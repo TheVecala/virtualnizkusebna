@@ -1,0 +1,5 @@
+VZ
+--------------------------------------
+27_06_19 - nefunguje oznámení o špatném heslu, 
+
+vloženo session_destroy do vytvorit_zkusebnu line 30

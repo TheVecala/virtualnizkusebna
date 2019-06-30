@@ -1,0 +1,77 @@
+VCS - version control system
+CVCS - centralized version control system, př. CVS, SUbversion, Perforce
+DVCS - distributed version control system, př. Git, Mercurial, Bazaar
+
+nastaveni -  c:\Users\(user)\.gitconfig
+git config --list   - vypíše seznam nastavení
+
+.gitignore - seznam soubor, který specifikuje ignorované soubory
+           - je v každém projektu (adresáři) samostatně, ne v celkovém nastavení
+
+staged - připraveno k zapsání
+branch - větev
+-------------------------------------------
+git init -
+git status - výpis stavu souborů, jen názvy, změněné, připravené, nové...
+git diff - výpis stavu souborů, přesně zobrazí přidané a odstraněné řádky v souborech
+
+git add <soubor> -  zahájí sledování souborů (tracking), tj. označí pro přidání soubory do repozitáře 
+                 - (!) soubor bude uložen tak, jak vypadal při spuštění příkazu git add
+git reset HEAD <soubor>	- návrat (vyřazení) souboru z oblasti připravených změn, tj. soubor nebude commitován
+git checkout -- <soubor> - 	vrátí soubor zpět do podoby při poslední revizi, tj. undo změn	 
+git commit -m "komentář" 
+           -a  do revize je automaticky zahrnut každý soubor který je sledován, tj. není třeba předtím zadávat git add 
+           --amend  -přepíše poslední revizi
+git rm - odstranění souborů, odstraní se uplně i ze sledování
+----------------------------------------------------
+git log    - výpis revizí v daném repozitáři		  
+        -p - zobrazí rozdíly diff
+gitk - grafická varianta příkazu git log	
+
+git remote - výpis vzdálených repozitářů
+	       -v  - i s adresou
+git remote add <jméno> <adresa>  - přidání vzdáleného repozitaře,
+								jméno=moje označení repozitáře, které budu pro něj používat .
+								adresa=místo na netu s repozitářem, které chci připojit
+
+git fetch <název vzdáleného repozitáře> - stažení dat ze vzdáleného repozitáře, jen stáhne, nezačlení
+										- pokud stáhnete s daty i nové vzdálené větve, nemáte automaticky jejich lokální, editovatelně kopie, ale pouze ukazatel origin/<nová větev> a nikoli <nová větev>. Je potřeba spustit příkaz "git merge origin/<nová větev>" a vtáhnout změny do aktuální větve, nebo spustit příkaz "git checkout -b <jméno nové větve> <origin/nová větev> a vytvořit lokální editovatelnou kopii
+										
+git pull  - vyzvedne a začlení vzdálenou větev do mojí aktuální větve
+git push  - odeslání na vzdálený repozitář
+           -  git push origin master -tj. git push kam co			
+			- lze odeslat pouze pokud se vzdálený repozitář mezitím nezměnil, pokud ano je potřeba nejprve stáhnout aktualní stav, začlenit u sebe, a teprve potom je umožněno odeslání
+---------------------------------------
+VĚTVE
+
+ukazatel HEAD - ukazatel na lokální větev, na níž se právě nacházíte
+
+git branch <jméno nové větve>  -vytvoří novou větev	(jen vytvoří, nepřepne na ni)									
+git branch -d <jméno větve>  -smaže větev 
+									
+git checkout <jméno větve> - přepne na existující větev (přesune ukazatel HEAD) 
+
+git checkout -b <jméno nové větve> -vytvoří novou větev a rovnou na ni přepne
+
+git merge <jméno větve> - fast forward (rychle vpřed) - začlenění v přímé linii, ukazatel se jen posune vpřed, "dožene změny"
+							začlenění větve <jméno větve> do větve na které se nacházíte, tj. "přitažení změn odněkud směrem sem",
+							ukazatel větve na které se nacházíte, se posune na ukazatel  <jméno větve>
+							
+						- třícestné sloučení , revize sloučením (merge commit) , vytvoří se nový snímek, na nějž se přesune ukazatel aktuální větve
+						
+git mergetool - vizuální nástroj pro řešení případných konfliktů při slučování
+
+vzdálené větve  - jsou reference, tj. odkazy na stav větví ve vzdálených repozitářích.
+				- jsou to lokální větve, které nemůžete přesouvat, přesouvají se automaticky při síťové komunikaci
+				- slouží jako záložky, které připomínají, kde byly větve ve vzdálených repozitářích, když jste se k nim naposledy připojili.
+				- např. "origin/master" - stav větve master na serveru
+				- git fetch origin - stáhne stav větve origin na serveru, posune tím směrem větev origin/master, ale lokální větev master zůstává stejná
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
