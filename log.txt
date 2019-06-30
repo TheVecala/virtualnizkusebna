@@ -1,5 +1,8 @@
 VZ
+30_06_19 - spuštění verzování v gitu
+
 --------------------------------------
 27_06_19 - nefunguje oznámení o špatném heslu, 
 
-vloženo session_destroy do vytvorit_zkusebnu line 30
+vloženo session_destroy do vytvorit_zkusebnu line 30 - nepomohlo
+--------------------------
