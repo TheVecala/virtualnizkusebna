@@ -1,13 +1,22 @@
+<!doctype html>
+<html lang="cz">
+  <head> 
+    <meta charset="utf-8">
+    
+	 
+  </head>
+   <body>
 <?php
  session_start();
 mysql_connect("localhost", "hanakdusan", "serepes6");
 mysql_select_db("18810_virtualni_zkusebna");
+mysql_set_charset("utf8"); 
 
 // vytvoření komentaře sloučením textu a odkazů z formuláře
 
-    $komentar= '<p>'.$_POST["vzkaz"].'</p>'.'<a href=" '. $_POST["odkaz"] . '">'.  $_POST["odkaz"].' </a> ' ;
+ //   $komentar= '<p>'.$_POST["vzkaz"].'</p>'.'<a href=" '. $_POST["odkaz"] . '">'.  $_POST["odkaz"].' </a> ' ;
  
-
+   $komentar= '<p>žlutý kůň </p>  ' ;
 
 
 // uložení do databaze 
@@ -33,8 +42,8 @@ mysql_select_db("18810_virtualni_zkusebna");
 // mail($adresa["mail"], "novy prispevek v diskuzi Carvadele",$textmailu,"From:automat_z_diskuse@carvadele.cz");
 
   // }
-  
-  
-  
-  
+
 ?>
+
+ </body>
+</html>
