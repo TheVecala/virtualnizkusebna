@@ -90,8 +90,18 @@ else {$pole_souboru = "empty" ;
 	   <!-- vecalovo -->
 	 
 <script src="https://unpkg.com/wavesurfer.js"></script>
-  
-	 
+
+    <style>
+ 
+.btn-VZ {
+ 
+  font-size: 0.6rem;
+}
+ 
+.stitek_valu { 
+  padding: 0.5rem; 
+}
+     </style>
   </head>
   <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
 
@@ -383,26 +393,24 @@ else {$pole_souboru = "empty" ;
 						  
 							   <div class="card bg-success text-white"  > 
 							   
+							     <div id=" " class="card-body   stitek_valu " style="   " > 
 							   
+							  
 							   
-							   <button class=" bg-success text-white" style="  padding:2px ; display: inline"  data-target="#ovladace_<?php echo  $x; ?>" data-toggle="collapse" >
-
-							   
-							   
-							        <div class="card-header" style= "background-color:white ;  "> 
-							      	<div style="color:black  ;  display: inline" >	
+							        <div class="card-header" style= "  "> 
+							      	<div style="color:black  ; background-color:white ;  display: inline" >	
 										<img src="/data/glyphicons-18-music.png" alt="vál"  > 			
 									   <?php echo $pole_souboru[$x]; ?>
 									</div> 
 								 
 							        </div> 
 									
-							   </button> 
+							 
 									
 									
 									
 									
-								   <div id="ovladace_<?php echo $x ; ?>" class="card-body collapse" > 
+								 
 								
 								 <?php
 								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
@@ -420,7 +428,7 @@ else {$pole_souboru = "empty" ;
 						         ?> 
 								 
 								 <a href="<?php echo $soub; ?>" download style="  display: inline"> 
-									<button type="button" class="btn btn-sm btn-secondary" >  DOWNLOAD </button> 
+									<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
 								 </a>
 								 
 								  <?php
@@ -428,14 +436,14 @@ else {$pole_souboru = "empty" ;
 								 if ($FileType == "mp3")
 								 {    
 						         ?>  
-									<button value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-warning wave_loader"  style=" max-width: 120px ; display: inline" >										 			
+									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >										 			
 									   OTEVŘÍT
 									</button> 
 								  <?php
 								  }  
 						         ?> 
                                   
-									<button value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger deleter"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete">		
+									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete">		
 									  SMAZAT
 									</button> 
 								  
@@ -621,22 +629,22 @@ define ("ROWS", 10);
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p class="modal-title">  Soubor nelze smazat... </p>
+        <p id="modal_delete_label" class="modal-title">  Soubor   </p>
 		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->
       <div class="modal-body">
-         <p id="modal_delete_label"> soubor </p>
+         <p >    Nemáš oprávnění smazat soubor...  </p>
         
       </div>
 
       <!-- Modal footer -->
       <div class="modal-footer">
+          <button type="button" class="btn btn-warning" data-dismiss="modal">Chápu</button>
+		  <button id="modal_delete_deleter" value="soubor_nevlozen" type="button" class="btn btn-danger" >Nechápu</button>
         
-		  <button id="modal_delete_deleter" value="soubor_nevlozen" type="button" class="btn btn-warning" >ANO</button>
-        <button type="button" class="btn btn-danger" data-dismiss="modal">NE</button>
       </div>
 
     </div>
@@ -809,7 +817,7 @@ wavesurfer.on('ready', function () {
   
     $("#modal_delete_deleter").click(function(){ 
      var val_ke_smazani = this.getAttribute("value");
-      
+    //   
   });
   
 });
