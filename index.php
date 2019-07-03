@@ -181,15 +181,14 @@ else {$pole_souboru = "empty" ;
             <div> <!--  karta skladby   -->
 			
 			  <table class="table table-bordered">
-    <thead>
+                <thead>
       <tr>
         <th>vál</th>
         <th>bpm</th>
-        <th>KEY
-		</th>
+        <th>KEY</th>
       </tr>
     </thead>
-    <tbody>
+                <tbody>
       <tr>
         <td>bluesová dvanáctka</td>
         <td>90</td>
@@ -255,20 +254,23 @@ else {$pole_souboru = "empty" ;
         <td></td>
         <td>A</td>
       </tr>
+	  <tr>
         <td>Jah Division_Jah naucil rastamana kurit ganja </td>
         <td></td>
         <td>Emi</td>
       </tr>
+	  <tr>
         <td></td>
         <td></td>
         <td>...</td>
       </tr>
+	  <tr>
         <td></td>
         <td></td>
         <td>...</td>
       </tr>
     </tbody>
-  </table>
+              </table>
 			
 		<button value=" " name="  " type="button" class="btn btn-sm btn-success  "  style="  ; display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
 									  UPRAVIT PLAYLIST
@@ -427,10 +429,6 @@ else {$pole_souboru = "empty" ;
 								  }  
 						         ?> 
 								 
-								 <a href="<?php echo $soub; ?>" download style="  display: inline"> 
-									<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
-								 </a>
-								 
 								  <?php
 								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
 								 if ($FileType == "mp3")
@@ -443,6 +441,12 @@ else {$pole_souboru = "empty" ;
 								  }  
 						         ?> 
                                   
+								  
+								 <a href="<?php echo $soub; ?>" download style="  display: inline"> 
+									<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
+								 </a>
+								 
+								  
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete">		
 									  SMAZAT
 									</button> 
