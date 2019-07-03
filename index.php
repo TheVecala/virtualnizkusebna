@@ -171,161 +171,153 @@ else {$pole_souboru = "empty" ;
         <div id="adresare" class="col-md-4">  <!--  prvni sloupec   -->
 		      
 
-			<div class="card bg-dark text-white"> <!--     -->
+			<div class="card bg-dark text-white"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
 	             <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2> 	<h2 style="text-align:right; color:red ">  PLAYLIST </h2>  
 	           </div>			  
             </div> <!--     -->
 	      
 		  
-            <div> <!--  karta skladby   -->
+            <div> <!--  playlist   -->
 			
 			  <table class="table table-bordered">
                 <thead>
-      <tr>
-        <th>vál</th>
-        <th>bpm</th>
-        <th>KEY</th>
-      </tr>
-    </thead>
+				  <tr>
+					<th>vál</th>
+					<th>bpm</th>
+					<th>KEY</th>
+				  </tr>
+                </thead>
                 <tbody>
-      <tr>
-        <td>bluesová dvanáctka</td>
-        <td>90</td>
-        <td>Gmi</td>
-      </tr>
-      <tr>
-        <td>2-5-1</td>
-        <td>120</td>
-        <td>C</td>
-      </tr>
-      <tr>
-        <td>U2 – in gods country</td>
-        <td>126</td>
-        <td>D</td>
-      </tr>
-      <tr>
-        <td>Ventil RG – Fajčenie škodí</td>
-        <td>140</td>
-        <td>...</td>
-      </tr>
-      <tr>
-        <td>Jackson - Billy Jean</td>
-        <td>117</td>
-        <td>...</td>
-      </tr>
-      <tr>
-        <td>Marley – Iron, lion, zion</td>
-        <td>142</td>
-        <td>...</td>
-      </tr>
-      <tr>
-        <td>Marley – Forever loving jah</td>
-        <td>141</td>
-        <td>Dmi</td>
-      </tr>
-      <tr>
-        <td>Marley – Jamming</td>
-        <td>123</td>
-        <td>Ami</td>
-      </tr>
-      <tr>
-        <td>Marley – So much trouble</td>
-        <td>78</td>
-        <td>...</td>
-      </tr>
-      <tr>
-        <td>Marley –  Natural Mystic</td>
-        <td>131</td>
-        <td>Ami</td>
-      </tr>
-      <tr>
-        <td>Marley/Clapton – I shot the sheriff</td>
-        <td>94</td>
-        <td>...</td>
-      </tr>
-      <tr>
-        <td>Jarek Nohavica_Peterburg</td>
-        <td></td>
-        <td>A</td>
-      </tr>
-      <tr>
-        <td>Jarek Nohavica_Tesinska</td>
-        <td></td>
-        <td>A</td>
-      </tr>
-	  <tr>
-        <td>Jah Division_Jah naucil rastamana kurit ganja </td>
-        <td></td>
-        <td>Emi</td>
-      </tr>
-	  <tr>
-        <td></td>
-        <td></td>
-        <td>...</td>
-      </tr>
-	  <tr>
-        <td></td>
-        <td></td>
-        <td>...</td>
-      </tr>
-    </tbody>
+				  <tr>
+					<td>bluesová dvanáctka</td>
+					<td>90</td>
+					<td>Gmi</td>
+				  </tr>
+				  <tr>
+					<td>2-5-1</td>
+					<td>120</td>
+					<td>C</td>
+				  </tr>
+				  <tr>
+					<td>U2 – in gods country</td>
+					<td>126</td>
+					<td>D</td>
+				  </tr>
+				  <tr>
+					<td>Ventil RG – Fajčenie škodí</td>
+					<td>140</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Jackson - Billy Jean</td>
+					<td>117</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Marley – Iron, lion, zion</td>
+					<td>142</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Marley – Forever loving jah</td>
+					<td>141</td>
+					<td>Dmi</td>
+				  </tr>
+				  <tr>
+					<td>Marley – Jamming</td>
+					<td>123</td>
+					<td>Ami</td>
+				  </tr>
+				  <tr>
+					<td>Marley – So much trouble</td>
+					<td>78</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Marley –  Natural Mystic</td>
+					<td>131</td>
+					<td>Ami</td>
+				  </tr>
+				  <tr>
+					<td>Marley/Clapton – I shot the sheriff</td>
+					<td>94</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Jarek Nohavica_Peterburg</td>
+					<td></td>
+					<td>A</td>
+				  </tr>
+				  <tr>
+					<td>Jarek Nohavica_Tesinska</td>
+					<td></td>
+					<td>A</td>
+				  </tr>
+				  <tr>
+					<td>Jah Division_Jah naucil rastamana kurit ganja </td>
+					<td></td>
+					<td>Emi</td>
+				  </tr> 
+                </tbody>
               </table>
 			
-		<button value=" " name="  " type="button" class="btn btn-sm btn-success  "  style="  ; display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
-									  UPRAVIT PLAYLIST
-									</button> 	 
+		      <button  type="button" class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
+				UPRAVIT PLAYLIST
+			  </button> 	 
 			
 			
-            </div> <!-- konec karty skladby    -->
+            </div> <!-- konec playlistu    -->
  
 	
-		</div>    
+		</div>  <!--  konec prvniho sloupce   -->  
 
 		<div  id="k" class="col-md-4"> <!--  druhy sloupec   -->
 		
-	      <div  class=" ">   <!-- sekce složek   -->
+	      <div  class=" ">   <!-- hlavička sekce složek   -->
 			  
                <div class="card bg-dark text-white"> <!--      -->
                    <div class="card-body"> 
 		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>  	 
 	               </div>			  
-               </div> <!--     -->
+               </div>  
  			
 
 			
-			<div  class="card bg-success text-white">   <!--  formular_vytvoreni_slozky  -->
-			   <div id="formular_vytvoreni_slozky" class="card-body " style="  display: none" >  
-							 
-				<form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
-					vytvořit novou složku:
-					<input id="jmeno_adresare" type="text" name="jmeno_adresare" autofocus >
-					<input id=" " type="text" value="<?php echo $sekce ; ?>" name="sekce" style="display:none" >
-					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-					<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
-				</form>
-					   
-			   </div>
-			</div>
- 				  
+				<div  class="card bg-success text-white">   <!--  formular_vytvoreni_slozky  -->
+				   <div id="formular_vytvoreni_slozky" class="card-body " style="  display: none" >  
+								 
+					  <form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
+						vytvořit novou složku:
+						<input id="jmeno_adresare" type="text" name="jmeno_adresare" autofocus >
+						<input id=" " type="text" value="<?php echo $sekce ; ?>" name="sekce" style="display:none" >
+						<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+						<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
+					  </form>
+						   
+				   </div>
+				</div>
+					  
  
 
-          </div>   <!-- konec sekce složek   -->
+          </div>   <!-- konec hlavičky sekce složek   -->
 		
 
 		
-   			<div class="card bg-dark text-white"> <!--     -->
+   			<div class="card bg-dark text-white"> <!--  SLOŽKA:   -->
                <div class="card-body"> 
-		         <span> SLOŽKA: </span>   <h3 style="display: inline"> <?php echo $slozka_souboru 	?> 	 </h3>	 </h3>	<h2 style="text-align:right; color:red "></h2>  	 	 
+		         <span> SLOŽKA: </span>   <h3 style="display: inline"> <?php echo $slozka_souboru 	?> 	 </h3>	<h2 style="text-align:right; color:red "></h2>  	 	 
 	           </div>
-
-			   			<ul class="dropdown">  <!--  vypis složek   -->
+			</div>
+			<ul class="dropdown">  <!--  vypis složek   -->
 		
 	  <button type="button" class="btn btn-succces dropdown-toggle" data-toggle="dropdown">
-    VYBRAT SLOŽKU
-  </button>		
- <button  id="nova_slozka"   type="button" class="btn btn-secondary"  >NOVÁ SLOŽKA</button> 
-   <div class="dropdown-menu">
+       VYBRAT SLOŽKU
+      </button>		
+      <button  id="nova_slozka"   type="button" class="btn btn-secondary"  >
+	  NOVÁ SLOŽKA
+	  </button> 
+      <div class="dropdown-menu"> <!-- zmšna složky    -->
     
   
 				<?php 
@@ -338,9 +330,8 @@ else {$pole_souboru = "empty" ;
 						
 						  {    
 						?>
-						<div  class="dropdown-item" ">		 
-						 
-								
+						<div  class="dropdown-item ">	<!-- tlačítko změny složky    -->  
+						 								
 			     			<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data">
 							 <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 			   
 							 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
@@ -356,11 +347,10 @@ else {$pole_souboru = "empty" ;
 				?>
 
 		  </div>
-  		
-				
+  						
 			</ul>
 			   
-            </div> <!--     -->
+            <!--  odstranenej konec div   -->
  
 			<div class="card bg-success text-white">
 			   
@@ -378,7 +368,7 @@ else {$pole_souboru = "empty" ;
 			   <div class="card-footer">	<!--  tlačítko vložení souboru  -->   	       
 				  <button  id="vlozit_soubor"   type="button" class="btn btn-secondary"  >VLOŽIT SOUBOR</button>
 			   </div>
-			 </div>
+			</div>
 			 
 			   <div>  <!--  vypis souboru   -->          
 								 
@@ -452,17 +442,17 @@ else {$pole_souboru = "empty" ;
 									</button> 
 								  
 
-								 </div>
-							   </div>
+								 </div> <!--card body  -->
+							   </div> <!-- card   -->
 						   							
 						<?php
 						}
 					}
 					?>
  		 			
-			</div>
+			</div> <!--  konec vypis souboru   --> 
 			  		   		   
-       </div  > <!-- druhý sloupec   -->
+       </div  > <!-- konec druhý sloupec   -->
   
         <div class="col-md-4" > <!-- třetí sloupec   -->
        
