@@ -150,7 +150,7 @@ else {$pole_souboru = "empty" ;
      
 	 
 <div class="container-fluid">
-     <div id="vycpavka" id="k" style="min-height:60px"> </div>               
+     <div id="vycpavka" id="k" style="min-height:0px"> </div>               
 	<div id="wave_jumbo" style="display:none" class="jumbotron bg-success">				
 					<div id="label_wave_jumbo"> název souboru</div>
 			        <div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
@@ -171,7 +171,7 @@ else {$pole_souboru = "empty" ;
         <div id="adresare" class="col-md-4">  <!--  prvni sloupec   -->
 		      
 
-			<div class="card bg-dark text-white"> <!--hlavička prvního sloupce     -->
+			<div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
 	             <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2> 	<h2 style="text-align:right; color:red ">  PLAYLIST </h2>  
 	           </div>			  
@@ -276,7 +276,7 @@ else {$pole_souboru = "empty" ;
 		
 	      <div  class=" ">   <!-- hlavička sekce složek   -->
 			  
-               <div class="card bg-dark text-white" style="margin-top: 30px;"> <!--      -->
+               <div class="card bg-dark text-white" style="margin-top: 58px;"> <!--      -->
                    <div class="card-body"> 
 		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>  	 
 	               </div>			  
@@ -493,7 +493,7 @@ define ("ROWS", 10);
   
  <div>   <!-- hlavička třetího sloupce  -->
       <div id="diskuse" style="font-size:1.5em">
-                <div class="card bg-dark text-white"> <!--      -->
+                <div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--      -->
                    <div class="card-body"> 
 		             	<h2 style="text-align:right; color:red ">  ODKAZY </h2>  	 
 	               </div>			  
