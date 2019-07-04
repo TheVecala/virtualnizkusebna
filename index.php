@@ -180,7 +180,7 @@ else {$pole_souboru = "empty" ;
 		  
             <div> <!--  playlist   -->
 			
-			  <table class="table table-bordered">
+			  <table class="table table-bordered table-hover table-dark" style="color: #000; background-color: #27a243">
                 <thead>
 				  <tr>
 					<th>vál</th>
@@ -276,7 +276,7 @@ else {$pole_souboru = "empty" ;
 		
 	      <div  class=" ">   <!-- hlavička sekce složek   -->
 			  
-               <div class="card bg-dark text-white"> <!--      -->
+               <div class="card bg-dark text-white" style="margin-top: 30px;"> <!--      -->
                    <div class="card-body"> 
 		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>  	 
 	               </div>			  
@@ -306,15 +306,15 @@ else {$pole_souboru = "empty" ;
 		
    			<div class="card bg-dark text-white"> <!--  SLOŽKA:   -->
                <div class="card-body"> 
-		         <span> SLOŽKA: </span>   <h3 style="display: inline"> <?php echo $slozka_souboru 	?> 	 </h3>	<h2 style="text-align:right; color:red "></h2>  	 	 
-	           </div>
-			</div>
-			<ul class="dropdown">  <!--  vypis složek   -->
+		         <span> SLOŽKA: </span>    
+
+
+			<ul class="dropdown" style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
 		
-	  <button type="button" class="btn btn-succces dropdown-toggle" data-toggle="dropdown">
-       VYBRAT SLOŽKU
+	  <button type="button" class="btn btn-sm btn-succces dropdown-toggle" data-toggle="dropdown">
+       <?php echo $slozka_souboru 	?> 
       </button>		
-      <button  id="nova_slozka"   type="button" class="btn btn-secondary"  >
+      <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  >
 	  NOVÁ SLOŽKA
 	  </button> 
       <div class="dropdown-menu"> <!-- zmšna složky    -->
@@ -349,6 +349,12 @@ else {$pole_souboru = "empty" ;
 		  </div>
   						
 			</ul>
+
+
+				 
+	           </div>
+			</div>
+
 			   
             <!--  odstranenej konec div   -->
  
