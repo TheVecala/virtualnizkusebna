@@ -101,7 +101,20 @@ else {$pole_souboru = "empty" ;
 .stitek_valu { 
   padding: 0.5rem; 
 }
+.vzkaz_karta  { 
+  margin:10px; 
+}
+.sloupec  { 
+  background-color:#27a243; 
+}
+.ovladac_vzkazu  { 
+  background-color: #343a40; 
+}
+.formular_vzkazu  { 
+  background-color: #27a243; 
+}
      </style>
+
   </head>
   <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
 
@@ -537,10 +550,10 @@ define ("ROWS", 10);
    
    
  </div> <!-- konec ovládání třetího sloupce  --> 
-<ul class="list-group">
-    <li class="list-group-item  ">
+<ul class="list-group sloupec" >
+    <li class="list-group-item  ovladac_vzkazu ">
 	         	   
-	   <div id="form_style" class="form" style="display:none" >  
+	   <div id="form_style" class="form formular_vzkazu" style="display:none" >  
 			<form id="form" name="form" method="post" action="#">
 				<!--<h1>Vložení komentáře</h1>-->				 
 				<label>Text </label><br>
@@ -562,7 +575,7 @@ define ("ROWS", 10);
 ?>
     
      
-	  <li class="list-group-item  ">
+	  <li class="list-group-item vzkaz_karta ">
 	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span><br>  
 	   <div style="text-align:right; ">
 	     <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 
