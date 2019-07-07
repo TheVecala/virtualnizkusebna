@@ -5,20 +5,23 @@
  
  
 $cas= time();
-$vzkaz= "admin";
-$jmeno= "Sem je možno vkládat odkazy na vály, názory a jiný věci";
-$adresa_diskuse=  "diskuse_pokus6" ;
+$vzkaz= "140";
+$nazev= "Michael Jackson -  s2";
+$bpm= "1";
+$key= "E";
+$adresa_diskuse=  "playlist_pokus_127" ;
  
  
   //vytvoření tabulky funguje
    mysql_query("CREATE TABLE $adresa_diskuse (
 cas INT(11) NOT NULL,
 vzkaz text NOT NULL,
-jmeno VARCHAR(50) NOT NULL
+nazev VARCHAR(50) NOT NULL,
+bpm VARCHAR(50) NOT NULL
 )");
   
  //vložení do tabulky funguje
-  $vysledek=mysql_query("insert into $adresa_diskuse (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
+  $vysledek=mysql_query("insert into $adresa_diskuse (cas, vzkaz, nazev) values ('$cas', '$vzkaz', '$nazev')");
 ?> 
 
 

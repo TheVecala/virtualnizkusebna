@@ -291,8 +291,69 @@ else {$pole_souboru = "empty" ;
 			  
                <div class="card bg-dark text-white" style="margin-top: 58px;"> <!--      -->
                    <div class="card-body"> 
-		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>  	 
-	               </div>			  
+		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>
+
+
+
+
+
+
+
+		
+   	 
+		         
+
+
+			<ul class="dropdown" style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
+		
+			  <button type="button" class="btn btn-sm btn-succces dropdown-toggle" data-toggle="dropdown">
+			   <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >
+			   <?php echo $slozka_souboru 	?> 
+			  </button>		
+		
+			  <div class="dropdown-menu"> <!-- zmšna složky    -->
+			
+		  
+						<?php 
+						for($x = 0; $x < $delka_pole_slozek; $x++) {
+							  if ($pole_slozek[$x] == ".")  { continue; };
+							  if ($pole_slozek[$x] == "..")  { continue; };
+						   $soub = ($slozka_slozek.$pole_slozek[$x]);
+						   
+							if(is_dir($soub))
+								
+								  {    
+								?>
+								<div  class="dropdown-item ">	<!-- tlačítko změny složky    -->  
+																
+									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data">
+									 <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 			   
+									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
+									 <input id=" " type="submit" value="<?php echo $pole_slozek[$x] ?>" name="submit">
+									</form>
+								 
+								</div>	
+								 
+								<?php
+								}
+						}
+						?>
+
+				  </div>
+								
+			</ul>
+ 
+						
+	               </div>	
+				   
+				   
+				   <div class="card-footer">	<!--  tlačítko vložení souboru  -->   	       
+				      <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  >VLOŽIT SOUBOR</button>   
+					  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"> NOVÁ SLOŽKA </button> 
+			       </div>
+				   
+				
                </div>  
  			
 
@@ -310,66 +371,18 @@ else {$pole_souboru = "empty" ;
 						   
 				   </div>
 				</div>
-					  
+				
+				
  
 
           </div>   <!-- konec hlavičky sekce složek   -->
 		
 
-		
-   			<div class="card bg-dark text-white"> <!--  SLOŽKA:   -->
-               <div class="card-body"> 
-		         <span> SLOŽKA: </span>    
-
-
-			<ul class="dropdown" style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
-		
-	  <button type="button" class="btn btn-sm btn-succces dropdown-toggle" data-toggle="dropdown">
-       <?php echo $slozka_souboru 	?> 
-      </button>		
-      <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  >
-	  NOVÁ SLOŽKA
-	  </button> 
-      <div class="dropdown-menu"> <!-- zmšna složky    -->
-    
-  
-				<?php 
-				for($x = 0; $x < $delka_pole_slozek; $x++) {
-					  if ($pole_slozek[$x] == ".")  { continue; };
-					  if ($pole_slozek[$x] == "..")  { continue; };
-				   $soub = ($slozka_slozek.$pole_slozek[$x]);
-				   
-					if(is_dir($soub))
-						
-						  {    
-						?>
-						<div  class="dropdown-item ">	<!-- tlačítko změny složky    -->  
-						 								
-			     			<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data">
-							 <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 			   
-							 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-							 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
-							 <input id=" " type="submit" value="<?php echo $pole_slozek[$x] ?>" name="submit">
-							</form>
-						 
-						</div>	
-						 
-						<?php
-						}
-				}
-				?>
-
-		  </div>
-  						
-			</ul>
-
-
-				 
-	           </div>
-			</div>
 
 			   
             <!--  odstranenej konec div   -->
+ 
+ 
  
 			<div class="card bg-success text-white">
 			   
@@ -384,9 +397,7 @@ else {$pole_souboru = "empty" ;
 				</form>
 					   
 			   </div>
-			   <div class="card-footer">	<!--  tlačítko vložení souboru  -->   	       
-				  <button  id="vlozit_soubor"   type="button" class="btn btn-secondary"  >VLOŽIT SOUBOR</button>
-			   </div>
+			 
 			</div>
 			 
 			   <div>  <!--  vypis souboru   -->          
