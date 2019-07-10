@@ -164,23 +164,59 @@ else {$pole_souboru = "empty" ;
 	 
 <div class="container-fluid">
      <div id="vycpavka" id="k" style="min-height:0px"> </div>               
-	<div id="wave_jumbo" style="display:none" class="jumbotron bg-success">				
-					<div id="label_wave_jumbo"> název souboru</div>
-			        <div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
-                 	<div id="waveform"> 
-				
-				    </div>
 	
-	                <div class="controls">
-                    <button id="wave_play" class="btn btn-warning" data-action="play"> Play/Pause </button>
-                    <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" "> zavřít</button>
-					 
-                    </div>
 	
-    </div>
-   	
-    	   
+		
+
+
+	
     <div class="row">
+	
+        <div id="wave_jumbo"  style="display:none"  class="col-md-12">  <!--  nulty sloupec   -->
+		      
+
+			<div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--hlavička nultého sloupce     -->
+               <div class="card-body"> 
+						<h2 style="text-align:right; color:red ">  	LOOPER </h2> 
+	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo"; style="display: inline"> soubor nenačten </h2>  
+				 	<div style="text-align:right ">
+					<button id=" " class="btn btn-secondary" data-action=" " > MINIMALIZOVAT</button>
+					<button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " > ZAVŘÍT</button>
+					</div>
+						   <div class="controls">
+							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> PLAY/PAUSE </button>
+							<button id=" " class="btn btn-sm btn-warning" data-action=" "> OD ZAČÁTKU </button>
+							<button id=" " class="btn btn-sm btn-warning" data-action=" "> NĚCO JINÉHO</button>
+						
+							 
+				</div>
+					
+					
+	           </div>
+		    <div class="card-footer">  
+		
+			</div>	
+            </div> <!--     -->
+	      
+	
+	
+			<div class="jumbotron bg-success">				
+							 
+							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
+							<div id="waveform"> 
+						
+							</div>
+			
+							
+			
+			</div>
+   	
+        </div>   
+
+	
+	
+	
+	
         <div id="adresare" class="col-md-4">  <!--  prvni sloupec   -->
 		      
 
@@ -455,8 +491,7 @@ else {$pole_souboru = "empty" ;
 								 {    
 						         ?>  
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >										 			
-									   OTEVŘÍT
-									</button> 
+									   OTEVŘÍT V LOOPERU
 								  <?php
 								  }  
 						         ?> 
@@ -519,7 +554,7 @@ define ("ROWS", 10);
       <div id="diskuse" style="font-size:1.5em">
                 <div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--      -->
                    <div class="card-body"> 
-		             	<h2 style="text-align:right; color:red ">  ODKAZY </h2>  	 
+		             	<h2 style="text-align:right; color:red ">  POZNÁMKY </h2>  	 
 	               </div>			  
                </div> <!--     -->
  			
@@ -577,7 +612,7 @@ define ("ROWS", 10);
 			</form>
 		</div>
 	    <button id="sbalit_formular"  class="ajax-file-upload-red" style="display:none" >ZAVŘÍT FORMULÁŘ</button>
-        <button id="vybalit_formular" class="ajax-file-upload-pink"  >VLOŽIT NOVÝ  </button> <br>
+        <button id="vybalit_formular" class="ajax-file-upload-pink"  >NAPSAT  </button> <br>
           
     </li>
 <?php

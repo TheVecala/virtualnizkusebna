@@ -7,7 +7,7 @@
 $cas= time();
 $vzkaz= "admin";
 $jmeno= "Sem je možno vkládat odkazy na vály, názory a jiný věci";
-$adresa_diskuse=  "diskuse_pokus6" ;
+$adresa_diskuse=  "diskuse_pokus5" ;
  
  
   //vytvoření tabulky funguje
