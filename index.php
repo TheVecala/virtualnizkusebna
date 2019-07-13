@@ -187,7 +187,7 @@ else {$pole_souboru = "empty" ;
 						   <div class="controls">
 							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> PLAY/PAUSE </button>
 							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "> OD ZAČÁTKU </button>
-							<button id=" " class="btn btn-sm btn-warning" data-action=" "> NĚCO JINÉHO</button>
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> NĚCO JINÉHO</button>
 						
 							 
 				</div>
@@ -832,11 +832,7 @@ var wavesurfer = WaveSurfer.create({
         WaveSurfer.regions.create({
 			 regions: [
                 {
-                    start: 0,
-                    end: 3,
-                    color: 'hsla(400, 100%, 30%, 0.5)',
-					id: 1,
-					loop: true
+                
                 }
             ],
 		})
@@ -845,20 +841,34 @@ var wavesurfer = WaveSurfer.create({
 	
  
 	 wavesurfer.addRegion( {
-                    start: 5,
-                    end: 9,
+                    start: 0,
+                    end: 20,
                     color: 'hsla(400, 100%, 30%, 0.5)',
-					id: 2,
+					id: 1,
 					loop: true
-                })
- 
+                });
+				
+			 wavesurfer.addRegion( {
+                    start: 25,
+                    end: 50,
+                    color: 'hsla(400, 100%, 30%, 0.5)',
+					id: 1,
+					loop: true
+                });
+						
+				
+				
+				
+ //  WaveSurfer.getDuration()
 	
 wavesurfer.on('ready', function () {
  // vložit funkce aktivování controlerů
   document.getElementById("hlaska_nacitani").style.display ="none";
  
-
 });
+
+
+
 
   
   $(".wave_loader").click(function(){ 
@@ -880,13 +890,24 @@ wavesurfer.on('ready', function () {
   $("#wave_od_zacatku").click(function(){ 
       wavesurfer.play(0);
   }); 
+   $("#loop").click(function(){ 
+         var delka = WaveSurfer.getDuration();
+     	 wavesurfer.addRegion( {
+                    start: 55,
+                    end: delka,
+                    color: 'hsla(400, 100%, 30%, 0.5)',
+					id: 1,
+					loop: true
+                });
+					  ;
+  }); 
   
   
    
   
    $("#schovat_wave_jumbo").click(function(){ 
     document.getElementById("wave_jumbo").style.display ="none";
-	 wavesurfer.empty();
+	 //  wavesurfer.empty();
 	
   });
  
@@ -911,10 +932,7 @@ wavesurfer.on('ready', function () {
   
 });
 
-wavesurfer.on('stop', function () { 
-     wavesurfer.play(0);
-  	 });
-  
+ 
  
 
 </script>
