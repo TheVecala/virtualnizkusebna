@@ -180,12 +180,12 @@ else {$pole_souboru = "empty" ;
 						<h2 style="text-align:right; color:red ">  	LOOPER </h2> 
 	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo"; style="display: inline"> soubor nenačten </h2>  
 				 	<div style="text-align:right ">
-					<button id=" " class="btn btn-secondary" data-action=" " > MINIMALIZOVAT</button>
+					<button id=" " class="btn btn-secondary" data-action=" " > MINIMALIZOVAT</button> 
 					<button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " > ZAVŘÍT</button>
 					</div>
 						   <div class="controls">
 							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> PLAY/PAUSE </button>
-							<button id=" " class="btn btn-sm btn-warning" data-action=" "> OD ZAČÁTKU </button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "> OD ZAČÁTKU </button>
 							<button id=" " class="btn btn-sm btn-warning" data-action=" "> NĚCO JINÉHO</button>
 						
 							 
@@ -834,6 +834,8 @@ var wavesurfer = WaveSurfer.create({
 wavesurfer.on('ready', function () {
  // vložit funkce aktivování controlerů
   document.getElementById("hlaska_nacitani").style.display ="none";
+  wavesurfer.addRegion();
+  wavesurfer.regions.playLoop()
 });
 
   
@@ -853,6 +855,12 @@ wavesurfer.on('ready', function () {
  $("#wave_play").click(function(){ 
      wavesurfer.playPause()();
   });
+  $("#wave_od_zacatku").click(function(){ 
+     wavesurfer.play(0); 
+  }); 
+  
+  
+  
   
    $("#schovat_wave_jumbo").click(function(){ 
     document.getElementById("wave_jumbo").style.display ="none";
@@ -880,6 +888,12 @@ wavesurfer.on('ready', function () {
   });
   
 });
+
+wavesurfer.on('stop', function () { 
+     wavesurfer.play(0);
+  	 });
+  
+wavesurfer.setWaveColor(green);
 
 </script>
 
