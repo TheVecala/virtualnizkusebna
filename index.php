@@ -90,6 +90,7 @@ else {$pole_souboru = "empty" ;
 	   <!-- vecalovo -->
 	 
 <script src="https://unpkg.com/wavesurfer.js"></script>
+<script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
 
     <style>
  
@@ -827,15 +828,36 @@ $(document).ready(function(){
 var wavesurfer = WaveSurfer.create({
     container: '#waveform',
 	waveColor: 'black',
+	plugins: [
+        WaveSurfer.regions.create({
+			 regions: [
+                {
+                    start: 0,
+                    end: 3,
+                    color: 'hsla(400, 100%, 30%, 0.5)',
+					id: 1,
+					loop: true
+                }
+            ],
+		})
+    ]
 });
 	
+ 
+	 wavesurfer.addRegion( {
+                    start: 5,
+                    end: 9,
+                    color: 'hsla(400, 100%, 30%, 0.5)',
+					id: 2,
+					loop: true
+                })
  
 	
 wavesurfer.on('ready', function () {
  // vložit funkce aktivování controlerů
   document.getElementById("hlaska_nacitani").style.display ="none";
-  wavesurfer.addRegion();
-  wavesurfer.regions.playLoop()
+ 
+
 });
 
   
@@ -856,11 +878,11 @@ wavesurfer.on('ready', function () {
      wavesurfer.playPause()();
   });
   $("#wave_od_zacatku").click(function(){ 
-     wavesurfer.play(0); 
+      wavesurfer.play(0);
   }); 
   
   
-  
+   
   
    $("#schovat_wave_jumbo").click(function(){ 
     document.getElementById("wave_jumbo").style.display ="none";
@@ -893,7 +915,7 @@ wavesurfer.on('stop', function () {
      wavesurfer.play(0);
   	 });
   
-wavesurfer.setWaveColor(green);
+ 
 
 </script>
 
