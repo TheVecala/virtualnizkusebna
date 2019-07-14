@@ -187,8 +187,9 @@ else {$pole_souboru = "empty" ;
 						   <div class="controls">
 							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> PLAY/PAUSE </button>
 							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "> OD ZAČÁTKU </button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> NĚCO JINÉHO</button>
-						
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> LOOP</button>
+							<button id="test_delky" class="btn btn-sm btn-warning" data-action=" ">něco jiného</button>
+						 
 							 
 				</div>
 					
@@ -892,6 +893,7 @@ wavesurfer.on('ready', function () {
   }); 
    $("#loop").click(function(){ 
          var delka = WaveSurfer.getDuration();
+		  document.getElementById("test_delky").style.display ="none";
      	 wavesurfer.addRegion( {
                     start: 55,
                     end: delka,
