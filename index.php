@@ -179,24 +179,30 @@ else {$pole_souboru = "empty" ;
 			<div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--hlavička nultého sloupce     -->
                <div class="card-body"> 
 						<h2 style="text-align:right; color:red ">  	LOOPER </h2> 
-	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo"; style="display: inline"> soubor nenačten </h2>  
-				 	<div style="text-align:right ">
-					<button id=" " class="btn btn-secondary" data-action=" " > MINIMALIZOVAT</button> 
-					<button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " > ZAVŘÍT</button>
-					</div>
-						   <div class="controls">
-							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> PLAY/PAUSE </button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "> OD ZAČÁTKU </button>
+						<div style="text-align:right ">
+					       <button id=" " class="btn btn-secondary" data-action=" " > MINIMALIZOVAT</button> 
+					       <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " > ZAVŘÍT</button>
+					    </div>
+						
+	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo" style="display: inline"> soubor nenačten </h2>  
+				 
+				 
+				    <div class="controls">
+							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play">PLAY</button>
+							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" ">PAUSE</button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" ">OD ZAČÁTKU</button>
 							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> LOOP</button>
-							<button id="test_delky" class="btn btn-sm btn-warning" data-action=" ">něco jiného</button>
-						 
+							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> odstranit smyčku</button>
+							
+							<button  class="btn btn-sm btn-warning" data-action=" ">něco dalšího</button>
+						
 							 
-				</div>
-					
+			    	</div>
+				
 					
 	           </div>
 		    <div class="card-footer">  
-		
+		           <div id="test_delky"></div>	
 			</div>	
             </div> <!--     -->
 	      
@@ -836,28 +842,17 @@ var wavesurfer = WaveSurfer.create({
                 
                 }
             ],
+			dragSelection: {
+                slop: 5
+            }
 		})
     ]
 });
 	
  
-	 wavesurfer.addRegion( {
-                    start: 0,
-                    end: 20,
-                    color: 'hsla(400, 100%, 30%, 0.5)',
-					id: 1,
-					loop: true
-                });
+	 
 				
-			 wavesurfer.addRegion( {
-                    start: 25,
-                    end: 50,
-                    color: 'hsla(400, 100%, 30%, 0.5)',
-					id: 1,
-					loop: true
-                });
-						
-				
+		 
 				
 				
  //  WaveSurfer.getDuration()
@@ -865,7 +860,8 @@ var wavesurfer = WaveSurfer.create({
 wavesurfer.on('ready', function () {
  // vložit funkce aktivování controlerů
   document.getElementById("hlaska_nacitani").style.display ="none";
- 
+     // var delka_multi = WaveSurfer.getDuration();
+	 var delka_multi = 3;
 });
 
 
@@ -886,25 +882,36 @@ wavesurfer.on('ready', function () {
   }); 
 
  $("#wave_play").click(function(){ 
-     wavesurfer.playPause()();
+     wavesurfer.play();
   });
+  
+  $("#wave_pause").click(function(){ 
+     wavesurfer.pause();
+  });
+  
   $("#wave_od_zacatku").click(function(){ 
       wavesurfer.play(0);
   }); 
    $("#loop").click(function(){ 
-         var delka = WaveSurfer.getDuration();
-		  document.getElementById("test_delky").style.display ="none";
-     	 wavesurfer.addRegion( {
-                    start: 55,
-                    end: delka,
+   // wavesurfer.playLoop();
+     var neco =  wavesurfer.getDuration();
+	 
+     		 wavesurfer.addRegion( {
+                    start: 0,
+                    end: neco-0.1,
                     color: 'hsla(400, 100%, 30%, 0.5)',
-					id: 1,
+					id: 2,
 					loop: true
                 });
-					  ;
+				
+	 
+		document.getElementById("test_delky").innerHTML = "délka smyčky: " + neco +" sekund";		
+				 
   }); 
   
-  
+    $("#wave_clear_regions").click(function(){ 
+     wavesurfer.clearRegions();
+  });
    
   
    $("#schovat_wave_jumbo").click(function(){ 
