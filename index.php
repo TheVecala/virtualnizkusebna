@@ -480,7 +480,7 @@ else {$pole_souboru = "empty" ;
 								
 								 <?php
 								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
-								 if ($FileType == "mp3")
+								 if ($FileType == "mp3" or $FileType == "wav" )
 								 {    
 						         ?>
  							 
@@ -495,7 +495,7 @@ else {$pole_souboru = "empty" ;
 								 
 								  <?php
 								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
-								 if ($FileType == "mp3")
+								 if ($FileType == "mp3" or $FileType == "wav")
 								 {    
 						         ?>  
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >										 			
