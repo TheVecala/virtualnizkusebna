@@ -2,42 +2,58 @@
 <?php
 $koren = "../user/";
 $target_dir = ($_POST["jmeno_adresare"]);
+$nahoda = "befelemepesseveze";
 $adresa_pro_navrat = ($_POST["navrat"]); 
 // $adresa_pro_navrat = ($_POST["navrat"]);  
  $databaze = true;
  
 if   ( $databaze )      
-                    { 
-					if(isset($_POST["jmeno_zkusebny"])) 
-						{   if (mkdir($koren.($_POST["jmeno_zkusebny"])))
-							 {  if (mkdir($koren.($_POST["jmeno_zkusebny"])."/uploads/" ))
-								 {   if (mkdir($koren.($_POST["jmeno_zkusebny"])."/uploads/".$target_dir))
-									 {	$_SESSION['vysledek'] = "vytvořeno"; 
-										$_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
-										$_SESSION['kapela'] = ($_POST["jmeno_zkusebny"]);
-										$_SESSION['login'] = ($_POST["jmeno_zkusebny"]);
-										
-									  // copy("../test/index.php","../".$adresa_pro_navrat."/index.php");
-						 
-									 } else  
-									   { $_SESSION['vysledek'] = "chyba - složka nebyla vytvořena"; 
-										 $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-									   }
-				             }
-			             }else  
-					    { $_SESSION['vysledek'] = "chyba - složka uploads nebyla vytvořena"; 
+     { 
+		if(isset($_POST["jmeno_zkusebny"])) 
+			{   if (mkdir($koren.($_POST["jmeno_zkusebny"])))									
+					{ 
+			    	
+					    if (mkdir($koren.($_POST["jmeno_zkusebny"]).$nahoda  )) 
+                           {   
+							if (mkdir($koren.($_POST["jmeno_zkusebny"]).$nahoda."/uploads/" ))
+									{   if (mkdir($koren.($_POST["jmeno_zkusebny"]).$nahoda."/uploads/".$target_dir))
+										 {	$_SESSION['vysledek'] = "vytvořeno"; 
+											$_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
+											$_SESSION['kapela'] = ($_POST["jmeno_zkusebny"]);
+											$_SESSION['login'] = ($_POST["jmeno_zkusebny"]);
+											
+										  // copy("../test/index.php","../".$adresa_pro_navrat."/index.php");
+							 
+										 } else  
+										 { $_SESSION['vysledek'] = "chyba - složka nebyla vytvořena"; 
+											 $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+										 }
+									
+									} else  
+									{	 
+									} 
+							 
+					    	} else  
+					        { $_SESSION['vysledek'] = "chyba - nahodna složka   nebyla vytvořena"; 
+					   	      $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+					         session_destroy(); 
+					        }	 
+							 
+					 
+			        } else  
+				    { $_SESSION['vysledek'] = "chyba - složka uploads nebyla vytvořena"; 
 					 	 $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
 						 session_destroy(); 
-									   }
+				    }
 		    } else  
-		        { $_SESSION['vysledek'] = "chyba - složka zkušebny nebyla vytvořena x"; 
+		    { $_SESSION['vysledek'] = "chyba - složka zkušebny nebyla vytvořena x"; 
 			 	  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-									   }
+		    }
 	  
       } else  
-	    { $_SESSION['vysledek'] = "chyba - registrace kapely nebyla vytvořena"; 
+	  { $_SESSION['vysledek'] = "chyba - registrace kapely nebyla vytvořena"; 
 		  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-									   };
+	  };
 	 
   // sem vložit vytvoření hesla
   ?>
