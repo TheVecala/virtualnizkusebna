@@ -3,11 +3,10 @@
 $koren = "../user/";
 $target_dir = ($_POST["jmeno_adresare"]);
 $nahoda = "befelemepesseveze";
-$adresa_pro_navrat = ($_POST["navrat"]); 
-// $adresa_pro_navrat = ($_POST["navrat"]);  
- $databaze = true;
+$adresa_pro_navrat = ($_POST["navrat"]);   
+$databaze = true;
  
-if   ( $databaze )      
+if   ( $databaze )      // vytvoření složek kapely
      { 
 		if(isset($_POST["jmeno_zkusebny"])) 
 			{   if (mkdir($koren.($_POST["jmeno_zkusebny"])))									
@@ -60,7 +59,8 @@ if   ( $databaze )
  
   <?php
 include "login/connect.php"; // přidat ověření nebo require
-if( $_SESSION['vysledek'] == "vytvořeno"  ) {
+if( $_SESSION['vysledek'] == "vytvořeno"  ) //vložení nové kapely do databáze
+    {
     $nick = mysql_real_escape_string($_POST['nick']);
     $heslo = mysql_real_escape_string($_POST['heslo']);
     $over_heslo = mysql_real_escape_string($_POST['over_heslo']);
@@ -70,17 +70,21 @@ if( $_SESSION['vysledek'] == "vytvořeno"  ) {
   
     $user_check = mysql_query("SELECT login FROM uzivatele WHERE login='".$nick."'");
     if($nick==""){echo"Nebyl vyplněn nick!";}
-    else if(mysql_num_rows($user_check)){echo"Tento nick používá již jiný uživatel.";}
-    else if($heslo==""){echo"Nebylo vyplněno heslo";}
-    else if($over_heslo==""){echo"Nebylo vyplněno ověřovací heslo";}
-    else if($heslo!=$over_heslo){echo"Vyplněná hesla se neshodují";}
-    else if($email==""){echo"Nebyl vyplněn email";}
-    else{
-        $sql= mysql_query("INSERT INTO uzivatele VALUES ('','$nick','$md5_heslo','','$email','','$adresa_diskuse')") or die(mysql_error());
-        echo"Registrace byla úspěšně dokončena!";
-		$_SESSION['vysledek'] = "Registrace učtu byla úspěšně dokončena!"; 
+       else if(mysql_num_rows($user_check)){echo"Tento nick používá již jiný uživatel.";}
+		   else if($heslo==""){echo"Nebylo vyplněno heslo";}
+		      else if($over_heslo==""){echo"Nebylo vyplněno ověřovací heslo";}
+		         else if($heslo!=$over_heslo){echo"Vyplněná hesla se neshodují";}
+		            else if($email==""){echo"Nebyl vyplněn email";}
+                       else{
+							$sql= mysql_query("INSERT INTO uzivatele VALUES ('','$nick','$md5_heslo','','$email','','$adresa_diskuse')") or die(mysql_error());
+							echo"Registrace byla úspěšně dokončena!";
+							$_SESSION['vysledek'] = "Registrace učtu byla úspěšně dokončena!"; 
+						   }
     }
-};
+	else
+	{
+	$_SESSION['vysledek'] = "Registrace učtu nebyla dokončena!"; 	
+	};
  
 if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  ) {
 	
