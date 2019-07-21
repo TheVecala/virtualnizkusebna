@@ -230,7 +230,12 @@ else {$pole_souboru = "empty" ;
 
 			<div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
-	             <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2> 	<h2 style="text-align:right; color:red ">  PLAYLIST </h2>  
+	             <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2> 	<h2 style="text-align:right; color:red ">  PLAYLIST </h2> 
+					
+		      <button  type="button" class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
+				UPRAVIT PLAYLIST
+			  </button> 	 
+					
 	           </div>			  
             </div> <!--     -->
 	      
@@ -318,11 +323,7 @@ else {$pole_souboru = "empty" ;
 				  </tr> 
                 </tbody>
               </table>
-			
-		      <button  type="button" class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
-				UPRAVIT PLAYLIST
-			  </button> 	 
-			
+
 			
             </div> <!-- konec playlistu    -->
  
@@ -733,8 +734,30 @@ define ("ROWS", 10);
 
       <!-- Modal body -->
       <div class="modal-body">
-         <p id=" "> Nemáš oprávnění editovat playlist </p>
-        
+     
+	   	        <form action="php/vlozit_track.php" method="post" enctype="multipart/form-data">
+				
+					<h2>   VYTVOŘENÍ NOVÉ POLOŽKY PLAYLISTU </h2>    <br>
+					
+					JMÉNO: 
+					<input id="nazev_tracku" type="text" name="nazev_tracku" > <br>
+					BPM: 
+					<input id="bpm" type="text" name="bpm" > <br>
+					KLÍČ:
+					<input id="klic" type="password" name="klic" > <br>
+					INFO1:
+					<input id=" " type="password" name="over_heslo" > <br>
+					EMAIL:
+			     	<input id=" " type="text" name="email" > <br>
+					
+					<input id="jmeno_adresare" type="text" value="první" name="jmeno_adresare" style="display:none" >	 <br>
+					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" > <br>
+					<input id="vlozit_track" type="submit" value="vložit" name="submit">
+				
+				
+				</form>
+		
+		
       </div>
 
       <!-- Modal footer -->

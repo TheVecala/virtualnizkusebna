@@ -14,9 +14,9 @@ mysql_set_charset("utf8");
 
 // vytvoření komentaře sloučením textu a odkazů z formuláře
 
- //   $komentar= '<p>'.$_POST["vzkaz"].'</p>'.'<a href=" '. $_POST["odkaz"] . '">'.  $_POST["odkaz"].' </a> ' ;
+   $komentar= '<p>'.$_POST["vzkaz"].'</p>'.'<a href=" '. $_POST["odkaz"] . '">'.  $_POST["odkaz"].' </a> ' ;
  
-   $komentar= '<p>žlutý kůň </p>  ' ;
+  //  $komentar= '<p>žlutý kůň </p>  ' ;
 
 
 // uložení do databaze 

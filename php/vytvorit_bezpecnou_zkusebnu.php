@@ -114,7 +114,23 @@ jmeno VARCHAR(50) NOT NULL
 	    { $_SESSION['vysledek'] = "chyba - vytvoření tabulek nebyla vytvořena"; 
 		  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
 									   };
-  
+ 
+
+  //vytvoření tabulky playlistu
+ $adresa_playlistu=  "playlist_kapela1" ;
+ 
+   mysql_query("CREATE TABLE $adresa_playlistu (
+cas INT(11) NOT NULL,
+poradi VARCHAR(50) NOT NULL,
+nazev_valu text NOT NULL,
+bpm VARCHAR(50) NOT NULL,
+klic VARCHAR(50) NOT NULL,
+adresa_diskuse VARCHAR(50) NOT NULL,
+data1 VARCHAR(50) NOT NULL,
+data2 VARCHAR(50) NOT NULL,
+data3 VARCHAR(50) NOT NULL
+)");
+   
   // if vytvoření učtu and vytvoření adresáře and vytvoření tabulek then návrat 
   // if chyba then smazat vytvořené a návrat 
  
