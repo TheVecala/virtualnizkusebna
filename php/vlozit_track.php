@@ -6,7 +6,8 @@
  $target_dir = ($_POST["jmeno_adresare"]);
 $nahoda = "befelemepesseveze";
 $adresa_pro_navrat = ($_POST["navrat"]); 
-$adresa_playlistu=  "playlist_kapela1" ;
+ //$adresa_playlistu=  "playlist_test_123" ;
+$adresa_playlistu=  "playlist_".($_POST["kapela"]); ;
 
 $cas= time();
 $poradi= 1;

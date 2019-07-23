@@ -86,38 +86,35 @@ if( $_SESSION['vysledek'] == "vytvořeno"  ) //vložení nové kapely do databá
 	$_SESSION['vysledek'] = "Registrace učtu nebyla dokončena!"; 	
 	};
  
-if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  ) {
-	
-	// vytvoření tabulek
+if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  ) 
+    {	
+    // vytvoření tabulky diskuse kapely
+	$cas= time();
+	$jmeno= "admin";
+	$vzkaz= "Sem je možno vkládat odkazy na vály, názory a jiný věci";
  
-$cas= time();
-$jmeno= "admin";
-$vzkaz= "Sem je možno vkládat odkazy na vály, názory a jiný věci";
-// $adresa_diskuse=  "diskuse_pokus5" ;
- 
- 
-  //vytvoření tabulky funguje
-   mysql_query("CREATE TABLE $adresa_diskuse (
-cas INT(11) NOT NULL,
-vzkaz text NOT NULL,
-jmeno VARCHAR(50) NOT NULL
-)");
-  
- //vložení do tabulky funguje
-  $vysledek=mysql_query("insert into $adresa_diskuse (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
-	
-	
-		$_SESSION['vysledek'] = "vytvoření tabulek bylo úspěšně dokončeno!"; 
-	    $_SESSION['diskuse'] = $adresa_diskuse ;
-	
-  } else  
-	    { $_SESSION['vysledek'] = "chyba - vytvoření tabulek nebyla vytvořena"; 
-		  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-									   };
+    mysql_query("CREATE TABLE $adresa_diskuse (
+	cas INT(11) NOT NULL,
+	vzkaz text NOT NULL,
+	jmeno VARCHAR(50) NOT NULL
+	)");
+	  
+	//vložení do tabulky diskuse kapely
+    $vysledek=mysql_query("insert into $adresa_diskuse (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
+	// přidat podmínku			
+	$_SESSION['vysledek'] = "vytvoření tabulek bylo úspěšně dokončeno!"; 
+	$_SESSION['diskuse'] = $adresa_diskuse ;
+		
+    } else  
+    {
+	$_SESSION['vysledek'] = "chyba - vytvoření tabulek nebyla vytvořena"; 
+    $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+	};
  
 
   //vytvoření tabulky playlistu
- $adresa_playlistu=  "playlist_kapela1" ;
+// $adresa_playlistu=  "playlist_kapela1" ;
+ $adresa_playlistu=  "playlist_".($_POST["jmeno_zkusebny"]);
  
    mysql_query("CREATE TABLE $adresa_playlistu (
 cas INT(11) NOT NULL,

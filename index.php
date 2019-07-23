@@ -740,18 +740,19 @@ define ("ROWS", 10);
 					<h2>   VYTVOŘENÍ NOVÉ POLOŽKY PLAYLISTU </h2>    <br>
 					
 					JMÉNO: 
-					<input id="nazev_tracku" type="text" name="nazev_tracku" > <br>
+					<input id="" type="text" name="nazev_tracku" > <br>
 					BPM: 
-					<input id="bpm" type="text" name="bpm" > <br>
+					<input id="" type="text" name="bpm" > <br>
 					KLÍČ:
-					<input id="klic" type="password" name="klic" > <br>
+					<input id="" type="password" name="klic" > <br>
 					INFO1:
-					<input id=" " type="password" name="over_heslo" > <br>
+					<input id="" type="password" name="over_heslo" > <br>
 					EMAIL:
-			     	<input id=" " type="text" name="email" > <br>
+			     	<input id="" type="text" name="email" > <br>
 					
-					<input id="jmeno_adresare" type="text" value="první" name="jmeno_adresare" style="display:none" >	 <br>
-					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" > <br>
+					<input id="jmeno_adresare_xxxxx" type="text" value="první" name="jmeno_adresare" style="display:none" >	 <br>
+					<input id="navrat_xxxxxxx" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:nonexxxxxx" > <br>
+					<input id="" type="text" value="<?php echo $kapela; ?>" name="kapela" style="display:nonexxxxxxxx" > <br>
 					<input id="vlozit_track" type="submit" value="vložit" name="submit">
 				
 				

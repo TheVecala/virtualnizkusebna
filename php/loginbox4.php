@@ -99,20 +99,20 @@
 	 	 
             <div  class="card-body " >  
 							 
-				<form action="php/vytvorit_zkusebnu.php" method="post" enctype="multipart/form-data">
+				<form action="php/vytvorit_bezpecnou_zkusebnu.php" method="post" enctype="multipart/form-data">
 					<h2>   VYTVOŘENÍ NOVÉHO PROJEKTU </h2>    <br>
 					PŘIHLAŠOVACÍ JMÉNO: 
-					<input id="jmeno_zkusebny" type="text" name="nick" > <br>
+					<input id=" " type="text" name="nick" > <br>
 					CELÝ NÁZEV PROJEKTU: 
-					<input id="jmeno_zkusebny" type="text" name="jmeno_zkusebny" > <br>
+					<input id=" " type="text" name="jmeno_zkusebny" > <br>
 					ZVOLTE HESLO PRO PŘÍSTUP:
-					<input id="heslo" type="password" name="heslo" > <br>
+					<input id=" " type="password" name="heslo" > <br>
 					ZNOVU HESLO:
 					<input id=" " type="password" name="over_heslo" > <br>
 					EMAIL:
 			     	<input id=" " type="text" name="email" > <br>
-					<input id="jmeno_adresare" type="text" value="první" name="jmeno_adresare" style="display:none" >	 <br>
-					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" > <br>
+					<input id=" " type="text" value="první" name="jmeno_adresare" style="display:none" >	 <br>
+					<input id=" " type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" > <br>
 					<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
 				
 				
