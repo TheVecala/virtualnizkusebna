@@ -242,6 +242,61 @@ else {$pole_souboru = "empty" ;
 		  
             <div> <!--  playlist   -->
 			
+			
+			
+			<!--  sem vypis playlistu z databáze   -->
+			
+			
+			
+			    
+<?php
+define ("ROWS", 10);
+ require "php/login/connect.php";
+ 
+  if (!isset($_GET["celkem"]))  
+  {
+    $vysledek=mysql_query("select count(*) as pocet from $aktualni_diskuse ");
+    $zaznam=mysql_fetch_array($vysledek);
+    $celkem=$zaznam["pocet"];
+  }
+  else
+  {
+    $celkem=$_GET["celkem"];
+  }
+?> 
+  
+<?php   
+    $vysledek=mysql_query("select * from $aktualni_diskuse order by cas desc") ; 
+?> 
+  
+ <div id="prispevek"  style="overflow: auto ">
+ 
+<ul class="list-group sloupec" >
+   
+<?php
+  while ($zaznam=MySQL_Fetch_Array($vysledek))   
+  {
+?>
+       
+	  <li class="list-group-item vzkaz_karta ">
+	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span><br>  
+	   <div style="text-align:right; ">	     
+	     <span class="jmeno"  >  <?php echo strip_tags($zaznam["jmeno"])?>   </span> 
+         <span class="datum"  >  <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?> </span> 
+       </div>	   
+      </li>
+	
+<?php 
+ }
+?> 
+  </ul>
+  </div>   
+			
+			
+	<!-- konec vypisu playlistu z databáze   -->		
+			
+			
+			
 			  <table class="table table-bordered table-hover table-dark" style="color: #000; background-color: #27a243">
                 <thead>
 				  <tr>
@@ -337,16 +392,7 @@ else {$pole_souboru = "empty" ;
                <div class="card bg-dark text-white" style="margin-top: 58px;"> <!--      -->
                    <div class="card-body"> 
 		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>
-
-
-
-
-
-
-
-		
-   	 
-		         
+   
 
 
 			<ul class="dropdown" style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
