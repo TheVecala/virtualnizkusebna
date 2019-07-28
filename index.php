@@ -20,10 +20,11 @@ if(isset($_SESSION['kapela']))
 	   {   $kapela =$_SESSION['kapela'] ;
     } else { $kapela=  "kapela nenastavena" ; } ;
 	
-if(isset($_SESSION['sekce_k_zobrazeni']))
-	   {   $sekce = $_SESSION['sekce_k_zobrazeni'] ;
-    } else { $sekce=  "uploads" ; } ;
+//if(isset($_SESSION['sekce_k_zobrazeni']))
+//	   {   $sekce = $_SESSION['sekce_k_zobrazeni'] ;
+//    } else { $sekce=  "uploads" ; } ;
 	 $sekce=  "uploads" ; 	
+	 
 if(isset($_SESSION['vysledek']))
 	   {   $vysledek =$_SESSION['vysledek'];
     } else { $vysledek=  "zadny vysledek " ; } ;
@@ -37,8 +38,8 @@ if(isset($_SESSION['cely_nazev']))
     } else { $nazev=  "celý název nebyl nastaven" ; } ; 
  
 if(isset($_SESSION['playlist']))
-	   {   $aktualni_playlist =$_SESSION['diskuse'];
-    } else { $aktualni_playlist=  "playlist_test_vytvor2" ; } ; 
+	   {   $aktualni_playlist =$_SESSION['playlist'];
+    } else { $aktualni_playlist=  "playlist_".$login ; } ; 
  		 
  ?> 
 
@@ -47,7 +48,7 @@ if(isset($_SESSION['playlist']))
  
 
  if($kapela!="kapela nenastavena"){  
-	$slozka_slozek ="user/". $kapela."/".$sekce."/"; 	 	
+	$slozka_slozek ="user/". $kapela."/befelemepesseveze/".$sekce."/"; 	 	
 	$pole_slozek = scandir($slozka_slozek);
 	$delka_pole_slozek = count($pole_slozek);} 
 else { $slozka_slozek ="složka kapely nenastavena"; 
