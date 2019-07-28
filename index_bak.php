@@ -273,15 +273,34 @@ define ("ROWS", 10);
     $vysledek=mysql_query("select * from $aktualni_playlist order by cas desc") ; 
 ?> 
   
- <div id=""  style="overflow: auto ">
+ <div id="prispevek_xxxxxxxxxxx"  style="overflow: auto ">
  
 <ul class="list-group sloupec" >
    
- 
+<?php
+  while ($zaznam=MySQL_Fetch_Array($vysledek))   
+  {
+?>
+       
+	  <li class="list-group-item vzkaz_karta ">
+	   <span class="vzkaz" > <?php echo $zaznam["nazev_valu"] ?> </span><br>  
+	   <div style="text-align:right; ">	     
+	     <span class="jmeno"  >  <?php echo strip_tags($zaznam["bpm"])?>   </span> 
+         <span class="datum"  >  <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?> </span> 
+       </div>	   
+      </li>
+	
+<?php 
+ }
+?> 
   </ul>
   </div>   
-							
-								
+			
+			
+	<!-- konec vypisu playlistu z databáze   -->		
+			
+			
+			
 			  <table class="table table-bordered table-hover table-dark" style="color: #000; background-color: #27a243">
                 <thead>
 				  <tr>
@@ -291,26 +310,76 @@ define ("ROWS", 10);
 				  </tr>
                 </thead>
                 <tbody>
-				
-<?php
-  while ($zaznam=MySQL_Fetch_Array($vysledek))   
-  {
-?>				
-				
-				
 				  <tr>
-					<td><?php echo $zaznam["nazev_valu"] ?> </td>
-					<td> <?php echo strip_tags($zaznam["bpm"])?> </td>
-					<td> <?php echo strip_tags($zaznam["klic"])?> </td>
-					<!--<td> <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?></td>  -->
+					<td>bluesová dvanáctka</td>
+					<td>90</td>
+					<td>Gmi</td>
+				  </tr>
+				  <tr>
+					<td>2-5-1</td>
+					<td>120</td>
+					<td>C</td>
+				  </tr>
+				  <tr>
+					<td>U2 – in gods country</td>
+					<td>126</td>
+					<td>D</td>
+				  </tr>
+				  <tr>
+					<td>Ventil RG – Fajčenie škodí</td>
+					<td>140</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Jackson - Billy Jean</td>
+					<td>117</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Marley – Iron, lion, zion</td>
+					<td>142</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Marley – Forever loving jah</td>
+					<td>141</td>
+					<td>Dmi</td>
+				  </tr>
+				  <tr>
+					<td>Marley – Jamming</td>
+					<td>123</td>
+					<td>Ami</td>
+				  </tr>
+				  <tr>
+					<td>Marley – So much trouble</td>
+					<td>78</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Marley –  Natural Mystic</td>
+					<td>131</td>
+					<td>Ami</td>
+				  </tr>
+				  <tr>
+					<td>Marley/Clapton – I shot the sheriff</td>
+					<td>94</td>
+					<td>...</td>
+				  </tr>
+				  <tr>
+					<td>Jarek Nohavica_Peterburg</td>
+					<td></td>
+					<td>A</td>
+				  </tr>
+				  <tr>
+					<td>Jarek Nohavica_Tesinska</td>
+					<td></td>
+					<td>A</td>
+				  </tr>
+				  <tr>
+					<td>Jah Division_Jah naucil rastamana kurit ganja </td>
+					<td></td>
+					<td>Emi</td>
 				  </tr> 
-				 
-<?php 
- }
-?> 			
-
-			
-				  
                 </tbody>
               </table>
 
