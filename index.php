@@ -627,7 +627,7 @@ define ("ROWS", 10);
 	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
-    <div class="modal-content">
+    <div class="modal-content bg-dark text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -660,7 +660,7 @@ define ("ROWS", 10);
   <!-- The Modal DELETE -->
 <div class="modal" id="modal_delete">
   <div class="modal-dialog  ">
-    <div class="modal-content">
+    <div class="modal-content bg-dark text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -690,7 +690,7 @@ define ("ROWS", 10);
   <!-- The Modal playlist edit -->
 <div class="modal" id="modal_playlist_edit">
   <div class="modal-dialog  ">
-    <div class="modal-content">
+    <div class="modal-content bg-dark text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -739,12 +739,12 @@ define ("ROWS", 10);
   </div>
 </div> 
  
-  
+ 
    
   <!-- The Modal vlozit_soubor -->
-<div class="modal" id="modal_vlozit_soubor">
+<div class="modal " id="modal_vlozit_soubor">
   <div class="modal-dialog  ">
-    <div class="modal-content">
+    <div class="modal-content bg-dark text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -783,7 +783,7 @@ define ("ROWS", 10);
   <!-- The Modal nova_slozka -->
 <div class="modal" id="modal_nova_slozka">
   <div class="modal-dialog  ">
-    <div class="modal-content">
+    <div class="modal-content  bg-dark text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
