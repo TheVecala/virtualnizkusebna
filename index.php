@@ -169,11 +169,7 @@ else {$pole_souboru = "empty" ;
      
 	 
 <div class="container-fluid">
-     <div id="vycpavka" id="k" style="min-height:0px"> </div>               
-	
-	
-		
-
+     <div id="vycpavka" id="k" style="min-height:58px"> </div>               
 
 	
     <div class="row">
@@ -181,7 +177,7 @@ else {$pole_souboru = "empty" ;
         <div id="wave_jumbo"  style="display:none"  class="col-md-12">  <!--  nulty sloupec   -->
 		      
 
-			<div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--hlavička nultého sloupce     -->
+			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
                <div class="card-body"> 
 						<h2 style="text-align:right; color:red ">  	LOOPER </h2> 
 						<div style="text-align:right ">
@@ -213,7 +209,7 @@ else {$pole_souboru = "empty" ;
 	      
 	
 	
-			<div class="jumbotron bg-success">				
+			<div class="jumbotron bg-success" style="padding: 0rem 1rem">				
 							 
 							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
 							<div id="waveform"> 
@@ -230,17 +226,19 @@ else {$pole_souboru = "empty" ;
 	
 	
 	
-        <div id="adresare" class="col-md-4">  <!--  prvni sloupec   -->
+        <div id="adresare" class="col-md-4" style="margin-bottom: 5px">  <!--  prvni sloupec   -->
 		      
 
-			<div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--hlavička prvního sloupce     -->
+			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
-	             <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2> 	<h2 style="text-align:right; color:red ">  PLAYLIST </h2> 
-					
-		      <button  type="button" class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
-				UPRAVIT PLAYLIST
-			  </button> 	 
-					
+	              <h2 style="text-align:right; color:red ">  PLAYLIST </h2> 
+				 <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
+				
+				     <div style="text-align:right" >
+		               <button  type="button" class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
+			         	UPRAVIT PLAYLIST
+			           </button> 	 
+				   </div>			  	
 	           </div>			  
             </div> <!--     -->
 	      
@@ -321,11 +319,11 @@ define ("ROWS", 10);
 	
 		</div>  <!--  konec prvniho sloupce   -->  
 
-		<div  id="k" class="col-md-4"> <!--  druhy sloupec   -->
+		<div  id="k" class="col-md-4" style="margin-bottom: 5px"> <!--  druhy sloupec   -->
 		
 	      <div  class=" ">   <!-- hlavička sekce složek   -->
 			  
-               <div class="card bg-dark text-white" style="margin-top: 58px;"> <!--      -->
+               <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
 		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>
    
@@ -375,9 +373,9 @@ define ("ROWS", 10);
 	               </div>	
 				   
 				   
-				   <div class="card-footer">	<!--  tlačítko vložení souboru  -->   	       
-				      <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  >VLOŽIT SOUBOR</button>   
-					  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"> NOVÁ SLOŽKA </button> 
+				   <div class="card-footer" style="text-align:right">	<!--  tlačítka souboru  -->   	       
+				      <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT SOUBOR</button>   
+					  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SLOŽKA </button> 
 			       </div>
 				   
 				
@@ -386,17 +384,7 @@ define ("ROWS", 10);
 
 			
 				<div  class="card bg-success text-white">   <!--  formular_vytvoreni_slozky  -->
-				   <div id="formular_vytvoreni_slozky" class="card-body " style="  display: none" >  
-								 
-					  <form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
-						vytvořit novou složku:
-						<input id="jmeno_adresare" type="text" name="jmeno_adresare" autofocus >
-						<input id=" " type="text" value="<?php echo $sekce ; ?>" name="sekce" style="display:none" >
-						<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-						<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
-					  </form>
-						   
-				   </div>
+				 
 				</div>
 				
 				
@@ -415,14 +403,7 @@ define ("ROWS", 10);
 			   
 			   <div id="formular_vlozeni_souboru" class="card-body" style="display:none">  
 							 
-				<form action="/php/upload_uni.php" method="post" enctype="multipart/form-data">
-					<h5>Vložit soubor:</h5>
-					<input id="fileToUpload" type="file" value="vybrat soubor" name="fileToUpload"  >
-					<input id="nahrat" type="submit" value="nahrát soubor" name="submit">
-					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-					<input id="" type="text" value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru" style="display:none" >
-				</form>
-					   
+			
 			   </div>
 			 
 			</div>
@@ -510,7 +491,7 @@ define ("ROWS", 10);
 			  		   		   
        </div  > <!-- konec druhý sloupec   -->
   
-        <div class="col-md-4" > <!-- třetí sloupec   -->
+        <div class="col-md-4" style="margin-bottom: 5px" > <!-- třetí sloupec   -->
        
       
 <?php
@@ -543,13 +524,24 @@ define ("ROWS", 10);
   
  <div>   <!-- hlavička třetího sloupce  -->
       <div id="diskuse" style="font-size:1.5em">
-                <div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--      -->
+                <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
-		             	<h2 style="text-align:right; color:red ">  POZNÁMKY </h2>  	 
-	               </div>			  
+		             	<h2 style="text-align:right; color:red ">  POZNÁMKY </h2>  	
+  	       <div  class="  bg-dark text-white" id="od_do" style="font-size:0.8em">
+<?php	   
+           echo ' '.$od.'-';
+           echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
+           echo ' z '. $celkem.'  ';
+?> 
+  	   
+           </div>
+						
+	               </div>	
+				   
                </div> <!--     -->
  			
-  	   
+
+	   
       </div> 
  
     
@@ -557,14 +549,7 @@ define ("ROWS", 10);
  </div> <!-- konec hlavička třetího sloupce  -->  
  <div id="prispevek"  style="overflow: auto ">
  <div>   <!-- ovládání třetího sloupce  -->
-      <div id="diskuse" style="font-size:1.5em">
-<?php	   
-           echo ' '.$od.'-';
-           echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
-           echo ' z '. $celkem.'  ';
-?> 
-  	   
-      </div> 
+   
   
 	 <div id="navigace" > 
 <?php				
@@ -747,13 +732,94 @@ define ("ROWS", 10);
       <div class="modal-footer">
         
 		
-        <button type="button" class="btn btn-danger" data-dismiss="modal">chápu</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
       </div>
 
     </div>
   </div>
 </div> 
  
+  
+   
+  <!-- The Modal vlozit_soubor -->
+<div class="modal" id="modal_vlozit_soubor">
+  <div class="modal-dialog  ">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title"> VLOŽENÍ SOUBORU </p>
+		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     
+	   	   	<form action="/php/upload_uni.php" method="post" enctype="multipart/form-data">
+					<h5>Vložit soubor:</h5>
+					<input id="fileToUpload" type="file" value="vybrat soubor" name="fileToUpload"  >
+					<input id="nahrat" type="submit" value="nahrát soubor" name="submit">
+					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+					<input id="" type="text" value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru" style="display:none" >
+				</form>
+					   
+		
+		
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        
+		
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+ 
+   
+  <!-- The Modal nova_slozka -->
+<div class="modal" id="modal_nova_slozka">
+  <div class="modal-dialog  ">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title">VLOŽENÍ NOVÉ SLOŽKY</p>
+		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     
+	   	      <div id="formular_vytvoreni_slozky"  >  
+								 
+					  <form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
+						vytvořit novou složku:
+						<input id="jmeno_adresare" type="text" name="jmeno_adresare" autofocus >
+						<input id=" " type="text" value="<?php echo $sekce ; ?>" name="sekce" style="display:none" >
+						<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+						<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
+					  </form>
+						   
+				  </div>
+		
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        
+		
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+   
   
     <script>
 
@@ -779,12 +845,12 @@ $(document).ready(function(){
 	
 	$('#nova_slozka').click(function() { 
 	
-         $("#formular_vytvoreni_slozky").toggle(700); 
+        // $("#formular_vytvoreni_slozky").toggle(700); 
 	});		
 	
 	$('#vlozit_soubor').click(function() { 
 	
-         $("#formular_vlozeni_souboru").toggle(700); 
+        // $("#formular_vlozeni_souboru").toggle(700); 
 	});		
 	
 	$("iframe").css({"height": "150px", "width": "100%"});
