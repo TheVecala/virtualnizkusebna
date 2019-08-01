@@ -526,22 +526,19 @@ define ("ROWS", 10);
       <div id="diskuse" style="font-size:1.5em">
                 <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
-		             	<h2 style="text-align:right; color:red ">  POZNÁMKY </h2>  	
-  	       <div  class="  bg-dark text-white" id="od_do" style="font-size:0.8em">
-<?php	   
-           echo ' '.$od.'-';
-           echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
-           echo ' z '. $celkem.'  ';
-?> 
-  	   
-           </div>
-						
-	               </div>	
-				   
-               </div> <!--     -->
- 			
-
-	   
+		               <h2 style="text-align:right; color:red ">  POZNÁMKY </h2>  	
+					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.8em">
+						   <?php	   
+						   echo ' '.$od.'-';
+						   echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
+						   echo ' z '. $celkem.'  ';
+						   ?> 				   
+					   </div>
+					   <div style="text-align:right;">
+                        <button id="vybalit_formular"   class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
+           			   </div>  					   
+	               </div>					   
+               </div> <!--     -->			   
       </div> 
  
     
@@ -573,24 +570,7 @@ define ("ROWS", 10);
    
  </div> <!-- konec ovládání třetího sloupce  --> 
 <ul class="list-group sloupec" >
-    <li class="list-group-item  ovladac_vzkazu ">
-	         	   
-	   <div id="form_style" class="form formular_vzkazu" style="display:none" >  
-			<form id="form" name="form" method="post" action="#">
-				<!--<h1>Vložení komentáře</h1>-->				 
-				<label>Text </label><br>
-				<textarea name="vzkaz" rows="5"  id="text" autofocus></textarea><br>				 
-				<label>Odkaz (pokud chceš) </label><br>	
-				<textarea name="odkaz" rows="2"  id="odkaz"></textarea><br>				
-				<label>Jméno </label><br>
-				<input  name="jmeno" type="text" id="name" /><br>					
-				<button  id= "odeslat" type="submit" class=" btn btn-sm btn-secondary">ULOŽIT</button>
-			</form>
-		</div>
-	    <button id="sbalit_formular"  class="ajax-file-upload-red" style="display:none" >ZAVŘÍT FORMULÁŘ</button>
-        <button id="vybalit_formular" class="ajax-file-upload-pink"  >NAPSAT  </button> <br>
-          
-    </li>
+   
 <?php
   while ($zaznam=MySQL_Fetch_Array($vysledek))   
   {
@@ -627,7 +607,7 @@ define ("ROWS", 10);
 	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
-    <div class="modal-content bg-dark text-white">
+    <div class="modal-content bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -660,7 +640,7 @@ define ("ROWS", 10);
   <!-- The Modal DELETE -->
 <div class="modal" id="modal_delete">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-dark text-white">
+    <div class="modal-content bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -690,7 +670,7 @@ define ("ROWS", 10);
   <!-- The Modal playlist edit -->
 <div class="modal" id="modal_playlist_edit">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-dark text-white">
+    <div class="modal-content bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -721,17 +701,12 @@ define ("ROWS", 10);
 					<input id="navrat_xxxxxxx" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:nonexxxxxx" > <br>
 					<input id="" type="text" value="<?php echo $kapela; ?>" name="kapela" style="display:nonexxxxxxxx" > <br>
 					<input id="vlozit_track" type="submit" value="vložit" name="submit">
-				
-				
+								
 				</form>
-		
-		
+				
       </div>
-
       <!-- Modal footer -->
       <div class="modal-footer">
-        
-		
         <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
       </div>
 
@@ -744,12 +719,11 @@ define ("ROWS", 10);
   <!-- The Modal vlozit_soubor -->
 <div class="modal " id="modal_vlozit_soubor">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-dark text-white">
+    <div class="modal-content bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p class="modal-title"> VLOŽENÍ SOUBORU </p>
-		
+        <p class="modal-title"> VLOŽENÍ SOUBORU </p>		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
@@ -763,16 +737,11 @@ define ("ROWS", 10);
 					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
 					<input id="" type="text" value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru" style="display:none" >
 				</form>
-					   
-		
-		
+					   		
       </div>
-
       <!-- Modal footer -->
       <div class="modal-footer">
-        
-		
-        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+         <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
       </div>
 
     </div>
@@ -783,12 +752,11 @@ define ("ROWS", 10);
   <!-- The Modal nova_slozka -->
 <div class="modal" id="modal_nova_slozka">
   <div class="modal-dialog  ">
-    <div class="modal-content  bg-dark text-white">
+    <div class="modal-content  bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p class="modal-title">VLOŽENÍ NOVÉ SLOŽKY</p>
-		
+        <p class="modal-title">VLOŽENÍ NOVÉ SLOŽKY</p>		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
@@ -805,14 +773,11 @@ define ("ROWS", 10);
 						<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
 					  </form>
 						   
-				  </div>
+			  </div>
 		
       </div>
-
       <!-- Modal footer -->
       <div class="modal-footer">
-        
-		
         <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
       </div>
 
@@ -820,6 +785,45 @@ define ("ROWS", 10);
   </div>
 </div> 
    
+      
+  <!-- The Modal vložit komentař -->
+<div class="modal" id="modal_vlozit_komentar">
+  <div class="modal-dialog  ">
+    <div class="modal-content  bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title">VLOŽENÍ POZNÁMKY</p>
+		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     
+             <form id="form" name="form" method="post" action="#">
+				<!--<h1>Vložení komentáře</h1>-->				 
+				<label>Text </label><br>
+				<textarea name="vzkaz" rows="5"  id="text" autofocus></textarea><br>				 
+				<label>Odkaz (pokud chceš) </label><br>	
+				<textarea name="odkaz" rows="2"  id="odkaz"></textarea><br>				
+				<label>Jméno </label><br>
+				<input  name="jmeno" type="text" id="name" /><br>					
+				<button  id= "odeslat" type="submit" class=" btn btn-sm btn-secondary">ULOŽIT</button>
+			</form>
+	
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">       		
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+   
+  
+ 
   
     <script>
 
@@ -873,29 +877,19 @@ $(document).ready(function(){
 				html += '<span class="jmeno"> '+ $('#name').val() +' </span> ';
 				html += '';
 
-				$('#prispevek').prepend($(html)); $("#form_style").hide(500); $('#text').val(""); $('#name').val(""); 
-				              $("#vybalit_formular").show(300);   $("#sbalit_formular").hide(900);
+				$('#prispevek').prepend($(html));   $('#text').val(""); $('#name').val(""); 
+				              
 			}
 		);
 
 		return false;
 	});
 	
-	$('#vybalit_formular').click(function() { $("#form_style").show(500);     $("#sbalit_formular").show(300);  $("#vybalit_formular").hide(900); 
-	                                     
-	  
-	});
+//	$('#vybalit_formular').click(function() { $("#form_style").show(500);     $("#sbalit_formular").show(300);  $("#vybalit_formular").hide(900);  });
 	
-	$('#sbalit_formular').click(function() { $("#form_style").hide(500);   $("#vybalit_formular").show(300);   $("#sbalit_formular").hide(900);
-	                                   
-				     
-	  
-	});
+//	$('#sbalit_formular').click(function() { $("#form_style").hide(500);   $("#vybalit_formular").show(300);   $("#sbalit_formular").hide(900); });
 	
-	
-	$('#odeslat').click(function() { 
-	});	
-	
+
  
  $(".modal_open").click(function(){
 	 var detaily_name = this.value;
