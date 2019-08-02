@@ -684,9 +684,9 @@ define ("ROWS", 10);
      
 	   	        <form action="php/vlozit_track.php" method="post" enctype="multipart/form-data">
 				
-					<h2>   VYTVOŘENÍ NOVÉ POLOŽKY PLAYLISTU </h2>    <br>
+					<h3>   VYTVOŘENÍ NOVÉ POLOŽKY PLAYLISTU </h3>    <br>
 					
-					JMÉNO: 
+					NÁZEV: 
 					<input id="" type="text" name="nazev_tracku" > <br>
 					BPM: 
 					<input id="" type="text" name="bpm" > <br>
@@ -801,16 +801,34 @@ define ("ROWS", 10);
       <!-- Modal body -->
       <div class="modal-body">
      
-             <form id="form" name="form" method="post" action="#">
-				<!--<h1>Vložení komentáře</h1>-->				 
-				<label>Text </label><br>
-				<textarea name="vzkaz" rows="5"  id="text" autofocus></textarea><br>				 
-				<label>Odkaz (pokud chceš) </label><br>	
-				<textarea name="odkaz" rows="2"  id="odkaz"></textarea><br>				
-				<label>Jméno </label><br>
-				<input  name="jmeno" type="text" id="name" /><br>					
-				<button  id= "odeslat" type="submit" class=" btn btn-sm btn-secondary">ULOŽIT</button>
-			</form>
+	 
+	 
+	 <!--<h1>Vložení komentáře</h1>-->
+	 <form id="form" name="form" method="post" action="#">
+ 
+
+ <div class="form-group">
+    <label for="text">Text:</label>
+    <textarea type="text" class="form-control" id="text">  </textarea>
+  </div>
+
+
+  <div class="form-group">
+    <label for="odkaz">Odkaz (pokud chceš):</label>
+    <input type="text" class="form-control" id="odkaz">
+  </div>
+  <div class="form-group">
+    <label for="name">Jméno:</label>
+    <input type="text" class="form-control" id="name">
+  </div>
+  
+  <button  id= "odeslat" type="submit" class="btn btn-primary">ULOŽIT</button>
+</form> 
+	 
+	 
+	 
+ 
+	  
 	
       </div>
       <!-- Modal footer -->
