@@ -841,16 +841,11 @@ define ("ROWS", 10);
 </div> 
    
   
- 
+<?php  
+  require "php/console.php";
+?>
   
-    <script>
 
-console.log("DIY forever!");
-console.log("  <?php echo "loged =".$loged.",  "."login= ".$login.", "."kapela= ".$kapela.", "."slozka_souboru= ".$slozka_souboru.",   "."slozka_slozek= ".$slozka_slozek.",  "; ?>  ");
-console.log("  <?php echo "vysledek= ".$vysledek.",  "."id= ".$_SESSION['id'].",  "."aktualni_diskuse =".$aktualni_diskuse.",  "."SESSION aktualni_diskuse= ".$_SESSION['diskuse'].",  "."nazev= ".$_SESSION['nazev'].",  ";  ?>  ");  
-console.log("  <?php echo "sekce = ".$sekce ?> ");
-console.log("  <?php echo "session sekce = ".$_SESSION['sekce_k_zobrazeni'] ?> ");
-</script>
   
   <script>   /*  ------------ vecalovo   */
 $(document).ready(function(){
