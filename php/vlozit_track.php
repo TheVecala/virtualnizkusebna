@@ -3,8 +3,8 @@
  
  require "login/connect.php";
  
- $target_dir = ($_POST["jmeno_adresare"]);
-$nahoda = "befelemepesseveze";
+// $target_dir = ($_POST["jmeno_adresare"]);
+// $nahoda = "befelemepesseveze";
 $adresa_pro_navrat = ($_POST["navrat"]); 
  //$adresa_playlistu=  "playlist_test_123" ;
 $adresa_playlistu=  "playlist_".($_POST["kapela"]); ;
@@ -19,21 +19,8 @@ $data1=  "---" ;
 $data2=  "---" ;
 $data3=  "---" ;
  
- 
-  // vytvoření tabulky playlistu  
-   // mysql_query("CREATE TABLE $adresa_playlistu (
-// cas INT(11) NOT NULL,
-// poradi VARCHAR(50) NOT NULL,
-// nazev_valu text NOT NULL,
-// bpm VARCHAR(50) NOT NULL,
-// klic VARCHAR(50) NOT NULL,
-// adresa_diskuse VARCHAR(50) NOT NULL,
-// data1 VARCHAR(50) NOT NULL,
-// data2 VARCHAR(50) NOT NULL,
-// data3 VARCHAR(50) NOT NULL
-// )");
-  
- //vložení do tabulky válů funguje
+
+ //vložení do tabulky válů 
  
 if  (  
   $vysledek=mysql_query("insert into $adresa_playlistu (cas, poradi, nazev_valu, bpm, klic, adresa_diskuse, data1, data2, data3) 
