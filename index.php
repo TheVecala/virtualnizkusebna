@@ -181,30 +181,24 @@ else {$pole_souboru = "empty" ;
                <div class="card-body"> 
 						<h2 style="text-align:right; color:red ">  	LOOPER </h2> 
 						<div style="text-align:right ">
+								<button id="wave_play" class="btn btn-sm btn-warning" data-action="play">PLAY</button>
+							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" ">PAUSE</button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" ">OD ZAČÁTKU</button>
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> LOOP</button>
+							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
+							 
+						
+						
 					       <button id=" " class="btn btn-secondary" data-action=" " > MINIMALIZOVAT</button> 
 					       <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " > ZAVŘÍT</button>
 					    </div>
 						
 	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo" style="display: inline"> soubor nenačten </h2>  
+				       <div id="test_delky"></div>	
 				 
-				 
-				    <div class="controls">
-							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play">PLAY</button>
-							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" ">PAUSE</button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" ">OD ZAČÁTKU</button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> LOOP</button>
-							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> odstranit smyčku</button>
-							
-							<button  class="btn btn-sm btn-warning" data-action=" ">něco dalšího</button>
-						
-							 
-			    	</div>
-				
 					
 	           </div>
-		    <div class="card-footer">  
-		           <div id="test_delky"></div>	
-			</div>	
+		 
             </div> <!--     -->
 	      
 	
