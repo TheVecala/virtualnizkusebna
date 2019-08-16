@@ -181,16 +181,16 @@ else {$pole_souboru = "empty" ;
                <div class="card-body"> 
 						<h2 style="text-align:right; color:red ">  	LOOPER </h2> 
 						<div style="text-align:right ">
-								<button id="wave_play" class="btn btn-sm btn-warning" data-action="play">PLAY</button>
-							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" ">PAUSE</button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" ">OD ZAČÁTKU</button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> LOOP</button>
+							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/ikony_novy/icons8-play-50-2.png" alt="play"></button>
+							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-pause-50-2.png" alt="pause"></button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-rewind-50.png" alt="od začátku"></button>
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/ikony_novy/icons8-repeat-50.png" alt="loop"></button>
 							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
 							 
 						
 						
-					       <button id=" " class="btn btn-secondary" data-action=" " > MINIMALIZOVAT</button> 
-					       <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " > ZAVŘÍT</button>
+					       <button id=" " class="btn btn-secondary" data-action=" " ><img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
+					       <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
 					    </div>
 						
 	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo" style="display: inline"> soubor nenačten </h2>  
