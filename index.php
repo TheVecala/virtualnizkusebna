@@ -40,6 +40,11 @@ if(isset($_SESSION['cely_nazev']))
 if(isset($_SESSION['playlist']))
 	   {   $aktualni_playlist =$_SESSION['playlist'];
     } else { $aktualni_playlist=  "playlist_".$login ; } ; 
+
+if(isset($_SESSION['befelemepesseveze']))
+	   {   $befelemepesseveze =$_SESSION['befelemepesseveze'];
+    } else { $befelemepesseveze=  "befelemepesseveze" ; } ; 	
+	
  		 
  ?> 
 
@@ -174,12 +179,21 @@ else {$pole_souboru = "empty" ;
 	
     <div class="row">
 	
-        <div id="wave_jumbo"  style="display:none"  class="col-md-12">  <!--  nulty sloupec   -->
+        <div id="wave_jumbo"  style="display:nonexxxxx"  class="col-md-12">  <!--  nulty sloupec   -->
 		      
 
 			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
                <div class="card-body"> 
-						<h2 style="text-align:right; color:red ">  	LOOPER </h2> 
+			   
+			   
+			            <div  style="text-align:right; ;" >
+					    	<h2 style="text-align:right; color:red ; display: inline ">  	LOOPER </h2> 
+						   <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
+						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
+					       
+						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
+						</div>
+						
 						<div style="text-align:right ">
 							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/ikony_novy/icons8-play-50-2.png" alt="play"></button>
 							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-pause-50-2.png" alt="pause"></button>
@@ -189,8 +203,7 @@ else {$pole_souboru = "empty" ;
 							 
 						
 						
-					       <button id=" " class="btn btn-secondary" data-action=" " ><img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
-					       <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
+					       
 					    </div>
 						
 	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo" style="display: inline"> soubor nenačten </h2>  
@@ -206,7 +219,7 @@ else {$pole_souboru = "empty" ;
 			<div class="jumbotron bg-success" style="padding: 0rem 1rem">				
 							 
 							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
-							<div id="waveform"> 
+							<div id="waveform" style="display:none">  
 						
 							</div>
 			
@@ -442,7 +455,7 @@ define ("ROWS", 10);
 								 {    
 						         ?>
  							 
-								  <audio controls preload="metadata" style=" width:250px; height: 30px;  display: block" >
+								  <audio controls preload="metadata" style=" width:130px; height: 30px;  display: inline" >
 	                                  <source src="<?php echo $soub; ?>" type="audio/mpeg">
 	                                   Your browser does not support the audio element.
                                   </audio>
@@ -472,6 +485,7 @@ define ("ROWS", 10);
 									  SMAZAT
 									</button> 
 								  
+
 
 								 </div> <!--card body  -->
 							   </div> <!-- card   -->
@@ -944,7 +958,7 @@ wavesurfer.on('ready', function () {
   $(".wave_loader").click(function(){ 
     var flek = document.getElementById("vycpavka");
       flek.scrollIntoView(); 
-    document.getElementById("wave_jumbo").style.display ="block";
+    document.getElementById("waveform").style.display ="block";
     document.getElementById("hlaska_nacitani").style.display ="inline";
 	var val = this.getAttribute("value");
 	var label_val = this.getAttribute("name");
@@ -988,7 +1002,7 @@ wavesurfer.on('ready', function () {
    
   
    $("#schovat_wave_jumbo").click(function(){ 
-    document.getElementById("wave_jumbo").style.display ="none";
+    document.getElementById("waveform").style.display ="none";
 	 //  wavesurfer.empty();
 	
   });
