@@ -43,7 +43,7 @@ if(isset($_SESSION['playlist']))
 
 if(isset($_SESSION['befelemepesseveze']))
 	   {   $befelemepesseveze =$_SESSION['befelemepesseveze'];
-    } else { $befelemepesseveze=  "72410024" ; } ; 	
+    } else { $befelemepesseveze=  "befelemepesseveze" ; } ; 	
 	
  		 
  ?> 
