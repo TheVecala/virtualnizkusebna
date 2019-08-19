@@ -7,8 +7,8 @@ console.log("  <?php echo "vysledek = ".$vysledek.",   aktualni_diskuse = ".$akt
 
 console.log("  <?php echo "sekce = ".$sekce.",    slozka_slozek= ".$slozka_slozek .",   slozka_souboru = ".$slozka_souboru  ?> ");
 
-console.log("  <?php echo "session sekce_k_zobrazeni = ".$_SESSION['sekce_k_zobrazeni'].",     SESSION chyba_prihlaseni= ". $_SESSION['chyba_prihlaseni'] ?> ");
-</script>
+console.log("  <?php echo "session sekce_k_zobrazeni = ".$_SESSION['sekce_k_zobrazeni'].",     SESSION chyba_prihlaseni= ". $_SESSION['chyba_prihlaseni'].", SESSIONhashedkapela= ".$_SESSION['hashedkapela']   ?> ");
+</script>   
   
  
  

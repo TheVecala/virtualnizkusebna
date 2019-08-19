@@ -812,22 +812,22 @@ define ("ROWS", 10);
 	 
 	 
 	 <!--<h1>Vložení komentáře</h1>-->
-	 <form id="form" name="form" method="post" action="#">
+	 <form id="form" name="form" method="post" action="php/vlozit_komentar.php">
  
 
  <div class="form-group">
     <label for="text">Text:</label>
-    <textarea type="text" class="form-control" id="text">  </textarea>
+    <textarea type="text" class="form-control" name="text">  </textarea>
   </div>
 
 
   <div class="form-group">
     <label for="odkaz">Odkaz (pokud chceš):</label>
-    <input type="text" class="form-control" id="odkaz">
+    <input type="text" class="form-control" name="odkaz">
   </div>
   <div class="form-group">
     <label for="name">Jméno:</label>
-    <input type="text" class="form-control" id="name">
+    <input type="text" class="form-control" name="name">
   </div>
   
   <button  id= "odeslat" type="submit" class="btn btn-primary">ULOŽIT</button>
@@ -883,7 +883,7 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-	$('#odeslat').click(function() {
+	$('#odeslatxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx').click(function() {
 		$.post("php/comment.php",
 			{	 
 				vzkaz: $('#text').val(),

@@ -3,7 +3,9 @@
 //$kapela = "../test/";
  $kapela = $_SESSION['kapela'] ;
  $sekce = ($_POST["sekce"]); 
-$cil_adresare = "../user/".$kapela."/befelemepesseveze/".$sekce ."/";
+ 
+// $cil_adresare = "../user/".$kapela."/befelemepesseveze/".$sekce ."/";
+   $cil_adresare = "../user/".$kapela."/befelemepesseveze/".$sekce ."/";
 $adresa_pro_navrat = ($_POST["navrat"]);  
  
 

@@ -2,8 +2,8 @@
 <?php
 $koren = "../user/";
 $target_dir = ($_POST["jmeno_adresare"]);
-$nahoda = "/befelemepesseveze";
-// $nahoda = "/" +  mt_rand();
+$nahoda = "befelemepesseveze";
+// $nahoda = mt_rand();
 $adresa_pro_navrat = ($_POST["navrat"]);   
 $databaze = true;
  
@@ -13,10 +13,10 @@ if   ( $databaze )      // vytvoření složek kapely
 			{   if (mkdir($koren.($_POST["jmeno_zkusebny"])))									
 					{ 
 			    	
-					    if (mkdir($koren.($_POST["jmeno_zkusebny"]).$nahoda  )) 
+					    if (mkdir($koren.($_POST["jmeno_zkusebny"])."/".$nahoda  )) 
                            {   
-							if (mkdir($koren.($_POST["jmeno_zkusebny"]).$nahoda."/uploads/" ))
-									{   if (mkdir($koren.($_POST["jmeno_zkusebny"]).$nahoda."/uploads/".$target_dir))
+							if (mkdir($koren.($_POST["jmeno_zkusebny"])."/".$nahoda."/uploads/" ))
+									{   if (mkdir($koren.($_POST["jmeno_zkusebny"])."/".$nahoda."/uploads/".$target_dir))
 										 {	$_SESSION['vysledek'] = "vytvořeno"; 
 											$_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
 											$_SESSION['kapela'] = ($_POST["jmeno_zkusebny"]);
@@ -77,7 +77,7 @@ if( $_SESSION['vysledek'] == "vytvořeno"  ) //vložení nové kapely do databá
 		         else if($heslo!=$over_heslo){echo"Vyplněná hesla se neshodují";}
 		            else if($email==""){echo"Nebyl vyplněn email";}
                        else{
-							$sql= mysql_query("INSERT INTO uzivatele VALUES ('','$nick','$md5_heslo','','$email','','$adresa_diskuse')") or die(mysql_error());
+							$sql= mysql_query("INSERT INTO uzivatele VALUES ('','$nick','$md5_heslo','','$email','$nahoda','$adresa_diskuse')") or die(mysql_error());
 							echo"Registrace byla úspěšně dokončena!";
 							$_SESSION['vysledek'] = "Registrace učtu byla úspěšně dokončena!"; 
 						   }
