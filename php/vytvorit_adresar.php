@@ -3,9 +3,12 @@
 //$kapela = "../test/";
  $kapela = $_SESSION['kapela'] ;
  $sekce = ($_POST["sekce"]); 
+ if(isset($_SESSION['befelemepesseveze']))
+	   {   $befelemepesseveze =$_SESSION['befelemepesseveze'];
+    } else { $befelemepesseveze=  "befelemepesseveze" ; } ; 
  
 // $cil_adresare = "../user/".$kapela."/befelemepesseveze/".$sekce ."/";
-   $cil_adresare = "../user/".$kapela."/befelemepesseveze/".$sekce ."/";
+   $cil_adresare = "../user/".$kapela."/".$befelemepesseveze."/".$sekce ."/";
 $adresa_pro_navrat = ($_POST["navrat"]);  
  
 

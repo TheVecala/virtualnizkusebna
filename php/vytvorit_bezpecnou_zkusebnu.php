@@ -2,8 +2,8 @@
 <?php
 $koren = "../user/";
 $target_dir = ($_POST["jmeno_adresare"]);
-$nahoda = "befelemepesseveze";
-// $nahoda = mt_rand();
+// $nahoda = "befelemepesseveze";
+$nahoda = mt_rand();
 $adresa_pro_navrat = ($_POST["navrat"]);   
 $databaze = true;
  

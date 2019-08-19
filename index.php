@@ -43,7 +43,7 @@ if(isset($_SESSION['playlist']))
 
 if(isset($_SESSION['befelemepesseveze']))
 	   {   $befelemepesseveze =$_SESSION['befelemepesseveze'];
-    } else { $befelemepesseveze=  "befelemepesseveze" ; } ; 	
+    } else { $befelemepesseveze=  "72410024" ; } ; 	
 	
  		 
  ?> 
@@ -53,7 +53,7 @@ if(isset($_SESSION['befelemepesseveze']))
  
 
  if($kapela!="kapela nenastavena"){  
-	$slozka_slozek ="user/". $kapela."/befelemepesseveze/".$sekce."/"; 	 	
+	$slozka_slozek ="user/". $kapela."/".$befelemepesseveze."/".$sekce."/"; 	 	
 	$pole_slozek = scandir($slozka_slozek);
 	$delka_pole_slozek = count($pole_slozek);} 
 else { $slozka_slozek ="složka kapely nenastavena"; 

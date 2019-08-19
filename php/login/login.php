@@ -27,10 +27,11 @@ if($overeni == 1) {
 	$_SESSION['diskuse'] = $row["adresa_diskuse"];
 	$_SESSION['nazev'] = $row["cely_nazev"];
 	$_SESSION['vysledek'] = "přihlášen jako ".$_POST["nick"];
-	
+	$_SESSION['befelemepesseveze'] = $row["hashedkapela"];
     $_SESSION['prihlasen'] = true ;
     $_SESSION['kapela'] =  stripslashes($login); 
-	$_SESSION['hashedkapela'] = $row["hashedkapela"];
+
+	
 	
 	header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  );
     die();
