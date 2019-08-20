@@ -242,7 +242,7 @@ else {$pole_souboru = "empty" ;
 				 <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
 				
 				     <div style="text-align:right" >
-		               <button  type="button" class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
+		               <button  type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
 			         	UPRAVIT PLAYLIST
 			           </button> 	 
 				   </div>			  	
@@ -543,7 +543,7 @@ define ("ROWS", 10);
 						   ?> 				   
 					   </div>
 					   <div style="text-align:right;">
-                        <button id="vybalit_formular"   class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
+                        <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
            			   </div>  					   
 	               </div>					   
                </div> <!--     -->			   

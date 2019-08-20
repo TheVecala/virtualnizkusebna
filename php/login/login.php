@@ -33,7 +33,8 @@ if($overeni == 1) {
 
 	
 	
-	  require "../navrat.php";
+	 require "../navrat.php";
+	  
     die();
 } else {
 	$_SESSION['chyba_prihlaseni'] = "wrong_heslo";
