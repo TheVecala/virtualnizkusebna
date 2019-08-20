@@ -4,7 +4,9 @@
 $adresa_pro_navrat = ($_POST["navrat"]);  
 $_SESSION['vysledek'] = "zmenena slozka"; 
 
+ 
+  require "php/navrat.php";
   
-header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat."#k"  ); 
+  require "navrat.php";
 ?>
  

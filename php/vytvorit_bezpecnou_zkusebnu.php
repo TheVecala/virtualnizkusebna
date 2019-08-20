@@ -134,6 +134,6 @@ data3 VARCHAR(50) NOT NULL
  
   
     
-header("Location:https://virtualnizkusebna.cz" .$adresa_pro_navrat  ); 
+  require "navrat.php";
  
 ?>

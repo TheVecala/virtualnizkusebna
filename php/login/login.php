@@ -33,7 +33,7 @@ if($overeni == 1) {
 
 	
 	
-	header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  );
+	  require "../navrat.php";
     die();
 } else {
 	$_SESSION['chyba_prihlaseni'] = "wrong_heslo";

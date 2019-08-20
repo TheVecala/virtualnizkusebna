@@ -24,6 +24,6 @@ if(isset($_POST["jmeno_adresare"])) {
  else  { $_SESSION['vysledek'] = "chyba - chybí jméno složky";
  }
  
-header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  ); 
+  require "navrat.php"; 
 ?>
  

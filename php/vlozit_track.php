@@ -36,7 +36,7 @@ if  (
 		 
 									   };
      
-header("Location:https://virtualnizkusebna.cz" .$adresa_pro_navrat  ); 
+  require "navrat.php";
  
 ?> 
  

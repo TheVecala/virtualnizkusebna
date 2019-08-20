@@ -15,6 +15,6 @@
 	
   $vysledek=mysql_query("insert into $aktualni_diskuse (cas, vzkaz, jmeno) values (".time().",'". $komentar."','".$_POST["name"]."')");
   
-header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  ); 
+  require "navrat.php";
 ?>
  

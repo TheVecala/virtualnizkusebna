@@ -31,7 +31,7 @@ if($overeni == 1) {
     $_SESSION['kapela'] =  stripslashes($login); 
 	
 	
-	header("Location:http://virtualnizkusebna.cz" .$adresa_pro_navrat  );
+	  require "../navrat.php";
     die();
 } else {
 	$_SESSION['vysledek'] = "špatný heslo";

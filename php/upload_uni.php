@@ -44,6 +44,6 @@ if (file_exists($target_file)) {
         $_SESSION['vysledek'] = " error uploading  file: ". $target_file;
     }
  ; }
- header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  ); 
+  require "navrat.php";
 ?>
  
