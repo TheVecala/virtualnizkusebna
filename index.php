@@ -242,9 +242,10 @@ else {$pole_souboru = "empty" ;
 				 <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
 				
 				     <div style="text-align:right" >
-		               <button  type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
+		               <button  type="button" class="btn btn-sm  btn-secondary"   style="display:none" data-toggle="modal" data-target="#modal_playlist_edit">		
 			         	UPRAVIT PLAYLIST
-			           </button> 	 
+			           </button> 
+					   	  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
 				   </div>			  	
 	           </div>			  
             </div> <!--     -->
@@ -252,7 +253,107 @@ else {$pole_souboru = "empty" ;
 		  
             <div> <!--  playlist   -->
 			
+	
+	
+	
+	
+	
+	
+	
+
+			<ul class=" " style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
+		
+			  
+			  <div class=" "> <!-- zmšna složky    -->
 			
+		  
+		  
+					  <table class="table table-bordered  table-dark" style="color: #000; background-color: #27a243">
+						<thead>
+						  <tr>
+							<th>vál</th>
+							<th>bpm</th>
+							<th>KEY</th>
+						  </tr>
+						</thead>
+						<tbody>
+				  
+						<?php 
+						for($x = 0; $x < $delka_pole_slozek; $x++) {
+							  if ($pole_slozek[$x] == ".")  { continue; };
+							  if ($pole_slozek[$x] == "..")  { continue; };
+						   $soub = ($slozka_slozek.$pole_slozek[$x]);
+						   
+							if(is_dir($soub))
+								
+								  {    
+								?>
+								<div  class=" ">	<!-- tlačítko změny složky    -->  
+																
+									
+								  <tr>
+                                   <td> 
+								  
+									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
+									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
+									 <button id=" " type="submit"  class="btn btn-success" value="<?php echo $pole_slozek[$x] ?>" name="submit">
+
+
+
+
+                                     <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 	
+									 <?php echo $pole_slozek[$x] ?>
+
+
+
+
+
+
+									 </button>
+									</form>
+									
+									
+								   </td> 
+								   
+								   <td></td> 
+							       <td></td> 
+								   
+								  </tr> 
+								</div>	
+								 
+								<?php
+								}
+						}
+						?>
+
+		  
+						</tbody>
+						</table>
+
+
+
+
+
+
+
+				  </div>
+								
+			</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 			
 			<!--  sem vypis playlistu z databáze   -->
 			
@@ -291,9 +392,9 @@ define ("ROWS", 10);
 			  <table class="table table-bordered table-hover table-dark" style="color: #000; background-color: #27a243">
                 <thead>
 				  <tr>
-					<th>vál</th>
-					<th>bpm</th>
-					<th>KEY</th>
+					<th>player</th>
+					<th>instrument</th>
+					<th>data</th>
 				  </tr>
                 </thead>
                 <tbody>
@@ -336,55 +437,24 @@ define ("ROWS", 10);
    
 
 
-			<ul class="dropdown" style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
+ 
 		
-			  <button type="button" class="btn btn-sm btn-succces dropdown-toggle" data-toggle="dropdown">
-			   <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >
-			   <?php echo $slozka_souboru 	?> 
-			  </button>		
-		
-			  <div class="dropdown-menu"> <!-- zmšna složky    -->
-			
-		  
-						<?php 
-						for($x = 0; $x < $delka_pole_slozek; $x++) {
-							  if ($pole_slozek[$x] == ".")  { continue; };
-							  if ($pole_slozek[$x] == "..")  { continue; };
-						   $soub = ($slozka_slozek.$pole_slozek[$x]);
-						   
-							if(is_dir($soub))
-								
-								  {    
-								?>
-								<div  class="dropdown-item ">	<!-- tlačítko změny složky    -->  
-																
-									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data">
-									 <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 			   
-									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
-									 <input id=" " type="submit" value="<?php echo $pole_slozek[$x] ?>" name="submit">
-									</form>
-								 
-								</div>	
-								 
-								<?php
-								}
-						}
-						?>
-
-				  </div>
-								
-			</ul>
+			  	 <span class="card-title"> SKLADBA: </span>  <h2 style="display: inline"> <?php echo $slozka_souboru 	?>  </h2>
+			  
+			   
+			 	
+		    
+				   <div  style="text-align:right">	<!--  tlačítka souboru  -->   	       
+				      <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT SOUBOR</button>   
+				 
+			       </div>
+				   
+			 
  
 						
 	               </div>	
 				   
-				   
-				   <div class="card-footer" style="text-align:right">	<!--  tlačítka souboru  -->   	       
-				      <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT SOUBOR</button>   
-					  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SLOŽKA </button> 
-			       </div>
-				   
+				
 				
                </div>  
  			
@@ -626,17 +696,26 @@ define ("ROWS", 10);
       <!-- Modal body -->
       <div class="modal-body">
 	      <p>
-        DIY a Open source projekt ze Štatlu. <br>
-		Plugin pro sdílení nahrávek hudebních skupin mezi jejímy členy. <br>   
+        DIY a Open source projekt ze Štatlu. <br><br>
+		Plugin pro sdílení nahrávek hudebních skupin mezi jejímy členy. <br>   <br>
 		Tohle není prostor pro volné ukládání dat většího množství uživatelů. 
-		Vhodná je instalace na vlastní doménu.  <br> <br>
+		Vhodná je instalace na vlastní doménu.  <br> <br><br>
 		Pro více info pište na adresu: <i>  the@vecala.cz  </i> 
-	
-         </p>
+	    
+		</p>
+		<p>
+		Thanks to:<br>
+		wavesurfer.js<br>
+		jahů
+		
+          </p>
+		  <button type="button" class="btn btn-swcondary"  >INSTALACE NA VLASTNÍ DOMÉNĚ</button><br>
+          <button type="button" class="btn btn-dark"  >ÚČET NA VIRTUALNIZKUSEBNA.CZ</button>
       </div>
 
       <!-- Modal footer -->
       <div class="modal-footer">
+ 
         <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
       </div>
 
