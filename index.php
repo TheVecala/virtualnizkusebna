@@ -388,39 +388,7 @@ define ("ROWS", 10);
   </ul>
   </div>   
 							
-								
-			  <table class="table table-bordered table-hover table-dark" style="color: #000; background-color: #27a243">
-                <thead>
-				  <tr>
-					<th>player</th>
-					<th>instrument</th>
-					<th>data</th>
-				  </tr>
-                </thead>
-                <tbody>
-				
-<?php
-  while ($zaznam=MySQL_Fetch_Array($vysledek))   
-  {
-?>				
-				
-				
-				  <tr>
-					<td><?php echo $zaznam["nazev_valu"] ?> </td>
-					<td> <?php echo strip_tags($zaznam["bpm"])?> </td>
-					<td> <?php echo strip_tags($zaznam["klic"])?> </td>
-					<!--<td> <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?></td>  -->
-				  </tr> 
-				 
-<?php 
- }
-?> 			
-
-			
-				  
-                </tbody>
-              </table>
-
+ 
 			
             </div> <!-- konec playlistu    -->
  
