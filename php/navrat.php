@@ -1,5 +1,5 @@
 	<?php
 	
-	header("Location:https://beta.virtualnizkusebna.cz" .$adresa_pro_navrat  );
+	header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  );
 	
 	?>
