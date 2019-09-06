@@ -113,6 +113,10 @@ if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  )
 	};
  
 
+
+if( $_SESSION['vysledek'] == "vytvoření tabulek bylo úspěšně dokončeno!"  ) 
+    {
+
   //vytvoření tabulky playlistu
 // $adresa_playlistu=  "playlist_kapela1" ;
  $adresa_playlistu=  "playlist_".($_POST["jmeno_zkusebny"]);
@@ -128,7 +132,18 @@ data1 VARCHAR(50) NOT NULL,
 data2 VARCHAR(50) NOT NULL,
 data3 VARCHAR(50) NOT NULL
 )");
-   
+  
+ $_SESSION['vysledek'] = "tabulka playlistu byla vytvořena";  
+ $_SESSION['login'] = "loged";  
+ 
+ } else  
+    {
+	$_SESSION['vysledek'] = "chyba - tabulka playlistu nebyla vytvořena"; 
+    $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+	};
+
+
+  
   // if vytvoření učtu and vytvoření adresáře and vytvoření tabulek then návrat 
   // if chyba then smazat vytvořené a návrat 
  

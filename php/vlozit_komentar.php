@@ -5,7 +5,7 @@
  
 // vytvoření komentaře sloučením textu a odkazů z formuláře
 
-   $komentar= '<p>'.$_POST["text"].'</p>'.'<a href=" '. $_POST["odkaz"] . '">'.  $_POST["odkaz"].' </a> ' ;
+   $komentar= '<p style="overflow-x: auto" >'.$_POST["text"].'</p>'.'<a href=" '. $_POST["odkaz"] . '">'.  $_POST["odkaz"].' </a> ' ;
  
 // uložení do databaze 
 
