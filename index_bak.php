@@ -20,10 +20,11 @@ if(isset($_SESSION['kapela']))
 	   {   $kapela =$_SESSION['kapela'] ;
     } else { $kapela=  "kapela nenastavena" ; } ;
 	
-if(isset($_SESSION['sekce_k_zobrazeni']))
-	   {   $sekce = $_SESSION['sekce_k_zobrazeni'] ;
-    } else { $sekce=  "uploads" ; } ;
+//if(isset($_SESSION['sekce_k_zobrazeni']))
+//	   {   $sekce = $_SESSION['sekce_k_zobrazeni'] ;
+//    } else { $sekce=  "uploads" ; } ;
 	 $sekce=  "uploads" ; 	
+	 
 if(isset($_SESSION['vysledek']))
 	   {   $vysledek =$_SESSION['vysledek'];
     } else { $vysledek=  "zadny vysledek " ; } ;
@@ -37,9 +38,17 @@ if(isset($_SESSION['cely_nazev']))
     } else { $nazev=  "celý název nebyl nastaven" ; } ; 
  
 if(isset($_SESSION['playlist']))
-	   {   $aktualni_playlist =$_SESSION['diskuse'];
-    } else { $aktualni_playlist=  "playlist_test_vytvor2" ; } ; 
- 		 
+	   {   $aktualni_playlist =$_SESSION['playlist'];
+    } else { $aktualni_playlist=  "playlist_".$login ; } ; 
+
+if(isset($_SESSION['befelemepesseveze']))
+	   {   $befelemepesseveze =$_SESSION['befelemepesseveze'];
+    } else { $befelemepesseveze=  "nenastaveno" ; } ; 	
+	
+ if(isset($_SESSION['skin']))
+	   {   $skin =$_SESSION['skin'];
+    } else { $skin=  "skin1" ; } ; 	
+			 
  ?> 
 
 
@@ -47,7 +56,7 @@ if(isset($_SESSION['playlist']))
  
 
  if($kapela!="kapela nenastavena"){  
-	$slozka_slozek ="user/". $kapela."/".$sekce."/"; 	 	
+	$slozka_slozek ="user/". $kapela."/".$befelemepesseveze."/".$sekce."/"; 	 	
 	$pole_slozek = scandir($slozka_slozek);
 	$delka_pole_slozek = count($pole_slozek);} 
 else { $slozka_slozek ="složka kapely nenastavena"; 
@@ -149,11 +158,14 @@ else {$pole_souboru = "empty" ;
             <li class="nav-item active">
               <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="">PLAYLIST</a>
             </li>
+			<li class="nav-item  ">
+              <a class="nav-link"  href="#"  data-toggle="modal" data-target="#modal_skin">SKIN</a>
+            </li>			
             <li class="nav-item">
-              <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">ARCHÍV ZKOUŠEK</a>
+              <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">OFFLINE</a>
             </li>
             <li class="nav-item">
-                  <a class="nav-link disabled" href="#"  data-toggle="modal" data-target="#myModal"  >INFO</a>
+                  <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >INFO</a>
             </li>
           </ul>
           <form class="form-inline mt-2 mt-md-0">
@@ -168,54 +180,52 @@ else {$pole_souboru = "empty" ;
      
 	 
 <div class="container-fluid">
-     <div id="vycpavka" id="k" style="min-height:0px"> </div>               
-	
-	
-		
-
+     <div id="vycpavka" id="k" style="min-height:58px"> </div>               
 
 	
     <div class="row">
 	
-        <div id="wave_jumbo"  style="display:none"  class="col-md-12">  <!--  nulty sloupec   -->
+        <div id="wave_jumbo"  style="display:nonexxxxx"  class="col-md-12">  <!--  nulty sloupec   -->
 		      
 
-			<div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--hlavička nultého sloupce     -->
+			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
                <div class="card-body"> 
-						<h2 style="text-align:right; color:red ">  	LOOPER </h2> 
+			   
+			   
+			            <div  style="text-align:right; ;" >
+					    	<h2 style="text-align:right; color:red ; display: inline "> WAVE </h2> 
+						   <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
+						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
+					       
+						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
+						</div>
+						
 						<div style="text-align:right ">
-					       <button id=" " class="btn btn-secondary" data-action=" " > MINIMALIZOVAT</button> 
-					       <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " > ZAVŘÍT</button>
+							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/ikony_novy/icons8-play-50-2.png" alt="play"></button>
+							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-pause-50-2.png" alt="pause"></button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-rewind-50.png" alt="od začátku"></button>
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/ikony_novy/icons8-repeat-50.png" alt="loop"></button>
+							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
+							 
+						
+						
+					       
 					    </div>
 						
 	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo" style="display: inline"> soubor nenačten </h2>  
+				       <div id="test_delky"></div>	
 				 
-				 
-				    <div class="controls">
-							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play">PLAY</button>
-							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" ">PAUSE</button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" ">OD ZAČÁTKU</button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> LOOP</button>
-							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> odstranit smyčku</button>
-							
-							<button  class="btn btn-sm btn-warning" data-action=" ">něco dalšího</button>
-						
-							 
-			    	</div>
-				
 					
 	           </div>
-		    <div class="card-footer">  
-		           <div id="test_delky"></div>	
-			</div>	
+		 
             </div> <!--     -->
 	      
 	
 	
-			<div class="jumbotron bg-success">				
+			<div class="jumbotron bg-success" style="padding: 0rem 1rem">				
 							 
 							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
-							<div id="waveform"> 
+							<div id="waveform" style="display:none">  
 						
 							</div>
 			
@@ -229,24 +239,127 @@ else {$pole_souboru = "empty" ;
 	
 	
 	
-        <div id="adresare" class="col-md-4">  <!--  prvni sloupec   -->
+        <div id="adresare" class="col-md-4" style="margin-bottom: 5px">  <!--  prvni sloupec   -->
 		      
 
-			<div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--hlavička prvního sloupce     -->
+			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
-	             <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2> 	<h2 style="text-align:right; color:red ">  PLAYLIST </h2> 
-					
-		      <button  type="button" class="btn btn-sm btn-success"  style=" display: inline" data-toggle="modal" data-target="#modal_playlist_edit">		
-				UPRAVIT PLAYLIST
-			  </button> 	 
-					
+	              <h2 style="text-align:right; color:red ">  PLAYLIST </h2> 
+				 <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
+				
+				     <div style="text-align:right" >
+		               <button  type="button" class="btn btn-sm  btn-secondary"   style="display:none" data-toggle="modal" data-target="#modal_playlist_edit">		
+			         	UPRAVIT PLAYLIST
+			           </button> 
+					   	  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
+				   </div>			  	
 	           </div>			  
             </div> <!--     -->
 	      
 		  
             <div> <!--  playlist   -->
 			
+	
+	
+	
+	
+	
+	
+	
+
+			<ul class=" " style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
+		
+			  
+			  <div class=" "> <!-- zmšna složky    -->
 			
+		  
+		  
+					  <table class="table table-bordered  table-dark" style="color: #000; background-color: #27a243">
+						<thead>
+						  <tr>
+							<th>vál</th>
+							<th>bpm</th>
+							<th>KEY</th>
+						  </tr>
+						</thead>
+						<tbody>
+				  
+						<?php 
+						for($x = 0; $x < $delka_pole_slozek; $x++) {
+							  if ($pole_slozek[$x] == ".")  { continue; };
+							  if ($pole_slozek[$x] == "..")  { continue; };
+						   $soub = ($slozka_slozek.$pole_slozek[$x]);
+						   
+							if(is_dir($soub))
+								
+								  {    
+								?>
+								<div  class=" ">	<!-- tlačítko změny složky    -->  
+																
+									
+								  <tr>
+                                   <td> 
+								  
+									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
+									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
+									 <button id=" " type="submit"  class="btn btn-success" value="<?php echo $pole_slozek[$x] ?>" name="submit">
+
+
+
+
+                                     <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 	
+									 <?php echo $pole_slozek[$x] ?>
+
+
+
+
+
+
+									 </button>
+									</form>
+									
+									
+								   </td> 
+								   
+								   <td></td> 
+							       <td></td> 
+								   
+								  </tr> 
+								</div>	
+								 
+								<?php
+								}
+						}
+						?>
+
+		  
+						</tbody>
+						</table>
+
+
+
+
+
+
+
+				  </div>
+								
+			</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 			
 			<!--  sem vypis playlistu z databáze   -->
 			
@@ -273,113 +386,44 @@ define ("ROWS", 10);
     $vysledek=mysql_query("select * from $aktualni_playlist order by cas desc") ; 
 ?> 
   
- <div id="prispevek_xxxxxxxxxxx"  style="overflow: auto ">
+ <div id=""  style="overflow: auto ">
  
 <ul class="list-group sloupec" >
    
-<?php
-  while ($zaznam=MySQL_Fetch_Array($vysledek))   
-  {
-?>
-       
-	  <li class="list-group-item vzkaz_karta ">
-	   <span class="vzkaz" > <?php echo $zaznam["nazev_valu"] ?> </span><br>  
-	   <div style="text-align:right; ">	     
-	     <span class="jmeno"  >  <?php echo strip_tags($zaznam["bpm"])?>   </span> 
-         <span class="datum"  >  <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?> </span> 
-       </div>	   
-      </li>
-	
-<?php 
- }
-?> 
+ 
   </ul>
   </div>   
-			
-			
-	<!-- konec vypisu playlistu z databáze   -->		
-			
-			
-			
+							
+								
 			  <table class="table table-bordered table-hover table-dark" style="color: #000; background-color: #27a243">
                 <thead>
 				  <tr>
-					<th>vál</th>
-					<th>bpm</th>
-					<th>KEY</th>
+					<th>player</th>
+					<th>instrument</th>
+					<th>data</th>
 				  </tr>
                 </thead>
                 <tbody>
+				
+<?php
+  while ($zaznam=MySQL_Fetch_Array($vysledek))   
+  {
+?>				
+				
+				
 				  <tr>
-					<td>bluesová dvanáctka</td>
-					<td>90</td>
-					<td>Gmi</td>
-				  </tr>
-				  <tr>
-					<td>2-5-1</td>
-					<td>120</td>
-					<td>C</td>
-				  </tr>
-				  <tr>
-					<td>U2 – in gods country</td>
-					<td>126</td>
-					<td>D</td>
-				  </tr>
-				  <tr>
-					<td>Ventil RG – Fajčenie škodí</td>
-					<td>140</td>
-					<td>...</td>
-				  </tr>
-				  <tr>
-					<td>Jackson - Billy Jean</td>
-					<td>117</td>
-					<td>...</td>
-				  </tr>
-				  <tr>
-					<td>Marley – Iron, lion, zion</td>
-					<td>142</td>
-					<td>...</td>
-				  </tr>
-				  <tr>
-					<td>Marley – Forever loving jah</td>
-					<td>141</td>
-					<td>Dmi</td>
-				  </tr>
-				  <tr>
-					<td>Marley – Jamming</td>
-					<td>123</td>
-					<td>Ami</td>
-				  </tr>
-				  <tr>
-					<td>Marley – So much trouble</td>
-					<td>78</td>
-					<td>...</td>
-				  </tr>
-				  <tr>
-					<td>Marley –  Natural Mystic</td>
-					<td>131</td>
-					<td>Ami</td>
-				  </tr>
-				  <tr>
-					<td>Marley/Clapton – I shot the sheriff</td>
-					<td>94</td>
-					<td>...</td>
-				  </tr>
-				  <tr>
-					<td>Jarek Nohavica_Peterburg</td>
-					<td></td>
-					<td>A</td>
-				  </tr>
-				  <tr>
-					<td>Jarek Nohavica_Tesinska</td>
-					<td></td>
-					<td>A</td>
-				  </tr>
-				  <tr>
-					<td>Jah Division_Jah naucil rastamana kurit ganja </td>
-					<td></td>
-					<td>Emi</td>
+					<td><?php echo $zaznam["nazev_valu"] ?> </td>
+					<td> <?php echo strip_tags($zaznam["bpm"])?> </td>
+					<td> <?php echo strip_tags($zaznam["klic"])?> </td>
+					<!--<td> <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?></td>  -->
 				  </tr> 
+				 
+<?php 
+ }
+?> 			
+
+			
+				  
                 </tbody>
               </table>
 
@@ -389,82 +433,41 @@ define ("ROWS", 10);
 	
 		</div>  <!--  konec prvniho sloupce   -->  
 
-		<div  id="k" class="col-md-4"> <!--  druhy sloupec   -->
+		<div  id="k" class="col-md-4" style="margin-bottom: 5px"> <!--  druhy sloupec   -->
 		
 	      <div  class=" ">   <!-- hlavička sekce složek   -->
 			  
-               <div class="card bg-dark text-white" style="margin-top: 58px;"> <!--      -->
+               <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
 		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>
    
 
 
-			<ul class="dropdown" style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
+ 
 		
-			  <button type="button" class="btn btn-sm btn-succces dropdown-toggle" data-toggle="dropdown">
-			   <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >
-			   <?php echo $slozka_souboru 	?> 
-			  </button>		
-		
-			  <div class="dropdown-menu"> <!-- zmšna složky    -->
-			
-		  
-						<?php 
-						for($x = 0; $x < $delka_pole_slozek; $x++) {
-							  if ($pole_slozek[$x] == ".")  { continue; };
-							  if ($pole_slozek[$x] == "..")  { continue; };
-						   $soub = ($slozka_slozek.$pole_slozek[$x]);
-						   
-							if(is_dir($soub))
-								
-								  {    
-								?>
-								<div  class="dropdown-item ">	<!-- tlačítko změny složky    -->  
-																
-									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data">
-									 <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 			   
-									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
-									 <input id=" " type="submit" value="<?php echo $pole_slozek[$x] ?>" name="submit">
-									</form>
-								 
-								</div>	
-								 
-								<?php
-								}
-						}
-						?>
-
-				  </div>
-								
-			</ul>
+			  	 <span class="card-title"> SKLADBA: </span>  <h2 style="display: inline"> <?php echo $slozka_souboru 	?>  </h2>
+			  
+			   
+			 	
+		    
+				   <div  style="text-align:right">	<!--  tlačítka souboru  -->   	       
+				      <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT SOUBOR</button>   
+				 
+			       </div>
+				   
+			 
  
 						
 	               </div>	
 				   
-				   
-				   <div class="card-footer">	<!--  tlačítko vložení souboru  -->   	       
-				      <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  >VLOŽIT SOUBOR</button>   
-					  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"> NOVÁ SLOŽKA </button> 
-			       </div>
-				   
+				
 				
                </div>  
  			
 
 			
 				<div  class="card bg-success text-white">   <!--  formular_vytvoreni_slozky  -->
-				   <div id="formular_vytvoreni_slozky" class="card-body " style="  display: none" >  
-								 
-					  <form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
-						vytvořit novou složku:
-						<input id="jmeno_adresare" type="text" name="jmeno_adresare" autofocus >
-						<input id=" " type="text" value="<?php echo $sekce ; ?>" name="sekce" style="display:none" >
-						<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-						<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
-					  </form>
-						   
-				   </div>
+				 
 				</div>
 				
 				
@@ -483,14 +486,7 @@ define ("ROWS", 10);
 			   
 			   <div id="formular_vlozeni_souboru" class="card-body" style="display:none">  
 							 
-				<form action="/php/upload_uni.php" method="post" enctype="multipart/form-data">
-					<h5>Vložit soubor:</h5>
-					<input id="fileToUpload" type="file" value="vybrat soubor" name="fileToUpload"  >
-					<input id="nahrat" type="submit" value="nahrát soubor" name="submit">
-					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-					<input id="" type="text" value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru" style="display:none" >
-				</form>
-					   
+			
 			   </div>
 			 
 			</div>
@@ -535,7 +531,7 @@ define ("ROWS", 10);
 								 {    
 						         ?>
  							 
-								  <audio controls preload="metadata" style=" width:250px; height: 30px;  display: block" >
+								  <audio controls preload="metadata" style=" width:130px; height: 30px;  display: inline" >
 	                                  <source src="<?php echo $soub; ?>" type="audio/mpeg">
 	                                   Your browser does not support the audio element.
                                   </audio>
@@ -566,6 +562,7 @@ define ("ROWS", 10);
 									</button> 
 								  
 
+
 								 </div> <!--card body  -->
 							   </div> <!-- card   -->
 						   							
@@ -578,7 +575,7 @@ define ("ROWS", 10);
 			  		   		   
        </div  > <!-- konec druhý sloupec   -->
   
-        <div class="col-md-4" > <!-- třetí sloupec   -->
+        <div class="col-md-4" style="margin-bottom: 5px" > <!-- třetí sloupec   -->
        
       
 <?php
@@ -611,13 +608,21 @@ define ("ROWS", 10);
   
  <div>   <!-- hlavička třetího sloupce  -->
       <div id="diskuse" style="font-size:1.5em">
-                <div class="card bg-dark text-white"  style="margin-top: 58px;"> <!--      -->
+                <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
-		             	<h2 style="text-align:right; color:red ">  POZNÁMKY </h2>  	 
-	               </div>			  
-               </div> <!--     -->
- 			
-  	   
+		               <h2 style="text-align:right; color:red ">  POZNÁMKY </h2>  	
+					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.8em">
+						   <?php	   
+						   echo ' '.$od.'-';
+						   echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
+						   echo ' z '. $celkem.'  ';
+						   ?> 				   
+					   </div>
+					   <div style="text-align:right;">
+                        <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
+           			   </div>  					   
+	               </div>					   
+               </div> <!--     -->			   
       </div> 
  
     
@@ -625,14 +630,7 @@ define ("ROWS", 10);
  </div> <!-- konec hlavička třetího sloupce  -->  
  <div id="prispevek"  style="overflow: auto ">
  <div>   <!-- ovládání třetího sloupce  -->
-      <div id="diskuse" style="font-size:1.5em">
-<?php	   
-           echo ' '.$od.'-';
-           echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
-           echo ' z '. $celkem.'  ';
-?> 
-  	   
-      </div> 
+   
   
 	 <div id="navigace" > 
 <?php				
@@ -656,24 +654,7 @@ define ("ROWS", 10);
    
  </div> <!-- konec ovládání třetího sloupce  --> 
 <ul class="list-group sloupec" >
-    <li class="list-group-item  ovladac_vzkazu ">
-	         	   
-	   <div id="form_style" class="form formular_vzkazu" style="display:none" >  
-			<form id="form" name="form" method="post" action="#">
-				<!--<h1>Vložení komentáře</h1>-->				 
-				<label>Text </label><br>
-				<textarea name="vzkaz" rows="5"  id="text" autofocus></textarea><br>				 
-				<label>Odkaz (pokud chceš) </label><br>	
-				<textarea name="odkaz" rows="2"  id="odkaz"></textarea><br>				
-				<label>Jméno </label><br>
-				<input  name="jmeno" type="text" id="name" /><br>					
-				<button  id= "odeslat" type="submit" class=" btn btn-sm btn-secondary">ULOŽIT</button>
-			</form>
-		</div>
-	    <button id="sbalit_formular"  class="ajax-file-upload-red" style="display:none" >ZAVŘÍT FORMULÁŘ</button>
-        <button id="vybalit_formular" class="ajax-file-upload-pink"  >NAPSAT  </button> <br>
-          
-    </li>
+   
 <?php
   while ($zaznam=MySQL_Fetch_Array($vysledek))   
   {
@@ -710,7 +691,7 @@ define ("ROWS", 10);
 	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
-    <div class="modal-content">
+    <div class="modal-content bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -721,17 +702,26 @@ define ("ROWS", 10);
       <!-- Modal body -->
       <div class="modal-body">
 	      <p>
-        DIY a Open source projekt ze Štatlu. <br>
-		Plugin pro sdílení nahrávek hudebních skupin mezi jejímy členy. <br>   
+        DIY a Open source projekt ze Štatlu. <br><br>
+		Plugin pro sdílení nahrávek hudebních skupin mezi jejímy členy. <br>   <br>
 		Tohle není prostor pro volné ukládání dat většího množství uživatelů. 
-		Vhodná je instalace na vlastní doménu.  <br> <br>
+		Vhodná je instalace na vlastní doménu.  <br> <br><br>
 		Pro více info pište na adresu: <i>  the@vecala.cz  </i> 
-	
-         </p>
+	    
+		</p>
+		<p>
+		Thanks to:<br>
+		wavesurfer.js<br>
+		jahů
+		
+          </p>
+		  <button type="button" class="btn btn-swcondary"  >INSTALACE NA VLASTNÍ DOMÉNĚ</button><br>
+          <button type="button" class="btn btn-dark"  >ÚČET NA VIRTUALNIZKUSEBNA.CZ</button>
       </div>
 
       <!-- Modal footer -->
       <div class="modal-footer">
+ 
         <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
       </div>
 
@@ -743,7 +733,7 @@ define ("ROWS", 10);
   <!-- The Modal DELETE -->
 <div class="modal" id="modal_delete">
   <div class="modal-dialog  ">
-    <div class="modal-content">
+    <div class="modal-content bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -773,7 +763,7 @@ define ("ROWS", 10);
   <!-- The Modal playlist edit -->
 <div class="modal" id="modal_playlist_edit">
   <div class="modal-dialog  ">
-    <div class="modal-content">
+    <div class="modal-content bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -787,9 +777,9 @@ define ("ROWS", 10);
      
 	   	        <form action="php/vlozit_track.php" method="post" enctype="multipart/form-data">
 				
-					<h2>   VYTVOŘENÍ NOVÉ POLOŽKY PLAYLISTU </h2>    <br>
+					<h3>   VYTVOŘENÍ NOVÉ POLOŽKY PLAYLISTU </h3>    <br>
 					
-					JMÉNO: 
+					NÁZEV: 
 					<input id="" type="text" name="nazev_tracku" > <br>
 					BPM: 
 					<input id="" type="text" name="bpm" > <br>
@@ -804,33 +794,218 @@ define ("ROWS", 10);
 					<input id="navrat_xxxxxxx" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:nonexxxxxx" > <br>
 					<input id="" type="text" value="<?php echo $kapela; ?>" name="kapela" style="display:nonexxxxxxxx" > <br>
 					<input id="vlozit_track" type="submit" value="vložit" name="submit">
-				
-				
+								
 				</form>
-		
-		
+				
       </div>
-
       <!-- Modal footer -->
       <div class="modal-footer">
-        
-		
-        <button type="button" class="btn btn-danger" data-dismiss="modal">chápu</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
       </div>
 
     </div>
   </div>
 </div> 
  
-  
-    <script>
+ 
+   
+  <!-- The Modal vlozit_soubor -->
+<div class="modal " id="modal_vlozit_soubor">
+  <div class="modal-dialog  ">
+    <div class="modal-content bg-success text-white">
 
-console.log("DIY forever!");
-console.log("  <?php echo "loged =".$loged.",  "."login= ".$login.", "."kapela= ".$kapela.", "."slozka_souboru= ".$slozka_souboru.",   "."slozka_slozek= ".$slozka_slozek.",  "; ?>  ");
-console.log("  <?php echo "vysledek= ".$vysledek.",  "."id= ".$_SESSION['id'].",  "."aktualni_diskuse =".$aktualni_diskuse.",  "."SESSION aktualni_diskuse= ".$_SESSION['diskuse'].",  "."nazev= ".$_SESSION['nazev'].",  ";  ?>  ");  
-console.log("  <?php echo "sekce = ".$sekce ?> ");
-console.log("  <?php echo "session sekce = ".$_SESSION['sekce_k_zobrazeni'] ?> ");
-</script>
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title"> VLOŽENÍ SOUBORU </p>		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     
+	   	   	<form action="/php/upload_uni.php" method="post" enctype="multipart/form-data">
+					<h5>Vložit soubor:</h5>
+					<input id="fileToUpload" type="file" value="vybrat soubor" name="fileToUpload"  >
+					<input id="nahrat" type="submit" value="nahrát soubor" name="submit">
+					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+					<input id="" type="text" value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru" style="display:none" >
+				</form>
+					   		
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">
+         <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+ 
+   
+  <!-- The Modal nova_slozka -->
+<div class="modal" id="modal_nova_slozka">
+  <div class="modal-dialog  ">
+    <div class="modal-content  bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title">VLOŽENÍ NOVÉ SLOŽKY</p>		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     
+	   	      <div id="formular_vytvoreni_slozky"  >  
+								 
+					  <form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
+					  
+					    <div class="form-group">
+                          <label for="jmeno_adresare">vytvořit novou složku:</label>
+                          <input type="text" class="form-control" name="jmeno_adresare">  
+                        </div>
+                        <div class="form-group">
+                          <label for="sekce">vytvořit novou složku:</label>
+                          <input type="text" class="form-control" name="sekce" value="<?php echo $sekce ; ?>"  style="display:none">  
+                        </div>
+
+						
+						< 
+						<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+						
+						<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
+						
+					  </form>
+						   
+			  </div>
+		
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+   
+      
+  <!-- The Modal vložit komentař -->
+<div class="modal" id="modal_vlozit_komentar">
+  <div class="modal-dialog  ">
+    <div class="modal-content  bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title">VLOŽENÍ POZNÁMKY</p>		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     	 
+	 <!--<h1>Vložení komentáře</h1>-->
+	 <form id="form" name="form" method="post" action="php/vlozit_komentar.php">
+ 
+ <div class="form-group">
+    <label for="text">Text:</label>
+    <textarea type="text" class="form-control" name="text">  </textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="odkaz">Odkaz (pokud chceš):</label>
+    <input type="text" class="form-control" name="odkaz">
+  </div>
+  <div class="form-group">
+    <label for="name">Jméno:</label>
+    <input type="text" class="form-control" name="name">
+  </div>
+  
+  <button  id= "odeslat" type="submit" class="btn btn-primary">ULOŽIT</button>
+</form> 
+	 
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">       		
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+   
+  
+         
+  <!-- The Modal  modal_skin -->
+<div class="modal" id="modal_skin">
+  <div class="modal-dialog  ">
+    <div class="modal-content  bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title">ZMĚNIT ROZVRŽENÍ STRÁNKY</p>
+		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     
+	 
+	 
+	 
+	 <form id="form" name="form" method="post" action="php/zmenit_skin.php">
+ 
+
+
+ <div class="form-check">
+  <label class="form-check-label">
+    <input type="radio" class="form-check-input" name="skin" value="skin1">VARIANTA A
+  </label>
+</div>
+<div class="form-check">
+  <label class="form-check-label">
+    <input type="radio" class="form-check-input" name="skin" value="skin2">VARIANTA B
+  </label>
+</div>
+<div class="form-check  ">
+  <label class="form-check-label">
+    <input type="radio" class="form-check-input" name="skin" value="skin3">VARIANTA C
+  </label>
+</div> 
+
+
+   <button  id= "odeslat" type="submit" class="btn btn-primary">NASTAVIT</button>
+  
+
+</form> 
+	 
+	 	  
+	
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">   
+	  
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+   
+     
+  
+  
+  
+  
+  
+  
+  
+<?php  
+  require "php/console.php";
+?>
+  
+
   
   <script>   /*  ------------ vecalovo   */
 $(document).ready(function(){
@@ -847,12 +1022,12 @@ $(document).ready(function(){
 	
 	$('#nova_slozka').click(function() { 
 	
-         $("#formular_vytvoreni_slozky").toggle(700); 
+        // $("#formular_vytvoreni_slozky").toggle(700); 
 	});		
 	
 	$('#vlozit_soubor').click(function() { 
 	
-         $("#formular_vlozeni_souboru").toggle(700); 
+        // $("#formular_vlozeni_souboru").toggle(700); 
 	});		
 	
 	$("iframe").css({"height": "150px", "width": "100%"});
@@ -860,7 +1035,7 @@ $(document).ready(function(){
 });
 
 $(document).ready(function(){
-	$('#odeslat').click(function() {
+	$('#odeslatxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx').click(function() {
 		$.post("php/comment.php",
 			{	 
 				vzkaz: $('#text').val(),
@@ -875,29 +1050,19 @@ $(document).ready(function(){
 				html += '<span class="jmeno"> '+ $('#name').val() +' </span> ';
 				html += '';
 
-				$('#prispevek').prepend($(html)); $("#form_style").hide(500); $('#text').val(""); $('#name').val(""); 
-				              $("#vybalit_formular").show(300);   $("#sbalit_formular").hide(900);
+				$('#prispevek').prepend($(html));   $('#text').val(""); $('#name').val(""); 
+				              
 			}
 		);
 
 		return false;
 	});
 	
-	$('#vybalit_formular').click(function() { $("#form_style").show(500);     $("#sbalit_formular").show(300);  $("#vybalit_formular").hide(900); 
-	                                     
-	  
-	});
+//	$('#vybalit_formular').click(function() { $("#form_style").show(500);     $("#sbalit_formular").show(300);  $("#vybalit_formular").hide(900);  });
 	
-	$('#sbalit_formular').click(function() { $("#form_style").hide(500);   $("#vybalit_formular").show(300);   $("#sbalit_formular").hide(900);
-	                                   
-				     
-	  
-	});
+//	$('#sbalit_formular').click(function() { $("#form_style").hide(500);   $("#vybalit_formular").show(300);   $("#sbalit_formular").hide(900); });
 	
-	
-	$('#odeslat').click(function() { 
-	});	
-	
+
  
  $(".modal_open").click(function(){
 	 var detaily_name = this.value;
@@ -945,7 +1110,7 @@ wavesurfer.on('ready', function () {
   $(".wave_loader").click(function(){ 
     var flek = document.getElementById("vycpavka");
       flek.scrollIntoView(); 
-    document.getElementById("wave_jumbo").style.display ="block";
+    document.getElementById("waveform").style.display ="block";
     document.getElementById("hlaska_nacitani").style.display ="inline";
 	var val = this.getAttribute("value");
 	var label_val = this.getAttribute("name");
@@ -989,7 +1154,7 @@ wavesurfer.on('ready', function () {
    
   
    $("#schovat_wave_jumbo").click(function(){ 
-    document.getElementById("wave_jumbo").style.display ="none";
+    document.getElementById("waveform").style.display ="none";
 	 //  wavesurfer.empty();
 	
   });

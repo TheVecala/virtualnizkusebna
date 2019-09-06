@@ -45,7 +45,10 @@ if(isset($_SESSION['befelemepesseveze']))
 	   {   $befelemepesseveze =$_SESSION['befelemepesseveze'];
     } else { $befelemepesseveze=  "nenastaveno" ; } ; 	
 	
- 		 
+ if(isset($_SESSION['skin']))
+	   {   $skin =$_SESSION['skin'];
+    } else { $skin=  "skin1" ; } ; 	
+			 
  ?> 
 
 
@@ -155,11 +158,14 @@ else {$pole_souboru = "empty" ;
             <li class="nav-item active">
               <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="">PLAYLIST</a>
             </li>
+			<li class="nav-item  ">
+              <a class="nav-link"  href="#"  data-toggle="modal" data-target="#modal_skin">SKIN</a>
+            </li>			
             <li class="nav-item">
-              <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">ARCHÍV ZKOUŠEK</a>
+              <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">OFFLINE</a>
             </li>
             <li class="nav-item">
-                  <a class="nav-link disabled" href="#"  data-toggle="modal" data-target="#myModal"  >INFO</a>
+                  <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >INFO</a>
             </li>
           </ul>
           <form class="form-inline mt-2 mt-md-0">
@@ -187,7 +193,7 @@ else {$pole_souboru = "empty" ;
 			   
 			   
 			            <div  style="text-align:right; ;" >
-					    	<h2 style="text-align:right; color:red ; display: inline ">  	LOOPER </h2> 
+					    	<h2 style="text-align:right; color:red ; display: inline "> WAVE </h2> 
 						   <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
 						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
 					       
@@ -388,7 +394,39 @@ define ("ROWS", 10);
   </ul>
   </div>   
 							
- 
+								
+			  <table class="table table-bordered table-hover table-dark" style="color: #000; background-color: #27a243">
+                <thead>
+				  <tr>
+					<th>player</th>
+					<th>instrument</th>
+					<th>data</th>
+				  </tr>
+                </thead>
+                <tbody>
+				
+<?php
+  while ($zaznam=MySQL_Fetch_Array($vysledek))   
+  {
+?>				
+				
+				
+				  <tr>
+					<td><?php echo $zaznam["nazev_valu"] ?> </td>
+					<td> <?php echo strip_tags($zaznam["bpm"])?> </td>
+					<td> <?php echo strip_tags($zaznam["klic"])?> </td>
+					<!--<td> <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?></td>  -->
+				  </tr> 
+				 
+<?php 
+ }
+?> 			
+
+			
+				  
+                </tbody>
+              </table>
+
 			
             </div> <!-- konec playlistu    -->
  
@@ -785,18 +823,34 @@ define ("ROWS", 10);
       <!-- Modal body -->
       <div class="modal-body">
      
-	   	   	<form action="/php/upload_uni.php" method="post" enctype="multipart/form-data">
-					<h5>Vložit soubor:</h5>
-					<input id="fileToUpload" type="file" value="vybrat soubor" name="fileToUpload"  >
-					<input id="nahrat" type="submit" value="nahrát soubor" name="submit">
-					<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-					<input id="" type="text" value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru" style="display:none" >
+	   	   	<form action="/php/upload_uni.php" method="post" enctype="multipart/form-data"  style="display:inline">
+			 
+					<div class="form-group">
+					   <label for="fileToUpload">Vložit soubor:</label>
+			    	   <input type="file" class="form-control" name="fileToUpload">
+				    </div>				
+					
+					 
+					 <button  id= "nahrat" type="submit" class="btn btn-primary">nahrát soubor</button>
+					
+				 
+					  <div class="form-group"  style="display:none">
+						<label for="navrat">navrat:</label>
+						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+					  </div>
+					
+				 
+					  <div class="form-group"  style="display:none">
+						<label for="slozka_pro_vlozeni_souboru">navrat</label>
+						<input type="text" class="form-control"  value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru">
+					  </div>					
+					
 				</form>
-					   		
+				  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	   		
       </div>
       <!-- Modal footer -->
       <div class="modal-footer">
-         <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+       
       </div>
 
     </div>
@@ -818,22 +872,32 @@ define ("ROWS", 10);
       <!-- Modal body -->
       <div class="modal-body">
      
-	   	      <div id="formular_vytvoreni_slozky"  >  
+	   	      
 								 
-					  <form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
-						vytvořit novou složku:
-						<input id="jmeno_adresare" type="text" name="jmeno_adresare" autofocus >
-						<input id=" " type="text" value="<?php echo $sekce ; ?>" name="sekce" style="display:none" >
-						<input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-						<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
+					  <form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data" style="display: inline">
+					  
+					    <div class="form-group">
+                          <label for="jmeno_adresare">vytvořit novou složku:</label>
+                          <input type="text" class="form-control" name="jmeno_adresare">  
+                        </div>
+                        <div class="form-group"  style="display:none">
+                          <label for="sekce">sekce:</label>
+                          <input type="text" class="form-control" name="sekce" value="<?php echo $sekce ; ?>" >  
+                        </div>
+                        <div class="form-group"  style="display:none">
+                          <label for="navrat">navrat:</label>
+                          <input type="text" class="form-control" name="navrat" value="<?php echo $_SERVER['PHP_SELF']; ?>" >  
+                        </div>
+						
+						<button  id= "vytvorit_adresar" type="submit" class="btn btn-primary" >vytvořit</button>
 					  </form>
-						   
-			  </div>
+					  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	   
+			  
 		
       </div>
       <!-- Modal footer -->
       <div class="modal-footer">
-        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+       
       </div>
 
     </div>
@@ -848,25 +912,20 @@ define ("ROWS", 10);
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p class="modal-title">VLOŽENÍ POZNÁMKY</p>
-		
+        <p class="modal-title">VLOŽENÍ POZNÁMKY</p>		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->
       <div class="modal-body">
-     
-	 
-	 
+     	 
 	 <!--<h1>Vložení komentáře</h1>-->
 	 <form id="form" name="form" method="post" action="php/vlozit_komentar.php">
  
-
  <div class="form-group">
     <label for="text">Text:</label>
     <textarea type="text" class="form-control" name="text">  </textarea>
   </div>
-
 
   <div class="form-group">
     <label for="odkaz">Odkaz (pokud chceš):</label>
@@ -880,11 +939,6 @@ define ("ROWS", 10);
   <button  id= "odeslat" type="submit" class="btn btn-primary">ULOŽIT</button>
 </form> 
 	 
-	 
-	 
- 
-	  
-	
       </div>
       <!-- Modal footer -->
       <div class="modal-footer">       		
@@ -895,6 +949,72 @@ define ("ROWS", 10);
   </div>
 </div> 
    
+  
+         
+  <!-- The Modal  modal_skin -->
+<div class="modal" id="modal_skin">
+  <div class="modal-dialog  ">
+    <div class="modal-content  bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title">ZMĚNIT ROZVRŽENÍ STRÁNKY</p>
+		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     
+	 
+	 
+	 
+	 <form id="form" name="form" method="post" action="php/zmenit_skin.php">
+ 
+
+
+ <div class="form-check">
+  <label class="form-check-label">
+    <input type="radio" class="form-check-input" name="skin" value="skin1">VARIANTA A
+  </label>
+</div>
+<div class="form-check">
+  <label class="form-check-label">
+    <input type="radio" class="form-check-input" name="skin" value="skin2">VARIANTA B
+  </label>
+</div>
+<div class="form-check  ">
+  <label class="form-check-label">
+    <input type="radio" class="form-check-input" name="skin" value="skin3">VARIANTA C
+  </label>
+</div> 
+
+
+   <button  id= "odeslat" type="submit" class="btn btn-primary">NASTAVIT</button>
+  
+
+</form> 
+	 
+	 	  
+	
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">   
+	  
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+   
+     
+  
+  
+  
+  
+  
+  
   
 <?php  
   require "php/console.php";

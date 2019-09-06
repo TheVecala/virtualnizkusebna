@@ -111,7 +111,7 @@
 					<input id=" " type="password" name="over_heslo" > <br>
 					EMAIL:
 			     	<input id=" " type="text" name="email" > <br>
-					<input id=" " type="text" value="první" name="jmeno_adresare" style="display:none" >	 <br>
+					<input id=" " type="text" value="hello_world" name="jmeno_adresare" style="display:none" >	 <br>
 					<input id=" " type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" > <br>
 					<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
 				
@@ -124,10 +124,11 @@
 	  </div> <!-- cards -->
 	
 		
-<!-- The Modal -->
+
+	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
-    <div class="modal-content">
+    <div class="modal-content bg-success text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -138,23 +139,33 @@
       <!-- Modal body -->
       <div class="modal-body">
 	      <p>
-       DIY a Open source projekt ze Štatlu. <br>
-		Plugin pro sdílení nahrávek hudebních skupin mezi jejímy členy. <br>   
+        DIY a Open source projekt ze Štatlu. <br><br>
+		Plugin pro sdílení nahrávek hudebních skupin mezi jejímy členy. <br>   <br>
 		Tohle není prostor pro volné ukládání dat většího množství uživatelů. 
-		Vhodná je instalace na vlastní doménu.  <br> <br>
+		Vhodná je instalace na vlastní doménu.  <br> <br><br>
 		Pro více info pište na adresu: <i>  the@vecala.cz  </i> 
-	
-         </p>
+	    
+		</p>
+		<p>
+		Thanks to:<br>
+		wavesurfer.js<br>
+		jahů
+		
+          </p>
+		  <button type="button" class="btn btn-swcondary"  >INSTALACE NA VLASTNÍ DOMÉNĚ</button><br>
+          <button type="button" class="btn btn-dark"  >ÚČET NA VIRTUALNIZKUSEBNA.CZ</button>
       </div>
 
       <!-- Modal footer -->
       <div class="modal-footer">
+ 
         <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
       </div>
 
     </div>
   </div>
 </div>
+	
 	
 	
 	
