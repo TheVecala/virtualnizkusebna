@@ -61,8 +61,8 @@
        <div class="card-body" style=" text-align:center"> 
 	    <h1 class="card-title"   >  VIRTUÁLNÍ ZKUŠEBNA</h1>
         
-	    <button  id="prihlasit"   type="button" class="btn btn-dark prihlasit"  >PŘIHLÁSIT SE</button> 
-	    <button  id="nova_zkusebna"   type="button" class="btn btn-dark nova_zkusebna"  >VYTVOŘIT NOVÝ PROJEKT</button> 
+	    <button  id="prihlasit"   type="button" class="btn btn-dark prihlasit" style="display:none"  >PŘIHLÁSIT SE</button> 
+	   
 	  
 		<?php
 		 
@@ -76,17 +76,17 @@
     
       </div> <!-- hlavní menu -->
 	  
-	   <div class=" ">
+	   <div class="row ">
 	    <!-- form přihlášení -->
-        <div id="formular_prihlaseni" class="card bg-success text-white" style="  display: none"> 
+        <div id="formular_prihlaseni" class="  card bg-success text-white col-md-5" style="  display: nonexxxxxxxxxxxxxxxxxx"  > 
           <div class="card-body">           
-            <h3>OTEVŘENÍ PROJEKTU:</h3>    
+            <!--   <h3>PŘIHLÁŠENÍ:</h3>  -->  
          
             <form action="php/login/login.php" method="post" >     
-      NÁZEV: <input type="text" name="nick" value="" size="17" autofocus="autofocus"  />  <br>  <br> 
+      LOGIN: <input type="text" name="nick" value="" size="17" autofocus="autofocus"  />  <br>  <br> 
       HESLO: <input type="password" name="heslo" value="" size="17"      />      <br> <br> 
 	         <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-             <input class="button" type="submit" name="submit" value="OTEVŘÍT" />
+             <input class="button" type="submit" name="submit" value="PŘIHLÁSIT" />
             </form>
 			
 			
@@ -94,10 +94,22 @@
           </div>
         </div> <!-- form přihlášení -->
          
-        <div id="formular_vytvoreni_zkusebny" style="  display: none" class="card bg-success text-white"> <!-- form vytvoření zkušebny -->
+		  <div   class="  col-md-2"> 
+		   <div class="site-wrapper">
+           <div class="site-wrapper-inner">
+		  <img src="data/kytarista.png" class="rounded" alt="" style="max-height:75px"> 
+		   </div>
+	   	   </div>
+		  </div>
+        <div id="formular_vytvoreni_zkusebny" style="  display: nonexxxxxxxxxxxxxxx" class=" card  bg-success text-white col-md-5"> <!-- form vytvoření zkušebny -->
 	 
-	 	 
-            <div  class="card-body " >  
+	    <div class="site-wrapper">
+        <div class="site-wrapper-inner">
+ 
+   
+	 
+ 	      <button  id="nova_zkusebna"   type="button" class="btn btn-dark nova_zkusebna"  >VYTVOŘIT NOVÝ PROJEKT</button> 
+            <div  class="card-body " style="  display: none" >  
 							 
 				<form action="php/vytvorit_bezpecnou_zkusebnu.php" method="post" enctype="multipart/form-data">
 					<h2>   VYTVOŘENÍ NOVÉHO PROJEKTU </h2>    <br>
@@ -119,7 +131,16 @@
 				</form>
 					   
 			</div>
-       	    
+       	
+
+
+
+ </div>
+  </div>
+   
+
+
+		
         </div> <!-- form vytvoření zkušebny -->
 	  </div> <!-- cards -->
 	
