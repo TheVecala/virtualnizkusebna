@@ -146,7 +146,7 @@ data3 VARCHAR(50) NOT NULL
   
   // if vytvoření učtu and vytvoření adresáře and vytvoření tabulek then návrat 
   // if chyba then smazat vytvořené a návrat 
- 
+ $_SESSION['befelemepesseveze'] = $nahoda ;
   
     
   require "navrat.php";
