@@ -109,7 +109,7 @@
    
 	 
  	      <button  id="nova_zkusebna"   type="button" class="btn btn-dark nova_zkusebna"  >VYTVOŘIT NOVÝ PROJEKT</button> 
-            <div  class="card-body " style="  display: none" >  
+            <div  class="card-body " style="  display: nonexxxxxxx" >  
 							 
 				<form action="php/vytvorit_bezpecnou_zkusebnu.php" method="post" enctype="multipart/form-data">
 					<h2>   VYTVOŘENÍ NOVÉHO PROJEKTU </h2>    <br>
