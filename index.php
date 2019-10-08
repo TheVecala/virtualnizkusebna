@@ -98,12 +98,23 @@ else {$pole_souboru = "empty" ;
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
      <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link href="/css/sticky-footer-navbar.css" rel="stylesheet">
- 
-	   <!-- vecalovo -->
-	 
-<script src="https://unpkg.com/wavesurfer.js"></script>
-<script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
+    <link href="/css/sticky-footer-navbar.css" rel="stylesheet"> 
+	   <!-- vecalovo -->	 
+    <script src="https://unpkg.com/wavesurfer.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
+	   <!-- kalendář -->	
+	<link href='fullcalendar/core/main.css' rel='stylesheet' />
+    <link href='fullcalendar/daygrid/main.css' rel='stylesheet' />
+    <link href='fullcalendar/timegrid/main.css' rel='stylesheet' />
+	<link href='fullcalendar/list/main.css' rel='stylesheet' />
+	<script src='fullcalendar/core/main.js'></script>
+	<script src='fullcalendar/interaction/main.js'></script>
+	<script src='fullcalendar/daygrid/main.js'></script>
+	<script src='fullcalendar/timegrid/main.js'></script>
+	<script src='fullcalendar/list/main.js'></script> 
+	<script src='fullcalendar/core/cs.js'></script> 
+	
+	
 
     <style>
  
@@ -683,6 +694,11 @@ define ("ROWS", 10);
       
       
     </div> <!-- row -->
+	
+	
+
+ <div id='calendar'></div>
+
 
 	
  </div>     <!-- container -->
@@ -1195,10 +1211,68 @@ wavesurfer.on('ready', function () {
   
 });
 
- 
- 
 
 </script>
+
+
+
+
+
+<script>
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+       plugins: [ 'interaction', 'dayGrid', 'timeGrid', 'list' ],
+      header: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      }, 
+	  
+
+	 select: function(arg) {
+        var title = prompt('akce od:' + arg.startStr + 'do:' + arg.endStr);
+        if (title) {
+          calendar.addEvent({
+            title: title,
+            start: arg.start,
+            end: arg.end,
+            allDay: arg.allDay
+          })
+        }
+        calendar.unselect()
+      },
+	
+	
+	 locale: 'cs', 
+      navLinks: true, // can click day/week names to navigate views
+      selectable: true,
+      selectMirror: true,
+     
+      editable: true,
+      eventLimit: true, // allow "more" link when too many events
+      events: [
+        {
+          title: 'All Day Event',
+          start: '2019-08-01'
+        },  
+        {
+          title: 'Click for Google', 
+          start: '2019-08-28'
+        }
+      ]
+    });
+
+    calendar.render();
+  });
+
+</script>
+
+
+
+
 
  </body>
 </html>

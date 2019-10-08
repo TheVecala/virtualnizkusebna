@@ -31,12 +31,12 @@ if( $_SESSION['vysledek'] == "adresar_vytvoren"  )
     
 	{	
     // vytvoření tabulky diskuse válu
-	$adresa_diskuse = 'diskuse_'.$kapela.'_'.$_POST["jmeno_adresare"].'_123456789';
+	$adresa_diskuse_valu = 'diskuse_'.$kapela.'_'.$_POST["jmeno_adresare"].'_123456789';
 	$cas= time();
 	$jmeno= "admin";
 	$vzkaz= "vlož text";
  
-    mysql_query("CREATE TABLE $adresa_diskuse (
+    mysql_query("CREATE TABLE $adresa_diskuse_valu (
 	cas INT(11) NOT NULL,
 	vzkaz text NOT NULL,
 	jmeno VARCHAR(50) NOT NULL
