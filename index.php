@@ -1214,11 +1214,7 @@ wavesurfer.on('ready', function () {
 
 </script>
 
-
-
-
-
-<script>
+<script>  //kalendář
 
   document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
@@ -1242,6 +1238,18 @@ wavesurfer.on('ready', function () {
             allDay: arg.allDay
           })
         }
+		
+		
+		// vložení eventu do databáze
+		
+		// if exist databáze_kalendář1  
+		   // {
+			  // vloz_event(title,start,end),
+			  // calendar.render();
+		   // },
+		   
+		   
+		   
         calendar.unselect()
       },
 	
@@ -1256,7 +1264,7 @@ wavesurfer.on('ready', function () {
       events: [
         {
           title: 'All Day Event',
-          start: '2019-08-01'
+          start: '2019-10-12'
         },  
         {
           title: 'Click for Google', 
@@ -1267,8 +1275,17 @@ wavesurfer.on('ready', function () {
 
     calendar.render();
   });
-
-</script>
+  
+  
+   calendar.addEvent({
+            title: 'dušan',
+            start: 2019-10-12 ,
+            end: 2019-10-14  
+          });
+  
+   calendar.render();
+ 
+</script> 
 
 
 
