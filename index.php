@@ -695,11 +695,11 @@ define ("ROWS", 10);
       
     </div> <!-- row -->
 	
-	
+	  <div class="col-md-6" style="margin-bottom: 5px" >   <!-- čtvrtý sloupec   -->
 
- <div id='calendar'></div>
+	      <div id='calendar'></div>
 
-
+	  </div> <!-- konec čtvrtý sloupec   -->
 	
  </div>     <!-- container -->
  
