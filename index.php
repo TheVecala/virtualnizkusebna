@@ -759,10 +759,11 @@ define ("ROWS", 10);
       </div>
 
       <!-- Modal body -->
-     <div class="modal-body">
-     
-	   	   	<form action="/php/smazat_soubor.php" method="post" enctype="multipart/form-data"  style="display:inline">
-			 
+	  
+	 	<form action="/php/smazat_soubor.php" method="post" enctype="multipart/form-data"  style="display:inline">
+	
+             <div class="modal-body">
+     		 
 					  <div class="form-group"  style="display:nonexxxxxxx">
 						<label for="soubor_ke_smazani">smazat soubor:</label>
 						<input id="modal_delete_deleter" type="text" class="form-control"  value="soubor ke smazání_nevložen " name="soubor_ke_smazani">
@@ -772,23 +773,19 @@ define ("ROWS", 10);
 						<label for="navrat">navrat:</label>
 						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
 					  </div>
-									 
-				<button  id= "nahrat" type="submit" class="btn btn-primary">smazat soubor</button>
-					
-			</form>
-				  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	   		
-      </div>	  
-	  
-  
-	  
+			  		
+            </div>	  
 
       <!-- Modal footer -->
-      <div class="modal-footer">
-          <button type="button" class="btn btn-warning" data-dismiss="modal">Chápu</button>
-		  <button  value="soubor_nevlozen" type="button" class="btn btn-danger" >Nechápu</button>
+            <div class="modal-footer">
+	  						 
+				<button  id= "nahrat" type="submit" class="btn btn-primary">smazat</button>
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
+	  
+ 
         
-      </div>
-
+          </div>
+	   </form>
     </div>
   </div>
 </div>
