@@ -43,14 +43,15 @@ if( $_SESSION['vysledek'] == "adresar_vytvoren"  )
 	)");
 	  
 	//vložení do tabulky diskuse válu
-    $vysledek=mysql_query("insert into $adresa_diskuse (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
+    $vysledek=mysql_query("insert into $adresa_diskuse_valu (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
 	// přidat podmínku			
 	$_SESSION['vysledek'] = " diskuse válu vytvořena"; 
 	$_SESSION['diskuse'] = $adresa_diskuse ;
 	
     // vložení adresy diskuse do tabulky
 	// ------------------------
-	// ------------------------
+	// if exist tabulka_diskusi then insert into  tabulka_diskusi (složka,adresa diskuse) 
+	
 	
     } else  
     {
