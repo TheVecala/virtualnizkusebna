@@ -1282,8 +1282,8 @@ wavesurfer.on('ready', function () {
   
   
   
-   // $("#modal_delete_deleter").click(function(){ 
-    // var val_ke_smazani = this.getAttribute("value");
+    $("#modal_delete_deleter").click(function(){ 
+    var val_ke_smazani = this.getAttribute("value");
     //   
  
   });
