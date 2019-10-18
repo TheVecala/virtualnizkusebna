@@ -334,7 +334,15 @@ else {$pole_souboru = "empty" ;
 								   </td> 
 								   
 								   <td></td> 
-							       <td></td> 
+							       <td>
+								   
+								   
+								   	<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val">		
+									  SMAZAT
+									</button> 
+								   
+								   
+								   </td> 
 								   
 								  </tr> 
 								</div>	
@@ -746,7 +754,7 @@ define ("ROWS", 10);
 </div>
 	
 	
-  <!-- The Modal DELETE -->
+  <!-- The Modal DELETE soubor-->
 <div class="modal" id="modal_delete">
   <div class="modal-dialog  ">
     <div class="modal-content bg-success text-white">
@@ -1040,7 +1048,49 @@ define ("ROWS", 10);
 </div> 
    
      
-  
+    <!-- The Modal DELETE vál -->
+<div class="modal" id="modal_delete_val">
+  <div class="modal-dialog  ">
+    <div class="modal-content bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p id="modal_delete_val_label" class="modal-title">  skladba   </p>
+		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+	  
+	 	<form action="/php/smazat_val.php" method="post" enctype="multipart/form-data"  style="display:inline">
+	
+             <div class="modal-body">
+     		 
+					  <div class="form-group"  style="display:nonexxxxxxx">
+						<label for="val_ke_smazani">smazat skladbu:</label>
+						<input id="modal_delete_val_deleter" type="text" class="form-control"  value="vál ke smazání_nevložen " name="val_ke_smazani">
+					  </div>				
+										 							 
+					  <div class="form-group"  style="display:none">
+						<label for="navrat">navrat:</label>
+						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+					  </div>
+			  		
+            </div>	  
+
+      <!-- Modal footer -->
+            <div class="modal-footer">
+	  						 
+				<button  id= "nahrat" type="submit" class="btn btn-primary">odstranit celou skladbu</button>
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
+	  
+ 
+        
+          </div>
+	   </form>
+    </div>
+  </div>
+</div>
   
   
   
@@ -1219,8 +1269,21 @@ wavesurfer.on('ready', function () {
 	
   }); 
   
-    $("#modal_delete_deleter").click(function(){ 
-     var val_ke_smazani = this.getAttribute("value");
+     $(".deleter_val").click(function(){ 
+    
+	var val = this.getAttribute("value");
+	var label_val = this.getAttribute("name");
+
+    document.getElementById("modal_delete_val_label").innerHTML = label_val;
+	 document.getElementById("modal_delete_val_deleter").setAttribute("value", val);
+	
+  }); 
+  
+  
+  
+  
+   // $("#modal_delete_deleter").click(function(){ 
+    // var val_ke_smazani = this.getAttribute("value");
     //   
  
   });
