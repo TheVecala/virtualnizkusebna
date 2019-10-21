@@ -304,8 +304,6 @@ else {$pole_souboru = "empty" ;
 									 <button id=" " type="submit"  class="btn btn-success" value="<?php echo $pole_slozek[$x] ?>" name="submit">
 
 
-
-
                                      <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 	
 									 <?php echo $pole_slozek[$x] ?>
  
@@ -334,65 +332,12 @@ else {$pole_souboru = "empty" ;
 		  
 						</tbody>
 						</table>
-
-
-
-
-
-
-
+ 
 				  </div>
 								
 			</ul>
 
 
-
-
-
-
-
-
-
-
-
-
-
-	
-			
-			<!--  sem vypis playlistu z databáze   -->
-			
-			
-			
-			    
-<?php
-define ("ROWS", 10);
- require "php/login/connect.php";
- 
-  if (!isset($_GET["celkem"]))  
-  {
-    $vysledek=mysql_query("select count(*) as pocet from $aktualni_playlist ");
-    $zaznam=mysql_fetch_array($vysledek);
-    $celkem=$zaznam["pocet"];
-  }
-  else
-  {
-    $celkem=$_GET["celkem"];
-  }
-?> 
-  
-<?php   
-    $vysledek=mysql_query("select * from $aktualni_playlist order by cas desc") ; 
-?> 
-  
- <div id=""  style="overflow: auto ">
- 
-<ul class="list-group sloupec" >
-   
- 
-  </ul>
-  </div>   
-							
- 
 			
             </div> <!-- konec playlistu    -->
  
@@ -704,7 +649,7 @@ define ("ROWS", 10);
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p id="modal_delete_label" class="modal-title">  Soubor   </p>
+	      smazat soubor:
 		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
@@ -714,8 +659,9 @@ define ("ROWS", 10);
 	 	<form action="/php/smazat_soubor.php" method="post" enctype="multipart/form-data"  style="display:inline">
 	
              <div class="modal-body">
-     		 
-					  <div class="form-group"  style="display:nonexxxxxxx">
+     		       
+                     <p id="modal_delete_label" class="modal-title">  Soubor   </p>
+					  <div class="form-group"  style="display:none">
 						<label for="soubor_ke_smazani">smazat soubor:</label>
 						<input id="modal_delete_deleter" type="text" class="form-control"  value="soubor ke smazání_nevložen " name="soubor_ke_smazani">
 					  </div>				
@@ -1003,8 +949,7 @@ define ("ROWS", 10);
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-      <!-- Modal body -->
-	  
+      <!-- Modal body -->  
 	 	<form action="/php/smazat_val.php" method="post" enctype="multipart/form-data"  style="display:inline">
 	
              <div class="modal-body">
@@ -1022,14 +967,10 @@ define ("ROWS", 10);
             </div>	  
 
       <!-- Modal footer -->
-            <div class="modal-footer">
-	  						 
+            <div class="modal-footer">	  						 
 				<button  id= "nahrat" type="submit" class="btn btn-primary">odstranit celou skladbu</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
-	  
- 
-        
-          </div>
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
+            </div>
 	   </form>
     </div>
   </div>

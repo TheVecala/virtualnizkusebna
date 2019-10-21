@@ -9,18 +9,18 @@ $databaze = true;
  
 if   ( $databaze )      // vytvoření složek kapely
      { 
-		if(isset($_POST["jmeno_zkusebny"])) 
-			{   if (mkdir($koren.($_POST["jmeno_zkusebny"])))									
+		if(isset($_POST["nick"])) 
+			{   if (mkdir($koren.($_POST["nick"])))									
 					{ 
 			    	
-					    if (mkdir($koren.($_POST["jmeno_zkusebny"])."/".$nahoda  )) 
+					    if (mkdir($koren.($_POST["nick"])."/".$nahoda  )) 
                            {   
-							if (mkdir($koren.($_POST["jmeno_zkusebny"])."/".$nahoda."/uploads/" ))
-									{   if (mkdir($koren.($_POST["jmeno_zkusebny"])."/".$nahoda."/uploads/".$target_dir))
+							if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/" ))
+									{   if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir))
 										 {	$_SESSION['vysledek'] = "vytvořeno"; 
 											$_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
-											$_SESSION['kapela'] = ($_POST["jmeno_zkusebny"]);
-											$_SESSION['login'] = ($_POST["jmeno_zkusebny"]);
+											$_SESSION['kapela'] = ($_POST["nick"]);
+											$_SESSION['login'] = ($_POST["nick"]);
 											
 										  // copy("../test/index.php","../".$adresa_pro_navrat."/index.php");
 							 
@@ -112,35 +112,6 @@ if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  )
     $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
 	};
  
-
-
-if( $_SESSION['vysledek'] == "vytvoření tabulek bylo úspěšně dokončeno!"  ) 
-    {
-
-  //vytvoření tabulky playlistu
-// $adresa_playlistu=  "playlist_kapela1" ;
- $adresa_playlistu=  "playlist_".($_POST["jmeno_zkusebny"]);
- 
-   mysql_query("CREATE TABLE $adresa_playlistu (
-cas INT(11) NOT NULL,
-poradi VARCHAR(50) NOT NULL,
-nazev_valu text NOT NULL,
-bpm VARCHAR(50) NOT NULL,
-klic VARCHAR(50) NOT NULL,
-adresa_diskuse VARCHAR(50) NOT NULL,
-data1 VARCHAR(50) NOT NULL,
-data2 VARCHAR(50) NOT NULL,
-data3 VARCHAR(50) NOT NULL
-)");
-  
- $_SESSION['vysledek'] = "tabulka playlistu byla vytvořena";  
- $_SESSION['login'] = "loged";  
- 
- } else  
-    {
-	$_SESSION['vysledek'] = "chyba - tabulka playlistu nebyla vytvořena"; 
-    $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-	};
 
 
   
