@@ -102,18 +102,7 @@ else {$pole_souboru = "empty" ;
 	   <!-- vecalovo -->	 
     <script src="https://unpkg.com/wavesurfer.js"></script>
     <script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
-	   <!-- kalendář -->	
-	<link href='fullcalendar/core/main.css' rel='stylesheet' />
-    <link href='fullcalendar/daygrid/main.css' rel='stylesheet' />
-    <link href='fullcalendar/timegrid/main.css' rel='stylesheet' />
-	<link href='fullcalendar/list/main.css' rel='stylesheet' />
-	<script src='fullcalendar/core/main.js'></script>
-	<script src='fullcalendar/interaction/main.js'></script>
-	<script src='fullcalendar/daygrid/main.js'></script>
-	<script src='fullcalendar/timegrid/main.js'></script>
-	<script src='fullcalendar/list/main.js'></script> 
-	<script src='fullcalendar/core/cs.js'></script> 
-	
+	 
 	
 
     <style>
@@ -204,7 +193,7 @@ else {$pole_souboru = "empty" ;
 			   
 			   
 			            <div  style="text-align:right; ;" >
-					    	<h2 style="text-align:right; color:red ; display: inline "> WAVE </h2> 
+					    	<h2 style="text-align:right; color:red ; display: inline "> LOOPER </h2> 
 						   <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
 						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
 					       
@@ -259,9 +248,7 @@ else {$pole_souboru = "empty" ;
 				 <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
 				
 				     <div style="text-align:right" >
-		               <button  type="button" class="btn btn-sm  btn-secondary"   style="display:none" data-toggle="modal" data-target="#modal_playlist_edit">		
-			         	UPRAVIT PLAYLIST
-			           </button> 
+		                
 					   	  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
 				   </div>			  	
 	           </div>			  
@@ -289,8 +276,8 @@ else {$pole_souboru = "empty" ;
 						<thead>
 						  <tr>
 							<th>vál</th>
-							<th>bpm</th>
-							<th>KEY</th>
+							 
+							<th> </th>
 						  </tr>
 						</thead>
 						<tbody>
@@ -321,27 +308,19 @@ else {$pole_souboru = "empty" ;
 
                                      <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 	
 									 <?php echo $pole_slozek[$x] ?>
-
-
-
-
-
+ 
 
 									 </button>
 									</form>
-									
-									
+																		
 								   </td> 
-								   
-								   <td></td> 
+ 
 							       <td>
-								   
-								   
-								   	<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val">		
+								   								   
+								   	<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
 									  SMAZAT
 									</button> 
-								   
-								   
+								   								   
 								   </td> 
 								   
 								  </tr> 
@@ -413,39 +392,7 @@ define ("ROWS", 10);
   </ul>
   </div>   
 							
-								
-			  <table class="table table-bordered table-hover table-dark" style="color: #000; background-color: #27a243">
-                <thead>
-				  <tr>
-					<th>player</th>
-					<th>instrument</th>
-					<th>data</th>
-				  </tr>
-                </thead>
-                <tbody>
-				
-<?php
-  while ($zaznam=MySQL_Fetch_Array($vysledek))   
-  {
-?>				
-				
-				
-				  <tr>
-					<td><?php echo $zaznam["nazev_valu"] ?> </td>
-					<td> <?php echo strip_tags($zaznam["bpm"])?> </td>
-					<td> <?php echo strip_tags($zaznam["klic"])?> </td>
-					<!--<td> <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?></td>  -->
-				  </tr> 
-				 
-<?php 
- }
-?> 			
-
-			
-				  
-                </tbody>
-              </table>
-
+ 
 			
             </div> <!-- konec playlistu    -->
  
@@ -703,11 +650,7 @@ define ("ROWS", 10);
       
     </div> <!-- row -->
 	
-	  <div class="col-md-6" style="margin-bottom: 5px" >   <!-- čtvrtý sloupec   -->
-
-	      <div id='calendar'></div>
-
-	  </div> <!-- konec čtvrtý sloupec   -->
+	 
 	
  </div>     <!-- container -->
  

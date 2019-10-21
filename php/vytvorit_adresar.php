@@ -26,38 +26,6 @@ if(isset($_POST["jmeno_adresare"])) {
 		  			   
 			   // vytvořění diskuse pro vál
 			   
-		
-if( $_SESSION['vysledek'] == "adresar_vytvoren"  ) 
-    
-	{	
-    // vytvoření tabulky diskuse válu
-	$adresa_diskuse_valu = 'diskuse_'.$kapela.'_'.$_POST["jmeno_adresare"].'_123456789';
-	$cas= time();
-	$jmeno= "admin";
-	$vzkaz= "vlož text";
- 
-    mysql_query("CREATE TABLE $adresa_diskuse_valu (
-	cas INT(11) NOT NULL,
-	vzkaz text NOT NULL,
-	jmeno VARCHAR(50) NOT NULL
-	)");
-	  
-	//vložení do tabulky diskuse válu
-    $vysledek=mysql_query("insert into $adresa_diskuse_valu (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
-	// přidat podmínku			
-	$_SESSION['vysledek'] = " diskuse válu vytvořena"; 
-	$_SESSION['diskuse'] = $adresa_diskuse ;
-	
-    // vložení adresy diskuse do tabulky
-	// ------------------------
-	// if exist tabulka_diskusi then insert into  tabulka_diskusi (složka,adresa diskuse) 
-	
-	
-    } else  
-    {
-	 
-    
-	};
  
 
 
