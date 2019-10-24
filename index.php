@@ -287,7 +287,8 @@ else {$pole_souboru = "empty" ;
 							  if ($pole_slozek[$x] == ".")  { continue; };
 							  if ($pole_slozek[$x] == "..")  { continue; };
 						   $soub = ($slozka_slozek.$pole_slozek[$x]);
-						   
+						   $label_soub = " test";
+						   $label_soub = ($pole_slozek[$x]);  
 							if(is_dir($soub))
 								
 								  {    
@@ -676,8 +677,8 @@ define ("ROWS", 10);
       <!-- Modal footer -->
             <div class="modal-footer">
 	  						 
-				<button  id= "nahrat" type="submit" class="btn btn-primary">smazat</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
+				<button  id= "nahrat" type="submit" class="btn btn-danger">smazat</button>
+ 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
 	  
  
         
@@ -944,17 +945,18 @@ define ("ROWS", 10);
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p id="modal_delete_val_label" class="modal-title">  skladba   </p>
-		
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
+	  
+	    smazat celou skladbu:
+        
+		       <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->  
 	 	<form action="/php/smazat_val.php" method="post" enctype="multipart/form-data"  style="display:inline">
 	
              <div class="modal-body">
-     		 
-					  <div class="form-group"  style="display:nonexxxxxxx">
+     		          <p id="modal_delete_val_label" class="modal-title">  skladba   </p>
+					  <div class="form-group"  style="display:none">
 						<label for="val_ke_smazani">smazat skladbu:</label>
 						<input id="modal_delete_val_deleter" type="text" class="form-control"  value="vál ke smazání_nevložen " name="val_ke_smazani">
 					  </div>				
@@ -967,9 +969,10 @@ define ("ROWS", 10);
             </div>	  
 
       <!-- Modal footer -->
-            <div class="modal-footer">	  						 
-				<button  id= "nahrat" type="submit" class="btn btn-primary">odstranit celou skladbu</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
+            <div class="modal-footer">	 
+			 <p  > Pozor! Smazat lze pouze prázdnou skladbu!   </p>
+				<button  id= "nahrat" type="submit" class="btn btn-danger">odstranit celou skladbu</button>
+ 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
             </div>
 	   </form>
     </div>
