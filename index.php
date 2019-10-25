@@ -68,8 +68,18 @@ else { $slozka_slozek ="složka kapely nenastavena";
 
    // zmenit na   if is in pole složek zobrazit else nastavit prvni slozku
  if(isset($_SESSION['slozka_souboru_k_zobrazeni']))
-	   {   $slozka_souboru= $_SESSION['slozka_souboru_k_zobrazeni'];
-   } else { $slozka_souboru=  $pole_slozek[2] ; } ; // první složku z vypisu, přeskakuje dvojtečku a tečku   
+  {   $slozka_souboru= $_SESSION['slozka_souboru_k_zobrazeni'];
+  } else { $slozka_souboru=  $pole_slozek[2] ; } ; // první složku z vypisu, přeskakuje dvojtečku a tečku   
+   
+ if ( $_SESSION['slozka_souboru_k_zobrazeni'] = "slozka_smazana"      )
+  {  $slozka_souboru=  $pole_slozek[2] ;
+  };   
+   
+   
+   
+   
+   
+   
    
    // cyklus for pro ověření složky
    $platna_slozka = true ; //prozatím, než bude ověřována z databáze
@@ -522,7 +532,7 @@ define ("ROWS", 10);
       <div id="diskuse" style="font-size:1.5em">
                 <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
-		               <h2 style="text-align:right; color:red ">  POZNÁMKY </h2>  	
+		               <h2 style="text-align:right; color:red ">  TEXTY </h2>  	
 					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.8em">
 						   <?php	   
 						   echo ' '.$od.'-';
@@ -945,10 +955,8 @@ define ("ROWS", 10);
 
       <!-- Modal Header -->
       <div class="modal-header">
-	  
-	    smazat celou skladbu:
-        
-		       <button type="button" class="close" data-dismiss="modal">&times;</button>
+          smazat celou skladbu:     
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->  
