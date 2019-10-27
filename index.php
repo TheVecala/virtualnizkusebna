@@ -67,12 +67,15 @@ else { $slozka_slozek ="složka kapely nenastavena";
 
 
    // zmenit na   if is in pole složek zobrazit else nastavit prvni slozku
+   
+   
  if(isset($_SESSION['slozka_souboru_k_zobrazeni']))
   {   $slozka_souboru= $_SESSION['slozka_souboru_k_zobrazeni'];
   } else { $slozka_souboru=  $pole_slozek[2] ; } ; // první složku z vypisu, přeskakuje dvojtečku a tečku   
    
- if ( $_SESSION['slozka_souboru_k_zobrazeni'] = "slozka_smazana"      )
+ if ( $_SESSION['slozka_souboru_k_zobrazeni']=="slozka_smazana"      )
   {  $slozka_souboru=  $pole_slozek[2] ;
+      $_SESSION['slozka_souboru_k_zobrazeni'] = $pole_slozek[2] ;
   };   
    
    
