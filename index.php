@@ -198,57 +198,7 @@ else {$pole_souboru = "empty" ;
 	
     <div class="row">
 	
-        <div id="wave_jumbo"  style="display:nonexxxxx"  class="col-md-12">  <!--  nulty sloupec   -->
-		      
 
-			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
-               <div class="card-body"> 
-			   
-			   
-			            <div  style="text-align:right; ;" >
-					    	<h2 style="text-align:right; color:red ; display: inline "> LOOPER </h2> 
-						   <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
-					       
-						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
-						</div>
-						
-						<div style="text-align:right ">
-							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/ikony_novy/icons8-play-50-2.png" alt="play"></button>
-							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-pause-50-2.png" alt="pause"></button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-rewind-50.png" alt="od začátku"></button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/ikony_novy/icons8-repeat-50.png" alt="loop"></button>
-							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
-							 
-						
-						
-					       
-					    </div>
-						
-	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo" style="display: inline"> soubor nenačten </h2>  
-				       <div id="test_delky"></div>	
-				 
-					
-	           </div>
-		 
-            </div> <!--     -->
-	      
-	
-	
-			<div class="jumbotron bg-success" style="padding: 0rem 1rem">				
-							 
-							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
-							<div id="waveform" style="display:none">  
-						
-							</div>
-			
-							
-			
-			</div>
-   	
-        </div>   
-
-	
 	
 	
 	
@@ -358,7 +308,66 @@ else {$pole_souboru = "empty" ;
 	
 		</div>  <!--  konec prvniho sloupce   -->  
 
-		<div  id="k" class="col-md-4" style="margin-bottom: 5px"> <!--  druhy sloupec   -->
+	 <div class="col-md-8" > <!--   druhejstřetím sloupec   -->    
+		 <div class="row">
+		 
+		 
+	        <div id="wave_jumbo"  style="display:nonexxxxx"  class="col-md-12">  <!--  nulty sloupec   -->
+		      
+
+			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
+               <div class="card-body"> 
+			   
+			   
+			            <div  style="text-align:right; ;" >
+					    	<h2 style="text-align:right; color:red ; display: inline "> LOOPER </h2> 
+						   <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
+						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
+					       
+						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
+						</div>
+						
+						<div style="text-align:right ">
+							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/ikony_novy/icons8-play-50-2.png" alt="play"></button>
+							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-pause-50-2.png" alt="pause"></button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-rewind-50.png" alt="od začátku"></button>
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/ikony_novy/icons8-repeat-50.png" alt="loop"></button>
+							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
+							 
+						
+						
+					       
+					    </div>
+						
+	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo" style="display: inline"> soubor nenačten </h2>  
+				       <div id="test_delky"></div>	
+				 
+					
+	           </div>
+		 
+            </div> <!--     -->
+	      
+	
+	
+			<div class="jumbotron bg-success" style="padding: 0rem 1rem">				
+							 
+							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
+							<div id="waveform" style="display:none">  
+						
+							</div>
+			
+							
+			
+			</div>
+   	
+        </div>   
+
+		 
+		 
+		 
+		 
+		 
+		<div  id="k" class="col-md-6" style="margin-bottom: 5px"> <!--  druhy sloupec   -->
 		
 	      <div  class=" ">   <!-- hlavička sekce složek   -->
 			  
@@ -500,7 +509,8 @@ else {$pole_souboru = "empty" ;
 			  		   		   
        </div  > <!-- konec druhý sloupec   -->
   
-        <div class="col-md-4" style="margin-bottom: 5px" > <!-- třetí sloupec   -->
+  
+        <div class="col-md-6" style="margin-bottom: 5px" > <!-- třetí sloupec   -->
        
       
 <?php
@@ -604,8 +614,8 @@ define ("ROWS", 10);
   </div>   
 
       </div> <!-- konec třetí sloupec   -->
-      	
-      
+      	 </div>
+      </div> <!--   konec druhejstřetím sloupec   -->  
       
     </div> <!-- row -->
 	
@@ -614,6 +624,7 @@ define ("ROWS", 10);
  </div>     <!-- container -->
  
  
+<div>  <!--  MODALS --> 
 	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
@@ -991,7 +1002,7 @@ define ("ROWS", 10);
 </div>
   
   
-  
+</div>  <!-- KONEC MODALS -->
   
   
   
