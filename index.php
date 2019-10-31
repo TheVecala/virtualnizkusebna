@@ -207,13 +207,16 @@ else {$pole_souboru = "empty" ;
 
 			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
-	              <h2 style="text-align:right; color:red ">  PLAYLIST </h2> 
-				 <span class="card-title"> PROJEKT: </span>  <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
-				
-				     <div style="text-align:right" >
-		                
+	              <h2 style="text-align:left; color:red ; display: inline ">  PLAYLIST </h2> 
+				  
+				         <div  style="display: none">
+						   <span class="card-title"> PROJEKT: </span> 
+						   <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
+				        </div>
+				     
+					 <div style="text-align:right; display: inline"   >		                
 					   	  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
-				   </div>			  	
+				     </div>			  	
 	           </div>			  
             </div> <!--     -->
 	      
