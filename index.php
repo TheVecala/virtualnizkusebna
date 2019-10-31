@@ -322,22 +322,22 @@ else {$pole_souboru = "empty" ;
                <div class="card-body"> 
 			   
 			   
-			            <div  style="text-align:right; ;" >
-					    	<h2 style="text-align:right; color:red ; display: inline "> LOOPER </h2> 
-						   <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
-					       
-						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
+			            <div  style="text-align:left; ;" >
+					    	<h2 style="text-align:left;; color:red ; display: inline "> LOOPER </h2> 
+						 
 						</div>
 						
-						<div style="text-align:right ">
+						<div style="text-align:right ; display: inline  ">
 							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/ikony_novy/icons8-play-50-2.png" alt="play"></button>
 							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-pause-50-2.png" alt="pause"></button>
 							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-rewind-50.png" alt="od začátku"></button>
 							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/ikony_novy/icons8-repeat-50.png" alt="loop"></button>
 							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
 							 
-						
+						  <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
+						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
+					       
+						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
 						
 					       
 					    </div>
