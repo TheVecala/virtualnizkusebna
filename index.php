@@ -140,6 +140,10 @@ else {$pole_souboru = "empty" ;
 .formular_vzkazu  { 
   background-color: #27a243; 
 }
+
+h4 {
+  font-family: "Times New Roman", Times, serif;
+}
      </style>
 
   </head>
@@ -322,7 +326,7 @@ else {$pole_souboru = "empty" ;
                <div class="card-body"> 
 			   
 			   
-			            <div  style="text-align:left; ;" >
+			            <div  style="text-align:left; display: inline ;" >
 					    	<h2 style="text-align:left;; color:red ; display: inline "> LOOPER </h2> 
 						 
 						</div>
@@ -342,7 +346,9 @@ else {$pole_souboru = "empty" ;
 					       
 					    </div>
 						
-	             <span class="card-title"> vál: </span>  <h2 id="label_wave_jumbo" style="display: inline"> soubor nenačten </h2>  
+	             <span class="card-title"> vál: </span> 
+				 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
+				 </h4>  
 				       <div id="test_delky"></div>	
 				 
 					
@@ -376,16 +382,17 @@ else {$pole_souboru = "empty" ;
 			  
                <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
+				   				 		
+			  	       <div>
+					      <span class="card-title"> SKLADBA: </span>  <h4 style="display: inline; color:black; background-color: white"> <?php echo $slozka_souboru 	?>  </h4> 
+					   </div>
+			  	    				   
 		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>   				 
 			           </div>
-				   				 		
-			  	       <div>
-					      <span class="card-title"> SKLADBA: </span>  <h2 style="display: inline"> <?php echo $slozka_souboru 	?>  </h2> 
-					   </div>
-			  	    
+
 	
 	               </div>	
 				   
