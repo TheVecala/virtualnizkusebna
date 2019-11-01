@@ -376,25 +376,17 @@ else {$pole_souboru = "empty" ;
 			  
                <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
-		             	<h2 style="text-align:right; color:red ">  SOUBORY </h2>
-   
-
-
- 
-		
-			  	 <span class="card-title"> SKLADBA: </span>  <h2 style="display: inline"> <?php echo $slozka_souboru 	?>  </h2>
-			  
-			   
-			 	
-		    
-				   <div  style="text-align:right">	<!--  tlačítka souboru  -->   	       
-				      <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT SOUBOR</button>   
-				 
-			       </div>
-				   
-			 
- 
-						
+		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
+					   
+  				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
+				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>   				 
+			           </div>
+				   				 		
+			  	       <div>
+					      <span class="card-title"> SKLADBA: </span>  <h2 style="display: inline"> <?php echo $slozka_souboru 	?>  </h2> 
+					   </div>
+			  	    
+	
 	               </div>	
 				   
 				
@@ -548,17 +540,19 @@ define ("ROWS", 10);
       <div id="diskuse" style="font-size:1.5em">
                 <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
-		               <h2 style="text-align:right; color:red ">  TEXTY </h2>  	
+		               <h2 style="text-align:left; color:red;  display: inline ">  TEXTY </h2> 
+					   
+					   <div style="text-align:right;  display: inline">
+                        <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
+           			   </div>  	
+					   
 					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.8em">
 						   <?php	   
 						   echo ' '.$od.'-';
 						   echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
 						   echo ' z '. $celkem.'  ';
 						   ?> 				   
-					   </div>
-					   <div style="text-align:right;">
-                        <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
-           			   </div>  					   
+					   </div> 					   
 	               </div>					   
                </div> <!--     -->			   
       </div> 
