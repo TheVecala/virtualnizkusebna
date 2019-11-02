@@ -143,7 +143,28 @@ else {$pole_souboru = "empty" ;
 
 h4 {
   font-family: "Times New Roman", Times, serif;
+  font-size:1rem;
+  padding: 10px;
 }
+
+.table {
+ border-left-width: 10px;
+ border-left-style: solid;
+ border-right-width: 10px;
+ border-right-style: solid;
+ border-top-width: 10px;
+ border-top-style: solid;
+ border-bottom-width: 7px;
+ border-bottom-style: solid;
+}
+td  {
+ border-bottom-width: 10px;
+ border-bottom-style: solid;
+ 
+ 
+}
+
+
      </style>
 
   </head>
@@ -228,27 +249,18 @@ h4 {
             <div> <!--  playlist   -->
 			
 	
-	
-	
-	
-	
-	
-	
 
-			<ul class=" " style="display: inline;padding-left: 4px;">  <!--  vypis složek   -->
+
+		 
 		
 			  
 			  <div class=" "> <!-- zmšna složky    -->
 			
 		  
 		  
-					  <table class="table table-bordered  table-dark" style="color: #000; background-color: #27a243">
+					  <table class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 10px;  border-style: solid;    " >
 						<thead>
-						  <tr>
-							<th>vál</th>
-							 
-							<th> </th>
-						  </tr>
+						  
 						</thead>
 						<tbody>
 				  
@@ -266,8 +278,8 @@ h4 {
 								<div  class=" ">	<!-- tlačítko změny složky    -->  
 																
 									
-								  <tr>
-                                   <td> 
+								  <tr style="  border-width: 10px;  border-style: solid;    "  >
+                                   <td style="padding: 0.2rem "> 
 								  
 									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
@@ -306,7 +318,7 @@ h4 {
  
 				  </div>
 								
-			</ul>
+		 
 
 
 			
@@ -384,7 +396,7 @@ h4 {
                    <div class="card-body"> 
 				   				 		
 			  	       <div>
-					      <span class="card-title"> SKLADBA: </span>  <h4 style="display: inline; color:black; background-color: white"> <?php echo $slozka_souboru 	?>  </h4> 
+					       <h4 style="display: inlinexxxxxx; color:white; background-color: #27a243"> <?php echo $slozka_souboru 	?>  </h4> 
 					   </div>
 			  	    				   
 		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
