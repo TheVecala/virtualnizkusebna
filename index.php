@@ -279,7 +279,7 @@ td  {
 																
 									
 								  <tr style="  border-width: 10px;  border-style: solid;    "  >
-                                   <td style="padding: 0.2rem "> 
+                                   <td style="padding: 0.2rem; max-width: 339px; "> 
 								  
 									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
