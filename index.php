@@ -49,6 +49,13 @@ if(isset($_SESSION['befelemepesseveze']))
 	   {   $skin =$_SESSION['skin'];
     } else { $skin=  "skin1" ; } ; 	
 			 
+ if(true  )
+	   {  ?> <script> zobraz() </script>   <?php
+	     
+    } else {  } ; 	
+			 
+					 
+			 
  ?> 
 
 
@@ -187,17 +194,15 @@ td  {
         KAPELA
       </a>
       <div class="dropdown-menu">
-        <a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">NASTAVENÍ</a> 
+        <a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">PROFIL</a> 
         <a class="dropdown-item" href="/php/login/logout.php">ODHLÁSIT SE</a>
       </div>
     </li>
 			
 			
-            <li class="nav-item active">
-              <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="">PLAYLIST</a>
-            </li>
+          
 			<li class="nav-item  ">
-              <a class="nav-link"  href="#"  data-toggle="modal" data-target="#modal_skin">SKIN</a>
+              <a class="nav-link"  href="#"  data-toggle="modal" data-target="#modal_skin">NASTAVENÍ</a>
             </li>			
             <li class="nav-item">
               <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">OFFLINE</a>
@@ -218,7 +223,7 @@ td  {
      
 	 
 <div class="container-fluid">
-     <div id="vycpavka" id="k" style="min-height:58px"> </div>               
+     <div id="vycpavka" id="kxxxx" style="min-height:58px"> </div>               
 
 	
     <div class="row">
@@ -284,20 +289,53 @@ td  {
 									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
 									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
-									 <button id=" " type="submit"  class="btn btn-success" value="<?php echo $pole_slozek[$x] ?>" name="submit">
-
-
-                                     <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 	
+									
+                                       <div style=" font-family: Times, serif;  <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  font-size:1.5em;;   color:white " ; } ; ?>  ">
+									   
+									<?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
+								   							   
+								   	
+									 <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 	
+									
+									
+									 <?php  
+  									 }
+									 
+									 else
+									  { ?>
+								       <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >   
+									  <?php 
+									 	 }
+									 ; ?>
+									 
+									 
+									 
 									 <?php echo $pole_slozek[$x] ?>
- 
-
-									 </button>
-									</form>
+                                       </div>
+                                
 																		
 								   </td> 
  
 							       <td>
-								   								   
+								   
+								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
+								   							   
+								    
+									
+									 <?php  
+  									 }
+									 
+									 else
+									  { ?>
+								         <button id=" " type="submit" style=" max-width: 120px ; display: inline" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
+                                          OTEVŘÍT
+									     </button>
+									  <?php 
+									 	 }
+									 ; ?>
+									 
+									 
+									</form>							   
 								   	<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
 									  SMAZAT
 									</button> 
@@ -357,11 +395,14 @@ td  {
 						
 					       
 					    </div>
-						
-	             <span class="card-title"> vál: </span> 
-				 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
-				 </h4>  
-				       <div id="test_delky"></div>	
+						<div style="  ">
+							   <img src="/data/glyphicons-18-music.png" alt="složka"  >    
+							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
+							 </h4> 
+
+				        </div>
+				        <div id="test_delky">
+						</div>	
 				 
 					
 	           </div>
@@ -395,8 +436,10 @@ td  {
                <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
 				   				 		
-			  	       <div>
-					       <h4 style="display: inlinexxxxxx; color:white; background-color: #27a243"> <?php echo $slozka_souboru 	?>  </h4> 
+			  	       <div style="display: inlinexxxxxx; color:white; background-color: #27a243; padding:15px; padding-bottom:3px ">
+					   			   	
+						 <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 	
+					      <h3 style="display: inline; color:white;  "> <?php echo $slozka_souboru 	?>  </h3> 
 					   </div>
 			  	    				   
 		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
@@ -944,17 +987,17 @@ define ("ROWS", 10);
 
  <div class="form-check">
   <label class="form-check-label">
-    <input type="radio" class="form-check-input" name="skin" value="skin1">VARIANTA A
+    <input type="radio" class="form-check-input" name="skin" value="skin1">DEFAULT
   </label>
 </div>
 <div class="form-check">
   <label class="form-check-label">
-    <input type="radio" class="form-check-input" name="skin" value="skin2">VARIANTA B
+    <input type="radio" class="form-check-input " disabled name="skin" value="skin2">FUNKY
   </label>
 </div>
 <div class="form-check  ">
   <label class="form-check-label">
-    <input type="radio" class="form-check-input" name="skin" value="skin3">VARIANTA C
+    <input type="radio" class="form-check-input " disabled name="skin" value="skin3">MINI
   </label>
 </div> 
 
@@ -1213,6 +1256,12 @@ wavesurfer.on('ready', function () {
  
   });
   
+ function zobraz() {
+  var elmnt = document.getElementById("k");
+  elmnt.scrollIntoView();
+} 
+  
+  
 });
 
 
@@ -1292,7 +1341,7 @@ wavesurfer.on('ready', function () {
 </script> 
 
 
-
+<script> zobraz() </script> 
 
 
  </body>
