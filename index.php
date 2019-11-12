@@ -602,6 +602,7 @@ define ("ROWS", 10);
       <div id="diskuse" style="font-size:1.5em">
                 <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
+				    
 		               <h2 style="text-align:left; color:red;  display: inline ">  TEXTY </h2> 
 					   
 					   <div style="text-align:right;  display: inline">
@@ -679,7 +680,7 @@ define ("ROWS", 10);
     </div> <!-- row -->
 	
 	 
-	
+<img src="/data/singer.png" alt="složka"  > 
  </div>     <!-- container -->
  
  
