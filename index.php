@@ -382,21 +382,21 @@ td  {
 						</div>
 						
 						<div style="text-align:right ; display: inline  ">
-							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/ikony_novy/icons8-play-50-2.png" alt="play"></button>
-							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-pause-50-2.png" alt="pause"></button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/ikony_novy/icons8-rewind-50.png" alt="od začátku"></button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/ikony_novy/icons8-repeat-50.png" alt="loop"></button>
+							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/icons8-play-50-2.png" alt="play"></button>
+							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-pause-50-2.png" alt="pause"></button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-rewind-50.png" alt="od začátku"></button>
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50.png" alt="loop"></button>
 							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
 							 
 						  <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-						   <img style="max-height:30px" src="/data/ikony_novy/icons8-minimize-window-64.png" alt="minimize"> </button> 
+						   <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> </button> 
 					       
-						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/ikony_novy/icons8-multiply-50.png" alt="zavřít"></button>
+						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>
 						
 					       
 					    </div>
 						<div style="  ">
-							   <img src="/data/glyphicons-18-music.png" alt="složka"  >    
+							   <img src="/data/icons8-sound-wave-50.png" alt="složka"  >    
 							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
 							 </h4> 
 
@@ -503,7 +503,7 @@ td  {
 							   
 							        <div class="card-header" style= "  "> 
 							      	<div style="color:black  ; background-color:white ;  display: inline" >	
-										<img src="/data/glyphicons-18-music.png" alt="vál"  > 			
+										<img src="/data/icons8-sound-wave-50.png" alt="vál"  > 			
 									   <?php echo $pole_souboru[$x]; ?>
 									</div> 
 								 
