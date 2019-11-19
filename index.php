@@ -522,9 +522,9 @@ td  {
 								 {    
 						         ?>
  							 
-								  <audio controls preload="metadata" style=" width:130px; height: 30px;  display: inline" >
+								  <audio controls preload="metadata" style=" width:130px___xxxxxxxxxx; height: 30px;  display: inline" >
 	                                  <source src="<?php echo $soub; ?>" type="audio/mpeg">
-	                                   Your browser does not support the audio element.
+	                                   Tak tohle neumí tvůj prohlížeč přehrát.
                                   </audio>
 								  
 								 <?php
@@ -538,6 +538,7 @@ td  {
 						         ?>  
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >										 			
 									   OTEVŘÍT V LOOPERU
+									</button>    
 								  <?php
 								  }  
 						         ?> 
@@ -546,7 +547,11 @@ td  {
 								 <a href="<?php echo $soub; ?>" download style="  display: inline"> 
 									<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
 								 </a>
-								 
+									  
+									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-succes btn-VZ  deleterxxxx"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
+									  PŘESUNOUT
+									</button> 
+								  							 
 								  
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete">		
 									  SMAZAT
@@ -1062,6 +1067,51 @@ define ("ROWS", 10);
 </div>
   
   
+  <!-- The Modal presunout soubor-->
+<div class="modal" id="modal_presunout">
+  <div class="modal-dialog  ">
+    <div class="modal-content bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+	      presunout soubor:
+		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+	  
+	 	<form action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data"  style="display:inline">
+	
+             <div class="modal-body">
+     		       
+                     <p id="modal_presunout_label" class="modal-title">  Soubor   </p>
+					  <div class="form-group"  style="display:none">
+						<label for="soubor_ke_smazani">přesunout soubor:</label>
+						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor ke smazání_nevložen " name="soubor_ke_smazani">
+						<input id="modal_presunout_kam" type="text" class="form-control"  value="soubor ke smazání_nevložen " name="soubor_ke_smazani">
+					  </div>				
+										 							 
+					  <div class="form-group"  style="display:none">
+						<label for="navrat">navrat:</label>
+						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+					  </div>
+			  		
+            </div>	  
+
+      <!-- Modal footer -->
+            <div class="modal-footer">
+	  						 
+				<button  id= "presun" type="submit" class="btn btn-danger">přesunout</button>
+ 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
+	  
+ 
+        
+          </div>
+	   </form>
+    </div>
+  </div>
+</div>  
 </div>  <!-- KONEC MODALS -->
   
   
