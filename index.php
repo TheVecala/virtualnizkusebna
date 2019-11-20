@@ -548,7 +548,7 @@ td  {
 									<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
 								 </a>
 									  
-									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-succes btn-VZ  deleterxxxx"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
+									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-succes btn-VZ  presunout"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
 									  PŘESUNOUT
 									</button> 
 								  							 
@@ -1086,10 +1086,11 @@ define ("ROWS", 10);
              <div class="modal-body">
      		       
                      <p id="modal_presunout_label" class="modal-title">  Soubor   </p>
-					  <div class="form-group"  style="display:none">
-						<label for="soubor_ke_smazani">přesunout soubor:</label>
-						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor ke smazání_nevložen " name="soubor_ke_smazani">
-						<input id="modal_presunout_kam" type="text" class="form-control"  value="soubor ke smazání_nevložen " name="soubor_ke_smazani">
+					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
+						<label for="soubor_k_presunuti">přesunout soubor:</label>
+						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor k přesunu nevložen " name="soubor_k_presunuti">
+						<label for="presunout_kam">přesunout do:</label>
+						<input id="modal_presunout_kam" type="text" class="form-control"  value="cíl přesunu_nevložen " name="presunout_kam">
 					  </div>				
 										 							 
 					  <div class="form-group"  style="display:none">
@@ -1298,14 +1299,28 @@ wavesurfer.on('ready', function () {
 	
   }); 
   
-  
-  
+ 
   
     $("#modal_delete_deleter").click(function(){ 
     var val_ke_smazani = this.getAttribute("value");
-    //   
+    // nevyužito   
  
   });
+  
+     $(".presunout").click(function(){ 
+    
+	var val = this.getAttribute("value");
+	var cil_presunu = "nic";
+	var label_val = this.getAttribute("name");
+
+    document.getElementById("modal_presunout_label").innerHTML = label_val;
+	 document.getElementById("modal_presunout_odkud").setAttribute("value", val);
+	  document.getElementById("modal_presunout_kam").setAttribute("value", cil_presunu);
+	
+  });  
+ 
+ 
+  
   
  function zobraz() {
   var elmnt = document.getElementById("k");
