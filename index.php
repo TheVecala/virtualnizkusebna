@@ -411,7 +411,7 @@ td  {
 	      
 	
 	
-			<div class="jumbotron bg-success" style="padding: 0rem 1rem">				
+			<div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
 							 
 							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
 							<div id="waveform" style="display:none">  
@@ -495,7 +495,7 @@ td  {
 						{    
 						?>
 						  
-							   <div class="card bg-success text-white"  > 
+							   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
 							   
 							     <div id=" " class="card-body   stitek_valu " style="   " > 
 							   
@@ -503,7 +503,7 @@ td  {
 							   
 							        <div class="card-header" style= "  "> 
 							      	<div style="color:black  ; background-color:white ;  display: inline" >	
-										<img src="/data/icons8-sound-wave-50.png" alt="vál"  > 			
+										<img src="/data/icons8-sound-wave-50.png_xxxxxxxxxxxxxxxxxxxxx" alt="-"  > 			
 									   <?php echo $pole_souboru[$x]; ?>
 									</div> 
 								 
