@@ -436,7 +436,7 @@ td  {
                <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
 				   				 		
-			  	       <div style="display: inlinexxxxxx; color:white; background-color: #27a243; padding:15px; padding-bottom:3px ">
+			  	       <div style="display: inlinexxxxxx; color:white; background-color: #27a243; padding:3px; ">
 					   			   	
 						 <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 	
 					      <h3 style="display: inline; color:white;  "> <?php echo $slozka_souboru 	?>  </h3> 
@@ -497,25 +497,17 @@ td  {
 						  
 							   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
 							   
+							    <div class="card-header" style= "  "> 
+							      <div style="color:black  ; background-color:white ;  display: inline" >	
+										 <!--<img src="/data/icons8-sound-wave-50.png" alt="-"  > 	 -->  	 	
+									   <?php echo $pole_souboru[$x]; ?>
+							      </div> 
+								 
+							    </div> 
+ 								    							   
+							   
 							     <div id=" " class="card-body   stitek_valu " style="   " > 
 							   
-							  
-							   
-							        <div class="card-header" style= "  "> 
-							      	<div style="color:black  ; background-color:white ;  display: inline" >	
-										<img src="/data/icons8-sound-wave-50.png_xxxxxxxxxxxxxxxxxxxxx" alt="-"  > 			
-									   <?php echo $pole_souboru[$x]; ?>
-									</div> 
-								 
-							        </div> 
-									
-							 
-									
-									
-									
-									
-								 
-								
 								 <?php
 								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
 								 if ($FileType == "mp3" or $FileType == "wav" )
@@ -535,30 +527,26 @@ td  {
 								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
 								 if ($FileType == "mp3" or $FileType == "wav")
 								 {    
-						         ?>  
+						          ?>  
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >										 			
 									   OTEVŘÍT V LOOPERU
 									</button>    
 								  <?php
 								  }  
-						         ?> 
-                                  
-								  
-								 <a href="<?php echo $soub; ?>" download style="  display: inline"> 
-									<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
-								 </a>
+						          ?> 
+                                  								  
+								    <a href="<?php echo $soub; ?>" download style="  display: inline"> 
+										<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
+								    </a>
 									  
-									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-succes btn-VZ  presunout"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
+									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-info btn-VZ  presunout"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
 									  PŘESUNOUT
 									</button> 
-								  							 
-								  
+								  							 								  
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete">		
 									  SMAZAT
 									</button> 
 								  
-
-
 								 </div> <!--card body  -->
 							   </div> <!-- card   -->
 						   							

@@ -37,13 +37,34 @@ if (file_exists($target_file)) {
     // echo "Sorry, your file was not uploaded.";
 // if everything is ok, try to upload file
 // } 
-   else {
-    if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-      $_SESSION['vysledek'] = "file ". basename( $_FILES["fileToUpload"]["name"]). " se nahrál.";
-    } else {
-        $_SESSION['vysledek'] = " error uploading  file: ". $target_file;
-    }
- ; }
+else {
+		if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+		  $_SESSION['vysledek'] = "file ". basename( $_FILES["fileToUpload"]["name"]). " se nahrál.";
+		  
+		
+				  
+				//  odeslaní mailů 
+				 include "login/connect.php";
+				 
+				  $maily=mysql_query("select mail from maily_silentroom /*order by cas desc*/") ;
+				 
+				  while ($adresa=MySQL_Fetch_Array($maily))
+				  {
+				   
+					$textmailu="Do složky".$_POST["val"]." byl vložen soubor: ".$_POST["soubor"]."";
+				   
+				   
+				 mail($adresa["mail"], "novy soubor v playlistu",$textmailu,"From:automat@virtualnizkusebna.cz");
+			
+				  }
+				//  konec odeslaní mailů 		  
+				  
+		  
+		  
+		} else {
+			$_SESSION['vysledek'] = " error uploading  file: ". $target_file;
+		};
+  }
   require "navrat.php";
 ?>
  
