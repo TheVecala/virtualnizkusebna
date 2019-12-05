@@ -2,6 +2,8 @@
 <?php
  $target_dir = ($_POST["slozka_pro_vlozeni_souboru"]);
 $target_file = "../".$target_dir ."/". basename($_FILES["fileToUpload"]["name"]); //bug s lomítkem
+$jmeno_do_mailu = basename($_FILES["fileToUpload"]["name"]); 
+
 $adresa_pro_navrat =    ($_POST["navrat"]);
 $uploadOk = 1;
 $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
@@ -45,16 +47,17 @@ else {
 				  
 				//  odeslaní mailů 
 				 include "login/connect.php";
-				 
-				  $maily=mysql_query("select mail from maily_silentroom /*order by cas desc*/") ;
+                  $seznam_mailu =    "maily_".$_SESSION['kapela'];
+				  
+				  $maily=mysql_query("select mail from $seznam_mailu /*order by cas desc*/") ;
 				 
 				  while ($adresa=MySQL_Fetch_Array($maily))
 				  {
 				   
-					$textmailu="Do složky".$_POST["val"]." byl vložen soubor: ".$_POST["soubor"]."";
+					$textmailu="Do složky __ ".$_SESSION['slozka_souboru_k_zobrazeni']." __ byl vložen soubor __ ".$jmeno_do_mailu.".";  
 				   
 				   
-				 mail($adresa["mail"], "novy soubor v playlistu",$textmailu,"From:automat@virtualnizkusebna.cz");
+				 mail($adresa["mail"], "nový soubor v playlistu",$textmailu,"From:automat@virtualnizkusebna.cz");
 			
 				  }
 				//  konec odeslaní mailů 		  
