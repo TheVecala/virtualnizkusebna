@@ -1073,7 +1073,7 @@ define ("ROWS", 10);
 	
              <div class="modal-body">
      		       
-                      <p id="modal_presunout_label" class="modal-title">  Soubor   </p>     
+                      <p id="modal_presunout_label" class="modal-title"  style="display:none">  Soubor   </p>     
 					 
 		              <div class="form-group"  style="display:none_xxxxxxxxxxxx">
 						<label for="presunout_co">přesunout co:</label>
@@ -1085,23 +1085,32 @@ define ("ROWS", 10);
 						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor k přesunu nevložen " name="presunout_odkud">	
 					  </div> 
 					  
-
-									  
 					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
 						<label for="presunout_odkud_label">přesunout odkud label:</label>
 						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="vložit php aktualní složky" name="presunout_odkud_label">	
 					  </div>				
-
 						
 					  <div class="form-group">
 						  <label for="modal_presunout_kam">přesunout kam:</label>
 						  <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
+						  
+						  
 							<option>vodis</option>
 							<option>2_5_1</option>
 							<option>3</option>
 							<option>4</option>
+							
+							
+							
 						  </select>
 					  </div> 
+	
+					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
+						<label for="presunout_cesta">přesunout cesta:</label>
+						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="../user/silentroom/338786519/uploads/" name="presunout_cesta">	
+					  </div>				
+	
+					  
 						
 					  <div class="form-group"  style="display:none">
 						<label for="navrat">navrat:</label>
@@ -1115,8 +1124,8 @@ define ("ROWS", 10);
       <!-- Modal footer -->
             <div class="modal-footer">
 	  						 
-				<button  id= "presun" type="submit" class="btn btn-danger">přesunout</button>
- 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
+				<button  id= "presun" type="submit" class="btn btn-primary">přesunout</button>
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
 	  
  
         

@@ -4,9 +4,10 @@
  
   $start_souboru =  "../" .($_POST["presunout_odkud"]);
  // $presunout_odkud =  $_POST["presunout_odkud"];
+  $presunout_cesta =  $_POST["presunout_cesta"];
   $presunout_co =  $_POST["presunout_co"];
   $presunout_kam =  $_POST["presunout_kam"]; 
-  $cil_souboru =         "../user/silentroom/338786519/uploads/".$presunout_kam."/".$presunout_co ;
+  $cil_souboru = $presunout_cesta.$presunout_kam."/".$presunout_co ;
 
 
 $adresa_pro_navrat =    ($_POST["navrat"]);
