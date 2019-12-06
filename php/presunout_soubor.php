@@ -2,8 +2,8 @@
 <?php
  // $target_dir = ($_POST["soubor_ke_smazani"]);
  
-  $soubor_k_presunuti =  "../" .($_POST["soubor_k_presunuti"]);
-  $presunout_odkud =  $_POST["presunout_odkud"];
+  $start_souboru =  "../" .($_POST["presunout_odkud"]);
+ // $presunout_odkud =  $_POST["presunout_odkud"];
   $presunout_co =  $_POST["presunout_co"];
   $presunout_kam =  $_POST["presunout_kam"]; 
   $cil_souboru =         "../user/silentroom/338786519/uploads/".$presunout_kam."/".$presunout_co ;
@@ -11,7 +11,7 @@
 
 $adresa_pro_navrat =    ($_POST["navrat"]);
   
-  	rename($soubor_k_presunuti,$cil_souboru);;
+  	rename($start_souboru,$cil_souboru);;
   
 if (file_exists($soubor_k_presunuti)) {
     

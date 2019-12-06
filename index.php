@@ -1073,40 +1073,41 @@ define ("ROWS", 10);
 	
              <div class="modal-body">
      		       
-                      <!--    <p id="modal_presunout_label" class="modal-title">  Soubor   </p>     -->
+                      <p id="modal_presunout_label" class="modal-title">  Soubor   </p>     
 					 
-					 		
+		              <div class="form-group"  style="display:none_xxxxxxxxxxxx">
 						<label for="presunout_co">přesunout co:</label>
 						<input id="modal_presunout_co" type="text" class="form-control"  value="objekt_presunu_nevložen " name="presunout_co">
-				
+				      </div> 
 					 
-					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
-						<label for="soubor_k_presunuti">přesunout odkud:</label>
-						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor k přesunu nevložen " name="soubor_k_presunuti">	
+                      <div class="form-group"  style="display:none_xxxxxxxxxxxx">
+						<label for="presunout_odkud">presunout_odkud:</label>
+						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor k přesunu nevložen " name="presunout_odkud">	
 					  </div> 
 					  
+
+									  
 					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
-						<label for="presunout_odkud">přesunout ze složky:</label>
-						<input id="" type="text" class="form-control"  value=" název  " name="presunout_odkud">	
+						<label for="presunout_odkud_label">přesunout odkud label:</label>
+						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="vložit php aktualní složky" name="presunout_odkud_label">	
 					  </div>				
-										 							 
-					  <div class="form-group"  style="display:none">
-						<label for="navrat">navrat:</label>
-						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>
-			 
+
 						
 					  <div class="form-group">
 						  <label for="modal_presunout_kam">přesunout kam:</label>
-						  <select class="form-control" id="modal_presunout_kam">
-							<option>1</option>
-							<option>2</option>
+						  <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
+							<option>vodis</option>
+							<option>2_5_1</option>
 							<option>3</option>
 							<option>4</option>
 						  </select>
 					  </div> 
 						
-						
+					  <div class="form-group"  style="display:none">
+						<label for="navrat">navrat:</label>
+						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+					  </div>
+			 						
 				
 			  		
             </div>	  
@@ -1321,13 +1322,13 @@ wavesurfer.on('ready', function () {
      $(".presunout").click(function(){ 
     
 	var val = this.getAttribute("value");
-	var cil_presunu = "nic";
 	var label_val = this.getAttribute("name");
 
+	document.getElementById("modal_presunout_odkud").setAttribute("value", val);
     document.getElementById("modal_presunout_label").innerHTML = label_val;
 	document.getElementById("modal_presunout_co").value = label_val;
-	 document.getElementById("modal_presunout_odkud").setAttribute("value", val);
-	 // document.getElementById("modal_presunout_kam").setAttribute("value", cil_presunu);
+
+	 
 	
   });  
  
