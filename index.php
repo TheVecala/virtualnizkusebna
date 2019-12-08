@@ -48,14 +48,7 @@ if(isset($_SESSION['befelemepesseveze']))
  if(isset($_SESSION['skin']))
 	   {   $skin =$_SESSION['skin'];
     } else { $skin=  "skin1" ; } ; 	
-			 
- if(true  )
-	   {  ?> <script> zobraz() </script>   <?php
-	     
-    } else {  } ; 	
-			 
-					 
-			 
+			   			 
  ?> 
 
 
@@ -281,8 +274,7 @@ td  {
 								  {    
 								?>
 								<div  class=" ">	<!-- tlačítko změny složky    -->  
-																
-									
+																									
 								  <tr style="  border-width: 10px;  border-style: solid;    "  >
                                    <td style="padding: 0.2rem; max-width: 339px; "> 
 								  
@@ -293,11 +285,9 @@ td  {
                                        <div style=" font-family: Times, serif;  <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  font-size:1.5em;;   color:white " ; } ; ?>  ">
 									   
 									<?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
-								   							   
-								   	
+								   							   								   	
 									 <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 	
-									
-									
+																		
 									 <?php  
   									 }
 									 
@@ -307,21 +297,16 @@ td  {
 									  <?php 
 									 	 }
 									 ; ?>
-									 
-									 
-									 
+									 									 
 									 <?php echo $pole_slozek[$x] ?>
                                        </div>
-                                
-																		
+                                																		
 								   </td> 
  
 							       <td>
 								   
 								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
-								   							   
-								    
-									
+								   							   								
 									 <?php  
   									 }
 									 
@@ -333,8 +318,7 @@ td  {
 									  <?php 
 									 	 }
 									 ; ?>
-									 
-									 
+									 									 
 									</form>							   
 								   	<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
 									  SMAZAT
@@ -349,7 +333,6 @@ td  {
 								}
 						}
 						?>
-
 		  
 						</tbody>
 						</table>
@@ -528,7 +511,7 @@ td  {
 								 if ($FileType == "mp3" or $FileType == "wav")
 								 {    
 						          ?>  
-									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >										 			
+									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >										 			
 									   OTEVŘÍT V LOOPERU
 									</button>    
 								  <?php
@@ -539,7 +522,7 @@ td  {
 										<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
 								    </a>
 									  
-									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-info btn-VZ  presunout"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
+									<button    value="<?php echo $soub;?>" name="<?php echo $label_soub;?>" type="button" class="btn btn-sm btn-info btn-VZ  presunout"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
 									  PŘESUNOUT
 									</button> 
 								  							 								  
@@ -669,11 +652,11 @@ define ("ROWS", 10);
       </div> <!-- konec třetí sloupec   -->
       	 </div>
       </div> <!--   konec druhejstřetím sloupec   -->  
-      
+     <!--   <img src="/data/singer.png" alt="složka"  >       --> 
     </div> <!-- row -->
 	
 	 
-<img src="/data/singer.png" alt="složka"  > 
+
  </div>     <!-- container -->
  
  
@@ -1062,7 +1045,7 @@ define ("ROWS", 10);
 
       <!-- Modal Header -->
       <div class="modal-header">
-	      presunout soubor:
+	      přesunout soubor
 		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
@@ -1076,36 +1059,44 @@ define ("ROWS", 10);
                       <p id="modal_presunout_label" class="modal-title"  style="display:none">  Soubor   </p>     
 					 
 		              <div class="form-group"  style="display:none_xxxxxxxxxxxx">
-						<label for="presunout_co">přesunout co:</label>
-						<input id="modal_presunout_co" type="text" class="form-control"  value="objekt_presunu_nevložen " name="presunout_co">
+						<label for="presunout_co">přesunout:</label>
+						<input id="modal_presunout_co" type="text" class="form-control"  value="" name="presunout_co">
 				      </div> 
 					 
-                      <div class="form-group"  style="display:none_xxxxxxxxxxxx">
+                      <div class="form-group"  style="display:none">
 						<label for="presunout_odkud">presunout_odkud:</label>
-						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor k přesunu nevložen " name="presunout_odkud">	
+						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor k přesunu nevložen" name="presunout_odkud">	
 					  </div> 
 					  
 					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
-						<label for="presunout_odkud_label">přesunout odkud label:</label>
-						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="vložit php aktualní složky" name="presunout_odkud_label">	
+						<label for="presunout_odkud_label">ze složky:</label>
+						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="<?php echo $slozka_souboru;?>" name="presunout_odkud_label">	
 					  </div>				
 						
 					  <div class="form-group">
-						  <label for="modal_presunout_kam">přesunout kam:</label>
+						  <label for="modal_presunout_kam">do složky:</label>
 						  <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
 						  
 						  
-							<option>vodis</option>
-							<option>2_5_1</option>
-							<option>3</option>
-							<option>4</option>
-							
-							
+		  		<?php 
+						for($x = 0; $x < $delka_pole_slozek; $x++) {
+						
+							  if ($pole_slozek[$x] == ".")  { continue; };
+							  if ($pole_slozek[$x] == "..")  { continue; };
+						      $soub = ($slozka_slozek.$pole_slozek[$x]);
+						      $label_soub = "test";
+						      $label_soub = ($pole_slozek[$x]);  
+							  
+						      if(is_dir($soub))
+								
+								{    echo   	"<option>".$pole_slozek[$x]."</option>" ; }
+						}
+				?>
 							
 						  </select>
 					  </div> 
 	
-					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
+					  <div class="form-group"  style="display:none">
 						<label for="presunout_cesta">přesunout cesta:</label>
 						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="../user/silentroom/338786519/uploads/" name="presunout_cesta">	
 					  </div>				
@@ -1124,7 +1115,7 @@ define ("ROWS", 10);
       <!-- Modal footer -->
             <div class="modal-footer">
 	  						 
-				<button  id= "presun" type="submit" class="btn btn-primary">přesunout</button>
+				<button  id= "presun" type="submit" class="btn btn-primary">PŘESUNOUT</button>
  				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
 	  
  
