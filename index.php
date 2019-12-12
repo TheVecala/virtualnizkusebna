@@ -183,14 +183,14 @@ td  {
 			
 			
 			 <li class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-        KAPELA
-      </a>
-      <div class="dropdown-menu">
-        <a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">PROFIL</a> 
-        <a class="dropdown-item" href="/php/login/logout.php">ODHLÁSIT SE</a>
-      </div>
-    </li>
+			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+				KAPELA
+			  </a>
+			  <div class="dropdown-menu">
+				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">PROFIL</a> 
+				<a class="dropdown-item" href="/php/login/logout.php">ODHLÁSIT SE</a>
+			  </div>
+           </li>
 			
 			
           
@@ -218,13 +218,13 @@ td  {
 <div class="container-fluid">
      <div id="vycpavka" id="kxxxx" style="min-height:58px"> </div>               
 
-	
+  
+
+
     <div class="row">
 	
 
-	
-	
-	
+
         <div id="adresare" class="col-md-4" style="margin-bottom: 5px">  <!--  prvni sloupec   -->
 		      
 
@@ -428,14 +428,15 @@ td  {
 		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
-				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>   				 
+				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
+						  
+                          <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >NAHRÁT</button> 
+		 
+					  
 			           </div>
-
 	
 	               </div>	
-				   
-				
-				
+				   				
                </div>  
  			
 
@@ -815,12 +816,12 @@ define ("ROWS", 10);
 	   	   	<form action="/php/upload_uni.php" method="post" enctype="multipart/form-data"  style="display:inline">
 			 
 					<div class="form-group">
-					   <label for="fileToUpload">Vložit soubor:</label>
+					   <label for="fileToUpload">Vybrat soubor:</label>
 			    	   <input type="file" class="form-control" name="fileToUpload">
 				    </div>				
 					
 					 
-					 <button  id= "nahrat" type="submit" class="btn btn-primary">nahrát soubor</button>
+					 <button  id= "nahrat" type="submit" class="btn btn-primary">VLOŽIT SOUBOR</button>
 					
 				 
 					  <div class="form-group"  style="display:none">
@@ -1125,6 +1126,38 @@ define ("ROWS", 10);
     </div>
   </div>
 </div>  
+
+    <!-- The Modal nahrat_zvuk -->
+<div class="modal" id="modal_nahrat_zvuk">
+  <div class="modal-dialog  ">
+    <div class="modal-content bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+            <p>record</p>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->  
+	  
+             <div class="modal-body">
+     	    	<div class="container text-center">
+					
+					<button  id="record_button" class="btn btn-primary">ZAČÍT NAHRÁVAT</button> <!--  nahrávání   -->
+					<ul id="playlist"></ul> <!--  cíl nahrávání   -->
+               </div>		  		
+            </div>	  
+
+      <!-- Modal footer -->
+            <div class="modal-footer">	 
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
+            </div>
+	  
+    </div>
+  </div>
+</div>
+  
+
 </div>  <!-- KONEC MODALS -->
   
   
@@ -1423,6 +1456,51 @@ wavesurfer.on('ready', function () {
 <script> zobraz() </script> 
 
 
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+  <script src="https://unpkg.com/mic-recorder-to-mp3"></script>  
+  <script src="js/index.js"></script>
+  <script>
+    const button = document.getElementById('record_button');
+    const recorder = new MicRecorder({
+      bitRate: 128
+    });
+
+    button.addEventListener('click', startRecording);
+
+    function startRecording() {
+      recorder.start().then(() => {
+        button.textContent = 'Zastavit nahrávání';
+        button.classList.toggle('btn-danger');
+        button.removeEventListener('click', startRecording);
+        button.addEventListener('click', stopRecording);
+      }).catch((e) => {
+        console.error(e);
+      });
+    }
+
+    function stopRecording() {
+      recorder.stop().getMp3().then(([buffer, blob]) => {
+        console.log(buffer, blob);
+        const file = new File(buffer, 'music.mp3', {
+          type: blob.type,
+          lastModified: Date.now()
+        });
+
+        const li = document.createElement('li');
+        const player = new Audio(URL.createObjectURL(file));
+        player.controls = true;
+        li.appendChild(player);
+        document.querySelector('#playlist').appendChild(li);
+
+        button.textContent = 'Začít nahrávat';
+        button.classList.toggle('btn-danger');
+        button.removeEventListener('click', stopRecording);
+        button.addEventListener('click', startRecording);
+      }).catch((e) => {
+        console.error(e);
+      });
+    }
+  </script>
  </body>
 </html>
 
