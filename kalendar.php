@@ -204,20 +204,12 @@ td  {
            </li>
 			
 			
-			 <li class="nav-item dropdown">
-			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-				ZKUŠEBNA
-			  </a>
-			  <div class="dropdown-menu">
-				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 
-				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
-			  </div>
-           </li>
-				
-			
           
 			<li class="nav-item  ">
               <a class="nav-link"  href="#"  data-toggle="modal" data-target="#modal_skin">NASTAVENÍ</a>
+            </li>			
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">ZKUŠEBNA</a>
             </li>			
             <li class="nav-item">
               <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">OFFLINE</a>
@@ -241,449 +233,44 @@ td  {
      <div id="vycpavka" id="kxxxx" style="min-height:58px"> </div>               
 
   
+       <div class="row">
+	   
+	  
+	   
+	   
+		  <div class="col-md-8" style="margin-bottom: 5px" >   <!-- čtvrtý sloupec   -->
 
 
-    <div class="row">
-	
-
-
-        <div id="adresare" class="col-md-4" style="margin-bottom: 5px">  <!--  prvni sloupec   -->
-		      
-
-			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
+  			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
-	              <h2 style="text-align:left; color:red ; display: inline ">  PLAYLIST </h2> 
+	              <h2 style="text-align:left; color:red ; display: inline ">  ČASOVÝ ROZVRH ZKUŠEBNY </h2> 
 				  
-				         <div  style="display: none">
-						   <span class="card-title"> PROJEKT: </span> 
-						   <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
+				         <div  style="display: none_XXXXXXX">
+						   <span class="card-title"> ZKUŠEBNA: </span> 
+						   <h2 style="display: inline"> Královopolská </h2>
 				        </div>
 				     
 					 <div style="text-align:right; display: inline"   >		                
-					   	  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
+					   	  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target=" "> zabookovat zkoušku </button>	                
+					   	  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target=" "> vybrat zkušebnu </button>
 				     </div>			  	
 	           </div>			  
             </div> <!--     -->
-	      
-		  
-            <div> <!--  playlist   -->
-			
-	
 
 
-		 
-		
-			  
-			  <div class=" "> <!-- zmšna složky    -->
-			
-		  
-		  
-					  <table class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 10px;  border-style: solid;    " >
-						<thead>
-						  
-						</thead>
-						<tbody>
-				  
-						<?php 
-						for($x = 0; $x < $delka_pole_slozek; $x++) {
-							  if ($pole_slozek[$x] == ".")  { continue; };
-							  if ($pole_slozek[$x] == "..")  { continue; };
-						   $soub = ($slozka_slozek.$pole_slozek[$x]);
-						   $label_soub = " test";
-						   $label_soub = ($pole_slozek[$x]);  
-							if(is_dir($soub))
-								
-								  {    
-								?>
-								<div  class=" ">	<!-- tlačítko změny složky    -->  
-																									
-								  <tr style="  border-width: 10px;  border-style: solid;    "  >
-                                   <td style="padding: 0.2rem; max-width: 339px; "> 
-								  
-									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
-									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
-									
-                                       <div style=" font-family: Times, serif;  <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  font-size:1.5em;;   color:white " ; } ; ?>  ">
-									   
-									<?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
-								   							   								   	
-									 <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 	
-																		
-									 <?php  
-  									 }
-									 
-									 else
-									  { ?>
-								       <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >   
-									  <?php 
-									 	 }
-									 ; ?>
-									 									 
-									 <?php echo $pole_slozek[$x] ?>
-                                       </div>
-                                																		
-								   </td> 
- 
-							       <td>
-								   
-								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
-								   							   								
-									 <?php  
-  									 }
-									 
-									 else
-									  { ?>
-								         <button id=" " type="submit" style=" max-width: 120px ; display: inline" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
-                                          OTEVŘÍT
-									     </button>
-									  <?php 
-									 	 }
-									 ; ?>
-									 									 
-									</form>							   
-								   	<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
-									  SMAZAT
-									</button> 
-								   								   
-								   </td> 
-								   
-								  </tr> 
-								</div>	
-								 
-								<?php
-								}
-						}
-						?>
-		  
-						</tbody>
-						</table>
- 
-				  </div>
-								
-		 
-
-
-			
-            </div> <!-- konec playlistu    -->
- 
-	
-		</div>  <!--  konec prvniho sloupce   -->  
-
-	 <div class="col-md-8" > <!--   druhejstřetím sloupec   -->    
-		 <div class="row">
-		 
-		 
-	        <div id="wave_jumbo"  style="display:nonexxxxx"  class="col-md-12">  <!--  nulty sloupec   -->
-		      
-
-			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
-               <div class="card-body"> 
-			   
-			   
-			            <div  style="text-align:left; display: inline ;" >
-					    	<h2 style="text-align:left;; color:red ; display: inline "> LOOPER </h2> 
-						 
-						</div>
-						
-						<div style="text-align:right ; display: inline  ">
-							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/icons8-play-50-2.png" alt="play"></button>
-							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-pause-50-2.png" alt="pause"></button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-rewind-50.png" alt="od začátku"></button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50.png" alt="loop"></button>
-							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
-							 
-						  <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-						   <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> </button> 
-					       
-						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>
-						
-					       
-					    </div>
-						<div style="  ">
-							   <img src="/data/icons8-sound-wave-50.png" alt="složka"  >    
-							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
-							 </h4> 
-
-				        </div>
-				        <div id="test_delky">
-						</div>	
-				 
-					
-	           </div>
-		 
-            </div> <!--     -->
-	      
-	
-	
-			<div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
-							 
-							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
-							<div id="waveform" style="display:none">  
-						
-							</div>
-			
-							
-			
-			</div>
-   	
-        </div>   
-
-		 
-		 
-		 
-		 
-		 
-		<div  id="k" class="col-md-6" style="margin-bottom: 5px"> <!--  druhy sloupec   -->
-		
-	      <div  class=" ">   <!-- hlavička sekce složek   -->
-			  
-               <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
-                   <div class="card-body"> 
-				   				 		
-			  	       <div style="display: inlinexxxxxx; color:white; background-color: #27a243; padding:3px; ">
-					   			   	
-						 <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 	
-					      <h3 style="display: inline; color:white;  "> <?php echo $slozka_souboru 	?>  </h3> 
-					   </div>
-			  	    				   
-		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
-					   
-  				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
-				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
-						  
-                          <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >NAHRÁT</button> 
-		 
-					  
-			           </div>
-	
-	               </div>	
-				   				
-               </div>  
- 			
-
-			
-				<div  class="card bg-success text-white">   <!--  formular_vytvoreni_slozky  -->
-				 
-				</div>
-				
-				
- 
-
-          </div>   <!-- konec hlavičky sekce složek   -->
-		
-
-
-			   
-            <!--  odstranenej konec div   -->
- 
- 
- 
-			<div class="card bg-success text-white">
-			   
-			   <div id="formular_vlozeni_souboru" class="card-body" style="display:none">  
-							 
-			
-			   </div>
-			 
-			</div>
-			 
-			   <div>  <!--  vypis souboru   -->          
-								 
-	 				   
-					<?php 
-
-					for($x = 0; $x < $delka_pole_souboru; $x++) {
-
-					   $soub = ($slozka_slozek.$slozka_souboru."/".$pole_souboru[$x]);
-					   $label_soub = ($pole_souboru[$x]);  
-					   if(is_file($soub))
-						{    
-						?>
-						  
-							   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
-							   
-							    <div class="card-header" style= "  "> 
-							      <div style="color:black  ; background-color:white ;  display: inline" >	
-										 <!--<img src="/data/icons8-sound-wave-50.png" alt="-"  > 	 -->  	 	
-									   <?php echo $pole_souboru[$x]; ?>
-							      </div> 
-								 
-							    </div> 
- 								    							   
-							   
-							     <div id=" " class="card-body   stitek_valu " style="   " > 
-							   
-								 <?php
-								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
-								 if ($FileType == "mp3" or $FileType == "wav" )
-								 {    
-						         ?>
- 							 
-								  <audio controls preload="metadata" style=" width:130px___xxxxxxxxxx; height: 30px;  display: inline" >
-	                                  <source src="<?php echo $soub; ?>" type="audio/mpeg">
-	                                   Tak tohle neumí tvůj prohlížeč přehrát.
-                                  </audio>
-								  
-								 <?php
-								  }  
-						         ?> 
-								 
-								  <?php
-								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
-								 if ($FileType == "mp3" or $FileType == "wav")
-								 {    
-						          ?>  
-									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >										 			
-									   OTEVŘÍT V LOOPERU
-									</button>    
-								  <?php
-								  }  
-						          ?> 
-                                  								  
-								    <a href="<?php echo $soub; ?>" download style="  display: inline"> 
-										<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
-								    </a>
-									  
-									<button    value="<?php echo $soub;?>" name="<?php echo $label_soub;?>" type="button" class="btn btn-sm btn-info btn-VZ  presunout"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
-									  PŘESUNOUT
-									</button> 
-								  							 								  
-									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete">		
-									  SMAZAT
-									</button> 
-								  
-								 </div> <!--card body  -->
-							   </div> <!-- card   -->
-						   							
-						<?php
-						}
-					}
-					?>
- 		 			
-			</div> <!--  konec vypis souboru   --> 
-			  		   		   
-       </div  > <!-- konec druhý sloupec   -->
-  
-  
-        <div class="col-md-6" style="margin-bottom: 5px" > <!-- třetí sloupec   -->
-       
-      
-<?php
-define ("ROWS", 10);
- require "php/login/connect.php";
- 
-  if (!isset($_GET["celkem"]))  
-  {
-    $vysledek=mysql_query("select count(*) as pocet from $aktualni_diskuse ");
-    $zaznam=mysql_fetch_array($vysledek);
-    $celkem=$zaznam["pocet"];
-  }
-  else
-  {
-      $celkem=$_GET["celkem"];
-  }
-?> 
-  
-<?php  
-  if ($celkem>ROWS)
-  {
-    if (!isset($_GET["od"])) $od=1; else $od=$_GET["od"];
-    $vysledek=mysql_query("select cas, vzkaz, jmeno from $aktualni_diskuse order by cas desc"." limit ".($od-1).", ".ROWS);
-  }
-  else
-  {
-    $vysledek=mysql_query("select * from $aktualni_diskuse order by cas desc") ;
-  }
-?> 
-  
- <div>   <!-- hlavička třetího sloupce  -->
-      <div id="diskuse" style="font-size:1.5em">
-                <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
-                   <div class="card-body"> 
-				    
-		               <h2 style="text-align:left; color:red;  display: inline ">  TEXTY </h2> 
-					   
-					   <div style="text-align:right;  display: inline">
-                        <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
-           			   </div>  	
-					   
-					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.8em">
-						   <?php	   
-						   echo ' '.$od.'-';
-						   echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
-						   echo ' z '. $celkem.'  ';
-						   ?> 				   
-					   </div> 					   
-	               </div>					   
-               </div> <!--     -->			   
-      </div> 
- 
-    
-   
- </div> <!-- konec hlavička třetího sloupce  -->  
- <div id="prispevek"  style="overflow: auto ">
- <div>   <!-- ovládání třetího sloupce  -->
-   
-  
-	 <div id="navigace" > 
-<?php				
-       if ($od<>1) echo  ' <a href=" '.$_SERVER["PHP_SELF"].'?celkem='.$celkem.'&amp;od=1">  <div id= "exit_tlac" class="btn btn-dark btn-sm" style="font-size:0.6em"  >NEJNOVĚJŠÍ</div></a>   '. "\n";
-
-  
-       if ($od>ROWS) echo ' <a href="'.$_SERVER["PHP_SELF"].'?celkem='.$celkem.'&amp;od='.($od-ROWS).'"> <div id= "exit_tlac"  class="btn btn-dark btn-sm" style="font-size:0.6em">NOVĚJŠÍ</div></a>  '. "\n";
- 
- 
-       if ($od+ROWS<$celkem) echo  '<a href="  '.$_SERVER["PHP_SELF"].'?celkem='.$celkem.'&amp;od='.($od+ROWS).'  ">  <div id= "exit_tlac" class="btn btn-dark btn-sm" style="font-size:0.6em">STARŠÍ</div></a> '. "\n";
- 
- 
-       if ($od<$celkem-ROWS) echo  '<a href="'.$_SERVER["PHP_SELF"].'?celkem='.$celkem.'&amp;od='.($celkem-$celkem%ROWS+1).' "> <div id= "exit_tlac"  class="btn btn-dark btn-sm" style="font-size:0.6em">NEJSTARŠÍ</div></a> '. "\n";
-  ?> 
-       
-	   </div>  
- 
-   
-      
-   
-   
- </div> <!-- konec ovládání třetího sloupce  --> 
-<ul class="list-group sloupec" >
-   
-<?php
-  while ($zaznam=MySQL_Fetch_Array($vysledek))   
-  {
-?>
-    
-     
-	  <li class="list-group-item vzkaz_karta ">
-	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span><br>  
-	   <div style="text-align:right; ">
-	     <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 
-	     <span class="jmeno"  style="font-size:0.9em; ">  <?php echo strip_tags($zaznam["jmeno"])?> &nbsp </span> 
-         <span class="datum"  style="font-size:0.6em; ">  <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?> </span> 
-       </div>
-	   
-      </li>
-	
-
-	<?php 
- }
-?> 
-  </ul>
-  </div>   
-
-      </div> <!-- konec třetí sloupec   -->
-      	 </div>
-      </div> <!--   konec druhejstřetím sloupec   -->  
-     <!--   <img src="/data/singer.png" alt="složka"  >       --> 
-    </div> <!-- row -->
-	
-		  <div class="col-md-6" style="margin-bottom: 5px" >   <!-- čtvrtý sloupec   -->
+   <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
+                   <div class="card-body">
 
 	      <div id='calendar'></div>
+	  </div>	  
+		    </div>
+		  
 
-	  </div> <!-- konec čtvrtý sloupec   --> 
-
+	      </div> <!-- konec čtvrtý sloupec   --> 
+		  
+		  
+		  
+      </div>
  </div>     <!-- container -->
  
  
@@ -1454,12 +1041,12 @@ wavesurfer.on('ready', function () {
       eventLimit: true, // allow "more" link when too many events
       events: [
         {
-          title: 'All Day Event',
-          start: '2019-10-12'
+          title: 'Únikový modul',
+          start: '2019-12-12'
         },  
         {
-          title: 'Click for Google', 
-          start: '2019-08-28'
+          title: 'Silentroom', 
+          start: '2019-12-23'
         }
       ]
     });

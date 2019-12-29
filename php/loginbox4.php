@@ -21,6 +21,7 @@
       <!-- Fixed navbar -->
       <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
         <a class="navbar-brand" href="#">VIRTUÁLNÍ ZKUŠEBNA</a>
+		
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -59,7 +60,9 @@
 	
       <div class="card bg-success text-white"> <!-- hlavní menu -->
        <div class="card-body" style=" text-align:center"> 
-	    <h1 class="card-title"   >  VIRTUÁLNÍ ZKUŠEBNA</h1>
+	    <h1 class="card-title"   >VIRTUÁLNÍ ZKUŠEBNA</h1> 
+	    <h2 class="card-title"   >Autonomní sdílení souborů</h2>
+	    <h2 class="card-title"   >Open-code web app</h2>
         
 	    <button  id="prihlasit"   type="button" class="btn btn-dark prihlasit"  >PŘIHLÁSIT SE</button> 
 	    <button  id="nova_zkusebna"   type="button" class="btn btn-dark nova_zkusebna"  >VYTVOŘIT NOVÝ PROJEKT</button> 
