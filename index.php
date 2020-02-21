@@ -268,20 +268,12 @@ td  {
 		  
             <div> <!--  playlist   -->
 			
-	
-
-
-		 
-		
-			  
+		  
 			  <div class=" "> <!-- zmšna složky    -->
 			
-		  
-		  
+		  		  
 					  <table class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 10px;  border-style: solid;    " >
-						<thead>
-						  
-						</thead>
+						<thead></thead>
 						<tbody>
 				  
 						<?php 
@@ -443,8 +435,71 @@ td  {
 				   				 		
 			  	       <div style="display: inlinexxxxxx; color:white; background-color: #27a243; padding:3px; ">
 					   			   	
-						 <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 	
-					      <h3 style="display: inline; color:white;  "> <?php echo $slozka_souboru 	?>  </h3> 
+						 <div class="dropdown"> 
+							  <button style="display: inline;  " type="button" class=" btn btn-success dropdown-toggle" data-toggle="dropdown">
+							   <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 
+							   <?php echo $slozka_souboru 	?> 
+							  </button>
+							  <div class="dropdown-menu">
+							  
+							 
+
+						<?php 
+						for($x = 0; $x < $delka_pole_slozek; $x++) {
+							  if ($pole_slozek[$x] == ".")  { continue; };
+							  if ($pole_slozek[$x] == "..")  { continue; };
+						   $soub = ($slozka_slozek.$pole_slozek[$x]);
+						   $label_soub = " test";
+						   $label_soub = ($pole_slozek[$x]);  
+							if(is_dir($soub))
+								
+								  {    
+								?>
+								<div  class="dropdown-item">	<!-- tlačítko změny složky    -->  
+																									
+								
+								  
+									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
+									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
+									
+                                       <div> 
+									    <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >   
+									    <?php echo $pole_slozek[$x] ?>
+                                       </div>
+                                																		
+	
+								   
+								    <?php 
+ 									   if ($pole_slozek[$x]==$slozka_souboru)  {   
+  									   }									 
+									   else
+									   { ?>
+								         <button id=" " type="submit" style=" max-width: 120px ; display: inline" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
+                                          OTEVŘÍT
+									     </button>
+									  <?php 
+									 	 }
+									 ; ?>
+	
+									</form>							   
+				   
+
+								</div>	
+								 
+								<?php
+								}
+						}
+						?>
+
+
+	 
+								<a class="dropdown-item" href="#">Link 1</a>
+
+								
+							  </div>
+						 </div> 
+						 
 					   </div>
 			  	    				   
 		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
