@@ -441,8 +441,7 @@ td  {
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
 							  <div class="dropdown-menu">
-							  
-							 
+							  						 
 
 						<?php 
 						for($x = 0; $x < $delka_pole_slozek; $x++) {
@@ -455,36 +454,36 @@ td  {
 								
 								  {    
 								?>
-								<div  class="dropdown-item">	<!-- tlačítko změny složky    -->  
-																									
-								
-								  
+								<div  class="dropdown-item-text">	<!-- tlačítko změny složky    --> 
+	
 									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
 									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
 									
-                                       <div> 
-									    <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >   
-									    <?php echo $pole_slozek[$x] ?>
-                                       </div>
-                                																		
-	
+                                     
 								   
 								    <?php 
  									   if ($pole_slozek[$x]==$slozka_souboru)  {   
   									   }									 
 									   else
 									   { ?>
+								   
+								         <div> 
+									      <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >   
+									      <?php echo $pole_slozek[$x] ?>
+                                         </div>
+	
+								   
 								         <button id=" " type="submit" style=" max-width: 120px ; display: inline" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
-                                          OTEVŘÍT
+                                          OTEVŘÍT <?php echo $pole_slozek[$x] ?>
 									     </button>
+										 										 
 									  <?php 
 									 	 }
 									 ; ?>
 	
 									</form>							   
 				   
-
 								</div>	
 								 
 								<?php
@@ -492,11 +491,6 @@ td  {
 						}
 						?>
 
-
-	 
-								<a class="dropdown-item" href="#">Link 1</a>
-
-								
 							  </div>
 						 </div> 
 						 
