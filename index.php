@@ -252,6 +252,9 @@ td  {
 
 			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
+			     <button data-toggle="collapse" data-target="#playlist_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
+				    <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> 
+			     </button>	
 	              <h2 style="text-align:left; color:red ; display: inline ">  PLAYLIST </h2> 
 				  
 				         <div  style="display: none">
@@ -269,7 +272,7 @@ td  {
             <div> <!--  playlist   -->
 			
 		  
-			  <div class=" "> <!-- zmšna složky    -->
+			  <div  id="playlist_vysuvka" class="collapse show"> <!-- zmšna složky    -->
 			
 		  		  
 					  <table class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 10px;  border-style: solid;    " >
@@ -354,8 +357,6 @@ td  {
 				  </div>
 								
 		 
-
-
 			
             </div> <!-- konec playlistu    -->
  
@@ -374,6 +375,9 @@ td  {
 			   
 			   
 			            <div  style="text-align:left; display: inline ;" >
+						 <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
+					        <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> 
+					     </button>	
 					    	<h2 style="text-align:left;; color:red ; display: inline "> LOOPER </h2> 
 						 
 						</div>
@@ -385,8 +389,7 @@ td  {
 							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50.png" alt="loop"></button>
 							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
 							 
-						  <button id=" " class="btn btn-secondary" data-action=" " style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-						   <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> </button> 
+						 
 					       
 						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>
 						
@@ -406,26 +409,20 @@ td  {
 		 
             </div> <!--     -->
 	      
-	
-	
-			<div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
+	        <div  id="looper_vysuvka" class="collapse show">
+			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
 							 
 							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
 							<div id="waveform" style="display:none">  
 						
 							</div>
 			
-							
-			
-			</div>
-   	
+									
+			 </div>
+          </div>
         </div>   
 
-		 
-		 
-		 
-		 
-		 
+	 
 		<div  id="k" class="col-md-6" style="margin-bottom: 5px"> <!--  druhy sloupec   -->
 		
 	      <div  class=" ">   <!-- hlavička sekce složek   -->
@@ -459,9 +456,7 @@ td  {
 									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
 									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
-									
-                                     
-								   
+								
 								    <?php 
  									   if ($pole_slozek[$x]==$slozka_souboru)  {   
   									   }									 
@@ -469,13 +464,12 @@ td  {
 									   { ?>
 								   
 								         <div> 
-									      <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >   
-									      <?php echo $pole_slozek[$x] ?>
+		 
                                          </div>
-	
-								   
-								         <button id=" " type="submit" style=" max-width: 120px ; display: inline" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
-                                          OTEVŘÍT <?php echo $pole_slozek[$x] ?>
+									   
+								         <button id=" " type="submit" style=" max-width: 333px ; display: inline" class="btn btn-sm btn-warning" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
+                                           <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 
+										   <?php echo $pole_slozek[$x] ?>
 									     </button>
 										 										 
 									  <?php 
@@ -487,15 +481,17 @@ td  {
 								</div>	
 								 
 								<?php
-								}
-						}
-						?>
+								 }
+						         }
+						        ?>
 
 							  </div>
 						 </div> 
 						 
 					   </div>
-			  	    				   
+			  	       <button data-toggle="collapse" data-target="#soubory_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
+					      <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> 
+					   </button>			   
 		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
@@ -516,17 +512,12 @@ td  {
 				 
 				</div>
 				
-				
- 
 
           </div>   <!-- konec hlavičky sekce složek   -->
 		
-
-
 			   
             <!--  odstranenej konec div   -->
- 
- 
+
  
 			<div class="card bg-success text-white">
 			   
@@ -536,10 +527,10 @@ td  {
 			   </div>
 			 
 			</div>
-			 
+	
+	         <div  id="soubory_vysuvka" class="collapse show">
 			   <div>  <!--  vypis souboru   -->          
-								 
-	 				   
+				   
 					<?php 
 
 					for($x = 0; $x < $delka_pole_souboru; $x++) {
@@ -611,7 +602,7 @@ td  {
 					?>
  		 			
 			</div> <!--  konec vypis souboru   --> 
-			  		   		   
+		  </div>	 <!--  konec vysuvka   -->   		   		   
        </div  > <!-- konec druhý sloupec   -->
   
   
@@ -650,7 +641,11 @@ define ("ROWS", 10);
       <div id="diskuse" style="font-size:1.5em">
                 <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
-				    
+				   
+				       <button data-toggle="collapse" data-target="#texty_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
+					      <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> 
+					   </button>	
+				  
 		               <h2 style="text-align:left; color:red;  display: inline ">  TEXTY </h2> 
 					   
 					   <div style="text-align:right;  display: inline">
@@ -667,10 +662,9 @@ define ("ROWS", 10);
 	               </div>					   
                </div> <!--     -->			   
       </div> 
- 
-    
-   
+  
  </div> <!-- konec hlavička třetího sloupce  -->  
+ <div  id="texty_vysuvka" class="collapse show">
  <div id="prispevek"  style="overflow: auto ">
  <div>   <!-- ovládání třetího sloupce  -->
    
@@ -720,7 +714,7 @@ define ("ROWS", 10);
 ?> 
   </ul>
   </div>   
-
+ </div> <!-- konec vysuvka   -->
       </div> <!-- konec třetí sloupec   -->
       	 </div>
       </div> <!--   konec druhejstřetím sloupec   -->  
@@ -729,7 +723,7 @@ define ("ROWS", 10);
 	
 		  <div class="col-md-6" style="margin-bottom: 5px" >   <!-- čtvrtý sloupec   -->
 
-	      <div id='calendar'></div>
+	     <!-- <div id='calendar'></div>   --> 
 
 	  </div> <!-- konec čtvrtý sloupec   --> 
 
@@ -1325,11 +1319,6 @@ var wavesurfer = WaveSurfer.create({
 });
 	
  
-	 
-				
-		 
-				
-				
  //  WaveSurfer.getDuration()
 	
 wavesurfer.on('ready', function () {
@@ -1339,10 +1328,7 @@ wavesurfer.on('ready', function () {
 	 var delka_multi = 3;
 });
 
-
-
-
-  
+ 
   $(".wave_loader").click(function(){ 
     var flek = document.getElementById("vycpavka");
       flek.scrollIntoView(); 
@@ -1390,8 +1376,8 @@ wavesurfer.on('ready', function () {
    
   
    $("#schovat_wave_jumbo").click(function(){ 
-    document.getElementById("waveform").style.display ="none";
-	 //  wavesurfer.empty();
+      // document.getElementById("waveform").style.display ="none";
+	  wavesurfer.empty();
 	
   });
  
@@ -1419,7 +1405,6 @@ wavesurfer.on('ready', function () {
 	
   }); 
   
- 
   
     $("#modal_delete_deleter").click(function(){ 
     var val_ke_smazani = this.getAttribute("value");
@@ -1435,13 +1420,9 @@ wavesurfer.on('ready', function () {
 	document.getElementById("modal_presunout_odkud").setAttribute("value", val);
     document.getElementById("modal_presunout_label").innerHTML = label_val;
 	document.getElementById("modal_presunout_co").value = label_val;
-
-	 
 	
   });  
  
- 
-  
   
  function zobraz() {
   var elmnt = document.getElementById("k");
@@ -1450,7 +1431,6 @@ wavesurfer.on('ready', function () {
   
   
 });
-
 
 </script>
 
