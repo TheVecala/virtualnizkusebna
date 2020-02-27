@@ -48,7 +48,9 @@ if(isset($_SESSION['befelemepesseveze']))
  if(isset($_SESSION['skin']))
 	   {   $skin =$_SESSION['skin'];
     } else { $skin=  "skin1" ; } ; 	
-			   			 
+	
+
+	
  ?> 
 
 
@@ -257,6 +259,8 @@ td  {
 				  
 			     <div style="text-align:right; display: inline"   >		                
 				    <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
+
+					
 				 </div>	
 				 
 	           </div>
@@ -269,7 +273,7 @@ td  {
             <div> <!--  playlist   -->
 			
 		  
-			  <div  id="playlist_vysuvka" class="collapse show"> <!-- zmšna složky    -->
+			  <div  id="playlist_vysuvka" class="collapse  "> <!-- zmšna složky    -->
 			
 		  		  
 					  <table class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 10px;  border-style: solid;    " >
@@ -369,12 +373,9 @@ td  {
 
 			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
                <div class="card-body"> 
-			   
-			   
+			   			   
 			            <div  style="text-align:left; display: inline ;" >
-							
 					    	<h2 style="text-align:left;; color:red ; display: inline "> LOOPER </h2> 
-						 
 						</div>
 						
 						<div style="text-align:right ; display: inline  ">
@@ -383,9 +384,7 @@ td  {
 							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-rewind-50.png" alt="od začátku"></button>
 							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50.png" alt="loop"></button>
 							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
-							 
-						 
-					       
+							  
 						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>
 						
 					       
@@ -406,7 +405,7 @@ td  {
 			   </button>
             </div> <!--     -->
 	      
-	        <div  id="looper_vysuvka" class="collapse show">
+	        <div  id="looper_vysuvka" class="collapse  ">
 			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
 							 
 							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
@@ -486,9 +485,7 @@ td  {
 						 </div> 
 						 
 					   </div>
-			  	       <button data-toggle="collapse" data-target="#soubory_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
-					      <img style="max-height:30px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
-					   </button>			   
+			   
 		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
@@ -506,28 +503,14 @@ td  {
                </div>  
  			
 
-			
-				<div  class="card bg-success text-white">   <!--  formular_vytvoreni_slozky  -->
-				 
-				</div>
-				
-
           </div>   <!-- konec hlavičky sekce složek   -->
 		
 			   
             <!--  odstranenej konec div   -->
 
  
-			<div class="card bg-success text-white">
-			   
-			   <div id="formular_vlozeni_souboru" class="card-body" style="display:none">  
-							 
-			
-			   </div>
-			 
-			</div>
 	
-	         <div  id="soubory_vysuvka" class="collapse show">
+	         <div  id="soubory_vysuvka" class="collapse  ">
 			   <div>  <!--  vypis souboru   -->          
 				   
 					<?php 
@@ -664,7 +647,7 @@ define ("ROWS", 10);
       </div> 
   
  </div> <!-- konec hlavička třetího sloupce  -->  
- <div  id="texty_vysuvka" class="collapse show">
+ <div  id="texty_vysuvka" class="collapse  ">
  <div id="prispevek"  style="overflow: auto ">
  <div>   <!-- ovládání třetího sloupce  -->
    
@@ -1024,14 +1007,12 @@ define ("ROWS", 10);
 
       <!-- Modal body -->
       <div class="modal-body">
-     
-	 
-	 
-	 
+      
+	    <button  id="skin_default" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> skin_default</button>
+	  	<button  id="skin_mini" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> mini</button>
+
 	 <form id="form" name="form" method="post" action="php/zmenit_skin.php">
  
-
-
  <div class="form-check">
   <label class="form-check-label">
     <input type="radio" class="form-check-input" name="skin" value="skin1">DEFAULT
@@ -1039,23 +1020,19 @@ define ("ROWS", 10);
 </div>
 <div class="form-check">
   <label class="form-check-label">
-    <input type="radio" class="form-check-input " disabled name="skin" value="skin2">FUNKY
+    <input type="radio" class="form-check-input "   name="skin" value="skin2">FUNKY
   </label>
 </div>
 <div class="form-check  ">
   <label class="form-check-label">
-    <input type="radio" class="form-check-input " disabled name="skin" value="skin3">MINI
+    <input type="radio" class="form-check-input "   name="skin" value="skin3">MINI
   </label>
 </div> 
 
-
    <button  id= "odeslat" type="submit" class="btn btn-primary">NASTAVIT</button>
   
-
 </form> 
 	 
-	 	  
-	
       </div>
       <!-- Modal footer -->
       <div class="modal-footer">   
@@ -1421,8 +1398,25 @@ wavesurfer.on('ready', function () {
     document.getElementById("modal_presunout_label").innerHTML = label_val;
 	document.getElementById("modal_presunout_co").value = label_val;
 	
+  });
+  
+    $("#skin_default").click(function(){ 
+     $("#playlist_vysuvka").collapse('show') ;  
+     $("#looper_vysuvka").collapse('show');  
+     $("#soubory_vysuvka").collapse('show');  
+     $("#texty_vysuvka").collapse('show') ;
+	 $("#modal_skin").modal("hide");
+	
+  });
+    $("#skin_mini").click(function(){ 
+     $("#playlist_vysuvka").collapse('hide') ;  
+     $("#looper_vysuvka").collapse('hide');  
+     $("#soubory_vysuvka").collapse('hide');  
+     $("#texty_vysuvka").collapse('hide'); 
+	 $("#modal_skin").modal("hide");
+	
   });  
- 
+ // document.getElementById("playlist_vysuvka").setAttribute("class","show");
   
  function zobraz() {
   var elmnt = document.getElementById("k");
@@ -1508,13 +1502,18 @@ wavesurfer.on('ready', function () {
 </script> 
 
 
-<script> zobraz() </script> 
+<script> zobraz(); //k ničemu asi
+
+    
+  
+ 
+	</script> 
 
 
-  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> 
   <script src="https://unpkg.com/mic-recorder-to-mp3"></script>  
   <script src="js/index.js"></script>
-  <script>
+  <script>   //recorder 
     const button = document.getElementById('record_button');
     const recorder = new MicRecorder({
       bitRate: 128
