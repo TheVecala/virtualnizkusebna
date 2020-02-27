@@ -252,20 +252,17 @@ td  {
 
 			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
-			     <button data-toggle="collapse" data-target="#playlist_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-				    <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> 
-			     </button>	
-	              <h2 style="text-align:left; color:red ; display: inline ">  PLAYLIST </h2> 
+	
+	             <h2 style="text-align:left; color:red ; display: inline ">  PLAYLIST </h2> 
 				  
-				         <div  style="display: none">
-						   <span class="card-title"> PROJEKT: </span> 
-						   <h2 style="display: inline"> <?php echo $_SESSION['kapela'] ; ?> </h2>
-				        </div>
-				     
-					 <div style="text-align:right; display: inline"   >		                
-					   	  <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
-				     </div>			  	
-	           </div>			  
+			     <div style="text-align:right; display: inline"   >		                
+				    <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
+				 </div>	
+				 
+	           </div>
+			     <button data-toggle="collapse" data-target="#playlist_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px;  background: #27a243;">
+				    <img style="max-height:30px;" src="/data/ikona_colapsedown3.png" alt="minimize"> 
+			     </button>			   
             </div> <!--     -->
 	      
 		  
@@ -375,9 +372,7 @@ td  {
 			   
 			   
 			            <div  style="text-align:left; display: inline ;" >
-						 <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-					        <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> 
-					     </button>	
+							
 					    	<h2 style="text-align:left;; color:red ; display: inline "> LOOPER </h2> 
 						 
 						</div>
@@ -406,7 +401,9 @@ td  {
 				 
 					
 	           </div>
-		 
+		       <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+			     <img style="max-height:30px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
+			   </button>
             </div> <!--     -->
 	      
 	        <div  id="looper_vysuvka" class="collapse show">
@@ -489,8 +486,8 @@ td  {
 						 </div> 
 						 
 					   </div>
-			  	       <button data-toggle="collapse" data-target="#soubory_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-					      <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> 
+			  	       <button data-toggle="collapse" data-target="#soubory_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+					      <img style="max-height:30px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
 					   </button>			   
 		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
 					   
@@ -503,7 +500,9 @@ td  {
 			           </div>
 	
 	               </div>	
-				   				
+				   <button data-toggle="collapse" data-target="#soubory_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+				      <img style="max-height:30px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
+				   </button>				
                </div>  
  			
 
@@ -642,9 +641,7 @@ define ("ROWS", 10);
                 <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
 				   
-				       <button data-toggle="collapse" data-target="#texty_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; ">
-					      <img style="max-height:30px" src="/data/icons8-minimize-window-64.png" alt="minimize"> 
-					   </button>	
+				     	
 				  
 		               <h2 style="text-align:left; color:red;  display: inline ">  TEXTY </h2> 
 					   
@@ -659,7 +656,10 @@ define ("ROWS", 10);
 						   echo ' z '. $celkem.'  ';
 						   ?> 				   
 					   </div> 					   
-	               </div>					   
+	               </div>	
+				   <button data-toggle="collapse" data-target="#texty_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+					    <img style="max-height:30px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
+				   </button>
                </div> <!--     -->			   
       </div> 
   
