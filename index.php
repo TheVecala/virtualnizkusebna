@@ -378,22 +378,11 @@ td  {
 					    	<h2 style="text-align:left;; color:red ; display: inline "> LOOPER </h2> 
 						</div>
 						
-						<div style="text-align:right ; display: inline  ">
-							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/icons8-play-50-2.png" alt="play"></button>
-							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-pause-50-2.png" alt="pause"></button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-rewind-50.png" alt="od začátku"></button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50.png" alt="loop"></button>
-							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
-							  
-						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>
-						
-					       
-					    </div>
-						<div style="  ">
-							   <img src="/data/icons8-sound-wave-50.png" alt="složka"  >    
+
+						<div style="display: inline ;  ">
+							 <img src="/data/icons8-sound-wave-50.png" alt="složka"  >    
 							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
 							 </h4> 
-
 				        </div>
 				        <div id="test_delky">
 						</div>	
@@ -406,12 +395,23 @@ td  {
             </div> <!--     -->
 	      
 	        <div  id="looper_vysuvka" class="collapse  ">
+			
+
+			
 			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
 							 
-							<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
-							<div id="waveform" style="display:none">  
-						
-							</div>
+						<div style="text-align:right ; display: inline  ">
+							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/icons8-play-50-2.png" alt="play"></button>
+							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-pause-50-2.png" alt="pause"></button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-rewind-50.png" alt="od začátku"></button>
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50.png" alt="loop"></button>
+							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> LOOP off</button>
+							  
+						   <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>				       
+					    </div>	
+						<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
+						<div id="waveform" style="display:none">  						
+						</div>
 			
 									
 			 </div>
@@ -542,7 +542,7 @@ td  {
 								 {    
 						         ?>
  							 
-								  <audio controls preload="metadata" style=" width:130px___xxxxxxxxxx; height: 30px;  display: inline" >
+								  <audio onplay="pauseOthers(this);" controls preload="metadata" style=" width:130px___xxxxxxxxxx; height: 30px;  display: inline" >
 	                                  <source src="<?php echo $soub; ?>" type="audio/mpeg">
 	                                   Tak tohle neumí tvůj prohlížeč přehrát.
                                   </audio>
@@ -1011,7 +1011,7 @@ define ("ROWS", 10);
 	    <button  id="skin_default" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> skin_default</button>
 	  	<button  id="skin_mini" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> mini</button>
 
-	 <form id="form" name="form" method="post" action="php/zmenit_skin.php">
+	<!--  <form id="form" name="form" method="post" action="php/zmenit_skin.php">
  
  <div class="form-check">
   <label class="form-check-label">
@@ -1031,7 +1031,7 @@ define ("ROWS", 10);
 
    <button  id= "odeslat" type="submit" class="btn btn-primary">NASTAVIT</button>
   
-</form> 
+</form>  -->
 	 
       </div>
       <!-- Modal footer -->
@@ -1316,6 +1316,7 @@ wavesurfer.on('ready', function () {
     wavesurfer.load(val);
 	
     document.getElementById("label_wave_jumbo").innerHTML = label_val;
+	$("#looper_vysuvka").collapse('show'); 
 	
   }); 
 
@@ -1418,6 +1419,11 @@ wavesurfer.on('ready', function () {
   });  
  // document.getElementById("playlist_vysuvka").setAttribute("class","show");
   
+  function pauseOthers(aktualni) {
+                $("audio").not(aktualni).each(function (index, audio) {
+                    audio.pause();
+                });
+            };
  function zobraz() {
   var elmnt = document.getElementById("k");
   elmnt.scrollIntoView();
@@ -1502,12 +1508,7 @@ wavesurfer.on('ready', function () {
 </script> 
 
 
-<script> zobraz(); //k ničemu asi
-
-    
-  
- 
-	</script> 
+<script> zobraz(); //k ničemu asi	</script> 
 
 
   <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> 
