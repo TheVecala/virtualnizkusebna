@@ -642,8 +642,8 @@ define ("ROWS", 10);
 						   ?> 				   
 					   </div> 					   
 	               </div>	
-				   <button data-toggle="collapse" data-target="#texty_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
-					    <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
+				   <button id="sipka_" data-toggle="collapse" data-target="#texty_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+					    <img id="sipka" style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
 				   </button>
                </div> <!--     -->			   
       </div> 
@@ -1002,7 +1002,7 @@ define ("ROWS", 10);
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p class="modal-title">ZMĚNIT ROZVRŽENÍ STRÁNKY</p>
+        <p class="modal-title">NASTAVENÍ</p>
 		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
@@ -1010,8 +1010,8 @@ define ("ROWS", 10);
       <!-- Modal body -->
       <div class="modal-body">
       
-	    <button  id="skin_default" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> skin_default</button>
-	  	<button  id="skin_mini" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> mini</button>
+	    <button  id="skin_default" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> rozbalit vše /desktop/</button>
+	  	<button  id="skin_mini" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> sbalit vše /mobil/</button>
 
 	<!--  <form id="form" name="form" method="post" action="php/zmenit_skin.php">
  
@@ -1182,7 +1182,7 @@ define ("ROWS", 10);
 
       <!-- Modal Header -->
       <div class="modal-header">
-            <p>record</p>
+            <p>RECORD</p>
 		  <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
@@ -1190,7 +1190,9 @@ define ("ROWS", 10);
 	  
              <div class="modal-body">
      	    	<div class="container text-center">
-					
+					 <p>Nahrávka se ukládá do dočasné paměti a je třeba ji manuálně uložit pomocí pravého tlačítka myši.</p>
+					 <p>Je možno udělat více nahrávek, poté poslechnout a případně uložit.</p>
+					 <p>Pozor! Znovunačtení stránky způsobí smazání neuložených nahrávek.</p>
 					<button  id="record_button" class="btn btn-primary">ZAČÍT NAHRÁVAT</button> <!--  nahrávání   -->
 					<ul id="playlist"></ul> <!--  cíl nahrávání   -->
                </div>		  		
