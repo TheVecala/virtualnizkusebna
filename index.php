@@ -368,7 +368,7 @@ td  {
 		 <div class="row">
 		 
 		 
-	        <div id="wave_jumbo"  style="display:nonexxxxx"  class="col-md-12">  <!--  nulty sloupec   -->
+	        <div id="wave_jumbo"  style="display:nonexxxxx; margin-bottom: 5px;"  class="col-md-12">  <!--  nulty sloupec   -->
 		      
 
 			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
