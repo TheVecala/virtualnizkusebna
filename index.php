@@ -49,6 +49,25 @@ if(isset($_SESSION['befelemepesseveze']))
 	   {   $skin =$_SESSION['skin'];
     } else { $skin=  "skin1" ; } ; 	
 	
+	
+ if(isset($_SESSION['rolna_playlist']))
+	   {  
+    } else { $_SESSION['rolna_playlist'] =  "hide" ; } ;	
+	
+ if(isset($_SESSION['rolna_looper']))
+	   {  
+    } else { $_SESSION['rolna_looper'] =  "show" ; } ;
+
+ if(isset($_SESSION['rolna_soubory']))
+	   {  
+    } else { $_SESSION['rolna_soubory'] =  "hide" ; } ;
+
+ if(isset($_SESSION['rolna_texty']))
+	   {  
+    } else { $_SESSION['rolna_texty'] =  "hide" ; } ;	
+	
+	 
+	
 
 	
  ?> 
@@ -1422,6 +1441,39 @@ wavesurfer.on('ready', function () {
 	 $("#modal_skin").modal("hide");
 	
   });  
+  
+
+	function rolna_playlist_show(){ $("#playlist_vysuvka").collapse('show') ;  };
+	function rolna_playlist_hide(){ $("#playlist_vysuvka").collapse('hide') ;  };	
+	function rolna_looper_show(){ $("#looper_vysuvka").collapse('show') ;  };
+	function rolna_looper_hide(){ $("#looper_vysuvka").collapse('hide') ;  };
+    function rolna_soubory_show(){ $("#soubory_vysuvka").collapse('show') ;  };
+	function rolna_soubory_hide(){ $("#soubory_vysuvka").collapse('hide') ;  };	
+	function rolna_texty_show(){ $("#texty_vysuvka").collapse('show') ;  };
+	function rolna_texty_hide(){ $("#texty_vysuvka").collapse('hide') ;  };
+	function rolna_val_show(){ $("#val_vysuvka").collapse('show') ;  };
+	function rolna_val_hide(){ $("#val_vysuvka").collapse('hide') ;  };
+	
+
+<?php	
+ if($_SESSION['rolna_playlist'] == "show")
+	   { echo"rolna_playlist_show();";
+    } else { echo"rolna_playlist_hide();"; } ; 	
+	
+ if($_SESSION['rolna_looper'] == "show")
+	   { echo"rolna_looper_show();";
+    } else { echo"rolna_looper_hide();"; } ;	
+		
+ if($_SESSION['rolna_soubory'] == "show")
+	   { echo"rolna_soubory_show();";
+    } else { echo"rolna_soubory_hide();"; } ;	
+		
+ if($_SESSION['rolna_texty'] == "show")
+	   { echo"rolna_texty_show();";
+    } else { echo"rolna_texty_hide();"; } ;		
+ ?>	
+   
+  
  // document.getElementById("playlist_vysuvka").setAttribute("class","show");
   
   function pauseOthers(aktualni) {  // zatím nefunguje
@@ -1433,7 +1485,7 @@ wavesurfer.on('ready', function () {
   var elmnt = document.getElementById("k");
   elmnt.scrollIntoView();
 } 
-  
+  ;
   
 });
 
