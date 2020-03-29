@@ -196,7 +196,10 @@ td  {
  
 }
 
-
+.card-body {
+  /* padding: 1.25rem; */
+  padding: 0.3rem;
+}
      </style>
 
   </head>
@@ -295,7 +298,7 @@ td  {
 			  <div  id="playlist_vysuvka" class="collapse  "> <!-- zmšna složky    -->
 			
 		  		  
-					  <table class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 10px;  border-style: solid;    " >
+					  <table class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 3px;  border-style: solid;    " >
 						<thead></thead>
 						<tbody>
 				  
@@ -312,7 +315,7 @@ td  {
 								?>
 								<div  class=" ">	<!-- tlačítko změny složky    -->  
 																									
-								  <tr style="  border-width: 10px;  border-style: solid;    "  >
+								  <tr style="  border-width: 2px;  border-style: solid;    "  >
                                    <td style="padding: 0.2rem; max-width: 339px; "> 
 								  
 									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
@@ -398,12 +401,7 @@ td  {
 						</div>
 						
 
-						<div style="display: inline ;  ">
-							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->
-							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
-							 </h4> 
-				        </div>
-				       	
+
 				 
 					
 	           </div>
@@ -414,7 +412,11 @@ td  {
 	      
 	        <div  id="looper_vysuvka" class="collapse  ">
 			
-
+						<div style="display: inline ;  ">
+							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->
+							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
+							 </h4> 
+				        </div>
 			
 			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
 						 <div id="test_delky">
@@ -509,7 +511,7 @@ td  {
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
 						  
-                          <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >NAHRÁT</button> 
+                          <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >REC</button> 
 		 
 					  
 			           </div>
