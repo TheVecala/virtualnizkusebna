@@ -52,19 +52,19 @@ if(isset($_SESSION['befelemepesseveze']))
 	
  if(isset($_SESSION['rolna_playlist']))
 	   {  
-    } else { $_SESSION['rolna_playlist'] =  "show" ; } ;	
+    } else { $_SESSION['rolna_playlist'] =  "hide" ; } ;	
 	
  if(isset($_SESSION['rolna_looper']))
 	   {  
-    } else { $_SESSION['rolna_looper'] =  "hide" ; } ;
+    } else { $_SESSION['rolna_looper'] =  "show" ; } ;
 
  if(isset($_SESSION['rolna_soubory']))
 	   {  
-    } else { $_SESSION['rolna_soubory'] =  "show" ; } ;
+    } else { $_SESSION['rolna_soubory'] =  "hide" ; } ;
 
  if(isset($_SESSION['rolna_texty']))
 	   {  
-    } else { $_SESSION['rolna_texty'] =  "show" ; } ;	
+    } else { $_SESSION['rolna_texty'] =  "hide" ; } ;	
 	
 	 
 	
@@ -286,7 +286,7 @@ td  {
 				 </div>	
 				 
 	           </div>
-			     <button id="playlist_vysuvka_button" data-toggle="collapse" data-target="#playlist_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px;  background: #27a243;">
+			     <button data-toggle="collapse" data-target="#playlist_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px;  background: #27a243;">
 				    <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
 			     </button>			   
             </div> <!--     -->
@@ -1441,18 +1441,6 @@ wavesurfer.on('ready', function () {
      $("#soubory_vysuvka").collapse('hide');  
      $("#texty_vysuvka").collapse('hide'); 
 	 $("#modal_skin").modal("hide");
-	
-  });  
- 
-    $("#playlist_vysuvka_button").click(function(){ 
-     
-	 <?php	
-          if($_SESSION['rolna_playlist'] == "show")
-	      {        $_SESSION['rolna_playlist'] =  "hide" ;
-          } else { $_SESSION['rolna_playlist'] =  "show" ; } ;	 
-	  ?>	
-
-
 	
   });  
   
