@@ -50,24 +50,7 @@ if(isset($_SESSION['befelemepesseveze']))
     } else { $skin=  "skin1" ; } ; 	
 	
 	
- if(isset($_SESSION['rolna_playlist']))
-	   {  
-    } else { $_SESSION['rolna_playlist'] =  "show" ; } ;	
-	
- if(isset($_SESSION['rolna_looper']))
-	   {  
-    } else { $_SESSION['rolna_looper'] =  "hide" ; } ;
-
- if(isset($_SESSION['rolna_soubory']))
-	   {  
-    } else { $_SESSION['rolna_soubory'] =  "show" ; } ;
-
- if(isset($_SESSION['rolna_texty']))
-	   {  
-    } else { $_SESSION['rolna_texty'] =  "show" ; } ;	
-	
-	 
-	
+ 
 
 	
  ?> 
@@ -1444,17 +1427,7 @@ wavesurfer.on('ready', function () {
 	
   });  
  
-    $("#playlist_vysuvka_button").click(function(){ 
-     
-	 <?php	
-          if($_SESSION['rolna_playlist'] == "show")
-	      {        $_SESSION['rolna_playlist'] =  "hide" ;
-          } else { $_SESSION['rolna_playlist'] =  "show" ; } ;	 
-	  ?>	
-
-
-	
-  });  
+ 
   
 
 	function rolna_playlist_show(){ $("#playlist_vysuvka").collapse('show') ;  };
