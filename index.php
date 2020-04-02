@@ -176,7 +176,10 @@ td  {
  
  
 }
-
+.card-body {
+  /* padding: 1.25rem; */
+  padding: 0.3rem;
+}
 
      </style>
 
@@ -379,11 +382,7 @@ td  {
 						</div>
 						
 
-						<div style="display: inline ;  ">
-							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->
-							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
-							 </h4> 
-				        </div>
+
 				       	
 				 
 					
@@ -395,7 +394,11 @@ td  {
 	      
 	        <div  id="looper_vysuvka" class="collapse  ">
 			
-
+						<div style="display: inline ;  ">
+							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->
+							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
+							 </h4> 
+				        </div>
 			
 			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
 						 <div id="test_delky">
