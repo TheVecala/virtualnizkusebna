@@ -277,7 +277,7 @@ td  {
 			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
 	
-	             <h2 style="text-align:left; color:red ; display: inline ">  PLAYLIST </h2> 
+	             <h2 style="text-align:left; color:black ; display: inline ;background-color: #dc3545;">  PLAYLIST </h2> 
 				  
 			     <div style="text-align:right; display: inline"   >		                
 				    <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
@@ -397,7 +397,7 @@ td  {
                <div class="card-body"> 
 			   			   
 			            <div  style="text-align:left; display: inline ;" >
-					    	<h2 style="text-align:left;; color:red ; display: inline "> LOOPER </h2> 
+					    	<h2 style="text-align:left;; color:black ; display: inline ;background-color: #ffc107;"> LOOPER </h2> 
 						</div>
 						
 
@@ -506,7 +506,7 @@ td  {
 						 
 					   </div>
 			   
-		               <h2 style="text-align:left; color:red;display: inline ">  SOUBORY </h2>
+		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  SOUBORY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
@@ -649,7 +649,7 @@ define ("ROWS", 10);
 				   
 				     	
 				  
-		               <h2 style="text-align:left; color:red;  display: inline ">  TEXTY </h2> 
+		               <h2 style="text-align:left; color:black;  display: inline; background-color: #17a2b8; ">  TEXTY </h2> 
 					   
 					   <div style="text-align:right;  display: inline">
                         <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
