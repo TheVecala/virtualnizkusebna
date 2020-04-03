@@ -370,70 +370,13 @@ td  {
 		</div>  <!--  konec prvniho sloupce   -->  
 
 	 <div class="col-md-8" > <!--   druhejstřetím sloupec   -->    
-		 <div class="row">
-		 
-		 
-	        <div id="wave_jumbo"  style="display:nonexxxxx"  class="col-md-12">  <!--  nulty sloupec   -->
-		      
+	 
 
-			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
-               <div class="card-body"> 
-			   			   
-			            <div  style="text-align:left; display: inline ;" >
-					    	<h2 style="text-align:left;; color:black ; display: inline ;background-color: #ffc107;"> LOOPER </h2> 
-						</div>
-						
-
-
-				 
-					
-	           </div>
-		       <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
-			     <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
-			   </button>
-            </div> <!--     -->
-	      
-	        <div  id="looper_vysuvka" class="collapse  ">
-			
-						<div style="display: inline ;  ">
-							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->
-							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
-							 </h4> 
-				        </div>
-			
-			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">				
-						 <div id="test_delky">
-						</div>	 
-						<div style="text-align:right ; display: inline  ">
-							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/icons8-play-50-2.png" alt="play"></button>
-							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-pause-50-2.png" alt="pause"></button>
-							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-rewind-50.png" alt="od začátku"></button>
-							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50.png" alt="loop"></button>
-							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50_off.png" alt="loop"></button>
-							  
-						  <!-- <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>-->				       
-					    </div>	
-						<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
-						<div id="waveform" style="display:none">  						
-						</div>
-			
-									
-			 </div>
-          </div>
-        </div>   
-
-		<div  id="k" class="col-md-6" style="margin-bottom: 5px"> <!--  druhy sloupec   -->
-		
-	      <div  class=" ">   <!-- hlavička sekce složek   -->
-			  
-               <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
-                   <div class="card-body"> 
-				   				 		
-			  	       <div style="display: inlinexxxxxx; color:white; background-color: #27a243; padding:3px; ">
+			  	       <div style="display: inlinexxxxxx; color:white; background-color: #343a40; padding:3px; ">
 					   			   	
-						 <div class="dropdown"> 
-							  <button style="display: inline;  " type="button" class=" btn btn-success dropdown-toggle" data-toggle="dropdown">
-							   <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 
+						 <div class="dropdown" style="text-align: center;"> 
+							  <button style="display: inline; background-color: white;color:black; font-size:2rem " type="button" class=" btn  dropdown-toggle" data-toggle="dropdown">
+							   <img src="/data/icons8-music-folder-50-2.png" alt="složka" style=" max-height: 40px;" > 
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
 							  <div class="dropdown-menu" style="background-color: rgb(52, 58, 64)">
@@ -487,7 +430,68 @@ td  {
 							  </div>
 						 </div> 
 						 
-					   </div>
+					   </div>	 
+	 
+	 
+		 <div class="row">
+		 
+		 
+	        <div id="wave_jumbo"  style="display:nonexxxxx ;  margin-bottom: 5px; "  class="col-md-12">  <!--  nulty sloupec   -->
+		      
+
+			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
+               <div class="card-body"> 
+			   			   
+			            <div  style="text-align:left; display: inline ;" >
+					    	<h2 style="text-align:left;; color:black ; display: inline ;background-color: #ffc107;"> LOOPER </h2> 
+						</div>
+		
+					
+	           </div>
+		       <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+			     <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
+			   </button>
+            </div> <!--     -->
+	      
+	        <div  id="looper_vysuvka" class="collapse  ">
+			
+
+			
+			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">	
+
+						<div style="display: inline ;  ">
+							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->
+							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
+							 </h4> 
+				        </div>			 
+						 <div id="test_delky" style="display: inline ;  ">
+						</div>	 
+						<div style="text-align:right ; display: inline  ">
+							<button id="wave_play" class="btn btn-sm btn-warning" data-action="play"> <img style="max-height:30px" src="/data/icons8-play-50-2.png" alt="play"></button>
+							<button id="wave_pause" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-pause-50-2.png" alt="pause"></button>
+							<button id="wave_od_zacatku" class="btn btn-sm btn-warning" data-action=" "><img style="max-height:30px" src="/data/icons8-rewind-50.png" alt="od začátku"></button>
+							<button id="loop" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50.png" alt="loop"></button>
+							<button id="wave_clear_regions" class="btn btn-sm btn-warning" data-action=" "> <img style="max-height:30px" src="/data/icons8-repeat-50_off.png" alt="loop"></button>
+							  
+						  <!-- <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>-->				       
+					    </div>	
+						<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
+						<div id="waveform" style="display:none">  						
+						</div>
+			
+									
+			 </div>
+          </div>
+        </div>   
+
+		<div  id="k" class="col-md-6" style="margin-bottom: 5px"> <!--  druhy sloupec   -->
+		
+	      <div  class=" ">   <!-- hlavička sekce složek   -->
+			  
+               <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
+                   <div class="card-body"> 
+				   				 		
+
 			   
 		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  SOUBORY </h2>
 					   
