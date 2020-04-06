@@ -603,8 +603,76 @@ td  {
   
   
         <div class="col-md-6" style="margin-bottom: 5px" > <!-- třetí sloupec   -->
-       
-      
+
+	      <div  class=" ">   <!-- hlavička sekce info   -->
+			  
+               <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
+                   <div class="card-body"> 
+				   				 		
+
+			   
+		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  INFO </h2>
+					   
+  				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
+				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
+						  
+                          <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >REC</button> 
+		 
+					  
+			           </div>
+	
+	               </div>	
+				   <button data-toggle="collapse" data-target="#info_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+				      <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
+				   </button>				
+               </div>  
+ 			
+
+          </div>   <!-- konec hlavičky sekce info   -->
+		
+          <div  id="info_vysuvka" class="collapse  ">
+		  
+		   <div> <!--  info   --> 
+		   
+		   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+							   
+	                          <div class="card-header" style= "  "> 
+							      <img src="/data/icons8-sound-wave-50.png" alt="-"  > 
+							      <div style="color:black  ; background-color:white ;  display: inline" >	
+											  	 	
+									    AKORDY
+							      </div> 
+								  <button data-toggle="collapse" data-target="#val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+				                      <img style="max-height:30px" src="/data/ikona_colapsedown4.png" alt="minimize"> 
+				                  </button>
+								 
+							  </div> 
+ 								    							   
+							   
+							  <div id="val_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse" style="   "   > 
+							   
+							   
+							  do re mi fa so la si do
+							   
+							   
+		   					  </div> <!--card body  -->
+							   
+		   </div> <!-- card   -->
+		   
+		   
+		   </div> <!--  konec info  --> 
+		   
+		  </div>
+  
+      </div> <!-- konec třetí sloupec   -->
+      	 </div>
+      </div> <!--   konec druhejstřetím sloupec   -->  
+     <!--   <img src="/data/singer.png" alt="složka"  >       --> 
+
+
+		  <div class="col-md-4" style="margin-bottom: 5px" >   <!-- čtvrtý sloupec   -->
+ 
+     
 <?php
 define ("ROWS", 10);
  require "php/login/connect.php";
@@ -712,17 +780,16 @@ define ("ROWS", 10);
   </ul>
   </div>   
  </div> <!-- konec vysuvka   -->
-      </div> <!-- konec třetí sloupec   -->
-      	 </div>
-      </div> <!--   konec druhejstřetím sloupec   -->  
-     <!--   <img src="/data/singer.png" alt="složka"  >       --> 
+ 
+	  </div> <!-- konec čtvrtý sloupec   --> 	 
+	 
+	 
+	 
+	 
+	 
     </div> <!-- row -->
 	
-		  <div class="col-md-6" style="margin-bottom: 5px" >   <!-- čtvrtý sloupec   -->
 
-	     <!-- <div id='calendar'></div>   --> 
-
-	  </div> <!-- konec čtvrtý sloupec   --> 
 
  </div>     <!-- container -->
  
