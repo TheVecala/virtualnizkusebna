@@ -374,8 +374,12 @@ td  {
 
 			  	       <div style="display: inlinexxxxxx; color:white; background-color: #343a40; padding:3px; ">
 					   			   	
-						 <div class="dropdown" style="text-align: center;"> 
-							  <button style="display: inline; background-color: white;color:black; font-size:2rem " type="button" class=" btn  dropdown-toggle" data-toggle="dropdown">
+						 <div class="dropdown" style="text-align: left;"> 
+								<div  style="text-align:left; display: inline ;" >
+									<h2 style="text-align:left;; color:black ; display: inline ;background-color: #dc3545;"> SONG </h2> 
+								</div>						 
+                               	
+							  <button style="display: inline; background-color: white;color:black; font-size:1.5rem " type="button" class=" btn  dropdown-toggle" data-toggle="dropdown">
 							   <img src="/data/icons8-music-folder-50-2.png" alt="složka" style=" max-height: 40px;" > 
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
