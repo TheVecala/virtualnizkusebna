@@ -254,7 +254,7 @@ td  {
 	
 
 
-        <div id="adresare" class="col-md-4" style="margin-bottom: 5px ; display:none">  <!--  prvni sloupec   -->
+        <div id="adresare" class="col-md-4" style="margin-bottom: 5px ;  ">  <!--  prvni sloupec   -->
 		      
 
 			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
@@ -640,7 +640,8 @@ define ("ROWS", 10);
 				   
 				     	
 				  
-		               <h2 style="text-align:left; color:black;  display: inline; background-color: #17a2b8; ">  TEXTY </h2> 
+		               <h2 style="text-align:left; color:black;  display: inline; background-color: #17a2b8; ">  NÁPADY
+					   </h2> 
 					   
 					   <div style="text-align:right;  display: inline">
                         <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  

@@ -611,7 +611,7 @@ td  {
 				   				 		
 
 			   
-		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  INFO </h2>
+		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  TEXTY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
@@ -637,7 +637,7 @@ td  {
 		   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
-							      <img src="/data/icons8-sound-wave-50.png" alt="-"  > 
+							      <!-- <img src="/data/icons8-sound-wave-50.png" alt="-"  > -->
 							      <div style="color:black  ; background-color:white ;  display: inline" >	
 											  	 	
 									    AKORDY
@@ -649,11 +649,17 @@ td  {
 							  </div> 
  								    							   
 							   
-							  <div id="val_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse" style="   "   > 
+							  <div id="val_vysuvka_<?php echo $x ?>" class="card-body stitek_valu  " style="   "   > 
 							   
-							   
-							  do re mi fa so la si do
-							   
+							  	  <li class="list-group-item vzkaz_karta ">
+									   <span class="vzkaz" > do re mi fa so la si do </span><br>  
+									   <div style="text-align:right; ">
+										 <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 
+										 <span class="jmeno"  style="font-size:0.9em; ">  <?php echo strip_tags($zaznam["jmeno"])?> &nbsp </span> 
+										 <span class="datum"  style="font-size:0.6em; ">  <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?> </span> 
+									   </div>
+									   
+								  </li>
 							   
 		   					  </div> <!--card body  -->
 							   
@@ -708,7 +714,7 @@ define ("ROWS", 10);
 				   
 				     	
 				  
-		               <h2 style="text-align:left; color:black;  display: inline; background-color: #17a2b8; ">  TEXTY </h2> 
+		               <h2 style="text-align:left; color:black;  display: inline; background-color: #17a2b8; ">  NÁPADY </h2> 
 					   
 					   <div style="text-align:right;  display: inline">
                         <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
