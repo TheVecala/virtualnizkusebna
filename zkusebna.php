@@ -47,8 +47,11 @@ if(isset($_SESSION['befelemepesseveze']))
 	
  if(isset($_SESSION['skin']))
 	   {   $skin =$_SESSION['skin'];
-    } else { $skin=  "skin1" ; } ; 	
-	
+    } else { $skin=  "skin1" ; } ;
+ 	
+ if(isset($_SESSION['aktualni_text']))
+	   {   $aktualni_text = $_SESSION['aktualni_text'];
+    } else { $aktualni_text=  "akordy.txt" ; } ; 	
 	
  
 
@@ -611,12 +614,12 @@ td  {
 				   				 		
 
 			   
-		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  TEXTY </h2>
+		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  AKORDY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
 						  
-                          <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >REC</button> 
+                         
 		 
 					  
 			           </div>
@@ -640,7 +643,7 @@ td  {
 							      <!-- <img src="/data/icons8-sound-wave-50.png" alt="-"  > -->
 							      <div style="color:black  ; background-color:white ;  display: inline" >	
 											  	 	
-									    AKORDY
+									    VERZE
 							      </div> 
 								  <button data-toggle="collapse" data-target="#val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
 				                      <img style="max-height:30px" src="/data/ikona_colapsedown4.png" alt="minimize"> 
@@ -651,8 +654,17 @@ td  {
 							   
 							  <div id="val_vysuvka_<?php echo $x ?>" class="card-body stitek_valu  " style="   "   > 
 							   
-							  	  <li class="list-group-item vzkaz_karta ">
-									   <span class="vzkaz" > do re mi fa so la si do </span><br>  
+							  	  <li class="list-group-item vzkaz_karta " style="color:black">
+									   <span class="vzkaz" > 
+									     <pre style="overflow-x: auto"><?php
+                                            $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/".$aktualni_text;
+											$akordy = fopen($aktualni_text_s_cestou, "r") or die("nevotevřel sem to!");
+											while(!feof($akordy)) {
+											  echo fgets($akordy) . "<br>";
+											}
+											fclose($akordy);
+										  ?></pre>
+									   </span><br>  
 									   <div style="text-align:right; ">
 										 <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 
 										 <span class="jmeno"  style="font-size:0.9em; ">  <?php echo strip_tags($zaznam["jmeno"])?> &nbsp </span> 
