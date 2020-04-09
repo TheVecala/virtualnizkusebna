@@ -524,7 +524,7 @@ td  {
 
  
 	
-	         <div  id="soubory_vysuvka" class="collapse  ">
+	         <div  id="soubory_vysuvka" class="   ">
 			   <div>  <!--  vypis souboru   -->          
 				   
 					<?php 
@@ -625,7 +625,7 @@ td  {
 			           </div>
 	
 	               </div>	
-				   <button data-toggle="collapse" data-target="#info_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+				   <button data-toggle="collapse" data-target="#info_akordy" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
 				      <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
 				   </button>				
                </div>  
@@ -633,7 +633,7 @@ td  {
 
           </div>   <!-- konec hlavičky sekce info   -->
 		
-          <div  id="info_vysuvka" class="collapse  ">
+          <div  id="info_akordy" class="   ">
 		  
 		   <div> <!--  info   --> 
 		   
