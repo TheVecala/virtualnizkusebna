@@ -70,9 +70,6 @@ else { $slozka_slozek ="složka kapely nenastavena";
 	$pole_slozek = "empty";
 	$delka_pole_slozek = 0;} ;
 	
-
-
-
    // zmenit na   if is in pole složek zobrazit else nastavit prvni slozku
    
    
@@ -84,12 +81,7 @@ else { $slozka_slozek ="složka kapely nenastavena";
   {  $slozka_souboru=  $pole_slozek[2] ;
       $_SESSION['slozka_souboru_k_zobrazeni'] = $pole_slozek[2] ;
   };   
-   
-   
-   
-   
-   
-   
+     
    
    // cyklus for pro ověření složky
    $platna_slozka = true ; //prozatím, než bude ověřována z databáze
@@ -495,15 +487,7 @@ wavesurfer.on('ready', function () {
   
  // document.getElementById("playlist_vysuvka").setAttribute("class","show");
   
-  function pauseOthers(aktualni) {  // zatím nefunguje
-                $("audio").not(aktualni).each(function (index, audio) {
-                    audio.pause();
-                });
-            };
- function zobraz() {
-  var elmnt = document.getElementById("k");
-  elmnt.scrollIntoView();
-} 
+
   ;
   
 });
@@ -583,8 +567,6 @@ wavesurfer.on('ready', function () {
  
 </script> 
 
-
-<script> zobraz(); //k ničemu asi	</script> 
 
 
   <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> 
