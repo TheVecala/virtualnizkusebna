@@ -235,7 +235,7 @@ td  {
     <div class="row">
 	      <!--  prvni sloupec   -->
         <div id="adresare" class="col-md-4" style="margin-bottom: 5px ; display:none"> 		      				  
-			<?php   require "php/meat/prvni.php";?>
+			<?php   require "meat/prvni.php";?>
 		</div>  <!--  konec prvniho sloupce   -->  
         
 		<!--   druhejstřetím sloupec   -->
@@ -310,17 +310,17 @@ td  {
 		 
 		 	   <!--  nulty sloupec   --> 
 			   <div id="wave_jumbo"  style="display:nonexxxxx ;  margin-bottom: 5px; "  class="col-md-12"> 
-					<?php 	  require "php/meat/nulty.php";	?>								
+					<?php 	  require "meat/nulty.php";	?>								
 			   </div>   <!-- konec nulty sloupec   -->
 
 			   <!--  druhy sloupec   -->
 		       <div  id="k" class="col-md-6" style="margin-bottom: 5px"> 
-				    <?php 	require "php/meat/druhy.php";	?>
+				    <?php 	require "meat/druhy.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   
                <!-- třetí sloupec   --> 
 			   <div class="col-md-6" style="margin-bottom: 5px" > 
-					<?php   require "php/meat/treti.php";	?>						
+					<?php   require "meat/treti.php";	?>						
 			   </div> <!-- konec třetí sloupec   -->
 			
       	  </div> <!-- konec row   -->
@@ -328,7 +328,7 @@ td  {
  
         <!-- čtvrtý sloupec   -->
 		<div class="col-md-4" style="margin-bottom: 5px" >   
- 			<?php   require "php/meat/ctvrty.php";	?>
+ 			<?php   require "meat/ctvrty.php";	?>
 	    </div> <!-- konec čtvrtý sloupec   --> 	 
 	 	 
     </div> <!-- row -->
@@ -337,7 +337,7 @@ td  {
  
  
  <div>  <!--  MODALS --> 
-   	<?php  require "php/meat/modals.php"; ?>				
+   	<?php  require "meat/modals.php"; ?>				
  </div>  <!-- KONEC MODALS -->
   
   
@@ -347,7 +347,7 @@ td  {
 ?>
   
 
-  <script src="js/vecalovo.js"></script> 
+  <script src="meat/vecalovo.js"></script> 
 
  </body>
 </html>
