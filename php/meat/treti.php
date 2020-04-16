@@ -17,7 +17,7 @@
 			           </div>
 	
 	               </div>	
-				   <button data-toggle="collapse" data-target="#info_akordy" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+				   <button data-toggle="collapse" data-target="#val_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
 				      <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
 				   </button>				
                </div>  
@@ -25,7 +25,7 @@
 
           </div>   <!-- konec hlavičky sekce info   -->
 		
-          <div  id="info_akordy" class="   ">
+          <div  id="val_vysuvka" class=" collapse  ">
 		  
 		   <div> <!--  info   --> 
 		   
