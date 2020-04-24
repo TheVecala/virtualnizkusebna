@@ -211,16 +211,7 @@ td  {
            </li>
 			
 			
-			 <li class="nav-item dropdown">
-			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-				ZKUŠEBNA
-			  </a>
-			  <div class="dropdown-menu">
-				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 
-				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
-			  </div>
-           </li>
-				
+	 
 			
           
 			<li class="nav-item  ">
@@ -479,8 +470,9 @@ td  {
 							  
 						  <!-- <button id="schovat_wave_jumbo" class="btn btn-secondary" data-action=" " style="display: inline; max-height:30px ; padding:0px ; border-width: 0px;" ><img style="max-height:30px" src="/data/icons8-multiply-50.png" alt="zavřít"></button>-->				       
 					    </div>	
-						<div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>
-						<div id="waveform" style="display:none">  						
+						
+						<div id="waveform" style="display:none">  
+                           <div id="hlaska_nacitani" class="bg-danger" style="display:none">načítám soubor...</div>						
 						</div>
 			
 									
