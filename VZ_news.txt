@@ -4,3 +4,5 @@ nová verze Virtuální zkušebny - 0.9.3
 novinky verze: 
 - všechny hlavní sekce jsou po načtení implicitně zarolovaný, což je užitečné zvláště při použití na mobilu
 - schovaný jsou i ovládací prvky každýho válu, který je možno vyrolovat stiskem tlačítka se šipkou
+
+GO.... 
