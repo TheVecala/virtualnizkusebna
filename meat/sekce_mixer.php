@@ -1,27 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-	<title>Mixer</title>
-
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-
- 
-	<script src="js/Tone.js"></script>
-	<script src="js/tonejs-ui.js"></script>
-	<style type="text/css">
-		#tracks {
-			display: flex;
-		}
-		#tracks tone-channel {
-			flex-grow: 1;
-			margin: 5px;
-			width: 20%;
-		}
-	</style>
-</head>
-<body>
-	 
 
 		<tone-content>
 			<tone-play-toggle></tone-play-toggle>
@@ -52,5 +28,3 @@
 
 		document.querySelector("tone-play-toggle").bind(Tone.Transport);
 	</script>
-</body>
-</html>
