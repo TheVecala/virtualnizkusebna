@@ -177,6 +177,15 @@ td  {
   /* padding: 1.25rem; */
   padding: 0.3rem;
 }
+
+.h2, h2 {
+ font-size:1.2rem;
+ border-radius: 1rem;
+ padding: 5px;
+ margin: 5px;
+}
+}
+
      </style>
 
   </head>

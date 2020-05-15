@@ -56,9 +56,7 @@
 			
           </ul>
           <form class="form-inline mt-2 mt-md-0">
-             
-            
-                <div  class="btn btn-success my-2 my-sm-0" type=""> přihlášen jako: <?php echo  $_SESSION['login'] ; ?></div>
+      
           
           </form>
         </div>

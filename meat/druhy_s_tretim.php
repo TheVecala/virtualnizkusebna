@@ -2,11 +2,11 @@
 					   			   	
 						 <div class="dropdown" style="text-align: left;"> 
 							  <div  style="text-align:left; display: inline ;" >
-								<div  class="btn btn-success my-2 my-sm-0" type=""><?php echo  $_SESSION['login'] ; ?></div>
+								<div  class="btn btn-success my-2 my-sm-0" type=""  style="display: inline; background-color: white;color:black; padding:1px; margin:2px; "><?php echo  $_SESSION['login'] ; ?></div>
 							  </div>						 
                                	/
-							  <button style="display: inline; background-color: white;color:black; font-size:1.5rem " type="button" class=" btn  dropdown-toggle" data-toggle="dropdown">
-							   <img src="/data/icons8-music-folder-50-2.png" alt="složka" style=" max-height: 40px;" > 
+							  <button style="display: inline; background-color: white;color:black; padding:1px; margin:2px; " type="button" class=" btn  dropdown-toggle" data-toggle="dropdown">
+							  <!-- <img src="/data/icons8-music-folder-50-2.png" alt="složka" style=" max-height: 30px;" >  --> 
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
 							  <div class="dropdown-menu" style="background-color: rgb(52, 58, 64)">
