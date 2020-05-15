@@ -182,50 +182,8 @@ td  {
   </head>
   <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
 
-   <header>
-      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-        <a class="navbar-brand" href="#">VIRTUÁLNÍ ZKUŠEBNA</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarCollapse">
-          <ul class="navbar-nav mr-auto">
-            			
-			 <li class="nav-item dropdown">
-			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-				KAPELA
-			  </a>
-			  <div class="dropdown-menu">
-				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">PROFIL</a> 
-				<a class="dropdown-item" href="/php/login/logout.php">ODHLÁSIT SE</a>
-			  </div>
-             </li>
-						
-			 <li class="nav-item dropdown">
-			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-				ZKUŠEBNA
-			  </a>
-			  <div class="dropdown-menu">
-				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 
-				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
-			  </div>
-             </li>
-				          
-    		 <li class="nav-item  ">
-               <a class="nav-link"  href="#"  data-toggle="modal" data-target="#modal_skin">NASTAVENÍ</a>
-             </li>			
-             <li class="nav-item">
-               <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">OFFLINE</a>
-             </li>
-             <li class="nav-item">
-               <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >INFO</a>
-             </li>
-          </ul>
-          <form class="form-inline mt-2 mt-md-0"> 
-              <div  class="btn btn-success my-2 my-sm-0" type=""> přihlášen jako: <?php echo  $_SESSION['login'] ; ?></div>        
-          </form>
-        </div>
-      </nav>
+    <header>
+      <?php   require "meat/header.php";?>
     </header>
      
 	 
@@ -242,69 +200,7 @@ td  {
 	    <div class="col-md-8" >     
 	 
          <!--   hlavicka druhyhostretim sloupce -->  
-		 <div style="display: inlinexxxxxx; color:white; background-color: #343a40; padding:3px; ">
-					   			   	
-						 <div class="dropdown" style="text-align: left;"> 
-							  <div  style="text-align:left; display: inline ;" >
-									<h2 style="text-align:left;; color:black ; display: inline ;background-color: #dc3545;"> SONG </h2> 
-							  </div>						 
-                               	
-							  <button style="display: inline; background-color: white;color:black; font-size:1.5rem " type="button" class=" btn  dropdown-toggle" data-toggle="dropdown">
-							   <img src="/data/icons8-music-folder-50-2.png" alt="složka" style=" max-height: 40px;" > 
-							   <?php echo $slozka_souboru 	?> 
-							  </button>
-							  <div class="dropdown-menu" style="background-color: rgb(52, 58, 64)">
-							  						 
-
-						<?php 
-						for($x = 0; $x < $delka_pole_slozek; $x++) {
-							  if ($pole_slozek[$x] == ".")  { continue; };
-							  if ($pole_slozek[$x] == "..")  { continue; };
-						   $soub = ($slozka_slozek.$pole_slozek[$x]);
-						   $label_soub = " test";
-						   $label_soub = ($pole_slozek[$x]);  
-							if(is_dir($soub))
-								
-								  {    
-								?>
-								<div  class="dropdown-item-text">	<!-- tlačítko změny složky    --> 
-	
-									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
-									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
-								
-								    <?php 
- 									   if ($pole_slozek[$x]==$slozka_souboru)  {   
-  									   }									 
-									   else
-									   { ?>
-								   
-								         <div> 
-		 
-                                         </div>
-									   
-								         <button id=" " type="submit" style=" max-width: 333px ; display: inline" class="btn btn-sm btn-warning" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
-                                           <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 
-										   <?php echo $pole_slozek[$x] ?>
-									     </button>
-										 										 
-									  <?php 
-									 	 }
-									 ; ?>
-	
-									</form>							   
-				   
-								</div>	
-								 
-								<?php
-								 }
-						         }
-						        ?>
-
-							    </div>
-						 </div> 
-						 
-		 </div>	 
+	      	<?php   require "meat/druhy_s_tretim.php";?>
 	  
 		 <div class="row">
 		 

@@ -9,7 +9,7 @@
             
 			
 			
-			 <li class="nav-item dropdown">
+		    <li class="nav-item dropdown">
 			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
 				KAPELA
 			  </a>
@@ -17,10 +17,10 @@
 				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">PROFIL</a> 
 				<a class="dropdown-item" href="/php/login/logout.php">ODHLÁSIT SE</a>
 			  </div>
-           </li>
+            </li>
 			
 			
-			 <li class="nav-item dropdown">
+			<li class="nav-item dropdown">
 			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
 				ZKUŠEBNA
 			  </a>
@@ -28,19 +28,32 @@
 				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 
 				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
 			  </div>
-           </li>
-				
-			
-          
+            </li>
+				  
+			<li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+				STYL
+			  </a>
+			  <div class="dropdown-menu">
+				<a class="dropdown-item" href="index.php">home</a>
+				<a class="dropdown-item" href="zkusebna.php">zkušebna</a>
+				<a class="dropdown-item" href="mixer.php">mixer</a>
+				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
+			  </div>
+            </li>				  
+				  
+				  
+				  
+				  
 			<li class="nav-item  ">
               <a class="nav-link"  href="#"  data-toggle="modal" data-target="#modal_skin">NASTAVENÍ</a>
-            </li>			
-            <li class="nav-item">
-              <a class="nav-link" href="#" data-toggle="popover" data-trigger="focus"  data-content="Tahle funkce zatím nefachá">OFFLINE</a>
-            </li>
+            </li>	
+			
+ 
             <li class="nav-item">
                   <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >INFO</a>
             </li>
+			
           </ul>
           <form class="form-inline mt-2 mt-md-0">
              
