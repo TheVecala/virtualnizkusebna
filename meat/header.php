@@ -38,6 +38,7 @@
 				<a class="dropdown-item" href="index.php">home</a>
 				<a class="dropdown-item" href="zkusebna.php">zkušebna</a>
 				<a class="dropdown-item" href="mixer.php">mixer</a>
+				<a class="dropdown-item" href="bigscreen.php">bigscreen</a>
 				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
 			  </div>
             </li>				  
