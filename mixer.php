@@ -220,16 +220,17 @@ td  {
 	  
 		 <div class="row">
 		 
-		 	
-			   <!--  druhy sloupec   -->
-		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/druhy.php";	?>
-		       </div  > <!-- konec druhý sloupec   -->
+
  			   <!--    sloupec   -->
 		       <div  id="k" class="col-md-8" style="margin-bottom: 5px"> 
 				    <?php 	require "meat/sekce_mixer.php";	?>
 		       </div  > <!-- konec   sloupec   --> 
  
+ 			   <!--  druhy sloupec   -->
+		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
+				    <?php 	require "meat/treti.php";	?>
+		       </div  > <!-- konec druhý sloupec   -->
+  
 					
       	  </div> <!-- konec row   -->
         </div> <!--   konec druhejstřetím sloupec   -->  

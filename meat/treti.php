@@ -25,7 +25,7 @@
 
           </div>   <!-- konec hlavičky sekce info   -->
 		
-          <div  id="val_vysuvka" class=" collapse  ">
+          <div  id="val_vysuvka" class=" ">
 		  
 		   <div> <!--  info   --> 
 		   
