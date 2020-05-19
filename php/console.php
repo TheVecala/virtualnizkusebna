@@ -9,7 +9,7 @@ console.log("  <?php echo "sekce = ".$sekce.",    slozka_slozek= ".$slozka_sloze
 
 console.log("  <?php echo "session sekce_k_zobrazeni = ".$_SESSION['sekce_k_zobrazeni'].",     SESSION chyba_prihlaseni= ". $_SESSION['chyba_prihlaseni'].", befelemepesseveze= ".$befelemepesseveze   ?> ");
 
-console.log("  <?php echo "skin = ".$skin  ?> ");
+console.log("  <?php echo "skin = ".$skin."   aktualni_text = ".$aktualni_text     ?>   ");
 </script>   
   
  
