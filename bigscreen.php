@@ -206,33 +206,33 @@ td  {
 	    <div class="col-md-12" >     
 	 
          <!--   hlavicka druhyhostretim sloupce -->  
-	      	<?php   require "meat/druhy_s_tretim.php";?>
+	      	<?php   require "meat/sekce_lista.php";?>
 	  
 		 <div class="row">
 		 
 		 	   <!--  nulty sloupec   --> 
 			   <div id="wave_jumbo"  style="display:nonexxxxx ;  margin-bottom: 5px; "  class="col-md-12"> 
-					<?php 	  require "meat/nulty.php";	?>								
+					<?php 	  require "meat/sekce_looper.php";	?>								
 			   </div>   <!-- konec nulty sloupec   --> 
 			   
 				 <!--  prvni sloupec   -->
 				<div id="adresare" class="col-md-3" style="margin-bottom: 5px ;"> 		      				  
-					<?php   require "meat/prvni.php";?>
+					<?php   require "meat/sekce_playlist.php";?>
 				</div>  <!--  konec prvniho sloupce   --> 
 		
 			   <!--  druhy sloupec   -->
 		       <div  id="k" class="col-md-3" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/druhy.php";	?>
+				    <?php 	require "meat/sekce_souboru.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   
                <!-- třetí sloupec   --> 
 			   <div class="col-md-3" style="margin-bottom: 5px" > 
-					<?php   require "meat/treti.php";	?>						
+					<?php   require "meat/sekce_akordu.php";	?>						
 			   </div> <!-- konec třetí sloupec   -->
 			   
 			    <!-- čtvrtý sloupec   -->
 				<div class="col-md-3" style="margin-bottom: 5px" >   
-					<?php   require "meat/ctvrty.php";	?>
+					<?php   require "meat/sekce_diskuse.php";	?>
 				</div> <!-- konec čtvrtý sloupec   --> 
 					
       	  </div> <!-- konec row   -->

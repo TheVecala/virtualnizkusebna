@@ -216,7 +216,7 @@ td  {
 	    <div class="col-md-12" >     
 	 
          <!--   hlavicka druhyhostretim sloupce -->  
-	      	<?php   require "meat/druhy_s_tretim.php";?>
+	      	<?php   require "meat/sekce_lista.php";?>
 	  
 		 <div class="row">
 		 
@@ -228,7 +228,7 @@ td  {
  
  			   <!--  druhy sloupec   -->
 		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/treti.php";	?>
+				    <?php 	require "meat/sekce_akordu.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   
 					
