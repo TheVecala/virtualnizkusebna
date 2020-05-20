@@ -227,7 +227,7 @@ td  {
 		       </div  > <!-- konec   sloupec   --> 
  
  			   <!--  druhy sloupec   -->
-		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
+		       <div  class="col-md-4" style="margin-bottom: 5px"> 
 				    <?php 	require "meat/sekce_akordu.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   

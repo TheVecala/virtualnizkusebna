@@ -488,3 +488,33 @@
   </div>
 </div>
   
+
+    <!-- The Modal modal_zmenit_text -->
+<div class="modal" id="modal_zmenit_text">
+  <div class="modal-dialog  ">
+    <div class="modal-content bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+            <p>UPRAVIT TEXT A AKORDY</p>
+		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->  
+	  
+             <div class="modal-body">
+     	    	<div class="container text-center">
+					 <p>MÍSTO PRO EDITACI.</p>
+
+					 
+               </div>		  		
+            </div>	  
+
+      <!-- Modal footer -->
+            <div class="modal-footer">	 
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
+            </div>
+	  
+    </div>
+  </div>
+</div>  

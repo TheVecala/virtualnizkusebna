@@ -1,3 +1,8 @@
+ <?php
+     $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/".$aktualni_text;
+	 $akordy = fopen($aktualni_text_s_cestou, "r") or die("SOUBOR S TEXTEM NEEXISTUJE!");
+ ?>
+
 
 	      <div  class=" ">   <!-- hlavička sekce info   -->
 			  
@@ -9,15 +14,13 @@
 		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  AKORDY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
-				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
+				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_zmenit_text" >ZMĚNIT</button>  
 						  
-                         
-		 
-					  
+                				  
 			           </div>
 	
 	               </div>	
-				   <button data-toggle="collapse" data-target="#val_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+				   <button data-toggle="collapse" data-target="#akordy_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
 				      <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3.png" alt="minimize"> 
 				   </button>				
                </div>  
@@ -25,7 +28,7 @@
 
           </div>   <!-- konec hlavičky sekce info   -->
 		
-          <div  id="val_vysuvka" class=" ">
+          <div  id="akordy_vysuvka" class="collapse show   ">
 		  
 		   <div> <!--  info   --> 
 		   
@@ -37,25 +40,25 @@
 											  	 	
 									    VERZE
 							      </div> 
-								  <button data-toggle="collapse" data-target="#val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+								  <button data-toggle="collapse" data-target="#akordy_vnitrni_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
 				                      <img style="max-height:30px" src="/data/ikona_colapsedown4.png" alt="minimize"> 
 				                  </button>
 								 
 							  </div> 
  								    							   
 							   
-							  <div id="val_vysuvka_<?php echo $x ?>" class="card-body stitek_valu  " style="   "   > 
+							  <div id="akordy_vnitrni_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse show  " style="  "   > 
 							   
 							  	  <li class="list-group-item vzkaz_karta " style="color:black">
 									   <span class="vzkaz" > 
-									     <pre style="overflow-x: auto"><?php
-                                            $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/".$aktualni_text;
-											$akordy = fopen($aktualni_text_s_cestou, "r") or die("nevotevřel sem to!");
+									     <pre style="overflow-x: auto">
+										    <?php
 											while(!feof($akordy)) {
 											  echo fgets($akordy) . "<br>";
 											}
 											fclose($akordy);
-										  ?></pre>
+										    ?>
+										 </pre>
 									   </span><br>  
 									   <div style="text-align:right; ">
 										 <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 

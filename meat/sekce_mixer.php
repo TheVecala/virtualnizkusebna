@@ -15,7 +15,7 @@
 
           </div>   <!-- konec hlavičky sekce mixer   -->
 		  
-		  <div  id="mixer_vysuvka" class=" ">
+		  <div  id="mixer_vysuvka" class="collapse show  ">
 		  
 		    <div> <!--  mixer   --> 
 		   
