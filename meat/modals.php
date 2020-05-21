@@ -506,14 +506,19 @@
       </div>
 
       <!-- Modal body -->  
-	  
+	     <form action="/php/vlozit_akordy.php" method="post" enctype="multipart/form-data"  style="display:inline">
              <div class="modal-body">
      	    	<div class="container text-center"> 
 				
                      <span class="vzkaz" > 
 
+					   <div class="form-group"  style="display:nonexx">
+						<label for="soubor_akordu">uložit do:</label>
+						<input id="" type="text" class="form-control"  value="<?php echo $aktualni_text_s_cestou ; ?>" name="soubor_akordu">
+					  </div>
+					  
 						 
-					     <textarea id="editor" style="overflow-x: auto; font-family: Courier, monospace; width:100%"  rows="20"  ><?php  // pozor na mezery
+					     <textarea id="editor" name="editor" style="overflow-x: auto; font-family: Courier, monospace; width:100%"  rows="20"  ><?php  // pozor na mezery
 	    
 						while(!feof($akordy)) {
 						  echo fgets($akordy);
@@ -522,17 +527,26 @@
 						 ?></textarea>
 						 
 				     </span>					 
-	
-					 
-               </div>		  		
+				 
+               </div>	
+
+
+                      <div class="form-group"  style="display:none">
+						<label for="navrat">navrat:</label>
+						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+					  </div>			   
             </div>	  
 
       <!-- Modal footer -->
             <div class="modal-footer">	 
- 				<button type="button" class="btn btn-warning"   style="display: inline">ULOŽIT</button>	 	 
+ 			   <p  > Pozor! Přepíše původní text.</p>
+				<button  id= "" type="submit" class="btn btn-danger">uložit změny</button>
  				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	        
             </div>
+     </form>
 	  
     </div>
   </div>
 </div>  
+
+
