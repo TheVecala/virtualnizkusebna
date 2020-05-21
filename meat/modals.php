@@ -496,25 +496,24 @@
 
       <!-- Modal Header -->
       <div class="modal-header">
-            <p>UPRAVIT TEXT A AKORDY</p>
+	  					     <?php     
+						 $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/texty/".$aktualni_text;
+                      	 $akordy = fopen($aktualni_text_s_cestou, "r") or die("SOUBOR S TEXTEM NEEXISTUJE!");
+	                     echo "<p>UPRAVIT ".$aktualni_text. " ze složky ".$slozka_souboru."</p>";
+						 ?>
+           
 		  <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->  
 	  
              <div class="modal-body">
-     	    	<div class="container text-center">
+     	    	<div class="container text-center"> 
 				
-					 <p>MÍSTO PRO EDITACI.</p>
-
                      <span class="vzkaz" > 
-					     <?php     
-						 $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/texty/".$aktualni_text;
-                      	 $akordy = fopen($aktualni_text_s_cestou, "r") or die("SOUBOR S TEXTEM NEEXISTUJE!");
-	                     echo $slozka_souboru. "/". $aktualni_text. "<br>";
-						 ?>
+
 						 
-					     <textarea id="editor" style="overflow-x: auto; font-family: Courier, monospace;"  rows="20"  ><?php  // pozor na mezery
+					     <textarea id="editor" style="overflow-x: auto; font-family: Courier, monospace; width:100%"  rows="20"  ><?php  // pozor na mezery
 	    
 						while(!feof($akordy)) {
 						  echo fgets($akordy);
@@ -530,7 +529,8 @@
 
       <!-- Modal footer -->
             <div class="modal-footer">	 
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
+ 				<button type="button" class="btn btn-warning"   style="display: inline">ULOŽIT</button>	 	 
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	        
             </div>
 	  
     </div>
