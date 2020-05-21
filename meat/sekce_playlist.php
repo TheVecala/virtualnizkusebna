@@ -58,7 +58,7 @@
 									 
 									 else
 									  { ?>
-								       <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  >   
+								       <img src="/data/glyphicons-441-folder-closed.png" alt="vál"  >   
 									  <?php 
 									 	 }
 									 ; ?>
@@ -67,16 +67,21 @@
                                        </div>
                                 																		
 								   </td> 
- 
+                                       
 							       <td>
-								   
+								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
+									     EDIT
+								      	</button>
+								  				
 								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
-								   							   								
+								   		    <img src="/data/ikony_novy/icons8-play-50.png" alt="otevřeno"  > 					   								
 									 <?php  
   									 }
 									 
 									 else
 									  { ?>
+								  
+								    				  
 								         <button id=" " type="submit" style=" max-width: 120px ; display: inline" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
                                           OTEVŘÍT
 									     </button>
@@ -85,9 +90,7 @@
 									 ; ?>
 									 									 
 									</form>							   
-								   	<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
-									  SMAZAT
-									</button> 
+								   
 								   								   
 								   </td> 
 								   
