@@ -504,8 +504,26 @@
 	  
              <div class="modal-body">
      	    	<div class="container text-center">
+				
 					 <p>MÍSTO PRO EDITACI.</p>
 
+                     <span class="vzkaz" > 
+					     <?php     
+						 $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/texty/".$aktualni_text;
+                      	 $akordy = fopen($aktualni_text_s_cestou, "r") or die("SOUBOR S TEXTEM NEEXISTUJE!");
+	                     echo $slozka_souboru. "/". $aktualni_text. "<br>";
+						 ?>
+						 
+					     <textarea id="editor" style="overflow-x: auto; font-family: Courier, monospace;"  rows="20"  ><?php  // pozor na mezery
+	    
+						while(!feof($akordy)) {
+						  echo fgets($akordy);
+						};
+						fclose($akordy);   // pozor na mezery
+						 ?></textarea>
+						 
+				     </span>					 
+	
 					 
                </div>		  		
             </div>	  

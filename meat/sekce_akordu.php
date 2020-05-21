@@ -1,5 +1,5 @@
  <?php
-     $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/".$aktualni_text;
+     $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/texty/".$aktualni_text;
 	 $akordy = fopen($aktualni_text_s_cestou, "r") or die("SOUBOR S TEXTEM NEEXISTUJE!");
  ?>
 
@@ -53,7 +53,7 @@
 									   <span class="vzkaz" > 
 									     <pre style="overflow-x: auto"><?php
 											while(!feof($akordy)) {
-											  echo fgets($akordy) . "<br>";
+											  echo fgets($akordy);
 											}
 											fclose($akordy);
 										    ?></pre>
