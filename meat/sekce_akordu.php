@@ -4,7 +4,7 @@
  ?>
 
 
-	      <div  class=" ">   <!-- hlavička sekce info   -->
+	      <div  class=" ">   <!-- hlavička sekce akordu   -->
 			  
                <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
@@ -26,11 +26,11 @@
                </div>  
  			
 
-          </div>   <!-- konec hlavičky sekce info   -->
+          </div>   <!-- konec hlavičky sekce akordu   -->
 		
           <div  id="akordy_vysuvka" class="collapse show   ">
 		  
-		   <div> <!--  info   --> 
+		   <div> <!--  akordy   --> 
 		   
 		   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
 							   
@@ -51,14 +51,12 @@
 							   
 							  	  <li class="list-group-item vzkaz_karta " style="color:black">
 									   <span class="vzkaz" > 
-									     <pre style="overflow-x: auto">
-										    <?php
+									     <pre style="overflow-x: auto"><?php
 											while(!feof($akordy)) {
 											  echo fgets($akordy) . "<br>";
 											}
 											fclose($akordy);
-										    ?>
-										 </pre>
+										    ?></pre>
 									   </span><br>  
 									   <div style="text-align:right; ">
 										 <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 

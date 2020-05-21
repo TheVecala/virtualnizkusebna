@@ -36,6 +36,7 @@
 			  </a>
 			  <div class="dropdown-menu">
 				<a class="dropdown-item" href="index.php">home</a>
+				<a class="dropdown-item" href="playlist.php">playlist</a>
 				<a class="dropdown-item" href="zkusebna.php">zkušebna</a>
 				<a class="dropdown-item" href="mixer.php">mixer</a>
 				<a class="dropdown-item" href="bigscreen.php">bigscreen</a>
