@@ -38,7 +38,7 @@ if($overeni == 1) {
     die();
 } else {
 	$_SESSION['chyba_prihlaseni'] = "wrong_heslo";
-   header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  );
+  require "../navrat.php";
 	
 }
 ?>
