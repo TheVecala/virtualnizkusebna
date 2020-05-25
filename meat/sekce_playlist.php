@@ -47,41 +47,41 @@
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
 									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
 									
-                                       <div style=" font-family: Times, serif;  <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  font-size:1.5em;;   color:white " ; } ; ?>  ">
+                                       <div style="  font-size: 1.5rem;  <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  font-size:1.5em;;   color:white " ; } ; ?>  ">
 									   
 									<?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
 								   							   								   	
-									 <img src="/data/glyphicons-145-folder-open.png" alt="složka"  > 	
+									 <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:30px"  > 	
 																		
 									 <?php  
   									 }
 									 
 									 else
 									  { ?>
-								       <img src="/data/glyphicons-441-folder-closed.png" alt="vál"  >   
+								       <img src="/data/icons8-rock-music-50.png" alt="vál" style="max-height:30px" >   
 									  <?php 
 									 	 }
 									 ; ?>
 									 									 
 									 <?php echo $pole_slozek[$x] ?>
+									 
+									 <?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
+								   		    <img src="/data/ikony_novy/icons8-play-50.png" alt="otevřeno" style="max-height:30px" >					   								
+									 <?php } ; ?>
+									 
+									 
                                        </div>
                                 																		
 								   </td> 
                                        
-							       <td>
+							       <td  style="padding: 0.2rem; max-width: 339px; " >
 								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
 									     EDIT
 								      	</button>
 								  				
-								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
-								   		    <img src="/data/ikony_novy/icons8-play-50.png" alt="otevřeno"  > 					   								
-									 <?php  
-  									 }
-									 
+								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  { }
 									 else
 									  { ?>
-								  
-								    				  
 								         <button id=" " type="submit" style=" max-width: 120px ; display: inline" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
                                           OTEVŘÍT
 									     </button>

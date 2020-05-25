@@ -47,11 +47,11 @@
 							   
 							    <div class="card-header" style= "  "> 
 							      <div style="color:black  ; background-color:white ;  display: inline" >	
-										 <!--<img src="/data/icons8-sound-wave-50.png" alt="-"  > 	 -->  	 	
+									 <img src="/data/icons8-music-record-50.png" alt="-" style="max-height:30px" > 	 	 	
 									   <?php echo $pole_souboru[$x]; ?>
 							      </div> 
 								  <button data-toggle="collapse" data-target="#val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
-				                      <img style="max-height:30px" src="/data/ikona_colapsedown4.png" alt="minimize"> 
+				                      <img style="max-height:15px" src="/data/arrow128.png" alt="minimize"> 
 				                  </button>
 								 
 							    </div> 
