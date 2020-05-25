@@ -75,8 +75,8 @@
 								   </td> 
                                        
 							       <td  style="padding: 0.2rem; max-width: 339px; " >
-								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
-									     EDIT
+								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
+									     UPRAVIT
 								      	</button>
 								  				
 								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  { }
