@@ -23,9 +23,9 @@
 			  <div  id="playlist_vysuvka" class="collapse  "> <!-- zmšna složky    -->
 			
 		  		  
-					  <table class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 3px;  border-style: solid;    " >
-						<thead></thead>
-						<tbody>
+					  <div class="table table-bordered  table-dark tabulka" style="color: #343a40; background-color: #27a243;  border-width: 3px;  border-style: solid;    " >
+					 
+						<div>
 				  
 						<?php 
 						for($x = 0; $x < $delka_pole_slozek; $x++) {
@@ -38,10 +38,11 @@
 								
 								  {    
 								?>
-								<div  class=" ">	<!-- tlačítko změny složky    -->  
-																									
-								  <tr style="  border-width: 2px;  border-style: solid;    "  >
-                                   <td style="padding: 0.2rem; max-width: 339px; "> 
+								<ul class="list-group list-group-flush">	<!-- tlačítko změny složky    -->  
+									
+									 <li class="list-group-item">
+								 
+                                   <div style="padding: 0.2rem; max-width: 339px; "> 
 								  
 									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
@@ -72,9 +73,9 @@
 									 
                                        </div>
                                 																		
-								   </td> 
+								   </div> 
                                        
-							       <td  style="padding: 0.2rem; max-width: 339px; " >
+							       <div  style="padding: 0.2rem; max-width: 339px; " >
 								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
 									     UPRAVIT
 								      	</button>
@@ -92,18 +93,18 @@
 									</form>							   
 								   
 								   								   
-								   </td> 
+								   </div 
 								   
-								  </tr> 
-								</div>	
+								   </li> 
+								</ul>	
 								 
 								<?php
 								}
 						}
 						?>
 		  
-						</tbody>
-						</table>
+						</div>
+						</div>
  
 				  </div>
 								

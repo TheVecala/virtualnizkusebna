@@ -19,41 +19,28 @@
 			  </div>
             </li>
 			
-			
-			<li class="nav-item dropdown">
-			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-				ZKUŠEBNA
-			  </a>
-			  <div class="dropdown-menu">
-				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 
-				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
-			  </div>
+ 
+			 <li class="nav-item">
+               <a class="nav-link" href="index.php">home</a> 
+            </li>
+			 <li class="nav-item">
+                <a class="nav-link" href="bigscreen.php">bigscreen</a> 
             </li>
 				  
-			<li class="nav-item dropdown">
-			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-				ZOBRAZENÍ
-			  </a>
-			  <div class="dropdown-menu">
-				<a class="dropdown-item" href="index.php">home</a>
-				<a class="dropdown-item" href="playlist.php">playlist</a>
-				<a class="dropdown-item" href="zkusebna.php">zkušebna</a>
-				<a class="dropdown-item" href="mixer.php">mixer</a>
-				<a class="dropdown-item" href="bigscreen.php">bigscreen</a>
-				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
-			  </div>
-            </li>				  
-				  
-				  
-				  
-				  
-			<li class="nav-item  ">
-              <a class="nav-link"  href="#"  data-toggle="modal" data-target="#modal_skin">NASTAVENÍ</a>
-            </li>	
-			
- 
+		    <li class="nav-item">
+              <a class="nav-link " href="playlist.php">playlist</a>    
+            </li>
+			 <li class="nav-item">
+               <a class="nav-link " href="zkusebna.php">zkušebna</a>  
+            </li>
+			 <li class="nav-item">
+               <a class="nav-link " href="mixer.php">mixer</a>  
+            </li> 
+			 <li class="nav-item">
+                <a class="nav-link" href="/php/login/logout.php">odhlásit</a>  
+            </li> 				  
             <li class="nav-item">
-                  <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >INFO</a>
+                  <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >info</a>
             </li>
 			
           </ul>
