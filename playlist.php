@@ -208,8 +208,7 @@ td  {
 		<!--   druhejstřetím sloupec   -->
 	    <div class="col-md-8" >     
 	 
-         <!--   hlavicka druhyhostretim sloupce -->  
-	      	<?php   require "meat/sekce_lista.php";?>
+      
 	  
 		 <div class="row">
 		 
@@ -217,16 +216,16 @@ td  {
 			   <div id="wave_jumbo"  style="display:none ;  margin-bottom: 5px; "  class="col-md-12"> 
 					<?php 	  require "meat/sekce_looper.php";	?>								
 			   </div>   <!-- konec nulty sloupec   -->
-
-			   <!--  druhy sloupec   -->
-		       <div  id="k" class="col-md-6" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/sekce_souboru.php";	?>
-		       </div  > <!-- konec druhý sloupec   -->
   
                <!-- třetí sloupec   --> 
 			   <div class="col-md-6" style="margin-bottom: 5px" > 
 					<?php   require "meat/sekce_akordu.php";	?>						
 			   </div> <!-- konec třetí sloupec   -->
+
+			   <!--  druhy sloupec   -->
+		       <div  id="k" class="col-md-6" style="margin-bottom: 5px"> 
+				    <?php 	require "meat/sekce_souboru.php";	?>
+		       </div  > <!-- konec druhý sloupec   -->
 			
       	  </div> <!-- konec row   -->
         </div> <!--   konec druhejstřetím sloupec   -->  

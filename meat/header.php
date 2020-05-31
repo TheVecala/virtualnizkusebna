@@ -86,10 +86,10 @@
           <ul class="navbar-nav mr-auto">
              
 			 <li class="nav-item">
-               <a class="nav-link" href="index.php">home</a> 
+               <a class="nav-link" href="index.php">old</a> 
             </li>
 			 <li class="nav-item">
-                <a class="nav-link" href="bigscreen.php">bigscreen</a> 
+                <a class="nav-link" href="home.php">home</a> 
             </li>
 				  
 		    <li class="nav-item">
