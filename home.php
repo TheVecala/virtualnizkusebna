@@ -205,9 +205,6 @@ td  {
 		<!--   druhejstřetím sloupec   -->
 	    <div class="col-md-12" >     
 	 
-         <!--   hlavicka druhyhostretim sloupce -->  
-	      	<?php   require "meat/sekce_lista.php";?>
-	  
 		 <div class="row">
 		 
 		 	   <!--  nulty sloupec   --> 

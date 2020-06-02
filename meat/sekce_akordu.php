@@ -1,6 +1,18 @@
  <?php
      $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/texty/".$aktualni_text;
-	 $akordy = fopen($aktualni_text_s_cestou, "r") or die("SOUBOR S TEXTEM NEEXISTUJE!");
+	 
+	 if (file_exists($aktualni_text_s_cestou))  { 
+	 
+	    $akordy = fopen($aktualni_text_s_cestou, "r") ;
+	 } 
+	 else{
+		  $akordy = fopen($aktualni_text_s_cestou, "w") ;
+	 } 	 ; 	
+	
+	 
+	 
+	 
+	 
  ?>
 
 

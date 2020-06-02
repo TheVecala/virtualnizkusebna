@@ -208,8 +208,7 @@ td  {
 		<!--   druhejstřetím sloupec   -->
 	    <div class="col-md-8" >     
 	 
-         <!--   hlavicka druhyhostretim sloupce -->  
-	      	<?php   require "meat/sekce_lista.php";?>
+      
 	  
 		 <div class="row">
 		 
