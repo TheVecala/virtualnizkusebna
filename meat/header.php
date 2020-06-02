@@ -8,22 +8,21 @@
 							  <div  style="text-align:left; display: inline ;" >
 							  
 							   
-								<div  class="btn btn-success my-2 my-sm-0" type=""  style="display: inline; background-color: white;color:black; padding:1px; margin:2px; ">
-								     <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:30px; margin:0px" class=" " >
+								<div  class="btn btn-light my-2 my-sm-0"  style="display: inline;    ">
+								     <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:30px;"  >
 								<?php echo  $_SESSION['login'] ; ?>
 								
 								</div>
 							  </div>						 
                                	/
 							  <div style="text-align:left; display: inline;"  class=" dropdown-toggle" data-toggle="dropdown">	
-							    <div    class="btn btn-success my-2 my-sm-0"  style="display: inline; padding:1px; margin:2px; background-color: white;color:black; ">
+							    
 								  
-							  <button style="display: inline;   ; " type=" ">
-							  <img src="/data/icons8-rock-music-50.png" alt="vál" style="max-height:30px" class="  "  >
-							  <!-- <img src="/data/icons8-music-folder-50-2.png" alt="složka" style=" max-height: 30px;" >  --> 
+							  <button style="display: inline; padding:0px " class="btn btn-light my-2 my-sm-0"    >
+							  <img src="/data/icons8-rock-music-50.png" alt="vál" style="max-height:30px"   > 
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
-							  </div>
+							  
 							  </div>
 							  <div class="dropdown-menu" style="background-color: rgb(52, 58, 64)">
 							  						 
