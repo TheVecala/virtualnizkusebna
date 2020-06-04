@@ -17,7 +17,7 @@ if(isset($_POST["jmeno_adresare"])) {
           if (mkdir($cil_adresare.($_POST["jmeno_adresare"]))) {
              	$_SESSION['vysledek'] = "adresar_vytvoren"; 
                $_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
-			   
+			   mkdir($cil_adresare.($_POST["jmeno_adresare"])."/texty");
           } 
 		  else {
               $_SESSION['vysledek'] = "chyba - složku se napodařilo vytvořit"; 
