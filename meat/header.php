@@ -1,5 +1,5 @@
       <!-- Fixed navbar -->
-      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" style="padding:0px">
 
 
 		      <div style="display: inlinexxxxxx; color:white; background-color: #343a40; padding:3px; ">
@@ -15,18 +15,14 @@
 								</div>
 							  </div>						 
                                	/
-							  <div style="text-align:left; display: inline;"  class=" dropdown-toggle" data-toggle="dropdown">	
-							    
-								  
-							  <button style="display: inline; padding:0px " class="btn btn-light my-2 my-sm-0"    >
+							 
+							  <button style="display: inline; padding:0px " class="btn btn-light my-2 my-sm-0 dropdown-toggle" data-toggle="dropdown" >
 							  <img src="/data/icons8-rock-music-50.png" alt="vál" style="max-height:30px"   > 
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
-							  
-							  </div>
+							  						  
 							  <div class="dropdown-menu" style="background-color: rgb(52, 58, 64)">
-							  						 
-
+		
 						<?php 
 						for($x = 0; $x < $delka_pole_slozek; $x++) {
 							  if ($pole_slozek[$x] == ".")  { continue; };
@@ -88,14 +84,14 @@
                <a class="nav-link" href="index.php">old</a> 
             </li>
 			 <li class="nav-item">
-                <a class="nav-link" href="home.php">home</a> 
+                <a class="nav-link " href="home.php">home</a> 
             </li>
 				  
 		    <li class="nav-item">
               <a class="nav-link " href="playlist.php">playlist</a>    
             </li>
 			 <li class="nav-item">
-               <a class="nav-link " href="zkusebna.php">zkušebna</a>  
+               <a class="nav-link " href="looper.php">looper</a>  
             </li>
 			 <li class="nav-item">
                <a class="nav-link " href="mixer.php">mixer</a>  

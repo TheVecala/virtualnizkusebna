@@ -14,7 +14,7 @@
 			   </button>
             </div> <!--     -->
 	      
-	        <div  id="looper_vysuvka" class="collapse  ">
+	        <div  id="looper_vysuvka" class="collapse show ">
 			
 
 			

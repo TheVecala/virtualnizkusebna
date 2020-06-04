@@ -57,7 +57,7 @@
 							    </div> 
  								    							   
 							   
-							     <div id="val_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse show" style="   "   > 
+							     <div id="val_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse " style="   "   > 
 							   
 								 <?php
 								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));

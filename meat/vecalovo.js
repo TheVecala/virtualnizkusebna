@@ -215,11 +215,6 @@ wavesurfer.on('ready', function () {
 	function rolna_val_show(){ $("#val_vysuvka").collapse('show') ;  };
 	function rolna_val_hide(){ $("#val_vysuvka").collapse('hide') ;  };
 	
- rolna_playlist_show();
- rolna_looper_hide();
- rolna_soubory_show();
- rolna_texty_show();
- rolna_val_show();
  
   
  // document.getElementById("playlist_vysuvka").setAttribute("class","show");

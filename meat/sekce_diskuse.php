@@ -56,7 +56,7 @@ define ("ROWS", 10);
       </div> 
   
  </div> <!-- konec hlavička třetího sloupce  -->  
- <div  id="texty_vysuvka" class="collapse  ">
+ <div  id="texty_vysuvka" class="collapse show ">
  <div id="prispevek"  style="overflow: auto ">
  <div>   <!-- ovládání třetího sloupce  -->
    
