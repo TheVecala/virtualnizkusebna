@@ -512,7 +512,7 @@
 				
                      <span class="vzkaz" > 
 
-					   <div class="form-group"  style="display:nonexx">
+					   <div class="form-group"  style="display:none">
 						<label for="soubor_akordu">uložit do:</label>
 						<input id="" type="text" class="form-control"  value="<?php echo $aktualni_text_s_cestou ; ?>" name="soubor_akordu">
 					  </div>
