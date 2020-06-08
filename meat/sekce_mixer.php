@@ -17,37 +17,46 @@
 		  
 		  <div  id="mixer_vysuvka" class="collapse show  ">
 		  
-		    <div> <!--  mixer   --> 
-		   
+		    <div > <!--  mixer   --> 
+		         
 		     <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
-	
+	               <div id="loading"> načítám...   </div> 
 		  
 		<tone-content>
 			<tone-play-toggle></tone-play-toggle>
 			<div id="tracks">
-				<tone-channel label="bici" id="johny_bici"></tone-channel>
-				<tone-channel label="keys" id="johny_key"></tone-channel>
-				<tone-channel label="bass" id="johny_bas"></tone-channel>
+				<tone-channel label="bicí automat" id="tonic_42_1_bici"></tone-channel>
+				<tone-channel label="basa Dušan" id="tonic_42_1_basa"></tone-channel>
+				<tone-channel label="kytara Marec" id="tonic_42_1_kytara"></tone-channel>
+				<tone-channel label="zpěv Vodys" id="tonic_42_1_zpev"></tone-channel>
 			</div>
 		</tone-content>
  
 
 	<script type="text/javascript">
+	
+	  function nahrano() {
+		 document.getElementById("loading").style.display ="none"; 
+		  
+	  };
+	
 		function makeChannel(name){
 			var channel = new Tone.Channel().toMaster();
 			var player = new Tone.Player({
-				url : `./data/${name}.[mp3|ogg]`,
-				loop : true
+				url : `./user/carvadele/2106703441/uploads/to nic neni/mixer/${name}.[mp3|ogg]`,
+				loop : true,
+				onload: nahrano()
 			}).sync().start(0);
 			player.chain(channel);
 
 			//bind the UI
 			document.querySelector(`#${name}`).bind(channel);
-		}
+		};
 
-		makeChannel("johny_bici");
-		makeChannel("johny_key"); 
-		makeChannel("johny_bas"); 
+		makeChannel("tonic_42_1_bici"); 
+		makeChannel("tonic_42_1_basa");
+		makeChannel("tonic_42_1_kytara");  
+		makeChannel("tonic_42_1_zpev"); 
 
 		document.querySelector("tone-play-toggle").bind(Tone.Transport);
 	</script>

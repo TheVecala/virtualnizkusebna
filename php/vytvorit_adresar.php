@@ -18,6 +18,12 @@ if(isset($_POST["jmeno_adresare"])) {
              	$_SESSION['vysledek'] = "adresar_vytvoren"; 
                $_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
 			   
+			   mkdir($cil_adresare.($_POST["jmeno_adresare"])."/texty");
+			   
+			    $vzor_akordu = ("../data/akordy.txt");
+				$cil_akordu = ($cil_adresare.($_POST["jmeno_adresare"])."/texty"."/akordy.txt");
+			   echo copy($vzor_akordu,$cil_akordu);
+			   
           } 
 		  else {
               $_SESSION['vysledek'] = "chyba - složku se napodařilo vytvořit"; 
