@@ -9,6 +9,8 @@ if (is_dir($target_dir)) {
 	// vyřesit soubory
 	unlink($target_dir."/texty/akordy.txt");
 	rmdir($target_dir."/texty");
+	// unlink($target_dir."/data/nazev_valu.txt");
+	rmdir($target_dir."/data");
 	
 	// smazat diskusi
 	
