@@ -8,49 +8,66 @@ $adresa_pro_navrat = ($_POST["navrat"]);
 $databaze = true;
  
 if   ( $databaze )      // vytvoření složek kapely
-     { 
-		if(isset($_POST["nick"])) 
-			{   if (mkdir($koren.($_POST["nick"])))									
-					{ 
-			    	
-					    if (mkdir($koren.($_POST["nick"])."/".$nahoda  )) 
-                           {   
-							if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/" ))
-									{   if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir))
-										 {	$_SESSION['vysledek'] = "vytvořeno"; 
-											$_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
-											$_SESSION['kapela'] = ($_POST["nick"]);
-											$_SESSION['login'] = ($_POST["nick"]);
-											
-										  // copy("../test/index.php","../".$adresa_pro_navrat."/index.php");
-							 
-										 } else  
-										 { $_SESSION['vysledek'] = "chyba - složka nebyla vytvořena"; 
-											 $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-										 }
+    { 
+	 if(isset($_POST["nick"])) 
+		{if (mkdir($koren.($_POST["nick"])))									
+			{if (mkdir($koren.($_POST["nick"])."/".$nahoda  )) 
+                {if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/" ))
+					{if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir))
+						{if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir."/data"))
+                            {if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir."/texty"))
+                                {
 									
-									} else  
-									{	 
-									} 
-							 
-					    	} else  
-					        { $_SESSION['vysledek'] = "chyba - nahodna složka   nebyla vytvořena"; 
-					   	      $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-					         session_destroy(); 
-					        }	 
-							 
-					 
-			        } else  
-				    { $_SESSION['vysledek'] = "chyba - složka uploads nebyla vytvořena"; 
-					 	 $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-						 session_destroy(); 
-				    }
-		    } else  
-		    { $_SESSION['vysledek'] = "chyba - složka zkušebny nebyla vytvořena x"; 
+									 $vzor_akordu = ("../data/akordy.txt");
+				                     $cil_akordu = ($koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir."/texty"."/akordy.txt");
+		                        	 echo copy($vzor_akordu,$cil_akordu);
+									
+									// vložení nazvu
+												if (true) {
+												$soubor = $koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir."/data/nazev_valu.txt";
+												$file = fopen($soubor, "w") or die("nasrat!"); 
+												fwrite($file, $target_dir); 
+												fclose($file);
+													
+												}
+												
+								        $_SESSION['vysledek'] = "vytvořeno"; 
+										$_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
+										$_SESSION['kapela'] = ($_POST["nick"]);
+										$_SESSION['login'] = ($_POST["nick"]);
+										
+								} else  
+							    { $_SESSION['vysledek'] = "chyba - složka texty nebyla vytvořena"; 
+							      $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+							    }		
+							} else  
+							{ $_SESSION['vysledek'] = "chyba - složka data nebyla vytvořena"; 
+							  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+							}
+
+						} else  
+						{ $_SESSION['vysledek'] = "chyba - složka nebyla vytvořena"; 
+						  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+						} 	
+					} else  
+					{	 
+					}   
+				} else  
+				{ $_SESSION['vysledek'] = "chyba - nahodna složka   nebyla vytvořena"; 
+				  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+				  session_destroy(); 
+				}
+			} else  
+			{ $_SESSION['vysledek'] = "chyba - složka uploads nebyla vytvořena"; 
+				$_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
+				session_destroy(); 
+			}
+		} else  
+		{ $_SESSION['vysledek'] = "chyba - složka zkušebny nebyla vytvořena x"; 
 			 	  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-		    }
+		}
 	  
-      } else  
+    } else  
 	  { $_SESSION['vysledek'] = "chyba - registrace kapely nebyla vytvořena"; 
 		  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
 	  };
@@ -92,7 +109,7 @@ if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  )
     // vytvoření tabulky diskuse kapely
 	$cas= time();
 	$jmeno= "admin";
-	$vzkaz= "Sem je možno vkládat odkazy na vály, názory a jiný věci";
+	$vzkaz= "Sem je možno vkládat nápady, odkazy, názory a jiný věci";
  
     mysql_query("CREATE TABLE $adresa_diskuse (
 	cas INT(11) NOT NULL,
