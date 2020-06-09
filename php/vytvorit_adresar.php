@@ -23,11 +23,23 @@ if(isset($_POST["jmeno_adresare"])) {
                $_SESSION['slozka_souboru_k_zobrazeni'] = ($ocesany_jmeno_adresare);
 			   
 			   mkdir($cil_adresare.($ocesany_jmeno_adresare)."/texty");
-			   mkdir($cil_adresare.($ocesany_jmeno_adresare)."/data");
-			   
-			    $vzor_akordu = ("../data/akordy.txt");
+			   $vzor_akordu = ("../data/akordy.txt");
 				$cil_akordu = ($cil_adresare.($ocesany_jmeno_adresare)."/texty"."/akordy.txt");
 			   echo copy($vzor_akordu,$cil_akordu);
+			   
+			   mkdir($cil_adresare.($ocesany_jmeno_adresare)."/data");	
+
+			    
+				if (true) {
+				$soubor = $cil_adresare.($ocesany_jmeno_adresare)."/data/nazev_valu.txt";
+				$file = fopen($soubor, "w") or die("nasrat!"); 
+				fwrite($file, $cely_jmeno_adresare); 
+				fclose($file);
+				 	
+				}
+			   
+			   
+			   
 			   
           } 
 		  else {

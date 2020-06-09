@@ -27,11 +27,22 @@
 							  if ($pole_slozek[$x] == ".")  { continue; };
 							  if ($pole_slozek[$x] == "..")  { continue; };
 						   $soub = ($slozka_slozek.$pole_slozek[$x]);
-						   $label_soub = " test";
+						  
 						   $label_soub = ($pole_slozek[$x]);  
+						   
+
+						   
 							if(is_dir($soub))
-								
 								  {    
+						    $soubor_s_nazvem = $soub."/data/nazev_valu.txt";
+	 
+	                            if (file_exists($soubor_s_nazvem))  { 
+	 
+								$cely_nazev = fopen($soubor_s_nazvem, "r") ;
+							 } 
+
+ 					 
+							  
 								?>
 						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px ; "> <!-- tlačítko změny složky    --> 
 											 
@@ -65,7 +76,10 @@
 																
 									   <div> 
 									      <?php
-									     echo $pole_slozek[$x]
+									     	while(!feof($cely_nazev)) {
+											    echo fgets($cely_nazev);
+											    }
+										     	fclose($cely_nazev);
 									      ?> 
 									   </div> 
 								
