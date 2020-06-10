@@ -50,56 +50,52 @@
 
            <div class="inner cover">
   
-   
-   
-   
-   
-   
+
     <div class="container" >
 	
 	
-      <div class="card bg-success text-white"> <!-- hlavní menu -->
-       <div class="card-body" style=" text-align:center"> 
-	    <h1 class="card-title"   >VIRTUÁLNÍ ZKUŠEBNA</h1> 
-	    <h2 class="card-title"   >Autonomní sdílení souborů</h2>
-	    <h2 class="card-title"   >Open-code web app</h2>
-        
-	    <button  id="prihlasit"   type="button" class="btn btn-dark prihlasit"  >PŘIHLÁSIT SE</button> 
-	    <button  id="nova_zkusebna"   type="button" class="btn btn-dark nova_zkusebna"  >VYTVOŘIT NOVÝ PROJEKT</button> 
-	  
-		<?php
-		 
-		if ($_SESSION['chyba_prihlaseni'] == "wrong_heslo") { 
-	     echo ' <div id="spatne_heslo" class=" " style="color:red"> Špatný jméno nebo heslo  </div> ';
-		 $_SESSION['chyba_prihlaseni'] = "";
-		 } ;
-	     ?>
-	
-	   </div> 
-    
+      <div id="hlavni_box" class="card bg-success text-white"> <!-- hlavní menu -->
+		   <div class="card-body" style=" text-align:center"> 
+			<h1 class="card-title"   >VIRTUÁLNÍ ZKUŠEBNA</h1> 
+			<h2 class="card-title"   >Autonomní sdílení souborů</h2>
+			<h2 class="card-title"   >Open-code web app</h2>
+			
+			<button  id="prihlasit"   type="button" class="btn btn-dark prihlasit"  >PŘIHLÁSIT SE</button> 
+			<button  id="nova_zkusebna"   type="button" class="btn btn-dark nova_zkusebna"  >VYTVOŘIT NOVÝ PROJEKT</button> 
+		  
+			<?php
+			 
+			if ($_SESSION['chyba_prihlaseni'] == "wrong_heslo") { 
+			 echo ' <div id="spatne_heslo" class=" " style="color:red"> Špatný jméno nebo heslo  </div> ';
+			 $_SESSION['chyba_prihlaseni'] = "";
+			 } ;
+			 ?>
+		
+		   </div> 
+		
       </div> <!-- hlavní menu -->
 	  
-	   <div class=" ">
+	  <div class=" ">
 	    <!-- form přihlášení -->
         <div id="formular_prihlaseni" class="card bg-success text-white" style="  display: none"> 
-          <div class="card-body">           
-            <h3>OTEVŘENÍ PROJEKTU:</h3>    
-         
-            <form action="php/login/login.php" method="post" >     
-      NÁZEV: <input type="text" name="nick" value="" size="17" autofocus="autofocus"  />  <br>  <br> 
-      HESLO: <input type="password" name="heslo" value="" size="17"      />      <br> <br> 
-	         <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
-             <input class="button" type="submit" name="submit" value="OTEVŘÍT" />
-            </form>
-			
-			
-              <br> 
-          </div>
+			  <div class="card-body">           
+				<h3>PŘIHLÁŠENÍ:</h3>    
+			 
+				<form action="php/login/login.php" method="post" >     
+				   JMÉNO: <input type="text" name="nick" value="" size="17" autofocus="autofocus"  />  <br>  <br> 
+				   HESLO: <input type="password" name="heslo" value="" size="17"      />      <br> <br> 
+				   <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
+				   <input class="button btn btn-dark" type="submit" name="submit" value="PŘIHLÁSIT" />
+				     <button id="zpet" type="button" class="btn btn-danger zpet"   style="display: inline">ZPĚT</button>
+				</form>
+				
+				
+				  <br> 
+			  </div>
         </div> <!-- form přihlášení -->
          
         <div id="formular_vytvoreni_zkusebny" style="  display: none" class="card bg-success text-white"> <!-- form vytvoření zkušebny -->
 	 
-	 	 
             <div  class="card-body " >  
 							 
 				<form action="php/vytvorit_bezpecnou_zkusebnu.php" method="post" enctype="multipart/form-data">
@@ -116,9 +112,8 @@
 			     	<input id=" " type="text" name="email" > <br>
 					<input id=" " type="text" value="hello_world" name="jmeno_adresare" style="display:none" >	 <br>
 					<input id=" " type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" > <br>
-					<input id="vytvorit_adresar" type="submit" value="vytvořit" name="submit">
-				
-				
+					<input id="vytvorit_adresar" type="submit" class="btn btn-dark  " value="VYTVOŘIT" name="submit">	
+                 	 <button id="zpet2" type="button" class="btn btn-danger zpet2"   style="display: inline">ZPĚT</button>
 				</form>
 					   
 			</div>
@@ -171,10 +166,8 @@
 	
 	
 	
-	
-	
-    </div> 
-                 
+   </div> 
+ 
   
 <?php  
   require "php/console.php";
@@ -196,25 +189,37 @@ $(document).ready(function(){
 	
 	$('.nova_zkusebna').click(function() { 
 	
-         $("#formular_vytvoreni_zkusebny").toggle(700); 
-         $("#formular_prihlaseni").hide(200); 
+         $("#formular_vytvoreni_zkusebny").show(700); 
+         $("#formular_prihlaseni").hide(200);  
+         $("#hlavni_box").hide(200); 
 	});		
 	
 	$('.prihlasit').click(function() { 
 	
-         $("#formular_prihlaseni").toggle(700); 
-		 $("#formular_vytvoreni_zkusebny").hide(200);
+         $("#formular_prihlaseni").show(700); 
+		 $("#formular_vytvoreni_zkusebny").hide(200);  
+         $("#hlavni_box").hide(200); 
 	});		
 	
+	$('.zpet').click(function() { 
+	
+         $("#formular_prihlaseni").hide(500); 
+         $("#hlavni_box").show(200); 
+	});	
+
+	$('.zpet2').click(function() { 
+	 
+		 $("#formular_vytvoreni_zkusebny").hide(500);  
+         $("#hlavni_box").show(200); 
+	});		
 });
 </script>		
 
 
-     </div>
-
-    </div>
-  </div>
-</div>
+		 </div>
+	   </div>
+	  </div>
+	</div>
 	
 		
    </body>

@@ -1,3 +1,4 @@
+  <?php session_start(); ?>
 <meta charset="utf-8">
 <?php
 include "connect.php";/* připojení k databázi */
@@ -20,7 +21,7 @@ else {
 };
 	
 if($overeni == 1) {
-    session_start();
+   
     $_SESSION['login'] = stripslashes($login); 
 /* Zde se vytváří SESSION 'login', kterou se budeme prokazovat jako přihlášení */
     $_SESSION['id'] = $row["id"];
@@ -38,7 +39,7 @@ if($overeni == 1) {
     die();
 } else {
 	$_SESSION['chyba_prihlaseni'] = "wrong_heslo";
-   header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  );
-	
+   // header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  );
+	  require "../navrat.php";
 }
 ?>
