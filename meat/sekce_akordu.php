@@ -6,12 +6,8 @@
 	    $akordy = fopen($aktualni_text_s_cestou, "r") ;
 	 } 
 	 else{
-		  $akordy = fopen($aktualni_text_s_cestou, "w") ;
+		  $akordy = "akordy_neexistuji" ;
 	 } 	 ; 	
-	
-	 
-	 
-	 
 	 
  ?>
 
@@ -44,7 +40,9 @@
 		  
 		   <div> <!--  akordy   --> 
 		   
-		   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+	
+
+          	<div class="card bg-success text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
 							      <!-- <img src="/data/icons8-sound-wave-50.png" alt="-"  > -->
@@ -59,7 +57,34 @@
 							  </div> 
  								    							   
 							   
-							  <div id="akordy_vnitrni_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse show  " style="  "   > 
+	
+	 <?php
+ 	 if ($akordy == "akordy_neexistuji")  { 
+	  ?>
+	 
+	                      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+							   
+	                          <div class="card-header" style= "  "> 
+							     <p>zatim tu nic není   </p> 
+							  </div>  						   
+							   
+							  <div id="" class="card-body   " style="  "   > 
+							   
+						          <img src="/data/singer.png" alt="-" style= " max-width:100% " > 
+							   
+		   					  </div> <!--card body  -->
+							   
+		                 </div> <!-- card   -->	
+	  
+	 <?php  
+	 } 
+	 else{
+	 ?>
+
+	
+
+	
+						      <div id="akordy_vnitrni_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse show  " style="  "   > 
 							   
 							  	  <li class="list-group-item vzkaz_karta " style="color:black">
 									   <span class="vzkaz" > 
@@ -70,15 +95,21 @@
 											fclose($akordy);
 										    ?></pre>
 									   </span><br>  
-									   <div style="text-align:right; ">
-										 <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 
-										 <span class="jmeno"  style="font-size:0.9em; ">  <?php echo strip_tags($zaznam["jmeno"])?> &nbsp </span> 
-										 <span class="datum"  style="font-size:0.6em; ">  <?php echo date("j.n.Y G:i:s", ($zaznam["cas"]))?> </span> 
-									   </div>
+									   
 									   
 								  </li>
 							   
 		   					  </div> <!--card body  -->
+							  
+							  
+							  
+							  
+		 <?php		 
+	  } ; 	
+	 ?>
+							  
+							  
+							  
 							   
 		   </div> <!-- card   -->
 		   

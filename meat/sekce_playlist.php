@@ -116,4 +116,30 @@
 				</div>  <!-- playlist_vysuvka   --> 
 
               </div> 
+			  
+			  
+      <?php if ($delka_pole_slozek < 3	) 
+		{ ?>
+	   	
+	      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+							   
+	                          <div class="card-header" style= "  "> 
+							     <p>zatim tu nic není   </p> 
+							  </div>  						   
+							   
+							  <div id="" class="card-body   " style="  "   > 
+							   
+						          <img src="/data/singer.png" alt="-" style= " max-width:100% " > 
+							   
+		   					  </div> <!--card body  -->
+							   
+		  </div> <!-- card   -->	
+		   	
+	 	<?php
+	 	  } 
+	    ?>			  
+			  
+			  
+			  
+			  
             </div> 

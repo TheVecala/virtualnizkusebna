@@ -9,7 +9,9 @@ console.log("  <?php echo "sekce = ".$sekce.",    slozka_slozek= ".$slozka_sloze
 
 console.log("  <?php echo "session sekce_k_zobrazeni = ".$_SESSION['sekce_k_zobrazeni'].",     SESSION chyba_prihlaseni= ". $_SESSION['chyba_prihlaseni'].", befelemepesseveze= ".$befelemepesseveze   ?> ");
 
-console.log("  <?php echo "skin = ".$skin."   aktualni_text = ".$aktualni_text     ?>   ");
+console.log("  <?php echo "skin = ".$skin."   aktualni_text = ".$aktualni_text."   delka_pole_souboru = ".$delka_pole_souboru     ?>   ");
+
+console.log("  <?php echo "delka_pole_slozek = ".$delka_pole_slozek     ?>   ");
 </script>   
   
  
