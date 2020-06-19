@@ -163,8 +163,10 @@ wavesurfer.on('ready', function () {
 	var val = this.getAttribute("value");
 	var label_val = this.getAttribute("name");
 
-    document.getElementById("modal_delete_val_label").innerHTML = label_val;
+     document.getElementById("modal_delete_val_label").innerHTML = label_val;
 	 document.getElementById("modal_delete_val_deleter").setAttribute("value", val);
+	 document.getElementById("modal_rename_val_label").setAttribute("value", label_val); 
+	 document.getElementById("modal_rename_val_label_novy").setAttribute("value", label_val);  
 	
   }); 
   

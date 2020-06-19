@@ -335,34 +335,59 @@
 
       <!-- Modal Header -->
       <div class="modal-header">
-          smazat celou skladbu:     
+            <p id="modal_delete_val_label" class="modal-title"> žádná skladba </p>       
 		  <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->  
+	  
+      <div class="modal-body">	  
+	  
 	 	<form action="/php/smazat_val.php" method="post" enctype="multipart/form-data"  style="display:inline">
-	
-             <div class="modal-body">
-     		          <p id="modal_delete_val_label" class="modal-title">  skladba   </p>
-					  <div class="form-group"  style="display:none">
-						<label for="val_ke_smazani">smazat skladbu:</label>
+	     		         
+					  <div class="form-group"  style="display:nonexxxx"> 
 						<input id="modal_delete_val_deleter" type="text" class="form-control"  value="vál ke smazání_nevložen " name="val_ke_smazani">
 					  </div>				
 										 							 
-					  <div class="form-group"  style="display:none">
-						<label for="navrat">navrat:</label>
+					  <div class="form-group"  style="display:none"> 
 						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>
-			  		
-            </div>	  
-
-      <!-- Modal footer -->
-            <div class="modal-footer">	 
-			 <p  > Pozor! Smazat lze pouze prázdnou skladbu!   </p>
+					  </div>		  		
 				<button  id= "nahrat" type="submit" class="btn btn-danger">odstranit celou skladbu</button>
+	            <p> Pozor! Smazat lze pouze prázdnou skladbu!   </p>
+	    </form>
+			 
+	    <form action="/php/prejmenovat_val.php" method="post" enctype="multipart/form-data"  style="display:inline">
+	
+   			<div class="form-group"  style="display:nonexxxxxxxxxxxx"> 
+			    <input id="modal_rename_val_renamer" type="text" class="form-control" value="<?php echo $slozka_slozek ?>" name="cesta_k_valu_k_prejmenovani">
+		    </div>	
+					  
+   		    <div class="form-group"  style="display:nonexxxxxxxxxxxx"> 
+				<input id="modal_rename_val_label" type="text" class="form-control" value="vál k prejmenovani_nevložen" 
+				  name="puvodni_jmeno_valu_k_prejmenovani">
+		    </div>					 
+					 
+  		    <div class="form-group"  style="display:nonexxxxxxxxxxxx"> 
+				<input id="modal_rename_val_label_novy" type="text" class="form-control" value="vál k prejmenovani_nevložen"
+     			  name="nove_jmeno_valu_k_prejmenovani">
+		    </div>					 
+					 
+					  <div class="form-group"  style="display:none"> 
+						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+					  </div>		  		
+				<button  id= "nahrat" type="submit" class="btn btn-danger">přejmenovat</button> 
+	    </form>
+		 
+			 
+				
+
+      </div>
+		<!-- Modal footer -->
+            <div class="modal-footer">	 
+
  				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
             </div>
-	   </form>
+	  
     </div>
   </div>
 </div>
