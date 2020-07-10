@@ -8,8 +8,8 @@ $target_dir =  ($_POST["nove_jmeno_valu_k_prejmenovani"]);
 
 $adresa_pro_navrat =    ($_POST["navrat"]);
   
-$odkud = $cesta_k_valu.$renamed_dir;
-$kam = $cesta_k_valu.$target_dir ;
+$odkud = "./".$cesta_k_valu.$renamed_dir;
+$kam = "./".$cesta_k_valu.$target_dir ;
 
 if (is_dir($odkud)) {
 
@@ -25,7 +25,7 @@ if (is_dir($odkud)) {
  
    else {
     
-        $_SESSION['vysledek'] = " chyba - vál nebyl prejmenovan ";
+        $_SESSION['vysledek'] = $odkud;
     };
   require "navrat.php";
 ?>

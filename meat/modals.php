@@ -86,52 +86,6 @@
 </div>
  
  
-  <!-- The Modal playlist edit -->
-<div class="modal" id="modal_playlist_edit">
-  <div class="modal-dialog  ">
-    <div class="modal-content bg-success text-white">
-
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <p class="modal-title"> EDITOVAT PLAYLIST </p>
-		
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-      </div>
-
-      <!-- Modal body -->
-      <div class="modal-body">
-     
-	   	        <form action="php/vlozit_track.php" method="post" enctype="multipart/form-data">
-				
-					<h3>   VYTVOŘENÍ NOVÉ POLOŽKY PLAYLISTU </h3>    <br>
-					
-					NÁZEV: 
-					<input id="" type="text" name="nazev_tracku" > <br>
-					BPM: 
-					<input id="" type="text" name="bpm" > <br>
-					KLÍČ:
-					<input id="" type="password" name="klic" > <br>
-					INFO1:
-					<input id="" type="password" name="over_heslo" > <br>
-					EMAIL:
-			     	<input id="" type="text" name="email" > <br>
-					
-					<input id="jmeno_adresare_xxxxx" type="text" value="první" name="jmeno_adresare" style="display:none" >	 <br>
-					<input id="navrat_xxxxxxx" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:nonexxxxxx" > <br>
-					<input id="" type="text" value="<?php echo $kapela; ?>" name="kapela" style="display:nonexxxxxxxx" > <br>
-					<input id="vlozit_track" type="submit" value="vložit" name="submit">
-								
-				</form>
-				
-      </div>
-      <!-- Modal footer -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
-      </div>
-
-    </div>
-  </div>
-</div> 
  
    
   <!-- The Modal vlozit_soubor -->
@@ -155,9 +109,7 @@
 			    	   <input type="file" class="form-control" name="fileToUpload">
 				    </div>				
 					
-					 
-					 <button  id= "nahrat" type="submit" class="btn btn-primary">VLOŽIT SOUBOR</button>
-					
+
 				 
 					  <div class="form-group"  style="display:none">
 						<label for="navrat">navrat:</label>
@@ -169,6 +121,16 @@
 						<label for="slozka_pro_vlozeni_souboru">navrat</label>
 						<input type="text" class="form-control"  value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru">
 					  </div>					
+					
+					   
+					    <div class="checkbox">
+						  <label><input name="odeslat" type="checkbox" value="true">Odeslat info na mail</label>
+						</div> 
+					  
+									 
+					  <button  id= "nahrat" type="submit" class="btn btn-primary">VLOŽIT SOUBOR</button>
+					
+					
 					
 				</form>
 				  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	   		

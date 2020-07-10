@@ -1,71 +1,39 @@
 <?php session_start(); ?>
 <?php
- $target_dir = ($_POST["slozka_pro_vlozeni_souboru"]);
+$target_dir = ($_POST["slozka_pro_vlozeni_souboru"]);
 $target_file = "../".$target_dir ."/". basename($_FILES["fileToUpload"]["name"]); //bug s lomítkem
 $jmeno_do_mailu = basename($_FILES["fileToUpload"]["name"]); 
 
 $adresa_pro_navrat =    ($_POST["navrat"]);
 $uploadOk = 1;
 $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
-// Check if image file is a actual image or fake image
-// if(isset($_POST["submit"])) {
-    // $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
-    // if($check !== false) {
-        // echo "File is an image - " . $check["mime"] . ".";
-        // $uploadOk = 1;
-    // } else {
-        // echo "File is not an image.";
-        // $uploadOk = 0;
-    // }
-// }
-// Check if file already exists
+ 
 if (file_exists($target_file)) {
-    $_SESSION['vysledek'] = "Sorry, file already exists.";
+    $_SESSION['vysledek'] = "Soubor stejného jména už ve složce je.";
     $uploadOk = 0;
 }
-// Check file size
-// if ($_FILES["fileToUpload"]["size"] > 50000000000000) {
-    // echo "Sorry, your file is too large.";
-    // $uploadOk = 0;
-// }
-// Allow certain file formats
-// if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
-// && $imageFileType != "gif" ) {
-    // echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
-    // $uploadOk = 0;
-// }
-// Check if $uploadOk is set to 0 by an error
-// if ($uploadOk == 0) {
-    // echo "Sorry, your file was not uploaded.";
-// if everything is ok, try to upload file
-// } 
+ 
 else {
 		if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-		  $_SESSION['vysledek'] = "file ". basename( $_FILES["fileToUpload"]["name"]). " se nahrál.";
-		  
-		
-				  
+		        $_SESSION['vysledek'] = "file ". basename( $_FILES["fileToUpload"]["name"]). " se nahrál.";	 
 				//  odeslaní mailů 
-				 include "login/connect.php";
-                  $seznam_mailu =    "maily_".$_SESSION['kapela'];
+				if ( $_POST["odeslat"] == "true") {
+				  include "login/connect.php";
+                  $seznam_mailu = "maily_".$_SESSION['kapela'];
 				  
 				  $maily=mysql_query("select mail from $seznam_mailu /*order by cas desc*/") ;
-				 
+				  $textmailu="Do složky __ ".$_SESSION['slozka_souboru_k_zobrazeni']." __ byl vložen soubor __ ".$jmeno_do_mailu.".";  
+				   
 				  while ($adresa=MySQL_Fetch_Array($maily))
-				  {
-				   
-					$textmailu="Do složky __ ".$_SESSION['slozka_souboru_k_zobrazeni']." __ byl vložen soubor __ ".$jmeno_do_mailu.".";  
-				   
-				   
-				 mail($adresa["mail"], "nový soubor v playlistu",$textmailu,"From:automat@virtualnizkusebna.cz");
-			
-				  }
+				  {  mail($adresa["mail"], "nový soubor v playlistu",$textmailu,"From:automat@virtualnizkusebna.cz");
+			        
+			      };
+				  
+				 }; 
 				//  konec odeslaní mailů 		  
 				  
-		  
-		  
 		} else {
-			$_SESSION['vysledek'] = " error uploading  file: ". $target_file;
+		    	$_SESSION['vysledek'] = " error uploading  file: ". $target_file;
 		};
   }
   require "navrat.php";
