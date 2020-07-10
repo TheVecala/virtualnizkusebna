@@ -5,9 +5,15 @@ $target_dir =  "../" .($_POST["val_ke_smazani"]);
 $adresa_pro_navrat =    ($_POST["navrat"]);
   
 if (is_dir($target_dir)) {
+	
+	$slozka = scandir($target_dir);
+	$pocet = count($slozka);
+    
+	
+ if ( $pocet < 5 ) {	
     
 	// vyřesit soubory
-	unlink($target_dir."/texty/akordy.txt");
+	unlink($target_dir."/texty/akordy.txt"); 
 	rmdir($target_dir."/texty");
 	unlink($target_dir."/data/nazev_valu.txt");
 	rmdir($target_dir."/data");
@@ -16,11 +22,18 @@ if (is_dir($target_dir)) {
 	
 	
 	rmdir($target_dir);
+	
 	//přepnout na jinej vál
 	if ($_SESSION['slozka_souboru_k_zobrazeni'] = $_POST["val_ke_smazani"]) 	
 	{      $_SESSION['slozka_souboru_k_zobrazeni'] = "slozka_smazana";
 	};
+	$_SESSION['vysledek'] = " vál smazán ";
+ }
  
+   else {
+    
+        $_SESSION['vysledek'] = " chyba - vál není prázdný ";
+    };
 	
 }
  
