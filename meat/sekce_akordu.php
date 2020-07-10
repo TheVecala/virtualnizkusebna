@@ -19,7 +19,7 @@
 				   				 		
 
 			   
-		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  AKORDY </h2>
+		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">TEXTY</h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_zmenit_text" >ZMĚNIT</button>  

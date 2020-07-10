@@ -201,15 +201,8 @@ td  {
 
     <div class="row">
  
-      
-	  
-	 
-		 
-		 	   <!--  nulty sloupec   --> 
-			   <div id="wave_jumbo"  style="display:nonexxxxx ;  margin-bottom: 5px; "  class="col-md-12"> 
-					<?php 	  require "meat/sekce_looper.php";	?>								
-			   </div>   <!-- konec nulty sloupec   -->
-
+ 
+ 
 			   <!--  druhy sloupec   -->
 		       <div  id="k" class="col-md-6" style="margin-bottom: 5px"> 
 				    <?php 	require "meat/sekce_souboru.php";	?>
@@ -217,17 +210,11 @@ td  {
   
                <!-- třetí sloupec   --> 
 			   <div class="col-md-6" style="margin-bottom: 5px" > 
-					<?php   require "meat/sekce_diskuse.php";	?>						
+					<?php   require "meat/sekce_akordu.php";	?>						
 			   </div> <!-- konec třetí sloupec   -->
 			
-      	 
-     
- 
-        <!-- čtvrtý sloupec   -->
-		<div class="col-md-4" style="margin-bottom: 5px" >   
- 			<?php   require "meat/sekce_akordu.php";	?>
-	    </div> <!-- konec čtvrtý sloupec   --> 	 
-	 	 
+  
+  
     </div> <!-- row -->
 	
  </div>     <!-- container -->
