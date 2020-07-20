@@ -205,31 +205,56 @@ td  {
 
 
           <div class="col-sm-6 col-md-5 col-lg-4 col-xl-3 bg-success">
-             <p>11111111111111 111            11111       111111111111</p>
+            <?php   require "meat/sekce_playlist.php";?>
           </div>
 		
  
-          <div class="col-sm-6 col-md-7 col-lg-8 col-xl-9 bg-warning">
-                <div class="row">
-		
-				  <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4 bg-warning">
-					 <p>2222222222222 222222222 2222222222 2 222222222222222 222222222</p>
-				  </div>
-				  
-				  <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4 bg-primary">
-					 <p>3333333333 3333333 33333333333 333333 3 3 333</p>
-				  </div>
-				  
-				  <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4 bg-secondary">
-					 <p>444444444444 44444444444 44444444444 444 4444 444 4 4 4444444</p>
-				  </div>
-			  
+          <div class="col-sm-6 col-md-7 col-lg-8 col-xl-9 bg-warningxxxxxx">
+		  
+		  
+
+<div class="container">
+  
+  <!-- Nav pills -->
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="pill" href="#home">SOUBORY</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="pill" href="#menu1">TEXTY</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="pill" href="#menu2">NÁPADY</a>
+    </li>
+  </ul>
+
+  <!-- Tab panes -->
+  <div class="tab-content">
+    <div id="home" class="container tab-pane active"><br>
+        <?php 	require "meat/sekce_souboru.php";	?>
+    </div>
+    <div id="menu1" class="container tab-pane fade"><br>
+     <?php   require "meat/sekce_akordu.php";	?>
+    </div>
+    <div id="menu2" class="container tab-pane fade"><br>
+     <?php   require "meat/sekce_diskuse.php";	?>
+    </div>
+  </div>
+</div>
+
+
+		 
+				
 	
-                </div> <!-- row -->
+
+
+	
+				
           </div>
 	
+	
         <div id=" "  style="display:nonexxxxx ;  margin-bottom: 5px; "  class="col-md-12"> 			   	   
-		  <?php 	  require "meat/sekce_looper2.php";	?>	
+		  <?php 	  require "meat/sekce_looper.php";	?>	
 		</div>   <!-- konec nulty sloupec   --> 
 			   
     </div> <!-- row -->
