@@ -209,46 +209,40 @@ td  {
           </div>
 		
  
-          <div class="col-sm-6 col-md-7 col-lg-8 col-xl-9 bg-warningxxxxxx">
+          <div class="col-sm-6 col-md-7 col-lg-8 col-xl-9 bg-warning" style="padding:1px">
 		  
 		  
 
-<div class="container">
-  
-  <!-- Nav pills -->
-  <ul class="nav nav-tabs" role="tablist">
-    <li class="nav-item">
-      <a class="nav-link active" data-toggle="pill" href="#home">SOUBORY</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-toggle="pill" href="#menu1">TEXTY</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-toggle="pill" href="#menu2">NÁPADY</a>
-    </li>
-  </ul>
+				<div class="container" style="padding:1px">
+				  
+				  <!-- Nav pills -->
+				  <ul class="nav nav-tabs" role="tablist"  >
+					<li class="nav-item">
+					  <a class="nav-link active" data-toggle="pill" href="#home" style="border: 1px solid d29e00;">SOUBORY</a>
+					</li>
+					<li class="nav-item">
+					  <a class="nav-link" data-toggle="pill" href="#menu1" style="border: 1px solid #d29e00;">TEXTY</a>
+					</li>
+					<li class="nav-item">
+					  <a class="nav-link" data-toggle="pill" href="#menu2" style="border: 1px solid #d29e00;">NÁPADY</a>
+					</li>
+				  </ul>
 
-  <!-- Tab panes -->
-  <div class="tab-content">
-    <div id="home" class="container tab-pane active"><br>
-        <?php 	require "meat/sekce_souboru.php";	?>
-    </div>
-    <div id="menu1" class="container tab-pane fade"><br>
-     <?php   require "meat/sekce_akordu.php";	?>
-    </div>
-    <div id="menu2" class="container tab-pane fade"><br>
-     <?php   require "meat/sekce_diskuse.php";	?>
-    </div>
-  </div>
-</div>
-
-
-		 
-				
-	
+				  <!-- Tab panes -->
+				  <div class="tab-content">
+					<div id="home" class="container tab-pane active"><br>
+						<?php 	require "meat/sekce_souboru.php";	?>
+					</div>
+					<div id="menu1" class="container tab-pane fade"><br>
+					 <?php   require "meat/sekce_akordu.php";	?>
+					</div>
+					<div id="menu2" class="container tab-pane fade"><br>
+					 <?php   require "meat/sekce_diskuse.php";	?>
+					</div>
+				  </div>
+				</div>
 
 
-	
 				
           </div>
 	
