@@ -204,12 +204,12 @@ td  {
 	 
 
 
-          <div class="col-sm-6 col-md-5 col-lg-4 col-xl-3 bg-success">
+          <div class="col-sm-6 col-md-5 col-lg-4 col-xl-3">
             <?php   require "meat/sekce_playlist.php";?>
           </div>
 		
  
-          <div class="col-sm-6 col-md-7 col-lg-8 col-xl-9 bg-warning" style="padding:1px">
+          <div class="col-sm-6 col-md-7 col-lg-8 col-xl-9 " style="padding:1px ; background-color:#343a40">  
 		  
 		  
 
@@ -230,13 +230,13 @@ td  {
 
 				  <!-- Tab panes -->
 				  <div class="tab-content">
-					<div id="home" class="container tab-pane active"><br>
+					<div id="home" class="container tab-pane active" style="padding:1px">
 						<?php 	require "meat/sekce_souboru.php";	?>
 					</div>
-					<div id="menu1" class="container tab-pane fade"><br>
+					<div id="menu1" class="container tab-pane fade" style="padding:1px">
 					 <?php   require "meat/sekce_akordu.php";	?>
 					</div>
-					<div id="menu2" class="container tab-pane fade"><br>
+					<div id="menu2" class="container tab-pane fade" style="padding:1px">
 					 <?php   require "meat/sekce_diskuse.php";	?>
 					</div>
 				  </div>
