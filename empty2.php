@@ -240,38 +240,40 @@ td  {
  
           <div  id="main" class="  " style="padding:1px ; background-color:#343a40">  
 		  
-		  
-
-				<div class="container" style="padding:1px">
-				  
-				  <!-- Nav pills -->
-				  <ul class="nav nav-tabs" role="tablist"  >
-					<li class="nav-item">
-					  <a class="nav-link active" data-toggle="pill" href="#home" style="border: 1px solid d29e00;">SOUBORY</a>
-					</li>
-					<li class="nav-item">
-					  <a class="nav-link" data-toggle="pill" href="#menu1" style="border: 1px solid #d29e00;">TEXTY</a>
-					</li>
-					<li class="nav-item">
-					  <a class="nav-link" data-toggle="pill" href="#menu2" style="border: 1px solid #d29e00;">NÁPADY</a>
-					</li>
-				  </ul>
-                   <button onclick="openNav()">playlist</button>
-				  <!-- Tab panes -->
-				  <div class="tab-content">
-					<div id="home" class="container tab-pane active" style="padding:1px">
-						<?php 	require "meat/sekce_souboru.php";	?>
-					</div>
-					<div id="menu1" class="container tab-pane fade" style="padding:1px">
-					 <?php   require "meat/sekce_akordu.php";	?>
-					</div>
-					<div id="menu2" class="container tab-pane fade" style="padding:1px">
-					 <?php   require "meat/sekce_diskuse.php";	?>
-					</div>
-				  </div>
-				</div>
-
-
+ 
+ 
+     <div class="row">
+ 
+         <button onclick="openNav()">playlist</button>
+		<!--   druhejstřetím sloupec   -->
+	    <div class="col-md-12" >     
+	 
+		 <div class="row">
+		 
+ 
+			   <!--  druhy sloupec   -->
+		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
+				    <?php 	require "meat/sekce_souboru.php";	?>
+		       </div  > <!-- konec druhý sloupec   -->
+  
+               <!-- třetí sloupec   --> 
+			   <div class="col-md-4" style="margin-bottom: 5px" > 
+					<?php   require "meat/sekce_akordu.php";	?>						
+			   </div> <!-- konec třetí sloupec   -->
+			   
+			    <!-- čtvrtý sloupec   -->
+				<div class="col-md-4" style="margin-bottom: 5px" >   
+					<?php   require "meat/sekce_diskuse.php";	?>
+				</div> <!-- konec čtvrtý sloupec   --> 
+					
+      	  </div> <!-- konec row   -->
+        </div> <!--   konec druhejstřetím sloupec   -->  
+ 
+	 
+	 	 
+    </div> <!-- row -->
+ 
+ 
 				
           </div>
 	

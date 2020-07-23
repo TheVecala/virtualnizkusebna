@@ -5,7 +5,7 @@
 				  
 			     <div style="text-align:right; display: inline"   >		                
 				    <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
-					
+					 <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
 				 </div>	
 				 
 	           </div>
