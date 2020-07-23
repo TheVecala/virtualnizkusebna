@@ -184,8 +184,39 @@ td  {
  padding: 5px;
  margin: 5px;
 }
+
+
+.sidenav {
+  height: 100%; /* 100% Full-height */
+  width: 0; /* 0 width - change this with JavaScript */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Stay on top */
+  top: 0; /* Stay at the top */
+  left: 0;
+  background-color: #111; /* Black*/
+  overflow-x: hidden; /* Disable horizontal scroll */
+  padding-top: 60px; /* Place content 60px from the top */
+  transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
 }
 
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+ 
+#main {
+  transition: margin-left .5s;
+  padding: 20px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
      </style>
 
   </head>
@@ -204,12 +235,13 @@ td  {
 	 
 
 
-          <div class="col-sm-6 col-md-5 col-lg-4 col-xl-3">
+          <div  id="mySidenav" class="sidenav">
+		  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
             <?php   require "meat/sekce_playlist.php";?>
           </div>
 		
  
-          <div class="col-sm-6 col-md-7 col-lg-8 col-xl-9 " style="padding:1px ; background-color:#343a40">  
+          <div  id="main" class="col-sm-6 col-md-7 col-lg-8 col-xl-9 " style="padding:1px ; background-color:#343a40">  
 		  
 		  
 
@@ -227,7 +259,7 @@ td  {
 					  <a class="nav-link" data-toggle="pill" href="#menu2" style="border: 1px solid #d29e00;">NÁPADY</a>
 					</li>
 				  </ul>
-
+<button onclick="openNav()">open</button>
 				  <!-- Tab panes -->
 				  <div class="tab-content">
 					<div id="home" class="container tab-pane active" style="padding:1px">
