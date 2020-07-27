@@ -217,7 +217,19 @@ td  {
   .sidenav {padding-top: 15px;}
   .sidenav a {font-size: 18px;}
 }
-     </style>
+   
+@media only screen and (max-width: 1000px) {
+  .stredni {display:none;}
+  .maly {display:inherit;}
+}
+
+@media only screen and (min-width: 1200px) {
+  .maly {display:none;}
+  .stredni {display:inherit;}
+}
+
+
+   </style>
 
   </head>
   <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
@@ -238,9 +250,9 @@ td  {
           </div>
 		
  
-          <div  id="main" class="  " style="padding:1px ; background-color:#343a40">  
+          <div  id="main"   style="padding:1px ; background-color:#343a40">  
 		  
-		  
+		     <div   class=" maly "  >  
 
 				<div class="container" style="padding:1px">
 				  
@@ -272,9 +284,50 @@ td  {
 				</div>
 
 
+             </div>
+		     <div   class=" stredni "  >  
+ 
+			 				
+ 
+     <div class="row">
+ 
+         <button onclick="openNav()">playlist</button>
+		<!--   druhejstřetím sloupec   -->
+	    <div class="col-md-12" >     
+	 
+		 <div class="row">
+		 
+ 
+			   <!--  druhy sloupec   -->
+		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
+				    <?php 	require "meat/sekce_souboru.php";	?>
+		       </div  > <!-- konec druhý sloupec   -->
+  
+               <!-- třetí sloupec   --> 
+			   <div class="col-md-4" style="margin-bottom: 5px" > 
+					<?php   require "meat/sekce_akordu.php";	?>						
+			   </div> <!-- konec třetí sloupec   -->
+			   
+			    <!-- čtvrtý sloupec   -->
+				<div class="col-md-4" style="margin-bottom: 5px" >   
+					<?php   require "meat/sekce_diskuse.php";	?>
+				</div> <!-- konec čtvrtý sloupec   --> 
+					
+      	  </div> <!-- konec row   -->
+        </div> <!--   konec druhejstřetím sloupec   -->  
+ 
+	  
+	 	 
+    </div> <!-- row -->
+ 
+             </div>
 				
           </div>
-	
+
+
+
+
+		  
 	
         <div id=" "  style="display:none ;  margin-bottom: 5px; "  class="col-md-12"> 			   	   
 		  <?php 	  require "meat/sekce_looper.php";	?>	
