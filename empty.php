@@ -223,7 +223,7 @@ td  {
   .maly {display:inherit;}
 }
 
-@media only screen and (min-width: 1200px) {
+@media only screen and (min-width: 1000px) {
   .maly {display:none;}
   .stredni {display:inherit;}
 }

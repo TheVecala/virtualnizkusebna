@@ -49,14 +49,12 @@ define ("ROWS", 10);
 						   ?> 				   
 					   </div> 					   
 	               </div>	
-				   <button id="sipka_" data-toggle="collapse" data-target="#texty_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
-					    <img id="sipka" style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3_up.png" alt="minimize"> 
-				   </button>
+ 
                </div> <!--     -->			   
       </div> 
   
  </div> <!-- konec hlavička třetího sloupce  -->  
- <div  id="texty_vysuvka" class="collapse show ">
+ <div  id=" "  >
  <div id="prispevek"  style="overflow: auto ">
  <div>   <!-- ovládání třetího sloupce  -->
    

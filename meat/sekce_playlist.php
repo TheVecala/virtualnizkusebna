@@ -9,14 +9,12 @@
 				 </div>	
 				 
 	           </div>
-			     <button id="playlist_vysuvka_button" data-toggle="collapse" data-target="#playlist_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px;  background: #27a243;">
-				    <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3_up.png" alt="minimize"> 
-			     </button>			   
+ 		   
             </div> <!--     -->
 	      		  
             <div> <!--  playlist   -->
 					  
-			  <div  id="playlist_vysuvka" class="collapse show" style="background-color:#27a243; padding: 3px;"> <!-- zmšna složky    -->
+			  <div  id=" "  style="background-color:#27a243; padding: 3px;"> <!-- zmšna složky    -->
 			 
 			  	<div>
 					 

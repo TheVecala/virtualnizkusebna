@@ -7,15 +7,13 @@
 		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  MIXER </h2>
 
 	               </div>	
-				   <button data-toggle="collapse" data-target="#mixer_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
-				      <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3_up.png" alt="minimize"> 
-				   </button>				
+ 				
                </div>  
  			
 
           </div>   <!-- konec hlavičky sekce mixer   -->
 		  
-		  <div  id="mixer_vysuvka" class="collapse show  ">
+		  <div  id=" "  >
 		  
 		    <div > <!--  mixer   --> 
 		         
