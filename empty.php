@@ -227,6 +227,11 @@ td  {
   .maly {display:none;}
   .stredni {display:inherit;}
 }
+  
+@media only screen and (max-width: 650px) {
+  .maly {display:none;}
+  .stredni {display:inherit;}
+}
 
 
    </style>

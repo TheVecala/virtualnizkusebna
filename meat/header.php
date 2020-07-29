@@ -83,17 +83,8 @@
 	 
 			 <li class="nav-item">
                 <a class="nav-link " href="home.php">home</a> 
-            </li>
-				  
-		    <li class="nav-item">
-              <a class="nav-link " href="playlist.php">playlist</a>    
-            </li>
-			 <li class="nav-item">
-               <a class="nav-link " href="skladba.php">skladba</a>  
-            </li>
-			 <li class="nav-item">
-               <a class="nav-link " href="looper.php">looper</a>  
-            </li>
+            </li>  
+			
 			 <li class="nav-item">
                <a class="nav-link " href="mixer.php">mixer</a>  
             </li>				  
