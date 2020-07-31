@@ -213,11 +213,7 @@ td  {
   padding: 20px;
 }
 
-@media screen and (max-height: 450px) {
-  .sidenav {padding-top: 15px;}
-  .sidenav a {font-size: 18px;}
-}
-   
+ 
 @media only screen and (max-width: 1000px) {
   .stredni {display:none;}
   .maly {display:inherit;}
@@ -244,11 +240,8 @@ td  {
     </header>
      
 	 
- <div class="container-fluid">
-    <div id="vycpavka"   style="min-height:58px"> </div>               
-
+ <div class="container-fluid" style="padding-top: 50px;}">
  
-
           <div  id="mySidenav" class="sidenav">
 		 
             <?php   require "meat/sekce_playlist.php";?>
@@ -273,7 +266,7 @@ td  {
 					  <a class="nav-link" data-toggle="pill" href="#menu2" style="border: 1px solid #d29e00;">NÁPADY</a>
 					</li>
 				  </ul>
-                   <button onclick="openNav()">playlist</button>
+                  
 				  <!-- Tab panes -->
 				  <div class="tab-content">
 					<div id="home" class="container tab-pane active" style="padding:1px">
@@ -296,7 +289,6 @@ td  {
  
      <div class="row">
  
-         <button onclick="openNav()">playlist</button>
 		<!--   druhejstřetím sloupec   -->
 	    <div class="col-md-12" >     
 	 

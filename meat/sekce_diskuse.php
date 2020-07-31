@@ -1,7 +1,7 @@
 
      
 <?php
-define ("ROWS", 10);
+define ("ROWS", 5);
  require "php/login/connect.php";
  
   if (!isset($_GET["celkem"]))  
