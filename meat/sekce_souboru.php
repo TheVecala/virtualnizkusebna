@@ -49,14 +49,14 @@
 									 <img src="/data/icons8-music-record-50.png" alt="-" style="max-height:30px" > 	 	 	
 									   <?php echo $pole_souboru[$x]; ?>
 							      </div> 
-								  <button data-toggle="collapse" data-target="#val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+								  <button data-toggle="collapse" data-target=".val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
 				                      <img style="max-height:15px" src="/data/arrow128.png" alt="minimize"> 
 				                  </button>
 								 
 							    </div> 
  								    							   
 							   
-							     <div id="val_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse " style="   "   > 
+							     <div id="" class=" val_vysuvka_<?php echo $x ?>  card-body stitek_valu collapse " style="   "   > 
 							   
 								 <?php
 								 $FileType = strtolower(pathinfo($soub,PATHINFO_EXTENSION));
