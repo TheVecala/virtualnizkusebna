@@ -229,6 +229,11 @@ td  {
   .stredni {display:inherit;}
 }
 
+div.sticky {
+  position: -webkit-sticky; /* Safari */
+  position: sticky;
+  top: 0;
+}
 
    </style>
 

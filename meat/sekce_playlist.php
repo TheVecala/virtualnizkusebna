@@ -1,4 +1,4 @@
-			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
+			<div class=" sticky card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
 	
 	             <h2 style="text-align:left; color:black ; display: inline ;background-color: #dc3545;">  PLAYLIST </h2> 
