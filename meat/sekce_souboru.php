@@ -41,12 +41,12 @@
 					   if(is_file($soub))
 						{    
 						?>
-						  
+						     
 							   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
 							   
 							    <div class="card-header" style= "  "> 
 							      <div style="color:black  ; background-color:white ;  display: inline" >	
-									 <img src="/data/icons8-music-record-50.png" alt="-" style="max-height:30px" > 	 	 	
+									 <img src="/data/icons8-rock-music-50.png" alt="-" style="max-height:30px" > 	 	 	
 									   <?php echo $pole_souboru[$x]; ?>
 							      </div> 
 								  <button data-toggle="collapse" data-target=".val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">

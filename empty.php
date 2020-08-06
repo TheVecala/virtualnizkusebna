@@ -129,6 +129,10 @@ else {$pole_souboru = "empty" ;
 
     <style>
  
+ body  {
+  word-wrap: break-word;
+  }
+  
 .btn-VZ {
  
   font-size: 0.6rem;

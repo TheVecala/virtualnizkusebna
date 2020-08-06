@@ -17,7 +17,7 @@
                                	/
 							 
 							  <button onclick="openNav()" style="display: inline; padding:0px " class="btn btn-light my-2 my-sm-0  "   >
-							  <img src="/data/icons8-rock-music-50.png" alt="vál" style="max-height:30px"   > 
+							  <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px"   > 
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
 							  
