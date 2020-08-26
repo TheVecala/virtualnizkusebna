@@ -4,7 +4,7 @@
                <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
                    <div class="card-body"> 
 				   				 		
-		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">  MIXER </h2>
+		               <h2 style="text-align:left;  display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; ">  MIXER </h2>
 
 	               </div>	
  				

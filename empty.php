@@ -257,7 +257,7 @@ div.sticky {
           </div>
 		
  
-          <div  id="main"   style="padding:1px ; background-color:#343a40">  
+          <div  id="main"   style="padding:1px ;  background-color: #bcbcbc;">  
 		  
 		     <div   class=" maly "  >  
 
@@ -266,10 +266,10 @@ div.sticky {
 				  <!-- Nav pills -->
 				  <ul class="nav nav-tabs" role="tablist"  >
 					<li class="nav-item">
-					  <a class="nav-link active" data-toggle="pill" href="#home" style="border: 1px solid d29e00;">SOUBORY</a>
+					  <a class="nav-link active" data-toggle="pill" href="#home" style="border: 1px solid d29e00;">TEXT</a>
 					</li>
 					<li class="nav-item">
-					  <a class="nav-link" data-toggle="pill" href="#menu1" style="border: 1px solid #d29e00;">TEXTY</a>
+					  <a class="nav-link" data-toggle="pill" href="#menu1" style="border: 1px solid #d29e00;">NAHRÁVKY</a>
 					</li>
 					<li class="nav-item">
 					  <a class="nav-link" data-toggle="pill" href="#menu2" style="border: 1px solid #d29e00;">NÁPADY</a>
@@ -279,10 +279,10 @@ div.sticky {
 				  <!-- Tab panes -->
 				  <div class="tab-content">
 					<div id="home" class="container tab-pane active" style="padding:1px">
-						<?php 	require "meat/sekce_souboru.php";	?>
+						<?php 	require "meat/sekce_akordu.php";	?>
 					</div>
 					<div id="menu1" class="container tab-pane fade" style="padding:1px">
-					 <?php   require "meat/sekce_akordu.php";	?>
+					 <?php   require "meat/sekce_souboru.php";	?>
 					</div>
 					<div id="menu2" class="container tab-pane fade" style="padding:1px">
 					 <?php   require "meat/sekce_diskuse.php";	?>
@@ -301,17 +301,17 @@ div.sticky {
 		<!--   druhejstřetím sloupec   -->
 	    <div class="col-md-12" >     
 	 
-		 <div class="row">
+		 <div class="row" ">
 		 
  
 			   <!--  druhy sloupec   -->
 		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/sekce_souboru.php";	?>
+				    <?php 	require "meat/sekce_akordu.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   
                <!-- třetí sloupec   --> 
 			   <div class="col-md-4" style="margin-bottom: 5px" > 
-					<?php   require "meat/sekce_akordu.php";	?>						
+					<?php   require "meat/sekce_souboru.php";	?>						
 			   </div> <!-- konec třetí sloupec   -->
 			   
 			    <!-- čtvrtý sloupec   -->
@@ -335,7 +335,7 @@ div.sticky {
 
 		  
 	
-        <div id=" "  style="display:none ;  margin-bottom: 5px; "  class="col-md-12"> 			   	   
+        <div id="wave_jumbo"  style="display:nonexxxxxx ;  margin-bottom: 5px; "  class="col-md-12"> 			   	   
 		  <?php 	  require "meat/sekce_looper.php";	?>	
 		</div>   <!-- konec nulty sloupec   --> 
 			   

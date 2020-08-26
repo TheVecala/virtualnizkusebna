@@ -1,7 +1,7 @@
 			<div class=" sticky  card bg-dark text-white"  style="margin-top: 1px; z-index:4"> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
 	
-	             <h2 style="text-align:left; color:black ; display: inline ;background-color: #dc3545;">  PLAYLIST </h2> 
+	             <h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2> 
 				  
 			     <div style="text-align:right; display: inline"   >		                
 				    <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
@@ -42,7 +42,9 @@
  					 
 							  
 								?>
-						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px ; "> <!-- tlačítko změny složky    --> 
+						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:#27a243 ; color: white " ; } ; ?> ">
+
+						<!-- tlačítko změny složky    --> 
 											 
                             <div style=" " > 
 								  
@@ -56,7 +58,7 @@
 									<?php   
    									   if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
 								   							   								   	
-									 <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:300px" class="mr-3 mt-3 " > 	
+									 <img src="/data/icons8-music-record-50.png" alt="složka" style="max-height:300px" class="mr-3 mt-3 " > 	
 																		
 									 <?php  
   									 }
@@ -64,7 +66,7 @@
 									 else
 									  {
 										  ?>
-								       <img src="/data/icons8-rock-music-50.png" alt="vál" style="max-height:300px" class="mr-3 mt-3  "  >   
+								       <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:300px" class="mr-3 mt-3  "  >   
 									  <?php 
 									 	 }
 										

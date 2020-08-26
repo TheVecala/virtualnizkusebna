@@ -5,7 +5,7 @@
                <div class="card-body"> 
 			   			   
 			            <div  style="text-align:left; display: inline ;" >
-					    	<h2 style="text-align:left;; color:black ; display: inline ;background-color: #ffc107;"> LOOPER </h2> 
+					    	<h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;"> LOOPER </h2> 
 						</div>
 		
 					

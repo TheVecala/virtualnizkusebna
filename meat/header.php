@@ -8,7 +8,7 @@
 							  <div  style="text-align:left; display: inline ;" >
 							  
 							   
-								<div  class="btn btn-light my-2 my-sm-0"  style="display: inline;    ">
+								<div  class="btn btn-light my-2 my-sm-0"  style="display: inline; background-color: #d5833c;">
 								     <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:30px;"  >
 								<?php echo  $_SESSION['login'] ; ?>
 								
@@ -16,7 +16,7 @@
 							  </div>						 
                                	/
 							 
-							  <button onclick="openNav()" style="display: inline; padding:0px " class="btn btn-light my-2 my-sm-0  "   >
+							  <button onclick="openNav()" style="display: inline; padding:0px ; padding-right: 15px; background-color: #27a243;" class="btn btn-light my-2 my-sm-0  "   >
 							  <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px"   > 
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
@@ -31,7 +31,7 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
-          <ul class="navbar-nav mr-auto">
+          <ul class="navbar-nav mr-auto" style="text-align: center">
              
 	 
 			 <li class="nav-item">
@@ -50,7 +50,7 @@
 			
           </ul>
           <form class="form-inline mt-2 mt-md-0">
-            <a class="navbar-brand" href="#">VIRTUÁLNÍ ZKUŠEBNA</a>  
+            <a class="navbar-brand" href="#" style="text-align: center">  <p style="text-align: center"> VIRTUÁLNÍ ZKUŠEBNA   </p> </a>  
           
           </form>
         </div>

@@ -35,7 +35,7 @@ define ("ROWS", 5);
 				   
 				     	
 				  
-		               <h2 style="text-align:left; color:black;  display: inline; background-color: #17a2b8; ">  NÁPADY </h2> 
+		               <h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; ">  NÁPADY </h2> 
 					   
 					   <div style="text-align:right;  display: inline">
                         <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  

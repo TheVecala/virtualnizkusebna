@@ -19,7 +19,7 @@
 				   				 		
 
 			   
-		               <h2 style="text-align:left; color:black ;display: inline; background-color: #d5833c; ">TEXTY</h2>
+		               <h2 style="text-align:left;  display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; ">TEXTY</h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_zmenit_text" >ZMĚNIT</button>  
@@ -46,7 +46,7 @@
 							      <!-- <img src="/data/icons8-sound-wave-50.png" alt="-"  > -->
 							      <div style="color:black  ; background-color:white ;  display: inline" >	
 											  	 	
-									    VERZE
+									    TEXT
 							      </div> 
 								  <button data-toggle="collapse" data-target="#akordy_vnitrni_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
 				                      <img style="max-height:30px" src="/data/ikona_colapsedown4.png" alt="minimize"> 
