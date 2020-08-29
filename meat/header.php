@@ -35,11 +35,11 @@
              
 	 
 			 <li class="nav-item">
-                <a class="nav-link " href="home.php">home</a> 
+                <a class="nav-link " href="index.php">home</a> 
             </li>  
 			
 			 <li class="nav-item">
-               <a class="nav-link " href="mixer.php">mixer</a>  
+               <a class="nav-link " href="classic.php">classic</a>  
             </li>				  
             <li class="nav-item">
                   <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >info</a>

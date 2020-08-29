@@ -13,7 +13,7 @@
       <div class="modal-body">
 	      <p>
         DIY a Open source projekt ze Štatlu. <br><br>
-		Plugin pro sdílení nahrávek hudebních skupin mezi jejímy členy. <br>   <br>
+		Plugin pro organizaci informací o skladbách hudební skupiny <br> a jejich sdílení mezi jejímy členy. <br>   <br>
 		Tohle není prostor pro volné ukládání dat většího množství uživatelů. 
 		Vhodná je instalace na vlastní doménu.  <br> <br><br>
 		Pro více info pište na adresu: <i>  the@vecala.cz  </i> 
@@ -26,7 +26,7 @@
 		
           </p>
 		  <button type="button" class="btn btn-swcondary"  >INSTALACE NA VLASTNÍ DOMÉNĚ</button><br>
-          <button type="button" class="btn btn-dark"  >ÚČET NA VIRTUALNIZKUSEBNA.CZ</button>
+         
       </div>
 
       <!-- Modal footer -->

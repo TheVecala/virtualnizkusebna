@@ -138,7 +138,7 @@
       <div class="modal-body">
 	      <p>
         DIY a Open source projekt ze Štatlu. <br><br>
-		Plugin pro sdílení nahrávek hudebních skupin mezi jejímy členy. <br>   <br>
+		Plugin pro organizaci informací o skladbách hudební skupiny <br> a jejich sdílení mezi jejímy členy. <br>   <br>
 		Tohle není prostor pro volné ukládání dat většího množství uživatelů. 
 		Vhodná je instalace na vlastní doménu.  <br> <br><br>
 		Pro více info pište na adresu: <i>  the@vecala.cz  </i> 
