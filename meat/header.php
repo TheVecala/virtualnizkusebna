@@ -40,7 +40,11 @@
 			
 			 <li class="nav-item">
                <a class="nav-link " href="classic.php">classic</a>  
-            </li>				  
+            </li>	
+
+			 <li class="nav-item">
+               <a class="nav-link " href="looper.php">looper</a>  
+            </li			
             <li class="nav-item">
                   <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >info</a>
             </li> 

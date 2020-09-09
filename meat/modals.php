@@ -75,7 +75,7 @@
             <div class="modal-footer">
 	  						 
 				<button  id= "nahrat" type="submit" class="btn btn-danger">smazat</button>
- 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
+ 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	 
 	  
  
         
@@ -133,7 +133,7 @@
 					
 					
 				</form>
-				  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	   		
+				  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	   		
       </div>
       <!-- Modal footer -->
       <div class="modal-footer">
@@ -178,7 +178,7 @@
 						
 						<button  id= "vytvorit_adresar" type="submit" class="btn btn-primary" >vytvořit</button>
 					  </form>
-					  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	   
+					  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	   
 			  
 		
       </div>
@@ -229,7 +229,7 @@
       </div>
       <!-- Modal footer -->
       <div class="modal-footer">       		
-        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
       </div>
 
     </div>
@@ -282,7 +282,7 @@
       <!-- Modal footer -->
       <div class="modal-footer">   
 	  
-        <button type="button" class="btn btn-danger" data-dismiss="modal">ZPĚT</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
       </div>
 
     </div>
@@ -347,7 +347,7 @@
 		<!-- Modal footer -->
             <div class="modal-footer">	 
 
- 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
+ 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	         
             </div>
 	  
     </div>
@@ -433,7 +433,7 @@
             <div class="modal-footer">
 	  						 
 				<button  id= "presun" type="submit" class="btn btn-primary">PŘESUNOUT</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	 
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	 
 	  
  
         
@@ -468,7 +468,7 @@
 
       <!-- Modal footer -->
             <div class="modal-footer">	 
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	         
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	         
             </div>
 	  
     </div>
@@ -528,7 +528,7 @@
             <div class="modal-footer">	 
  			   <p  > Pozor! Přepíše původní text.</p>
 				<button  id= "" type="submit" class="btn btn-danger">uložit změny</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZPĚT</button>	        
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	        
             </div>
      </form>
 	  

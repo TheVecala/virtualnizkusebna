@@ -6,7 +6,7 @@
 				   				 		
 
 			   
-		               <h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  SOUBORY </h2>
+		               <h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NAHRÁVKY </h2>
 					   
   				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
@@ -52,7 +52,9 @@
 								  <button data-toggle="collapse" data-target=".val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
 				                      <img style="max-height:15px" src="/data/arrow128.png" alt="minimize"> 
 				                  </button>
-								 
+									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >
+									   LOOPER
+									</button>								 
 							    </div> 
  								    							   
 							   
@@ -78,9 +80,7 @@
 								 if ($FileType == "mp3" or $FileType == "wav")
 								 {    
 						          ?>  
-									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >
-									   OTEVŘÍT
-									</button>    
+    
 								  <?php
 								  }  
 						          ?> 

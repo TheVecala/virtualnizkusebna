@@ -331,13 +331,7 @@ div.sticky {
           </div>
 
 
-
-
-		  
-	
-        <div id="wave_jumbo"  style="display:nonexxxxxx ;  margin-bottom: 5px; "  class="col-md-12"> 			   	   
-		  <?php 	  require "meat/sekce_looper.php";	?>	
-		</div>   <!-- konec nulty sloupec   --> 
+ 
 			   
  
 	
