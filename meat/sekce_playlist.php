@@ -58,7 +58,7 @@
 									<?php   
    									   if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
 								   							   								   	
-									 <img src="/data/icons8-music-record-50.png" alt="složka" style="max-height:300px" class="mr-3 mt-3 " > 	
+									 <img src="/data/icons8-music-record-50.png" alt="složka" style="max-height:30px" class="mr-3  " > 	
 																		
 									 <?php  
   									 }
@@ -66,15 +66,15 @@
 									 else
 									  {
 										  ?>
-								       <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:300px" class="mr-3 mt-3  "  >   
+								       <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px;" class="mr-3   "  >   
 									  <?php 
 									 	 }
 										
 									  ?>
 								  				
-								   <div class="media-body" style="padding: 0.2rem; max-width: 339px" >
+								   <div class="media-body" style="padding: 0.2rem; max-width: 339px; text-align: right;" >
 																
-									   <div> 
+									   <div  style="  display: inline;  "> 
 									      <?php
 									     	while(!feof($cely_nazev)) {
 											    echo fgets($cely_nazev);
@@ -82,17 +82,18 @@
 										     	fclose($cely_nazev);
 									      ?> 
 									   </div> 
-								
-								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete_val"> 		
+								       <div  style="  display: inline;  " >
+								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline; padding: 1px;" data-toggle="modal" data-target="#modal_delete_val"> 		
 									     UPRAVIT
 								      	</button>
 								  				
 								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  { }
 									 else
 									  { ?>
-								         <button id=" " type="submit" style=" max-width: 120px ; display: inline" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
+								         <button id=" " type="submit" style=" max-width: 120px ; display: inline; padding: 1px;" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
                                           OTEVŘÍT
 									     </button>
+									   </div> 
 									  <?php 
 									 	 }
 									 ; ?>
