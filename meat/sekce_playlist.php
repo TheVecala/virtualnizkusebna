@@ -74,7 +74,7 @@
 								  				
 								   <div class="media-body" style="padding: 0.2rem; max-width: 339px; text-align: right;" >
 																
-									   <div  style="  display: inline;  "> 
+									   <div  style="  display: inline; position: absolute;  left: 35px;  margin-right:10px"> 
 									      <?php
 									     	while(!feof($cely_nazev)) {
 											    echo fgets($cely_nazev);
