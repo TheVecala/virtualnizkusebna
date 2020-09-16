@@ -52,7 +52,7 @@
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
 									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
 									
-                                <div class="media border p-1" style="font-size: 1.5rem; padding:1px;    ">
+                                <div class="media border p-1" style="font-size: 1.2rem; padding:1px;    ">
 								
 																	   
 									<?php   
@@ -74,15 +74,17 @@
 								  				
 								   <div class="media-body" style="padding: 0.2rem; max-width: 339px; text-align: right; max-height:100%" >
 																
-									   <div  style="display: inline; position: absolute;  left: 35px;  margin-right:10px; max-width:50% "> 
+									   <div  style="display: inline; position: absolute;  left: 35px;  margin-right:10px;  "> 
+									      <div  style=" text-align: left;  "> 
 									      <?php
 									     	while(!feof($cely_nazev)) {
 											    echo fgets($cely_nazev);
 											    }
 										     	fclose($cely_nazev);
 									      ?> 
+										  </div> 
 									   </div> 
-								       <div  style="  display: inline;  " >
+								       <div  style="  display: inline; position: relative;  z-index: 5; " >
 								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline; padding: 1px;" data-toggle="modal" data-target="#modal_delete_val"> 		
 									     UPRAVIT
 								      	</button>
