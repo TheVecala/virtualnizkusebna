@@ -177,6 +177,10 @@ td  {
  
 }
 
+.card {
+ border: 1px solid white;
+}
+
 .card-body {
   /* padding: 1.25rem; */
   padding: 0.3rem;
@@ -251,7 +255,7 @@ div.sticky {
 	 
  <div class="container-fluid" style="padding-top: 50px;}">
  
-          <div  id="mySidenav" class="sidenav">
+          <div  id="mySidenav" class="sidenav" style="z-index:4">
 		 
             <?php   require "meat/sekce_playlist.php";?>
           </div>
