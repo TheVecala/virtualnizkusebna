@@ -36,13 +36,14 @@
           <ul class="navbar-nav mr-auto" style="text-align: center">
              
 	 
-			 <li class="nav-item">
+	 <!-- 	 <li class="nav-item">
                 <a class="nav-link " href="index.php">home</a> 
             </li>  
 			
 			 <li class="nav-item">
                <a class="nav-link " href="classic.php">classic</a>  
-            </li>	
+            </li>	 
+	-->	
 
 			 <li class="nav-item">
                <a class="nav-link " href="looper.php">looper</a>  
@@ -56,7 +57,7 @@
 			
           </ul>
           <form class="form-inline mt-2 mt-md-0">
-            <a class="navbar-brand" href="#" style="text-align: center">  <p style="text-align: center"> VIRTUÁLNÍ ZKUŠEBNA   </p> </a>  
+            <a class="navbar-brand" href="index.php" style="text-align: center">  <p style="text-align: center"> VIRTUÁLNÍ ZKUŠEBNA   </p> </a>  
           
           </form>
         </div>
