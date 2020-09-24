@@ -255,11 +255,10 @@ div.sticky {
 	 
  <div class="container-fluid" style="padding-top: 50px;}">
  
-          <div  id="mySidenav" class="sidenav" style="z-index:4">
-		 
-            <?php   require "meat/sekce_playlist.php";?>
-          </div>
-		
+           <!-- 
+		    <div  id="mySidenav" class="sidenav" style="z-index:4">
+		    </div>
+		   -->
  
           <div  id="main"   style="padding:1px ;  background-color: #bcbcbc;">  
 		  
