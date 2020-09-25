@@ -1,7 +1,7 @@
 			<div class=" sticky  card bg-dark text-white"  style="margin-top: 1px; "> <!--hlavička prvního sloupce     -->
                <div class="card-body"> 
 	
-	             <h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2> 
+	             <h2 style="text-align:left; display: inline; color:#ffc107 ;   font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2> 
 				  
 			     <div style="text-align:right; display: inline"   >		                
 				    <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
