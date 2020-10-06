@@ -1,0 +1,3 @@
+databáze v connect.php
+
+beta to www v návrat.php
