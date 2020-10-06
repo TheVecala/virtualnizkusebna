@@ -19,7 +19,8 @@
 							  <button style="display: inline; padding:0px ; padding-right: 15px; background-color: #27a243;" class="btn btn-light my-2 my-sm-0  "  dropdown-toggle" data-toggle="dropdown"  >
 							  <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px"   > 
 							   <?php echo $slozka_souboru 	?> 
-							  <!--   <img onclick="openNav()" src="/data/ikona_colapsedown2.png" alt="vál" style="max-height:12px"> 
+							   <img  src="/data/ikona_colapsedown2.png" alt="vál" style="max-height:12px"> 
+							    <!-- 
 							   <img onclick="closeNav()" src="/data/123_Maximize_Square-512.png" alt="vál" style="max-height:29px"> 
 							    -->
 							  </button>
@@ -40,10 +41,10 @@
           <ul class="navbar-nav mr-auto" style="text-align: center">
              
 	 
-	 <!-- 	 <li class="nav-item">
+		 <li class="nav-item">
                 <a class="nav-link " href="index.php">home</a> 
             </li>  
-			
+	 <!-- 		
 			 <li class="nav-item">
                <a class="nav-link " href="classic.php">classic</a>  
             </li>	 
