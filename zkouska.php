@@ -129,10 +129,6 @@ else {$pole_souboru = "empty" ;
 
     <style>
  
- body  {
-  word-wrap: break-word;
-  }
-  
 .btn-VZ {
  
   font-size: 0.6rem;
@@ -177,10 +173,6 @@ td  {
  
 }
 
-.card {
- border: 1px solid white;
-}
-
 .card-body {
   /* padding: 1.25rem; */
   padding: 0.3rem;
@@ -188,67 +180,13 @@ td  {
 
 .h2, h2 {
  font-size:1.2rem;
-  
+ border-radius: 1rem;
+ padding: 5px;
  margin: 5px;
 }
-
-
-.sidenav {
-  height: 90%; /* 100% Full-height */
-  width: 0; /* 0 width - change this with JavaScript */
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Stay on top */
-  top: 50px; /* Stay at the top */
-  left: 0;
-  
-  overflow-x: hidden; /* Disable horizontal scroll */
-  
-  transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
 }
 
-.sidenav .closebtn {
-  position: absolute;
-  top: 0;
-  right: 25px;
-  font-size: 36px;
-  margin-left: 50px;
-}
-
- 
-#main {
-  transition: margin-left .5s;
-  padding: 20px;
-}
-
- 
-@media only screen and (max-width: 1000px) {
-  .stredni {display:none;}
-  .maly {display:inherit;}
-}
-
-@media only screen and (min-width: 1000px) {
-  .maly {display:none;}
-  .stredni {display:inherit;}
-}
-  
-@media only screen and (max-width: 650px) {
-  .maly {display:none;}
-  .stredni {display:inherit;}
-}
-
-div.sticky {
-  position: -webkit-sticky; /* Safari */
-  position: sticky;
-  top: 0;
-}
-
-.nav-link.active {
- color:green;
- background-color:black;
- 
-}
-
-   </style>
+     </style>
 
   </head>
   <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
@@ -258,90 +196,37 @@ div.sticky {
     </header>
      
 	 
- <div class="container-fluid" style="padding-top: 50px;}">
- 
-           <!-- 
-		    <div  id="mySidenav" class="sidenav" style="z-index:4">
-		    </div>
-		   -->
- 
-          <div  id="main"   style="padding:1px ;  background-color: #bcbcbc;">  
-		  
-		     <div   class=" maly "  >  
+ <div class="container-fluid">
+    <div id="vycpavka"   style="min-height:58px"> </div>               
 
-				<div class="container" style="padding:1px">
-				  
-				  <!-- Nav pills -->
-				  <ul class="nav nav-tabs" role="tablist"  >
-					<li class="nav-item">
-					  <a class="nav-link active" data-toggle="pill" href="#home" style="border: 1px solid d29e00;">TEXT</a>
-					</li>
-					<li class="nav-item">
-					  <a class="nav-link" data-toggle="pill" href="#menu1" style="border: 1px solid #d29e00;">NAHRÁVKY</a>
-					</li>
-					<li class="nav-item">
-					  <a class="nav-link" data-toggle="pill" href="#menu2" style="border: 1px solid #d29e00;">NÁPADY</a>
-					</li>
-				  </ul>
-                  
-				  <!-- Tab panes -->
-				  <div class="tab-content">
-					<div id="home" class="container tab-pane active" style="padding:1px">
-						<?php 	require "meat/sekce_akordu.php";	?>
-					</div>
-					<div id="menu1" class="container tab-pane fade" style="padding:1px">
-					 <?php   require "meat/sekce_souboru.php";	?>
-					</div>
-					<div id="menu2" class="container tab-pane fade" style="padding:1px">
-					 <?php   require "meat/sekce_diskuse.php";	?>
-					</div>
-				  </div>
-				</div>
-
-
-             </div>
-		     <div   class=" stredni "  >  
- 
-			 				
- 
-     <div class="row">
- 
+    <div class="row">
+	      <!--  prvni sloupec   -->
+        <div id="adresare" class="col-md-4" style="margin-bottom: 5px ; display:none"> 		      				  
+			<?php   require "meat/sekce_playlist.php";?>
+		</div>  <!--  konec prvniho sloupce   -->  
+        
 		<!--   druhejstřetím sloupec   -->
 	    <div class="col-md-12" >     
 	 
-		 <div class="row" ">
+      
+	  
+		 <div class="row">
 		 
- 
+	 
 			   <!--  druhy sloupec   -->
 		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/sekce_akordu.php";	?>
+				    <?php 	require "meat/sekce_souboru.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   
                <!-- třetí sloupec   --> 
-			   <div class="col-md-4" style="margin-bottom: 5px" > 
-					<?php   require "meat/sekce_souboru.php";	?>						
+			   <div class="col-md-8" style="margin-bottom: 5px" > 
+					<?php   require "meat/sekce_akordu.php";	?>						
 			   </div> <!-- konec třetí sloupec   -->
-			   
-			    <!-- čtvrtý sloupec   -->
-				<div class="col-md-4" style="margin-bottom: 5px" >   
-					<?php   require "meat/sekce_diskuse.php";	?>
-				</div> <!-- konec čtvrtý sloupec   --> 
-					
+			
       	  </div> <!-- konec row   -->
         </div> <!--   konec druhejstřetím sloupec   -->  
- 
-	  
-	 	 
+  
     </div> <!-- row -->
- 
-             </div>
-				
-          </div>
-
-
- 
-			   
- 
 	
  </div>     <!-- container -->
  

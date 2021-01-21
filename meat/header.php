@@ -45,9 +45,15 @@
                 <a class="nav-link " href="index.php">home</a> 
             </li>  
 	 <!-- 		
-			 <li class="nav-item">
-               <a class="nav-link " href="classic.php">classic</a>  
-            </li>	 
+			 <li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+				ZKUŠEBNA
+			  </a>
+			  <div class="dropdown-menu">
+				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 
+				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
+			  </div>
+             </li>	 
 	-->	
 
 			 <li class="nav-item">
