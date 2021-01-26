@@ -22,7 +22,7 @@ $_SESSION['skin']
 $_SESSION['playlist']   -   nepoužívané
 
 
-
+MULTIUSER:
 
 $_SESSION['']
 $_SESSION['']
