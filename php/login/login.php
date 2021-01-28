@@ -30,7 +30,7 @@ if($overeni == 1) {
 	$_SESSION['vysledek'] = "přihlášen jako ".$_POST["nick"];
 	$_SESSION['befelemepesseveze'] = $row["hashedkapela"];
     $_SESSION['prihlasen'] = true ;
-    $_SESSION['kapela'] =  stripslashes($login); 
+    $_SESSION['kapela'] =  $row["cely_nazev"]; 
 
 	
 	

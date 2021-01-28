@@ -4,7 +4,9 @@ uživatel -  přidat vložení nového uživatele
 
 zkušebna - tabulka uživatelů 
 
-cely_nazev změnit na adresu tabulky s kapelama uživatele, zatim jedna
+cely_nazev změnit na adresu tabulky s kapelama uživatele,
+ zatim jen nazev kapely se nacita z položky $row["cely_nazev"] !!!!
+ 
 vytvořit tabulku s kapelama uživatele
 
 
