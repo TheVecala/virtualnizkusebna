@@ -1,4 +1,4 @@
-  <?php session_start(); ?>
+ <?php session_start(); ?>
 <meta charset="utf-8">
 <?php
 include "connect.php";/* připojení k databázi */
@@ -8,11 +8,11 @@ $login = strtolower($login);
  
 $md5heslo = md5($heslo);/* Pomocí funkce md5() heslo zahashujeme */
 /* — SQL DOTAZ PRO OVĚŘENÍ PRAVOSTI PŘIHLAŠOVACÍH DAT V DATABÁZI A UŽIVATELEM ZADANÝCH — */
-$dotaz = mysql_query("select * from uzivatele where login = '$login' and heslo = '$md5heslo'");
+$dotaz = mysql_query("select * from uzivatele_multi where login = '$login' and heslo = '$md5heslo'");
 $overeni = mysql_num_rows($dotaz);
 $radek_databaze = mysql_fetch_array($dotaz);
 // tady na tom makám  
-$dostupna_zkusebna = mysql_query("select * from uzivatele where login = '$login' and heslo = '$md5heslo'");
+$dostupna_zkusebna = mysql_query("select * from uzivatele_multi where login = '$login' and heslo = '$md5heslo'");
 
 if(isset($_POST["navrat"])) {
 	   $adresa_pro_navrat = ($_POST["navrat"]); } 

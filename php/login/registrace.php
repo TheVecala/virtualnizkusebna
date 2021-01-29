@@ -13,7 +13,7 @@ if(isset($_POST['submit'])) {
     $md5_heslo = md5($heslo);
     $email = mysql_real_escape_string($_POST['email']);
     /* Nyní ověříme, zda byly zadané všechny potřebné údaje  */
-    $user_check = mysql_query("SELECT login FROM uzivatele WHERE login='".$nick."'");
+    $user_check = mysql_query("SELECT login FROM uzivatele_multi WHERE login='".$nick."'");
     if($nick==""){echo"Nebyl vyplněn nick!";}
     else if(mysql_num_rows($user_check)){echo"Tento nick používá již jiný uživatel.";}
     else if($heslo==""){echo"Nebylo vyplněno heslo";}
@@ -21,8 +21,8 @@ if(isset($_POST['submit'])) {
     else if($heslo!=$over_heslo){echo"Vyplněná hesla se neshodují";}
     else if($email==""){echo"Nebyl vyplněn email";}
     else{
-        $sql= mysql_query("INSERT INTO uzivatele VALUES ('','$nick','$md5_heslo','','$email','','')") or die(mysql_error());
-        echo"Registrace byla úspěšně dokončena!";
+        $sql= mysql_query("INSERT INTO uzivatele_multi VALUES ('','$nick','$md5_heslo','','$email','','')") or die(mysql_error());
+        echo"Registrace byla úspěšně dokončena!"; 
     }
 }
  
