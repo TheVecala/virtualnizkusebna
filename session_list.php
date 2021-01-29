@@ -4,8 +4,8 @@ $_SESSION['prihlasen'] ano nebo ne
 $_SESSION['login']
 $_SESSION['kapela'] - 
 $_SESSION['id']
-$_SESSION['nazev'] 
-$_SESSION['cely_nazev']
+$_SESSION['nazev'] - zrušeno
+$_SESSION['cely_nazev']  - zrušeno 29.1.
 
 $_SESSION['befelemepesseveze']
 $_SESSION['sekce_k_zobrazeni']

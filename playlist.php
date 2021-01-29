@@ -33,10 +33,7 @@ if(isset($_SESSION['diskuse']))
 	   {   $aktualni_diskuse =$_SESSION['diskuse'];
     } else { $aktualni_diskuse=  "diskuse_kapela1" ; } ; 
  		
-if(isset($_SESSION['cely_nazev']))
-	   {   $nazev =$_SESSION['cely_nazev'];
-    } else { $nazev=  "celý název nebyl nastaven" ; } ; 
- 
+
 if(isset($_SESSION['playlist']))
 	   {   $aktualni_playlist =$_SESSION['playlist'];
     } else { $aktualni_playlist=  "playlist_".$login ; } ; 
