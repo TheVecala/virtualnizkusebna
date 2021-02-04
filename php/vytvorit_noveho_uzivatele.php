@@ -3,15 +3,20 @@
  session_start();
  include "login/connect.php";
  
-// vytvoření komentaře sloučením textu a odkazů z formuláře
-
-//   $komentar= '<pre style="overflow-x: auto" >'.$_POST["text"].'</pre>'.'<a href=" '. $_POST["odkaz"] . '">'.  $_POST["odkaz"].' </a> ' ;
    
-   $novy_uzivatel= $_POST["odkaz"];
+   $novy_uzivatel= $_POST["login"];
+   $novy_uzivatel= $_POST["heslo"];
+   $novy_uzivatel= $_POST["nazev_kapely"];
+   $novy_uzivatel= $_POST["email"];
+   $novy_uzivatel= $_POST["hashedkapela"];
+   $novy_uzivatel= $_POST["adresa_diskuse"];
+  
+   
+  // ověření neexistence stejného uživatele - viz vytvoření zkušebny 
 	
-// uložení do databaze 
+// vložení do databaze 
 
-  if(isset($_SESSION['diskuse']))
+  if(isset(  ))
 	   {   $aktualni_kapela =$_SESSION['diskuse'];
     } else { $aktualni_kapela=  "diskuse_kapela1" ; } ; 
 	
