@@ -1,4 +1,4 @@
- <?php session_start(); ?>
+  <?php session_start(); ?>
 <meta charset="utf-8">
 <?php
 include "connect.php";/* připojení k databázi */
@@ -29,7 +29,7 @@ if($overeni == 1) {
 	$_SESSION['vysledek'] = "přihlášen jako ".$_POST["nick"];
 	$_SESSION['befelemepesseveze'] = $radek_databaze["hashedkapela"];
     $_SESSION['prihlasen'] = true ;
-    $_SESSION['kapela'] =  $radek_databaze["cely_nazev"]; 
+    $_SESSION['kapela'] =  $radek_databaze["nazev_kapely"]; 
 
 	
 	
