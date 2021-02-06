@@ -36,7 +36,7 @@
 	 
 	                            if (file_exists($soubor_s_nazvem))  { 
 	 
-								$cely_nazev = fopen($soubor_s_nazvem, "r") ;
+								$otevreny_soubor = fopen($soubor_s_nazvem, "r") ;
 							 } 
 
  					 
@@ -77,10 +77,10 @@
 									   <div  style="display: inline; position: absolute;  left: 35px;  margin-right:10px;  "> 
 									      <div  style=" text-align: left;  "> 
 									      <?php
-									     	while(!feof($cely_nazev)) {
-											    echo fgets($cely_nazev);
+									     	while(!feof($otevreny_soubor)) {
+											    echo fgets($otevreny_soubor);
 											    }
-										     	fclose($cely_nazev);
+										     	fclose($otevreny_soubor);
 									      ?> 
 										  </div> 
 									   </div> 

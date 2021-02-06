@@ -5,6 +5,7 @@ zkušebna - tabulka uživatelů
 
 cely_nazev změnit na kapelu,
  zatim jen nazev kapely se nacita z položky $$radek_databaze["cely_nazev"] !!!!
+ uzivatele  to  uzivatele_multi
  
 TODO - Vytvoření nového uživatele .php
 
