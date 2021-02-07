@@ -4,25 +4,26 @@
  include "login/connect.php";
  
    
-   $novy_uzivatel= $_POST["login"];
-   $novy_uzivatel= $_POST["heslo"];
-   $novy_uzivatel= $_POST["nazev_kapely"];
-   $novy_uzivatel= $_POST["email"];
-   $novy_uzivatel= $_POST["hashedkapela"];
-   $novy_uzivatel= $_POST["adresa_diskuse"];
+   $new_login= $_POST["login"];
+   $new_md5_heslo= $_POST["heslo"];
+   $new_nazev_kapely= $_POST["nazev_kapely"];
+   $new_email= $_POST["email"];
+   $new_hashedkapela= $_POST["hashedkapela"];
+   $new_adresa_diskuse= $_POST["adresa_diskuse"];
   
    
   // ověření neexistence stejného uživatele - viz vytvoření zkušebny 
 	
-// vložení do databaze 
 
   if(isset(  ))
 	   {   $aktualni_kapela =$_SESSION['diskuse'];
     } else { $aktualni_kapela=  "diskuse_kapela1" ; } ; 
 	
+	
+// vložení do databaze 	
 // $vysledek=mysql_query("insert into $aktualni_diskuse (cas, vzkaz, jmeno) values (".time().",'". $komentar."','".$_POST["name"]."')");
  
-   $vysledek=mysql_query("insert into $aktualni_kapela (user, admin, jmeno) values (".$_POST["user"].",'". $komentar."','".$_POST["name"]."')");
+   $vysledek=mysql_query("insert into $uzivatele_multi values ('','$new_login','$new_md5_heslo','$new_nazev_kapely','$new_email','$new_hashedkapela','$new_adresa_diskuse')");
     
   require "navrat.php";
 ?>
