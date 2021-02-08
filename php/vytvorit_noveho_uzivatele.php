@@ -11,20 +11,22 @@
    $new_hashedkapela= $_POST["hashedkapela"];
    $new_adresa_diskuse= $_POST["adresa_diskuse"];
   
+   $new_login= "test_login";
+   $new_md5_heslo= "test_dfgdfgfdg";
+   $new_nazev_kapely= "test_ddddd";
+   $new_email= "test_dfgf";
+   $new_hashedkapela= "testfffffff";
+   $new_adresa_diskuse= "test_fgf";  
+  
    
   // ověření neexistence stejného uživatele - viz vytvoření zkušebny 
 	
-
-  if(isset(  ))
-	   {   $aktualni_kapela =$_SESSION['diskuse'];
-    } else { $aktualni_kapela=  "diskuse_kapela1" ; } ; 
-	
-	
+ 
 // vložení do databaze 	
 // $vysledek=mysql_query("insert into $aktualni_diskuse (cas, vzkaz, jmeno) values (".time().",'". $komentar."','".$_POST["name"]."')");
  
-   $vysledek=mysql_query("insert into $uzivatele_multi values ('','$new_login','$new_md5_heslo','$new_nazev_kapely','$new_email','$new_hashedkapela','$new_adresa_diskuse')");
-    
-  require "navrat.php";
+   $vysledek=mysql_query("INSERT INTO uzivatele_multi VALUES ('','$new_login','$new_md5_heslo','$new_nazev_kapely','$new_email','$new_hashedkapela','$new_adresa_diskuse')");
+   
+ // require "navrat.php";
 ?>
  

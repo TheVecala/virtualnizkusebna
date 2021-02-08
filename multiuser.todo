@@ -10,10 +10,10 @@ cely_nazev změnit na kapelu,
  $cely_nazev  to  $otevreny_soubor
  
 TODO - Vytvoření nového uživatele .php
-   vložení uživatele na sucho
+   vložení uživatele na sucho - funguje
    vložení z formuláře
    nastavení práv - 
-
+  upravit zakládání kapely
 
 
 PHP7!!!!!
