@@ -537,3 +537,47 @@
 </div>  
 
 
+  <!-- The Modal vložit uživatele -->
+<div class="modal" id="modal_vlozit_uzivatele">
+  <div class="modal-dialog  ">
+    <div class="modal-content  bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title">VLOŽENÍ UŽIVATELE</p>		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     	 
+	 <!--<h1>Vložení komentáře</h1>-->
+	 <form id="form" name="form" method="post" action="php/vytvorit_noveho_uzivatele.php">
+ 
+ <div class="form-group">
+    <label for="text">Login:</label>
+    <textarea type="text" class="form-control" name="login">  </textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="odkaz">Heslo:</label>
+    <input type="text" class="form-control" name="heslo">
+  </div>
+  <div class="form-group">
+    <label for="name">Email:</label>
+    <input type="text" class="form-control" name="email">
+  </div>
+  
+  <button  id= "odeslat" type="submit" class="btn btn-primary">VYTVOŘIT</button>
+</form> 
+	 
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">       		
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+  

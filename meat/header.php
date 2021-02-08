@@ -63,6 +63,10 @@
                   <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >info</a>
             </li> 
 			 <li class="nav-item">
+		      <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_uzivatele" >Vytvořit uživatele </button> 
+		     </li> 
+			  
+			 <li class="nav-item">
                 <a class="nav-link" href="/php/login/logout.php">odhlásit se</a>  
             </li> 
 			
