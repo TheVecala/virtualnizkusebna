@@ -11,7 +11,8 @@ cely_nazev změnit na kapelu,
  
 TODO - Vytvoření nového uživatele .php
    vložení uživatele na sucho - funguje
-   vložení z formuláře
+   vložení z formuláře - funguje
+   hashovani hesla -funguje
    nastavení práv - 
   upravit zakládání kapely
 
