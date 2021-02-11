@@ -5,17 +5,23 @@
 		      <div style="display: inlinexxxxxx; color:white; background-color: #343a40; padding:3px; ">
 					   			   	
 						 <div class=" " style="text-align: left;"> 
-							  <div  style="text-align:left; display: inline ;" >
-							  
-							   
+						 
+							  <div  style="text-align:left; display: inline ;" >							  
 								<div  class="btn btn-light my-2 my-sm-0"  style="display: inline; background-color: #d5833c;">
-								     <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:30px;"  >
-								<?php echo  $_SESSION['login'] ; ?>
-								
-								</div>
+								   <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:30px;"  >
+								   <?php echo  $_SESSION['login'] ; ?>
+						 		</div>
 							  </div>						 
                                	/
-							 
+							  <div  style="text-align:left; display: inline ;" >							  
+								<div  class="btn btn-light my-2 my-sm-0"  style="display: inline; background-color: #d5833c;">
+								   <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:30px;"  >
+								   <?php echo  $_SESSION['kapela'] ; ?>
+						 		</div>
+							  </div>						 
+                               	/
+
+								
 							  <button style="display: inline; padding:0px ; padding-right: 15px; background-color: #27a243;" class="btn btn-light my-2 my-sm-0  "  dropdown-toggle" data-toggle="dropdown"  >
 							  <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px"   > 
 							   <?php echo $slozka_souboru 	?> 
