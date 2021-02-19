@@ -78,7 +78,7 @@
 			
           </ul>
           <form class="form-inline mt-2 mt-md-0">
-            <a class="navbar-brand" href="index.php" style="text-align: center">  <p style="text-align: center"> VIRTUÁLNÍ ZKUŠEBNA   </p> </a>  
+            <a class="navbar-brand" href="index.php" style="text-align: center">  <p style="text-align: center">VZ</p> </a>  
           
           </form>
         </div>

@@ -255,7 +255,10 @@ div.sticky {
     </header>
      
 	 
- <div class="container-fluid" style="padding-top: 50px;}">
+ <div class="container-fluid" style="margin-top: 50px;}">
+ 
+ 
+ 
  
            <!-- 
 		    <div  id="mySidenav" class="sidenav" style="z-index:4">
