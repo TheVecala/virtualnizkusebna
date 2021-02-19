@@ -46,35 +46,35 @@
         <div class="collapse navbar-collapse" id="navbarCollapse">
           <ul class="navbar-nav mr-auto" style="text-align: center">
              
-	 
-		 <li class="nav-item">
-                <a class="nav-link " href="index.php">home</a> 
-            </li>  
-	 <!-- 		
-			 <li class="nav-item dropdown">
+ 
+			<li class="nav-item dropdown">
 			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-				ZKUŠEBNA
+				zobrazení
 			  </a>
 			  <div class="dropdown-menu">
-				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 
+				<a class="dropdown-item" href="index.php">home</a>
+			    <a class="dropdown-item" href="looper.php">looper</a>
 				<a class="dropdown-item" href="kalendar.php">ROZVRH</a>
 			  </div>
-             </li>	 
-	-->	
-
-			 <li class="nav-item">
-               <a class="nav-link " href="looper.php">looper</a>  
-            </li			
+            </li>
+			
+			<li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+				nastavení
+			  </a>
+			  <div class="dropdown-menu">			  
+			    <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_uzivatele" >Vytvořit uživatele 
+				</button> 
+ 				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 
+		        <a class="dropdown-item" href="/php/login/logout.php">odhlásit se</a>
+			  </div>
+            </li> 	
+ 
             <li class="nav-item">
                   <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >info</a>
             </li> 
-			 <li class="nav-item">
-		      <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_uzivatele" >Vytvořit uživatele </button> 
-		     </li> 
-			  
-			 <li class="nav-item">
-                <a class="nav-link" href="/php/login/logout.php">odhlásit se</a>  
-            </li> 
+			
+ 
 			
           </ul>
           <form class="form-inline mt-2 mt-md-0">
