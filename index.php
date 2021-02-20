@@ -255,7 +255,7 @@ div.sticky {
     </header>
      
 	 
- <div class="container-fluid" style="margin-top: 50px;}">
+ <div class="container-fluid" style="margin-top: 50px;">
  
  
  

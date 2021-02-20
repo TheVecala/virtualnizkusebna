@@ -203,8 +203,8 @@ td  {
     </header>
      
 	 
- <div class="container-fluid">
-    <div id="vycpavka"   style="min-height:58px"> </div>               
+ <div class="container-fluid" style="margin-top: 50px;">
+                  
 
     <div class="row">
  
