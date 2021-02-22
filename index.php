@@ -249,16 +249,14 @@ div.sticky {
 
   </head>
   <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
-
+   <div class="container-fluid" >
+  
     <header>
       <?php   require "meat/header.php";?>
     </header>
      
 	 
  <div class="container-fluid" style="margin-top: 50px;">
- 
- 
- 
  
            <!-- 
 		    <div  id="mySidenav" class="sidenav" style="z-index:4">
@@ -298,51 +296,37 @@ div.sticky {
 				  </div>
 				</div>
 
-
              </div>
 		     <div   class=" stredni "  >  
+               <div class="row">
+			 
+					<!--   druhejstřetím sloupec   -->
+					<div class="col-md-12" >     
+				 
+					   <div class="row" >
+					 
+						   <!--  druhy sloupec   -->
+						   <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
+								<?php 	require "meat/sekce_akordu.php";	?>
+						   </div  > <!-- konec druhý sloupec   -->
+			  
+						   <!-- třetí sloupec   --> 
+						   <div class="col-md-4" style="margin-bottom: 5px" > 
+								<?php   require "meat/sekce_souboru.php";	?>						
+						   </div> <!-- konec třetí sloupec   -->
+						   
+							<!-- čtvrtý sloupec   -->
+							<div class="col-md-4" style="margin-bottom: 5px" >   
+								<?php   require "meat/sekce_diskuse.php";	?>
+							</div> <!-- konec čtvrtý sloupec   --> 
+								
+					   </div> <!-- konec row   --><!-- konec vnitrni row   -->
+					</div> <!--   konec druhejstřetím sloupec   -->  
+              </div> <!-- konec vnejsí row   -->
+             </div> <!-- stredni -->
  
-			 				
- 
-     <div class="row">
- 
-		<!--   druhejstřetím sloupec   -->
-	    <div class="col-md-12" >     
-	 
-		 <div class="row" ">
-		 
- 
-			   <!--  druhy sloupec   -->
-		       <div  id="k" class="col-md-4" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/sekce_akordu.php";	?>
-		       </div  > <!-- konec druhý sloupec   -->
-  
-               <!-- třetí sloupec   --> 
-			   <div class="col-md-4" style="margin-bottom: 5px" > 
-					<?php   require "meat/sekce_souboru.php";	?>						
-			   </div> <!-- konec třetí sloupec   -->
-			   
-			    <!-- čtvrtý sloupec   -->
-				<div class="col-md-4" style="margin-bottom: 5px" >   
-					<?php   require "meat/sekce_diskuse.php";	?>
-				</div> <!-- konec čtvrtý sloupec   --> 
-					
-      	  </div> <!-- konec row   -->
-        </div> <!--   konec druhejstřetím sloupec   -->  
- 
-	  
-	 	 
-    </div> <!-- row -->
- 
-             </div>
-				
-          </div>
-
-
- 
-			   
- 
-	
+          </div>  <!-- main -->
+ 	
  </div>     <!-- container -->
  
  
@@ -358,7 +342,7 @@ div.sticky {
   
 
   <script src="meat/vecalovo.js"></script> 
-
+  </div> <!-- hlavní container fluid-->
  </body>
 </html>
 
