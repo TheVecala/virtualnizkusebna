@@ -251,12 +251,9 @@ div.sticky {
   <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
    <div class="container-fluid" >
   
-    <header>
-      <?php   require "meat/header.php";?>
-    </header>
+    <?php   require "meat/header.php";?>
      
-	 
- <div class="container-fluid" style="margin-top: 50px;">
+ <div class="container-fluid" style="">
  
            <!-- 
 		    <div  id="mySidenav" class="sidenav" style="z-index:4">

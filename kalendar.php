@@ -178,7 +178,7 @@ td  {
   </head>
   <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
 
-   <header>
+  
       <!-- Fixed navbar -->
       <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
         <a class="navbar-brand" href="#">VIRTUÁLNÍ ZKUŠEBNA</a>
@@ -223,10 +223,10 @@ td  {
           </form>
         </div>
       </nav>
-    </header>
+ 
      
 	 
-<div class="container-fluid" style="margin-top: 50px;">
+<div class="container-fluid" style="">
                   
 
   
