@@ -19,6 +19,20 @@
  
    $vysledek=mysql_query("INSERT INTO uzivatele_multi VALUES ('','$new_login','$new_md5_heslo','$new_nazev_kapely','$new_email','$new_hashedkapela','$new_adresa_diskuse')");
    
+// vytvoření tabulky INFO   
+ 
+	$status= "admin";
+	$style= "classic";
+ 
+    mysql_query("CREATE TABLE $info_diskuse (
+	cas INT(11) NOT NULL,
+	vzkaz text NOT NULL,
+	jmeno VARCHAR(50) NOT NULL
+	)");
+	
+    $vysledek=mysql_query("insert into $adresa_diskuse (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
+
+ 
  // require "navrat.php";
 ?>
  
