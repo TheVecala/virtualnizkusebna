@@ -16,7 +16,7 @@ TODO - Vytvoření nového uživatele .php
    vytvoření tabulky INFO  -funguje
    
    ověření neexistence stejného uživatele -
-  
+   při přihlášení načíst INFO do sessions
     nastavení práv -
   upravit zakládání kapely
 

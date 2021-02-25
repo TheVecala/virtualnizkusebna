@@ -589,17 +589,24 @@
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p class="modal-title">muj ucet</p>		
+        <p class="modal-title">Můj účet</p>		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->
       <div class="modal-body">
-     	 
-	  přihlášen jako:
-	  status:
-	  style:
-	  
+     	 <div class="card bg-dark text-white">
+           <div class="card-body">přihlášen jako: <?php echo $_SESSION['login']; ?></div>
+         </div>
+		      	 <div class="card bg-dark text-white">
+           <div class="card-body">kapela: <?php echo $_SESSION['kapela']; ?></div>
+         </div>
+     	 <div class="card bg-dark text-white">
+           <div class="card-body">status: <?php   ?></div>
+         </div>
+     	 <div class="card bg-dark text-white">
+           <div class="card-body">style: <?php   ?></div>
+         </div>	  
       </div>
       <!-- Modal footer -->
       <div class="modal-footer">       		
