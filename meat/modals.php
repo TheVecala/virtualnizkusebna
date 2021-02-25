@@ -581,3 +581,32 @@
   </div>
 </div> 
   
+  
+  <!-- The Modal muj ucet -->
+<div class="modal" id="modal_muj_ucet">
+  <div class="modal-dialog  ">
+    <div class="modal-content  bg-success text-white">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <p class="modal-title">muj ucet</p>		
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+     	 
+	  přihlášen jako:
+	  status:
+	  style:
+	  
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">       		
+        <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+      </div>
+
+    </div>
+  </div>
+</div> 
+  

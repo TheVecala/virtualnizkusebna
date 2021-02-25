@@ -63,6 +63,8 @@
 				nastavení
 			  </a>
 			  <div class="dropdown-menu">			  
+			    <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_muj_ucet" >můj účet
+				</button> 			  
 			    <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_uzivatele" >Vytvořit uživatele 
 				</button> 
  				<a class="dropdown-item" href="#" data-toggle="popover" data-trigger="focus" data-content="Tahle funkce zatím nefachá">ZMĚNIT</a> 

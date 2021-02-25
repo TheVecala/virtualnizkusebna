@@ -13,9 +13,10 @@ TODO - Vytvoření nového uživatele .php
    vložení uživatele na sucho - funguje
    vložení z formuláře - funguje
    hashovani hesla -funguje
+   vytvoření tabulky INFO  -funguje
    
    ověření neexistence stejného uživatele -
-   vytvoření tabulky INFO 
+  
     nastavení práv -
   upravit zakládání kapely
 
