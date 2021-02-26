@@ -24,12 +24,12 @@ $_SESSION['playlist']   -   nepoužívané
 
 MULTIUSER:
 
+ $_SESSION['adresa_info']
+ $_SESSION['status']
+ $_SESSION['style']
 $_SESSION['']
 $_SESSION['']
 $_SESSION['']
-$_SESSION['']
-$_SESSION['']
-$_SESSION['']
-$_SESSION['']
+
 
 ?>
