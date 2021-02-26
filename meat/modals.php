@@ -602,10 +602,10 @@
            <div class="card-body">kapela: <?php echo $_SESSION['kapela']; ?></div>
          </div>
      	 <div class="card bg-dark text-white">
-           <div class="card-body">status: <?php   ?></div>
+           <div class="card-body">status: <?php echo $_SESSION['status'];  ?></div>
          </div>
      	 <div class="card bg-dark text-white">
-           <div class="card-body">style: <?php   ?></div>
+           <div class="card-body">style: <?php echo $_SESSION['style'];  ?></div>
          </div>	  
       </div>
       <!-- Modal footer -->
