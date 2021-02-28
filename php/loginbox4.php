@@ -103,7 +103,7 @@
 					PŘIHLAŠOVACÍ JMÉNO: 
 					<input id=" " type="text" name="nick" > <br>
 					CELÝ NÁZEV PROJEKTU: 
-					<input id=" " type="text" name="jmeno_zkusebny" > <br>
+					<input id=" " type="text" name="kapela" > <br>
 					ZVOLTE HESLO PRO PŘÍSTUP:
 					<input id=" " type="password" name="heslo" > <br>
 					ZNOVU HESLO:

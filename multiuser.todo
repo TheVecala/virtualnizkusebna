@@ -14,11 +14,16 @@ TODO - Vytvoření nového uživatele .php
    vložení z formuláře - funguje
    hashovani hesla -funguje
    vytvoření tabulky INFO  -funguje
-   
-   ověření neexistence stejného uživatele -
    při přihlášení načíst INFO do sessions - funguje
+   vytváří novou zkušebnu multiuser - funguje
+   
+   vytvoření nového užitele aktuální zkušebny, vytváří natvrdo silentroom
+   ověření neexistence stejného uživatele -
+   
+
+   
     nastavení práv -
-  upravit zakládání kapely
+
 
 
 PHP7!!!!!
