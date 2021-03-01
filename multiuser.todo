@@ -17,7 +17,7 @@ TODO - Vytvoření nového uživatele .php
    při přihlášení načíst INFO do sessions - funguje
    vytváří novou zkušebnu multiuser - funguje
    
-   vytvoření nového užitele aktuální zkušebny, vytváří natvrdo silentroom
+
    ověření neexistence stejného uživatele -
    
 

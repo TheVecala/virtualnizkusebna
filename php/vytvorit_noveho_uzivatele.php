@@ -6,10 +6,10 @@
    $new_login= $_POST["login"];   
    $new_heslo= $_POST["heslo"];  
    $new_md5_heslo= md5($new_heslo);;  
-   $new_nazev_kapely= "silentroom";
+   $new_nazev_kapely= $_SESSION['kapela'];
    $new_email= $_POST["email"];
-   $new_hashedkapela= "338786519";
-   $new_adresa_diskuse= "diskuse_silentroom_123456789";
+   $new_hashedkapela= $_SESSION['befelemepesseveze'];
+   $new_adresa_diskuse= "diskuse_".$_SESSION['kapela']."_123456789";
    $new_adresa_info= "info_$new_login";
   
    
