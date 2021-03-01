@@ -124,7 +124,7 @@ if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  )
 	)");
 	  
 	//vložení do tabulky diskuse kapely
-    $vysledek=mysql_query("insert into $adresa_diskuse (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
+    $vysledek_dotazu=mysql_query("insert into $adresa_diskuse (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
 	// přidat podmínku			
 	$_SESSION['vysledek'] = "vytvoření tabulek bylo úspěšně dokončeno!"; 
 	$_SESSION['diskuse'] = $adresa_diskuse ;
@@ -141,8 +141,8 @@ if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  )
 	hodnota VARCHAR(50) NOT NULL 
 	)");
 	
-    $vysledek=mysql_query("INSERT INTO $nazev_tabulky  VALUES ('status','$status')");
-	$vysledek=mysql_query("INSERT INTO $nazev_tabulky  VALUES ('style','$style')");
+    $vysledek_dotazu=mysql_query("INSERT INTO $nazev_tabulky  VALUES ('status','$status')");
+	$vysledek_dotazu=mysql_query("INSERT INTO $nazev_tabulky  VALUES ('style','$style')");
    	
 	
 		

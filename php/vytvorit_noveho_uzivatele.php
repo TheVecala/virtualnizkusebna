@@ -18,7 +18,7 @@
  
 // vložení do databaze 	
  
-   $vysledek=mysql_query("INSERT INTO uzivatele_multi VALUES ('','$new_login','$new_md5_heslo','$new_nazev_kapely','$new_email','$new_hashedkapela','$new_adresa_diskuse','$new_adresa_info')");
+   $vysledek_dotazu=mysql_query("INSERT INTO uzivatele_multi VALUES ('','$new_login','$new_md5_heslo','$new_nazev_kapely','$new_email','$new_hashedkapela','$new_adresa_diskuse','$new_adresa_info')");
    
    
 // vytvoření tabulky INFO   
@@ -33,8 +33,8 @@
 	hodnota VARCHAR(50) NOT NULL 
 	)");
 	
-    $vysledek=mysql_query("INSERT INTO $nazev_tabulky  VALUES ('status','$status')");
-	$vysledek=mysql_query("INSERT INTO $nazev_tabulky  VALUES ('style','$style')");
+    $vysledek_dotazu=mysql_query("INSERT INTO $nazev_tabulky  VALUES ('status','$status')");
+	$vysledek_dotazu=mysql_query("INSERT INTO $nazev_tabulky  VALUES ('style','$style')");
    
    
   require "navrat.php";

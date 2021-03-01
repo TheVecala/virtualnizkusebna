@@ -13,7 +13,7 @@
 	   {   $aktualni_diskuse =$_SESSION['diskuse'];
     } else { $aktualni_diskuse=  "diskuse_kapela1" ; } ; 
 	
-  $vysledek=mysql_query("insert into $aktualni_diskuse (cas, vzkaz, jmeno) values (".time().",'". $komentar."','".$_POST["name"]."')");
+  $vysledek_dotazu=mysql_query("insert into $aktualni_diskuse (cas, vzkaz, jmeno) values (".time().",'". $komentar."','".$_POST["name"]."')");
   
   require "navrat.php";
 ?>

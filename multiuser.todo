@@ -16,7 +16,8 @@ TODO - Vytvoření nového uživatele .php
    vytvoření tabulky INFO  -funguje
    při přihlášení načíst INFO do sessions - funguje
    vytváří novou zkušebnu multiuser - funguje
-   
+   vložit odstranění diakritiky do tabulky uživatelů 
+   status a style nenašíta do sessions při založení kapely
 
    ověření neexistence stejného uživatele -
    
@@ -25,5 +26,19 @@ TODO - Vytvoření nového uživatele .php
     nastavení práv -
 
 
-
 PHP7!!!!!
+
+protokol kontroly funkčnosti:
+
+-smazání sessions
+-založení kapely
+-přihlášení
+-přihlášení na jinou zkušebnu
+-přihlášení se špatným heslem
+-vytvoření uživatele
+-přihlášení uživatele
+-vytvoření skladby
+-vložení souboru
+-přehrání souboru
+-smazání souboru
+-smazání skladby

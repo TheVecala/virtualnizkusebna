@@ -6,8 +6,8 @@ define ("ROWS", 5);
  
   if (!isset($_GET["celkem"]))  
   {
-    $vysledek=mysql_query("select count(*) as pocet from $aktualni_diskuse ");
-    $zaznam=mysql_fetch_array($vysledek);
+    $vysledek_dotazu=mysql_query("select count(*) as pocet from $aktualni_diskuse ");
+    $zaznam=mysql_fetch_array($vysledek_dotazu);
     $celkem=$zaznam["pocet"];
   }
   else
@@ -20,11 +20,11 @@ define ("ROWS", 5);
   if ($celkem>ROWS)
   {
     if (!isset($_GET["od"])) $od=1; else $od=$_GET["od"];
-    $vysledek=mysql_query("select cas, vzkaz, jmeno from $aktualni_diskuse order by cas desc"." limit ".($od-1).", ".ROWS);
+    $vysledek_dotazu=mysql_query("select cas, vzkaz, jmeno from $aktualni_diskuse order by cas desc"." limit ".($od-1).", ".ROWS);
   }
   else
   {
-    $vysledek=mysql_query("select * from $aktualni_diskuse order by cas desc") ;
+    $vysledek_dotazu=mysql_query("select * from $aktualni_diskuse order by cas desc") ;
   }
 ?> 
   
@@ -83,7 +83,7 @@ define ("ROWS", 5);
 <ul class="list-group sloupec" >
    
 <?php
-  while ($zaznam=MySQL_Fetch_Array($vysledek))   
+  while ($zaznam=MySQL_Fetch_Array($vysledek_dotazu))   
   {
 ?>
     
