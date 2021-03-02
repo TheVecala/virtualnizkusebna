@@ -1,5 +1,7 @@
 <?php session_start();  ?>
 <?php
+<require "remove_accents.php";
+
 $koren = "../user/";
 $target_dir = ($_POST["jmeno_adresare"]);
 // $nahoda = "befelemepesseveze";
