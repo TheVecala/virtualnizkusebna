@@ -8,34 +8,36 @@ $target_dir = ($_POST["jmeno_adresare"]);
 $nahoda = mt_rand();
 $adresa_pro_navrat = ($_POST["navrat"]);   
 $databaze = true;
- 
+
+$nazev_kapely= $_POST["kapela"]; 
+$ocesany_nazev_kapely= remove_accents($nazev_kapely);
 if   ( $databaze )      // vytvoření složek kapely
     { 
 	 if(isset($_POST["kapela"])) 
-		{if (mkdir($koren.($_POST["kapela"])))									
-			{if (mkdir($koren.($_POST["kapela"])."/".$nahoda  )) 
-                {if (mkdir($koren.($_POST["kapela"])."/".$nahoda."/uploads/" ))
-					{if (mkdir($koren.($_POST["kapela"])."/".$nahoda."/uploads/".$target_dir))
-						{if (mkdir($koren.($_POST["kapela"])."/".$nahoda."/uploads/".$target_dir."/data"))
-                            {if (mkdir($koren.($_POST["kapela"])."/".$nahoda."/uploads/".$target_dir."/texty"))
+		{if (mkdir($koren.($ocesany_nazev_kapely)))									
+			{if (mkdir($koren.($ocesany_nazev_kapely)."/".$nahoda  )) 
+                {if (mkdir($koren.($ocesany_nazev_kapely)."/".$nahoda."/uploads/" ))
+					{if (mkdir($koren.($ocesany_nazev_kapely)."/".$nahoda."/uploads/".$target_dir))
+						{if (mkdir($koren.($ocesany_nazev_kapely)."/".$nahoda."/uploads/".$target_dir."/data"))
+                            {if (mkdir($koren.($ocesany_nazev_kapely)."/".$nahoda."/uploads/".$target_dir."/texty"))
                                 {
 									
 									 $vzor_akordu = ("../data/akordy.txt");
-				                     $cil_akordu = ($koren.($_POST["kapela"])."/".$nahoda."/uploads/".$target_dir."/texty"."/akordy.txt");
+				                     $cil_akordu = ($koren.($ocesany_nazev_kapely)."/".$nahoda."/uploads/".$target_dir."/texty"."/akordy.txt");
 		                        	 echo copy($vzor_akordu,$cil_akordu);
 									
 									// vložení nazvu
 												if (true) {
-												$soubor = $koren.($_POST["kapela"])."/".$nahoda."/uploads/".$target_dir."/data/nazev_valu.txt";
+												$soubor = $koren.($ocesany_nazev_kapely)."/".$nahoda."/uploads/".$target_dir."/data/nazev_valu.txt";
 												$file = fopen($soubor, "w") or die("nasrat!"); 
 												fwrite($file, $target_dir); 
 												fclose($file);
 													
 												}
 												
-								        $_SESSION['vysledek'] = "vytvořeno"; 
+								        $_SESSION['vysledek'] = "vytvořeny složky"; 
 										$_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
-										$_SESSION['kapela'] = ($_POST["kapela"]);
+										$_SESSION['kapela'] = ($ocesany_nazev_kapely);
 										$_SESSION['login'] = ($_POST["nick"]);
 										
 								} else  
