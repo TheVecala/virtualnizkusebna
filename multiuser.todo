@@ -16,7 +16,17 @@ TODO - Vytvoření nového uživatele .php
    vytvoření tabulky INFO  -funguje
    při přihlášení načíst INFO do sessions - funguje
    vytváří novou zkušebnu multiuser - funguje
-   vložit odstranění diakritiky do tabulky uživatelů 
+   
+   vložit odstranění diakritiky do tabulky uživatelů:
+   -změna tabulky uživatelů
+   -vytváření tabulky pro kapelu
+   -přesunout tam adresu diskuse
+   -změna názvu tabulky uživatele
+   -adekvátně upravit přihlašování
+   -adekvátně upravit ostatní přístupk tabulkám
+   
+
+   
    status a style nenašíta do sessions při založení kapely
 
    ověření neexistence stejného uživatele -
