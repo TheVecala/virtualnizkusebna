@@ -1,11 +1,11 @@
 uzivatele_multi2
 
 id	login	heslo	                            adresa_info
-72	vecala	009820c09a1f14b5778a0486528b91a1	info_vecala
+72	vecala	009820c09a1f14b5778a0486528b91a1	user_vecala
 
 user_vecala
 
-id	kapela	    status	email	empty1	empty2	empty3	empty4	empty5
+id	kapela	    status	email	
 1	silentroom	admin	nic
 
 kapely_multi2
