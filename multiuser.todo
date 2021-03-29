@@ -24,7 +24,7 @@ TODO - Vytvoření nového uživatele .php
    -změna názvu tabulky uživatele
    -adekvátně upravit přihlašování
    -adekvátně upravit ostatní přístupk tabulkám
-   
+   - $login = strtolower($login);
 
    
    status a style nenašíta do sessions při založení kapely

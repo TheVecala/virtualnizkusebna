@@ -26,10 +26,8 @@ MULTIUSER:
 
  $_SESSION['adresa_info']
  $_SESSION['status']
- $_SESSION['style']
-$_SESSION['']
-$_SESSION['']
-$_SESSION['']
+ $_SESSION['style'] změnit na vlastnost2
+ $_SESSION['adresa_seznam_kapel']
 
 
 ?>
