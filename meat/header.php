@@ -19,14 +19,13 @@
 							  <button style="display: inline; padding:0px ; padding-right: 15px; background-color: #27a243;" class="btn btn-light my-2 my-sm-0  "  dropdown-toggle" data-toggle="dropdown"  >
 							  <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px"   > 
 							   <?php echo $slozka_souboru 	?> 
-							   <img  src="/data/ikona_colapsedown2.png" alt="vál" style="max-height:12px"> 
-							    <!-- 
+							  <!--   <img onclick="openNav()" src="/data/ikona_colapsedown2.png" alt="vál" style="max-height:12px"> 
 							   <img onclick="closeNav()" src="/data/123_Maximize_Square-512.png" alt="vál" style="max-height:29px"> 
 							    -->
 							  </button>
 							  <div class="dropdown-menu" style="background-color: rgb(52, 58, 64)">
 							  
-							     <?php   require "meat/sekce_playlist.php";?>
+							     <?php   require "meat/sekce_playlist_drop.php";?>
 							  
 	                          </div> 
 						 </div> 
@@ -41,14 +40,14 @@
           <ul class="navbar-nav mr-auto" style="text-align: center">
              
 	 
-		 <li class="nav-item">
-                <a class="nav-link " href="index.php">home</a> 
+	    	 <li class="nav-item">
+                <a class="nav-link " href="index.php">track</a> 
             </li>  
-	 <!-- 		
+		 			
 			 <li class="nav-item">
-               <a class="nav-link " href="classic.php">classic</a>  
+               <a class="nav-link " href="playlist.php">playlist</a>  
             </li>	 
-	-->	
+	 
 
 			 <li class="nav-item">
                <a class="nav-link " href="looper.php">looper</a>  

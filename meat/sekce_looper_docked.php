@@ -6,6 +6,13 @@
 			   			   
 			            <div  style="text-align:left; display: inline ;" >
 					    	<h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;"> LOOPER </h2> 
+							
+						  <div style="display: inline ;  ">
+							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->
+							 <h2 id="label_wave_jumbo" style=" display: inline;  color:white; background-color:#343a40  "> soubor nenačten 
+							 </h2> 
+				           </div>	
+						
 						</div>
 		
 					
@@ -21,11 +28,7 @@
 			
 			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">	
 
-						<div style="display: inline ;  ">
-							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->
-							 <h4 id="label_wave_jumbo" style="font-family: Times New Roman ; display: inline;  color:black; background-color: white"> soubor nenačten 
-							 </h4> 
-				        </div>			 
+ 		 
 						 <div id="test_delky" style="display: inline ;  ">
 						</div>	 
 						<div style="text-align:right ; display: inline  ">

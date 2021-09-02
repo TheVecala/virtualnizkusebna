@@ -181,8 +181,8 @@ td  {
 .h2, h2 {
  font-size:1.2rem;
  border-radius: 1rem;
- padding: 5px;
- margin: 5px;
+  /*  padding: 5px;  */
+  /*  margin: 5px;   */
 }
 }
 
@@ -203,6 +203,12 @@ td  {
  
       
 	  
+			   <!--  druhy sloupec   -->
+		       <div  id="wave_jumbo"  class="col-md-9" style="margin-bottom: 5px"> 
+				    <?php 	require "meat/sekce_looper_docked.php";	?>
+		       </div  > <!-- konec druhý sloupec   -->
+           
+	  
 	 
 		 
 		 	 
@@ -211,13 +217,7 @@ td  {
 				    <?php 	require "meat/sekce_souboru.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   
-  
-			   <!--  druhy sloupec   -->
-		       <div  id="wave_jumbo"  class="col-md-9" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/sekce_looper_docked.php";	?>
-		       </div  > <!-- konec druhý sloupec   -->
-           
-			
+		
       	 
      
    

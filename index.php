@@ -189,7 +189,8 @@ td  {
 .h2, h2 {
  font-size:1.2rem;
   
- margin: 5px;
+  /*  padding: 5px;  */
+  /*  margin: 5px;   */
 }
 
 
