@@ -8,13 +8,7 @@
 			   
 		               <h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NAHRÁVKY </h2>
 					   
-  				       <div  style="text-align:right; display: inline">	<!--  tlačítka souboru  -->   	       
-				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
-						  
-                          <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >REC</button> 
-		 
-					  
-			           </div>
+
 	
 	               </div>	
  				
@@ -105,7 +99,16 @@
 					}
 					?>
  		 			
-			</div> <!--  konec vypis souboru   --> 
+	
+			
+			  		  <div  style="text-align:right;"  class=" bg-success text-white" >	<!--  tlačítka souboru  -->   	       
+				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
+						  
+                          <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >REC</button> 
+		 
+					  
+			           </div>		
+				</div> <!--  konec vypis souboru   --> 	
 		  </div>	 <!--  konec vysuvka   --> 
 		  
       <?php if ($delka_pole_souboru < 5	) 
@@ -128,3 +131,4 @@
 	 	<?php
 	 	  } 
 	    ?>
+		
