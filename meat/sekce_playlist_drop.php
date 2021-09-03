@@ -1,17 +1,9 @@
-			<div class=" sticky  card bg-dark text-white"  style="margin-top: 1px; "> <!--hlavička prvního sloupce     -->
-               <div class="card-body"> 
-	
-	    	
-				 
-	           </div>
- 		   
-            </div> <!--     -->
-	      		  
+ 	      		  
             <div> <!--  playlist   -->
 					  
-			  <div  id=" "  style="background-color:#27a243; padding: 3px;"> <!-- zmšna složky    -->
+			  <div  id=" "  style=" padding: 3px;"> <!-- zmšna složky    -->
 			 
-			  	<div>
+			  	<div style="text-align:center">
 					 
 					<div>
 				      <ul class="list-group list-group-flush">
@@ -47,7 +39,7 @@
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
 									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
 									
-                                <div class="media border p-1" style="font-size: 0.8rem; padding:1px;    ">
+                                <div class="media border " style="font-size: 0.8rem;     ">
 								
 																	   
 									<?php   
@@ -67,16 +59,11 @@
 										
 									  ?>
 								  				
-								   <div class="media-body" style="padding: 0.2rem; max-width: 339px; text-align: right; max-height:100%" >
+								   <div class="media-body" style="  max-width: 339px; text-align: center; max-height:100%" >
 																
 									   <div  style="display: inline; position: absolute;  left: 5px;  margin-right:10px;  "> 
 									      <div  style=" text-align: left;  "> 
-									      <?php
-									     	while(!feof($cely_nazev)) {
-											    echo fgets($cely_nazev);
-											    }
-										     	fclose($cely_nazev);
-									      ?> 
+									 
 										  </div> 
 									   </div> 
 								       <div  style="  display: inline; position: relative;  z-index: 5; " >
@@ -85,8 +72,13 @@
 								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  { }
 									 else
 									  { ?>
-								         <button id=" " type="submit" style=" max-width: 120px ; display: inline; padding: 1px;" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
-                                          OTEVŘÍT
+								         <button id=" " type="submit" style=" /* max-width: 120px ; */ display: inline; padding: 1px;" class=" " value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
+                                               <?php
+									     	while(!feof($cely_nazev)) {
+											    echo fgets($cely_nazev);
+											    }
+										     	fclose($cely_nazev);
+									      ?> 
 									     </button>
 									   </div> 
 									  <?php 
@@ -108,7 +100,7 @@
 		                </ul>
 					  
 				    </div>
-   <button  id="nova_slozka"   type="button" class="btn btn-sm btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_nova_slozka"> NOVÁ SKLADBA </button>
+   <button id="nova_slozka" type="button" class="btn btn-sm btn-secondary" style="display: inline" data-toggle="modal" data-target="#modal_nova_slozka">+</button>
 				</div>  <!-- playlist_vysuvka   --> 
 
               </div> 
