@@ -38,7 +38,7 @@
 						     
 							   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
 							   
-							    <div class="card-header" style= "  "> 
+							    <div class="card-header" style=  " padding:2px  "> 
 							      <div style="color:black  ; background-color:white ;  display: inline" >	
 									 <img src="/data/icons8-rock-music-50.png" alt="-" style="max-height:30px" > 	 	 	
 									   <?php echo $pole_souboru[$x]; ?>
@@ -116,7 +116,7 @@
 	   	
 	      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
 							   
-	                          <div class="card-header" style= "  "> 
+	                          <div class="card-header" style= " padding:2px "> 
 							     <p>zatim tu nic není   </p> 
 							  </div>  						   
 							   
