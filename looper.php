@@ -204,7 +204,7 @@ td  {
       
 	  
 			   <!--  druhy sloupec   -->
-		       <div  id="wave_jumbo"  class="col-md-9" style="margin-bottom: 5px"> 
+		       <div  id="wave_jumbo"  class="col-md-12" style="margin-bottom: 5px"> 
 				    <?php 	require "meat/sekce_looper_docked.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
            
@@ -213,7 +213,7 @@ td  {
 		 
 		 	 
 			   <!--  druhy sloupec   -->
-		       <div  id="k" class="col-md-3" style="margin-bottom: 5px" display="none"> 
+		       <div  id="k" class="col-md-6" style="margin-bottom: 5px" display="none"> 
 				    <?php 	require "meat/sekce_souboru.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   
