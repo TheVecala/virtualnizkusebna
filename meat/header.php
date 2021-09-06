@@ -53,7 +53,7 @@
                <a class="nav-link " href="looper.php">looper</a>  
             </li			
             <li class="nav-item">
-                  <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >info</a>
+                  <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >about</a>
             </li> 
 			 <li class="nav-item">
                 <a class="nav-link" href="/php/login/logout.php">odhlásit se</a>  
@@ -61,7 +61,7 @@
 			
           </ul>
           <form class="form-inline mt-2 mt-md-0">
-            <a class="navbar-brand" href="index.php" style="text-align: center">  <p style="text-align: center"> VIRTUÁLNÍ ZKUŠEBNA   </p> </a>  
+            <a class="navbar-brand" href="index.php" style="text-align: center">  <p style="text-align: center">-VZ-</p> </a>  
           
           </form>
         </div>

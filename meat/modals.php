@@ -5,24 +5,26 @@
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <h4 class="modal-title">I N F O </h4>
+        <h4 class="modal-title">A B O U T</h4>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->
       <div class="modal-body">
 	      <p>
-        DIY a Open source projekt ze Štatlu. <br><br>
-		Plugin pro organizaci informací o skladbách hudební skupiny <br> a jejich sdílení mezi jejímy členy. <br>   <br>
+        DIY projekt ze Štatlu. <br><br>
+		Plugin pro sdílení informací o rozpracovaných skladbách <br> hudební skupiny  mezi jejímy členy. <br>   <br>
 		Tohle není prostor pro volné ukládání dat většího množství uživatelů. 
-		Vhodná je instalace na vlastní doménu.  <br> <br><br>
+		Vhodná je instalace na vlastní doménu pro plnou kontrolu nad obsahem.
+		<br> <br><br>
 		Pro více info pište na adresu: <i>  the@vecala.cz  </i> 
 	    
 		</p>
 		<p>
 		Thanks to:<br>
+		<a href="https://www.jakpsatweb.cz/">Jak psát web</a><br>
 		wavesurfer.js<br>
-		jahů
+	
 		
           </p>
 		  <button type="button" class="btn btn-swcondary"  >INSTALACE NA VLASTNÍ DOMÉNĚ</button><br>
