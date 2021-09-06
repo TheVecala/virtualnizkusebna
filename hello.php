@@ -195,7 +195,7 @@ td  {
     <header>
       <?php   require "meat/header.php";?>
     </header>
-
+ 
   <div class="site-wrapper">
 
       <div class="site-wrapper-inner">
@@ -204,34 +204,34 @@ td  {
 
            <div class="inner cover">
        
-	 
- <div class="container">
-    <div id="vycpavka"   style="min-height:58px"> </div>               
-
-    
  
-<div class="card-columns">
-  <div class="card bg-primary">
+ 
+<div class="card-deck">
+  <div class="card bg-success">
     <div class="card-body text-center">
-      <p class="card-text">PLAYLIST</p><br>
+       <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2>
+	   <br>
 	    <p class="card-text">otevřít</p>
     </div>
   </div>
-  <div class="card bg-warning">
+  <div class="card bg-success">
     <div class="card-body text-center">
-      <p class="card-text">TEXT</p><br>
+        <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  TEXT </h2>
+		 <br>
 	 <p class="card-text">otevřít</p>
     </div>
   </div>
   <div class="card bg-success">
     <div class="card-body text-center">
-      <p class="card-text">NAHRÁVKY</p><br>
+      
+	   <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NAHRÁVKY </h2>
+	  <br>
 	 <p class="card-text">otevřít</p>
     </div>
   </div>
-  <div class="card bg-danger">
+  <div class="card bg-success">
     <div class="card-body text-center">
-      <p class="card-text">NÁPADY</p><br>
+       <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NÁPADY </h2><br>
 	 <p class="card-text">otevřít</p>
     </div>
   </div>
@@ -240,7 +240,7 @@ td  {
 	 	 
  
 	
- </div>     <!-- container -->
+ 
  
  		 </div>
 	   </div>
