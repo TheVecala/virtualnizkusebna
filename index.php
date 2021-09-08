@@ -246,7 +246,7 @@ div.sticky {
    </style>
 
   </head>
-  <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
+  <body style="background-color: #202428   ; line-height: 1 ; ">
 
     <header>
       <?php   require "meat/header.php";?>
