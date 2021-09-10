@@ -195,7 +195,7 @@ td  {
     <header>
       <?php   require "meat/header.php";?>
     </header>
-   <div id="vycpavka"   style="min-height:58px"> </div>      
+ 
   <div class="site-wrapper">
 
       <div class="site-wrapper-inner">
@@ -206,33 +206,72 @@ td  {
        
  
  
+<div class="card-deck">
   <div class="card bg-success">
-  
-	<div class="card-body text-center">
-      <img class="card-img-top" src="/data/singer.png" alt="" style= "  " > 	
-	  <div class="card-img-overlay" style="text-align:right">
-	       <div class="btn">
-	    <h2 style="font-size:2rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2>
-		   </div>  <br>
-	       <div class="btn">
-	    <h2 style="font-size:2rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  TEXT </h2>
-		   </div>	<br>
-		   <div class="btn">
-	    <h2 style="font-size:2rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NAHRÁVKY </h2>
-		   </div>	<br>	   
-		   <div class="btn">
-	    <h2 style="font-size:2rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NÁPADY </h2>
-		   </div>		   
-		   		   
+    <div class="card-header text-center">
+	
+        <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2>
+		 <br>
 	 
-	  </div>
+	 
+    </div>
+	<div class="card-body text-center">
+      <img src="/data/singer.png" alt="-" style= " max-width:100px " > 	
+    </div>
+	
+	
+	
+  </div>
+  <div class="card bg-success">
+    <div class="card-header text-center">
+	
+        <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  TEXT </h2>
+		 <br>
+	 
+	 
+    </div>
+	<div class="card-body text-center">
+      <img src="/data/singer.png" alt="-" style= " max-width:100px " > 	
+    </div>
+	
+	
+	
+  </div>
+   <div class="card bg-success">
+    <div class="card-header text-center">
+	
+        <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NAHRÁVKY </h2>
+		 <br>
+	 
+	 
+    </div>
+	<div class="card-body text-center">
+      <img src="/data/singer.png" alt="-" style= " max-width:100px " > 	
+    </div>
+	
+	
+	
+  </div>
+  <div class="card bg-success">
+    <div class="card-header text-center">
+	
+        <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NÁPADY </h2>
+		 <br>
+	 
+	 
+    </div>
+	<div class="card-body text-center">
+      <img src="/data/singer.png" alt="-" style= " max-width:100px " > 	
     </div>
 	
 	
 	
   </div>
  
+</div>
+	 	 
  
+	
  
  
  		 </div>
