@@ -206,10 +206,10 @@ td  {
        
  
  
-  <div class="card bg-success">
+  <div class="card"  style="background-color: #1e2225 !important">
   
-	<div class="card-body text-center">
-      <img class="card-img-top" src="/data/singer.png" alt="" style= "  " > 	
+	<div class="card-body text-left">
+      <img class="card-img-top" src="/data/singer.png" alt="" style= "width: 40%;   " > 	
 	  <div class="card-img-overlay" style="text-align:right">
 	       <div class="btn">
 	    <h2 style="font-size:2rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2>
