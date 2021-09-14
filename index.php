@@ -260,7 +260,7 @@ div.sticky {
 		    </div>
 		   -->
  
-          <div  id="main"   style="padding:1px ;  background-color: #bcbcbc;">  
+          <div  id="main"   style="padding:1px ">  
 		  
 		     <div   class=" maly "  >  
 
