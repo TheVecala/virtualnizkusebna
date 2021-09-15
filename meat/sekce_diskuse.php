@@ -88,7 +88,7 @@ define ("ROWS", 5);
 ?>
     
      
-	  <li class="list-group-item vzkaz_karta ">
+	  <li class="list-group-item vzkaz_karta"  style="  background-color:#0000001f">
 	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span><br>  
 	   <div style="text-align:right; ">
 	     <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 

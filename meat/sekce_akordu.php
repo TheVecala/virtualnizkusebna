@@ -81,7 +81,7 @@
 	
 						      <div id="akordy_vnitrni_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse show  " style="  "   > 
 							   
-							  	  <li class="list-group-item vzkaz_karta " style="color:black">
+							  	  <li class="list-group-item vzkaz_karta " style="color:black; background-color:#0000001f">
 									   <span class="vzkaz" > 
 									     <pre style="overflow-x: auto"><?php
 											while(!feof($akordy)) {

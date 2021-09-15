@@ -195,7 +195,7 @@ td  {
     <header>
       <?php   require "meat/header.php";?>
     </header>
-   <div id="vycpavka"   style="min-height:58px"> </div>      
+   <div id="vycpavka"   style="min-height:50px"> </div>      
   <div class="site-wrapper">
 
       <div class="site-wrapper-inner">

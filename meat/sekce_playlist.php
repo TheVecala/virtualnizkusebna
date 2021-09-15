@@ -42,7 +42,7 @@
  					 
 							  
 								?>
-						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:#27a243 ; color: white " ; } ; ?> ">
+						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:#0000001f ; color: white " ; } ; ?> ;background-color:#0000001f ; ">
 
 						<!-- tlačítko změny složky    --> 
 											 
