@@ -42,7 +42,7 @@
  					 
 							  
 								?>
-						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:#0000001f ; color: white " ; } ; ?> ;background-color:#0000001f ; ">
+						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:#0000001f ; color: black " ; } ; ?> ;background-color:#0000001f ; ">
 
 						<!-- tlačítko změny složky    --> 
 											 
@@ -75,7 +75,7 @@
 								   <div class="media-body" style="padding: 0.2rem; max-width: 339px; text-align: right; max-height:100%" >
 																
 									   <div  style="display: inline; position: absolute;  left: 35px;  margin-right:10px;  "> 
-									      <div  style=" text-align: left;  "> 
+									      <div  style=" text-align: left; color: #a6d8b0; "> 
 									      <?php
 									     	while(!feof($cely_nazev)) {
 											    echo fgets($cely_nazev);

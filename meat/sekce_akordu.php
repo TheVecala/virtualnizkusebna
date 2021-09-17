@@ -40,7 +40,7 @@
 							   
 	                          <div class="card-header" style= "  "> 
 							      <!-- <img src="/data/icons8-sound-wave-50.png" alt="-"  > -->
-							      <div style="color:black  ; background-color:white ;  display: inline" >	
+							      <div style="color:black  ; background-color:#faf9f999 ;  display: inline" >	
 											  	 	
 									  <?php echo $slozka_souboru 	?> 
 									  
@@ -81,7 +81,7 @@
 	
 						      <div id="akordy_vnitrni_vysuvka_<?php echo $x ?>" class="card-body stitek_valu collapse show  " style="  "   > 
 							   
-							  	  <li class="list-group-item vzkaz_karta " style="color:black; background-color:#0000001f">
+							  	  <li class="list-group-item vzkaz_karta " style="color:black; background-color:#faf9f999">
 									   <span class="vzkaz" > 
 									     <pre style="overflow-x: auto"><?php
 											while(!feof($akordy)) {

@@ -62,7 +62,7 @@
 								   <div class="media-body" style="  max-width: 339px; text-align: center; max-height:100%" >
 																
 									   <div  style="display: inline; position: absolute;  left: 5px;  margin-right:10px;  "> 
-									      <div  style=" text-align: left;  "> 
+									      <div  style=" text-align: left; color: #a6d8b0; "> 
 									 
 										  </div> 
 									   </div> 
