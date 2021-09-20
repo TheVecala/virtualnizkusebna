@@ -80,15 +80,18 @@ define ("ROWS", 5);
    
    
  </div> <!-- konec ovládání třetího sloupce  --> 
-<ul class="list-group sloupec" >
+ 
+  <div class="row" style=" " > 
+      <div class="col-md-6" style="" > 
+ 
+         <ul class="list-group sloupec" >
    
 <?php
   while ($zaznam=MySQL_Fetch_Array($vysledek))   
   {
 ?>
-    
-     
-	  <li class="list-group-item vzkaz_karta"  style="  background-color:#0000001f">
+       
+	  <li class="list-group-item vzkaz_karta"  style="  background-color:#ffffff59;">
 	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span><br>  
 	   <div style="text-align:right; ">
 	     <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 
@@ -98,11 +101,43 @@ define ("ROWS", 5);
 	   
       </li>
 	
-
 	<?php 
  }
 ?> 
-  </ul>
+       </ul>
+  
+     </div> 
+      <div class="col-md-6" style="" > 
+         <ul class="list-group sloupec" >
+ 
+      <div class="modal-body">
+     	 
+	 <!--<h1>Vložení komentáře</h1>-->
+	 <form id="form" name="form" method="post" action="php/vlozit_komentar.php">
+ 
+ <div class="form-group">
+    <label for="text">Napiš text:</label>
+    <textarea type="text" class="form-control" name="text" style="min-height:400px">  </textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="odkaz">Přilož odkaz (pokud chceš):</label>
+    <input type="text" class="form-control" name="odkaz">
+  </div>
+  <div class="form-group">
+    <label for="name">Autor:</label>
+    <input type="text" class="form-control" name="name">
+  </div>
+  
+  <button  id= "odeslat" type="submit" class="btn btn-primary">ULOŽIT</button>
+</form> 
+	 
+      </div>
+       </ul>
+     </div> 	 
+	 
+ </div> 
+  
   </div>   
  </div> <!-- konec vysuvka   -->
  
