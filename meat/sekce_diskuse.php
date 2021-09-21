@@ -82,7 +82,7 @@ define ("ROWS", 5);
  </div> <!-- konec ovládání třetího sloupce  --> 
  
   <div class="row" style=" " > 
-      <div class="col-md-6" style="" > 
+      <div class="col-md-6 col-lg-12  " style="" > 
  
          <ul class="list-group sloupec" >
    
@@ -107,7 +107,7 @@ define ("ROWS", 5);
        </ul>
   
      </div> 
-      <div class="col-md-6" style="" > 
+      <div class="col-md-6 col-lg-12  " style="" > 
          <ul class="list-group sloupec" >
  
       <div class="modal-body">
