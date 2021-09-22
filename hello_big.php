@@ -142,13 +142,13 @@ else {$pole_souboru = "empty" ;
   margin:10px; 
 }
 .sloupec  { 
-  background-color:#27a243; 
+  background-color:#<?php echo $_SESSION['barva1'] ?>; 
 }
 .ovladac_vzkazu  { 
   background-color: #343a40; 
 }
 .formular_vzkazu  { 
-  background-color: #27a243; 
+  background-color: #<?php echo $_SESSION['barva1'] ?>; 
 }
 
 h4 {
@@ -172,6 +172,12 @@ td  {
  border-bottom-style: solid;
  
  
+}
+
+
+.card {
+  
+  background-color: #<?php echo $_SESSION['barva1'] ?>;;
 }
 
 .card-body {
@@ -207,7 +213,7 @@ td  {
  
  
 <div class="card-deck">
-  <div class="card bg-success">
+  <div class="card ">
     <div class="card-header text-center">
 	
         <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2>
@@ -222,7 +228,7 @@ td  {
 	
 	
   </div>
-  <div class="card bg-success">
+  <div class="card ">
     <div class="card-header text-center">
 	
         <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  TEXT </h2>
@@ -237,7 +243,7 @@ td  {
 	
 	
   </div>
-   <div class="card bg-success">
+   <div class="card ">
     <div class="card-header text-center">
 	
         <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NAHRÁVKY </h2>
@@ -252,7 +258,7 @@ td  {
 	
 	
   </div>
-  <div class="card bg-success">
+  <div class="card ">
     <div class="card-header text-center">
 	
         <h2 style="color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  NÁPADY </h2>

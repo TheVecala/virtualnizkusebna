@@ -29,7 +29,7 @@
  					 
 							  
 								?>
-						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:#27a243 ; color: white " ; } ; ?> ">
+						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:",$_SESSION['barva1']," ; color: white " ; } ; ?> ">
 
 						<!-- tlačítko změny složky    --> 
 											 
@@ -109,7 +109,7 @@
       <?php if ($delka_pole_slozek < 3	) 
 		{ ?>
 	   	
-	      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+	      <div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
 							     <p>zatim tu nic není   </p> 

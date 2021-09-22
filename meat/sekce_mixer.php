@@ -17,7 +17,7 @@
 		  
 		    <div > <!--  mixer   --> 
 		         
-		     <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+		     <div class="card  text-white" style="margin-bottom: 3px;" > 
 	               <div id="loading"> načítám...   </div> 
 		  
 		<tone-content>

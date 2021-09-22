@@ -1,6 +1,7 @@
  <?php session_start(); ?>
 
 <?php
+ $_SESSION['barva1'] ="a7ac38";
   if($_SESSION['login']!=""){  
 ?>
 
@@ -141,13 +142,13 @@ else {$pole_souboru = "empty" ;
   margin:10px; 
 }
 .sloupec  { 
-  background-color:#27a243; 
+  background-color:#<?php echo $_SESSION['barva1'] ?>; 
 }
 .ovladac_vzkazu  { 
   background-color: #343a40; 
 }
 .formular_vzkazu  { 
-  background-color: #27a243; 
+  background-color: #<?php echo $_SESSION['barva1'] ?>; 
 }
 
 h4 {
@@ -171,6 +172,11 @@ td  {
  border-bottom-style: solid;
  
  
+}
+
+.card {
+  
+  background-color: #<?php echo $_SESSION['barva1'] ?>;;
 }
 
 .card-body {
@@ -204,12 +210,12 @@ td  {
  
  
 			   <!--  druhy sloupec   -->
-		       <div  id="k" class="col-md-6" style="margin-bottom: 5px"> 
+		       <div  id="k" class="col-md-6" style="margin-bottom: 5px; <?php echo $_SESSION['barva1'] ?>"> 
 				    <?php 	require "meat/sekce_souboru.php";	?>
 		       </div  > <!-- konec druhý sloupec   -->
   
                <!-- třetí sloupec   --> 
-			   <div class="col-md-6" style="margin-bottom: 5px" > 
+			   <div class="col-md-6" style="margin-bottom: 5px; <?php echo $_SESSION['barva1'] ?>" > 
 					<?php   require "meat/sekce_akordu.php";	?>						
 			   </div> <!-- konec třetí sloupec   -->
 			

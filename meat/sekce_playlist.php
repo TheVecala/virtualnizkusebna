@@ -14,7 +14,7 @@
 	      		  
             <div> <!--  playlist   -->
 					  
-			  <div  id=" "  style="background-color:#27a243; padding: 3px;"> <!-- zmšna složky    -->
+			  <div  id=" "  style="background-color:#<?php echo $_SESSION['barva1'] ?>; padding: 3px;"> <!-- zmšna složky    -->
 			 
 			  	<div>
 					 
@@ -124,7 +124,7 @@
       <?php if ($delka_pole_slozek < 3	) 
 		{ ?>
 	   	
-	      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+	      <div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
 							     <p>zatim tu nic není   </p> 

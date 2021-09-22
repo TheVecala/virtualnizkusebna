@@ -36,7 +36,7 @@
 		   
 	
 
-          	<div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+          	<div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
 							      <!-- <img src="/data/icons8-sound-wave-50.png" alt="-"  > -->
@@ -45,7 +45,7 @@
 									  <?php echo $slozka_souboru 	?> 
 									  
 							      </div> 
-								  <button data-toggle="collapse" data-target="#akordy_vnitrni_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+								  <button data-toggle="collapse" data-target="#akordy_vnitrni_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background-color: #<?php echo $_SESSION['barva1'] ?>; ">
 				                      <img style="max-height:30px" src="/data/ikona_colapsedown4.png" alt="minimize"> 
 				                  </button>
 								 
@@ -57,7 +57,7 @@
  	 if ($akordy == "akordy_neexistuji")  { 
 	  ?>
 	 
-	                      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+	                      <div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
 							     <p>zatim tu nic není   </p> 

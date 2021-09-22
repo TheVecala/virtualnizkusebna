@@ -141,13 +141,13 @@ else {$pole_souboru = "empty" ;
   margin:10px; 
 }
 .sloupec  { 
-  background-color:#27a243; 
+  background-color:#<?php echo $_SESSION['barva1'] ?>; 
 }
 .ovladac_vzkazu  { 
   background-color: #343a40; 
 }
 .formular_vzkazu  { 
-  background-color: #27a243; 
+  background-color: #<?php echo $_SESSION['barva1'] ?>; 
 }
 
 h4 {
@@ -171,6 +171,12 @@ td  {
  border-bottom-style: solid;
  
  
+}
+
+
+.card {
+  
+  background-color: #<?php echo $_SESSION['barva1'] ?>;;
 }
 
 .card-body {

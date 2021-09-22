@@ -36,14 +36,14 @@
 						{    
 						?>
 						     
-							   <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+							   <div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 							    <div class="card-header" style=  " padding:2px  "> 
-							      <div style="color:black  ; background-color:white ;  display: inline" >	
+							      <div style="color:black  ;  display: inline" >	
 									 <img src="/data/icons8-rock-music-50.png" alt="-" style="max-height:30px" > 	 	 	
 									   <?php echo $pole_souboru[$x]; ?>
 							      </div> 
-								  <button data-toggle="collapse" data-target=".val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+								  <button data-toggle="collapse" data-target=".val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background-color: #<?php echo $_SESSION['barva1'] ?>; ">
 				                      <img style="max-height:15px" src="/data/arrow128.png" alt="minimize"> 
 				                  </button>
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >
@@ -101,7 +101,7 @@
  		 			
 	
 			
-			  		  <div  style="text-align:right;"  class=" bg-success text-white" >	<!--  tlačítka souboru  -->   	       
+			  		  <div  style="text-align:right;"  class="  text-white" >	<!--  tlačítka souboru  -->   	       
 				          <button  id="vlozit_soubor"   type="button" class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_soubor" >VLOŽIT</button>  
 						  
                           <button  id="nahrat_zvuk"   type="button" class="btn btn-sm  btn-danger"  style=" display: inline" data-toggle="modal" data-target="#modal_nahrat_zvuk" >REC</button> 
@@ -114,7 +114,7 @@
       <?php if ($delka_pole_souboru < 5	) 
 		{ ?>
 	   	
-	      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+	      <div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= " padding:2px "> 
 							     <p>zatim tu nic není   </p> 

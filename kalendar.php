@@ -143,13 +143,13 @@ else {$pole_souboru = "empty" ;
   margin:10px; 
 }
 .sloupec  { 
-  background-color:#27a243; 
+  background-color:#<?php echo $_SESSION['barva1'] ?>; 
 }
 .ovladac_vzkazu  { 
   background-color: #343a40; 
 }
 .formular_vzkazu  { 
-  background-color: #27a243; 
+  background-color: #<?php echo $_SESSION['barva1'] ?>; 
 }
 
 h4 {
@@ -278,7 +278,7 @@ td  {
 	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
-    <div class="modal-content bg-success text-white">
+    <div class="modal-content  text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -320,7 +320,7 @@ td  {
   <!-- The Modal DELETE soubor-->
 <div class="modal" id="modal_delete">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-success text-white">
+    <div class="modal-content  text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -366,7 +366,7 @@ td  {
   <!-- The Modal playlist edit -->
 <div class="modal" id="modal_playlist_edit">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-success text-white">
+    <div class="modal-content  text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -415,7 +415,7 @@ td  {
   <!-- The Modal vlozit_soubor -->
 <div class="modal " id="modal_vlozit_soubor">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-success text-white">
+    <div class="modal-content  text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -464,7 +464,7 @@ td  {
   <!-- The Modal nova_slozka -->
 <div class="modal" id="modal_nova_slozka">
   <div class="modal-dialog  ">
-    <div class="modal-content  bg-success text-white">
+    <div class="modal-content   text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -511,7 +511,7 @@ td  {
   <!-- The Modal vložit komentař -->
 <div class="modal" id="modal_vlozit_komentar">
   <div class="modal-dialog  ">
-    <div class="modal-content  bg-success text-white">
+    <div class="modal-content   text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -557,7 +557,7 @@ td  {
   <!-- The Modal  modal_skin -->
 <div class="modal" id="modal_skin">
   <div class="modal-dialog  ">
-    <div class="modal-content  bg-success text-white">
+    <div class="modal-content   text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -615,7 +615,7 @@ td  {
     <!-- The Modal DELETE vál -->
 <div class="modal" id="modal_delete_val">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-success text-white">
+    <div class="modal-content  text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -655,7 +655,7 @@ td  {
   <!-- The Modal presunout soubor-->
 <div class="modal" id="modal_presunout">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-success text-white">
+    <div class="modal-content  text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -743,7 +743,7 @@ td  {
     <!-- The Modal nahrat_zvuk -->
 <div class="modal" id="modal_nahrat_zvuk">
   <div class="modal-dialog  ">
-    <div class="modal-content bg-success text-white">
+    <div class="modal-content  text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">
