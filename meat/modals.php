@@ -1,7 +1,7 @@
 	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
-    <div class="modal-content  text-white">
+    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -45,7 +45,7 @@
   <!-- The Modal DELETE soubor-->
 <div class="modal" id="modal_delete">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white">
+    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -93,7 +93,7 @@
   <!-- The Modal vlozit_soubor -->
 <div class="modal " id="modal_vlozit_soubor">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white">
+    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -150,9 +150,9 @@
   <!-- The Modal nova_slozka -->
 <div class="modal" id="modal_nova_slozka">
   <div class="modal-dialog  ">
-    <div class="modal-content   text-white">
+    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
-      <!-- Modal Header -->
+      <!-- Modal Header --><?php echo $_SESSION['barva1'] ?>
       <div class="modal-header">
         <p class="modal-title">VLOŽENÍ NOVÉ SLOŽKY</p>		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -197,7 +197,7 @@
   <!-- The Modal vložit komentař -->
 <div class="modal" id="modal_vlozit_komentar">
   <div class="modal-dialog  ">
-    <div class="modal-content   text-white">
+   <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -243,7 +243,7 @@
   <!-- The Modal  modal_skin -->
 <div class="modal" id="modal_skin">
   <div class="modal-dialog  ">
-    <div class="modal-content   text-white">
+   <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -295,7 +295,7 @@
     <!-- The Modal DELETE vál -->
 <div class="modal" id="modal_delete_val">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white">
+    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -360,7 +360,7 @@
   <!-- The Modal presunout soubor-->
 <div class="modal" id="modal_presunout">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white">
+    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -448,7 +448,7 @@
     <!-- The Modal nahrat_zvuk -->
 <div class="modal" id="modal_nahrat_zvuk">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white">
+    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -481,7 +481,7 @@
     <!-- The Modal modal_zmenit_text -->
 <div class="modal" id="modal_zmenit_text">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white">
+    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">

@@ -1,6 +1,8 @@
  <?php session_start(); ?>
 
 <?php
+ $_SESSION['barva1'] ="a7ac38";
+ $_SESSION['barva2'] ="yellow";
   if($_SESSION['login']!=""){  
 ?>
 
