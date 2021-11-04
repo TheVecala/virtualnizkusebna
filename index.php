@@ -327,7 +327,7 @@ div.sticky {
 			   
 			    <!-- čtvrtý sloupec   -->
 				<div class="col-md-4" style="margin-bottom: 5px" >   
-					<?php   require "meat/sekce_diskuse.php";	?>
+					<?php   require "meat/sekce_diskuse_valu.php";	?>
 				</div> <!-- konec čtvrtý sloupec   --> 
 					
       	  </div> <!-- konec row   -->

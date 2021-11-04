@@ -9,9 +9,13 @@
  
 // uložení do databaze 
 
-  if(isset($_SESSION['diskuse']))
-	   {   $aktualni_diskuse =$_SESSION['diskuse'];
-    } else { $aktualni_diskuse=  "diskuse_kapela1" ; } ; 
+//  if(isset($_SESSION['diskuse']))
+//	   {   $aktualni_diskuse =$_SESSION['diskuse'];
+ //   } else { $aktualni_diskuse=  "diskuse_kapela1" ; } ; 
+	
+	
+ $aktualni_diskuse = 'diskuse_'.$_SESSION['kapela'].'_'.$_SESSION['slozka_souboru_k_zobrazeni'];	
+	
 	
   $vysledek=mysql_query("insert into $aktualni_diskuse (cas, vzkaz, jmeno) values (".time().",'". $komentar."','".$_POST["name"]."')");
   
