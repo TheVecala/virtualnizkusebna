@@ -213,13 +213,19 @@
  
  <div class="form-group">
     <label for="text">Text:</label>
-    <textarea type="text" class="form-control" name="text">  </textarea>
+    <textarea type="text" class="form-control" name="text"></textarea>
   </div>
 
   <div class="form-group">
     <label for="odkaz">Odkaz (pokud chceš):</label>
     <input type="text" class="form-control" name="odkaz">
   </div>
+  
+   <div class="form-group">
+    <label for="odkaz2">youtube odkaz (pokud chceš):</label>
+    <input type="text" class="form-control" name="odkaz2">
+   </div>
+  
   <div class="form-group">
     <label for="name">Jméno:</label>
     <input type="text" class="form-control" name="name">
