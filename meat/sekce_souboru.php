@@ -40,11 +40,11 @@
 							   
 							    <div class="card-header" style=  " padding:2px  "> 
 							      <div style="color:black  ;  display: inline" >	
-									 <img src="/data/icons8-rock-music-50.png" alt="-" style="max-height:30px" > 	 	 	
+									 <img src="/carvadele/zkusebna/data/icons8-rock-music-50.png" alt="-" style="max-height:30px" > 	 	 	
 									   <?php echo $pole_souboru[$x]; ?>
 							      </div> 
 								  <button data-toggle="collapse" data-target=".val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background-color: #<?php echo $_SESSION['barva1'] ?>; ">
-				                      <img style="max-height:15px" src="/data/arrow128.png" alt="minimize"> 
+				                      <img style="max-height:15px" src="/carvadele/zkusebna/data/arrow128.png" alt="minimize"> 
 				                  </button>
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >
 									   LOOPER
@@ -122,7 +122,7 @@
 							   
 							  <div id="" class="card-body   " style="  "   > 
 							   
-						          <img src="/data/singer.png" alt="-" style= " max-width:100% " > 
+						          <img src="/carvadele/zkusebna/data/singer.png" alt="-" style= " max-width:100% " > 
 							   
 		   					  </div> <!--card body  -->
 							   

@@ -25,14 +25,14 @@ if(isset($_POST["jmeno_adresare"])) {
 	
 	
 			  if (   mkdir($cil_adresare.($ocesany_jmeno_adresare)."/texty") ) {
-				   $vzor_akordu = ("../data/akordy.txt");
+				   $vzor_akordu = ("../carvadele/zkusebna/data/akordy.txt");
 				   $cil_akordu = ($cil_adresare.($ocesany_jmeno_adresare)."/texty"."/akordy.txt");
 				   echo copy($vzor_akordu,$cil_akordu);
 				   
 		
 									    
 					if (mkdir($cil_adresare.($ocesany_jmeno_adresare)."/data")) {
-						$soubor = $cil_adresare.($ocesany_jmeno_adresare)."/data/nazev_valu.txt";
+						$soubor = $cil_adresare.($ocesany_jmeno_adresare)."/carvadele/zkusebna/data/nazev_valu.txt";
 						$file = fopen($soubor, "w") or die("nasrat!"); 
 						fwrite($file, $cely_jmeno_adresare); 
 						fclose($file);

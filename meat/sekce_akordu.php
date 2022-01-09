@@ -39,14 +39,14 @@
           	<div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
-							      <!-- <img src="/data/icons8-sound-wave-50.png" alt="-"  > -->
+							      <!-- <img src="/carvadele/zkusebna/data/icons8-sound-wave-50.png" alt="-"  > -->
 							      <div style="color:black  ; background-color:#faf9f999 ;  display: inline" >	
 											  	 	
 									  <?php echo $slozka_souboru 	?> 
 									  
 							      </div> 
 								  <button data-toggle="collapse" data-target="#akordy_vnitrni_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background-color: #<?php echo $_SESSION['barva1'] ?>; ">
-				                      <img style="max-height:30px" src="/data/ikona_colapsedown4.png" alt="minimize"> 
+				                      <img style="max-height:30px" src="/carvadele/zkusebna/data/ikona_colapsedown4.png" alt="minimize"> 
 				                  </button>
 								 
 							  </div> 
@@ -65,7 +65,7 @@
 							   
 							  <div id="" class="card-body   " style="  "   > 
 							   
-						          <img src="/data/singer.png" alt="-" style= " max-width:100% " > 
+						          <img src="/carvadele/zkusebna/data/singer.png" alt="-" style= " max-width:100% " > 
 							   
 		   					  </div> <!--card body  -->
 							   

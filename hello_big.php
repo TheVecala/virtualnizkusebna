@@ -224,7 +224,7 @@ td  {
 	 
     </div>
 	<div class="card-body text-center">
-      <img src="/data/singer.png" alt="-" style= " max-width:100px " > 	
+      <img src="/carvadele/zkusebna/data/singer.png" alt="-" style= " max-width:100px " > 	
     </div>
 	
 	
@@ -239,7 +239,7 @@ td  {
 	 
     </div>
 	<div class="card-body text-center">
-      <img src="/data/singer.png" alt="-" style= " max-width:100px " > 	
+      <img src="/carvadele/zkusebna/data/singer.png" alt="-" style= " max-width:100px " > 	
     </div>
 	
 	
@@ -254,7 +254,7 @@ td  {
 	 
     </div>
 	<div class="card-body text-center">
-      <img src="/data/singer.png" alt="-" style= " max-width:100px " > 	
+      <img src="/carvadele/zkusebna/data/singer.png" alt="-" style= " max-width:100px " > 	
     </div>
 	
 	
@@ -269,7 +269,7 @@ td  {
 	 
     </div>
 	<div class="card-body text-center">
-      <img src="/data/singer.png" alt="-" style= " max-width:100px " > 	
+      <img src="/carvadele/zkusebna/data/singer.png" alt="-" style= " max-width:100px " > 	
     </div>
 	
 	

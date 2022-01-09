@@ -19,7 +19,7 @@
 						   
 							if(is_dir($soub))
 								  {    
-						    $soubor_s_nazvem = $soub."/data/nazev_valu.txt";
+						    $soubor_s_nazvem = $soub."/carvadele/zkusebna/data/nazev_valu.txt";
 	 
 	                            if (file_exists($soubor_s_nazvem))  { 
 	 
@@ -45,7 +45,7 @@
 									<?php   
    									   if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
 								   							   								   	
-									 <img src="/data/icons8-music-record-50.png" alt="složka" style="max-height:30px" class="mr-3  " > 	
+									 <img src="/carvadele/zkusebna/data/icons8-music-record-50.png" alt="složka" style="max-height:30px" class="mr-3  " > 	
 																		
 									 <?php  
   									 }
@@ -117,7 +117,7 @@
 							   
 							  <div id="" class="card-body   " style="  "   > 
 							   
-						          <img src="/data/singer.png" alt="-" style= " max-width:100% " > 
+						          <img src="/carvadele/zkusebna/data/singer.png" alt="-" style= " max-width:100% " > 
 							   
 		   					  </div> <!--card body  -->
 							   

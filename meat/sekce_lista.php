@@ -6,7 +6,7 @@
 							  </div>						 
                                	/
 							  <button style="display: inline; background-color: white;color:black; padding:1px; margin:2px; " type="button" class=" btn  dropdown-toggle" data-toggle="dropdown">
-							  <!-- <img src="/data/icons8-music-folder-50-2.png" alt="složka" style=" max-height: 30px;" >  --> 
+							  <!-- <img src="/carvadele/zkusebna/data/icons8-music-folder-50-2.png" alt="složka" style=" max-height: 30px;" >  --> 
 							   <?php echo $slozka_souboru 	?> 
 							  </button>
 							  <div class="dropdown-menu" style="background-color: rgb(52, 58, 64)">
@@ -40,7 +40,7 @@
                                          </div>
 									   
 								         <button id=" " type="submit" style=" max-width: 333px ; display: inline" class="btn btn-sm btn-warning" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
-                                           <img src="/data/glyphicons-441-folder-closed.png" alt="složka"  > 
+                                           <img src="/carvadele/zkusebna/data/glyphicons-441-folder-closed.png" alt="složka"  > 
 										   <?php echo $pole_slozek[$x] ?>
 									     </button>
 										 										 

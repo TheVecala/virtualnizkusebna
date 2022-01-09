@@ -18,13 +18,13 @@ if   ( $databaze )      // vytvoření složek kapely
                             {if (mkdir($koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir."/texty"))
                                 {
 									
-									 $vzor_akordu = ("../data/akordy.txt");
+									 $vzor_akordu = ("../carvadele/zkusebna/data/akordy.txt");
 				                     $cil_akordu = ($koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir."/texty"."/akordy.txt");
 		                        	 echo copy($vzor_akordu,$cil_akordu);
 									
 									// vložení nazvu
 												if (true) {
-												$soubor = $koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir."/data/nazev_valu.txt";
+												$soubor = $koren.($_POST["nick"])."/".$nahoda."/uploads/".$target_dir."/carvadele/zkusebna/data/nazev_valu.txt";
 												$file = fopen($soubor, "w") or die("nasrat!"); 
 												fwrite($file, $target_dir); 
 												fclose($file);

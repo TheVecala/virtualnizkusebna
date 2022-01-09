@@ -115,19 +115,19 @@ else {$pole_souboru = "empty" ;
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
       <title>Virtuální zkušebna</title>
        <!-- bootstrap JavaScript --> 
-      <script src="/js/jquery-3.3.1.min.js" type="text/javascript"></script>
+      <script src="/carvadele/zkusebna/js/jquery-3.3.1.min.js" type="text/javascript"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
      <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link href="/css/sticky-footer-navbar.css" rel="stylesheet"> 
+    <link href="/carvadele/zkusebna/css/sticky-footer-navbar.css" rel="stylesheet"> 
 	   <!-- wavesurfer -->	 
     <script src="https://unpkg.com/wavesurfer.js"></script>
     <script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
       <!-- recording -->
 	 <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> 
      <script src="https://unpkg.com/mic-recorder-to-mp3"></script>  
-    <script src="js/index.js"></script>
+    <script src="/carvadele/zkusebna/js/index.js"></script>
 
     <style>
  
@@ -350,17 +350,17 @@ div.sticky {
  
  
  <div>  <!--  MODALS --> 
-   	<?php  require "meat/modals.php"; ?>				
+   	<?php  require "/carvadele/zkusebna/meat/modals.php"; ?>				
  </div>  <!-- KONEC MODALS -->
   
   
   
 <?php  
-  require "php/console.php";
+  require "/carvadele/zkusebna/php/console.php";
 ?>
   
 
-  <script src="meat/vecalovo.js"></script> 
+  <script src="/carvadele/zkusebna/meat/vecalovo.js"></script> 
 
  </body>
 </html>
@@ -368,7 +368,7 @@ div.sticky {
    <?php  
    ; }
   else { 
-    require "php/loginbox4.php";
+    require "/carvadele/zkusebna/php/loginbox4.php";
     
   }
 ?>
