@@ -356,11 +356,11 @@ div.sticky {
   
   
 <?php  
-  require "/carvadele/zkusebna/php/console.php";
+  require "php/console.php";
 ?>
   
 
-  <script src="/carvadele/zkusebna/meat/vecalovo.js"></script> 
+  <script src="meat/vecalovo.js"></script> 
 
  </body>
 </html>
@@ -368,7 +368,7 @@ div.sticky {
    <?php  
    ; }
   else { 
-    require "/carvadele/zkusebna/php/loginbox4.php";
+    require "php/loginbox4.php";
     
   }
 ?>
