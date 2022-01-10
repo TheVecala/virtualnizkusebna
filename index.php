@@ -350,7 +350,7 @@ div.sticky {
  
  
  <div>  <!--  MODALS --> 
-   	<?php  require "/carvadele/zkusebna/meat/modals.php"; ?>				
+   	<?php  require "meat/modals.php"; ?>				
  </div>  <!-- KONEC MODALS -->
   
   

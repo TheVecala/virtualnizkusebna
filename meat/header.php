@@ -56,7 +56,7 @@
                   <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >about</a>
             </li> 
 			 <li class="nav-item">
-                <a class="nav-link" href="/php/login/logout.php">odhlásit se</a>  
+                <a class="nav-link" href="/carvadele/zkusebna/php/login/logout.php">odhlásit se</a>  
             </li> 
 			
           </ul>
