@@ -1,0 +1,37 @@
+názvy sekcí uprostřed
+-----------------------
+každá sekce samostatnej soubor php
+za nimi ostatní:
+
+playlist - text - nahrávky - poznámky/nápady ..
+text - nahrávky - playlist - nápady
+nahrávky - text - playlist - nápady
+nápady - playlist - text - nahrávky
+text a nahrávky dohromady pod názvem vál - 
+
+
+-------------
+loooper - jako "otevřít v novém okně" s minimalistickým seznamem souborů k otevření, bez žádných dalších tlačítek
+
+po tlačítku looper ještě confirm pop-up
+místo textu LOOPER rovnou název souboru a po kliknutí pop-up s tlačítky OTEVŘÍT V LOOPERU  STÁHNOUT PŘESUNOUT SMAZAT
+----------------------------
+když dám v playlistu otevřít přepne se na text - nahrávky - napady 
+(track.cz nefungují tlačítka)
+
+na začátku po přihlášení musí být volba:
+-jdu s nápadem = hodit do nápadů
+-jdu hrát = hodit do playlistu
+
+--------
+vyměnit nápady a text
+ texty v databázi jako po sobě jdoucí verze
+ a nápady jako samostatné soubory ve složce válu ve složce s textem 
+-------
+
+
+-------
+nápady se musí dát převést na vál. 
+    v databázi položka použito ano/ne
+
+------------
