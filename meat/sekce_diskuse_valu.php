@@ -34,7 +34,7 @@ define ("ROWS", 5);
  <div>   <!-- hlavička třetího sloupce  -->
       <div id="diskuse" style="font-size:1.5em">
                 <div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--      -->
-                   <div class="card-body"> 
+                   <div class="card-body" style="text-align: center"> 
 				   
 				     	
 				  

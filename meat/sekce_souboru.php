@@ -1,8 +1,8 @@
 		
 	      <div  class=" ">   <!-- hlavička sekce složek   -->
 			  
-               <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
-                   <div class="card-body"> 
+               <div class="card bg-dark text-white" style="margin-top: 1px"> <!--      -->
+                   <div class="card-body" style="text-align: center"> 
 				   				 		
 
 			   
