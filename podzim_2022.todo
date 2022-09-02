@@ -1,4 +1,4 @@
-názvy sekcí uprostřed
+názvy sekcí uprostřed  -hotovo
 -----------------------
 každá sekce samostatnej soubor php
 za nimi ostatní:
@@ -16,7 +16,7 @@ loooper - jako "otevřít v novém okně" s minimalistickým seznamem souborů k
 po tlačítku looper ještě confirm pop-up
 místo textu LOOPER rovnou název souboru a po kliknutí pop-up s tlačítky OTEVŘÍT V LOOPERU  STÁHNOUT PŘESUNOUT SMAZAT
 ----------------------------
-když dám v playlistu otevřít přepne se na text - nahrávky - napady 
+když dám v playlistu otevřít přepne se na text - nahrávky - napady   -  vyřešeno dočasně - bug alert
 (track.cz nefungují tlačítka)
 
 na začátku po přihlášení musí být volba:
