@@ -220,11 +220,11 @@ td  {
  
   
  
-<div class="card" style="width:auto; padding:10px">
+<div class="card" style="width:auto; padding:10px; background-color:transparent; border-color: transparent;">
   <img class="card-img-top" src="/data/kytarista.png" alt="Card image" style="max-width:100px; margin:auto">
   <div class="card-body">
  
-    <a href="#" class="btn btn-primary" style="font-size:1.5rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  JDU HRÁT </a>
+    <a href="#" class="btn btn-primary" style="font-size:1.5rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; border-color: #ffc107;">  JDU HRÁT </a>
   </div>
 </div>
 
@@ -234,11 +234,11 @@ td  {
      
  
   
-  <div class="card" style="width:auto; padding:10px">
+  <div class="card" style="width:auto; padding:10px; background-color:transparent; border-color: transparent;">
   <img class="card-img-top" src="/data/singer.png" alt="Card image" style="max-width:100px; margin:auto">
   <div class="card-body">
  
-    <a href="#" class="btn btn-primary" style="font-size:1.5rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  JDU S NÁPADEM </a>
+    <a href="#" class="btn btn-primary" style="font-size:1.5rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; border-color: #ffc107;">  JDU S NÁPADEM </a>
   </div>
 </div>
   
