@@ -17,9 +17,17 @@ po tlačítku looper ještě confirm pop-up
 místo textu LOOPER rovnou název souboru a po kliknutí pop-up s tlačítky OTEVŘÍT V LOOPERU  STÁHNOUT PŘESUNOUT SMAZAT
 ----------------------------
 když dám v playlistu otevřít přepne se na text - nahrávky - napady   -  vyřešeno dočasně - bug alert
-(track.cz nefungují tlačítka)
+(track.cz nefungují tlačítka
+index.php nefunguje
+playlist.php ne
+skladba.php ne, dvojpanel
+napady.php moc velký okno
+	
+home.php a classic.php jsou stejný a fungují
 
-na začátku po přihlášení musí být volba:
+)
+
+na začátku po přihlášení musí být volba:  
 -jdu s nápadem = hodit do nápadů
 -jdu hrát = hodit do playlistu
 

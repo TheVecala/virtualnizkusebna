@@ -41,16 +41,18 @@
              
 	 
 	    	 <li class="nav-item">
-                <a class="nav-link " href="index.php">track</a> 
+                <a class="nav-link " href="simple_playlist.php">playlist</a> 
             </li>  
 		 			
 			 <li class="nav-item">
-               <a class="nav-link " href="playlist.php">playlist</a>  
+               <a class="nav-link " href="simple_text.php">texty</a>  
             </li>	 
-	 
+	         <li class="nav-item">
+               <a class="nav-link " href="simple_soubory.php">nahrávky</a>  
+            </li>
 
 			 <li class="nav-item">
-               <a class="nav-link " href="looper.php">looper</a>  
+               <a class="nav-link " href="simple_napady.php">nápady</a>  
             </li			
             <li class="nav-item">
                   <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >about</a>

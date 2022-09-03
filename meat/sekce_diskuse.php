@@ -107,34 +107,7 @@ define ("ROWS", 5);
        </ul>
   
      </div> 
-      <div class="col-md-6 col-lg-12  " style="" > 
-         <ul class="list-group sloupec" >
- 
-      <div class="modal-body">
-     	 
-	 <!--<h1>Vložení komentáře</h1>-->
-	 <form id="form" name="form" method="post" action="php/vlozit_komentar.php">
- 
- <div class="form-group">
-    <label for="text">Napiš text:</label>
-    <textarea type="text" class="form-control" name="text" style="min-height:400px">  </textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="odkaz">Přilož odkaz (pokud chceš):</label>
-    <input type="text" class="form-control" name="odkaz">
-  </div>
-  <div class="form-group">
-    <label for="name">Autor:</label>
-    <input type="text" class="form-control" name="name">
-  </div>
-  
-  <button  id= "odeslat" type="submit" class="btn btn-primary">ULOŽIT</button>
-</form> 
-	 
-      </div>
-       </ul>
-     </div> 	 
+ 	 
 	 
  </div> 
   
