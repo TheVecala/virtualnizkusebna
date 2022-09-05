@@ -4,7 +4,7 @@
  
  
 // $adresa_pro_navrat = ($_POST["navrat"]);  
-   $adresa_pro_navrat = "/index.php";  
+   $adresa_pro_navrat = "/simple_text.php";  
 
 
 $_SESSION['vysledek'] = "zmenena slozka"; 

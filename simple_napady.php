@@ -3,6 +3,7 @@
 <?php
  $_SESSION['barva1'] ="a7ac38";
  $_SESSION['barva2'] ="yellow";
+ $_SESSION['barva_pozadi'] ="343a40";
   if($_SESSION['login']!=""){  
 ?>
 
@@ -197,7 +198,7 @@ td  {
      </style>
 
   </head>
-  <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
+  <body style="background-color: #<?php echo $_SESSION['barva_pozadi'] ?>   ; line-height: 1 ; ">
 
     <header>
       <?php   require "meat/header.php";?>
