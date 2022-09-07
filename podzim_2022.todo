@@ -6,7 +6,12 @@ za nimi ostatní:
 playlist - text - nahrávky - poznámky/nápady ..
 text - nahrávky - playlist - nápady
 nahrávky - text - playlist - nápady
-nápady - playlist - text - nahrávky
+nápady - playlist - text - nahrávky --hotovo
+
+na začátku po přihlášení musí být volba:  
+-jdu s nápadem = hodit do nápadů
+-jdu hrát = hodit do playlistu   --hotovo
+
 text a nahrávky dohromady pod názvem vál - 
 
 
@@ -14,7 +19,8 @@ text a nahrávky dohromady pod názvem vál -
 loooper - jako "otevřít v novém okně" s minimalistickým seznamem souborů k otevření, bez žádných dalších tlačítek
 
 po tlačítku looper ještě confirm pop-up
-místo textu LOOPER rovnou název souboru a po kliknutí pop-up s tlačítky OTEVŘÍT V LOOPERU  STÁHNOUT PŘESUNOUT SMAZAT
+místo textu LOOPER  v tlačítku rovnou název souboru 
+a po kliknutí výsuvka s tlačítky s ikonami OTEVŘÍT V LOOPERU   Editovat (PŘESUNOUT, přejmenovat)  STÁHNOUT SMAZAT  
 ----------------------------
 když dám v playlistu otevřít přepne se na text - nahrávky - napady   -  vyřešeno dočasně - bug alert
 (track.cz nefungují tlačítka
@@ -25,11 +31,10 @@ napady.php moc velký okno
 	
 home.php a classic.php jsou stejný a fungují
 
+v modelu SIMPLE nefunguuje zobrazení příspěvků diskuse, vložení ale funguje
+
 )
 
-na začátku po přihlášení musí být volba:  
--jdu s nápadem = hodit do nápadů
--jdu hrát = hodit do playlistu
 
 --------
 vyměnit nápady a text

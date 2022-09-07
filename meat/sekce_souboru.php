@@ -46,9 +46,7 @@
 								  <button data-toggle="collapse" data-target=".val_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background-color: #<?php echo $_SESSION['barva1'] ?>; ">
 				                      <img style="max-height:15px" src="/data/arrow128.png" alt="minimize"> 
 				                  </button>
-									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >
-									   LOOPER
-									</button>								 
+																	 
 							    </div> 
  								    							   
 							   
@@ -78,14 +76,19 @@
 								  <?php
 								  }  
 						          ?> 
-                                  								  
+                                  		
+								 	<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm        btn-warning btn-VZ wave_loader"  style=" max-width: 120px ; display: inline" >
+									   LOOPER
+									</button>
+									
+									<button    value="<?php echo $soub;?>" name="<?php echo $label_soub;?>" type="button" class="btn btn-sm btn-info btn-VZ  presunout"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
+									  PŘESUNOUT
+									</button> 
+									
 								    <a href="<?php echo $soub; ?>" download style="  display: inline"> 
 										<button   type="button" class="btn btn-sm btn-secondary btn-VZ"  >  STÁHNOUT </button> 
 								    </a>
 									  
-									<button    value="<?php echo $soub;?>" name="<?php echo $label_soub;?>" type="button" class="btn btn-sm btn-info btn-VZ  presunout"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_presunout">		
-									  PŘESUNOUT
-									</button> 
 								  							 								  
 									<button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-danger btn-VZ  deleter"  style=" max-width: 120px ; display: inline" data-toggle="modal" data-target="#modal_delete">		
 									  SMAZAT
