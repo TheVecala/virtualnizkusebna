@@ -226,6 +226,12 @@ td  {
 					<?php   require "meat/sekce_diskuse.php";	?>
 				</div> <!-- konec čtvrtý sloupec   --> 
 			
+				
+				<!--  prvni sloupec   -->
+				<div id="adresare" class="col-md-3" style="margin-bottom: 5px ;"> 		      				  
+					<?php   require "meat/sekce_playlist.php";?>
+				</div>  <!--  konec prvniho sloupce   --> 
+				
 			       <!--  druhy sloupec   --> 
 			   <div class="col-md-3" style="margin-bottom: 5px" > 
 					<?php   require "meat/sekce_akordu.php";	?>						
@@ -240,11 +246,7 @@ td  {
            
   			
 			   
-				
-				<!--  prvni sloupec   -->
-				<div id="adresare" class="col-md-3" style="margin-bottom: 5px ;"> 		      				  
-					<?php   require "meat/sekce_playlist.php";?>
-				</div>  <!--  konec prvniho sloupce   --> 
+
 		
 					
       	  </div> <!-- konec row   -->

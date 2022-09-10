@@ -232,16 +232,16 @@ td  {
 					<?php   require "meat/sekce_akordu.php";	?>						
 			   </div> <!-- konec druhý sloupec   -->
   			
-			   
-			    <!-- čtvrtý sloupec   -->
-				<div class="col-md-3" style="margin-bottom: 5px" >   
-					<?php   require "meat/sekce_diskuse.php";	?>
-				</div> <!-- konec čtvrtý sloupec   --> 
 				<!--  prvni sloupec   -->
 				<div id="adresare" class="col-md-3" style="margin-bottom: 5px ;"> 		      				  
 					<?php   require "meat/sekce_playlist.php";?>
 				</div>  <!--  konec prvniho sloupce   --> 
-		
+					   
+			    <!-- čtvrtý sloupec   -->
+				<div class="col-md-3" style="margin-bottom: 5px" >   
+					<?php   require "meat/sekce_diskuse.php";	?>
+				</div> <!-- konec čtvrtý sloupec   --> 
+
 					
       	  </div> <!-- konec row   -->
         </div> <!--   konec druhejstřetím sloupec   -->  

@@ -52,12 +52,11 @@
 									 
 									 else
 									  {
+									  };
+										   
 										  ?>
 								       
-									  <?php 
-									 	 }
-										
-									  ?>
+									 
 								  				
 								   <div class="media-body" style="  max-width: 339px; text-align: center; max-height:100%" >
 																
@@ -69,7 +68,20 @@
 								       <div  style="  display: inline; position: relative;  z-index: 5; " >
  
 								  				
-								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  { }
+								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  {
+
+                                     ?>
+									  <h3>
+								    <?php 
+                                            	while(!feof($cely_nazev)) {
+											    echo fgets($cely_nazev);
+											    }
+										     	fclose($cely_nazev);
+
+                                     ?>
+									  </h3> 
+								    <?php 
+										}
 									 else
 									  { ?>
 								         <button id=" " type="submit" style=" /* max-width: 120px ; */ display: inline; padding: 1px;" class=" " value="  <?php echo $pole_slozek[$x] ;?> " name="submit">

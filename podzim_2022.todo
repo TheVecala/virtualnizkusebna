@@ -1,28 +1,18 @@
-názvy sekcí uprostřed  -hotovo
+HOTOVO    názvy sekcí uprostřed  -hotovo
 -----------------------
-každá sekce samostatnej soubor php
-za nimi ostatní:
+HOTOVO    každá sekce samostatnej soubor php
+HOTOVO    za nimi ostatní:
 
-playlist - text - nahrávky - poznámky/nápady ..
-text - nahrávky - playlist - nápady
-nahrávky - text - playlist - nápady
-nápady - playlist - text - nahrávky --hotovo
+HOTOVO    playlist - text - nahrávky - poznámky/nápady ..
+HOTOVO    text - nahrávky - playlist - nápady
+HOTOVO    nahrávky - text - playlist - nápady
+HOTOVO    nápady - playlist - text - nahrávky --hotovo
 
-na začátku po přihlášení musí být volba:  
--jdu s nápadem = hodit do nápadů
--jdu hrát = hodit do playlistu   --hotovo
-
-text a nahrávky dohromady pod názvem vál - 
+HOTOVO    na začátku po přihlášení musí být volba:  
+HOTOVO    -jdu s nápadem = hodit do nápadů
+HOTOVO    -jdu hrát = hodit do playlistu   --hotovo
 
 
--------------
-loooper - jako "otevřít v novém okně" s minimalistickým seznamem souborů k otevření, bez žádných dalších tlačítek
-
-po tlačítku looper ještě confirm pop-up
-místo textu LOOPER  v tlačítku rovnou název souboru 
-a po kliknutí výsuvka s tlačítky s ikonami OTEVŘÍT V LOOPERU   Editovat (PŘESUNOUT, přejmenovat)  STÁHNOUT SMAZAT  
-----------------------------
-když dám v playlistu otevřít přepne se na text - nahrávky - napady   -  vyřešeno dočasně - bug alert
 (track.cz nefungují tlačítka
 index.php nefunguje
 playlist.php ne
@@ -31,13 +21,32 @@ napady.php moc velký okno
 	
 home.php a classic.php jsou stejný a fungují
 
-v modelu SIMPLE nefunguuje zobrazení příspěvků diskuse, vložení ale funguje
 
-)
+----------------------------
+
+TODO  BUG   V obou playlistech se netobrazuje plný název ze souboru ale jen nazev složky
+
+TODO   BUG    když dám v playlistu otevřít přepne se na text - nahrávky - napady   -  vyřešeno dočasně - bug alert
+
+TODO  BUG   v modelu SIMPLE nefunguuje zobrazení příspěvků diskuse, vložení ale funguje
 
 
+-------------
+TODO  PROG    loooper - jako "otevřít v novém okně" s minimalistickým seznamem souborů k otevření, bez žádných dalších tlačítek
+
+TODO  PROG    po tlačítku looper ještě confirm pop-up
+TODO  PROG    místo textu LOOPER  v tlačítku rovnou název souboru 
+              a po kliknutí výsuvka s tlačítky s ikonami OTEVŘÍT V LOOPERU   Editovat (PŘESUNOUT, přejmenovat)  STÁHNOUT SMAZAT  
+
+--------------
+TODO FUTURE
 --------
-vyměnit nápady a text
+
+NÁPAD     text a nahrávky dohromady pod názvem vál - 
+
+
+-------------
+  vyměnit nápady a text
  texty v databázi jako po sobě jdoucí verze
  a nápady jako samostatné soubory ve složce válu ve složce s textem 
 -------
