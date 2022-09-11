@@ -71,7 +71,7 @@
 								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  {
 
                                      ?>
-									  <h3>
+									  <h4>
 								    <?php 
                                             	while(!feof($cely_nazev)) {
 											    echo fgets($cely_nazev);
@@ -79,7 +79,7 @@
 										     	fclose($cely_nazev);
 
                                      ?>
-									  </h3> 
+									  </h4> 
 								    <?php 
 										}
 									 else
