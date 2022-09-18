@@ -3,6 +3,8 @@
 <?php
  $_SESSION['barva1'] ="a7ac38";
  $_SESSION['barva2'] ="yellow";
+ $_SESSION['barva_pozadi'] ="202428"; 
+ 
   if($_SESSION['login']!=""){  
 ?>
 
@@ -131,6 +133,9 @@ else {$pole_souboru = "empty" ;
 
     <style>
  
+ body {	
+  background-color: #<?php echo $_SESSION['barva_pozadi'] ?>;
+}
 .btn-VZ {
  
   font-size: 0.6rem;
@@ -197,7 +202,7 @@ td  {
      </style>
 
   </head>
-  <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
+  <body style=" line-height: 1 ; ">
 
     <header>
       <?php   require "meat/header.php";?>

@@ -3,6 +3,7 @@
 <?php
  $_SESSION['barva1'] ="a7ac38";
  $_SESSION['barva2'] ="yellow";
+ $_SESSION['barva_pozadi'] ="202428"; 
   if($_SESSION['login']!=""){  
 ?>
 
@@ -130,6 +131,9 @@ else {$pole_souboru = "empty" ;
     <script src="js/index.js"></script>
 
     <style>
+body {	
+  background-color: #<?php echo $_SESSION['barva_pozadi'] ?>;
+}
  
 .btn-VZ {
  
@@ -197,7 +201,7 @@ td  {
      </style>
 
   </head>
-  <body style="background-color: #b4b4b4   ; line-height: 1 ; ">
+  <body style=" line-height: 1 ; ">
 
     <header>
       <?php   require "meat/header.php";?>
@@ -221,24 +225,24 @@ td  {
 			   </div>   <!-- konec nulty sloupec   --> 
 			   
 			       <!--  druhy sloupec   --> 
-			   <div class="col-md-3" style="margin-bottom: 5px" > 
+			   <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px" > 
 					<?php   require "meat/sekce_akordu.php";	?>						
 			   </div> <!-- konec druhý sloupec   -->
 				 
 			
                <!-- třetí sloupec   --> 
-		       <div  id="k" class="col-md-3" style="margin-bottom: 5px"> 
+		       <div  id="k" class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px"> 
 				    <?php 	require "meat/sekce_souboru.php";	?>
 		       </div  ><!-- konec třetí sloupec   -->
 			
            
  				<!--  prvni sloupec   -->
-				<div id="adresare" class="col-md-3" style="margin-bottom: 5px ;"> 		      				  
+				<div id="adresare" class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px ;"> 		      				  
 					<?php   require "meat/sekce_playlist.php";?>
 				</div>  <!--  konec prvniho sloupce   -->  			
 			   
 			    <!-- čtvrtý sloupec   -->
-				<div class="col-md-3" style="margin-bottom: 5px" >   
+				<div class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px" >   
 					<?php   require "meat/sekce_diskuse.php";	?>
 				</div> <!-- konec čtvrtý sloupec   --> 
 

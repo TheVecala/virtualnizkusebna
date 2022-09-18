@@ -1,12 +1,9 @@
-			<div class=" sticky  card bg-dark text-white"  style="margin-top: 1px; "> <!--hlavička prvního sloupce     -->
+			<div class="sticky card bg-dark text-white" style="margin-top: 1px; border: 1px solid #dee2e6;">  <!--hlavička prvního sloupce     -->
                <div class="card-body" style="text-align: center"> 
 	
 	             <h2 style="text-align:left; display: inline; color:#ffc107 ;   font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2> 
 				  
-			     <div style="text-align:right; display: inline"   >		                
-				  
-					 <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-				 </div>	
+ 
 				 
 	           </div>
  		   

@@ -1,7 +1,7 @@
 		      
     	<div class=" fixed-bottom"  >
 	
-			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
+			<div class="card bg-dark text-white"  style="margin-top: 1px; border: 1px solid #dee2e6;"> <!--hlavička nultého sloupce     -->
                <div class="card-body"> 
 			   			   
 			            <div  style="text-align:left; display: inline ;" >

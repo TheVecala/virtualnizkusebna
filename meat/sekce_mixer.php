@@ -1,7 +1,7 @@
 
 	      <div  class=" ">   <!-- hlavička sekce mixer   -->
 			  
-               <div class="card bg-dark text-white" style="margin-top: 1px;"> <!--      -->
+               <div class="card bg-dark text-white" style="margin-top: 1px; border: 1px solid #dee2e6;"> <!--      -->
                    <div class="card-body" style="text-align: center"> 
 				   				 		
 		               <h2 style="text-align:left;  display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; ">  MIXER </h2>
