@@ -21,13 +21,15 @@ napady.php moc velký okno
 	
 home.php a classic.php jsou stejný a fungují
 
+TODO QUICK  srazit čtyři sloupce na dva - nastavení je změněno jen v simple_text 
 
 ----------------------------
-TODO  BUG    v playlistu nefuguje přejmenovávání
+TODO  BUG    v playlistu nefuguje přejmenovávání - chce zgruntu předělat, nemá se přejmenovávat složka, ale obsah souboru txt 
+TODO  BUG    přihlašovací okno nemá barvy 
 
-TODO  BUG   V obou playlistech se netobrazuje plný název ze souboru ale jen nazev složky
+TODO  BUG  při otvírání v novém zařízení chyba php , absence session ,  
 
-TODO   BUG    když dám v playlistu otevřít přepne se na text - nahrávky - napady   -  vyřešeno dočasně - bug alert
+TODO  BUG    když dám v playlistu otevřít přepne se na text - nahrávky - napady   -  vyřešeno dočasně - bug alert
 
 TODO  BUG   v modelu SIMPLE nefunguuje zobrazení příspěvků diskuse, vložení ale funguje
 
