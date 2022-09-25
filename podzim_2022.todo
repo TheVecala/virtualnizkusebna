@@ -22,7 +22,7 @@ napady.php moc velký okno
 home.php a classic.php jsou stejný a fungují
 
 TODO QUICK  srazit čtyři sloupce na dva - nastavení je změněno jen v simple_text 
-
+   v playlistu přehodit tlačítka otevřít a upravit
 ----------------------------
 TODO  BUG    v playlistu nefuguje přejmenovávání - chce zgruntu předělat, nemá se přejmenovávat složka, ale obsah souboru txt 
 TODO  BUG    přihlašovací okno nemá barvy 
@@ -31,10 +31,11 @@ TODO  BUG  při otvírání v novém zařízení chyba php , absence session ,
 
 TODO  BUG    když dám v playlistu otevřít přepne se na text - nahrávky - napady   -  vyřešeno dočasně - bug alert
 
-TODO  BUG   v modelu SIMPLE nefunguuje zobrazení příspěvků diskuse, vložení ale funguje
+TODO  BUG   v modelu SIMPLE nefunguuje vložení příspěvků diskuse, zobrazení ale funguje - 
 
 
 -------------
+TODO  PROG    v playlistu posunout tlačítka doprava a vzájemně prohodit
 TODO  PROG    loooper - jako "otevřít v novém okně" s minimalistickým seznamem souborů k otevření, bez žádných dalších tlačítek
 
 TODO  PROG    po tlačítku looper ještě confirm pop-up

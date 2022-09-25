@@ -145,7 +145,8 @@ else {$pole_souboru = "empty" ;
   padding: 0.5rem; 
 }
 .vzkaz_karta  { 
-  margin:10px; 
+  margin:1px; 
+  padding: 0.25rem 0.25rem;
 }
 .sloupec  { 
   background-color:#<?php echo $_SESSION['barva1'] ?>; 
@@ -226,22 +227,22 @@ td  {
 			   </div>   <!-- konec nulty sloupec   --> 
 			   
 				 <!--  prvni sloupec   -->
-				<div id="adresare" class="col-md-3" style="margin-bottom: 5px ;"> 		      				  
+				<div id="adresare" class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px ;"> 		      				  
 					<?php   require "meat/sekce_playlist.php";?>
 				</div>  <!--  konec prvniho sloupce   --> 
 		
 			   <!--  druhy sloupec   --> 
-			   <div class="col-md-3" style="margin-bottom: 5px" > 
+			   <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px" > 
 					<?php   require "meat/sekce_akordu.php";	?>						
 			   </div> <!-- konec druhý sloupec   -->
   
                <!-- třetí sloupec   --> 
-		       <div  id="k" class="col-md-3" style="margin-bottom: 5px"> 
+		       <div  id="k" class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px"> 
 				    <?php 	require "meat/sekce_souboru.php";	?>
 		       </div  ><!-- konec třetí sloupec   -->
 			   
 			    <!-- čtvrtý sloupec   -->
-				<div class="col-md-3" style="margin-bottom: 5px" >   
+				<div class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px" >   
 					<?php   require "meat/sekce_diskuse.php";	?>
 				</div> <!-- konec čtvrtý sloupec   --> 
 					

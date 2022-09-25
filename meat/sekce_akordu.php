@@ -13,20 +13,23 @@
 
 
 	      <div  class=" ">   <!-- hlavička sekce akordu   -->
-			  
-               <div class="card bg-dark text-white" style="margin-top: 1px; border: 1px solid #dee2e6;"> <!--      -->
-                   <div class="card-body" style="text-align: center"> 
-				   				 		
-
 			   
-		               <h2 style="text-align:left;  display: inline; color:#ffc107 ; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; ">TEXT</h2>
-					   
- 
+               <div class="card bg-dark text-white" style="margin-top: 1px; border: 1px solid #dee2e6;"> <!--      -->
+	
+			  
+			   <div data-toggle="collapse" data-target="#akordy_vnitrni_vysuvka_<?php echo $x ?>" style="">
+			   
+                   <div class="card-body" style="text-align: center"> 
+				   
+					<h2 style="text-align:left;  display: inline; color:#ffc107 ; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; ">TEXT</h2>
 	
 	               </div>	
- 			
+ 			   </div>
                </div>  
- 			
+ 			 
+				                       
+			
+								 
 
           </div>   <!-- konec hlavičky sekce akordu   -->
 		
@@ -38,19 +41,7 @@
 
           	<div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
-	                          <div class="card-header" style= "  "> 
-							      <!-- <img src="/data/icons8-sound-wave-50.png" alt="-"  > -->
-							      <div style="color:black  ; background-color:#faf9f999 ;  display: inline" >	
-											  	 	
-									  <?php echo $slozka_souboru 	?> 
-									  
-							      </div> 
-								  <button data-toggle="collapse" data-target="#akordy_vnitrni_vysuvka_<?php echo $x ?>" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background-color: #<?php echo $_SESSION['barva1'] ?>; ">
-				                      <img style="max-height:30px" src="/data/ikona_colapsedown4.png" alt="minimize"> 
-				                  </button>
-								 
-							  </div> 
- 								    							   
+	                      					 						   
 							   
 	
 	 <?php

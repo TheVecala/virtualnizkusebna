@@ -144,7 +144,8 @@ body {
   padding: 0.5rem; 
 }
 .vzkaz_karta  { 
-  margin:10px; 
+  margin:1px; 
+  padding: 0.25rem 0.25rem;
 }
 .sloupec  { 
   background-color:#<?php echo $_SESSION['barva1'] ?>; 
