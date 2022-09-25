@@ -197,6 +197,10 @@ td  {
  padding: 5px;
  margin: 5px;
 }
+ pre {
+	margin-bottom: 1px;
+}
+
 }
 
      </style>

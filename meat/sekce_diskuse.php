@@ -41,7 +41,7 @@ define ("ROWS", 5);
                         <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
            			   </div>  	
 					   
-					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.8em">
+					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.6em">
 						   <?php	   
 						   echo ' '.$od.'-';
 						   echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
@@ -92,7 +92,7 @@ define ("ROWS", 5);
 ?>
        
 	  <li class="list-group-item vzkaz_karta"  style="  background-color:#ffffff59;">
-	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span><br>  
+	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span>
 	   <div style="text-align:right; ">
 	     <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 
 	     <span class="jmeno"  style="font-size:0.9em; ">  <?php echo strip_tags($zaznam["jmeno"])?> &nbsp </span> 
