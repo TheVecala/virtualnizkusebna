@@ -1,4 +1,11 @@
   <?php session_start(); ?>
+  <?php
+ $_SESSION['barva1'] ="a7ac38";
+ $_SESSION['barva2'] ="yellow";
+ $_SESSION['barva_pozadi'] ="202428"; 
+  
+?>
+
   <!doctype html>
   <html lang="cz">
    <head> 
@@ -13,9 +20,19 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link href="/css/sticky-footer-navbar.css" rel="stylesheet">
   <link href="/css/cover.css" rel="stylesheet">
+  
+      <style>
+body {	
+  background-color: #<?php echo $_SESSION['barva_pozadi'] ?>;
+}
+
+  .login_box {	
+  background-color: #<?php echo $_SESSION['barva1'] ?>;
+}
+
+ </style>
    </head>
-   <body style="background-color: #b4b4b4" >
-   
+   <body>
    
      <header>
       <!-- Fixed navbar -->
@@ -54,7 +71,7 @@
     <div class="container" >
 	
 	
-      <div id="hlavni_box" class="card  text-white"> <!-- hlavní menu -->
+      <div id="hlavni_box" class="card  login_box text-white"> <!-- hlavní menu -->
 		   <div class="card-body" style=" text-align:center"> 
 			<h1 class="card-title"   >VIRTUÁLNÍ ZKUŠEBNA</h1> 
 			<h2 class="card-title"   >Autonomní sdílení souborů</h2>
@@ -77,7 +94,7 @@
 	  
 	  <div class=" ">
 	    <!-- form přihlášení -->
-        <div id="formular_prihlaseni" class="card  text-white" style="  display: none"> 
+        <div id="formular_prihlaseni" class="card login_box text-white" style="  display: none"> 
 			  <div class="card-body">           
 				<h3>PŘIHLÁŠENÍ:</h3>    
 			 
@@ -94,7 +111,7 @@
 			  </div>
         </div> <!-- form přihlášení -->
          
-        <div id="formular_vytvoreni_zkusebny" style="  display: none" class="card  text-white"> <!-- form vytvoření zkušebny -->
+        <div id="formular_vytvoreni_zkusebny" style="  display: none" class="card login_box text-white"> <!-- form vytvoření zkušebny -->
 	 
             <div  class="card-body " >  
 							 
