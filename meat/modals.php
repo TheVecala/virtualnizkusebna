@@ -365,91 +365,62 @@
   
   <!-- The Modal presunout soubor-->
 <div class="modal" id="modal_presunout">
-  <div class="modal-dialog  ">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+  <div class="modal-dialog">
+    <div class="modal-content text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
-	      přesunout soubor
-		
+        přesunout soubor
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->
-	  
-	 	<form action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data"  style="display:inline">
-	
-             <div class="modal-body">
-     		       
-                      <p id="modal_presunout_label" class="modal-title"  style="display:none">  Soubor   </p>     
-					 
-		              <div class="form-group"  style="display:none_xxxxxxxxxxxx">
-						<label for="presunout_co">přesunout:</label>
-						<input id="modal_presunout_co" type="text" class="form-control"  value="" name="presunout_co">
-				      </div> 
-					 
-                      <div class="form-group"  style="display:none">
-						<label for="presunout_odkud">presunout_odkud:</label>
-						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor k přesunu nevložen" name="presunout_odkud">	
-					  </div> 
-					  
-					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
-						<label for="presunout_odkud_label">ze složky:</label>
-						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="<?php echo $slozka_souboru;?>" name="presunout_odkud_label">	
-					  </div>				
-						
-					  <div class="form-group">
-						  <label for="modal_presunout_kam">do složky:</label>
-						  <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
-						  
-						  
-		  		<?php 
-						for($x = 0; $x < $delka_pole_slozek; $x++) {
-						
-							  if ($pole_slozek[$x] == ".")  { continue; };
-							  if ($pole_slozek[$x] == "..")  { continue; };
-						      $soub = ($slozka_slozek.$pole_slozek[$x]);
-						      $label_soub = "test";
-						      $label_soub = ($pole_slozek[$x]);  
-							  
-						      if(is_dir($soub))
-								
-								{    echo   	"<option>".$pole_slozek[$x]."</option>" ; }
-						}
-				?>
-							
-						  </select>
-					  </div> 
-	
-					  <div class="form-group"  style="display:none">
-						<label for="presunout_cesta">přesunout cesta:</label>
-						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="../user/silentroom/338786519/uploads/" name="presunout_cesta">	
-					  </div>				
-	
-					  
-						
-					  <div class="form-group"  style="display:none">
-						<label for="navrat">navrat:</label>
-						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>
-			 						
-				
-			  		
-            </div>	  
+      <form action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data" style="display:inline">
+        <div class="modal-body">
 
-      <!-- Modal footer -->
-            <div class="modal-footer">
-	  						 
-				<button  id= "presun" type="submit" class="btn btn-primary">PŘESUNOUT</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	 
-	  
- 
-        
+          <p id="modal_presunout_label" class="modal-title">Soubor</p>
+
+          <div class="form-group" style="display:none">
+            <input id="modal_presunout_co" type="text" class="form-control" value="" name="presunout_co">
           </div>
-	   </form>
+
+          <div class="form-group" style="display:none">
+            <input id="modal_presunout_odkud" type="text" class="form-control" value="" name="presunout_odkud">
+          </div>
+
+          <div class="form-group">
+            <label for="modal_presunout_kam">do složky:</label>
+            <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
+            <?php
+            for($x = 0; $x < $delka_pole_slozek; $x++) {
+                if ($pole_slozek[$x] == ".")  { continue; }
+                if ($pole_slozek[$x] == "..")  { continue; }
+                $soub = ($slozka_slozek.$pole_slozek[$x]);
+                if(is_dir($soub)) {
+                    $selected = ($pole_slozek[$x] == $slozka_souboru) ? ' selected' : '';
+                    echo "<option".$selected.">".htmlspecialchars($pole_slozek[$x])."</option>";
+                }
+            }
+            ?>
+            </select>
+          </div>
+
+          <div class="form-group" style="display:none">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+
+        </div>
+
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">PŘESUNOUT</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+        </div>
+      </form>
     </div>
   </div>
-</div>  
+</div>
+
 
     <!-- The Modal nahrat_zvuk -->
 <div class="modal" id="modal_nahrat_zvuk">
