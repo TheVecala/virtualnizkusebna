@@ -3,6 +3,8 @@
 <?php
  $_SESSION['barva1'] ="a7ac38";
  $_SESSION['barva2'] ="yellow";
+ $_SESSION['barva_pozadi'] ="202428"; 
+ 
   if($_SESSION['login']!=""){  
 ?>
 
@@ -131,6 +133,9 @@ else {$pole_souboru = "empty" ;
 
     <style>
  
+ body {	
+  background-color: #<?php echo $_SESSION['barva_pozadi'] ?>;
+}
 .btn-VZ {
  
   font-size: 0.6rem;
@@ -140,7 +145,8 @@ else {$pole_souboru = "empty" ;
   padding: 0.5rem; 
 }
 .vzkaz_karta  { 
-  margin:10px; 
+  margin:1px; 
+  padding: 0.25rem 0.25rem;
 }
 .sloupec  { 
   background-color:#<?php echo $_SESSION['barva1'] ?>; 
@@ -189,15 +195,18 @@ td  {
 .h2, h2 {
  font-size:1.2rem;
  border-radius: 1rem;
-  /*  padding: 5px;  */
-  /*  margin: 5px;   */
+ padding: 5px;
+ margin: 5px;
+}
+ pre {
+	margin-bottom: 1px;
 }
 }
 
      </style>
 
   </head>
-  <body style="background-color: #202428   ; line-height: 1 ; ">
+  <body style=" line-height: 1 ; ">
 
     <header>
       <?php   require "meat/header.php";?>
@@ -209,26 +218,41 @@ td  {
 
     <div class="row">
  
-      
-	  
-			   <!--  druhy sloupec   -->
-		       <div  id="wave_jumbo"  class="col-md-12" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/sekce_looper_docked.php";	?>
-		       </div  > <!-- konec druhý sloupec   -->
-           
-	  
+        
+		<!--   druhejstřetím sloupec   -->
+	    <div class="col-md-12" >     
 	 
+		 <div class="row">
 		 
-		 	 
-			   <!--  druhy sloupec   -->
-		       <div  id="k" class="col-md-6" style="margin-bottom: 5px" display="none"> 
-				    <?php 	require "meat/sekce_souboru.php";	?>
-		       </div  > <!-- konec druhý sloupec   -->
-  
+		 	   <!--  nulty sloupec   --> 
+			   <div id="wave_jumbo"  style="display:nonexxxxx ;  margin-bottom: 5px; "  class="col-md-12"> 
+					<?php 	  require "meat/sekce_looper.php";	?>								
+			   </div>   <!-- konec nulty sloupec   --> 
+			   
+				 <!--  prvni sloupec   -->
+				<div id="adresare" class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px ;"> 		      				  
+					<?php   require "meat/sekce_playlist.php";?>
+				</div>  <!--  konec prvniho sloupce   --> 
 		
-      	 
-     
-   
+			   <!--  druhy sloupec   --> 
+			   <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px" > 
+					<?php   require "meat/sekce_akordu.php";	?>						
+			   </div> <!-- konec druhý sloupec   -->
+  
+               <!-- třetí sloupec   --> 
+		       <div  id="k" class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px"> 
+				    <?php 	require "meat/sekce_souboru.php";	?>
+		       </div  ><!-- konec třetí sloupec   -->
+			   
+			    <!-- čtvrtý sloupec   -->
+				<div class="col-md-6 col-sm-6 col-lg-6 col-xl-3" style="margin-bottom: 5px" >   
+					<?php   require "meat/sekce_diskuse.php";	?>
+				</div> <!-- konec čtvrtý sloupec   --> 
+					
+      	  </div> <!-- konec row   -->
+        </div> <!--   konec druhejstřetím sloupec   -->  
+ 
+	 
 	 	 
     </div> <!-- row -->
 	

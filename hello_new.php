@@ -121,6 +121,7 @@ else {$pole_souboru = "empty" ;
      <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link href="/css/sticky-footer-navbar.css" rel="stylesheet"> 
+	<link href="/css/cover.css" rel="stylesheet">
 	   <!-- wavesurfer -->	 
     <script src="https://unpkg.com/wavesurfer.js"></script>
     <script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
@@ -175,11 +176,11 @@ td  {
  
 }
 
-
 .card {
   
   background-color: #<?php echo $_SESSION['barva1'] ?>;;
 }
+
 
 .card-body {
   /* padding: 1.25rem; */
@@ -189,8 +190,8 @@ td  {
 .h2, h2 {
  font-size:1.2rem;
  border-radius: 1rem;
-  /*  padding: 5px;  */
-  /*  margin: 5px;   */
+ padding: 5px;
+ margin: 5px;
 }
 }
 
@@ -202,38 +203,56 @@ td  {
     <header>
       <?php   require "meat/header.php";?>
     </header>
-     
-	 
- <div class="container-fluid">
-    <div id="vycpavka"   style="min-height:58px"> </div>               
+   <div id="vycpavka"   style="min-height:50px"> </div>      
+  <div class="site-wrapper">
 
-    <div class="row">
+      <div class="site-wrapper-inner">
+
+        <div class="cover-container">
+
+           <div class="inner cover">
+       
  
-      
-	  
-			   <!--  druhy sloupec   -->
-		       <div  id="wave_jumbo"  class="col-md-12" style="margin-bottom: 5px"> 
-				    <?php 	require "meat/sekce_looper_docked.php";	?>
-		       </div  > <!-- konec druhý sloupec   -->
-           
-	  
-	 
-		 
-		 	 
-			   <!--  druhy sloupec   -->
-		       <div  id="k" class="col-md-6" style="margin-bottom: 5px" display="none"> 
-				    <?php 	require "meat/sekce_souboru.php";	?>
-		       </div  > <!-- konec druhý sloupec   -->
+  <div class="card-columns">
   
-		
-      	 
-     
-   
-	 	 
-    </div> <!-- row -->
-	
- </div>     <!-- container -->
+  
+  
  
+  
+ 
+<div class="card" style="width:400px">
+  <img class="card-img-top" src="/data/kytarista.png" alt="Card image" style="max-width:100px">
+  <div class="card-body">
+ 
+    <a href="#" class="btn btn-primary" style="font-size:1.5rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  JDU HRÁT </a>
+  </div>
+</div>
+
+ 
+  
+  
+     
+ 
+  
+  <div class="card" style="width:400px">
+  <img class="card-img-top" src="/data/singer.png" alt="Card image" style="max-width:100px">
+  <div class="card-body">
+ 
+    <a href="#" class="btn btn-primary" style="font-size:1.5rem; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  JDU S NÁPADEM </a>
+  </div>
+</div>
+  
+  
+  
+  
+  
+  
+  </div>
+ 
+ 		 </div>
+	   </div>
+	  </div>
+	</div>
  
  <div>  <!--  MODALS --> 
    	<?php  require "meat/modals.php"; ?>				

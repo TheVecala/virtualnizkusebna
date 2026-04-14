@@ -57,7 +57,7 @@
     <div class="container" >
 	
 	
-      <div class="card bg-success text-white"> <!-- hlavní menu -->
+      <div class="card  text-white"> <!-- hlavní menu -->
        <div class="card-body" style=" text-align:center"> 
 	    <h1 class="card-title"   >  VIRTUÁLNÍ ZKUŠEBNA</h1>
         
@@ -78,7 +78,7 @@
 	  
 	   <div class="row ">
 	    <!-- form přihlášení -->
-        <div id="formular_prihlaseni" class="  card bg-success text-white col-md-5" style="  display: nonexxxxxxxxxxxxxxxxxx"  > 
+        <div id="formular_prihlaseni" class="  card  text-white col-md-5" style="  display: nonexxxxxxxxxxxxxxxxxx"  > 
           <div class="card-body">           
             <!--   <h3>PŘIHLÁŠENÍ:</h3>  -->  
          
@@ -101,7 +101,7 @@
 		   </div>
 	   	   </div>
 		  </div>
-        <div id="formular_vytvoreni_zkusebny" style="  display: nonexxxxxxxxxxxxxxx" class=" card  bg-success text-white col-md-5"> <!-- form vytvoření zkušebny -->
+        <div id="formular_vytvoreni_zkusebny" style="  display: nonexxxxxxxxxxxxxxx" class=" card   text-white col-md-5"> <!-- form vytvoření zkušebny -->
 	 
 	    <div class="site-wrapper">
         <div class="site-wrapper-inner">
@@ -149,7 +149,7 @@
 	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
-    <div class="modal-content bg-success text-white">
+    <div class="modal-content  text-white">
 
       <!-- Modal Header -->
       <div class="modal-header">

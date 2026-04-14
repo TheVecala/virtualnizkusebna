@@ -29,7 +29,7 @@
  					 
 							  
 								?>
-						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:#27a243 ; color: white " ; } ; ?> ">
+						<li class="list-group-item list-group-item-action <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  active " ; } ; ?> " style="padding:0px; background-color:#939731; <?php  if ($pole_slozek[$x]==$slozka_souboru)  { echo"  background-color:",$_SESSION['barva1']," ; color: white " ; } ; ?> ">
 
 						<!-- tlačítko změny složky    --> 
 											 
@@ -52,12 +52,11 @@
 									 
 									 else
 									  {
+									  };
+										   
 										  ?>
 								       
-									  <?php 
-									 	 }
-										
-									  ?>
+									 
 								  				
 								   <div class="media-body" style="  max-width: 339px; text-align: center; max-height:100%" >
 																
@@ -69,7 +68,20 @@
 								       <div  style="  display: inline; position: relative;  z-index: 5; " >
  
 								  				
-								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  { }
+								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  {
+
+                                     ?>
+									  <h4>
+								    <?php 
+                                            	while(!feof($cely_nazev)) {
+											    echo fgets($cely_nazev);
+											    }
+										     	fclose($cely_nazev);
+
+                                     ?>
+									  </h4> 
+								    <?php 
+										}
 									 else
 									  { ?>
 								         <button id=" " type="submit" style=" /* max-width: 120px ; */ display: inline; padding: 1px;" class=" " value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
@@ -109,7 +121,7 @@
       <?php if ($delka_pole_slozek < 3	) 
 		{ ?>
 	   	
-	      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+	      <div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
 							     <p>zatim tu nic není   </p> 

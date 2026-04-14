@@ -1,12 +1,9 @@
-			<div class=" sticky  card bg-dark text-white"  style="margin-top: 1px; "> <!--hlavička prvního sloupce     -->
-               <div class="card-body"> 
+			<div class="sticky card bg-dark text-white" style="margin-top: 1px; border: 1px solid #dee2e6;">  <!--hlavička prvního sloupce     -->
+               <div class="card-body" style="text-align: center"> 
 	
 	             <h2 style="text-align:left; display: inline; color:#ffc107 ;   font-weight: bold; text-shadow: 2px -2px 20px #ffc107;">  PLAYLIST </h2> 
 				  
-			     <div style="text-align:right; display: inline"   >		                
-				  
-					 <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-				 </div>	
+ 
 				 
 	           </div>
  		   
@@ -14,7 +11,7 @@
 	      		  
             <div> <!--  playlist   -->
 					  
-			  <div  id=" "  style="background-color:#27a243; padding: 3px;"> <!-- zmšna složky    -->
+			  <div  id=" "  style="background-color:#<?php echo $_SESSION['barva1'] ?>; padding: 3px;"> <!-- zmšna složky    -->
 			 
 			  	<div>
 					 
@@ -46,36 +43,28 @@
 
 						<!-- tlačítko změny složky    --> 
 											 
-                            <div style=" " > 
+                            <div class="media border p-1" style="font-size: 1.2rem; padding:1px;    " > 
 								  
 									<form action="/php/zmenit_slozku.php" method="post" enctype="multipart/form-data"> 
 									 <input id="navrat" type="text" value="<?php echo $_SERVER['PHP_SELF']; ?>" name="navrat" style="display:none" >
 									 <input id="cilova_slozka" type="text" value="<?php echo $pole_slozek[$x] ?>" name="cilova_slozka" style="display:none" >
 									
-                                <div class="media border p-1" style="font-size: 1.2rem; padding:1px;    ">
+                                 
 								
 																	   
-									<?php   
-   									   if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
-								   							   								   	
-									 <img src="/data/icons8-music-record-50.png" alt="složka" style="max-height:30px" class="mr-3  " > 	
-																		
-									 <?php  
-  									 }
-									 
-									 else
-									  {
-										  ?>
-								       <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px;" class="mr-3   "  >   
-									  <?php 
-									 	 }
-										
-									  ?>
+								
 								  				
-								   <div class="media-body" style="padding: 0.2rem; max-width: 339px; text-align: right; max-height:100%" >
+								   <div class="media-body" style=" " >
+								   
+								   	  <?php  if ($pole_slozek[$x]==$slozka_souboru)  {  ?>   
+								  	        <img src="/data/icons8-music-record-50.png" alt="složka" style="max-height:30px" class="mr-3  " > 	
+									  <?php } else { ?>
+								            <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px;" class="mr-3   "  >   
+									  <?php } ?>
 																
-									   <div  style="display: inline; position: absolute;  left: 35px;  margin-right:10px;  "> 
-									      <div  style=" text-align: left; color: #a6d8b0; "> 
+									   <div  style="display: inline; position: absolute;  left: 35px;  margin-right:10px;  "> <!-- obálka vypsání názvu ze souboru   -->
+									      <div  style=" text-align: left;  "> <!-- vypsání názvu ze souboru   -->	
+										  
 									      <?php
 									     	while(!feof($cely_nazev)) {
 											    echo fgets($cely_nazev);
@@ -84,34 +73,29 @@
 									      ?> 
 										  </div> 
 									   </div> 
-								       <div  style="  display: inline; position: relative;  z-index: 5; " >
-								       <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline; padding: 1px;" data-toggle="modal" data-target="#modal_delete_val"> 		
-									     UPRAVIT
-								      	</button>
-								  				
-								    <?php  if ($pole_slozek[$x]==$slozka_souboru)  { }
-									 else
-									  { ?>
-								         <button id=" " type="submit" style=" max-width: 120px ; display: inline; padding: 1px;" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
-                                          OTEVŘÍT
-									     </button>
+									    <div> <!--   -->
+								       <div  style="display: inline; position: relative;  z-index: 5; " > <!-- button otevřít   -->
+									   								  				
+											<?php  if ($pole_slozek[$x]==$slozka_souboru)  { }
+											 else
+											  { ?>
+												 <button id=" " type="submit" style=" max-width: 120px ; display: inline; padding: 1px;" class="btn btn-sm btn-warning btn-VZ" value="  <?php echo $pole_slozek[$x] ;?> " name="submit">
+												  OTEVŘÍT
+												 </button>
+										    <?php } ; ?>
 									   </div> 
-									  <?php 
-									 	 }
-									 ; ?>
-	
-									 </form>							   
-	   
+							              <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline; padding: 1px;" data-toggle="modal" data-target="#modal_delete_val"> 		
+									     UPRAVIT
+								        </button>								 
+	                                  </div>
 						            </div >	<!-- media body    -->							
-                               	</div>	<!--   media  -->																	
-						    </div>                                      
- 								   
+                                <!--   media  -->	
+                                    </form>
+								
+						    </div>                                      							   
 						</li> 
 
-								<?php
-								}
-						}
-						?>
+								<?php } } ?>
 		                </ul>
 					  
 				    </div>
@@ -124,7 +108,7 @@
       <?php if ($delka_pole_slozek < 3	) 
 		{ ?>
 	   	
-	      <div class="card bg-success text-white" style="margin-bottom: 3px;" > 
+	      <div class="card  text-white" style="margin-bottom: 3px;" > 
 							   
 	                          <div class="card-header" style= "  "> 
 							     <p>zatim tu nic není   </p> 

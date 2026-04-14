@@ -1,25 +1,25 @@
 		      
     	<div class=" fixed-bottom"  >
 	
-			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
-               <div class="card-body"> 
+			<div class="card bg-dark text-white"  style="margin-top: 1px; border: 1px solid #dee2e6;"> <!--hlavička nultého sloupce     -->
+               <div class="card-body" style="text-align: center"> 
 			   			   
 			            <div  style="text-align:left; display: inline ;" >
-					    	<h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107;"> LOOPER </h2> 
+					    	<h2 style="text-align:left; display: inline; color:#ffc107 ;  font-weight: bold; text-shadow: 2px -2px 20px #ffc107;"> LOOPER </h2> 
 						</div>
 		
 					
 	           </div>
-		       <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+		       <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #<?php echo $_SESSION['barva1'] ?>; ">
 			     <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3_up.png" alt="minimize"> 
 			   </button>
             </div> <!--     -->
 	      
-	        <div  id="looper_vysuvka" class="collapse show ">
+	        <div  id="looper_vysuvka" class="collapse ">
 			
 
 			
-			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">	
+			 <div class="jumbotron " style="padding: 0rem 1rem; margin-bottom: 2px;">	
 
 						<div style="display: inline ;  ">
 							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->

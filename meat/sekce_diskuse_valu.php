@@ -3,10 +3,13 @@
 <?php
 define ("ROWS", 5);
  require "php/login/connect.php";
- 
+  $aktualni_diskuse_valu="diskuse_silentroom_testovaci2";
+  $aktualni_diskuse_valu = 'diskuse_'.$_SESSION['kapela'].'_'.$_SESSION['slozka_souboru_k_zobrazeni'];
+  
+  
   if (!isset($_GET["celkem"]))  
   {
-    $vysledek=mysql_query("select count(*) as pocet from $aktualni_diskuse ");
+    $vysledek=mysql_query("select count(*) as pocet from $aktualni_diskuse_valu ");
     $zaznam=mysql_fetch_array($vysledek);
     $celkem=$zaznam["pocet"];
   }
@@ -20,11 +23,11 @@ define ("ROWS", 5);
   if ($celkem>ROWS)
   {
     if (!isset($_GET["od"])) $od=1; else $od=$_GET["od"];
-    $vysledek=mysql_query("select cas, vzkaz, jmeno from $aktualni_diskuse order by cas desc"." limit ".($od-1).", ".ROWS);
+    $vysledek=mysql_query("select cas, vzkaz, jmeno from $aktualni_diskuse_valu order by cas desc"." limit ".($od-1).", ".ROWS);
   }
   else
   {
-    $vysledek=mysql_query("select * from $aktualni_diskuse order by cas desc") ;
+    $vysledek=mysql_query("select * from $aktualni_diskuse_valu order by cas desc") ;
   }
 ?> 
   
@@ -35,13 +38,13 @@ define ("ROWS", 5);
 				   
 				     	
 				  
-		               <h2 style="text-align:left; display: inline; color:#ffc107 ;  font-weight: bold; text-shadow: 2px -2px 20px #ffc107; ">  NÁPADY </h2> 
+		               <h2 style="text-align:left; display: inline; color:#ffc107 ; background-color:#343a40; font-weight: bold; text-shadow: 2px -2px 20px #ffc107; "> POZNÁMKY </h2> 
 					   
 					   <div style="text-align:right;  display: inline">
                         <button id="vybalit_formular"   class="btn btn-sm  btn-secondary"  style=" display: inline" data-toggle="modal" data-target="#modal_vlozit_komentar" >NAPSAT  </button>  
            			   </div>  	
 					   
-					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.6em">
+					   <div  id="od_do" class="bg-dark text-white" style="font-size:0.8em">
 						   <?php	   
 						   echo ' '.$od.'-';
 						   echo (($od+ROWS-1)<=$celkem)?($od+ROWS-1):$celkem;
@@ -92,7 +95,7 @@ define ("ROWS", 5);
 ?>
        
 	  <li class="list-group-item vzkaz_karta"  style="  background-color:#ffffff59;">
-	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span>
+	   <span class="vzkaz" > <?php echo $zaznam["vzkaz"] ?> </span><br>  
 	   <div style="text-align:right; ">
 	     <span class="jmeno"  style="font-size:0.6em; "> VLOŽIL:&nbsp </span> 
 	     <span class="jmeno"  style="font-size:0.9em; ">  <?php echo strip_tags($zaznam["jmeno"])?> &nbsp </span> 
@@ -107,7 +110,34 @@ define ("ROWS", 5);
        </ul>
   
      </div> 
- 	 
+      <div class="col-md-6 col-lg-12  " style="" > 
+         <ul class="list-group sloupec" >
+ 
+      <div class="modal-body">
+     	 
+	 <!--<h1>Vložení komentáře</h1>-->
+	 <form id="form" name="form" method="post" action="php/vlozit_komentar.php">
+ 
+ <div class="form-group">
+    <label for="text">Napiš text:</label>
+    <textarea type="text" class="form-control" name="text" style="min-height:400px">  </textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="odkaz">Přilož odkaz (pokud chceš):</label>
+    <input type="text" class="form-control" name="odkaz">
+  </div>
+  <div class="form-group">
+    <label for="name">Autor:</label>
+    <input type="text" class="form-control" name="name">
+  </div>
+  
+  <button  id= "odeslat" type="submit" class="btn btn-primary">ULOŽIT</button>
+</form> 
+	 
+      </div>
+       </ul>
+     </div> 	 
 	 
  </div> 
   

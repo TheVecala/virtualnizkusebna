@@ -1,6 +1,8 @@
  <?php session_start(); ?>
 
 <?php
+ $_SESSION['barva1'] ="a7ac38";
+ $_SESSION['barva2'] ="yellow";
   if($_SESSION['login']!=""){  
 ?>
 
@@ -141,13 +143,13 @@ else {$pole_souboru = "empty" ;
   margin:10px; 
 }
 .sloupec  { 
-  background-color:#27a243; 
+  background-color:#<?php echo $_SESSION['barva1'] ?>; 
 }
 .ovladac_vzkazu  { 
   background-color: #343a40; 
 }
 .formular_vzkazu  { 
-  background-color: #27a243; 
+  background-color: #<?php echo $_SESSION['barva1'] ?>; 
 }
 
 h4 {

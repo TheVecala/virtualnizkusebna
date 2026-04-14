@@ -1,7 +1,7 @@
 		      
     	<div class=" fixed-bottom"  >
 	
-			<div class="card bg-dark text-white"  style="margin-top: 1px;"> <!--hlavička nultého sloupce     -->
+			<div class="card bg-dark text-white"  style="margin-top: 1px; border: 1px solid #dee2e6;"> <!--hlavička nultého sloupce     -->
                <div class="card-body"> 
 			   			   
 			            <div  style="text-align:left; display: inline ;" >
@@ -19,7 +19,7 @@
 		
 					
 	           </div>
-		       <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #27a243; ">
+		       <button data-toggle="collapse" data-target="#looper_vysuvka" style="display: inline ; max-height:30px ; padding:0px ; border-width: 0px; background: #<?php echo $_SESSION['barva1'] ?>; ">
 			     <img style="max-height:25px; padding:3px" src="/data/ikona_colapsedown3_up.png" alt="minimize"> 
 			   </button>
             </div> <!--     -->
@@ -28,7 +28,7 @@
 			
 
 			
-			 <div class="jumbotron bg-success" style="padding: 0rem 1rem; margin-bottom: 2px;">	
+			 <div class="jumbotron " style="padding: 0rem 1rem; margin-bottom: 2px;">	
 
 						<div style="display: inline ;  ">
 							 <!--<img src="/data/icons8-sound-wave-50.png" alt="složka"  > -->

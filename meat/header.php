@@ -8,7 +8,7 @@
 							  <div  style="text-align:left; display: inline ;" >
 							  
 							   
-								<div  class="btn btn-light my-2 my-sm-0"  style="display: inline; background-color: #d5833c;">
+								<div  class="btn btn-light my-2 my-sm-0"  style="display: inline; background-color: #BD9C74;">
 								     <img src="/data/icons8-punk-50-2.png" alt="složka" style="max-height:30px;"  >
 								<?php echo  $_SESSION['login'] ; ?>
 								
@@ -16,7 +16,7 @@
 							  </div>						 
                                	/
 							 
-							  <button style="display: inline; padding:0px ; padding-right: 15px; background-color: #27a243;" class="btn btn-light my-2 my-sm-0  "  dropdown-toggle" data-toggle="dropdown"  >
+							  <button style="display: inline; padding:0px ; padding-right: 15px; background-color: #<?php echo $_SESSION['barva1'] ?>;" class="btn btn-light my-2 my-sm-0  dropdown-toggle " data-toggle="dropdown"  >
 							  <img src="/data/icons8-music-record-50.png" alt="vál" style="max-height:30px"   > 
 							   <?php echo $slozka_souboru 	?> 
 							  <!--   <img onclick="openNav()" src="/data/ikona_colapsedown2.png" alt="vál" style="max-height:12px"> 
@@ -41,16 +41,18 @@
              
 	 
 	    	 <li class="nav-item">
-                <a class="nav-link " href="index.php">track</a> 
+                <a class="nav-link " href="simple_playlist.php">playlist</a> 
             </li>  
 		 			
 			 <li class="nav-item">
-               <a class="nav-link " href="playlist.php">playlist</a>  
+               <a class="nav-link " href="simple_text.php">texty</a>  
             </li>	 
-	 
+	         <li class="nav-item">
+               <a class="nav-link " href="simple_soubory.php">nahrávky</a>  
+            </li>
 
 			 <li class="nav-item">
-               <a class="nav-link " href="looper.php">looper</a>  
+               <a class="nav-link " href="simple_napady.php">nápady</a>  
             </li			
             <li class="nav-item">
                   <a class="nav-link  " href="#"  data-toggle="modal" data-target="#myModal"  >about</a>
