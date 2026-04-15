@@ -91,60 +91,49 @@
  
    
   <!-- The Modal vlozit_soubor -->
-<div class="modal " id="modal_vlozit_soubor">
-  <div class="modal-dialog  ">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+<div class="modal" id="modal_vlozit_soubor">
+  <div class="modal-dialog">
+    <div class="modal-content text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
-        <p class="modal-title"> VLOŽENÍ SOUBORU </p>		
+        <p class="modal-title">VLOŽENÍ SOUBORU</p>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->
       <div class="modal-body">
-     
-	   	   	<form action="/php/upload_uni.php" method="post" enctype="multipart/form-data"  style="display:inline">
-			 
-					<div class="form-group">
-					   <label for="fileToUpload">Vybrat soubor:</label>
-			    	   <input type="file" class="form-control" name="fileToUpload">
-				    </div>				
-					
+        <p>Skladba: <strong><?php echo htmlspecialchars($slozka_souboru); ?></strong></p>
+        <form action="/php/upload_uni.php" method="post" enctype="multipart/form-data">
 
-				 
-					  <div class="form-group"  style="display:none">
-						<label for="navrat">navrat:</label>
-						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>
-					
-				 
-					  <div class="form-group"  style="display:none">
-						<label for="slozka_pro_vlozeni_souboru">navrat</label>
-						<input type="text" class="form-control"  value="<?php echo $slozka_slozek.$slozka_souboru ?>" name="slozka_pro_vlozeni_souboru">
-					  </div>					
-					
-					   
-					    <div class="checkbox">
-						  <label><input name="odeslat" type="checkbox" value="true">Odeslat info na mail</label>
-						</div> 
-					  
-									 
-					  <button  id= "nahrat" type="submit" class="btn btn-primary">VLOŽIT SOUBOR</button>
-					
-					
-					
-				</form>
-				  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	   		
+          <div class="form-group">
+            <label for="fileToUpload">Vybrat soubor:</label>
+            <input type="file" class="form-control" name="fileToUpload"
+              accept=".mp3,.wav,.ogg,.flac,.aac,.pdf,.txt,.jpg,.jpeg,.png,.gif">
+          </div>
+
+          <div class="checkbox" style="margin-bottom:10px">
+            <label><input name="odeslat" type="checkbox" value="true"> Odeslat info na mail</label>
+          </div>
+
+          <div class="form-group" style="display:none">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+
+          <button type="submit" class="btn btn-primary">VLOŽIT SOUBOR</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+
+        </form>
       </div>
+
       <!-- Modal footer -->
-      <div class="modal-footer">
-       
-      </div>
+      <div class="modal-footer"></div>
 
     </div>
   </div>
-</div> 
+</div>
+
+ 
  
    
   <!-- The Modal nova_slozka -->
