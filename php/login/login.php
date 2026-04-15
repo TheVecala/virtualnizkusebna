@@ -1,45 +1,48 @@
-  <?php session_start(); ?>
+<?php session_start(); ?>
 <meta charset="utf-8">
 <?php
-include "connect.php";/* připojení k databázi */
-$login = mysql_real_escape_string($_POST["nick"]);/* nick zadaný ve formuláři pro přihlašování */
-$heslo = mysql_real_escape_string($_POST["heslo"]);/* heslo zadané ve formuláři pro přihlašování */
-$login = strtolower($login);
- 
-$md5heslo = md5($heslo);/* Pomocí funkce md5() heslo zahashujeme */
-/* — SQL DOTAZ PRO OVĚŘENÍ PRAVOSTI PŘIHLAŠOVACÍH DAT V DATABÁZI A UŽIVATELEM ZADANÝCH — */
-$dotaz = mysql_query("select * from uzivatele where login = '$login' and heslo = '$md5heslo'");
-$overeni = mysql_num_rows($dotaz);
-$row = mysql_fetch_array($dotaz);
-// tady na tom makám  
-$dostupna_zkusebna = mysql_query("select * from uzivatele where login = '$login' and heslo = '$md5heslo'");
+include "connect.php";
 
-if(isset($_POST["navrat"])) {
-	   $adresa_pro_navrat = ($_POST["navrat"]); } 
-else {
-	   $adresa_pro_navrat = "/index.php"; 
-};
-	
-if($overeni == 1) {
-   
-    $_SESSION['login'] = stripslashes($login); 
-/* Zde se vytváří SESSION 'login', kterou se budeme prokazovat jako přihlášení */
-    $_SESSION['id'] = $row["id"];
-	$_SESSION['diskuse'] = $row["adresa_diskuse"];
-	$_SESSION['nazev'] = $row["cely_nazev"];
-	$_SESSION['vysledek'] = "přihlášen jako ".$_POST["nick"];
-	$_SESSION['befelemepesseveze'] = $row["hashedkapela"];
-    $_SESSION['prihlasen'] = true ;
-    $_SESSION['kapela'] =  stripslashes($login); 
+$adresa_pro_navrat = isset($_POST["navrat"]) ? $_POST["navrat"] : "/index.php";
 
-	
-	
-	 require "../navrat.php";
-	  
-    die();
+// Validace vstupů
+$login_raw = trim($_POST["nick"] ?? "");
+$heslo_raw = $_POST["heslo"] ?? "";
+
+if (empty($login_raw) || empty($heslo_raw)) {
+    $_SESSION['chyba_prihlaseni'] = "wrong_heslo";
+    require "../navrat.php";
+    exit;
+}
+
+$login    = strtolower($mysqli->real_escape_string($login_raw));
+$md5heslo = md5($heslo_raw);
+
+// Dotaz do databáze
+$dotaz  = $mysqli->query("SELECT * FROM uzivatele WHERE login = '$login' AND heslo = '$md5heslo'");
+$overeni = $dotaz ? $dotaz->num_rows : 0;
+
+if ($overeni === 1) {
+    $row = $dotaz->fetch_assoc();
+
+    $_SESSION['login']            = $login;
+    $_SESSION['id']               = $row["id"];
+    $_SESSION['diskuse']          = $row["adresa_diskuse"];
+    $_SESSION['nazev']            = $row["cely_nazev"];
+    $_SESSION['vysledek']         = "přihlášen jako " . $login_raw;
+    $_SESSION['befelemepesseveze'] = $row["hashedkapela"];
+    $_SESSION['prihlasen']        = true;
+    $_SESSION['kapela']           = $login;
+
+    // Regenerace session ID po přihlášení - ochrana proti session fixation
+    session_regenerate_id(true);
+
+    require "../navrat.php";
+    exit;
+
 } else {
-	$_SESSION['chyba_prihlaseni'] = "wrong_heslo";
-   // header("Location:https://www.virtualnizkusebna.cz" .$adresa_pro_navrat  );
-	  require "../navrat.php";
+    $_SESSION['chyba_prihlaseni'] = "wrong_heslo";
+    require "../navrat.php";
+    exit;
 }
 ?>
