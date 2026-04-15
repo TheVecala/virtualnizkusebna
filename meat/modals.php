@@ -300,64 +300,56 @@
      
     <!-- The Modal DELETE vál -->
 <div class="modal" id="modal_delete_val">
-  <div class="modal-dialog  ">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+  <div class="modal-dialog">
+    <div class="modal-content text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
-            <p id="modal_delete_val_label" class="modal-title"> žádná skladba </p>       
-		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <p id="modal_delete_val_label" class="modal-title">žádná skladba</p>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-      <!-- Modal body -->  
-	  
-      <div class="modal-body">	  
-	  
-	 	<form action="/php/smazat_val.php" method="post" enctype="multipart/form-data"  style="display:inline">
-	     		         
-					  <div class="form-group"  style="display:nonexxxx"> 
-						<input id="modal_delete_val_deleter" type="text" class="form-control"  value="vál ke smazání_nevložen " name="val_ke_smazani">
-					  </div>				
-										 							 
-					  <div class="form-group"  style="display:none"> 
-						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>		  		
-				<button  id= "nahrat" type="submit" class="btn btn-danger">odstranit celou skladbu</button>
-	            <p> Pozor! Smazat lze pouze prázdnou skladbu!   </p>
-	    </form>
-			 
-	    <form action="/php/prejmenovat_val.php" method="post" enctype="multipart/form-data"  style="display:inline">
-	
-   			<div class="form-group"  style="display:nonexxxxxxxxxxxx"> 
-			    <input id="modal_rename_val_renamer" type="text" class="form-control" value="<?php echo $slozka_slozek ?>" name="cesta_k_valu_k_prejmenovani">
-		    </div>	
-					  
-   		    <div class="form-group"  style="display:nonexxxxxxxxxxxx"> 
-				<input id="modal_rename_val_label" type="text" class="form-control" value="vál k prejmenovani_nevložen" 
-				  name="puvodni_jmeno_valu_k_prejmenovani">
-		    </div>					 
-					 
-  		    <div class="form-group"  style="display:nonexxxxxxxxxxxx"> 
-				<input id="modal_rename_val_label_novy" type="text" class="form-control" value="vál k prejmenovani_nevložen"
-     			  name="nove_jmeno_valu_k_prejmenovani">
-		    </div>					 
-					 
-					  <div class="form-group"  style="display:none"> 
-						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>		  		
-				<button  id= "nahrat" type="submit" class="btn btn-danger">přejmenovat</button> 
-	    </form>
-		 
-			 
-				
+      <!-- Modal body -->
+      <div class="modal-body">
+
+        <!-- Smazání válu -->
+        <form action="/php/smazat_val.php" method="post" style="display:inline">
+          <div class="form-group" style="display:none">
+            <input id="modal_delete_val_deleter" type="text" class="form-control" value="" name="val_ke_smazani">
+          </div>
+          <div class="form-group" style="display:none">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+          <button type="submit" class="btn btn-danger">odstranit celou skladbu</button>
+          <p>Pozor! Smazat lze pouze prázdnou skladbu!</p>
+        </form>
+
+        <hr>
+
+        <!-- Přejmenování válu -->
+        <form action="/php/prejmenovat_val.php" method="post" style="display:inline">
+          <div class="form-group" style="display:none">
+            <input id="modal_rename_val_label" type="text" class="form-control" value=""
+              name="puvodni_jmeno_valu_k_prejmenovani">
+          </div>
+          <div class="form-group">
+            <label for="modal_rename_val_label_novy">nový název skladby:</label>
+            <input id="modal_rename_val_label_novy" type="text" class="form-control" value=""
+              name="nove_jmeno_valu_k_prejmenovani" placeholder="nový název">
+          </div>
+          <div class="form-group" style="display:none">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+          <button type="submit" class="btn btn-warning">přejmenovat</button>
+        </form>
 
       </div>
-		<!-- Modal footer -->
-            <div class="modal-footer">	 
 
- 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	         
-            </div>
-	  
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">ZAVŘÍT</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -365,91 +357,62 @@
   
   <!-- The Modal presunout soubor-->
 <div class="modal" id="modal_presunout">
-  <div class="modal-dialog  ">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+  <div class="modal-dialog">
+    <div class="modal-content text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
 
       <!-- Modal Header -->
       <div class="modal-header">
-	      přesunout soubor
-		
+        přesunout soubor
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
       <!-- Modal body -->
-	  
-	 	<form action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data"  style="display:inline">
-	
-             <div class="modal-body">
-     		       
-                      <p id="modal_presunout_label" class="modal-title"  style="display:none">  Soubor   </p>     
-					 
-		              <div class="form-group"  style="display:none_xxxxxxxxxxxx">
-						<label for="presunout_co">přesunout:</label>
-						<input id="modal_presunout_co" type="text" class="form-control"  value="" name="presunout_co">
-				      </div> 
-					 
-                      <div class="form-group"  style="display:none">
-						<label for="presunout_odkud">presunout_odkud:</label>
-						<input id="modal_presunout_odkud" type="text" class="form-control"  value="soubor k přesunu nevložen" name="presunout_odkud">	
-					  </div> 
-					  
-					  <div class="form-group"  style="display:none_xxxxxxxxxxxx">
-						<label for="presunout_odkud_label">ze složky:</label>
-						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="<?php echo $slozka_souboru;?>" name="presunout_odkud_label">	
-					  </div>				
-						
-					  <div class="form-group">
-						  <label for="modal_presunout_kam">do složky:</label>
-						  <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
-						  
-						  
-		  		<?php 
-						for($x = 0; $x < $delka_pole_slozek; $x++) {
-						
-							  if ($pole_slozek[$x] == ".")  { continue; };
-							  if ($pole_slozek[$x] == "..")  { continue; };
-						      $soub = ($slozka_slozek.$pole_slozek[$x]);
-						      $label_soub = "test";
-						      $label_soub = ($pole_slozek[$x]);  
-							  
-						      if(is_dir($soub))
-								
-								{    echo   	"<option>".$pole_slozek[$x]."</option>" ; }
-						}
-				?>
-							
-						  </select>
-					  </div> 
-	
-					  <div class="form-group"  style="display:none">
-						<label for="presunout_cesta">přesunout cesta:</label>
-						<input id="modal_presunout_odkud_label" type="text" class="form-control"  value="../user/silentroom/338786519/uploads/" name="presunout_cesta">	
-					  </div>				
-	
-					  
-						
-					  <div class="form-group"  style="display:none">
-						<label for="navrat">navrat:</label>
-						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>
-			 						
-				
-			  		
-            </div>	  
+      <form action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data" style="display:inline">
+        <div class="modal-body">
 
-      <!-- Modal footer -->
-            <div class="modal-footer">
-	  						 
-				<button  id= "presun" type="submit" class="btn btn-primary">PŘESUNOUT</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	 
-	  
- 
-        
+          <p id="modal_presunout_label" class="modal-title">Soubor</p>
+
+          <div class="form-group" style="display:none">
+            <input id="modal_presunout_co" type="text" class="form-control" value="" name="presunout_co">
           </div>
-	   </form>
+
+          <div class="form-group" style="display:none">
+            <input id="modal_presunout_odkud" type="text" class="form-control" value="" name="presunout_odkud">
+          </div>
+
+          <div class="form-group">
+            <label for="modal_presunout_kam">do složky:</label>
+            <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
+            <?php
+            for($x = 0; $x < $delka_pole_slozek; $x++) {
+                if ($pole_slozek[$x] == ".")  { continue; }
+                if ($pole_slozek[$x] == "..")  { continue; }
+                $soub = ($slozka_slozek.$pole_slozek[$x]);
+                if(is_dir($soub)) {
+                    $selected = ($pole_slozek[$x] == $slozka_souboru) ? ' selected' : '';
+                    echo "<option".$selected.">".htmlspecialchars($pole_slozek[$x])."</option>";
+                }
+            }
+            ?>
+            </select>
+          </div>
+
+          <div class="form-group" style="display:none">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+
+        </div>
+
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">PŘESUNOUT</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+        </div>
+      </form>
     </div>
   </div>
-</div>  
+</div>
+
 
     <!-- The Modal nahrat_zvuk -->
 <div class="modal" id="modal_nahrat_zvuk">

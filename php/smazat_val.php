@@ -1,46 +1,61 @@
 <?php session_start(); ?>
 <?php
- 
-$target_dir =  "../" .($_POST["val_ke_smazani"]);
-$adresa_pro_navrat =    ($_POST["navrat"]);
-  
-if (is_dir($target_dir)) {
-	
-	$slozka = scandir($target_dir);
-	$pocet = count($slozka);
-    
-	
- if ( $pocet < 5 ) {	
-    
-	// vyřesit soubory
-	unlink($target_dir."/texty/akordy.txt"); 
-	rmdir($target_dir."/texty");
-	unlink($target_dir."/data/nazev_valu.txt");
-	rmdir($target_dir."/data");
-	
-	// smazat diskusi
-	
-	
-	rmdir($target_dir);
-	
-	//přepnout na jinej vál
-	if ($_SESSION['slozka_souboru_k_zobrazeni'] = $_POST["val_ke_smazani"]) 	
-	{      $_SESSION['slozka_souboru_k_zobrazeni'] = "slozka_smazana";
-	};
-	$_SESSION['vysledek'] = " vál smazán ";
- }
- 
-   else {
-    
-        $_SESSION['vysledek'] = " chyba - vál není prázdný ";
-    };
-	
+
+$val_ke_smazani    = $_POST["val_ke_smazani"] ?? "";
+$adresa_pro_navrat = $_POST["navrat"]         ?? "/";
+
+// Ochrana proti path traversal
+if (empty($val_ke_smazani) || strpos($val_ke_smazani, "..") !== false) {
+    $_SESSION['vysledek'] = "chyba - neplatný název válu";
+    require "navrat.php";
+    exit;
 }
- 
-   else {
-    
-        $_SESSION['vysledek'] = " chyba - vál nebyl smazán ";
-    };
-  require "navrat.php";
+
+// Cesta se sestavuje ze SESSION, ne z POST
+$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/";
+$target_dir   = "../" . $cesta_slozek . $val_ke_smazani;
+
+if (!is_dir($target_dir)) {
+    $_SESSION['vysledek'] = "chyba - vál neexistuje";
+    require "navrat.php";
+    exit;
+}
+
+$slozka = scandir($target_dir);
+$pocet  = count($slozka); // . a .. jsou vždy 2, texty a data jsou 2 = celkem 4
+
+if ($pocet > 4) {
+    $_SESSION['vysledek'] = "chyba - vál není prázdný, nejdříve smažte nahrávky";
+    require "navrat.php";
+    exit;
+}
+
+// Smazání podsložky texty
+if (file_exists($target_dir . "/texty/akordy.txt")) {
+    unlink($target_dir . "/texty/akordy.txt");
+}
+if (is_dir($target_dir . "/texty")) {
+    rmdir($target_dir . "/texty");
+}
+
+// Smazání podsložky data
+if (file_exists($target_dir . "/data/nazev_valu.txt")) {
+    unlink($target_dir . "/data/nazev_valu.txt");
+}
+if (is_dir($target_dir . "/data")) {
+    rmdir($target_dir . "/data");
+}
+
+// Smazání samotného válu
+if (rmdir($target_dir)) {
+    // Přepnout na jinou složku pokud byl smazán aktuálně zobrazený vál
+    if ($_SESSION['slozka_souboru_k_zobrazeni'] == $val_ke_smazani) {
+        $_SESSION['slozka_souboru_k_zobrazeni'] = "slozka_smazana";
+    }
+    $_SESSION['vysledek'] = "vál \"" . $val_ke_smazani . "\" byl smazán";
+} else {
+    $_SESSION['vysledek'] = "chyba - vál se nepodařilo smazat";
+}
+
+require "navrat.php";
 ?>
- 
