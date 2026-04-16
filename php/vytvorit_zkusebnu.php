@@ -1,105 +1,92 @@
-<?php session_start();  ?>
+<?php session_start(); ?>
 <?php
+include "login/connect.php";
+
+$adresa_pro_navrat = $_POST["navrat"] ?? "/";
+
+// Validace vstupů
+$nick        = trim($_POST["nick"]           ?? "");
+$jmeno_zkus  = trim($_POST["jmeno_zkusebny"] ?? "");
+$heslo       = $_POST["heslo"]               ?? "";
+$over_heslo  = $_POST["over_heslo"]          ?? "";
+$email       = trim($_POST["email"]          ?? "");
+$target_dir  = trim($_POST["jmeno_adresare"] ?? "");
+
+if (empty($nick)) {
+    $_SESSION['vysledek'] = "chyba - nebyl vyplněn nick";
+    require "navrat.php"; exit;
+}
+if (empty($jmeno_zkus)) {
+    $_SESSION['vysledek'] = "chyba - nebyl vyplněn název zkušebny";
+    require "navrat.php"; exit;
+}
+if (empty($heslo)) {
+    $_SESSION['vysledek'] = "chyba - nebylo vyplněno heslo";
+    require "navrat.php"; exit;
+}
+if ($heslo !== $over_heslo) {
+    $_SESSION['vysledek'] = "chyba - hesla se neshodují";
+    require "navrat.php"; exit;
+}
+if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $_SESSION['vysledek'] = "chyba - neplatný email";
+    require "navrat.php"; exit;
+}
+
+// Ověření unikátnosti nicku
+$nick_db = $mysqli->real_escape_string($nick);
+$user_check = $mysqli->query("SELECT login FROM uzivatele WHERE login = '$nick_db'");
+if ($user_check && $user_check->num_rows > 0) {
+    $_SESSION['vysledek'] = "chyba - tento nick již používá jiný uživatel";
+    require "navrat.php"; exit;
+}
+
+// Vytvoření složek
 $koren = "../user/";
-$target_dir = ($_POST["jmeno_adresare"]);
-$adresa_pro_navrat = ($_POST["navrat"]); 
-// $adresa_pro_navrat = ($_POST["navrat"]);  
- $databaze = true;
- 
-if   ( $databaze )      
-                    { 
-					if(isset($_POST["jmeno_zkusebny"])) 
-						{   if (mkdir($koren.($_POST["jmeno_zkusebny"])))
-							 {  if (mkdir($koren.($_POST["jmeno_zkusebny"])."/uploads/" ))
-								 {   if (mkdir($koren.($_POST["jmeno_zkusebny"])."/uploads/".$target_dir))
-									 {	$_SESSION['vysledek'] = "vytvořeno"; 
-										$_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["jmeno_adresare"]);
-										$_SESSION['kapela'] = ($_POST["jmeno_zkusebny"]);
-										$_SESSION['login'] = ($_POST["jmeno_zkusebny"]);
-										
-									  // copy("../test/index.php","../".$adresa_pro_navrat."/index.php");
-						 
-									 } else  
-									   { $_SESSION['vysledek'] = "chyba - složka nebyla vytvořena"; 
-										 $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-									   }
-				             }
-			             }else  
-					    { $_SESSION['vysledek'] = "chyba - složka uploads nebyla vytvořena"; 
-					 	 $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-						 session_destroy(); 
-									   }
-		    } else  
-		        { $_SESSION['vysledek'] = "chyba - složka zkušebny nebyla vytvořena x"; 
-			 	  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-									   }
-	  
-      } else  
-	    { $_SESSION['vysledek'] = "chyba - registrace kapely nebyla vytvořena"; 
-		  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-									   };
-	 
-  // sem vložit vytvoření hesla
-  ?>
- 
-  <?php
-include "login/connect.php"; // přidat ověření nebo require
-if( $_SESSION['vysledek'] == "vytvořeno"  ) {
-    $nick = mysql_real_escape_string($_POST['nick']);
-    $heslo = mysql_real_escape_string($_POST['heslo']);
-    $over_heslo = mysql_real_escape_string($_POST['over_heslo']);
-    $md5_heslo = md5($heslo);
-    $email = mysql_real_escape_string($_POST['email']);
-    $adresa_diskuse = 'diskuse_'. mysql_real_escape_string($_POST['nick']).'_123456789';
-  
-    $user_check = mysql_query("SELECT login FROM uzivatele WHERE login='".$nick."'");
-    if($nick==""){echo"Nebyl vyplněn nick!";}
-    else if(mysql_num_rows($user_check)){echo"Tento nick používá již jiný uživatel.";}
-    else if($heslo==""){echo"Nebylo vyplněno heslo";}
-    else if($over_heslo==""){echo"Nebylo vyplněno ověřovací heslo";}
-    else if($heslo!=$over_heslo){echo"Vyplněná hesla se neshodují";}
-    else if($email==""){echo"Nebyl vyplněn email";}
-    else{
-        $sql= mysql_query("INSERT INTO uzivatele VALUES ('','$nick','$md5_heslo','','$email','','$adresa_diskuse')") or die(mysql_error());
-        echo"Registrace byla úspěšně dokončena!";
-		$_SESSION['vysledek'] = "Registrace učtu byla úspěšně dokončena!"; 
+$slozky = [
+    $koren . $jmeno_zkus,
+    $koren . $jmeno_zkus . "/uploads/",
+    $koren . $jmeno_zkus . "/uploads/" . $target_dir,
+];
+
+foreach ($slozky as $slozka) {
+    if (!mkdir($slozka)) {
+        $_SESSION['vysledek'] = "chyba - nepodařilo se vytvořit složku: " . basename($slozka);
+        session_destroy();
+        require "navrat.php"; exit;
     }
-};
- 
-if( $_SESSION['vysledek'] == "Registrace učtu byla úspěšně dokončena!"  ) {
-	
-	// vytvoření tabulek
- 
-$cas= time();
-$jmeno= "admin";
-$vzkaz= "Sem je možno vkládat odkazy na vály, názory a jiný věci";
-// $adresa_diskuse=  "diskuse_pokus5" ;
- 
- 
-  //vytvoření tabulky funguje
-   mysql_query("CREATE TABLE $adresa_diskuse (
-cas INT(11) NOT NULL,
-vzkaz text NOT NULL,
-jmeno VARCHAR(50) NOT NULL
+}
+
+// Vložení uživatele do DB
+$md5_heslo      = md5($heslo);
+$email_db       = $mysqli->real_escape_string($email);
+$adresa_diskuse = "diskuse_" . $nick_db . "_123456789";
+
+$sql = $mysqli->query("INSERT INTO uzivatele VALUES
+    ('', '$nick_db', '$md5_heslo', '', '$email_db', '', '$adresa_diskuse')");
+
+if (!$sql) {
+    $_SESSION['vysledek'] = "chyba - registrace do DB selhala: " . $mysqli->error;
+    require "navrat.php"; exit;
+}
+
+// Vytvoření tabulky diskuse kapely
+$cas   = time();
+$vzkaz = $mysqli->real_escape_string("Sem je možno vkládat odkazy na vály, názory a jiný věci");
+$mysqli->query("CREATE TABLE IF NOT EXISTS `$adresa_diskuse` (
+    cas   INT(11)     NOT NULL,
+    vzkaz TEXT        NOT NULL,
+    jmeno VARCHAR(50) NOT NULL
 )");
-  
- //vložení do tabulky funguje
-  $vysledek=mysql_query("insert into $adresa_diskuse (cas, vzkaz, jmeno) values ('$cas', '$vzkaz', '$jmeno')");
-	
-	
-		$_SESSION['vysledek'] = "vytvoření tabulek bylo úspěšně dokončeno!"; 
-	    $_SESSION['diskuse'] = $adresa_diskuse ;
-	
-  } else  
-	    { $_SESSION['vysledek'] = "chyba - vytvoření tabulek nebyla vytvořena"; 
-		  $_SESSION['slozka_souboru_k_zobrazeni'] =  "./";
-									   };
-  
-  // if vytvoření učtu and vytvoření adresáře and vytvoření tabulek then návrat 
-  // if chyba then smazat vytvořené a návrat 
- 
-  
-    
-header("Location:https://virtualnizkusebna.cz" .$adresa_pro_navrat  ); 
- 
+$mysqli->query("INSERT INTO `$adresa_diskuse` (cas, vzkaz, jmeno)
+    VALUES ('$cas', '$vzkaz', 'admin')");
+
+// Nastavení SESSION
+$_SESSION['login']   = $nick;
+$_SESSION['kapela']  = $nick;
+$_SESSION['diskuse'] = $adresa_diskuse;
+$_SESSION['slozka_souboru_k_zobrazeni'] = $target_dir;
+$_SESSION['vysledek'] = "Registrace zkušebny byla úspěšně dokončena!";
+
+require "navrat.php";
 ?>

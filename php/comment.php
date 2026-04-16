@@ -1,49 +1,41 @@
-<!doctype html>
-<html lang="cz">
-  <head> 
-    <meta charset="utf-8">
-    
-	 
-  </head>
-   <body>
 <?php
- session_start();
-mysql_connect("localhost", "hanakdusan", "serepes6");
-mysql_select_db("18810_virtualni_zkusebna");
-mysql_set_charset("utf8"); 
+session_start();
+header('Content-Type: text/html; charset=utf-8');
 
-// vytvoření komentaře sloučením textu a odkazů z formuláře
+// Připojení k DB přes sdílený connect
+$db_server   = 'localhost';
+$db_login    = 'hanakdusan';
+$db_password = 'serepes6';
+$db_name     = '18810_virtualni_zkusebna';
 
-   $komentar= '<p>'.$_POST["vzkaz"].'</p>'.'<a href=" '. $_POST["odkaz"] . '">'.  $_POST["odkaz"].' </a> ' ;
- 
-  //  $komentar= '<p>žlutý kůň </p>  ' ;
+$mysqli = new mysqli($db_server, $db_login, $db_password, $db_name);
+if ($mysqli->connect_error) {
+    http_response_code(500);
+    exit;
+}
+$mysqli->set_charset("utf8");
 
+// Validace session
+if (empty($_SESSION['diskuse'])) {
+    http_response_code(403);
+    exit;
+}
 
-// uložení do databaze 
+// Sestavení komentáře
+$vzkaz  = htmlspecialchars(trim($_POST["vzkaz"] ?? ""), ENT_QUOTES);
+$odkaz  = htmlspecialchars(trim($_POST["odkaz"] ?? ""), ENT_QUOTES);
+$jmeno  = htmlspecialchars(trim($_POST["jmeno"] ?? "Anonym"), ENT_QUOTES);
 
-  if(isset($_SESSION['diskuse']))
-	   {   $aktualni_diskuse =$_SESSION['diskuse'];
-    } else { $aktualni_diskuse=  "diskuse_kapela1" ; } ; 
-	
-  $vysledek=mysql_query("insert into $aktualni_diskuse (cas, vzkaz, jmeno) values (".time().",'". $komentar."','".$_POST["jmeno"]."')");
-  
-//  odeslani na maily 
-  // $maily=mysql_query("select mail from maily_carvadele /*order by cas desc*/") ;
- 
-  // while ($adresa=MySQL_Fetch_Array($maily))
-  // {
-   
-   // $textmailu="".$_POST["jmeno"]." napsal do diskuse:  
-   // ".$_POST["vzkaz"]."
-   // /bohuzel se prozatim v techto automatickych mailech zobrazuje spatne diakritika/
-   // /spravne zneni primo na diskuzi - www.carvadele.cz/zkusebna";
-   
-   
-// mail($adresa["mail"], "novy prispevek v diskuzi Carvadele",$textmailu,"From:automat_z_diskuse@carvadele.cz");
+$komentar = '<p>' . $vzkaz . '</p>';
+if (!empty($odkaz)) {
+    $komentar .= '<a href="' . $odkaz . '">' . $odkaz . '</a>';
+}
 
-  // }
+$aktualni_diskuse = $mysqli->real_escape_string($_SESSION['diskuse']);
+$komentar_db      = $mysqli->real_escape_string($komentar);
+$jmeno_db         = $mysqli->real_escape_string($jmeno);
+$cas              = time();
 
+$mysqli->query("INSERT INTO `$aktualni_diskuse` (cas, vzkaz, jmeno)
+    VALUES ('$cas', '$komentar_db', '$jmeno_db')");
 ?>
-
- </body>
-</html>
