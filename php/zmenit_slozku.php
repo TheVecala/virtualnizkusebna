@@ -1,17 +1,27 @@
-<?php session_start();  ?>
+<?php session_start(); ?>
 <?php
- $_SESSION['slozka_souboru_k_zobrazeni'] = ($_POST["cilova_slozka"]);
- 
- 
-// $adresa_pro_navrat = ($_POST["navrat"]);  
-   $adresa_pro_navrat = "/simple_text.php";  
 
+$adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
-$_SESSION['vysledek'] = "zmenena slozka"; 
+$cilova_slozka = $_POST["cilova_slozka"] ?? "";
 
- 
- 
-  
-  require "navrat.php";
+// Ochrana proti path traversal
+if (empty($cilova_slozka) || strpos($cilova_slozka, "..") !== false || strpos($cilova_slozka, "/") !== false) {
+    $_SESSION['vysledek'] = "chyba - neplatný název složky";
+    require "navrat.php";
+    exit;
+}
+
+// Ověření že složka skutečně existuje pro tohoto uživatele
+$cesta = "../user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/" . $cilova_slozka;
+if (!is_dir($cesta)) {
+    $_SESSION['vysledek'] = "chyba - složka neexistuje";
+    require "navrat.php";
+    exit;
+}
+
+$_SESSION['slozka_souboru_k_zobrazeni'] = $cilova_slozka;
+$_SESSION['vysledek'] = "změněna složka";
+
+require "navrat.php";
 ?>
- 

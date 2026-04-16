@@ -2,7 +2,7 @@
       <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" style="padding:0px">
 
 
-		      <div style="display: inlinexxxxxx; color:white; background-color: #343a40; padding:3px; ">
+		      <div style="display: inline; color:white; background-color: #343a40; padding:3px; ">
 					   			   	
 						 <div class=" " style="text-align: left;"> 
 							  <div  style="text-align:left; display: inline ;" >

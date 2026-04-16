@@ -1,4 +1,4 @@
-		      <div style="display: inlinexxxxxx; color:white; background-color: #343a40; padding:3px; ">
+		      <div style="display: inline; color:white; background-color: #343a40; padding:3px; ">
 					   			   	
 						 <div class="dropdown" style="text-align: left;"> 
 							  <div  style="text-align:left; display: inline ;" >

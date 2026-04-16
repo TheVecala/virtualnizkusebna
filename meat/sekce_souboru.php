@@ -114,7 +114,7 @@
 				</div> <!--  konec vypis souboru   --> 	
 		  </div>	 <!--  konec vysuvka   --> 
 		  
-      <?php if ($delka_pole_souboru < 5	) 
+      <?php if ($delka_pole_souboru < 3) 
 		{ ?>
 	   	
 	      <div class="card  text-white" style="margin-bottom: 3px;" > 
