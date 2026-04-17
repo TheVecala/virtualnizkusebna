@@ -64,47 +64,40 @@ if(isset($_SESSION['befelemepesseveze']))
 <?php
  
 
- if($kapela!="kapela nenastavena"){  
-	$slozka_slozek ="user/". $kapela."/".$befelemepesseveze."/".$sekce."/"; 	 	
-	$pole_slozek = scandir($slozka_slozek);
-	$delka_pole_slozek = count($pole_slozek);} 
-else { $slozka_slozek ="složka kapely nenastavena"; 
-	$pole_slozek = "empty";
-	$delka_pole_slozek = 0;} ;
-	
+ if ($kapela != "kapela nenastavena") {
+    $slozka_slozek    = "user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/";
+    $pole_slozek      = scandir($slozka_slozek);
+    $delka_pole_slozek = count($pole_slozek);
+} else {
+    $slozka_slozek    = "složka kapely nenastavena";
+    $pole_slozek      = [];
+    $delka_pole_slozek = 0;
+};
 
+// Nastavení aktuální složky
+if (isset($_SESSION['slozka_souboru_k_zobrazeni']))
+    { $slozka_souboru = $_SESSION['slozka_souboru_k_zobrazeni']; }
+else { $slozka_souboru = $pole_slozek[2] ?? ""; };
 
+// Pokud byla složka smazána, přepnout na první dostupnou
+if ($_SESSION['slozka_souboru_k_zobrazeni'] == "slozka_smazana") {
+    $slozka_souboru = $pole_slozek[2] ?? "";
+    $_SESSION['slozka_souboru_k_zobrazeni'] = $slozka_souboru;
+};
 
-   // zmenit na   if is in pole složek zobrazit else nastavit prvni slozku
-   
-   
- if(isset($_SESSION['slozka_souboru_k_zobrazeni']))
-  {   $slozka_souboru= $_SESSION['slozka_souboru_k_zobrazeni'];
-  } else { $slozka_souboru=  $pole_slozek[2] ; } ; // první složku z vypisu, přeskakuje dvojtečku a tečku   
-   
- if ( $_SESSION['slozka_souboru_k_zobrazeni']=="slozka_smazana"      )
-  {  $slozka_souboru=  $pole_slozek[2] ;
-      $_SESSION['slozka_souboru_k_zobrazeni'] = $pole_slozek[2] ;
-  };   
-   
-   
-   
-   
-   
-   
-   
-   // cyklus for pro ověření složky
-   $platna_slozka = true ; //prozatím, než bude ověřována z databáze
-   for($x = 0; $x < $delka_pole_slozek; $x++) 
-      {
-	  if ($pole_slozek[$x] == $slozka_souboru)  {$platna_slozka = true;};
-      } ;
-   
- if ( $platna_slozka = true   )  {    
-     $pole_souboru = scandir($slozka_slozek.$slozka_souboru);  //chybí podmínka pro existenci slozky slozek
-     $delka_pole_souboru = count($pole_souboru);  } 
-else {$pole_souboru = "empty" ;
-	  $delka_pole_souboru = 0; }  ;
+// Ověření složky v seznamu
+$platna_slozka = false;
+for ($x = 0; $x < $delka_pole_slozek; $x++) {
+    if ($pole_slozek[$x] == $slozka_souboru) { $platna_slozka = true; break; }
+};
+
+if ($platna_slozka == true && is_dir($slozka_slozek . $slozka_souboru)) {
+    $pole_souboru      = scandir($slozka_slozek . $slozka_souboru);
+    $delka_pole_souboru = count($pole_souboru);
+} else {
+    $pole_souboru      = [];
+    $delka_pole_souboru = 0;
+};
 ?>
 
 

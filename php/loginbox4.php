@@ -82,8 +82,8 @@ body {
 		  
 			<?php
 			 
-			if ($_SESSION['chyba_prihlaseni'] == "wrong_heslo") { 
-			 echo ' <div id="spatne_heslo" class=" " style="color:red"> Špatný jméno nebo heslo  </div> ';
+			if (isset($_SESSION['chyba_prihlaseni']) && $_SESSION['chyba_prihlaseni'] == "wrong_heslo") { 
+			 echo ' <div id="spatne_heslo" class=" " style="color:red"> Špatné jméno nebo heslo  </div> ';
 			 $_SESSION['chyba_prihlaseni'] = "";
 			 } ;
 			 ?>

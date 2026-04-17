@@ -222,7 +222,7 @@ td  {
 		 <div class="row">
 		 
 		 	   <!--  nulty sloupec   --> 
-			   <div id="wave_jumbo"  style="display:nonexxxxx ;  margin-bottom: 5px; "  class="col-md-12"> 
+			   <div id="wave_jumbo"  style="display:none ;  margin-bottom: 5px; "  class="col-md-12"> 
 					<?php 	  require "meat/sekce_looper.php";	?>								
 			   </div>   <!-- konec nulty sloupec   --> 
 			   
