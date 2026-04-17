@@ -81,7 +81,7 @@ if (isset($_SESSION['slozka_souboru_k_zobrazeni']))
 else { $slozka_souboru = $pole_slozek[2] ?? ""; };
 
 // Pokud byla složka smazána, přepnout na první dostupnou
-if ($_SESSION['slozka_souboru_k_zobrazeni'] == "slozka_smazana") {
+ if (isset( $_SESSION['slozka_souboru_k_zobrazeni']) && $_SESSION['slozka_souboru_k_zobrazeni'] == "slozka_smazana") {
     $slozka_souboru = $pole_slozek[2] ?? "";
     $_SESSION['slozka_souboru_k_zobrazeni'] = $slozka_souboru;
 };
