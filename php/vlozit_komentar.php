@@ -28,7 +28,7 @@ if (!empty($odkaz2)) {
 // Název tabulky diskuse ze SESSION
 $kapela  = $mysqli->real_escape_string($_SESSION['kapela']);
 $slozka  = $mysqli->real_escape_string($_SESSION['slozka_souboru_k_zobrazeni']);
-$aktualni_diskuse = 'diskuse_' . $kapela . '_' . $slozka;
+$aktualni_diskuse = 'diskuse_' . $kapela . '_123456789';
 
 $cas      = time();
 $komentar_db = $mysqli->real_escape_string($komentar);
