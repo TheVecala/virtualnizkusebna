@@ -198,29 +198,31 @@
       <div class="modal-body">
      	 
 	 <!--<h1>Vložení komentáře</h1>-->
-	 <form id="form" name="form" method="post" action="php/vlozit_komentar.php">
- 
- <div class="form-group">
-    <label for="text">Text:</label>
-    <textarea type="text" class="form-control" name="text"></textarea>
+	 <form id="form_komentar">
+
+  <div class="form-group">
+    <label>Text:</label>
+    <textarea class="form-control" id="komentar_text" name="text" rows="5"></textarea>
   </div>
 
   <div class="form-group">
-    <label for="odkaz">Odkaz (pokud chceš):</label>
-    <input type="text" class="form-control" name="odkaz">
+    <label>Odkaz (pokud chceš):</label>
+    <input type="text" class="form-control" id="komentar_odkaz" name="odkaz">
   </div>
-  
-   <div class="form-group">
-    <label for="odkaz2">youtube odkaz (pokud chceš):</label>
-    <input type="text" class="form-control" name="odkaz2">
-   </div>
-  
+
   <div class="form-group">
-    <label for="name">Jméno:</label>
-    <input type="text" class="form-control" name="name">
+    <label>YouTube odkaz (pokud chceš):</label>
+    <input type="text" class="form-control" id="komentar_odkaz2" name="odkaz2">
   </div>
-  
-  <button  id= "odeslat" type="submit" class="btn btn-primary">ULOŽIT</button>
+
+  <div class="form-group">
+    <label>Jméno:</label>
+    <input type="text" class="form-control" id="komentar_jmeno" name="name">
+  </div>
+
+  <div id="komentar_chyba" style="color:red; display:none"></div>
+
+  <button type="submit" class="btn btn-primary">ULOŽIT</button>
 </form> 
 	 
       </div>

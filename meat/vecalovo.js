@@ -17,24 +17,46 @@ $(document).ready(function(){
     $("iframe").css({"height": "150px", "width": "100%"});
 
     // ---- AJAX komentář ----
-    $('#odeslat').click(function() {
-        $.post("php/comment.php",
-            {
-                vzkaz: $('#text').val(),
-                odkaz: $('#odkaz').val(),
-                jmeno: $('#name').val(),
-            },
-            function(data){
-                var html = '<br><span class="datum" style="color:green; font-size:0.9em"> Tvoje čerstvá věc právě teď:</span><br>';
-                html += '<span class="vzkaz">' + $('#text').val() + '</span><br>';
-                html += '<span class="vzkaz">' + $('#odkaz').val() + '</span><br>';
-                html += '<span class="jmeno">' + $('#name').val() + '</span>';
-                $('#prispevek').prepend($(html));
-                $('#text').val("");
-                $('#name').val("");
+    $('#form_komentar').submit(function(e) {
+        e.preventDefault();
+        var chyba = document.getElementById("komentar_chyba");
+        if (chyba) chyba.style.display = "none";
+
+        $.post("php/vlozit_komentar.php", {
+            text:   $('#komentar_text').val(),
+            odkaz:  $('#komentar_odkaz').val(),
+            odkaz2: $('#komentar_odkaz2').val(),
+            name:   $('#komentar_jmeno').val(),
+        }, function(data) {
+            if (data.ok) {
+                // Vložit nový příspěvek na začátek seznamu
+                var html = '<li class="list-group-item vzkaz_karta" style="background-color:#ffffff59;">';
+                html += '<span class="vzkaz">' + data.vzkaz + '</span>';
+                html += '<div style="text-align:right;">';
+                html += '<span style="font-size:0.6em;">VLOŽIL:&nbsp;</span>';
+                html += '<span style="font-size:0.9em;">' + data.jmeno + '&nbsp;</span>';
+                html += '<span style="font-size:0.6em;">' + data.datum + '</span>';
+                html += '</div></li>';
+                $('#prispevek .list-group').prepend(html);
+
+                // Vyčistit formulář a zavřít modal
+                $('#komentar_text').val('');
+                $('#komentar_odkaz').val('');
+                $('#komentar_odkaz2').val('');
+                $('#komentar_jmeno').val('');
+                $('#modal_vlozit_komentar').modal('hide');
+            } else {
+                if (chyba) {
+                    chyba.innerHTML = data.chyba || "Chyba při ukládání";
+                    chyba.style.display = "block";
+                }
             }
-        );
-        return false;
+        }, "json").fail(function() {
+            if (chyba) {
+                chyba.innerHTML = "Chyba spojení se serverem";
+                chyba.style.display = "block";
+            }
+        });
     });
 
     $(".modal_open").click(function(){
