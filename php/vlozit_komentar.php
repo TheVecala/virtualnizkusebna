@@ -1,13 +1,15 @@
 <?php
 session_start();
+// Potlačit warningy aby nezkazily JSON výstup
+error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
-include "login/connect.php";
-
-if (empty($_SESSION['kapela']) || empty($_SESSION['slozka_souboru_k_zobrazeni'])) {
+if (empty($_SESSION['login'])) {
     echo json_encode(["ok" => false, "chyba" => "Nejste přihlášen"]);
     exit;
 }
+
+include "login/connect.php";
 
 $text   = htmlspecialchars(trim($_POST["text"]   ?? ""), ENT_QUOTES);
 $odkaz  = htmlspecialchars(trim($_POST["odkaz"]  ?? ""), ENT_QUOTES);
@@ -27,9 +29,14 @@ if (!empty($odkaz2)) {
     $komentar .= ' ' . $odkaz2;
 }
 
-$kapela  = $mysqli->real_escape_string($_SESSION['kapela']);
-$slozka  = $mysqli->real_escape_string($_SESSION['slozka_souboru_k_zobrazeni']);
-$aktualni_diskuse = 'diskuse_' . $kapela . '_' . $slozka;
+// Používáme hlavní kapelovou diskusi - vždy existuje, nastavuje se při přihlášení
+// Diskuse per-vál bude přidána až budou doděláno vytváření tabulek pro každý vál
+if (empty($_SESSION['diskuse'])) {
+    echo json_encode(["ok" => false, "chyba" => "Diskuse není nastavena, zkuste se odhlásit a přihlásit znovu"]);
+    exit;
+}
+
+$aktualni_diskuse = $mysqli->real_escape_string($_SESSION['diskuse']);
 
 $cas         = time();
 $komentar_db = $mysqli->real_escape_string($komentar);

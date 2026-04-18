@@ -22,7 +22,7 @@ $(document).ready(function(){
         var chyba = document.getElementById("komentar_chyba");
         if (chyba) chyba.style.display = "none";
 
-        $.post("php/vlozit_komentar.php", {
+        $.post("/php/vlozit_komentar.php", {
             text:   $('#komentar_text').val(),
             odkaz:  $('#komentar_odkaz').val(),
             odkaz2: $('#komentar_odkaz2').val(),
