@@ -2,6 +2,7 @@
 session_start();
 session_unset();
 session_destroy();
+$adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
 // Smazat session cookie
 if (ini_get("session.use_cookies")) {
