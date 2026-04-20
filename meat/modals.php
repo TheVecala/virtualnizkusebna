@@ -445,52 +445,44 @@
 
       <!-- Modal Header -->
       <div class="modal-header">
-	  					     <?php     
-						 $aktualni_text_s_cestou = $slozka_slozek.$slozka_souboru."/texty/".$aktualni_text;
-                      	 $akordy = fopen($aktualni_text_s_cestou, "r") or die("SOUBOR S TEXTEM NEEXISTUJE!");
-	                     echo "<p>UPRAVIT ".$aktualni_text. " ze složky ".$slozka_souboru."</p>";
-						 ?>
-           
-		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+		  <?php
+		  $aktualni_text_s_cestou = $slozka_slozek . $slozka_souboru . "/texty/" . $aktualni_text;
+		  echo "<p>UPRAVIT " . htmlspecialchars($aktualni_text) . " ze složky " . htmlspecialchars($slozka_souboru) . "</p>";
+		  ?>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-      <!-- Modal body -->  
-	     <form action="/php/vlozit_akordy.php" method="post" enctype="multipart/form-data"  style="display:inline">
+      <!-- Modal body -->
+	     <form action="/php/vlozit_akordy.php" method="post" enctype="multipart/form-data" style="display:inline">
              <div class="modal-body">
-     	    	<div class="container text-center"> 
-				
-                     <span class="vzkaz" > 
-
-					   <div class="form-group"  style="display:none">
-						<label for="soubor_akordu">uložit do:</label>
-						<input id="" type="text" class="form-control"  value="<?php echo $aktualni_text_s_cestou ; ?>" name="soubor_akordu">
+     	    	<div class="container text-center">
+                     <span class="vzkaz">
+					   <div class="form-group" style="display:none">
+						<input type="text" class="form-control" value="<?php echo htmlspecialchars($aktualni_text); ?>" name="soubor_akordu">
 					  </div>
-					  
-						 
-					     <textarea id="editor" name="editor" style="overflow-x: auto; font-family: Courier, monospace; width:100%"  rows="20"  ><?php  // pozor na mezery
-	    
-						while(!feof($akordy)) {
-						  echo fgets($akordy);
-						};
-						fclose($akordy);   // pozor na mezery
+
+					  <?php if (file_exists($aktualni_text_s_cestou)): ?>
+					     <textarea id="editor" name="editor" style="overflow-x:auto; font-family:Courier,monospace; width:100%" rows="20"><?php
+						    $akordy = fopen($aktualni_text_s_cestou, "r");
+							while (!feof($akordy)) { echo fgets($akordy); }
+							fclose($akordy);
 						 ?></textarea>
-						 
-				     </span>					 
-				 
-               </div>	
+					  <?php else: ?>
+					     <div class="alert alert-warning">Soubor <?php echo htmlspecialchars($aktualni_text); ?> neexistuje.</div>
+					  <?php endif; ?>
 
-
-                      <div class="form-group"  style="display:none">
-						<label for="navrat">navrat:</label>
+				     </span>
+               </div>
+                      <div class="form-group" style="display:none">
 						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>			   
-            </div>	  
+					  </div>
+            </div>
 
       <!-- Modal footer -->
-            <div class="modal-footer">	 
- 			   <p  > Pozor! Přepíše původní text.</p>
-				<button  id= "" type="submit" class="btn btn-danger">uložit změny</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	        
+            <div class="modal-footer">
+ 			   <p>Pozor! Přepíše původní text.</p>
+				<button type="submit" class="btn btn-danger">uložit změny</button>
+ 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display:inline">ZAVŘÍT</button>
             </div>
      </form>
 	  

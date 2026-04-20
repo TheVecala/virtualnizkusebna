@@ -1,10 +1,9 @@
-<?php session_start(); ?>
-<?php
+<?php session_start();
+error_reporting(0);
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
-// Validace session
-if (empty($_SESSION['kapela']) || empty($_SESSION['befelemepesseveze']) || empty($_SESSION['slozka_souboru_k_zobrazeni'])) {
+if (empty($_SESSION['login'])) {
     $_SESSION['vysledek'] = "chyba - nejste přihlášen";
     require "navrat.php";
     exit;
@@ -13,15 +12,10 @@ if (empty($_SESSION['kapela']) || empty($_SESSION['befelemepesseveze']) || empty
 // Obsah editoru
 $akordy = $_POST["editor"] ?? "";
 
-// Cesta k souboru se sestavuje ze SESSION - ne z POST
-$sekce           = "uploads";
-$cesta_slozek    = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/" . $sekce . "/";
-$slozka_souboru  = $_SESSION['slozka_souboru_k_zobrazeni'];
+// Název souboru - jen basename, bez cesty
+$nazev_souboru = basename($_POST["soubor_akordu"] ?? "akordy.txt");
 
-// Název textového souboru z POST, ale jen název - bez cesty
-$nazev_souboru   = basename($_POST["soubor_akordu"] ?? "akordy.txt");
-
-// Povolit pouze .txt soubory
+// Pouze .txt soubory
 $pripona = strtolower(pathinfo($nazev_souboru, PATHINFO_EXTENSION));
 if ($pripona !== "txt") {
     $_SESSION['vysledek'] = "chyba - lze ukládat pouze .txt soubory";
@@ -29,11 +23,21 @@ if ($pripona !== "txt") {
     exit;
 }
 
-$soubor = "../" . $cesta_slozek . $slozka_souboru . "/texty/" . $nazev_souboru;
+// Sestavit cestu ze SESSION
+$kapela            = $_SESSION['kapela']                         ?? "";
+$befelemepesseveze = $_SESSION['befelemepesseveze']              ?? "";
+$slozka_souboru    = $_SESSION['slozka_souboru_k_zobrazeni']     ?? "";
 
-// Ověření že soubor existuje (nesmí vytvářet nové soubory přes tento endpoint)
+if (empty($kapela) || empty($befelemepesseveze) || empty($slozka_souboru)) {
+    $_SESSION['vysledek'] = "chyba - chybí kontext skladby, zkuste obnovit stránku";
+    require "navrat.php";
+    exit;
+}
+
+$soubor = "../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/texty/" . $nazev_souboru;
+
 if (!file_exists($soubor)) {
-    $_SESSION['vysledek'] = "chyba - soubor neexistuje";
+    $_SESSION['vysledek'] = "chyba - soubor " . $nazev_souboru . " neexistuje";
     require "navrat.php";
     exit;
 }
@@ -45,4 +49,3 @@ if (file_put_contents($soubor, $akordy) !== false) {
 }
 
 require "navrat.php";
-?>
