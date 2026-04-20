@@ -63,7 +63,7 @@ $(document).ready(function(){
         $("#modal_detail").modal();
     });
 
-    // ---- WaveSurfer ----
+/*     // ---- WaveSurfer ----
     // Inicializace pouze pokud existuje element #waveform
     if (document.getElementById("waveform")) {
 
@@ -131,7 +131,7 @@ $(document).ready(function(){
         });
 
     } // konec if waveform
-
+ */
     // ---- Mazání souboru ----
     $(".deleter").click(function(){
         var val = this.getAttribute("value");

@@ -123,8 +123,8 @@ else {$pole_souboru = "empty" ;
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link href="/css/sticky-footer-navbar.css" rel="stylesheet"> 
 	   <!-- wavesurfer -->	 
-    <script src="https://unpkg.com/wavesurfer.js"></script>
-    <script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
+    <!--  <script src="https://unpkg.com/wavesurfer.js"></script> -->	
+    <!--  <script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>  -->	
       <!-- recording -->
 	 <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> 
      <script src="https://unpkg.com/mic-recorder-to-mp3"></script>  
