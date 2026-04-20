@@ -3,6 +3,11 @@
 <?php
  $_SESSION['barva1'] ="a7ac38";
  $_SESSION['barva2'] ="yellow";
+ 
+ if (isset($_SESSION['login']))
+    {   }
+else { $_SESSION['login'] = ""; };
+
   if($_SESSION['login']!=""){  
 ?>
 

@@ -1,6 +1,10 @@
  <?php session_start(); ?>
 <?php
 
+if (isset($_SESSION['login']))
+    {   }
+else { $_SESSION['login'] = ""; };
+
 if ($_SESSION['login'] != "") {
 
 ?>
