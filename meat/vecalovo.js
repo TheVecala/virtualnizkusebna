@@ -144,16 +144,18 @@ $(document).ready(function(){
 
     // ---- Mazání / přejmenování válu ----
     $(".deleter_val").click(function(){
-        var val = this.getAttribute("value");
-        var label_val = this.getAttribute("name");
-        var lbl = document.getElementById("modal_delete_val_label");
-        var del = document.getElementById("modal_delete_val_deleter");
-        var ren = document.getElementById("modal_rename_val_label");
+        var val = this.getAttribute("value");        // celá cesta - jen pro zobrazení
+        var label_val = this.getAttribute("name");   // jen název složky - posílá se do PHP
+
+        var lbl     = document.getElementById("modal_delete_val_label");
+        var del     = document.getElementById("modal_delete_val_deleter");
+        var ren     = document.getElementById("modal_rename_val_label");
         var ren_new = document.getElementById("modal_rename_val_label_novy");
-        if (lbl) lbl.innerHTML = label_val;
-        if (del) del.setAttribute("value", val);
-        if (ren) ren.setAttribute("value", label_val);
-        if (ren_new) ren_new.value = "";  // prázdné pole pro nový název
+
+        if (lbl)     lbl.innerHTML = label_val;
+        if (del)     del.setAttribute("value", label_val);  // oprava: jen název, ne celá cesta
+        if (ren)     ren.setAttribute("value", label_val);
+        if (ren_new) ren_new.value = "";
     });
 
     // ---- Přesunutí souboru ----
