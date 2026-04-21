@@ -1,10 +1,9 @@
-<?php session_start(); ?>
-<?php
+<?php session_start();
 require "remove_accents.php";
 
-$puvodni_jmeno     = $_POST["puvodni_jmeno_valu_k_prejmenovani"] ?? "";
-$nove_jmeno_raw    = $_POST["nove_jmeno_valu_k_prejmenovani"]    ?? "";
-$adresa_pro_navrat = $_POST["navrat"]                            ?? "/";
+$puvodni_jmeno     = trim($_POST["puvodni_jmeno_valu_k_prejmenovani"] ?? "");
+$nove_jmeno_raw    = trim($_POST["nove_jmeno_valu_k_prejmenovani"]    ?? "");
+$adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
 // Odstranit diakritiku a normalizovat nové jméno
 $nove_jmeno = remove_accents(trim($nove_jmeno_raw));

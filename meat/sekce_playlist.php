@@ -84,7 +84,7 @@
 												 </button>
 										    <?php } ; ?>
 									   </div> 
-							              <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?> " type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline; padding: 1px;" data-toggle="modal" data-target="#modal_delete_val"> 		
+							              <button    value="<?php echo $soub; ?>" name="<?php echo $label_soub; ?>" type="button" class="btn btn-sm btn-secondary btn-VZ  deleter_val"  style=" max-width: 120px ; display: inline; padding: 1px;" data-toggle="modal" data-target="#modal_delete_val"> 		
 									     UPRAVIT
 								        </button>								 
 	                                  </div>

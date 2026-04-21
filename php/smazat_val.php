@@ -1,8 +1,7 @@
-<?php session_start(); ?>
-<?php
+<?php session_start();
 
-$val_ke_smazani    = $_POST["val_ke_smazani"] ?? "";
-$adresa_pro_navrat = $_POST["navrat"]         ?? "/";
+$val_ke_smazani    = trim($_POST["val_ke_smazani"] ?? "");
+$adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
 // Ochrana proti path traversal
 if (empty($val_ke_smazani) || strpos($val_ke_smazani, "..") !== false) {
