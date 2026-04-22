@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VZ – layout v2</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --barva:     #a7ac38;
+  --pozadi:    #202428;
+  --tmava:     #1a1d20;
+  --card:      #2a2e33;
+  --border:    #3a3e44;
+  --text:      #e0e0e0;
+  --muted:     #888;
+  --accent:    #ffc107;
+  --sidebar-w: 240px;
+  --bottom-h:  58px;
+  --top-h:     46px;
+}
+
+body { background: var(--pozadi); color: var(--text); font-family: sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* ── TOPBAR ── */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--top-h);
+  background: var(--tmava); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px; gap: 12px; z-index: 100;
+}
+.brand { font-weight: bold; color: var(--barva); letter-spacing: 1px; font-size: 13px; }
+.user-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px 10px; font-size: 12px; color: var(--muted);
+}
+.user-chip span { color: var(--text); }
+.topnav { display: flex; gap: 4px; margin-left: auto; }
+.topnav a {
+  color: var(--muted); text-decoration: none; font-size: 12px;
+  padding: 5px 10px; border-radius: 5px; transition: all .15s;
+}
+.topnav a:hover { color: var(--text); background: var(--card); }
+.topnav a.active { color: var(--accent); background: var(--card); }
+.napady-badge {
+  background: #2a3a10; color: #a7d050; border: 1px solid #4a6a20;
+  border-radius: 8px; padding: 0px 5px; font-size: 10px; margin-left: 4px;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  position: fixed; top: var(--top-h); left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--tmava); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 90; overflow: hidden;
+}
+
+.sidebar-section-title {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); padding: 10px 14px 4px;
+}
+
+/* Playlist v sidebaru */
+.sidebar-playlist { flex: 1; overflow-y: auto; padding: 0 8px; }
+.val-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; color: var(--muted); transition: all .15s;
+}
+.val-item:hover { background: var(--card); color: var(--text); }
+.val-item.active { background: var(--card); color: var(--barva); }
+.val-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.val-item.active .val-dot { background: var(--barva); }
+.val-item .val-actions { margin-left: auto; display: none; gap: 4px; }
+.val-item:hover .val-actions { display: flex; }
+.val-item .val-actions button {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 3px; padding: 1px 5px; font-size: 10px; cursor: pointer;
+}
+.val-item .val-actions button:hover { color: var(--accent); border-color: var(--accent); }
+
+.sidebar-add {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 12px; color: var(--muted); transition: all .15s;
+  border: 1px dashed var(--border); margin: 6px 8px;
+  text-align: center; justify-content: center;
+}
+.sidebar-add:hover { border-color: var(--barva); color: var(--barva); }
+
+/* Upload + REC tlačítka v sidebaru */
+.sidebar-file-actions {
+  padding: 8px 10px; display: flex; gap: 6px;
+  border-top: 1px solid var(--border);
+}
+.sbtn {
+  flex: 1; padding: 6px; border-radius: 5px; font-size: 11px;
+  cursor: pointer; text-align: center; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); transition: all .15s;
+}
+.sbtn:hover { border-color: var(--barva); }
+.sbtn.rec { background: #5a1a1a; border-color: #8a2a2a; color: #ff8888; }
+.sbtn.rec:hover { background: #7a2020; }
+
+/* ── MAIN ── */
+#main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--top-h);
+  display: flex; flex-direction: column;
+  min-height: calc(100vh - var(--top-h));
+}
+
+/* LOOPER BAR - celá šířka */
+#looper-bar {
+  background: var(--tmava); border-bottom: 1px solid var(--border);
+  padding: 8px 14px; display: flex; align-items: center; gap: 10px;
+  transition: all .3s;
+}
+#looper-bar.hidden { display: none; }
+.looper-controls { display: flex; gap: 6px; flex-shrink: 0; }
+.wave-btn {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); border-radius: 5px; padding: 5px 10px;
+  cursor: pointer; font-size: 13px; transition: all .15s;
+}
+.wave-btn:hover { border-color: var(--accent); color: var(--accent); }
+.wave-btn.active { border-color: var(--barva); color: var(--barva); }
+#waveform-placeholder {
+  flex: 1; height: 44px; background: var(--card);
+  border-radius: 5px; border: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px;
+  color: var(--muted); font-size: 12px; position: relative; overflow: hidden;
+}
+/* Simulace waveform */
+#waveform-placeholder::after {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 30%; background: linear-gradient(90deg, var(--barva)20, transparent);
+  border-right: 2px solid var(--barva);
+}
+.looper-name { font-size: 11px; color: var(--muted); white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+.looper-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px; }
+.looper-close:hover { color: var(--text); }
+
+/* CONTENT AREA - dva sloupce */
+#content-area {
+  flex: 1; display: flex; overflow: hidden;
+}
+
+/* Sekce jako panely */
+.panel {
+  flex: 1; overflow-y: auto; padding: 14px;
+  border-right: 1px solid var(--border);
+}
+.panel:last-child { border-right: none; }
+
+/* Desktop: text + nahrávky vedle sebe, nápady přes celou šířku */
+#panel-text    { display: block; }
+#panel-nahravky { display: block; }
+#panel-napady  { display: none; }
+
+/* Karty */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 12px; overflow: hidden;
+}
+.card-header {
+  padding: 8px 14px; background: var(--tmava);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-header h2 {
+  color: var(--accent); font-weight: bold; font-size: 12px;
+  text-shadow: 1px -1px 6px var(--accent); letter-spacing: 1px;
+}
+.card-header .actions { margin-left: auto; display: flex; gap: 6px; }
+.card-body { padding: 12px 14px; }
+
+/* Soubory */
+.file-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; border-radius: 6px; margin-bottom: 4px;
+  background: var(--pozadi); border: 1px solid var(--border);
+  transition: all .15s;
+}
+.file-item:hover { border-color: rgba(167,172,56,.4); }
+.file-name { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fbtn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 4px; padding: 2px 7px; font-size: 11px; cursor: pointer;
+  white-space: nowrap; transition: all .15s; flex-shrink: 0;
+}
+.fbtn:hover { border-color: var(--accent); color: var(--accent); }
+.fbtn.play { color: var(--barva); border-color: var(--barva); }
+
+/* Text */
+.text-content {
+  font-family: Courier, monospace; font-size: 13px;
+  color: var(--text); white-space: pre-wrap; line-height: 1.6;
+}
+
+/* Komentáře */
+.comment {
+  padding: 8px 10px; border-radius: 6px; margin-bottom: 6px;
+  background: var(--pozadi); border: 1px solid var(--border);
+}
+.comment-text { font-size: 13px; margin-bottom: 4px; }
+.comment-meta { font-size: 10px; color: var(--muted); text-align: right; }
+
+/* btn */
+.btn {
+  border-radius: 5px; padding: 4px 10px; font-size: 11px;
+  cursor: pointer; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); transition: all .15s;
+}
+.btn:hover { border-color: var(--barva); }
+.btn-danger { background: #5a1a1a; border-color: #8a2a2a; color: #ff8888; }
+.btn-rec { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+/* Demo */
+.demo-banner {
+  background: #2a3a10; border: 1px solid #4a6a20; border-radius: 6px;
+  padding: 6px 12px; margin-bottom: 12px; font-size: 11px; color: #a7d050;
+}
+
+/* ── BOTTOM NAV (mobil) ── */
+#bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--bottom-h); background: var(--tmava);
+  border-top: 1px solid var(--border); z-index: 100;
+  justify-content: space-around; align-items: stretch;
+}
+.bnav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+  color: var(--muted); font-size: 10px; cursor: pointer;
+  border: none; background: none; transition: all .15s;
+}
+.bnav-item .bicon { font-size: 20px; }
+.bnav-item.active { color: var(--accent); }
+
+/* Mobilní val drawer */
+#val-drawer {
+  display: none; position: fixed;
+  bottom: var(--bottom-h); left: 0; right: 0;
+  background: var(--tmava); border-top: 1px solid var(--border);
+  max-height: 55vh; overflow-y: auto; z-index: 99;
+  padding: 8px;
+}
+#val-drawer.open { display: block; }
+.drawer-val-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-radius: 6px; color: var(--muted);
+  cursor: pointer; font-size: 13px;
+}
+.drawer-val-item:hover { background: var(--card); color: var(--text); }
+.drawer-val-item.active { color: var(--barva); background: var(--card); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  #main { margin-left: 0; margin-bottom: var(--bottom-h); }
+  #bottom-nav { display: flex; }
+  #content-area { flex-direction: column; }
+  .panel { border-right: none; border-bottom: 1px solid var(--border); display: none; }
+  .panel.mobile-active { display: block; }
+  #topbar .topnav { display: none; }
+  #topbar .user-chip { display: none; }
+}
+
+@media (min-width: 769px) {
+  #panel-text, #panel-nahravky { display: block; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <span class="brand">VZ</span>
+  <div class="user-chip">🎸 <span>silentroom</span></div>
+  <nav class="topnav">
+    <a href="#" class="active" onclick="desktopSekce('text-nahravky',this);return false">text + nahrávky</a>
+    <a href="#" onclick="desktopSekce('napady',this);return false">
+      nápady <span class="napady-badge">kapela</span>
+    </a>
+    <a href="#" onclick="return false" style="color:var(--muted)">about</a>
+    <a href="#" onclick="return false" style="color:#888">odhlásit</a>
+  </nav>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-section-title">Skladby</div>
+  <div class="sidebar-playlist" id="sidebar-playlist">
+    <div class="val-item" onclick="switchVal('prvni',this)">
+      <span class="val-dot"></span>
+      <span>první skladba</span>
+      <div class="val-actions">
+        <button title="přejmenovat">✏</button>
+        <button title="smazat">🗑</button>
+      </div>
+    </div>
+    <div class="val-item active" onclick="switchVal('druha',this)">
+      <span class="val-dot"></span>
+      <span>druhá skladba</span>
+      <div class="val-actions">
+        <button title="přejmenovat">✏</button>
+        <button title="smazat">🗑</button>
+      </div>
+    </div>
+    <div class="val-item" onclick="switchVal('zkusebni',this)">
+      <span class="val-dot"></span>
+      <span>zkušební track</span>
+      <div class="val-actions">
+        <button title="přejmenovat">✏</button>
+        <button title="smazat">🗑</button>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-add" onclick="return false">+ nová skladba</div>
+  <div class="sidebar-file-actions">
+    <button class="sbtn" onclick="return false">⬆ vložit soubor</button>
+    <button class="sbtn rec btn-rec">⏺ REC</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LOOPER BAR -->
+  <div id="looper-bar" class="hidden">
+    <div class="looper-controls">
+      <button class="wave-btn active">▶</button>
+      <button class="wave-btn">⏸</button>
+      <button class="wave-btn">↩</button>
+      <button class="wave-btn">⟳</button>
+    </div>
+    <div id="waveform-placeholder">zde wavesurfer waveform</div>
+    <span class="looper-name" id="looper-name">—</span>
+    <button class="looper-close" onclick="document.getElementById('looper-bar').classList.add('hidden')">✕</button>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div id="content-area">
+
+    <!-- PANEL TEXT -->
+    <div class="panel mobile-active" id="panel-text">
+      <div class="demo-banner">ℹ Klikej na sekce nahoře nebo spodní liště (mobil)</div>
+      <div class="card">
+        <div class="card-header">
+          <h2>TEXT</h2>
+          <div class="actions">
+            <button class="btn">změnit</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="text-content">Em        C          G
+Slova letí, vítr je nese
+D         Em
+Někam daleko
+
+Em        C
+Ref: la la la...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL NAHRÁVKY -->
+    <div class="panel" id="panel-nahravky">
+      <div class="card">
+        <div class="card-header">
+          <h2>NAHRÁVKY</h2>
+        </div>
+        <div class="card-body">
+          <div class="file-item">
+            <span>🎵</span>
+            <span class="file-name">demo_verse.mp3</span>
+            <button class="fbtn play" onclick="showLooper('demo_verse.mp3')">▶ looper</button>
+            <button class="fbtn">⬇</button>
+            <button class="fbtn">↔</button>
+            <button class="fbtn" style="color:#e44">🗑</button>
+          </div>
+          <div class="file-item">
+            <span>🎵</span>
+            <span class="file-name">zkouska_chorus.wav</span>
+            <button class="fbtn play" onclick="showLooper('zkouska_chorus.wav')">▶ looper</button>
+            <button class="fbtn">⬇</button>
+            <button class="fbtn">↔</button>
+            <button class="fbtn" style="color:#e44">🗑</button>
+          </div>
+          <div class="file-item">
+            <span>🎵</span>
+            <span class="file-name">intro_idea.mp3</span>
+            <button class="fbtn play" onclick="showLooper('intro_idea.mp3')">▶ looper</button>
+            <button class="fbtn">⬇</button>
+            <button class="fbtn">↔</button>
+            <button class="fbtn" style="color:#e44">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL NÁPADY (přes celou šířku, skrytý) -->
+    <div class="panel" id="panel-napady" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <h2>NÁPADY <span class="napady-badge">celá kapela</span></h2>
+          <div class="actions">
+            <button class="btn">napsat</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="comment">
+            <div class="comment-text">Zkusit intro v 7/8 taktu — bylo by to zajímavý</div>
+            <div class="comment-meta">Dušan · 14.4.2025 18:32</div>
+          </div>
+          <div class="comment">
+            <div class="comment-text">Přidat delay na kytaru v chorusu</div>
+            <div class="comment-meta">Vodys · 12.4.2025 20:11</div>
+          </div>
+          <div class="comment">
+            <div class="comment-text">Tempo zvednout na 120 BPM?</div>
+            <div class="comment-meta">Marec · 10.4.2025 15:55</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /main -->
+
+<!-- BOTTOM NAV -->
+<div id="bottom-nav">
+  <button class="bnav-item active" id="bn-text" onclick="mobileSekce('text',this)">
+    <span class="bicon">📝</span>text
+  </button>
+  <button class="bnav-item" id="bn-nahravky" onclick="mobileSekce('nahravky',this)">
+    <span class="bicon">🎙</span>nahrávky
+  </button>
+  <button class="bnav-item" id="bn-playlist" onclick="toggleValDrawer()">
+    <span class="bicon">🎵</span>skladby
+  </button>
+  <button class="bnav-item" id="bn-napady" onclick="mobileSekce('napady',this)">
+    <span class="bicon">💡</span>nápady
+  </button>
+</div>
+
+<!-- VAL DRAWER (mobil) -->
+<div id="val-drawer">
+  <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:4px 12px 8px">Skladby</div>
+  <div class="drawer-val-item" onclick="switchVal('prvni',null)"><span>🎵</span>první skladba</div>
+  <div class="drawer-val-item active" onclick="switchVal('druha',null)"><span>🎵</span>druhá skladba</div>
+  <div class="drawer-val-item" onclick="switchVal('zkusebni',null)"><span>🎵</span>zkušební track</div>
+  <div class="drawer-val-item" style="color:var(--barva);border:1px dashed #4a5a20;border-radius:6px;margin:6px" onclick="return false">
+    <span>+</span>nová skladba
+  </div>
+</div>
+
+<script>
+// Desktop: přepínání text+nahrávky / nápady
+function desktopSekce(sekce, el) {
+  document.querySelectorAll('.topnav a').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  var panelText     = document.getElementById('panel-text');
+  var panelNahravky = document.getElementById('panel-nahravky');
+  var panelNapady   = document.getElementById('panel-napady');
+
+  if (sekce === 'napady') {
+    panelText.style.display     = 'none';
+    panelNahravky.style.display = 'none';
+    panelNapady.style.display   = 'block';
+  } else {
+    panelText.style.display     = 'block';
+    panelNahravky.style.display = 'block';
+    panelNapady.style.display   = 'none';
+  }
+}
+
+// Mobil: přepínání panelů
+function mobileSekce(sekce, el) {
+  document.getElementById('val-drawer').classList.remove('open');
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('mobile-active'));
+
+  if (sekce === 'text')     document.getElementById('panel-text').classList.add('mobile-active');
+  if (sekce === 'nahravky') document.getElementById('panel-nahravky').classList.add('mobile-active');
+  if (sekce === 'napady')   document.getElementById('panel-napady').classList.add('mobile-active');
+}
+
+// Přepnutí válu (AJAX simulace)
+function switchVal(nazev, el) {
+  document.getElementById('val-drawer').classList.remove('open');
+
+  // Sidebar
+  document.querySelectorAll('#sidebar-playlist .val-item').forEach(v => v.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  // Drawer
+  document.querySelectorAll('.drawer-val-item').forEach(v => {
+    v.classList.toggle('active', v.textContent.trim().includes(nazev.replace('_', ' ')));
+  });
+
+  // Simulace AJAX - flash obsahu
+  document.querySelectorAll('.panel').forEach(p => { p.style.opacity = '.4'; });
+  setTimeout(() => {
+    document.querySelectorAll('.panel').forEach(p => { p.style.opacity = '1'; });
+  }, 300);
+
+  console.log('AJAX: načítám vál', nazev);
+}
+
+// Looper
+function showLooper(nazev) {
+  var bar = document.getElementById('looper-bar');
+  bar.classList.remove('hidden');
+  document.getElementById('looper-name').textContent = nazev;
+}
+
+// Val drawer toggle
+function toggleValDrawer() {
+  document.getElementById('val-drawer').classList.toggle('open');
+}
+
+// Schovat drawer při kliku mimo
+document.addEventListener('click', function(e) {
+  var drawer = document.getElementById('val-drawer');
+  var btn    = document.getElementById('bn-playlist');
+  if (!drawer.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    drawer.classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>

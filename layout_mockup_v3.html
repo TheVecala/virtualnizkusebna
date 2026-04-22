@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VZ – layout v3</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --barva:     #a7ac38;
+  --pozadi:    #202428;
+  --tmava:     #1a1d20;
+  --card:      #2a2e33;
+  --border:    #3a3e44;
+  --text:      #e0e0e0;
+  --muted:     #888;
+  --accent:    #ffc107;
+  --sidebar-w: 220px;
+  --bottom-h:  58px;
+  --top-h:     46px;
+}
+
+body { background: var(--pozadi); color: var(--text); font-family: sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* ── TOPBAR ── */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--top-h);
+  background: var(--tmava); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px; gap: 10px; z-index: 100;
+}
+.brand { font-weight: bold; color: var(--barva); letter-spacing: 1px; font-size: 13px; white-space: nowrap; }
+.topbar-sep { color: var(--border); }
+.kapela-chip { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.val-chip {
+  font-size: 12px; color: var(--text);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 5px; padding: 2px 9px; white-space: nowrap;
+}
+.val-chip::before { content: '🎵 '; }
+.topnav { display: flex; gap: 2px; margin-left: auto; }
+.topnav a {
+  color: var(--muted); text-decoration: none; font-size: 12px;
+  padding: 5px 10px; border-radius: 5px; transition: all .15s; white-space: nowrap;
+}
+.topnav a:hover { color: var(--text); background: var(--card); }
+.topnav a.active { color: var(--accent); background: var(--card); }
+.napady-badge {
+  background: #2a3a10; color: #a7d050; border: 1px solid #4a6a20;
+  border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 3px;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  position: fixed; top: var(--top-h); left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--tmava); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 90; overflow: hidden;
+}
+.sidebar-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); padding: 10px 14px 4px;
+}
+.sidebar-playlist { flex: 1; overflow-y: auto; padding: 0 8px; }
+.val-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; color: var(--muted); transition: all .15s; position: relative;
+}
+.val-item:hover { background: var(--card); color: var(--text); }
+.val-item.active { background: var(--card); color: var(--barva); }
+.val-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.val-item.active .val-dot { background: var(--barva); }
+.val-actions { margin-left: auto; display: none; gap: 3px; }
+.val-item:hover .val-actions { display: flex; }
+.val-actions button {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 3px; padding: 1px 5px; font-size: 10px; cursor: pointer;
+}
+.val-actions button:hover { color: var(--accent); border-color: var(--accent); }
+.sidebar-add {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 12px; color: var(--muted); transition: all .15s;
+  border: 1px dashed var(--border); margin: 6px 8px;
+}
+.sidebar-add:hover { border-color: var(--barva); color: var(--barva); }
+
+/* ── MAIN ── */
+#main {
+  margin-left: var(--sidebar-w); margin-top: var(--top-h);
+  display: flex; flex-direction: column; height: calc(100vh - var(--top-h));
+  overflow: hidden;
+}
+
+/* LOOPER BAR */
+#looper-bar {
+  background: var(--tmava); border-bottom: 1px solid var(--border);
+  padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+#looper-bar.hidden { display: none; }
+.lctrl { display: flex; gap: 5px; flex-shrink: 0; }
+.wave-btn {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); border-radius: 5px; padding: 4px 9px;
+  cursor: pointer; font-size: 12px; transition: all .15s;
+}
+.wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
+#waveform {
+  flex: 1; height: 40px; background: var(--card);
+  border-radius: 5px; border: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 10px;
+  color: var(--muted); font-size: 11px; position: relative; overflow: hidden;
+}
+#waveform::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 28%; background: linear-gradient(90deg,rgba(167,172,56,.15),transparent);
+  border-right: 2px solid var(--barva);
+}
+.lname { font-size: 11px; color: var(--muted); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+.lclose { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; }
+.lclose:hover { color: var(--text); }
+
+/* CONTENT AREA - 3 sloupce */
+#content-area {
+  flex: 1; display: flex; overflow: hidden;
+}
+
+/* Panely */
+.panel {
+  display: flex; flex-direction: column; overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.panel:last-child { border-right: none; }
+.panel-inner { flex: 1; overflow-y: auto; padding: 12px; }
+
+#panel-text     { flex: 2; }
+#panel-nahravky { flex: 2; }
+#panel-diskuse  { flex: 1.5; background: var(--pozadi); }
+
+/* Nápady - přes celou šířku */
+#panel-napady { flex: 1; display: none; }
+
+/* Karty */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 10px; overflow: hidden;
+}
+.card-header {
+  padding: 7px 12px; background: var(--tmava);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.card-header h2 {
+  color: var(--accent); font-weight: bold; font-size: 11px;
+  text-shadow: 1px -1px 5px var(--accent); letter-spacing: 1px;
+}
+.card-header .acts { margin-left: auto; display: flex; gap: 5px; }
+.card-body { padding: 10px 12px; }
+
+/* Soubory */
+.file-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 8px; border-radius: 5px; margin-bottom: 4px;
+  background: var(--pozadi); border: 1px solid var(--border); transition: all .15s;
+}
+.file-item:hover { border-color: rgba(167,172,56,.4); }
+.fname { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fbtn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 4px; padding: 2px 6px; font-size: 10px; cursor: pointer;
+  white-space: nowrap; transition: all .15s; flex-shrink: 0;
+}
+.fbtn:hover { border-color: var(--accent); color: var(--accent); }
+.fbtn.play { color: var(--barva); border-color: var(--barva); }
+
+/* Text */
+.text-pre { font-family: Courier,monospace; font-size: 12px; color: var(--text); white-space: pre-wrap; line-height: 1.7; }
+
+/* Komentáře */
+.comment {
+  padding: 7px 9px; border-radius: 5px; margin-bottom: 5px;
+  background: var(--card); border: 1px solid var(--border);
+}
+.ctext { font-size: 12px; margin-bottom: 3px; line-height: 1.4; }
+.cmeta { font-size: 10px; color: var(--muted); text-align: right; }
+
+/* Formulář komentáře */
+.comment-form { padding: 8px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.comment-form textarea {
+  width: 100%; background: var(--pozadi); border: 1px solid var(--border);
+  border-radius: 5px; color: var(--text); font-size: 12px; padding: 6px 8px;
+  resize: none; font-family: sans-serif;
+}
+.comment-form textarea:focus { outline: none; border-color: var(--barva); }
+.comment-form .cf-row { display: flex; gap: 6px; margin-top: 5px; align-items: center; }
+.comment-form input {
+  flex: 1; background: var(--pozadi); border: 1px solid var(--border);
+  border-radius: 5px; color: var(--text); font-size: 12px; padding: 4px 8px;
+}
+.comment-form input:focus { outline: none; border-color: var(--barva); }
+
+/* Btns */
+.btn {
+  border-radius: 5px; padding: 3px 9px; font-size: 11px;
+  cursor: pointer; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); transition: all .15s;
+}
+.btn:hover { border-color: var(--barva); }
+.btn-primary { background: #3a4a10; border-color: var(--barva); color: var(--barva); }
+.btn-rec { background: #5a1a1a; border-color: #8a3a3a; color: #ff9999; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.75} }
+
+/* Demo */
+.demo-banner {
+  background: #2a3a10; border: 1px solid #4a6a20; border-radius: 5px;
+  padding: 5px 10px; margin-bottom: 10px; font-size: 11px; color: #a7d050;
+}
+
+/* ── BOTTOM NAV ── */
+#bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--bottom-h); background: var(--tmava);
+  border-top: 1px solid var(--border); z-index: 100;
+  justify-content: space-around; align-items: stretch;
+}
+.bnav {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+  color: var(--muted); font-size: 10px; cursor: pointer;
+  border: none; background: none; transition: all .15s;
+}
+.bnav .bi { font-size: 20px; }
+.bnav.active { color: var(--accent); }
+
+/* Val drawer */
+#val-drawer {
+  display: none; position: fixed;
+  bottom: var(--bottom-h); left: 0; right: 0;
+  background: var(--tmava); border-top: 1px solid var(--border);
+  max-height: 55vh; overflow-y: auto; z-index: 99; padding: 8px;
+}
+#val-drawer.open { display: block; }
+.dval {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-radius: 6px; color: var(--muted);
+  cursor: pointer; font-size: 13px; transition: all .15s;
+}
+.dval:hover { background: var(--card); color: var(--text); }
+.dval.active { color: var(--barva); background: var(--card); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
+  #bottom-nav { display: flex; }
+  .topnav { display: none; }
+  .val-chip { display: none; }
+  #content-area { flex-direction: column; }
+  .panel { display: none; border-right: none; border-bottom: 1px solid var(--border); }
+  .panel.mob { display: flex; }
+}
+@media (min-width: 769px) {
+  #panel-text, #panel-nahravky, #panel-diskuse { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <span class="brand">VZ</span>
+  <span class="topbar-sep">/</span>
+  <span class="kapela-chip">silentroom</span>
+  <span class="topbar-sep">/</span>
+  <span class="val-chip" id="topbar-val">druhá skladba</span>
+  <nav class="topnav">
+    <a href="#" class="active" onclick="desktopView('main',this);return false">text + nahrávky</a>
+    <a href="#" onclick="desktopView('napady',this);return false">nápady <span class="napady-badge">kapela</span></a>
+    <a href="#" style="color:var(--muted)" onclick="return false">about</a>
+    <a href="#" style="color:var(--muted)" onclick="return false">odhlásit</a>
+  </nav>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-label">Skladby</div>
+  <div class="sidebar-playlist">
+    <div class="val-item" onclick="switchVal('první skladba',this)">
+      <span class="val-dot"></span><span>první skladba</span>
+      <div class="val-actions"><button>✏</button><button>🗑</button></div>
+    </div>
+    <div class="val-item active" onclick="switchVal('druhá skladba',this)">
+      <span class="val-dot"></span><span>druhá skladba</span>
+      <div class="val-actions"><button>✏</button><button>🗑</button></div>
+    </div>
+    <div class="val-item" onclick="switchVal('zkušební track',this)">
+      <span class="val-dot"></span><span>zkušební track</span>
+      <div class="val-actions"><button>✏</button><button>🗑</button></div>
+    </div>
+  </div>
+  <div class="sidebar-add">+ nová skladba</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LOOPER BAR -->
+  <div id="looper-bar" class="hidden">
+    <div class="lctrl">
+      <button class="wave-btn on">▶</button>
+      <button class="wave-btn">⏸</button>
+      <button class="wave-btn">↩</button>
+      <button class="wave-btn">⟳</button>
+    </div>
+    <div id="waveform">wavesurfer waveform</div>
+    <span class="lname" id="lname">—</span>
+    <button class="lclose" onclick="document.getElementById('looper-bar').classList.add('hidden')">✕</button>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div id="content-area">
+
+    <!-- TEXT -->
+    <div class="panel mob" id="panel-text">
+      <div class="card-header">
+        <h2>TEXT</h2>
+        <div class="acts"><button class="btn">změnit</button></div>
+      </div>
+      <div class="panel-inner">
+        <div class="demo-banner">ℹ Mockup — klikej na topnav nebo spodní lištu</div>
+        <div class="text-pre">Em        C          G
+Slova letí, vítr je nese
+D         Em
+Někam daleko
+
+Em        C
+Ref: la la la...
+
+[verse 2]
+Em        C          G
+...</div>
+      </div>
+    </div>
+
+    <!-- NAHRÁVKY -->
+    <div class="panel" id="panel-nahravky">
+      <div class="card-header">
+        <h2>NAHRÁVKY</h2>
+        <div class="acts">
+          <button class="btn">⬆ vložit</button>
+          <button class="btn btn-rec">⏺ REC</button>
+        </div>
+      </div>
+      <div class="panel-inner">
+        <div class="file-item">
+          <span>🎵</span>
+          <span class="fname">demo_verse.mp3</span>
+          <button class="fbtn play" onclick="showLooper('demo_verse.mp3')">▶ looper</button>
+          <button class="fbtn">⬇</button>
+          <button class="fbtn">↔</button>
+          <button class="fbtn" style="color:#e44">🗑</button>
+        </div>
+        <div class="file-item">
+          <span>🎵</span>
+          <span class="fname">zkouska_chorus.wav</span>
+          <button class="fbtn play" onclick="showLooper('zkouska_chorus.wav')">▶ looper</button>
+          <button class="fbtn">⬇</button>
+          <button class="fbtn">↔</button>
+          <button class="fbtn" style="color:#e44">🗑</button>
+        </div>
+        <div class="file-item">
+          <span>🎵</span>
+          <span class="fname">intro_idea_dlouhy_nazev_souboru.mp3</span>
+          <button class="fbtn play" onclick="showLooper('intro_idea.mp3')">▶ looper</button>
+          <button class="fbtn">⬇</button>
+          <button class="fbtn">↔</button>
+          <button class="fbtn" style="color:#e44">🗑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISKUSE (per-vál) -->
+    <div class="panel" id="panel-diskuse">
+      <div class="card-header">
+        <h2>DISKUSE</h2>
+        <div class="acts" style="font-size:10px;color:var(--muted)">druhá skladba</div>
+      </div>
+      <div class="panel-inner">
+        <div class="comment">
+          <div class="ctext">Intro by chtělo pomalejší nájezd</div>
+          <div class="cmeta">Dušan · 14.4.2025 18:32</div>
+        </div>
+        <div class="comment">
+          <div class="ctext">Přidat delay na kytaru v chorusu, zní to tam dobře</div>
+          <div class="cmeta">Vodys · 12.4.2025 20:11</div>
+        </div>
+        <div class="comment">
+          <div class="ctext">Tempo 120 BPM?</div>
+          <div class="cmeta">Marec · 10.4.2025 15:55</div>
+        </div>
+      </div>
+      <div class="comment-form">
+        <textarea rows="2" placeholder="napsat poznámku..."></textarea>
+        <div class="cf-row">
+          <input type="text" placeholder="jméno">
+          <button class="btn btn-primary">uložit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NÁPADY (celá šířka, skryté) -->
+    <div class="panel" id="panel-napady">
+      <div class="card-header">
+        <h2>NÁPADY <span class="napady-badge">celá kapela</span></h2>
+        <div class="acts"><button class="btn">napsat</button></div>
+      </div>
+      <div class="panel-inner">
+        <div class="comment">
+          <div class="ctext">Zkusit intro v 7/8 taktu</div>
+          <div class="cmeta">Dušan · 14.4.2025</div>
+        </div>
+        <div class="comment">
+          <div class="ctext">Nová skladba — riff z rehearsalu 10.4.</div>
+          <div class="cmeta">Vodys · 10.4.2025</div>
+        </div>
+      </div>
+      <div class="comment-form">
+        <textarea rows="2" placeholder="napsat nápad..."></textarea>
+        <div class="cf-row">
+          <input type="text" placeholder="jméno">
+          <button class="btn btn-primary">uložit</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /main -->
+
+<!-- BOTTOM NAV -->
+<div id="bottom-nav">
+  <button class="bnav active" id="bn-skladby" onclick="toggleValDrawer()">
+    <span class="bi">🎵</span>skladby
+  </button>
+  <button class="bnav" id="bn-text" onclick="mobilePanel('text',this)">
+    <span class="bi">📝</span>text
+  </button>
+  <button class="bnav" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
+    <span class="bi">🎙</span>nahrávky
+  </button>
+  <button class="bnav" id="bn-diskuse" onclick="mobilePanel('diskuse',this)">
+    <span class="bi">💬</span>diskuse
+  </button>
+  <button class="bnav" id="bn-napady" onclick="mobilePanel('napady',this)">
+    <span class="bi">💡</span>nápady
+  </button>
+</div>
+
+<!-- VAL DRAWER -->
+<div id="val-drawer">
+  <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:4px 12px 8px">Skladby</div>
+  <div class="dval" onclick="switchVal('první skladba',null)"><span>🎵</span>první skladba</div>
+  <div class="dval active" onclick="switchVal('druhá skladba',null)"><span>🎵</span>druhá skladba</div>
+  <div class="dval" onclick="switchVal('zkušební track',null)"><span>🎵</span>zkušební track</div>
+  <div class="dval" style="color:var(--barva);border:1px dashed #4a5a20;border-radius:6px;margin:6px">
+    <span>+</span>nová skladba
+  </div>
+</div>
+
+<script>
+var aktivniMobilePanel = 'text';
+
+function desktopView(view, el) {
+  document.querySelectorAll('.topnav a').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  var isMobile = window.innerWidth <= 768;
+  if (isMobile) return;
+
+  if (view === 'napady') {
+    document.getElementById('panel-text').style.display    = 'none';
+    document.getElementById('panel-nahravky').style.display = 'none';
+    document.getElementById('panel-diskuse').style.display  = 'none';
+    document.getElementById('panel-napady').style.display   = 'flex';
+  } else {
+    document.getElementById('panel-text').style.display    = 'flex';
+    document.getElementById('panel-nahravky').style.display = 'flex';
+    document.getElementById('panel-diskuse').style.display  = 'flex';
+    document.getElementById('panel-napady').style.display   = 'none';
+  }
+}
+
+function mobilePanel(nazev, el) {
+  document.getElementById('val-drawer').classList.remove('open');
+  document.querySelectorAll('.bnav').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  aktivniMobilePanel = nazev;
+
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('mob'));
+  document.getElementById('panel-' + nazev).classList.add('mob');
+}
+
+function switchVal(nazev, el) {
+  document.getElementById('val-drawer').classList.remove('open');
+  document.getElementById('topbar-val').textContent = nazev;
+
+  // Sidebar
+  document.querySelectorAll('.val-item').forEach(v => {
+    v.classList.toggle('active', v.querySelector('span:nth-child(2)').textContent === nazev);
+  });
+  // Drawer
+  document.querySelectorAll('.dval').forEach(v => {
+    v.classList.toggle('active', v.textContent.trim() === nazev);
+  });
+  // Update diskuse header
+  var dh = document.querySelector('#panel-diskuse .card-header .acts');
+  if (dh) dh.textContent = nazev;
+
+  // Simulace AJAX flash
+  document.querySelectorAll('.panel-inner').forEach(p => {
+    p.style.opacity = '.3';
+    setTimeout(() => { p.style.opacity = '1'; }, 250);
+  });
+}
+
+function showLooper(nazev) {
+  document.getElementById('looper-bar').classList.remove('hidden');
+  document.getElementById('lname').textContent = nazev;
+}
+
+function toggleValDrawer() {
+  var d = document.getElementById('val-drawer');
+  d.classList.toggle('open');
+  // Aktivovat tlačítko skladby
+  document.querySelectorAll('.bnav').forEach(b => b.classList.remove('active'));
+  if (d.classList.contains('open')) {
+    document.getElementById('bn-skladby').classList.add('active');
+  } else {
+    // Vrátit aktivní panel
+    var prev = document.getElementById('bn-' + aktivniMobilePanel);
+    if (prev) prev.classList.add('active');
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var drawer = document.getElementById('val-drawer');
+  var btn = document.getElementById('bn-skladby');
+  if (!drawer.contains(e.target) && !btn.contains(e.target)) {
+    if (drawer.classList.contains('open')) {
+      drawer.classList.remove('open');
+      var prev = document.getElementById('bn-' + aktivniMobilePanel);
+      if (prev) { document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('active')); prev.classList.add('active'); }
+    }
+  }
+});
+</script>
+</body>
+</html>
