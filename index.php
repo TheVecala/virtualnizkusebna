@@ -580,7 +580,17 @@ function looperLoop()    {
 
 // ── Edit text modal ──
 function otevritEditText() {
-  $('#modal_zmenit_text').modal('show');
+  // Načíst aktuální obsah textového souboru přes AJAX
+  $.get('/php/ajax/ajax_text_raw.php', function(data) {
+    var textarea = document.getElementById('editor');
+    if (textarea) textarea.value = data.obsah || '';
+    var input = document.getElementById('modal_soubor_akordu');
+    if (input) input.value = data.nazev_souboru || 'akordy.txt';
+    $('#modal_zmenit_text').modal('show');
+  }, 'json').fail(function() {
+    // Fallback - otevřít modal i bez načtení
+    $('#modal_zmenit_text').modal('show');
+  });
 }
 
 // ── Přejmenování / smazání válu ──
