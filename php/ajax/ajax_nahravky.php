@@ -9,7 +9,7 @@ $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";
 $slozka_souboru    = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 $sekce             = "uploads";
 
-$cesta_slozky = "user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/";
+$cesta_slozky = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/";
 
 $povolene_audio = ['mp3', 'wav', 'ogg', 'flac', 'aac'];
 $povolene_vse   = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'pdf', 'txt', 'jpg', 'jpeg', 'png', 'gif'];
@@ -53,7 +53,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   <?php foreach ($soubory as $soub):
     $pripona  = strtolower(pathinfo($soub, PATHINFO_EXTENSION));
     $je_audio = in_array($pripona, $povolene_audio);
-    $cesta    = "/" . $cesta_slozky . $soub;
+    $cesta    = "/user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/" . $soub;
   ?>
   <div class="file-item">
     <span class="<?php echo $je_audio ? 'soubor-audio' : 'soubor-ostatni'; ?>">

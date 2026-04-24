@@ -4,7 +4,7 @@ error_reporting(0);
 
 if (empty($_SESSION['login'])) { echo ''; exit; }
 
-include "login/connect.php";
+include "../login/connect.php";
 
 $kapela         = $_SESSION['kapela']                     ?? "";
 $slozka_souboru = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
