@@ -274,9 +274,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #content-area { flex-direction: column; }
   .panel { display: none; border-right: none; border-bottom: 1px solid var(--border); }
   .panel.mob-active { display: flex; }
-  /* Na mobilu skrýt textarea, zobrazit toggle tlačítko */
-  #napady-textarea-wrap { display: none; }
-  #napady-textarea-wrap.open { display: block; }
+  /* Na mobilu skrýt celý formulář, zobrazit toggle tlačítko */
+  #napady-fields { display: none; }
+  #napady-fields.open { display: block; }
   #napady-toggle-btn { display: block !important; }
 }
 @media (min-width: 769px) {
@@ -404,31 +404,31 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
         flex-shrink: 0;
       ">
         <form id="form_napady">
-          <!-- Na mobilu je textarea skrytá, vysunutí tlačítkem -->
-          <div id="napady-textarea-wrap">
+          <!-- Na mobilu toggle tlačítko -->
+          <button type="button" id="napady-toggle-btn" onclick="napodyToggle()" style="
+            display:none; width:100%;
+            background: var(--card); border: 1px solid var(--border); color: var(--muted);
+            border-radius: 5px; padding: 6px 10px; font-size: 12px; cursor: pointer;
+            margin-bottom: 6px;
+          ">+ nápad</button>
+          <!-- Celý formulář — na mobilu skrytý -->
+          <div id="napady-fields">
             <textarea id="napady_text" rows="2" placeholder="napsat nápad..." style="
               width: 100%; background: var(--pozadi); border: 1px solid var(--border);
               border-radius: 5px; color: var(--text); font-size: 12px; padding: 6px 8px;
-              resize: none; font-family: sans-serif; box-sizing: border-box;
-              display: block;
+              resize: none; font-family: sans-serif; box-sizing: border-box; display: block;
             "></textarea>
-          </div>
-          <div class="napady-cf-row" style="display:flex; gap:6px; margin-top:5px; align-items:center;">
-            <!-- Na mobilu: tlačítko pro vysunutí textarey -->
-            <button type="button" id="napady-toggle-btn" onclick="napodyToggle()" style="
-              display:none;
-              background: var(--card); border: 1px solid var(--border); color: var(--muted);
-              border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer;
-            ">+ nápad</button>
-            <input id="napady_jmeno" type="text" placeholder="jméno" style="
-              flex:1; background: var(--pozadi); border: 1px solid var(--border);
-              border-radius: 5px; color: var(--text); font-size: 12px; padding: 4px 8px;
-            ">
-            <button type="submit" style="
-              border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer;
-              border: 1px solid var(--barva); background: #2a3a10; color: var(--barva);
-              white-space: nowrap;
-            ">uložit</button>
+            <div style="display:flex; gap:6px; margin-top:5px; align-items:center;">
+              <input id="napady_jmeno" type="text" placeholder="jméno" style="
+                flex:1; background: var(--pozadi); border: 1px solid var(--border);
+                border-radius: 5px; color: var(--text); font-size: 12px; padding: 4px 8px;
+              ">
+              <button type="submit" style="
+                border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer;
+                border: 1px solid var(--barva); background: #2a3a10; color: var(--barva);
+                white-space: nowrap;
+              ">uložit</button>
+            </div>
           </div>
           <div id="napady_chyba" style="color:#ff8888; font-size:11px; margin-top:4px; display:none;"></div>
         </form>
@@ -676,14 +676,14 @@ $(document).on('submit', '#form_komentar', function(e) {
 
 // ── Nápady formulář ──
 function napodyToggle() {
-  var wrap = document.getElementById('napady-textarea-wrap');
-  var btn  = document.getElementById('napady-toggle-btn');
-  if (wrap.classList.contains('open')) {
-    wrap.classList.remove('open');
+  var fields = document.getElementById('napady-fields');
+  var btn    = document.getElementById('napady-toggle-btn');
+  if (fields.classList.contains('open')) {
+    fields.classList.remove('open');
     btn.textContent = '+ nápad';
   } else {
-    wrap.classList.add('open');
-    btn.textContent = '▲ skrýt';
+    fields.classList.add('open');
+    btn.textContent = '▲ zavřít';
     document.getElementById('napady_text').focus();
   }
 }
@@ -704,10 +704,10 @@ $(document).on('submit', '#form_napady', function(e) {
       nacistPanel('napady');
       $('#napady_text').val('');
       // Na mobilu schovat textarea po odeslání
-      var wrap = document.getElementById('napady-textarea-wrap');
-      var btn  = document.getElementById('napady-toggle-btn');
-      if (wrap && btn && window.innerWidth <= 768) {
-        wrap.classList.remove('open');
+      var fields = document.getElementById('napady-fields');
+      var btn    = document.getElementById('napady-toggle-btn');
+      if (fields && btn && window.innerWidth <= 768) {
+        fields.classList.remove('open');
         btn.textContent = '+ nápad';
       }
     } else {
