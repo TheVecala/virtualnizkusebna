@@ -274,6 +274,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #content-area { flex-direction: column; }
   .panel { display: none; border-right: none; border-bottom: 1px solid var(--border); }
   .panel.mob-active { display: flex; }
+  /* Na mobilu skrýt textarea, zobrazit toggle tlačítko */
+  #napady-textarea-wrap { display: none; }
+  #napady-textarea-wrap.open { display: block; }
+  #napady-toggle-btn { display: block !important; }
 }
 @media (min-width: 769px) {
   #panel-text, #panel-nahravky, #panel-diskuse { display: flex; }
@@ -391,6 +395,43 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       </div>
       <div class="panel-body" id="body-napady">
         <div class="panel-loading"><div class="spinner"></div>načítám...</div>
+      </div>
+      <!-- Formulář přilepen ke spodnímu okraji -->
+      <div id="napady-form-wrap" style="
+        border-top: 1px solid var(--border);
+        background: var(--tmava);
+        padding: 8px 12px;
+        flex-shrink: 0;
+      ">
+        <form id="form_napady">
+          <!-- Na mobilu je textarea skrytá, vysunutí tlačítkem -->
+          <div id="napady-textarea-wrap">
+            <textarea id="napady_text" rows="2" placeholder="napsat nápad..." style="
+              width: 100%; background: var(--pozadi); border: 1px solid var(--border);
+              border-radius: 5px; color: var(--text); font-size: 12px; padding: 6px 8px;
+              resize: none; font-family: sans-serif; box-sizing: border-box;
+              display: block;
+            "></textarea>
+          </div>
+          <div class="napady-cf-row" style="display:flex; gap:6px; margin-top:5px; align-items:center;">
+            <!-- Na mobilu: tlačítko pro vysunutí textarey -->
+            <button type="button" id="napady-toggle-btn" onclick="napodyToggle()" style="
+              display:none;
+              background: var(--card); border: 1px solid var(--border); color: var(--muted);
+              border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer;
+            ">+ nápad</button>
+            <input id="napady_jmeno" type="text" placeholder="jméno" style="
+              flex:1; background: var(--pozadi); border: 1px solid var(--border);
+              border-radius: 5px; color: var(--text); font-size: 12px; padding: 4px 8px;
+            ">
+            <button type="submit" style="
+              border-radius: 5px; padding: 4px 10px; font-size: 11px; cursor: pointer;
+              border: 1px solid var(--barva); background: #2a3a10; color: var(--barva);
+              white-space: nowrap;
+            ">uložit</button>
+          </div>
+          <div id="napady_chyba" style="color:#ff8888; font-size:11px; margin-top:4px; display:none;"></div>
+        </form>
       </div>
     </div>
 
@@ -633,9 +674,51 @@ $(document).on('submit', '#form_komentar', function(e) {
   });
 });
 
-// ── Po úspěšném nahrání souboru ──
-// Formuláře v modalech odesílají standardně a přesměrují — zachytit to a místo
-// přesměrování přenačíst panel (implementovat přes zmenit_slozku_ajax.php response)
+// ── Nápady formulář ──
+function napodyToggle() {
+  var wrap = document.getElementById('napady-textarea-wrap');
+  var btn  = document.getElementById('napady-toggle-btn');
+  if (wrap.classList.contains('open')) {
+    wrap.classList.remove('open');
+    btn.textContent = '+ nápad';
+  } else {
+    wrap.classList.add('open');
+    btn.textContent = '▲ skrýt';
+    document.getElementById('napady_text').focus();
+  }
+}
+
+$(document).on('submit', '#form_napady', function(e) {
+  e.preventDefault();
+  var chyba = document.getElementById('napady_chyba');
+  chyba.style.display = 'none';
+
+  $.post('/php/vlozit_komentar.php', {
+    text:   $('#napady_text').val(),
+    name:   $('#napady_jmeno').val(),
+    odkaz:  '',
+    odkaz2: '',
+    pouzit_hlavni_diskusi: '1'
+  }, function(data) {
+    if (data.ok) {
+      nacistPanel('napady');
+      $('#napady_text').val('');
+      // Na mobilu schovat textarea po odeslání
+      var wrap = document.getElementById('napady-textarea-wrap');
+      var btn  = document.getElementById('napady-toggle-btn');
+      if (wrap && btn && window.innerWidth <= 768) {
+        wrap.classList.remove('open');
+        btn.textContent = '+ nápad';
+      }
+    } else {
+      chyba.innerHTML = data.chyba || 'Chyba';
+      chyba.style.display = 'block';
+    }
+  }, 'json').fail(function() {
+    chyba.innerHTML = 'Chyba spojení';
+    chyba.style.display = 'block';
+  });
+});
 </script>
 
 </body>
