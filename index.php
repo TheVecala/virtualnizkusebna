@@ -580,15 +580,18 @@ function looperLoop()    {
 
 // ── Edit text modal ──
 function otevritEditText() {
-  // Načíst aktuální obsah textového souboru přes AJAX
   $.get('/php/ajax/ajax_text_raw.php', function(data) {
-    var textarea = document.getElementById('editor');
-    if (textarea) textarea.value = data.obsah || '';
-    var input = document.getElementById('modal_soubor_akordu');
-    if (input) input.value = data.nazev_souboru || 'akordy.txt';
+    if (data.obsah !== undefined) {
+      var textarea = document.getElementById('editor');
+      var input    = document.getElementById('modal_soubor_akordu');
+      var label    = document.getElementById('modal_zmenit_text_label');
+      if (textarea) textarea.value = data.obsah;
+      if (input)    input.value    = data.nazev_souboru || 'akordy.txt';
+      if (label)    label.textContent = 'UPRAVIT ' + (data.nazev_souboru || 'akordy.txt') + ' — ' + (data.slozka || '');
+    }
     $('#modal_zmenit_text').modal('show');
-  }, 'json').fail(function() {
-    // Fallback - otevřít modal i bez načtení
+  }, 'json').fail(function(xhr) {
+    console.error('ajax_text_raw chyba:', xhr.status, xhr.responseText);
     $('#modal_zmenit_text').modal('show');
   });
 }

@@ -445,10 +445,7 @@
 
       <!-- Modal Header -->
       <div class="modal-header">
-		  <?php
-		  $aktualni_text_s_cestou = $slozka_slozek . $slozka_souboru . "/texty/" . $aktualni_text;
-		  echo "<p>UPRAVIT " . htmlspecialchars($aktualni_text) . " ze složky " . htmlspecialchars($slozka_souboru) . "</p>";
-		  ?>
+          <p id="modal_zmenit_text_label">UPRAVIT <?php echo htmlspecialchars($aktualni_text); ?></p>
           <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
@@ -458,18 +455,10 @@
      	    	<div class="container text-center">
                      <span class="vzkaz">
 					   <div class="form-group" style="display:none">
-						<input type="text" class="form-control" value="<?php echo htmlspecialchars($aktualni_text); ?>" name="soubor_akordu">
+						<input id="modal_soubor_akordu" type="text" class="form-control" value="<?php echo htmlspecialchars($aktualni_text); ?>" name="soubor_akordu">
 					  </div>
 
-					  <?php if (file_exists($aktualni_text_s_cestou)): ?>
-					     <textarea id="editor" name="editor" style="overflow-x:auto; font-family:Courier,monospace; width:100%" rows="20"><?php
-						    $akordy = fopen($aktualni_text_s_cestou, "r");
-							while (!feof($akordy)) { echo fgets($akordy); }
-							fclose($akordy);
-						 ?></textarea>
-					  <?php else: ?>
-					     <div class="alert alert-warning">Soubor <?php echo htmlspecialchars($aktualni_text); ?> neexistuje.</div>
-					  <?php endif; ?>
+					  <textarea id="editor" name="editor" style="overflow-x:auto; font-family:Courier,monospace; width:100%" rows="20"></textarea>
 
 				     </span>
                </div>
