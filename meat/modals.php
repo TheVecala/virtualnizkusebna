@@ -471,9 +471,15 @@
             <div class="modal-footer">
  			   <p>Pozor! Přepíše původní text.</p>
 				<button type="submit" class="btn btn-danger">uložit změny</button>
+				<button type="button" class="btn btn-secondary" onclick="zobrazHistorii()">📋 historie</button>
  				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display:inline">ZAVŘÍT</button>
             </div>
      </form>
+     <!-- Panel historie -->
+     <div id="panel-historie" style="display:none; padding:10px; border-top:1px solid #3a3e44; max-height:200px; overflow-y:auto;">
+       <div style="font-size:11px;color:#888;margin-bottom:6px">Kliknutím na zálohu ji načteš do editoru. Uložením ji obnovíš.</div>
+       <div id="seznam-zaloh"></div>
+     </div>
 	  
     </div>
   </div>

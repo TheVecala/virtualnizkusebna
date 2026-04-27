@@ -674,7 +674,46 @@ $(document).on('submit', '#form_komentar', function(e) {
   });
 });
 
-// ── Nápady formulář ──
+// ── Historie textu ──
+function zobrazHistorii() {
+  var panel = document.getElementById('panel-historie');
+  var seznam = document.getElementById('seznam-zaloh');
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+
+  seznam.innerHTML = '<div style="color:#888;font-size:12px">načítám...</div>';
+  panel.style.display = 'block';
+
+  $.get('/php/ajax/ajax_history.php', { akce: 'seznam' }, function(data) {
+    if (!data.ok || data.zalohy.length === 0) {
+      seznam.innerHTML = '<div style="color:#888;font-size:12px">Žádné zálohy.</div>';
+      return;
+    }
+    var html = '';
+    data.zalohy.forEach(function(z) {
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #3a3e44;">';
+      html += '<span style="font-size:12px;color:#e0e0e0;flex:1">' + z.datum + '</span>';
+      html += '<span style="font-size:10px;color:#888">' + Math.round(z.velikost/1024*10)/10 + ' kB</span>';
+      html += '<button class="btn-zaloha" data-soubor="' + z.soubor + '" style="background:#2a3a10;border:1px solid #a7ac38;color:#a7ac38;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer">načíst</button>';
+      html += '</div>';
+    });
+    seznam.innerHTML = html;
+  }, 'json').fail(function() {
+    seznam.innerHTML = '<div style="color:#888;font-size:12px">Chyba načítání.</div>';
+  });
+}
+
+function nacistZalohu(soubor) {
+  $.get('/php/ajax/ajax_history.php', { akce: 'nacist', soubor: soubor }, function(data) {
+    if (data.ok) {
+      document.getElementById('editor').value = data.obsah;
+      document.getElementById('panel-historie').style.display = 'none';
+    }
+  }, 'json');
+}
+
+$(document).on('click', '.btn-zaloha', function() {
+  nacistZalohu($(this).data('soubor'));
+});
 function napodyToggle() {
   var fields = document.getElementById('napady-fields');
   var btn    = document.getElementById('napady-toggle-btn');
