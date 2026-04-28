@@ -674,7 +674,61 @@ $(document).on('submit', '#form_komentar', function(e) {
   });
 });
 
-// ── Historie textu ──
+// ── Nahrávky — handlery (registrovány jednou, fungují i po AJAX přenačtení) ──
+function pauseOthers(aktualni) {
+  document.querySelectorAll('audio').forEach(function(a) {
+    if (a !== aktualni) { a.pause(); }
+  });
+  document.querySelectorAll('.toggle-player.otevreno').forEach(function(b) {
+    var wrap = document.getElementById(b.dataset.player);
+    if (wrap) {
+      var audio = wrap.querySelector('audio');
+      if (audio && audio !== aktualni) {
+        b.textContent = '▶';
+        b.classList.remove('otevreno');
+        wrap.classList.remove('open');
+      }
+    }
+  });
+}
+
+$(document).on('click', '.toggle-player', function() {
+  var wrap = document.getElementById($(this).data('player'));
+  if (!wrap) return;
+  if (wrap.classList.contains('open')) {
+    var audio = wrap.querySelector('audio');
+    if (audio) { audio.pause(); audio.currentTime = 0; }
+    wrap.classList.remove('open');
+    this.textContent = '▶';
+    this.classList.remove('otevreno');
+  } else {
+    wrap.classList.add('open');
+    this.textContent = '■';
+    this.classList.add('otevreno');
+  }
+});
+
+$(document).on('click', '.looper-btn', function() {
+  looperOtevrit($(this).data('cesta'), $(this).data('nazev'));
+});
+
+$(document).on('click', '.presunout-btn', function() {
+  var val = $(this).data('soubor'), label = $(this).data('nazev');
+  var odkud = document.getElementById('modal_presunout_odkud');
+  var lbl   = document.getElementById('modal_presunout_label');
+  var co    = document.getElementById('modal_presunout_co');
+  if (odkud) odkud.value = val;
+  if (lbl)   lbl.innerHTML = label;
+  if (co)    co.value = label;
+});
+
+$(document).on('click', '.smazat-btn', function() {
+  var val = $(this).data('soubor'), label = $(this).data('nazev');
+  var lbl = document.getElementById('modal_delete_label');
+  var del = document.getElementById('modal_delete_deleter');
+  if (lbl) lbl.innerHTML = label;
+  if (del) del.value = val;
+});
 function zobrazHistorii() {
   var panel = document.getElementById('panel-historie');
   var seznam = document.getElementById('seznam-zaloh');

@@ -107,11 +107,14 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
       <?php endif; ?>
     </div>
 
-    <?php if ($je_audio): ?>
+    <?php if ($je_audio):
+      $mime_typy = ['mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg', 'flac' => 'audio/flac', 'aac' => 'audio/aac'];
+      $mime = $mime_typy[$pripona] ?? 'audio/mpeg';
+    ?>
     <div class="player-wrap" id="<?php echo $player_id; ?>">
       <audio controls preload="none" style="width:100%;height:32px"
              onplay="pauseOthers(this)">
-        <source src="<?php echo htmlspecialchars($cesta); ?>" type="audio/mpeg">
+        <source src="<?php echo htmlspecialchars($cesta); ?>" type="<?php echo $mime; ?>">
       </audio>
     </div>
     <?php endif; ?>
@@ -119,63 +122,5 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   <?php endforeach; ?>
 <?php endif; ?>
 
-<script>
-function pauseOthers(aktualni) {
-  document.querySelectorAll('audio').forEach(function(a) {
-    if (a !== aktualni) { a.pause(); }
-  });
-  document.querySelectorAll('.fbtn.play.otevreno').forEach(function(b) {
-    var pid  = b.data ? b.getAttribute('data-player') : b.dataset.player;
-    var wrap = document.getElementById(pid);
-    if (wrap) {
-      var audio = wrap.querySelector('audio');
-      if (audio && audio !== aktualni) {
-        b.textContent = '▶';
-        b.classList.remove('otevreno');
-        wrap.classList.remove('open');
-      }
-    }
-  });
-}
 
-$(document).on('click', '.toggle-player', function() {
-  var playerId = $(this).data('player');
-  var wrap     = document.getElementById(playerId);
-  var btn      = this;
-  if (!wrap) return;
 
-  if (wrap.classList.contains('open')) {
-    var audio = wrap.querySelector('audio');
-    if (audio) { audio.pause(); audio.currentTime = 0; }
-    wrap.classList.remove('open');
-    btn.textContent = '▶';
-    btn.classList.remove('otevreno');
-  } else {
-    wrap.classList.add('open');
-    btn.textContent = '■';
-    btn.classList.add('otevreno');
-  }
-});
-
-$(document).on('click', '.looper-btn', function() {
-  looperOtevrit($(this).data('cesta'), $(this).data('nazev'));
-});
-
-$(document).on('click', '.presunout-btn', function() {
-  var val = $(this).data('soubor'), label = $(this).data('nazev');
-  var odkud = document.getElementById('modal_presunout_odkud');
-  var lbl   = document.getElementById('modal_presunout_label');
-  var co    = document.getElementById('modal_presunout_co');
-  if (odkud) odkud.value = val;
-  if (lbl)   lbl.innerHTML = label;
-  if (co)    co.value = label;
-});
-
-$(document).on('click', '.smazat-btn', function() {
-  var val = $(this).data('soubor'), label = $(this).data('nazev');
-  var lbl = document.getElementById('modal_delete_label');
-  var del = document.getElementById('modal_delete_deleter');
-  if (lbl) lbl.innerHTML = label;
-  if (del) del.value = val;
-});
-</script>
