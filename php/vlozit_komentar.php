@@ -1,6 +1,5 @@
 <?php
 session_start();
-// Potlačit warningy aby nezkazily JSON výstup
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
@@ -15,6 +14,7 @@ $text   = htmlspecialchars(trim($_POST["text"]   ?? ""), ENT_QUOTES);
 $odkaz  = htmlspecialchars(trim($_POST["odkaz"]  ?? ""), ENT_QUOTES);
 $odkaz2 = htmlspecialchars(trim($_POST["odkaz2"] ?? ""), ENT_QUOTES);
 $jmeno  = htmlspecialchars(trim($_POST["name"]   ?? ""), ENT_QUOTES);
+$pouzit_hlavni = !empty($_POST["pouzit_hlavni_diskusi"]);
 
 if (empty($text)) {
     echo json_encode(["ok" => false, "chyba" => "Text nesmí být prázdný"]);
@@ -22,21 +22,31 @@ if (empty($text)) {
 }
 
 $komentar = '<pre style="overflow-x:auto">' . $text . '</pre>';
-if (!empty($odkaz)) {
-    $komentar .= '<a href="' . $odkaz . '">' . $odkaz . '</a>';
-}
-if (!empty($odkaz2)) {
-    $komentar .= ' ' . $odkaz2;
-}
+if (!empty($odkaz))  { $komentar .= '<a href="' . $odkaz . '">' . $odkaz . '</a>'; }
+if (!empty($odkaz2)) { $komentar .= ' ' . $odkaz2; }
 
-// Používáme hlavní kapelovou diskusi - vždy existuje, nastavuje se při přihlášení
-// Diskuse per-vál bude přidána až budou doděláno vytváření tabulek pro každý vál
-if (empty($_SESSION['diskuse'])) {
-    echo json_encode(["ok" => false, "chyba" => "Diskuse není nastavena, zkuste se odhlásit a přihlásit znovu"]);
-    exit;
-}
+$kapela  = $_SESSION['kapela']                     ?? "";
+$slozka  = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 
-$aktualni_diskuse = $mysqli->real_escape_string($_SESSION['diskuse']);
+// Výběr tabulky diskuse
+if ($pouzit_hlavni || empty($slozka)) {
+    // Nápady kapely — hlavní diskuse
+    if (empty($_SESSION['diskuse'])) {
+        echo json_encode(["ok" => false, "chyba" => "Diskuse není nastavena"]);
+        exit;
+    }
+    $aktualni_diskuse = $mysqli->real_escape_string($_SESSION['diskuse']);
+} else {
+    // Diskuse per-vál
+    $aktualni_diskuse = "diskuse_" . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
+
+    // Vytvořit tabulku pokud neexistuje
+    $mysqli->query("CREATE TABLE IF NOT EXISTS `$aktualni_diskuse` (
+        cas   INT(11)     NOT NULL,
+        vzkaz TEXT        NOT NULL,
+        jmeno VARCHAR(50) NOT NULL
+    )");
+}
 
 $cas         = time();
 $komentar_db = $mysqli->real_escape_string($komentar);
