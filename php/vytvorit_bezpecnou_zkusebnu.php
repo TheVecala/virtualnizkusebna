@@ -109,6 +109,9 @@ $_SESSION['kapela']            = $nick;
 $_SESSION['befelemepesseveze'] = $nahoda;
 $_SESSION['diskuse']           = $adresa_diskuse;
 $_SESSION['slozka_souboru_k_zobrazeni'] = $jmeno_adresare;
+$_SESSION['aktualni_text']     = "akordy.txt";
+$_SESSION['skin']              = "skin1";
+$_SESSION['prihlasen']         = true;
 $_SESSION['vysledek']          = "Registrace a vytvoření zkušebny bylo úspěšně dokončeno!";
 
 require "navrat.php";

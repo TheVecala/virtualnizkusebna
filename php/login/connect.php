@@ -1,10 +1,7 @@
 <?php
-$db_server   = 'localhost';
-$db_login    = 'hanakdusan';
-$db_password = 'serepes6';
-$db_name     = '18810_virtualni_zkusebna';
+require_once dirname(__FILE__) . "/../../config.php";
 
-$mysqli = new mysqli($db_server, $db_login, $db_password, $db_name);
+$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 if ($mysqli->connect_error) {
     die('<p style="color:red">Nastala chyba v připojení k databázi: ' . $mysqli->connect_error . '</p>');

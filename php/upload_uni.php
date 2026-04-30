@@ -1,5 +1,6 @@
 <?php session_start(); ?>
 <?php
+require_once __DIR__ . "/../config.php";
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
@@ -84,7 +85,7 @@ if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
             $textmailu = "Do složky __ " . $slozka . " __ byl vložen soubor __ " . $bezpecne_jmeno . ".";
             if ($maily) {
                 while ($adresa = mysqli_fetch_array($maily)) {
-                    mail($adresa["mail"], "nový soubor v playlistu", $textmailu, "From:automat@virtualnizkusebna.cz");
+                    mail($adresa["mail"], "nový soubor v playlistu", $textmailu, "From:" . MAIL_FROM);
                 }
             }
         }
