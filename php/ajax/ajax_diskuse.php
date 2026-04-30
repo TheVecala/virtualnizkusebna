@@ -40,12 +40,13 @@ $vysledek = $mysqli->query("SELECT cas, vzkaz, jmeno FROM `$aktualni_diskuse` OR
 }
 .dk-text { font-size: 12px; margin-bottom: 3px; line-height: 1.4; color: #e0e0e0; word-break: break-word; }
 .dk-meta { font-size: 10px; color: #888; text-align: right; }
+pre { background: transparent !important; color: #e0e0e0 !important; margin: 0; white-space: pre-wrap; }
 </style>
 
 <?php if ($vysledek && $vysledek->num_rows > 0): ?>
   <?php while ($r = $vysledek->fetch_assoc()): ?>
   <div class="dk-comment">
-    <div class="dk-text"><?php echo $r['vzkaz']; ?></div>
+    <div class="dk-text"><?php echo strip_tags($r['vzkaz'], '<a><br><b>'); ?></div>
     <div class="dk-meta">
       <?php echo htmlspecialchars(strip_tags($r['jmeno'])); ?>
       &nbsp;·&nbsp;

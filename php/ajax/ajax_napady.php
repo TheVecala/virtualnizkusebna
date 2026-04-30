@@ -48,12 +48,13 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
 }
 .cf-btn:hover { background: #3a4a15; }
 .cf-chyba { color: #ff8888; font-size: 11px; margin-top: 4px; display: none; }
+pre { background: transparent !important; color: #e0e0e0 !important; margin: 0; white-space: pre-wrap; }
 </style>
 
 <?php if ($vysledek && $vysledek->num_rows > 0): ?>
   <?php while ($r = $vysledek->fetch_assoc()): ?>
   <div class="comment">
-    <div class="ctext"><?php echo $r['vzkaz']; ?></div>
+    <div class="ctext"><?php echo strip_tags($r['vzkaz'], '<a><br><b>'); ?></div>
     <div class="cmeta">
       <?php echo htmlspecialchars(strip_tags($r['jmeno'])); ?>
       &nbsp;·&nbsp;

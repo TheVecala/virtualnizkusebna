@@ -272,8 +272,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   .topnav { display: none; }
   #topbar-val { display: none; }
   #content-area { flex-direction: column; }
-  .panel { display: none; border-right: none; border-bottom: 1px solid var(--border); }
-  .panel.mob-active { display: flex; }
+  .panel { display: none !important; border-right: none; border-bottom: 1px solid var(--border); }
+  .panel.mob-active { display: flex !important; }
   /* Na mobilu skrýt celý formulář, zobrazit toggle tlačítko */
   #napady-fields { display: none; }
   #napady-fields.open { display: block; }
