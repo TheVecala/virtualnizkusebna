@@ -10,7 +10,7 @@ $(function() {
 
 // ── AJAX načtení panelu ──
 function nacistPanel(panel) {
-  $.get('/php/ajax/ajax_' + panel + '.php', { val: VZ.aktualniVal }, function(html) {
+  $.get('/php/ajax/ajax_' + panel + '.php', function(html) {
     $('#body-' + panel).html(html);
   }).fail(function() {
     $('#body-' + panel).html('<div style="color:#888;padding:12px;font-size:12px">Chyba načítání</div>');
@@ -57,14 +57,15 @@ function desktopView(view, el) {
   document.querySelectorAll('.topnav a').forEach(function(a) { a.classList.remove('active'); });
   if (el) el.classList.add('active');
 
+  // Pouze na desktopu — na mobilu řídí mobilePanel
+  if (window.innerWidth <= 768) return;
+
   if (view === 'napady') {
     $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'none');
     $('#panel-napady').css('display', 'flex');
   } else {
     $('#panel-napady').css('display', 'none');
-    if (window.innerWidth > 768) {
-      $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'flex');
-    }
+    $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'flex');
   }
 }
 
@@ -75,7 +76,12 @@ function mobilePanel(panel, el) {
   if (el) el.classList.add('active');
   VZ.aktivniMobPanel = panel;
 
-  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); });
+  // Odstranit všechny inline display styly (pozůstatky desktopView)
+  document.querySelectorAll('.panel').forEach(function(p) {
+    p.style.display = '';
+    p.classList.remove('mob-active');
+  });
+
   document.getElementById('panel-' + panel).classList.add('mob-active');
 }
 
@@ -321,4 +327,30 @@ $(document).on('submit', '#form_napady', function(e) {
     chyba.innerHTML    = 'Chyba spojení';
     chyba.style.display = 'block';
   });
+});
+
+// ── Resize / otočení — reset layoutu ──
+window.addEventListener('resize', function() {
+  var isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    // Odstranit inline display styly z desktopView
+    document.querySelectorAll('.panel').forEach(function(p) { p.style.display = ''; });
+    // Aktivovat správný panel
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); });
+    var el = document.getElementById('panel-' + (VZ.aktivniMobPanel || 'text'));
+    if (el) el.classList.add('mob-active');
+  } else {
+    // Odstranit mob-active, nastavit desktop layout
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); p.style.display = ''; });
+    var napadyAktivni = document.getElementById('nav-napady') &&
+                        document.getElementById('nav-napady').classList.contains('active');
+    if (napadyAktivni) {
+      $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'none');
+      $('#panel-napady').css('display', 'flex');
+    } else {
+      $('#panel-napady').css('display', 'none');
+      $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'flex');
+    }
+  }
 });
