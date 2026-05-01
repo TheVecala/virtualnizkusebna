@@ -270,7 +270,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
   #bottom-nav { display: flex; }
   .topnav { display: none; }
-  #topbar-val { display: none; }
+  #topbar-val { font-size: 11px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #content-area { flex-direction: column; }
   .panel { display: none !important; border-right: none; border-bottom: 1px solid var(--border); }
   .panel.mob-active { display: flex !important; }
