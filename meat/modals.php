@@ -1,7 +1,90 @@
+<style>
+/* ── Jednotný tmavý styl všech modalů ── */
+.modal-content {
+  background: var(--tmava) !important;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text) !important;
+}
+.modal-header {
+  background: #111417;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  border-radius: 8px 8px 0 0;
+}
+.modal-header .modal-title,
+.modal-header h4,
+.modal-header p.modal-title {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin: 0;
+  text-shadow: 1px -1px 5px var(--accent);
+}
+.modal-header .close {
+  color: var(--muted);
+  opacity: 1;
+  text-shadow: none;
+}
+.modal-header .close:hover { color: var(--text); }
+.modal-body  { padding: 14px 16px; background: var(--tmava); }
+.modal-footer {
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  background: #111417;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Formulářové prvky */
+.modal-content .form-control {
+  background: var(--pozadi) !important;
+  border: 1px solid var(--border);
+  color: var(--text) !important;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.modal-content .form-control:focus {
+  border-color: var(--barva);
+  box-shadow: none;
+  background: var(--pozadi) !important;
+  color: var(--text) !important;
+}
+.modal-content label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.modal-content select option { background: var(--pozadi); color: var(--text); }
+.modal-content textarea.form-control { resize: vertical; font-family: inherit; }
+.modal-content p { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+.modal-content hr { border-color: var(--border); margin: 12px 0; }
+.modal-content strong { color: var(--text); }
+
+/* Checkbox */
+.modal-content .form-check-label { color: var(--text); font-size: 13px; }
+
+/* Tlačítka */
+.modal-content .btn { font-size: 12px; border-radius: 5px; padding: 5px 12px; }
+.modal-content .btn-primary   { background: var(--barva); border-color: var(--barva); color: #000; }
+.modal-content .btn-primary:hover { filter: brightness(1.1); }
+.modal-content .btn-danger    { background: #5a1a1a; border-color: #8a3a3a; color: #ff9999; }
+.modal-content .btn-danger:hover { background: #7a2020; }
+.modal-content .btn-warning   { background: #3a3000; border-color: var(--accent); color: var(--accent); }
+.modal-content .btn-secondary { background: var(--card); border-color: var(--border); color: var(--text); }
+.modal-content .btn-secondary:hover { border-color: var(--barva); color: var(--barva); }
+.modal-content .btn-dark      { background: var(--card); border-color: var(--border); color: var(--text); }
+
+/* Panel historie */
+#panel-historie { background: var(--pozadi); border-top: 1px solid var(--border); padding: 10px 16px; }
+#panel-historie .btn-zaloha {
+  background: #2a3a10; border: 1px solid var(--barva);
+  color: var(--barva); border-radius: 4px;
+  padding: 2px 8px; font-size: 11px; cursor: pointer;
+}
+#panel-historie .btn-zaloha:hover { background: #3a4a15; }
+</style>
+
 	<!-- The Modal INFO-->
 <div class="modal modal-centered " id="myModal">
   <div class="modal-dialog">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+    <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -27,7 +110,7 @@
 	
 		
           </p>
-		  <button type="button" class="btn btn-swcondary"  >INSTALACE NA VLASTNÍ DOMÉNĚ</button><br>
+		  <button type="button" class="btn btn-secondary"  >INSTALACE NA VLASTNÍ DOMÉNĚ</button><br>
          
       </div>
 
@@ -45,7 +128,7 @@
   <!-- The Modal DELETE soubor-->
 <div class="modal" id="modal_delete">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+    <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -93,7 +176,7 @@
   <!-- The Modal vlozit_soubor -->
 <div class="modal" id="modal_vlozit_soubor">
   <div class="modal-dialog">
-    <div class="modal-content text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+    <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -139,9 +222,9 @@
   <!-- The Modal nova_slozka -->
 <div class="modal" id="modal_nova_slozka">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+    <div class="modal-content">
 
-      <!-- Modal Header --><?php echo $_SESSION['barva1'] ?>
+      <!-- Modal Header -->
       <div class="modal-header">
         <p class="modal-title">VLOŽENÍ NOVÉ SLOŽKY</p>		
         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -186,7 +269,7 @@
   <!-- The Modal vložit komentař -->
 <div class="modal" id="modal_vlozit_komentar">
   <div class="modal-dialog  ">
-   <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+   <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -240,7 +323,7 @@
   <!-- The Modal  modal_skin -->
 <div class="modal" id="modal_skin">
   <div class="modal-dialog  ">
-   <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+   <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -292,7 +375,7 @@
     <!-- The Modal DELETE vál -->
 <div class="modal" id="modal_delete_val">
   <div class="modal-dialog">
-    <div class="modal-content text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+    <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -349,7 +432,7 @@
   <!-- The Modal presunout soubor-->
 <div class="modal" id="modal_presunout">
   <div class="modal-dialog">
-    <div class="modal-content text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+    <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -408,7 +491,7 @@
     <!-- The Modal nahrat_zvuk -->
 <div class="modal" id="modal_nahrat_zvuk">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+    <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -441,7 +524,7 @@
     <!-- The Modal modal_zmenit_text -->
 <div class="modal" id="modal_zmenit_text">
   <div class="modal-dialog  ">
-    <div class="modal-content  text-white" style="background-color:#<?php echo $_SESSION['barva1'] ?>">
+    <div class="modal-content">
 
       <!-- Modal Header -->
       <div class="modal-header">
