@@ -67,6 +67,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
     $pripona  = strtolower(pathinfo($soub, PATHINFO_EXTENSION));
     $je_audio = in_array($pripona, $povolene_audio);
     $cesta    = "/user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/" . $soub;
+    $cesta_fs = "user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/" . $soub; // bez / pro PHP
     $player_id = "player_" . $i;
     $btn_id    = "playbtn_" . $i;
   ?>
@@ -90,12 +91,12 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
       </a>
 
       <button class="fbtn presunout-btn"
-        data-soubor="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
+        data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
         data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
         data-toggle="modal" data-target="#modal_presunout">↔</button>
 
       <button class="fbtn smazat-btn" style="color:#e44;border-color:#633"
-        data-soubor="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
+        data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
         data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
         data-toggle="modal" data-target="#modal_delete">🗑</button>
 
