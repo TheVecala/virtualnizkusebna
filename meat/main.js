@@ -354,3 +354,23 @@ window.addEventListener('resize', function() {
     }
   }
 });
+
+// ── Modal přesunout — dynamické naplnění selectu ──
+$(document).on('show.bs.modal', '#modal_presunout', function() {
+  var select = document.getElementById('modal_presunout_kam');
+  if (!select) return;
+  select.innerHTML = '<option disabled>načítám...</option>';
+
+  $.get('/php/ajax/ajax_slozky.php', function(data) {
+    select.innerHTML = '';
+    data.forEach(function(s) {
+      var opt = document.createElement('option');
+      opt.value = s.slozka;
+      opt.textContent = s.nazev;
+      if (s.aktivni) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }, 'json').fail(function() {
+    select.innerHTML = '<option>Chyba načítání</option>';
+  });
+});

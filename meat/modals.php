@@ -1,14 +1,15 @@
 <style>
-/* ── Jednotný tmavý styl všech modalů ── */
+/* ── Jednotný styl všech modalů ── */
 .modal-content {
-  background: var(--tmava) !important;
-  border: 1px solid var(--border);
+  background: #2e3338 !important;
+  border: 1px solid #a7ac38;
   border-radius: 8px;
   color: var(--text) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,.7);
 }
 .modal-header {
-  background: #111417;
-  border-bottom: 1px solid var(--border);
+  background: #383d43;
+  border-bottom: 1px solid #4a4e55;
   padding: 10px 16px;
   border-radius: 8px 8px 0 0;
 }
@@ -28,33 +29,33 @@
   text-shadow: none;
 }
 .modal-header .close:hover { color: var(--text); }
-.modal-body  { padding: 14px 16px; background: var(--tmava); }
+.modal-body  { padding: 14px 16px; background: #2e3338; }
 .modal-footer {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #4a4e55;
   padding: 10px 16px;
-  background: #111417;
+  background: #383d43;
   border-radius: 0 0 8px 8px;
 }
 
 /* Formulářové prvky */
 .modal-content .form-control {
-  background: var(--pozadi) !important;
-  border: 1px solid var(--border);
+  background: #1e2226 !important;
+  border: 1px solid #4a4e55;
   color: var(--text) !important;
   border-radius: 5px;
   font-size: 13px;
 }
 .modal-content .form-control:focus {
   border-color: var(--barva);
-  box-shadow: none;
-  background: var(--pozadi) !important;
+  box-shadow: 0 0 0 2px rgba(167,172,56,.2);
+  background: #1e2226 !important;
   color: var(--text) !important;
 }
-.modal-content label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
-.modal-content select option { background: var(--pozadi); color: var(--text); }
+.modal-content label { color: #aaa; font-size: 12px; margin-bottom: 4px; }
+.modal-content select option { background: #1e2226; color: var(--text); }
 .modal-content textarea.form-control { resize: vertical; font-family: inherit; }
-.modal-content p { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
-.modal-content hr { border-color: var(--border); margin: 12px 0; }
+.modal-content p { color: #aaa; font-size: 12px; margin-bottom: 6px; }
+.modal-content hr { border-color: #4a4e55; margin: 12px 0; }
 .modal-content strong { color: var(--text); }
 
 /* Checkbox */
@@ -64,15 +65,15 @@
 .modal-content .btn { font-size: 12px; border-radius: 5px; padding: 5px 12px; }
 .modal-content .btn-primary   { background: var(--barva); border-color: var(--barva); color: #000; }
 .modal-content .btn-primary:hover { filter: brightness(1.1); }
-.modal-content .btn-danger    { background: #5a1a1a; border-color: #8a3a3a; color: #ff9999; }
-.modal-content .btn-danger:hover { background: #7a2020; }
-.modal-content .btn-warning   { background: #3a3000; border-color: var(--accent); color: var(--accent); }
-.modal-content .btn-secondary { background: var(--card); border-color: var(--border); color: var(--text); }
+.modal-content .btn-danger    { background: #7a2020; border-color: #a03030; color: #ffbbbb; }
+.modal-content .btn-danger:hover { background: #922525; }
+.modal-content .btn-warning   { background: #4a3a00; border-color: var(--accent); color: var(--accent); }
+.modal-content .btn-secondary { background: #3a3f45; border-color: #555; color: var(--text); }
 .modal-content .btn-secondary:hover { border-color: var(--barva); color: var(--barva); }
-.modal-content .btn-dark      { background: var(--card); border-color: var(--border); color: var(--text); }
+.modal-content .btn-dark      { background: #3a3f45; border-color: #555; color: var(--text); }
 
 /* Panel historie */
-#panel-historie { background: var(--pozadi); border-top: 1px solid var(--border); padding: 10px 16px; }
+#panel-historie { background: #252a2e; border-top: 1px solid #4a4e55; padding: 10px 16px; }
 #panel-historie .btn-zaloha {
   background: #2a3a10; border: 1px solid var(--barva);
   color: var(--barva); border-radius: 4px;
@@ -457,17 +458,7 @@
           <div class="form-group">
             <label for="modal_presunout_kam">do složky:</label>
             <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
-            <?php
-            for($x = 0; $x < $delka_pole_slozek; $x++) {
-                if ($pole_slozek[$x] == ".")  { continue; }
-                if ($pole_slozek[$x] == "..")  { continue; }
-                $soub = ($slozka_slozek.$pole_slozek[$x]);
-                if(is_dir($soub)) {
-                    $selected = ($pole_slozek[$x] == $slozka_souboru) ? ' selected' : '';
-                    echo "<option".$selected.">".htmlspecialchars($pole_slozek[$x])."</option>";
-                }
-            }
-            ?>
+              <option disabled>načítám...</option>
             </select>
           </div>
 
