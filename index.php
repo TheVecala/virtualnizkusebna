@@ -282,9 +282,35 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 @media (min-width: 769px) {
   #panel-text, #panel-nahravky, #panel-diskuse { display: flex; }
 }
+
+/* ── Progress bar ── */
+#progress-bar {
+  position: fixed; top: var(--top-h); left: 0; right: 0;
+  height: 3px; z-index: 2000; pointer-events: none;
+  opacity: 0; transition: opacity .2s;
+}
+#progress-bar.loading {
+  opacity: 1;
+  background: linear-gradient(90deg, var(--barva) 0%, #ffc107 50%, var(--barva) 100%);
+  background-size: 200% 100%;
+  animation: pb-slide 1.2s linear infinite;
+}
+#progress-bar.done {
+  opacity: 0;
+  background: var(--barva);
+  transition: opacity .5s ease .2s;
+  animation: none;
+}
+@keyframes pb-slide {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
 </style>
 </head>
 <body>
+
+<!-- Progress bar -->
+<div id="progress-bar"></div>
 
 <!-- ── TOPBAR ── -->
 <div id="topbar">

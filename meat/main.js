@@ -1,24 +1,47 @@
 /* ── main.js — Virtuální zkušebna ── */
 
+// ── Progress bar ──
+var pbTimer = null;
+function pbStart() {
+  clearTimeout(pbTimer);
+  var pb = document.getElementById('progress-bar');
+  if (!pb) return;
+  pb.className = 'loading';
+}
+function pbDone() {
+  var pb = document.getElementById('progress-bar');
+  if (!pb) return;
+  pb.className = 'done';
+  pbTimer = setTimeout(function() { pb.className = ''; }, 700);
+}
+
 // ── Načtení panelů při startu ──
 $(function() {
-  nacistPanel('text');
-  nacistPanel('nahravky');
-  nacistPanel('diskuse');
-  nacistPanel('napady');
+  pbStart();
+  var pending = 4;
+  function panelDone() { if (--pending === 0) pbDone(); }
+  ['text','nahravky','diskuse','napady'].forEach(function(p) {
+    nacistPanel(p, panelDone);
+  });
 });
 
 // ── AJAX načtení panelu ──
-function nacistPanel(panel) {
+function nacistPanel(panel, callback) {
+  pbStart();
   $.get('/php/ajax/ajax_' + panel + '.php', function(html) {
     $('#body-' + panel).html(html);
+    if (callback) callback(); else pbDone();
   }).fail(function() {
     $('#body-' + panel).html('<div style="color:#888;padding:12px;font-size:12px">Chyba načítání</div>');
+    if (callback) callback(); else pbDone();
   });
 }
 
 function nacistVsechnyPanely() {
-  ['text','nahravky','diskuse','napady'].forEach(nacistPanel);
+  pbStart();
+  var pending = 4;
+  function done() { if (--pending === 0) pbDone(); }
+  ['text','nahravky','diskuse','napady'].forEach(function(p) { nacistPanel(p, done); });
 }
 
 // ── Přepnutí válu ──
@@ -168,6 +191,7 @@ $(document).on('submit', '#form_komentar', function(e) {
   e.preventDefault();
   var chyba = document.getElementById('komentar_chyba');
   if (chyba) chyba.style.display = 'none';
+  pbStart();
 
   $.post('/php/vlozit_komentar.php', {
     text:   $('#komentar_text').val(),
@@ -179,11 +203,14 @@ $(document).on('submit', '#form_komentar', function(e) {
       nacistPanel('diskuse');
       $('#komentar_text').val('');
       $('#komentar_jmeno').val('');
+      pbDone();
     } else {
       if (chyba) { chyba.innerHTML = data.chyba || 'Chyba'; chyba.style.display = 'block'; }
+      pbDone();
     }
   }, 'json').fail(function() {
     if (chyba) { chyba.innerHTML = 'Chyba spojení'; chyba.style.display = 'block'; }
+    pbDone();
   });
 });
 
@@ -302,6 +329,7 @@ $(document).on('submit', '#form_napady', function(e) {
   e.preventDefault();
   var chyba = document.getElementById('napady_chyba');
   chyba.style.display = 'none';
+  pbStart();
 
   $.post('/php/vlozit_komentar.php', {
     text:                 $('#napady_text').val(),
@@ -319,13 +347,16 @@ $(document).on('submit', '#form_napady', function(e) {
         fields.classList.remove('open');
         btn.textContent = '+ nápad';
       }
+      pbDone();
     } else {
       chyba.innerHTML    = data.chyba || 'Chyba';
       chyba.style.display = 'block';
+      pbDone();
     }
   }, 'json').fail(function() {
     chyba.innerHTML    = 'Chyba spojení';
     chyba.style.display = 'block';
+    pbDone();
   });
 });
 
@@ -373,4 +404,96 @@ $(document).on('show.bs.modal', '#modal_presunout', function() {
   }, 'json').fail(function() {
     select.innerHTML = '<option>Chyba načítání</option>';
   });
+});
+
+// ── Upload souboru s progress barem ──
+$(document).on('submit', '#form_upload', function(e) {
+  e.preventDefault();
+
+  var fileInput = document.getElementById('upload_file');
+  if (!fileInput.files.length) {
+    var res = document.getElementById('upload-result');
+    res.style.display = 'block';
+    res.style.color = '#ff8888';
+    res.textContent = 'Vyberte soubor.';
+    return;
+  }
+
+  var formData = new FormData();
+  formData.append('fileToUpload', fileInput.files[0]);
+  formData.append('odeslat', document.getElementById('upload_odeslat').checked ? 'true' : '');
+  formData.append('navrat', window.location.pathname);
+
+  var wrap = document.getElementById('upload-progress-wrap');
+  var bar  = document.getElementById('upload-progress-bar');
+  var txt  = document.getElementById('upload-progress-text');
+  var res  = document.getElementById('upload-result');
+  var btn  = document.getElementById('upload-btn');
+
+  wrap.style.display = 'block';
+  res.style.display  = 'none';
+  btn.disabled = true;
+  btn.textContent = 'nahrávám...';
+  pbStart();
+
+  var xhr = new XMLHttpRequest();
+
+  xhr.upload.onprogress = function(e) {
+    if (e.lengthComputable) {
+      var pct = Math.round(e.loaded / e.total * 100);
+      bar.style.width  = pct + '%';
+      txt.textContent  = pct + '%';
+    }
+  };
+
+  xhr.onload = function() {
+    pbDone();
+    btn.disabled = false;
+    btn.textContent = 'VLOŽIT SOUBOR';
+    bar.style.width = '100%';
+    txt.textContent = '100%';
+
+    res.style.display = 'block';
+    if (xhr.status === 200) {
+      res.style.color = '#a7ac38';
+      res.textContent = 'Soubor nahrán.';
+      // Reset formuláře
+      fileInput.value = '';
+      bar.style.width = '0%';
+      txt.textContent = '0%';
+      setTimeout(function() { wrap.style.display = 'none'; }, 1500);
+      // Přenačíst panel nahrávek
+      nacistPanel('nahravky');
+      // Zavřít modal po 1.5s
+      setTimeout(function() {
+        $('#modal_vlozit_soubor').modal('hide');
+        res.style.display = 'none';
+      }, 1500);
+    } else {
+      res.style.color = '#ff8888';
+      res.textContent = 'Chyba nahrávání (status ' + xhr.status + ').';
+    }
+  };
+
+  xhr.onerror = function() {
+    pbDone();
+    btn.disabled = false;
+    btn.textContent = 'VLOŽIT SOUBOR';
+    res.style.display = 'block';
+    res.style.color = '#ff8888';
+    res.textContent = 'Chyba spojení.';
+  };
+
+  xhr.open('POST', '/php/upload_uni.php');
+  xhr.send(formData);
+});
+
+// Reset progress baru při zavření modalu
+$(document).on('hidden.bs.modal', '#modal_vlozit_soubor', function() {
+  document.getElementById('upload-progress-bar').style.width = '0%';
+  document.getElementById('upload-progress-text').textContent = '0%';
+  document.getElementById('upload-progress-wrap').style.display = 'none';
+  document.getElementById('upload-result').style.display = 'none';
+  var btn = document.getElementById('upload-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'VLOŽIT SOUBOR'; }
 });

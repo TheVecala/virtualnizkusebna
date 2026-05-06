@@ -178,41 +178,36 @@
 <div class="modal" id="modal_vlozit_soubor">
   <div class="modal-dialog">
     <div class="modal-content">
-
-      <!-- Modal Header -->
       <div class="modal-header">
         <p class="modal-title">VLOŽENÍ SOUBORU</p>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
-      <!-- Modal body -->
       <div class="modal-body">
         <p>Skladba: <strong><?php echo htmlspecialchars($slozka_souboru); ?></strong></p>
-        <form action="/php/upload_uni.php" method="post" enctype="multipart/form-data">
-
+        <form id="form_upload">
           <div class="form-group">
-            <label for="fileToUpload">Vybrat soubor:</label>
-            <input type="file" class="form-control" name="fileToUpload"
+            <label>Vybrat soubor:</label>
+            <input type="file" class="form-control" id="upload_file"
               accept=".mp3,.wav,.ogg,.flac,.aac,.pdf,.txt,.jpg,.jpeg,.png,.gif">
           </div>
-
           <div class="checkbox" style="margin-bottom:10px">
-            <label><input name="odeslat" type="checkbox" value="true"> Odeslat info na mail</label>
+            <label><input id="upload_odeslat" type="checkbox" value="true"> Odeslat info na mail</label>
           </div>
 
-          <div class="form-group" style="display:none">
-            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          <!-- Progress bar uploadu -->
+          <div id="upload-progress-wrap" style="display:none; margin-bottom:10px;">
+            <div style="background:#1e2226; border-radius:4px; height:6px; overflow:hidden;">
+              <div id="upload-progress-bar" style="height:100%; width:0%; background:var(--barva); transition:width .1s;"></div>
+            </div>
+            <div id="upload-progress-text" style="font-size:11px; color:var(--muted); margin-top:4px; text-align:center;">0%</div>
           </div>
+          <div id="upload-result" style="font-size:12px; margin-bottom:8px; display:none;"></div>
 
-          <button type="submit" class="btn btn-primary">VLOŽIT SOUBOR</button>
-          <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
-
+          <button type="submit" class="btn btn-primary" id="upload-btn">VLOŽIT SOUBOR</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
         </form>
       </div>
-
-      <!-- Modal footer -->
       <div class="modal-footer"></div>
-
     </div>
   </div>
 </div>
