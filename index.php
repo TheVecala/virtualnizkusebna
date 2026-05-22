@@ -1,17 +1,34 @@
 <?php session_start();
 error_reporting(0);
 
-// Inicializace SESSION
+// Inicializace SESSION barev
 $_SESSION['barva1']     = $_SESSION['barva1']     ?? "a7ac38";
 $_SESSION['barva_pozadi'] = $_SESSION['barva_pozadi'] ?? "202428";
 
-// Přihlášení
-if (empty($_SESSION['login'])) {
+
+/* ── HARDCODED CONFIGURATION PRO SINGLE-BAND VERZI ── */
+// Tímto zajistíme, že skript bude vždy vědět, o jakou kapelu se jedná,
+// i když se uživatel přihlašuje pouze jedním globálním heslem.
+
+$single_login             = "kapela";             // Výchozí zobrazené jméno člena klanu
+$single_kapela            = "kapela";       // Název složky tvé kapely na FTP (user/moje_kapela/...)
+$single_befelemepesseveze = "471707760"; // Hodnota pro tvou složku (pokud ji v multi-verzi používáš jako sůl/hash)
+
+
+// Kontrola přihlášení (Odkazuje na tvůj loginbox, který po úpravě bude chtít jen heslo)
+if (empty($_SESSION['logged_in_single'])) {
     require "php/loginbox4.php";
     exit;
 }
 
-// Nastavit SESSION proměnné
+// Pokud je uživatel úspěšně ověřen heslem, podstrčíme systému identitu tvé kapely
+$_SESSION['login']             = $single_login;
+$_SESSION['kapela']            = $single_kapela;
+$_SESSION['befelemepesseveze'] = $single_befelemepesseveze;
+/* ─────────────────────────────────────────────────── */
+
+
+// Nastavit lokální proměnné (zůstává původní logika)
 $login             = $_SESSION['login'];
 $kapela            = $_SESSION['kapela']            ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
@@ -19,7 +36,7 @@ $sekce             = "uploads";
 $aktualni_text     = $_SESSION['aktualni_text']     ?? "akordy.txt";
 $aktualni_diskuse  = $_SESSION['diskuse']           ?? "";
 
-// Složky (vály)
+// Složky (vály) - původní netknutá logika
 if (!empty($kapela) && !empty($befelemepesseveze)) {
     $slozka_slozek     = "user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/";
     $pole_slozek_raw   = is_dir($slozka_slozek) ? scandir($slozka_slozek) : [];
@@ -53,6 +70,8 @@ function nacti_nazev_valu($slozka_slozek, $slozka) {
 
 $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 ?>
+
+
 <!doctype html>
 <html lang="cs">
 <head>
