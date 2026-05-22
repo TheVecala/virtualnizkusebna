@@ -555,3 +555,26 @@
 </div>  
 
 
+
+
+<!-- ── ODHLÁŠENÍ ── -->
+<div class="modal" id="modal_logout">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content" style="text-align:center">
+      <div class="modal-header" style="justify-content:center; border-bottom:none; padding-bottom:0">
+        <h5 class="modal-title">🎸</h5>
+      </div>
+      <div class="modal-body" style="padding: 10px 20px 20px">
+        <p style="color:var(--text); font-size:14px; margin-bottom:16px">
+          Opravdu chceš opustit zkušebnu?
+        </p>
+        <a href="/php/login/logout.php" class="btn btn-danger" style="display:block; margin-bottom:8px">
+          zpět do reálného světa
+        </a>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" style="display:block; width:100%">
+          zůstat ve zkušebně
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

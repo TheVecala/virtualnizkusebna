@@ -325,7 +325,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       nápady <span class="napady-badge">kapela</span>
     </a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
-    <a href="/php/login/logout.php">odhlásit</a>
+    <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
 </div>
 
