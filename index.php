@@ -1,4 +1,4 @@
-<?php session_start();
+ <?php session_start();
 error_reporting(0);
 
 // Inicializace SESSION barev
@@ -7,28 +7,41 @@ $_SESSION['barva_pozadi'] = $_SESSION['barva_pozadi'] ?? "202428";
 
 
 /* ── HARDCODED CONFIGURATION PRO SINGLE-BAND VERZI ── */
-// Tímto zajistíme, že skript bude vždy vědět, o jakou kapelu se jedná,
-// i když se uživatel přihlašuje pouze jedním globálním heslem.
+// !!! TADY ZKONTROLUJ PŘESNOU SHODU S FTP (i malá/velká písmena) !!!
+$single_login             = "kapela";             
+$single_kapela            = "kapela";       // Název složky v user/
+$single_befelemepesseveze = "471707760"; // Přesný název vnitřní složky
 
-$single_login             = "kapela";             // Výchozí zobrazené jméno člena klanu
-$single_kapela            = "kapela";       // Název složky tvé kapely na FTP (user/moje_kapela/...)
-$single_befelemepesseveze = "471707760"; // Hodnota pro tvou složku (pokud ji v multi-verzi používáš jako sůl/hash)
+$globalni_heslo_kapely    = "krpole";      // Tvoje heslo pro vstup
+/* ─────────────────────────────────────────────────── */
 
 
-// Kontrola přihlášení (Odkazuje na tvůj loginbox, který po úpravě bude chtít jen heslo)
+// Zpracování odeslaného formuláře z loginboxu
+if (isset($_POST['submit_single'])) {
+    $zadani_hesla = $_POST['heslo'] ?? '';
+    
+    if ($zadani_hesla === $globalni_heslo_kapely) {
+        $_SESSION['logged_in_single'] = true;
+        unset($_SESSION['chyba_prihlaseni_single']);
+    } else {
+        $_SESSION['chyba_prihlaseni_single'] = "wrong_heslo";
+    }
+}
+
+
+// Kontrola, zda je uživatel přihlášen
 if (empty($_SESSION['logged_in_single'])) {
     require "php/loginbox4.php";
     exit;
 }
 
-// Pokud je uživatel úspěšně ověřen heslem, podstrčíme systému identitu tvé kapely
+// Pokud přihlášen JE, podstrčíme systému identitu tvé kapely
 $_SESSION['login']             = $single_login;
 $_SESSION['kapela']            = $single_kapela;
 $_SESSION['befelemepesseveze'] = $single_befelemepesseveze;
-/* ─────────────────────────────────────────────────── */
 
 
-// Nastavit lokální proměnné (zůstává původní logika)
+// Nastavit lokální proměnné
 $login             = $_SESSION['login'];
 $kapela            = $_SESSION['kapela']            ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
@@ -36,10 +49,13 @@ $sekce             = "uploads";
 $aktualni_text     = $_SESSION['aktualni_text']     ?? "akordy.txt";
 $aktualni_diskuse  = $_SESSION['diskuse']           ?? "";
 
-// Složky (vály) - původní netknutá logika
+
+// ── UPRAVENÁ LOGIKA SLOŽEK S ABSOLUTNÍ CESTOU ──
 if (!empty($kapela) && !empty($befelemepesseveze)) {
-    $slozka_slozek     = "user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/";
+    // Použijeme __DIR__ pro přesné zacílení na disk
+    $slozka_slozek     = __DIR__ . "/user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/";
     $pole_slozek_raw   = is_dir($slozka_slozek) ? scandir($slozka_slozek) : [];
+    
     // Filtrovat jen složky, přeskočit . a ..
     $pole_slozek = [];
     foreach ($pole_slozek_raw as $s) {
@@ -52,14 +68,16 @@ if (!empty($kapela) && !empty($befelemepesseveze)) {
     $pole_slozek   = [];
 }
 
-// Aktuální vál
+// Aktuální vál (Zde v HTML kódu pak potřebujeme relativní cestu, tak si připravíme verzi pro zobrazení)
+$relativni_slozka_slozek = "user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/";
+
 $slozka_souboru = $_SESSION['slozka_souboru_k_zobrazeni'] ?? ($pole_slozek[0] ?? "");
 if ($slozka_souboru === "slozka_smazana" || !in_array($slozka_souboru, $pole_slozek)) {
     $slozka_souboru = $pole_slozek[0] ?? "";
     $_SESSION['slozka_souboru_k_zobrazeni'] = $slozka_souboru;
 }
 
-// Název válu (z nazev_valu.txt pokud existuje)
+// Název válu (z nazev_valu.txt pokud existuje) - upraveno o absolutní cestu
 function nacti_nazev_valu($slozka_slozek, $slozka) {
     $soubor = $slozka_slozek . $slozka . "/data/nazev_valu.txt";
     if (file_exists($soubor)) {
@@ -70,7 +88,6 @@ function nacti_nazev_valu($slozka_slozek, $slozka) {
 
 $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 ?>
-
 
 <!doctype html>
 <html lang="cs">
