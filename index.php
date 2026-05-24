@@ -366,8 +366,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 </div>
 
 <!-- ── SIDEBAR ── -->
-<div id="sidebar">
-  <div class="sidebar-label">Skladby</div>
+ <div id="sidebar">
+  <div class="sidebar-label" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 4px;">
+    <span>Skladby</span>
+    <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" style="padding: 2px 6px; font-size: 10px;">+ nová</button>
+  </div>
   <div id="sidebar-playlist">
     <?php foreach ($pole_slozek as $s):
         $nazev_s = nacti_nazev_valu($slozka_slozek, $s);
@@ -385,7 +388,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     </div>
     <?php endforeach; ?>
   </div>
-  <div class="sidebar-add" data-toggle="modal" data-target="#modal_nova_slozka">+ nová skladba</div>
 </div>
 
 <!-- ── MAIN ── -->
@@ -524,7 +526,14 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 <!-- VAL DRAWER (mobil) -->
 <div id="val-drawer">
-  <div class="drawer-label">Skladby</div>
+  
+  <div class="drawer-header" style="padding: 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Seznam skladeb</span>
+      <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')">
+          + nová skladba
+      </button>
+  </div>
+
   <?php foreach ($pole_slozek as $s):
       $nazev_s = nacti_nazev_valu($slozka_slozek, $s);
       $active  = ($s === $slozka_souboru) ? ' active' : '';
@@ -534,10 +543,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     <span>🎵</span><?php echo htmlspecialchars($nazev_s); ?>
   </div>
   <?php endforeach; ?>
-  <div class="dval" style="color:var(--barva);border:1px dashed #4a5a20;border-radius:6px;margin:6px"
-       data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')">
-    <span>+</span>nová skladba
-  </div>
+
 </div>
 
 <!-- ── SKRIPTY ── -->
