@@ -3,7 +3,8 @@ session_start();
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
-if (empty($_SESSION['login'])) {
+// 1. ZMĚNA: Kontrola single-band přihlášení
+if (empty($_SESSION['logged_in_single'])) {
     echo json_encode(["ok" => false, "chyba" => "Nejste přihlášen"]);
     exit;
 }
@@ -30,14 +31,24 @@ $slozka  = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 
 // Výběr tabulky diskuse
 if ($pouzit_hlavni || empty($slozka)) {
-    // Nápady kapely — hlavní diskuse
-    if (empty($_SESSION['diskuse'])) {
-        echo json_encode(["ok" => false, "chyba" => "Diskuse není nastavena"]);
+    
+    // 2. ZMĚNA: Nápady kapely — hlavní diskuse (dynamický název)
+    if (empty($kapela)) {
+        echo json_encode(["ok" => false, "chyba" => "Název kapely není nastaven"]);
         exit;
     }
-    $aktualni_diskuse = $mysqli->real_escape_string($_SESSION['diskuse']);
+    
+    $aktualni_diskuse = "napady_" . $mysqli->real_escape_string($kapela);
+    
+    // Vytvořit tabulku pro nápady, pokud náhodou ještě neexistuje
+    $mysqli->query("CREATE TABLE IF NOT EXISTS `$aktualni_diskuse` (
+        cas   INT(11)     NOT NULL,
+        vzkaz TEXT        NOT NULL,
+        jmeno VARCHAR(50) NOT NULL
+    )");
+
 } else {
-    // Diskuse per-vál
+    // Diskuse per-vál (zůstává beze změny)
     $aktualni_diskuse = "diskuse_" . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
 
     // Vytvořit tabulku pokud neexistuje
