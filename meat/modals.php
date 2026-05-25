@@ -426,53 +426,46 @@
   
   
   <!-- The Modal presunout soubor-->
-<div class="modal" id="modal_presunout">
+ <div class="modal fade" id="modal_presunout">
   <div class="modal-dialog">
     <div class="modal-content">
 
-      <!-- Modal Header -->
       <div class="modal-header">
-        přesunout soubor
+        <h5 class="modal-title">PŘESUNOUT SOUBOR</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-      <!-- Modal body -->
-      <form action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data" style="display:inline">
+      <form action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
-
-          <p id="modal_presunout_label" class="modal-title">Soubor</p>
+          
+          <p id="modal_presunout_label" style="color: var(--barva); font-weight: bold; margin-bottom: 15px;">Soubor</p>
 
           <div class="form-group" style="display:none">
             <input id="modal_presunout_co" type="text" class="form-control" value="" name="presunout_co">
           </div>
-
           <div class="form-group" style="display:none">
             <input id="modal_presunout_odkud" type="text" class="form-control" value="" name="presunout_odkud">
           </div>
-
-          <div class="form-group">
-            <label for="modal_presunout_kam">do složky:</label>
-            <select class="form-control" id="modal_presunout_kam" name="presunout_kam">
-              <option disabled>načítám...</option>
-            </select>
-          </div>
-
           <div class="form-group" style="display:none">
             <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
           </div>
 
+          <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Kliknutím na složku rovnou přesunete:</p>
+
+          <div id="seznam_slozek_pro_presun" class="list-group" style="max-height: 300px; overflow-y: auto; padding-right: 4px;">
+            <div style="color: var(--muted); font-size: 12px; padding: 10px;">načítám...</div>
+          </div>
+
         </div>
 
-        <!-- Modal footer -->
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">PŘESUNOUT</button>
-          <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">ZRUŠIT</button>
         </div>
       </form>
+      
     </div>
   </div>
 </div>
-
 
     <!-- The Modal nahrat_zvuk -->
 <div class="modal" id="modal_nahrat_zvuk">

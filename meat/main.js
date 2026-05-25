@@ -386,26 +386,46 @@ window.addEventListener('resize', function() {
   }
 });
 
-// ── Modal přesunout — dynamické naplnění selectu ──
+ // ── Modal přesunout — dynamické naplnění seznamu tlačítek ──
 $(document).on('show.bs.modal', '#modal_presunout', function() {
-  var select = document.getElementById('modal_presunout_kam');
-  if (!select) return;
-  select.innerHTML = '<option disabled>načítám...</option>';
+  var kontejner = document.getElementById('seznam_slozek_pro_presun');
+  if (!kontejner) return;
+  
+  kontejner.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px;">načítám...</div>';
 
   $.get('/php/ajax/ajax_slozky.php', function(data) {
-    select.innerHTML = '';
+    kontejner.innerHTML = '';
+    
     data.forEach(function(s) {
-      var opt = document.createElement('option');
-      opt.value = s.slozka;
-      opt.textContent = s.nazev;
-      if (s.aktivni) opt.selected = true;
-      select.appendChild(opt);
+      // Skryje složku, ve které právě jsme (aby soubor nešel přesunout tam, kde už je)
+      if (s.aktivni) return;
+
+      var btn = document.createElement('button');
+      btn.type = 'submit';
+      // Tohle zaručí, že po kliknutí se do PHP pošle správná hodnota
+      btn.name = 'presunout_kam'; 
+      btn.value = s.slozka;
+      btn.className = 'list-group-item list-group-item-action';
+      
+      // Inline stylování pro dark-mode design
+      btn.style.cssText = 'background: #1e2226; color: #e0e0e0; border: 1px solid #3a3e44; margin-bottom: 5px; border-radius: 5px; padding: 10px 12px; font-size: 13px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; transition: 0.2s;';
+
+      // Hover efekty (přes JS, aby ladily s barvou kapely)
+      btn.onmouseover = function() { this.style.borderColor = 'var(--barva)'; this.style.color = 'var(--barva)'; };
+      btn.onmouseout  = function() { this.style.borderColor = '#3a3e44'; this.style.color = '#e0e0e0'; };
+
+      btn.innerHTML = '<span style="font-size:16px;">📁</span> ' + s.nazev;
+      kontejner.appendChild(btn);
     });
+    
+    // Pokud je kapela jen s jednou složkou
+    if(kontejner.innerHTML === '') {
+      kontejner.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">Nemáte vytvořené žádné další skladby.</div>';
+    }
   }, 'json').fail(function() {
-    select.innerHTML = '<option>Chyba načítání</option>';
+    kontejner.innerHTML = '<div style="color:#ff8888; font-size:12px; padding:10px;">Chyba načítání skladeb.</div>';
   });
 });
-
 // ── Upload souboru s progress barem ──
 $(document).on('submit', '#form_upload', function(e) {
   e.preventDefault();
