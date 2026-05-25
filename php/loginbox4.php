@@ -65,7 +65,7 @@ if (isset($_POST['submit_single'])) {
                             <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">     
                                 <div class="form-group d-flex justify-content-center align-items-center gap-2" style="max-width: 320px; margin: 0 auto 15px;">
                                     <label class="mr-2 mb-0" style="font-weight: bold;">HESLO:</label>
-                                    <input type="password" name="heslo" class="form-control text-center" autofocus style="background: #1a1d20; color: #fff; border: 1px solid #3a3e44;" />
+                                    <input type="password" name="heslo" class="form-control " autofocus style="background: #1a1d20; color: #fff; border: 1px solid #3a3e44;" />
                                 </div>
                                 
                                 <?php
