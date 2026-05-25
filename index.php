@@ -63,6 +63,18 @@ if (!empty($kapela) && !empty($befelemepesseveze)) {
             $pole_slozek[] = $s;
         }
     }
+// --- AUTOMATICKÝ VÝBĚR SKLADBY PO PŘIHLÁŠENÍ ---
+    // Pokud není vybraná žádná skladba, NEBO pokud vybraná skladba už neexistuje (např. byla smazána)
+    if (empty($_SESSION['slozka_souboru_k_zobrazeni']) || !in_array($_SESSION['slozka_souboru_k_zobrazeni'], $pole_slozek)) {
+        if (count($pole_slozek) > 0) {
+            // Nastaví se automaticky první nalezená skladba
+            $_SESSION['slozka_souboru_k_zobrazeni'] = $pole_slozek[0];
+        }
+    }
+    
+    // Propíšeme si to do lokální proměnné, aby ji mohl zbytek index.php ihned použít
+    $slozka_souboru = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";	
+	
 } else {
     $slozka_slozek = "";
     $pole_slozek   = [];
