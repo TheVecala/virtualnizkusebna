@@ -63,6 +63,24 @@ if (!empty($kapela) && !empty($befelemepesseveze)) {
             $pole_slozek[] = $s;
         }
     }
+	
+$soubor_poradi = $slozka_slozek . 'poradi.json';
+    if (file_exists($soubor_poradi)) {
+        $vlastni_poradi = json_decode(file_get_contents($soubor_poradi), true);
+        if (is_array($vlastni_poradi)) {
+            usort($pole_slozek, function($a, $b) use ($vlastni_poradi) {
+                $posA = array_search($a, $vlastni_poradi);
+                $posB = array_search($b, $vlastni_poradi);
+                
+                // Pokud složka v seznamu chybí (nová skladba), dáme ji na konec
+                $posA = ($posA === false) ? 9999 : $posA;
+                $posB = ($posB === false) ? 9999 : $posB;
+                
+                return $posA <=> $posB;
+            });
+        }
+    }
+	
 // --- AUTOMATICKÝ VÝBĚR SKLADBY PO PŘIHLÁŠENÍ ---
     // Pokud není vybraná žádná skladba, NEBO pokud vybraná skladba už neexistuje (např. byla smazána)
     if (empty($_SESSION['slozka_souboru_k_zobrazeni']) || !in_array($_SESSION['slozka_souboru_k_zobrazeni'], $pole_slozek)) {
