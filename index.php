@@ -371,6 +371,23 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   0%   { background-position: 100% 0; }
   100% { background-position: -100% 0; }
 }
+
+/* Styl pro prvek, který zrovna táhneš (stínový prvek na původním místě) */
+.sortable-ghost {
+  opacity: 0.4;
+  background: var(--barva) !important;
+  color: var(--tmava) !important;
+}
+
+/* Styl pro prvek, který zrovna visí pod kurzorem myši */
+.sortable-chosen {
+   opacity: 1 !important; /* Zrušíme průhlednost, chceme plnou barvu */
+  background-color: #a7ac38 !important; /* Tvoje žlutá/olivová barva */
+  color: #202428 !important; /* Tmavé písmo, aby byl text na žluté skvěle čitelný */
+  box-shadow: 0 0 15px rgba(167, 172, 56, 0.6) !important; /* Jemná žlutá záře (podsvícení) */
+  border: 1px solid #ffffff !important;
+}
+
 </style>
 </head>
 <body>
@@ -401,12 +418,13 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     <span>Skladby</span>
     <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" style="padding: 2px 6px; font-size: 10px;">+ nová</button>
   </div>
-  <div id="sidebar-playlist">
+<div id="sidebar-playlist">
     <?php foreach ($pole_slozek as $s):
         $nazev_s = nacti_nazev_valu($slozka_slozek, $s);
         $active  = ($s === $slozka_souboru) ? ' active' : '';
     ?>
     <div class="val-item<?php echo $active; ?>"
+         data-id="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
          data-val="<?php echo htmlspecialchars($s); ?>"
          onclick="switchVal('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>', '<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>', this)">
       <span class="val-dot"></span>
@@ -555,7 +573,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 </div>
 
 <!-- VAL DRAWER (mobil) -->
-<div id="val-drawer">
+<div id="val-drawer" class="seznam-skladeb">
   
   <div class="drawer-header" style="padding: 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
       <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Seznam skladeb</span>
@@ -564,11 +582,12 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       </button>
   </div>
 
-  <?php foreach ($pole_slozek as $s):
+<?php foreach ($pole_slozek as $s):
       $nazev_s = nacti_nazev_valu($slozka_slozek, $s);
       $active  = ($s === $slozka_souboru) ? ' active' : '';
   ?>
-  <div class="dval<?php echo $active; ?>"
+  <div class="dval<?php echo $active; ?>" 
+       data-id="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
        onclick="switchVal('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>', null)">
     <span>🎵</span><?php echo htmlspecialchars($nazev_s); ?>
   </div>
@@ -584,6 +603,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <script src="https://unpkg.com/wavesurfer.js"></script>
 <script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
 -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <script>
 // Inicializace stavových proměnných z PHP — přístupné přes objekt VZ
@@ -593,6 +613,47 @@ var VZ = {
   aktivniMobPanel: 'text'
 };
 </script>
+
+ <script>
+// Inicializace SortableJS po načtení stránky
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Funkce, která naučí Drag & Drop jakýkoliv seznam
+    function aktivovatSortable(idKontejneru) {
+        var el = document.getElementById(idKontejneru);
+        if (el) {
+            var sortable = Sortable.create(el, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                delay: 100, 
+                // delayOnTouchOnly: true, // Na myši reaguje ihned, na dotyk s malým zpožděním (aby šlo scrollovat)
+                // draggable: '.' + tridaPolozky,
+				filter: 'drawer-header',
+                onEnd: function (evt) {
+                    var novePoradi = sortable.toArray();
+                    
+                    $.ajax({
+                        url: '/php/uloz_poradi.php',
+                        method: 'POST',
+                        data: { poradi: novePoradi },
+                        success: function(response) {
+                            console.log('Nové pořadí bylo uloženo z panelu: ' + idKontejneru);
+                        },
+                        error: function() {
+                            alert('Chyba při ukládání pořadí. Zkuste to znovu.');
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    // Aktivujeme přetahování pro oba seznamy!
+    aktivovatSortable('val-drawer');      // Mobilní menu
+    aktivovatSortable('sidebar-playlist'); // Desktopový levý panel
+});
+</script>
+
 <script src="/meat/main.js"></script>
 
 </body>
