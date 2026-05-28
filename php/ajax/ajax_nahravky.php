@@ -25,6 +25,7 @@ if (!empty($slozka_souboru) && is_dir($cesta_slozky)) {
 
 $barva = $_SESSION['barva1'] ?? "a7ac38";
 ?>
+
 <style>
 /* Jednotný styl pro řádek nahrávky */
 .nahravka-box {
@@ -54,27 +55,19 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   color: #e0e0e0;
 }
 
-/* Společný styl pro velká mobilní tlačítka uvnitř roletky */
-.fbtn {
-  background: #2a3a10 !important;
+/* Tlačítko ozubeného kolečka na hlavním řádku */
+.btn-nastaveni {
+  background: #222e0d !important;
   color: #<?php echo $barva; ?> !important;
   border: 1px solid #<?php echo $barva; ?> !important;
   border-radius: 6px;
-  width: 44px;
-  height: 44px;
-  font-size: 20px;
+  width: 42px;
+  height: 42px;
+  font-size: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  vertical-align: middle;
-  padding: 0;
-}
-
-.fbtn:active, .fbtn:hover {
-  background: #<?php echo $barva; ?> !important;
-  color: #202428 !important;
 }
 
 /* Výsuvná plocha (panel pod názvem) */
@@ -84,20 +77,67 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   padding-top: 10px;
 }
 
-/* Řádek pro tlačítka v roletce */
+/* NOVÉ: Flexbox kontejner pro roztažení tlačítek po celé šířce */
 .vysuvna-tlacitka {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
   margin-top: 10px;
+}
+
+/* Automaticky rozdělí šířku roletky rovnoměrně mezi všechny potomky (button i odkaz) */
+.vysuvna-tlacitka > button,
+.vysuvna-tlacitka > a {
+  flex: 1;
+  min-width: 0;
+}
+
+/* UNIVERZÁLNÍ TEXTOVÉ TLAČÍTKO */
+.fbtn {
+  background: #2a3a10 !important;
+  color: #<?php echo $barva; ?> !important;
+  border: 1px solid #<?php echo $barva; ?> !important;
+  border-radius: 5px;
+  width: 100%; /* Vyplní celou šířku přidělenou flexboxem (důležité uvnitř tagu <a>) */
+  
+  /* Výška se nyní plně přizpůsobuje velikosti písma a paddingu */
+  padding: 8px 2px; 
+  font-size: 11px; /* Kompaktní velikost, aby se nápisy vešly i na menší mobily */
+  font-weight: bold;
+  text-transform: uppercase; /* Jednotný vzhled velkých písmen */
+  text-align: center;
+  letter-spacing: 0.5px;
+  
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.fbtn:active, .fbtn:hover {
+  background: #<?php echo $barva; ?> !important;
+  color: #202428 !important;
+}
+
+/* Speciální barvy pro tlačítko SMAZAT */
+.fbtn.smazat-btn {
+  color: #ff5555 !important;
+  border-color: #633030 !important;
+  background: #341c1c !important;
+}
+.fbtn.smazat-btn:active, .fbtn.smazat-btn:hover {
+  background: #ff5555 !important;
+  color: #202428 !important;
 }
 </style>
 
 <?php if (empty($slozka_souboru)): ?>
-  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Vyberte vál ze seznamu.</div>
+  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Vyberte skladbu ze seznamu.</div>
 
 <?php elseif (empty($soubory)): ?>
-  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Žádné soubory v tomto válu.</div>
+  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Žádné soubory v této skladbě.</div>
 
 <?php else: ?>
   
@@ -108,7 +148,6 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
     $ext      = strtolower(pathinfo($soub, PATHINFO_EXTENSION));
     $je_audio = in_array($ext, $povolene_audio);
     
-    // Unikátní ID pro každou roletku na základě indexu smyčky
     $id_roletky = "roletka_" . $i;
   ?>
     <div class="nahravka-box">
@@ -118,11 +157,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
           <?php echo $je_audio ? '🎵' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
         </div>
         <div>
-          <button class="fbtn" 
-                  data-toggle="collapse" 
-                  data-target="#<?php echo $id_roletky; ?>" 
-                  title="Možnosti" 
-                  style="background: #222e0d !important;">
+          <button class="btn-nastaveni" data-toggle="collapse" data-target="#<?php echo $id_roletky; ?>" title="Možnosti">
             ⚙️
           </button>
         </div>
@@ -144,33 +179,32 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
 
         <div class="vysuvna-tlacitka">
           
-          <a href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
-             download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
-             onclick="return confirm('Opravdu stáhnout soubor: <?php echo htmlspecialchars($soub, ENT_QUOTES); ?>?');">
-            <button class="fbtn" title="Stáhnout">⬇</button>
-          </a>
+          <?php if ($je_audio): ?>
+            <button class="fbtn looper-btn"
+                    data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
+                    data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+                    title="Otevřít v looperu">Looper</button>
+          <?php endif; ?>
 
           <button class="fbtn presunout-btn"
                   data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
                   data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
                   data-toggle="modal" 
                   data-target="#modal_presunout" 
-                  title="Přesunout do jiné skladby">↔</button>
+                  title="Přesunout do jiné skladby">Přesun</button>
+
+          <a href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
+             download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+             onclick="return confirm('Opravdu stáhnout soubor: <?php echo htmlspecialchars($soub, ENT_QUOTES); ?>?');">
+            <button class="fbtn" title="Stáhnout">Stáhnout</button>
+          </a>
 
           <button class="fbtn smazat-btn" 
-                  style="color:#ff5555; border-color:#633030;"
                   data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
                   data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
                   data-toggle="modal" 
                   data-target="#modal_delete" 
-                  title="Smazat">🗑</button>
-
-          <?php if ($je_audio): ?>
-            <button class="fbtn looper-btn"
-                    data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
-                    data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
-                    title="Otevřít v looperu">〜</button>
-          <?php endif; ?>
+                  title="Smazat">Smazat</button>
 
         </div>
         
