@@ -372,20 +372,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   100% { background-position: -100% 0; }
 }
 
-/* Styl pro prvek, který zrovna táhneš (stínový prvek na původním místě) */
 .sortable-ghost {
   opacity: 0.4;
   background: var(--barva) !important;
   color: var(--tmava) !important;
-}
-
-/* Styl pro prvek, který zrovna visí pod kurzorem myši */
-.sortable-chosen {
-   opacity: 1 !important; /* Zrušíme průhlednost, chceme plnou barvu */
-  background-color: #a7ac38 !important; /* Tvoje žlutá/olivová barva */
-  color: #202428 !important; /* Tmavé písmo, aby byl text na žluté skvěle čitelný */
-  box-shadow: 0 0 15px rgba(167, 172, 56, 0.6) !important; /* Jemná žlutá záře (podsvícení) */
-  border: 1px solid #ffffff !important;
 }
 
 </style>
@@ -575,7 +565,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <!-- VAL DRAWER (mobil) -->
 <div id="val-drawer" class="seznam-skladeb">
   
-  <div class="drawer-header" style="padding: 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+  <div class="drawer-header nodrag" style="padding: 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
       <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Seznam skladeb</span>
       <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')">
           + nová skladba
@@ -627,8 +617,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 ghostClass: 'sortable-ghost',
                 delay: 100, 
                 // delayOnTouchOnly: true, // Na myši reaguje ihned, na dotyk s malým zpožděním (aby šlo scrollovat)
-                // draggable: '.' + tridaPolozky,
-				filter: 'drawer-header',
+                draggable: '.dval',
+				filter: '.nodrag, button',
+				preventOnFilter: true,
                 onEnd: function (evt) {
                     var novePoradi = sortable.toArray();
                     
