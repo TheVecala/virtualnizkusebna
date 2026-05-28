@@ -26,104 +26,157 @@ if (!empty($slozka_souboru) && is_dir($cesta_slozky)) {
 $barva = $_SESSION['barva1'] ?? "a7ac38";
 ?>
 <style>
-.file-item {
-  border-radius: 5px; margin-bottom: 5px;
-  background: #1a1d20; border: 1px solid #3a3e44; transition: border-color .15s;
+/* Jednotný styl pro řádek nahrávky */
+.nahravka-box {
+  background: #25292e;
+  border: 1px solid #3a3e44;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+}
+
+/* Hlavní viditelný řádek: Název + Jedno tlačítko */
+.nahravka-hlavni {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Zajištění, že se dlouhý název souboru nikdy nezalomí a elegantně se zkrátí */
+.nahravka-nazev {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  color: #e0e0e0;
 }
-.file-item:hover { border-color: rgba(167,172,56,.4); }
-.file-row {
-  display: flex; align-items: center; gap: 7px;
-  padding: 6px 8px;
-}
-.fname { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e0e0e0; }
+
+/* Společný styl pro velká mobilní tlačítka uvnitř roletky */
 .fbtn {
-  background: none; border: 1px solid #3a3e44; color: #888;
-  border-radius: 4px; padding: 2px 6px; font-size: 10px; cursor: pointer;
-  white-space: nowrap; transition: all .15s; flex-shrink: 0;
+  background: #2a3a10 !important;
+  color: #<?php echo $barva; ?> !important;
+  border: 1px solid #<?php echo $barva; ?> !important;
+  border-radius: 6px;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  padding: 0;
 }
-.fbtn:hover { border-color: #ffc107; color: #ffc107; }
-.fbtn.play { color: #<?php echo $barva ?>; border-color: #<?php echo $barva ?>; }
-.fbtn.play.otevreno { background: rgba(167,172,56,.15); }
-.prazdno { color: #888; font-size: 12px; text-align: center; padding: 24px 0; }
-.soubor-audio { color: #<?php echo $barva ?>; }
-.soubor-ostatni { color: #888; }
-.player-wrap {
-  display: none; padding: 6px 8px; border-top: 1px solid #3a3e44;
-  background: #1a1d20;
+
+.fbtn:active, .fbtn:hover {
+  background: #<?php echo $barva; ?> !important;
+  color: #202428 !important;
 }
-.player-wrap.open { display: block; }
-.player-wrap audio {
-  width: 100%; height: 32px; filter: invert(0);
+
+/* Výsuvná plocha (panel pod názvem) */
+.nahravka-vysuvna {
+  margin-top: 10px;
+  border-top: 1px solid #34383e;
+  padding-top: 10px;
+}
+
+/* Řádek pro tlačítka v roletce */
+.vysuvna-tlacitka {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
 </style>
 
 <?php if (empty($slozka_souboru)): ?>
-  <div class="prazdno">Žádná skladba není vybrána.</div>
+  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Vyberte vál ze seznamu.</div>
+
 <?php elseif (empty($soubory)): ?>
-  <div class="prazdno">Zatím tu nic není.<br>Vložte první nahrávku tlačítkem ⬆ vložit.</div>
+  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Žádné soubory v tomto válu.</div>
+
 <?php else: ?>
-  <?php foreach ($soubory as $i => $soub):
-    $pripona  = strtolower(pathinfo($soub, PATHINFO_EXTENSION));
-    $je_audio = in_array($pripona, $povolene_audio);
-    $cesta    = "/user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/" . $soub;
-    $cesta_fs = "user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/" . $soub; // bez / pro PHP
-    $player_id = "player_" . $i;
-    $btn_id    = "playbtn_" . $i;
+  
+  <?php 
+  foreach ($soubory as $i => $soub): 
+    $cesta    = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/" . $soub;
+    $cesta_fs = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/" . $soub;
+    $ext      = strtolower(pathinfo($soub, PATHINFO_EXTENSION));
+    $je_audio = in_array($ext, $povolene_audio);
+    
+    // Unikátní ID pro každou roletku na základě indexu smyčky
+    $id_roletky = "roletka_" . $i;
   ?>
-  <div class="file-item">
-    <div class="file-row">
-      <span class="<?php echo $je_audio ? 'soubor-audio' : 'soubor-ostatni'; ?>">
-        <?php echo $je_audio ? '🎵' : '📄'; ?>
-      </span>
-      <span class="fname" title="<?php echo htmlspecialchars($soub); ?>"><?php echo htmlspecialchars($soub); ?></span>
+    <div class="nahravka-box">
+      
+      <div class="nahravka-hlavni">
+        <div class="nahravka-nazev" title="<?php echo htmlspecialchars($soub); ?>">
+          <?php echo $je_audio ? '🎵' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
+        </div>
+        <div>
+          <button class="fbtn" 
+                  data-toggle="collapse" 
+                  data-target="#<?php echo $id_roletky; ?>" 
+                  title="Možnosti" 
+                  style="background: #222e0d !important;">
+            ⚙️
+          </button>
+        </div>
+      </div>
 
-      <?php if ($je_audio): ?>
-      <button id="<?php echo $btn_id; ?>" class="fbtn play toggle-player"
-        data-player="<?php echo $player_id; ?>"
-        data-btn="<?php echo $btn_id; ?>"
-        data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
-        data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>">▶</button>
-      <?php endif; ?>
+      <div id="<?php echo $id_roletky; ?>" class="collapse nahravka-vysuvna">
+        
+        <?php if ($je_audio): ?>
+          <div class="vysuvna-prehravac">
+            <audio controls style="width: 100%; height: 40px;">
+              <?php 
+              $mime_typy = ['mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg', 'flac' => 'audio/flac', 'aac' => 'audio/aac'];
+              $m_type = $mime_typy[$ext] ?? 'audio/mpeg';
+              ?>
+              <source src="<?php echo htmlspecialchars($cesta); ?>?t=<?php echo time(); ?>" type="<?php echo $m_type; ?>">
+            </audio>
+          </div>
+        <?php endif; ?>
 
-      <a href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
-         download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
-         onclick="return confirm('Opravdu stáhnout vál: <?php echo htmlspecialchars($soub, ENT_QUOTES); ?>?');">
-         <button class="fbtn" title="stáhnout">⬇</button>
-      </a>
+        <div class="vysuvna-tlacitka">
+          
+          <a href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
+             download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+             onclick="return confirm('Opravdu stáhnout soubor: <?php echo htmlspecialchars($soub, ENT_QUOTES); ?>?');">
+            <button class="fbtn" title="Stáhnout">⬇</button>
+          </a>
 
-      <button class="fbtn presunout-btn"
-        data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
-        data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
-        data-toggle="modal" data-target="#modal_presunout">↔</button>
+          <button class="fbtn presunout-btn"
+                  data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
+                  data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+                  data-toggle="modal" 
+                  data-target="#modal_presunout" 
+                  title="Přesunout do jiné skladby">↔</button>
 
-      <button class="fbtn smazat-btn" style="color:#e44;border-color:#633"
-        data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
-        data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
-        data-toggle="modal" data-target="#modal_delete">🗑</button>
+          <button class="fbtn smazat-btn" 
+                  style="color:#ff5555; border-color:#633030;"
+                  data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
+                  data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+                  data-toggle="modal" 
+                  data-target="#modal_delete" 
+                  title="Smazat">🗑</button>
 
-      <?php if ($je_audio): ?>
-      <button class="fbtn looper-btn"
-        data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
-        data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
-        title="otevřít v looperu">〜</button>
-      <?php endif; ?>
+          <?php if ($je_audio): ?>
+            <button class="fbtn looper-btn"
+                    data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
+                    data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+                    title="Otevřít v looperu">〜</button>
+          <?php endif; ?>
+
+        </div>
+        
+      </div>
+      
     </div>
-
-    <?php if ($je_audio):
-      $mime_typy = ['mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg', 'flac' => 'audio/flac', 'aac' => 'audio/aac'];
-      $mime = $mime_typy[$pripona] ?? 'audio/mpeg';
-    ?>
-    <div class="player-wrap" id="<?php echo $player_id; ?>">
-      <audio controls preload="none" style="width:100%;height:32px"
-             onplay="pauseOthers(this)">
-        <source src="<?php echo htmlspecialchars($cesta); ?>" type="<?php echo $mime; ?>">
-      </audio>
-    </div>
-    <?php endif; ?>
-  </div>
   <?php endforeach; ?>
+
 <?php endif; ?>
-
-
-
