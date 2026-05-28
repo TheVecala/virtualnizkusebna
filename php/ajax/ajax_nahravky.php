@@ -86,8 +86,10 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
         data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>">▶</button>
       <?php endif; ?>
 
-      <a href="<?php echo htmlspecialchars($cesta); ?>" download style="text-decoration:none">
-        <button class="fbtn">⬇</button>
+      <a href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
+         download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+         onclick="return confirm('Opravdu stáhnout vál: <?php echo htmlspecialchars($soub, ENT_QUOTES); ?>?');">
+         <button class="fbtn" title="stáhnout">⬇</button>
       </a>
 
       <button class="fbtn presunout-btn"
