@@ -216,37 +216,59 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   display: flex; flex-direction: column; height: calc(100vh - var(--top-h)); overflow: hidden;
 }
 
-/* ── LOOPER BAR ── */
+/* ── LOOPER BAR VÝRAZNÝ A VELKÝ ── */
 #looper-bar {
-  background: var(--tmava); border-bottom: 1px solid var(--border);
-  padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  background: var(--tmava); 
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px; 
+  display: flex; 
+  flex-direction: column; /* Změna: prvky jdou pod sebe */
+  align-items: stretch; 
+  gap: 12px; 
+  flex-shrink: 0;
   transition: all .2s;
 }
 #looper-bar.hidden { display: none; }
-.lctrl { display: flex; gap: 5px; flex-shrink: 0; }
+
+/* Nový kontejner pro spodní řádek pod vlnou */
+.looper-ovladani-rada {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.lctrl { display: flex; gap: 6px; flex-shrink: 0; }
 .wave-btn {
   background: var(--card); border: 1px solid var(--border); color: var(--text);
-  border-radius: 5px; padding: 4px 9px; cursor: pointer; font-size: 12px; transition: all .15s;
+  border-radius: 5px; padding: 6px 12px; cursor: pointer; font-size: 14px; transition: all .15s;
 }
 .wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
+
+/* Vlna na celou šířku s výškou 100px */
 #waveform-container {
-  flex: 1; height: 40px; background: var(--card);
-  border-radius: 5px; border: 1px solid var(--border);
-  position: relative; overflow: hidden; min-width: 0;
+  width: 100%; 
+  height: 100px; /* Zvětšeno ze 40px na 100px */
+  background: var(--card);
+  border-radius: 6px; 
+  border: 1px solid var(--border);
+  position: relative; 
+  overflow: hidden;
 }
-/* Placeholder dokud není wavesurfer */
 #waveform-container .wf-placeholder {
   position: absolute; inset: 0; display: flex; align-items: center;
-  padding: 0 12px; color: var(--muted); font-size: 11px;
+  padding: 0 12px; color: var(--muted); font-size: 12px;
 }
 #waveform { width: 100%; height: 100%; }
+
 .lname {
-  font-size: 11px; color: var(--muted); white-space: nowrap;
-  max-width: 130px; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+  font-size: 13px; color: var(--text); font-weight: bold;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+  flex: 1; text-align: center; /* Vycentruje název uprostřed spodní řady */
 }
 .lclose {
   background: none; border: none; color: var(--muted); cursor: pointer;
-  font-size: 18px; line-height: 1; padding: 0 4px; flex-shrink: 0;
+  font-size: 22px; line-height: 1; padding: 0 4px; flex-shrink: 0;
 }
 .lclose:hover { color: var(--text); }
 
@@ -432,19 +454,26 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <div id="main">
 
   <!-- LOOPER BAR -->
-  <div id="looper-bar" class="hidden">
-    <div class="lctrl">
-      <button class="wave-btn on" id="btn-play" onclick="looperPlay()">▶</button>
-      <button class="wave-btn" id="btn-pause" onclick="looperPause()">⏸</button>
-      <button class="wave-btn" onclick="looperRestart()">↩</button>
-      <button class="wave-btn" id="btn-loop" onclick="looperLoop()">⟳</button>
-    </div>
+<div id="looper-bar" class="hidden">
+    
     <div id="waveform-container">
-      <div class="wf-placeholder" id="wf-placeholder">načítám...</div>
+      <div class="wf-placeholder" id="wf-placeholder">načítám nahrávku...</div>
       <div id="waveform"></div>
     </div>
-    <span class="lname" id="lname">—</span>
-    <button class="lclose" onclick="looperZavrit()">✕</button>
+
+    <div class="looper-ovladani-rada">
+      <div class="lctrl">
+        <button class="wave-btn on" id="btn-play" onclick="looperPlay()">▶</button>
+        <button class="wave-btn" id="btn-pause" onclick="looperPause()">⏸</button>
+        <button class="wave-btn" onclick="looperRestart()">↩</button>
+        <button class="wave-btn" id="btn-loop" onclick="looperLoop()">⟳</button>
+      </div>
+      
+      <span class="lname" id="lname">—</span>
+      
+      <button class="lclose" onclick="looperZavrit()">✕</button>
+    </div>
+    
   </div>
 
   <!-- CONTENT AREA -->
@@ -676,14 +705,14 @@ $(document).on('click', '.looper-btn', function() {
     // Inicializace WaveSurfer v7
     wavesurfer = WaveSurfer.create({
         container: '#waveform',
-        waveColor: '#34383e',       // Barva neodehrané části (tmavě šedá)
+        waveColor: '#7a828e',       // Barva neodehrané části (tmavě šedá)
         progressColor: barvaKapely, // Barva odehrané části (vaše olivová/žlutá)
         cursorColor: '#ffffff',     // Barva svislé linky pozice přehrávání
         cursorWidth: 2,
         barWidth: 2,                // Moderní styl vykreslení pomocí sloupečků
         barGap: 1,
         barRadius: 1,
-        height: 38,                 // Přesně zapadne do 40px vysokého kontejneru v CSS
+        height: 98,                 // Přesně zapadne do 100px vysokého kontejneru v CSS
         url: cesta                  // Načtení stopy
     });
     
