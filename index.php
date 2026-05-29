@@ -589,10 +589,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" crossorigin="anonymous"></script>
-<!-- wavesurfer (zakomentovaný, připravený)
-<script src="https://unpkg.com/wavesurfer.js"></script>
-<script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
--->
+<!-- wavesurfer  -->
+<script src="https://unpkg.com/wavesurfer.js@7"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <script>
@@ -646,6 +645,114 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script src="/meat/main.js"></script>
+
+<script>
+// Globální proměnné pro instanci přehrávače a stav smyčky
+var wavesurfer = null;
+var isLooping = false;
+
+// Odchycení kliknutí na tlačítko "Looper" v dynamicky načteném AJAX výpisu nahrávek
+$(document).on('click', '.looper-btn', function() {
+    var cesta = $(this).data('cesta');
+    var nazev = $(this).data('nazev');
+    
+    // Zobrazíme looper bar a dosadíme název nahrávky
+    $('#looper-bar').removeClass('hidden');
+    $('#lname').text(nazev);
+    $('#wf-placeholder').show(); // Zobrazíme text "načítám..."
+    
+    // Resetujeme stav smyčky při otevření nové skladby
+    isLooping = false;
+    $('#btn-loop').removeClass('on');
+    
+    // Pokud už nějaký wavesurfer běžela, správně ji zničíme z paměti
+    if (wavesurfer) {
+        wavesurfer.destroy();
+    }
+    
+    // Dynamicky zjistíme hlavní barvu kapely z CSS proměnné, aby vlna ladila s designem
+    var barvaKapely = getComputedStyle(document.documentElement).getPropertyValue('--barva').trim() || '#a7ac38';
+    
+    // Inicializace WaveSurfer v7
+    wavesurfer = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: '#34383e',       // Barva neodehrané části (tmavě šedá)
+        progressColor: barvaKapely, // Barva odehrané části (vaše olivová/žlutá)
+        cursorColor: '#ffffff',     // Barva svislé linky pozice přehrávání
+        cursorWidth: 2,
+        barWidth: 2,                // Moderní styl vykreslení pomocí sloupečků
+        barGap: 1,
+        barRadius: 1,
+        height: 38,                 // Přesně zapadne do 40px vysokého kontejneru v CSS
+        url: cesta                  // Načtení stopy
+    });
+    
+    // Událost: Vlna je zanalyzovaná a připravená k přehrávání
+    wavesurfer.on('ready', function() {
+        $('#wf-placeholder').hide(); // Schováme text "načítám..."
+        wavesurfer.play();           // Automaticky spustíme nahrávku
+    });
+    
+    // Událost: Sledování startu přehrávání pro synchronizaci tlačítek ▶ / ⏸
+    wavesurfer.on('play', function() {
+        $('#btn-play').addClass('on');
+        $('#btn-pause').removeClass('on');
+    });
+    
+    // Událost: Sledování pauzy pro synchronizaci tlačítek ▶ / ⏸
+    wavesurfer.on('pause', function() {
+        $('#btn-play').removeClass('on');
+        $('#btn-pause').addClass('on');
+    });
+    
+    // Událost: Písnička dojela na konec stopy
+    wavesurfer.on('finish', function() {
+        if (isLooping) {
+            wavesurfer.play(); // Pokud je aktivní smyčka, hrajeme okamžitě znovu od začátku
+        } else {
+            $('#btn-play').removeClass('on');
+            $('#btn-pause').addClass('on');
+        }
+    });
+});
+
+/* --- Globální funkce volané z tlačítek přes onclick="..." --- */
+
+function looperPlay() {
+    if (wavesurfer) wavesurfer.play();
+}
+
+function looperPause() {
+    if (wavesurfer) wavesurfer.pause();
+}
+
+function looperRestart() {
+    if (wavesurfer) {
+        wavesurfer.setTime(0); // Skočí na čas 0:00
+        wavesurfer.play();
+    }
+}
+
+function looperLoop() {
+    isLooping = !isLooping;
+    if (isLooping) {
+        $('#btn-loop').addClass('on'); // Rozsvítí tlačítko zeleně/olivově
+    } else {
+        $('#btn-loop').removeClass('on');
+    }
+}
+
+function looperZavrit() {
+    if (wavesurfer) {
+        wavesurfer.pause();
+        wavesurfer.destroy(); // Kompletní vyčištění paměti prohlížeče
+        wavesurfer = null;
+    }
+    $('#looper-bar').addClass('hidden'); // Skryje celou lištu looperu
+    isLooping = false;
+    $('#btn-loop').removeClass('on');
+}
+</script>
 
 </body>
 </html>
