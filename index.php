@@ -127,7 +127,6 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <title>Virtuální zkušebna</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
       xintegrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-<!-- Oprava: Cesta k CSS změněna na relativní pro bezchybné načítání -->
 <link href="css/sticky-footer-navbar.css" rel="stylesheet">
 <style>
 /* ── Proměnné ── */
@@ -223,7 +222,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   border-bottom: 1px solid var(--border);
   padding: 12px 16px; 
   display: flex; 
-  flex-direction: column; /* Prvky skládáme pod sebe */
+  flex-direction: column; 
   align-items: stretch; 
   gap: 12px; 
   flex-shrink: 0;
@@ -231,7 +230,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 #looper-bar.hidden { display: none; }
 
-/* Kontejner pro spodní řádek pod vlnou */
 .looper-ovladani-rada {
   display: flex;
   align-items: center;
@@ -246,10 +244,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
 
-/* Vlna na celou šířku s výškou 100px */
 #waveform-container {
   width: 100%; 
-  height: 100px; /* Zvětšeno pro pohodlné ovládání */
+  height: 100px; 
   background: var(--card);
   border-radius: 6px; 
   border: 1px solid var(--border);
@@ -284,7 +281,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 #panel-text     { flex: 2; }
 #panel-nahravky { flex: 2; }
 #panel-diskuse  { flex: 1.5; }
-#panel-napady   { flex: 1; display: none; }
+#panel-napady   { flex: 1.5; display: none; }
 
 .panel-header {
   padding: 8px 12px; background: var(--tmava);
@@ -355,8 +352,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 
 /* ── RESPONZIVNÍ ROZHRANÍ (MEDIA QUERIES) ── */
-/* EXPERIMENTUJ ZDE: Změnili jsme limit ze 768px na 1024px. */
-@media (max-width: 1024px) {
+
+/* 1. MALÝ MOBIL (na výšku, do 767px): Pouze jeden panel */
+@media (max-width: 767px) {
   #sidebar { display: none; }
   #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
   #bottom-nav { display: flex; }
@@ -365,15 +363,58 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #content-area { flex-direction: column; }
   .panel { display: none !important; border-right: none; border-bottom: 1px solid var(--border); }
   .panel.mob-active { display: flex !important; }
-  /* Na mobilu skrýt celý formulář nápadů a zobrazit kompaktní tlačítko */
   #napady-fields { display: none; }
   #napady-fields.open { display: block; }
   #napady-toggle-btn { display: block !important; }
 }
 
-/* Plnohodnotný desktop se zobrazí až na zařízeních se šířkou 1025px a více */
-@media (min-width: 1025px) {
-  #panel-text, #panel-nahravky, #panel-diskuse { display: flex; }
+/* 2. STŘEDNÍ VARIANT (768px až 1199px): Přesně dva panely vedle sebe! */
+@media (min-width: 768px) and (max-width: 1199px) {
+  #sidebar { display: none; }
+  #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
+  #bottom-nav { display: flex; }
+  .topnav { display: none; }
+  #content-area { flex-direction: row; }
+  
+  /* Skryjeme výchozí zobrazení všech */
+  .panel { display: none !important; width: 50%; }
+  
+  /* Dynamické párování na základě zvoleného panelu z dolní lišty */
+  
+  /* A) Vybrán Text nebo Nahrávky -> Zobrazí se TEXT + NAHRÁVKY */
+  #content-area[data-active-panel="text"] #panel-text,
+  #content-area[data-active-panel="text"] #panel-nahravky,
+  #content-area[data-active-panel="nahravky"] #panel-text,
+  #content-area[data-active-panel="nahravky"] #panel-nahravky {
+    display: flex !important;
+  }
+  
+  /* B) Vybrána Diskuse -> Zobrazí se NAHRÁVKY + DISKUSE */
+  #content-area[data-active-panel="diskuse"] #panel-nahravky,
+  #content-area[data-active-panel="diskuse"] #panel-diskuse {
+    display: flex !important;
+  }
+  
+  /* C) Vybrány Nápady -> Zobrazí se NAHRÁVKY + NÁPADY */
+  #content-area[data-active-panel="napady"] #panel-nahravky,
+  #content-area[data-active-panel="napady"] #panel-napady {
+    display: flex !important;
+  }
+  
+  /* Záchranný fallback (pokud není atribut nastaven, ukážeme základní dvojici) */
+  #content-area:not([data-active-panel]) #panel-text,
+  #content-area:not([data-active-panel]) #panel-nahravky {
+    display: flex !important;
+  }
+}
+
+/* 3. DESKTOP (od 1200px výše): Všechny tři panely vedle sebe + trvalý sidebar */
+@media (min-width: 1200px) {
+  #sidebar { display: flex; }
+  #main { margin-left: var(--sidebar-w); }
+  #bottom-nav { display: none; }
+  #content-area { flex-direction: row; }
+  #panel-text, #panel-nahravky, #panel-diskuse { display: flex !important; }
 }
 
 
@@ -423,7 +464,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   <nav class="topnav">
     <a href="#" class="active" id="nav-main" onclick="desktopView('main',this);return false">text + nahrávky</a>
     <a href="#" id="nav-napady" onclick="desktopView('napady',this);return false">
-      nápady <span class="napady-badge">kapela</span>
+      nápady <span class="napady-badge">DK</span>
     </a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
@@ -482,8 +523,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     </div>
   </div>
 
-  <!-- CONTENT AREA -->
-  <div id="content-area">
+  <!-- CONTENT AREA (Přidán výchozí atribut data-active-panel pro správný start 2-panelové verze) -->
+  <div id="content-area" data-active-panel="text">
 
     <!-- PANEL TEXT -->
     <div class="panel mob-active" id="panel-text">
@@ -515,7 +556,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     <!-- PANEL DISKUSE -->
     <div class="panel" id="panel-diskuse">
       <div class="panel-header">
-        <h2>DISKUSE</h2>
+        <h2>POZNÁMKY</h2>
         <div class="acts" id="diskuse-val-label" style="font-size:10px;color:var(--muted)">
           <?php echo htmlspecialchars($nazev_valu); ?>
         </div>
@@ -782,6 +823,17 @@ function looperZavrit() {
 
 <!-- ── BEZPEČNÝ FALLBACK PRO NAVIGAČNÍ FUNKCE (Zabraňuje ReferenceError, pokud se nenačte main.js) ── -->
 <script>
+// Přidáme globální sledování kliknutí na spodní nav pro zápis atributu na #content-area
+// To zajistí přepínání dvojic ve středním režimu (768px - 1199px)
+$(document).on('click', '.bnav', function() {
+    var id = $(this).attr('id'); // bn-text, bn-nahravky...
+    if (id) {
+        var panelId = id.replace('bn-', '');
+        if (panelId === 'skladby') return; 
+        $('#content-area').attr('data-active-panel', panelId);
+    }
+});
+
 if (typeof mobilePanel === 'undefined') {
     window.mobilePanel = function(panelId, btn) {
         $('.panel').removeClass('mob-active');
@@ -794,6 +846,7 @@ if (typeof mobilePanel === 'undefined') {
         }
         VZ.aktivniMobPanel = panelId;
         $('#val-drawer').removeClass('open');
+        $('#content-area').attr('data-active-panel', panelId);
     };
 }
 
@@ -843,11 +896,10 @@ if (typeof switchVal === 'undefined') {
                 VZ.aktualniNazev = nazev;
                 $('#topbar-val').text(nazev);
                 $('#diskuse-val-label').text(nazev);
-                location.reload(); // Spolehlivé obnovení obsahu
+                location.reload(); 
             },
             error: function() {
                 $('#progress-bar').removeClass('loading');
-                // Lokální nouzový přepis pro plynulost
                 $('#topbar-val').text(nazev);
                 $('#diskuse-val-label').text(nazev);
             }
@@ -877,7 +929,6 @@ if (typeof otevritEditText === 'undefined') {
 }
 </script>
 
-<!-- Oprava: Cesta k JS změněna na relativní pro bezchybné načítání -->
 <script src="meat/main.js"></script>
 
 </body>
