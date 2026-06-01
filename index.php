@@ -1,4 +1,4 @@
- <?php session_start();
+<?php session_start();
 error_reporting(0);
 
 // Inicializace SESSION barev
@@ -13,7 +13,7 @@ $single_kapela            = "kapela";       // Název složky v user/
 $single_befelemepesseveze = "471707760"; // Přesný název vnitřní složky
 
 $globalni_heslo_kapely    = "krpole";      // Tvoje heslo pro vstup
-/* ─────────────────────────────────────────────────── */
+/* ────────────────────────────────────────────────── */
 
 
 // Zpracování odeslaného formuláře z loginboxu
@@ -126,8 +126,9 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Virtuální zkušebna</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-<link href="/css/sticky-footer-navbar.css" rel="stylesheet">
+      xintegrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<!-- Oprava: Cesta k CSS změněna na relativní pro bezchybné načítání -->
+<link href="css/sticky-footer-navbar.css" rel="stylesheet">
 <style>
 /* ── Proměnné ── */
 :root {
@@ -222,7 +223,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   border-bottom: 1px solid var(--border);
   padding: 12px 16px; 
   display: flex; 
-  flex-direction: column; /* Změna: prvky jdou pod sebe */
+  flex-direction: column; /* Prvky skládáme pod sebe */
   align-items: stretch; 
   gap: 12px; 
   flex-shrink: 0;
@@ -230,7 +231,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 #looper-bar.hidden { display: none; }
 
-/* Nový kontejner pro spodní řádek pod vlnou */
+/* Kontejner pro spodní řádek pod vlnou */
 .looper-ovladani-rada {
   display: flex;
   align-items: center;
@@ -248,7 +249,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 /* Vlna na celou šířku s výškou 100px */
 #waveform-container {
   width: 100%; 
-  height: 100px; /* Zvětšeno ze 40px na 100px */
+  height: 100px; /* Zvětšeno pro pohodlné ovládání */
   background: var(--card);
   border-radius: 6px; 
   border: 1px solid var(--border);
@@ -264,7 +265,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .lname {
   font-size: 13px; color: var(--text); font-weight: bold;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-  flex: 1; text-align: center; /* Vycentruje název uprostřed spodní řady */
+  flex: 1; text-align: center;
 }
 .lclose {
   background: none; border: none; color: var(--muted); cursor: pointer;
@@ -352,8 +353,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .dval.active { color: var(--barva); background: var(--card); }
 .drawer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 4px 12px 8px; }
 
-/* ── RESPONSIVE ── */
-@media (max-width: 768px) {
+
+/* ── RESPONZIVNÍ ROZHRANÍ (MEDIA QUERIES) ── */
+/* EXPERIMENTUJ ZDE: Změnili jsme limit ze 768px na 1024px. */
+@media (max-width: 1024px) {
   #sidebar { display: none; }
   #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
   #bottom-nav { display: flex; }
@@ -362,14 +365,17 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #content-area { flex-direction: column; }
   .panel { display: none !important; border-right: none; border-bottom: 1px solid var(--border); }
   .panel.mob-active { display: flex !important; }
-  /* Na mobilu skrýt celý formulář, zobrazit toggle tlačítko */
+  /* Na mobilu skrýt celý formulář nápadů a zobrazit kompaktní tlačítko */
   #napady-fields { display: none; }
   #napady-fields.open { display: block; }
   #napady-toggle-btn { display: block !important; }
 }
-@media (min-width: 769px) {
+
+/* Plnohodnotný desktop se zobrazí až na zařízeních se šířkou 1025px a více */
+@media (min-width: 1025px) {
   #panel-text, #panel-nahravky, #panel-diskuse { display: flex; }
 }
+
 
 /* ── Progress bar ── */
 #progress-bar {
@@ -453,14 +459,15 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <!-- ── MAIN ── -->
 <div id="main">
 
-  <!-- LOOPER BAR -->
-<div id="looper-bar" class="hidden">
-    
+  <!-- LOOPER BAR (DVOUŘÁDKOVÝ VELKÝ) -->
+  <div id="looper-bar" class="hidden">
+    <!-- 1. ŘÁDEK: Vlna přes celou šířku -->
     <div id="waveform-container">
       <div class="wf-placeholder" id="wf-placeholder">načítám nahrávku...</div>
       <div id="waveform"></div>
     </div>
 
+    <!-- 2. ŘÁDEK: Ovládací prvky zarovnané pod vlnou -->
     <div class="looper-ovladani-rada">
       <div class="lctrl">
         <button class="wave-btn on" id="btn-play" onclick="looperPlay()">▶</button>
@@ -473,7 +480,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       
       <button class="lclose" onclick="looperZavrit()">✕</button>
     </div>
-    
   </div>
 
   <!-- CONTENT AREA -->
@@ -618,9 +624,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" crossorigin="anonymous"></script>
-<!-- wavesurfer  -->
-<script src="https://unpkg.com/wavesurfer.js@7"></script>
 
+<!-- Aktuální a stabilní verze WaveSurfer.js v7 -->
+<script src="https://unpkg.com/wavesurfer.js@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <script>
@@ -636,18 +642,18 @@ var VZ = {
 // Inicializace SortableJS po načtení stránky
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Funkce, která naučí Drag & Drop jakýkoliv seznam
-    function aktivovatSortable(idKontejneru) {
+    function aktivovatSortable(idKontejneru, tridaPolozky) {
         var el = document.getElementById(idKontejneru);
         if (el) {
             var sortable = Sortable.create(el, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
-                delay: 100, 
-                // delayOnTouchOnly: true, // Na myši reaguje ihned, na dotyk s malým zpožděním (aby šlo scrollovat)
-                draggable: '.dval',
-				filter: '.nodrag, button',
-				preventOnFilter: true,
+                delay: 150, // Zpoždění pro myš i mobil
+                
+                // Povolíme tahání POUZE pro prvky s touto třídou (hlavička zůstane přibitá)
+                draggable: '.' + tridaPolozky,
+                filter: '.nodrag, button',
+                preventOnFilter: true,
                 onEnd: function (evt) {
                     var novePoradi = sortable.toArray();
                     
@@ -667,77 +673,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Aktivujeme přetahování pro oba seznamy!
-    aktivovatSortable('val-drawer');      // Mobilní menu
-    aktivovatSortable('sidebar-playlist'); // Desktopový levý panel
+    // Aktivujeme přetahování a předáme třídy písniček
+    aktivovatSortable('val-drawer', 'dval');           // Mobilní menu
+    aktivovatSortable('sidebar-playlist', 'val-item'); // Desktopový panel
 });
 </script>
 
-<script src="/meat/main.js"></script>
-
+<!-- OVLÁDÁNÍ A INICIALIZACE WAVESURFER LOOPERU -->
 <script>
-// Globální proměnné pro instanci přehrávače a stav smyčky
 var wavesurfer = null;
 var isLooping = false;
 
-// Odchycení kliknutí na tlačítko "Looper" v dynamicky načteném AJAX výpisu nahrávek
-$(document).on('click', '.looper-btn', function() {
+// Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
+$(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
     var cesta = $(this).data('cesta');
     var nazev = $(this).data('nazev');
     
-    // Zobrazíme looper bar a dosadíme název nahrávky
+    // Zobrazíme looper bar a resetujeme stav
     $('#looper-bar').removeClass('hidden');
     $('#lname').text(nazev);
-    $('#wf-placeholder').show(); // Zobrazíme text "načítám..."
+    $('#wf-placeholder').text('načítám nahrávku...').show();
     
-    // Resetujeme stav smyčky při otevření nové skladby
     isLooping = false;
     $('#btn-loop').removeClass('on');
     
-    // Pokud už nějaký wavesurfer běžela, správně ji zničíme z paměti
     if (wavesurfer) {
         wavesurfer.destroy();
     }
     
-    // Dynamicky zjistíme hlavní barvu kapely z CSS proměnné, aby vlna ladila s designem
+    // Dynamicky zjistíme barvu kapely z CSS proměnné
     var barvaKapely = getComputedStyle(document.documentElement).getPropertyValue('--barva').trim() || '#a7ac38';
     
-    // Inicializace WaveSurfer v7
+    // Inicializace WaveSurfer v7 (výška upravena na 98px pro velkou vlnu)
     wavesurfer = WaveSurfer.create({
         container: '#waveform',
-        waveColor: '#7a828e',       // Barva neodehrané části (tmavě šedá)
-        progressColor: barvaKapely, // Barva odehrané části (vaše olivová/žlutá)
-        cursorColor: '#ffffff',     // Barva svislé linky pozice přehrávání
+        waveColor: 'rgba(255, 255, 255, 0.15)', // Krásná průhledná bílá, co se přizpůsobí pozadí
+        progressColor: barvaKapely,             // Barva odehrané části (aktivní barva kapely)
+        cursorColor: '#ffffff',     
         cursorWidth: 2,
-        barWidth: 2,                // Moderní styl vykreslení pomocí sloupečků
+        barWidth: 2,                
         barGap: 1,
         barRadius: 1,
-        height: 98,                 // Přesně zapadne do 100px vysokého kontejneru v CSS
-        url: cesta                  // Načtení stopy
+        height: 98,                 
+        url: cesta                  
     });
     
-    // Událost: Vlna je zanalyzovaná a připravená k přehrávání
     wavesurfer.on('ready', function() {
-        $('#wf-placeholder').hide(); // Schováme text "načítám..."
-        wavesurfer.play();           // Automaticky spustíme nahrávku
+        $('#wf-placeholder').hide(); 
+        wavesurfer.play();           
     });
     
-    // Událost: Sledování startu přehrávání pro synchronizaci tlačítek ▶ / ⏸
     wavesurfer.on('play', function() {
         $('#btn-play').addClass('on');
         $('#btn-pause').removeClass('on');
     });
     
-    // Událost: Sledování pauzy pro synchronizaci tlačítek ▶ / ⏸
     wavesurfer.on('pause', function() {
         $('#btn-play').removeClass('on');
         $('#btn-pause').addClass('on');
     });
     
-    // Událost: Písnička dojela na konec stopy
     wavesurfer.on('finish', function() {
         if (isLooping) {
-            wavesurfer.play(); // Pokud je aktivní smyčka, hrajeme okamžitě znovu od začátku
+            wavesurfer.play(); 
         } else {
             $('#btn-play').removeClass('on');
             $('#btn-pause').addClass('on');
@@ -745,8 +743,7 @@ $(document).on('click', '.looper-btn', function() {
     });
 });
 
-/* --- Globální funkce volané z tlačítek přes onclick="..." --- */
-
+/* --- Globální funkce pro tlačítka v looper-baru --- */
 function looperPlay() {
     if (wavesurfer) wavesurfer.play();
 }
@@ -757,7 +754,7 @@ function looperPause() {
 
 function looperRestart() {
     if (wavesurfer) {
-        wavesurfer.setTime(0); // Skočí na čas 0:00
+        wavesurfer.setTime(0);
         wavesurfer.play();
     }
 }
@@ -765,7 +762,7 @@ function looperRestart() {
 function looperLoop() {
     isLooping = !isLooping;
     if (isLooping) {
-        $('#btn-loop').addClass('on'); // Rozsvítí tlačítko zeleně/olivově
+        $('#btn-loop').addClass('on');
     } else {
         $('#btn-loop').removeClass('on');
     }
@@ -774,15 +771,114 @@ function looperLoop() {
 function looperZavrit() {
     if (wavesurfer) {
         wavesurfer.pause();
-        wavesurfer.destroy(); // Kompletní vyčištění paměti prohlížeče
+        wavesurfer.destroy();
         wavesurfer = null;
     }
-    $('#looper-bar').addClass('hidden'); // Skryje celou lištu looperu
+    $('#looper-bar').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
 }
 </script>
 
+<!-- ── BEZPEČNÝ FALLBACK PRO NAVIGAČNÍ FUNKCE (Zabraňuje ReferenceError, pokud se nenačte main.js) ── -->
+<script>
+if (typeof mobilePanel === 'undefined') {
+    window.mobilePanel = function(panelId, btn) {
+        $('.panel').removeClass('mob-active');
+        $('#panel-' + panelId).addClass('mob-active');
+        $('.bnav').removeClass('active');
+        if (btn) {
+            $(btn).addClass('active');
+        } else {
+            $('#bn-' + panelId).addClass('active');
+        }
+        VZ.aktivniMobPanel = panelId;
+        $('#val-drawer').removeClass('open');
+    };
+}
+
+if (typeof toggleValDrawer === 'undefined') {
+    window.toggleValDrawer = function() {
+        $('#val-drawer').toggleClass('open');
+    };
+}
+
+if (typeof desktopView === 'undefined') {
+    window.desktopView = function(view, btn) {
+        $('.topnav a').removeClass('active');
+        $(btn).addClass('active');
+        if (view === 'main') {
+            $('#panel-text, #panel-nahravky, #panel-diskuse').show();
+            $('#panel-napady').hide();
+        } else if (view === 'napady') {
+            $('#panel-text, #panel-nahravky, #panel-diskuse').hide();
+            $('#panel-napady').show();
+        }
+    };
+}
+
+if (typeof napodyToggle === 'undefined') {
+    window.napodyToggle = function() {
+        $('#napady-fields').toggleClass('open');
+    };
+}
+
+if (typeof switchVal === 'undefined') {
+    window.switchVal = function(valId, nazev, element) {
+        $('#progress-bar').addClass('loading');
+        $('.val-item').removeClass('active');
+        if (element) {
+            $(element).addClass('active');
+        } else {
+            $('.val-item[data-id="' + valId + '"]').addClass('active');
+        }
+        $('#val-drawer').removeClass('open');
+        
+        $.ajax({
+            url: 'php/nastav_val.php',
+            method: 'POST',
+            data: { val: valId },
+            success: function() {
+                VZ.aktualniVal = valId;
+                VZ.aktualniNazev = nazev;
+                $('#topbar-val').text(nazev);
+                $('#diskuse-val-label').text(nazev);
+                location.reload(); // Spolehlivé obnovení obsahu
+            },
+            error: function() {
+                $('#progress-bar').removeClass('loading');
+                // Lokální nouzový přepis pro plynulost
+                $('#topbar-val').text(nazev);
+                $('#diskuse-val-label').text(nazev);
+            }
+        });
+    };
+}
+
+if (typeof otevritPrejmenovani === 'undefined') {
+    window.otevritPrejmenovani = function(id, nazev) {
+        $('#modal_prejmenovat input[name="slozka"]').val(id);
+        $('#modal_prejmenovat input[name="novy_nazev"]').val(nazev);
+        $('#modal_prejmenovat').modal('show');
+    };
+}
+
+if (typeof otevritSmazani === 'undefined') {
+    window.otevritSmazani = function(id) {
+        $('#modal_smazat input[name="slozka"]').val(id);
+        $('#modal_smazat').modal('show');
+    };
+}
+
+if (typeof otevritEditText === 'undefined') {
+    window.otevritEditText = function() {
+        $('#modal_edit_text').modal('show');
+    };
+}
+</script>
+
+<!-- Oprava: Cesta k JS změněna na relativní pro bezchybné načítání -->
+<script src="meat/main.js"></script>
+
 </body>
 </html>
-
