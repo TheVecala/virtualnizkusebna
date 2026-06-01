@@ -133,26 +133,23 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// ── Looper ──
+// ── Looper (Starý testovací kód vyčištěn, ostrý kód je v index.php) ──
 function looperOtevrit(soubor, label) {
   document.getElementById('looper-bar').classList.remove('hidden');
-  document.getElementById('lname').textContent = label || soubor;
-  document.getElementById('wf-placeholder').textContent = soubor;
-  // wavesurfer.load(soubor) — až bude knihovna aktivní
+  document.getElementById('lname').textContent = label || 'Nahrávka';
+  
+  // BEZPEČNOSTNÍ ÚPRAVA: Už nevypisujeme celou FTP cestu k souboru na disku
+  var placeholder = document.getElementById('wf-placeholder');
+  if (placeholder) {
+    placeholder.textContent = 'načítám nahrávku...';
+  }
 }
 
 function looperZavrit() {
   document.getElementById('looper-bar').classList.add('hidden');
-  // wavesurfer.stop(); wavesurfer.empty();
 }
 
-function looperPlay()    { /* wavesurfer.play() */ }
-function looperPause()   { /* wavesurfer.pause() */ }
-function looperRestart() { /* wavesurfer.play(0) */ }
-function looperLoop() {
-  document.getElementById('btn-loop').classList.toggle('on');
-  // wavesurfer addRegion / clearRegions
-}
+// Prázdné obslužné metody vyčištěny, obstarává je nyní nový kód v index.php
 
 // ── Edit text modal ──
 function otevritEditText() {
