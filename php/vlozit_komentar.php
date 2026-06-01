@@ -18,13 +18,13 @@ $jmeno  = htmlspecialchars(trim($_POST["name"]   ?? ""), ENT_QUOTES);
 $pouzit_hlavni = !empty($_POST["pouzit_hlavni_diskusi"]);
 
 if (empty($text)) {
-    echo json_encode(["ok" => false, "chyba" => "Text nesmí být prázdný"]);
+    echo json_encode(["ok" => false, "chyba" => "Něco sem musíš napsat."]);
     exit;
 }
 
-$komentar = '<pre style="overflow-x:auto">' . $text . '</pre>';
-if (!empty($odkaz))  { $komentar .= '<a href="' . $odkaz . '">' . $odkaz . '</a>'; }
-if (!empty($odkaz2)) { $komentar .= ' ' . $odkaz2; }
+$komentar = $text;
+// if (!empty($odkaz))  { $komentar .= "\n" . $odkaz; }
+// if (!empty($odkaz2)) { $komentar .= " " . $odkaz2; }
 
 $kapela  = $_SESSION['kapela']                     ?? "";
 $slozka  = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
@@ -69,7 +69,7 @@ $ok = $mysqli->query("INSERT INTO `$aktualni_diskuse` (cas, vzkaz, jmeno)
 if ($ok) {
     echo json_encode([
         "ok"    => true,
-        "vzkaz" => $komentar,
+        "vzkaz" => nl2br($komentar),
         "jmeno" => htmlspecialchars(strip_tags($jmeno)),
         "datum" => date("j.n.Y G:i:s", $cas),
     ]);

@@ -78,10 +78,10 @@ $mysqli->query("CREATE TABLE IF NOT EXISTS `$adresa_diskuse_valu` (
     jmeno VARCHAR(50) NOT NULL
 )");
 
-$cas   = time();
-$vzkaz = $mysqli->real_escape_string("Sem je možno vkládat");
-$mysqli->query("INSERT INTO `$adresa_diskuse_valu` (cas, vzkaz, jmeno)
-    VALUES ('$cas', '$vzkaz', 'admin')");
+// $cas   = time();
+// $vzkaz = $mysqli->real_escape_string("Sem je možno vkládat");
+// $mysqli->query("INSERT INTO `$adresa_diskuse_valu` (cas, vzkaz, jmeno)
+//     VALUES ('$cas', '$vzkaz', 'admin')");
 
 // Přepnout zobrazení na novou složku
 $_SESSION['slozka_souboru_k_zobrazeni'] = $ocesany_jmeno;

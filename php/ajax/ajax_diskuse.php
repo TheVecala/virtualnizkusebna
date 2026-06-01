@@ -41,13 +41,36 @@ $vysledek = $mysqli->query("SELECT cas, vzkaz, jmeno FROM `$aktualni_diskuse` OR
 }
 .dk-text { font-size: 12px; margin-bottom: 3px; line-height: 1.4; color: #e0e0e0; word-break: break-word; }
 .dk-meta { font-size: 10px; color: #888; text-align: right; }
-pre { background: transparent !important; color: #e0e0e0 !important; margin: 0; white-space: pre-wrap; }
+pre { background: transparent !important; color: #e0e0e0 !important; margin: 0; white-space: pre-wrap; font-family: inherit; font-size: inherit; }
+
+/* Stylování odkazů uvnitř diskuse, aby ladily s barvou webu */
+.dk-text a { color: #<?php echo $barva ?>; text-decoration: underline; }
+.dk-text a:hover { filter: brightness(1.2); }
 </style>
 
 <?php if ($vysledek && $vysledek->num_rows > 0): ?>
   <?php while ($r = $vysledek->fetch_assoc()): ?>
   <div class="dk-comment">
-    <div class="dk-text"><?php echo strip_tags($r['vzkaz'], '<a><br><b>'); ?></div>
+    <div class="dk-text">
+      <?php 
+        $vzkaz = $r['vzkaz'];
+        
+        // Zpětná kompatibilita: Pokud starý komentář obsahuje HTML tagy (<pre> nebo <a>),
+        // propustíme ho bezpečně přes původní strip_tags, aby se nezobrazil jako surový zdrojový kód
+        if (strpos($vzkaz, '<pre') !== false || strpos($vzkaz, '<a') !== false) {
+            echo strip_tags($vzkaz, '<a><br><b>');
+        } else {
+            // Nový formát: Čistý text kompletně zabezpečíme proti XSS útokům
+            $text_safe = htmlspecialchars($vzkaz, ENT_QUOTES, 'UTF-8');
+            
+            // Inteligentní převod textových URL adres na plně funkční klikací odkazy
+            $text_safe = preg_replace('/(https?:\/\/[^\s]+)/', '<a href="$1" target="_blank" rel="noopener">$1</a>', $text_safe);
+            
+            // Převedení konců řádků (\n) na HTML značky <br> pro správné odřádkování
+            echo nl2br($text_safe);
+        }
+      ?>
+    </div>
     <div class="dk-meta">
       <?php echo htmlspecialchars(strip_tags($r['jmeno'])); ?>
       &nbsp;·&nbsp;
@@ -64,7 +87,6 @@ pre { background: transparent !important; color: #e0e0e0 !important; margin: 0; 
   <div class="prazdno">Zatím žádné komentáře.</div>
 <?php endif; ?>
 
-<!-- Formulář — submit handler je v index.php -->
 <form id="form_komentar" style="margin-top:10px;padding-top:10px;border-top:1px solid #3a3e44;">
   <textarea id="komentar_text" rows="2" placeholder="napsat poznámku..." style="
     width:100%; background:#1a1d20; border:1px solid #3a3e44;
