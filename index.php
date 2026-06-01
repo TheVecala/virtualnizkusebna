@@ -329,11 +329,26 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .bnav {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 2px; color: var(--muted); font-size: 10px;
+  justify-content: center; gap: 4px; color: var(--muted); font-size: 10px;
   cursor: pointer; border: none; background: none; transition: all .15s;
+  padding: 6px 0;
 }
-.bnav .bi { font-size: 20px; }
+/* 🌟 Styl pro nové obrázkové ikony v navigaci */
+.bnav img.bi {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  opacity: 0.55;
+  transition: all .15s ease-in-out;
+}
+.bnav:hover img.bi {
+  opacity: 0.85;
+}
 .bnav.active { color: var(--accent); }
+.bnav.active img.bi {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px var(--accent));
+}
 
 /* Val drawer (mobil) */
 #val-drawer {
@@ -456,9 +471,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 <!-- ── TOPBAR ── -->
 <div id="topbar">
-  <span class="brand">VZ</span>
+  <span class="brand">ZKUŠEBNA</span>
   <span class="topbar-sep">/</span>
-  <span class="kapela-chip"><?php echo htmlspecialchars($login); ?></span>
+  <span class="brand">DK</span>
   <span class="topbar-sep">/</span>
   <span id="topbar-val"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
@@ -622,19 +637,19 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <!-- ── BOTTOM NAV ── -->
 <div id="bottom-nav">
   <button class="bnav active" id="bn-skladby" onclick="toggleValDrawer()">
-    <span class="bi">🎵</span>skladby
+    <img src="meat/ikona_skladby.png" class="bi" alt="skladby">skladby
   </button>
   <button class="bnav" id="bn-text" onclick="mobilePanel('text',this)">
-    <span class="bi">📝</span>text
+    <img src="meat/ikona_text.png" class="bi" alt="text">text
   </button>
   <button class="bnav" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
-    <span class="bi">🎙</span>nahrávky
+    <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
   </button>
   <button class="bnav" id="bn-diskuse" onclick="mobilePanel('diskuse',this)">
-    <span class="bi">💬</span>diskuse
+    <img src="meat/ikona_diskuse.png" class="bi" alt="diskuse">diskuse
   </button>
   <button class="bnav" id="bn-napady" onclick="mobilePanel('napady',this)">
-    <span class="bi">💡</span>nápady
+    <img src="meat/ikona_napady.png" class="bi" alt="nápady">nápady
   </button>
 </div>
 
