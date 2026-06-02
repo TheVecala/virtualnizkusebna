@@ -161,7 +161,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   background: var(--card); border: 1px solid var(--border);
   border-radius: 5px; padding: 2px 9px; white-space: nowrap;
 }
-#topbar-val::before { content: '🎵 '; }
+#topbar-val::before { content: ''; }
 .topnav { display: flex; gap: 2px; margin-left: auto; }
 .topnav a {
   color: var(--muted); text-decoration: none; font-size: 12px;
@@ -338,7 +338,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   width: 24px;
   height: 24px;
   object-fit: contain;
-  opacity: 0.55;
+  // opacity: 0.55;
   transition: all .15s ease-in-out;
 }
 .bnav:hover img.bi {
@@ -472,9 +472,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <!-- ── TOPBAR ── -->
 <div id="topbar">
   <span class="brand">ZKUŠEBNA</span>
-  <span class="topbar-sep">/</span>
+  <span class="brand">/</span>
   <span class="brand">DK</span>
-  <span class="topbar-sep">/</span>
+  <span class="brand">/</span>
   <span id="topbar-val"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
     <a href="#" class="active" id="nav-main" onclick="desktopView('main',this);return false">text + nahrávky</a>
@@ -501,7 +501,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
          data-id="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
          data-val="<?php echo htmlspecialchars($s); ?>"
          onclick="switchVal('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>', '<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>', this)">
-      <span class="val-dot"></span>
+      <img src="meat/ikona_kombo.png" alt="" style="width: 20px; height: 20px; object-fit: contain; flex-shrink: 0;">
       <span class="val-nazev"><?php echo htmlspecialchars($nazev_s); ?></span>
       <div class="val-actions">
         <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat">✏</button>
@@ -637,19 +637,19 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <!-- ── BOTTOM NAV ── -->
 <div id="bottom-nav">
   <button class="bnav active" id="bn-skladby" onclick="toggleValDrawer()">
-    <img src="meat/ikona_skladby.png" class="bi" alt="skladby">skladby
+    <img src="meat/ikona_skladby.png" class="bi" alt="">skladby
   </button>
   <button class="bnav" id="bn-text" onclick="mobilePanel('text',this)">
-    <img src="meat/ikona_text.png" class="bi" alt="text">text
+    <img src="meat/ikona_text.png" class="bi" alt="">text
   </button>
   <button class="bnav" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
-    <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
+    <img src="meat/ikona_nahravky.png" class="bi" alt="">nahrávky
   </button>
   <button class="bnav" id="bn-diskuse" onclick="mobilePanel('diskuse',this)">
-    <img src="meat/ikona_diskuse.png" class="bi" alt="diskuse">diskuse
+    <img src="meat/ikona_diskuse.png" class="bi" alt="">diskuse
   </button>
   <button class="bnav" id="bn-napady" onclick="mobilePanel('napady',this)">
-    <img src="meat/ikona_napady.png" class="bi" alt="nápady">nápady
+    <img src="meat/ikona_napady.png" class="bi" alt="">nápady
   </button>
 </div>
 
@@ -670,7 +670,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   <div class="dval<?php echo $active; ?>" 
        data-id="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
        onclick="switchVal('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>', null)">
-    <span>🎵</span><?php echo htmlspecialchars($nazev_s); ?>
+      <img src="meat/ikona_kombo.png" alt="" style="width: 20px; height: 20px; object-fit: contain; flex-shrink: 0;">
+      <span><?php echo htmlspecialchars($nazev_s); ?></span>
   </div>
   <?php endforeach; ?>
 

@@ -154,7 +154,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
       
       <div class="nahravka-hlavni">
         <div class="nahravka-nazev" title="<?php echo htmlspecialchars($soub); ?>">
-          <?php echo $je_audio ? '🎵' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
+          <?php echo $je_audio ? '<img src="meat/ikona_kazeta.png" alt="" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
         </div>
         <div>
           <button class="btn-nastaveni" data-toggle="collapse" data-target="#<?php echo $id_roletky; ?>" title="Možnosti">
