@@ -183,8 +183,8 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
         data-target="#<?php echo $id_roletky; ?>" 
         aria-expanded="false" 
         title="Možnosti">
-  ▼
-</button>
+  ﹀
+          </button>
         </div>
       </div>
 
