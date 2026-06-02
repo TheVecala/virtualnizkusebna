@@ -55,20 +55,41 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   color: #e0e0e0;
 }
 
-/* Tlačítko ozubeného kolečka na hlavním řádku */
+/* Styling pro velké otočné šipkové tlačítko */
 .btn-nastaveni {
-  background: #222e0d !important;
-  color: #<?php echo $barva; ?> !important;
-  border: 1px solid #<?php echo $barva; ?> !important;
-  border-radius: 6px;
-  width: 42px;
-  height: 42px;
-  font-size: 18px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 26px; /* Extra velké a dobře viditelné */
+  line-height: 1;
   cursor: pointer;
+  outline: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 4px 10px;
+  
+  /* Plynulá animace otočení a změny barvy */
+  transition: transform 0.25s ease-in-out, color 0.15s;
+  
+  /* Výchozí stav: ROZBALENO (šipka míří nahoru) */
+  transform: rotate(180deg); 
 }
+
+.btn-nastaveni:focus, .btn-nastaveni:active {
+  outline: none;
+}
+
+/* Stav: ZABALENO / SKRYTO (šipka se otočí dolů) */
+.btn-nastaveni.collapsed {
+  transform: rotate(0deg); 
+}
+
+/* Zvýraznění při najetí myší */
+.btn-nastaveni:hover {
+  color: var(--barva);
+}
+
 
 /* Výsuvná plocha (panel pod názvem) */
 .nahravka-vysuvna {
@@ -157,9 +178,13 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
           <?php echo $je_audio ? '<img src="meat/ikona_kazeta.png" alt="" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
         </div>
         <div>
-          <button class="btn-nastaveni" data-toggle="collapse" data-target="#<?php echo $id_roletky; ?>" title="Možnosti">
-            ⚙️
-          </button>
+          <button class="btn-nastaveni collapsed" 
+        data-toggle="collapse" 
+        data-target="#<?php echo $id_roletky; ?>" 
+        aria-expanded="false" 
+        title="Možnosti">
+  ▼
+</button>
         </div>
       </div>
 
