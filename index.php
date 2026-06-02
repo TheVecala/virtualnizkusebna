@@ -333,7 +333,12 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   cursor: pointer; border: none; background: none; transition: all .15s;
   padding: 6px 0;
 }
-/* 🌟 Styl pro nové obrázkové ikony v navigaci */
+/* 🌟 Speciální styl pro oddělení tlačítka "Skladby" od panelů */
+.bnav-skladby {
+  background: rgba(0, 0, 0, 0.2); /* Nepatrně tmavší pozadí */
+  border-right: 1px solid rgba(255, 255, 255, 0.05); /* Jemná oddělovací čára zprava */
+}
+/* 🌟 Styl pro obrázkové ikony v navigaci */
 .bnav img.bi {
   width: 24px;
   height: 24px;
@@ -636,10 +641,12 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 <!-- ── BOTTOM NAV ── -->
 <div id="bottom-nav">
-  <button class="bnav active" id="bn-skladby" onclick="toggleValDrawer()">
+  <!-- 🌟 Tlačítko "skladby" ztratilo třídu 'active' a dostalo třídu 'bnav-skladby' pro vizuální oddělení -->
+  <button class="bnav bnav-skladby" id="bn-skladby" onclick="toggleValDrawer()">
     <img src="meat/ikona_skladby.png" class="bi" alt="">skladby
   </button>
-  <button class="bnav" id="bn-text" onclick="mobilePanel('text',this)">
+  <!-- 🌟 Tlačítko "text" nyní dostalo třídu 'active', protože panel text je při načtení webu zobrazený jako výchozí -->
+  <button class="bnav active" id="bn-text" onclick="mobilePanel('text',this)">
     <img src="meat/ikona_text.png" class="bi" alt="">text
   </button>
   <button class="bnav" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
@@ -854,7 +861,10 @@ if (typeof mobilePanel === 'undefined') {
     window.mobilePanel = function(panelId, btn) {
         $('.panel').removeClass('mob-active');
         $('#panel-' + panelId).addClass('mob-active');
-        $('.bnav').removeClass('active');
+        
+        // 🌟 Změna: Odebereme .active ze všech tlačítek, KROMĚ "Skladby", protože to je jen roletka
+        $('.bnav').not('#bn-skladby').removeClass('active');
+        
         if (btn) {
             $(btn).addClass('active');
         } else {
