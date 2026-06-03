@@ -467,34 +467,56 @@
   </div>
 </div>
 
-    <!-- The Modal nahrat_zvuk -->
-<div class="modal" id="modal_nahrat_zvuk">
-  <div class="modal-dialog  ">
-    <div class="modal-content">
+<!-- ── MODAL PRO ŠPIČKOVÉ NAHRÁVÁNÍ ZVUKU (REC) - VARIANTA A ── -->
+<div class="modal fade" id="modal_nahrat_zvuk" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content" style="background: #1a1d20; border: 1px solid #3a3e44; color: #e0e0e0; border-radius: 8px;">
 
-      <!-- Modal Header -->
-      <div class="modal-header">
-            <p>RECORD</p>
-		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+      <!-- Hlavička modalu -->
+      <div class="modal-header" style="border-bottom: 1px solid #3a3e44; padding: 12px 16px;">
+        <h5 class="modal-title" style="color: #ff5555; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px;">
+          <span style="display: inline-block; width: 10px; height: 10px; background: #ff5555; border-radius: 50%; animation: pulse_rec 1.5s infinite;"></span>
+          NAHRÁVÁNÍ DO SKLADBY
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít" style="color: #888; text-shadow: none; opacity: 0.8; outline: none;">
+          <span aria-hidden="true" style="font-size: 20px;">&times;</span>
+        </button>
       </div>
 
-      <!-- Modal body -->  
-	  
-             <div class="modal-body">
-     	    	<div class="container text-center">
-					 <p>Nahrávka se ukládá do dočasné paměti a je třeba ji manuálně uložit pomocí pravého tlačítka myši.</p>
-					 <p>Je možno udělat více nahrávek, poté poslechnout a případně uložit.</p>
-					 <p>Pozor! Znovunačtení stránky způsobí smazání neuložených nahrávek.</p>
-					<button  id="record_button" class="btn btn-primary">ZAČÍT NAHRÁVAT</button> <!--  nahrávání   -->
-					<ul id="playlist"></ul> <!--  cíl nahrávání   -->
-               </div>		  		
-            </div>	  
+      <!-- Tělo modalu -->
+      <div class="modal-body" style="padding: 20px;">
+        <div class="text-center">
+          
+          <!-- Ovládací tlačítko -->
+          <button id="record_btn" class="btn btn-vz btn-block" style="font-size: 14px; padding: 10px 16px; font-weight: bold; background: #2a2e33; border: 1px solid #3a3e44; color: #e0e0e0; margin-bottom: 15px; border-radius: 6px; outline: none;">
+            Spustit nahrávání
+          </button>
 
-      <!-- Modal footer -->
-            <div class="modal-footer">	 
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	         
+          <!-- Běžící vlna během nahrávání -->
+          <div id="record-waveform" style="width: 100%; height: 80px; background: #15181a; border-radius: 6px; border: 1px solid #3a3e44; margin-bottom: 15px; overflow: hidden; position: relative;">
+            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #555; font-size: 11px; pointer-events: none;">
+              [ zde se po spuštění vykreslí běžící vlna ]
             </div>
-	  
+          </div>
+
+          <!-- Náhled a kontrolní přehrávač po dokončení nahrávky -->
+          <div id="nahravka-preview" style="width: 100%; margin-top: 15px;"></div>
+
+          <!-- Tlačítko pro spuštění přemostění do odesílacího modalu (původně skryté) -->
+          <button type="button" id="save_recording_bridge" class="btn btn-block btn-vz primary" style="font-size: 13px; font-weight: bold; padding: 10px 16px; margin-top: 15px; display: none; border-radius: 6px;">
+            💾 Odeslat nahrávku do zkušebny
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Patička modalu -->
+      <div class="modal-footer" style="border-top: 1px solid #3a3e44; padding: 10px 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="btn btn-vz danger" data-dismiss="modal" style="font-size: 11px; padding: 5px 12px;">
+          ZAVŘÍT
+        </button>
+      </div>
+
     </div>
   </div>
 </div>
