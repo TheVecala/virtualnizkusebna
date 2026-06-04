@@ -1,11 +1,15 @@
-<?php session_start(); ?>
+ <?php session_start(); ?>
 <?php
 require_once __DIR__ . "/../config.php";
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
-// Povolené přípony souborů - php a spustitelné soubory NESMÍ být povoleny
-$povolene_pripony = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'pdf', 'txt', 'jpg', 'jpeg', 'png', 'gif'];
+// 🌟 ROZŠÍŘENÍ: Přidány nativní audio formáty webm, m4a a mp4 pro bezchybné nahrávání z mobilů
+$povolene_pripony = [
+    'mp3', 'wav', 'ogg', 'flac', 'aac', 
+    'webm', 'm4a', 'mp4', 
+    'pdf', 'txt', 'jpg', 'jpeg', 'png', 'gif'
+];
 
 // Ověření že soubor byl odeslán
 if (!isset($_FILES["fileToUpload"]) || $_FILES["fileToUpload"]["error"] !== UPLOAD_ERR_OK) {
@@ -82,18 +86,33 @@ if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
         if (function_exists('mysqli_query') && isset($mysqli)) {
             $seznam_mailu = "maily_" . mysqli_real_escape_string($mysqli, $_SESSION['kapela']);
             $maily = mysqli_query($mysqli, "SELECT mail FROM $seznam_mailu");
-            $textmailu = "Do složky __ " . $slozka . " __ byl vložen soubor __ " . $bezpecne_jmeno . ".";
+            
             if ($maily) {
-                while ($adresa = mysqli_fetch_array($maily)) {
-                    mail($adresa["mail"], "nový soubor v playlistu", $textmailu, "From:" . MAIL_FROM);
+                $to_list = [];
+                while ($row = mysqli_fetch_assoc($maily)) {
+                    if (!empty($row['mail'])) {
+                        $to_list[] = $row['mail'];
+                    }
+                }
+                
+                if (!empty($to_list)) {
+                    $to = implode(", ", $to_list);
+                    $subject = "Novy soubor ve zkušebně: " . $bezpecne_jmeno;
+                    $message = "Ahoj,\n\nve zkušebně u skladby \"" . htmlspecialchars($slozka) . "\" byl nahrán nový soubor:\n" . $bezpecne_jmeno . "\n\nZkušebna.";
+                    $headers = "From: no-reply@vzkusebna.cz\r\n" .
+                               "Reply-To: no-reply@vzkusebna.cz\r\n" .
+                               "Content-Type: text/plain; charset=UTF-8\r\n" .
+                               "X-Mailer: PHP/" . phpversion();
+                    
+                    @mail($to, $subject, $message, $headers);
                 }
             }
         }
     }
-
 } else {
-    $_SESSION['vysledek'] = "chyba - soubor se nepodařilo nahrát";
+    $_SESSION['vysledek'] = "Nepodařilo se přesunout soubor na serveru.";
 }
 
 require "navrat.php";
+exit;
 ?>

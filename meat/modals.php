@@ -467,7 +467,7 @@
   </div>
 </div>
 
-<!-- ── MODAL PRO ŠPIČKOVÉ NAHRÁVÁNÍ ZVUKU (REC) - VARIANTA A ── -->
+ <!-- ── MODAL PRO ŠPIČKOVÉ NAHRÁVÁNÍ ZVUKU (REC) - VARIANTA A S NÁZVEM ── -->
 <div class="modal fade" id="modal_nahrat_zvuk" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content" style="background: #1a1d20; border: 1px solid #3a3e44; color: #e0e0e0; border-radius: 8px;">
@@ -502,7 +502,13 @@
           <!-- Náhled a kontrolní přehrávač po dokončení nahrávky -->
           <div id="nahravka-preview" style="width: 100%; margin-top: 15px;"></div>
 
-          <!-- Tlačítko pro spuštění přemostění do odesílacího modalu (původně skryté) -->
+          <!-- 🌟 NOVÉ: Políčko pro zadání názvu nahrávky před odesláním (zobrazí se po nahrání) -->
+          <div id="custom-name-wrap" style="display: none; margin-top: 15px; text-align: left;">
+            <label style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Název nahrávky:</label>
+            <input type="text" id="custom_rec_name" class="form-control" placeholder="např. Zkouska_sol, rago_tempo..." style="background: #15181a; border: 1px solid #3a3e44; border-radius: 5px; color: #e0e0e0; font-size: 12px; padding: 6px 10px;">
+          </div>
+
+          <!-- Tlačítko pro spuštění přemostění do odesílacího modalu -->
           <button type="button" id="save_recording_bridge" class="btn btn-block btn-vz primary" style="font-size: 13px; font-weight: bold; padding: 10px 16px; margin-top: 15px; display: none; border-radius: 6px;">
             💾 Odeslat nahrávku do zkušebny
           </button>
