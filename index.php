@@ -47,6 +47,7 @@ $kapela            = $_SESSION['kapela']            ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
 $sekce             = "uploads";
 $aktualni_text     = $_SESSION['aktualni_text']     ?? "akordy.txt";
+$aktualni_tab      = $_SESSION['aktualni_tab']      ?? "tabelatura.txt"; // Přidána session pro tabelaturu
 $aktualni_diskuse  = $_SESSION['diskuse']           ?? "";
 
 
@@ -161,7 +162,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   background: var(--card); border: 1px solid var(--border);
   border-radius: 5px; padding: 2px 9px; white-space: nowrap;
 }
-#topbar-val::before { content: ''; }
+#topbar-val::before { content: '🎵 '; }
 .topnav { display: flex; gap: 2px; margin-left: auto; }
 .topnav a {
   color: var(--muted); text-decoration: none; font-size: 12px;
@@ -278,10 +279,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   border-right: 1px solid var(--border);
 }
 .panel:last-child { border-right: none; }
-#panel-text     { flex: 2; }
-#panel-nahravky { flex: 2; }
-#panel-diskuse  { flex: 1.5; }
-#panel-napady   { flex: 1.5; display: none; }
+#panel-text       { flex: 2; }
+#panel-tabelatura { flex: 2; } /* Nový panel Tabelatura */
+#panel-nahravky   { flex: 2; }
+#panel-diskuse    { flex: 1.5; }
+#panel-napady     { flex: 1.5; display: none; }
 
 .panel-header {
   padding: 8px 12px; background: var(--tmava);
@@ -333,12 +335,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   cursor: pointer; border: none; background: none; transition: all .15s;
   padding: 6px 0;
 }
-/* 🌟 Speciální styl pro oddělení tlačítka "Skladby" od panelů */
-.bnav-skladby {
-  background: rgba(0, 0, 0, 0.2); /* Nepatrně tmavší pozadí */
-  border-right: 1px solid rgba(255, 255, 255, 0.05); /* Jemná oddělovací čára zprava */
-}
-/* 🌟 Styl pro obrázkové ikony v navigaci */
 .bnav img.bi {
   width: 24px;
   height: 24px;
@@ -399,23 +395,27 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   /* Skryjeme výchozí zobrazení všech */
   .panel { display: none !important; width: 50%; }
   
-  /* Dynamické párování na základě zvoleného panelu z dolní lišty */
-  
-  /* A) Vybrán Text nebo Nahrávky -> Zobrazí se TEXT + NAHRÁVKY */
+  /* A) Vybrán Text nebo Tabelatura -> Zobrazí se TEXT + TABELATURA */
   #content-area[data-active-panel="text"] #panel-text,
-  #content-area[data-active-panel="text"] #panel-nahravky,
-  #content-area[data-active-panel="nahravky"] #panel-text,
+  #content-area[data-active-panel="text"] #panel-tabelatura,
+  #content-area[data-active-panel="tabelatura"] #panel-text,
+  #content-area[data-active-panel="tabelatura"] #panel-tabelatura {
+    display: flex !important;
+  }
+  
+  /* B) Vybrány Nahrávky -> TABELATURA + NAHRÁVKY */
+  #content-area[data-active-panel="nahravky"] #panel-tabelatura,
   #content-area[data-active-panel="nahravky"] #panel-nahravky {
     display: flex !important;
   }
   
-  /* B) Vybrána Diskuse -> Zobrazí se NAHRÁVKY + DISKUSE */
+  /* C) Vybrána Diskuse -> Zobrazí se NAHRÁVKY + DISKUSE */
   #content-area[data-active-panel="diskuse"] #panel-nahravky,
   #content-area[data-active-panel="diskuse"] #panel-diskuse {
     display: flex !important;
   }
   
-  /* C) Vybrány Nápady -> Zobrazí se NAHRÁVKY + NÁPADY */
+  /* D) Vybrány Nápady -> Zobrazí se NAHRÁVKY + NÁPADY */
   #content-area[data-active-panel="napady"] #panel-nahravky,
   #content-area[data-active-panel="napady"] #panel-napady {
     display: flex !important;
@@ -423,20 +423,20 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   
   /* Záchranný fallback (pokud není atribut nastaven, ukážeme základní dvojici) */
   #content-area:not([data-active-panel]) #panel-text,
-  #content-area:not([data-active-panel]) #panel-nahravky {
+  #content-area:not([data-active-panel]) #panel-tabelatura {
     display: flex !important;
   }
 }
 
-/* 3. DESKTOP (od 1200px výše): Všechny tři panely vedle sebe + trvalý sidebar */
+/* 3. DESKTOP (od 1200px výše): Všechny čtyři panely vedle sebe + trvalý sidebar */
 @media (min-width: 1200px) {
   #sidebar { display: flex; }
   #main { margin-left: var(--sidebar-w); }
   #bottom-nav { display: none; }
   #content-area { flex-direction: row; }
-  #panel-text, #panel-nahravky, #panel-diskuse { display: flex !important; }
+  /* Přidán i panel-tabelatura */
+  #panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse { display: flex !important; }
 }
-
 
 /* ── Progress bar ── */
 #progress-bar {
@@ -482,7 +482,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   <span class="brand">/</span>
   <span id="topbar-val"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
-    <a href="#" class="active" id="nav-main" onclick="desktopView('main',this);return false">text + nahrávky</a>
+    <!-- 🌟 Text tlačítka v horní liště je doplněn o taby -->
+    <a href="#" class="active" id="nav-main" onclick="desktopView('main',this);return false">text + taby + nahrávky</a>
     <a href="#" id="nav-napady" onclick="desktopView('napady',this);return false">
       nápady <span class="napady-badge">DK</span>
     </a>
@@ -551,10 +552,23 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <div class="panel-header">
         <h2>TEXT</h2>
         <div class="acts">
-          <button class="btn-vz" onclick="otevritEditText()">změnit</button>
+          <button class="btn-vz" onclick="otevritEditText('text')">změnit</button>
         </div>
       </div>
       <div class="panel-body" id="body-text">
+        <div class="panel-loading"><div class="spinner"></div>načítám...</div>
+      </div>
+    </div>
+
+    <!-- 🌟 PANEL TABELATURA (Nový panel, zcela identický s panelem textu) -->
+    <div class="panel" id="panel-tabelatura">
+      <div class="panel-header">
+        <h2>TABELATURA</h2>
+        <div class="acts">
+          <button class="btn-vz" onclick="otevritEditText('tabelatura')">změnit</button>
+        </div>
+      </div>
+      <div class="panel-body" id="body-tabelatura">
         <div class="panel-loading"><div class="spinner"></div>načítám...</div>
       </div>
     </div>
@@ -641,22 +655,26 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 <!-- ── BOTTOM NAV ── -->
 <div id="bottom-nav">
-  <!-- 🌟 Tlačítko "skladby" ztratilo třídu 'active' a dostalo třídu 'bnav-skladby' pro vizuální oddělení -->
-  <button class="bnav bnav-skladby" id="bn-skladby" onclick="toggleValDrawer()">
-    <img src="meat/ikona_skladby.png" class="bi" alt="">skladby
+  <button class="bnav" id="bn-skladby" onclick="toggleValDrawer()">
+    <img src="meat/ikona_skladby.png" class="bi" alt="skladby">skladby
   </button>
-  <!-- 🌟 Tlačítko "text" nyní dostalo třídu 'active', protože panel text je při načtení webu zobrazený jako výchozí -->
   <button class="bnav active" id="bn-text" onclick="mobilePanel('text',this)">
-    <img src="meat/ikona_text.png" class="bi" alt="">text
+    <img src="meat/ikona_text.png" class="bi" alt="text">text
   </button>
+  
+  <!-- 🌟 Přidáno tlačítko Tabelatura do spodní lišty (se zbarvenou ikonou pro odlišení) -->
+  <button class="bnav" id="bn-tabelatura" onclick="mobilePanel('tabelatura',this)">
+    <img src="meat/ikona_text.png" class="bi" alt="tabelatura" style="filter: hue-rotate(90deg);">taby
+  </button>
+  
   <button class="bnav" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
-    <img src="meat/ikona_nahravky.png" class="bi" alt="">nahrávky
+    <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
   </button>
   <button class="bnav" id="bn-diskuse" onclick="mobilePanel('diskuse',this)">
-    <img src="meat/ikona_diskuse.png" class="bi" alt="">diskuse
+    <img src="meat/ikona_diskuse.png" class="bi" alt="diskuse">diskuse
   </button>
   <button class="bnav" id="bn-napady" onclick="mobilePanel('napady',this)">
-    <img src="meat/ikona_napady.png" class="bi" alt="">nápady
+    <img src="meat/ikona_napady.png" class="bi" alt="nápady">nápady
   </button>
 </div>
 
@@ -844,12 +862,10 @@ function looperZavrit() {
 }
 </script>
 
-<!-- ── BEZPEČNÝ FALLBACK PRO NAVIGAČNÍ FUNKCE (Zabraňuje ReferenceError, pokud se nenačte main.js) ── -->
+<!-- ── BEZPEČNÝ FALLBACK PRO NAVIGAČNÍ FUNKCE ── -->
 <script>
-// Přidáme globální sledování kliknutí na spodní nav pro zápis atributu na #content-area
-// To zajistí přepínání dvojic ve středním režimu (768px - 1199px)
 $(document).on('click', '.bnav', function() {
-    var id = $(this).attr('id'); // bn-text, bn-nahravky...
+    var id = $(this).attr('id');
     if (id) {
         var panelId = id.replace('bn-', '');
         if (panelId === 'skladby') return; 
@@ -862,9 +878,7 @@ if (typeof mobilePanel === 'undefined') {
         $('.panel').removeClass('mob-active');
         $('#panel-' + panelId).addClass('mob-active');
         
-        // 🌟 Změna: Odebereme .active ze všech tlačítek, KROMĚ "Skladby", protože to je jen roletka
-        $('.bnav').not('#bn-skladby').removeClass('active');
-        
+        $('.bnav').removeClass('active');
         if (btn) {
             $(btn).addClass('active');
         } else {
@@ -887,10 +901,10 @@ if (typeof desktopView === 'undefined') {
         $('.topnav a').removeClass('active');
         $(btn).addClass('active');
         if (view === 'main') {
-            $('#panel-text, #panel-nahravky, #panel-diskuse').show();
+            $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').show();
             $('#panel-napady').hide();
         } else if (view === 'napady') {
-            $('#panel-text, #panel-nahravky, #panel-diskuse').hide();
+            $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').hide();
             $('#panel-napady').show();
         }
     };
@@ -949,8 +963,9 @@ if (typeof otevritSmazani === 'undefined') {
 }
 
 if (typeof otevritEditText === 'undefined') {
-    window.otevritEditText = function() {
-        $('#modal_edit_text').modal('show');
+    // Upravený fallback s parametrem typ
+    window.otevritEditText = function(typ) {
+        $('#modal_zmenit_text').modal('show');
     };
 }
 </script>

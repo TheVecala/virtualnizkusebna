@@ -15,12 +15,12 @@ function pbDone() {
   pbTimer = setTimeout(function() { pb.className = ''; }, 700);
 }
 
-// ── Načtení panelů při startu ──
+// ── Načtení panelů při startu (Nyní včetně tabelatury) ──
 $(function() {
   pbStart();
-  var pending = 4;
+  var pending = 5; // 🌟 Zvýšeno na 5 panelů
   function panelDone() { if (--pending === 0) pbDone(); }
-  ['text','nahravky','diskuse','napady'].forEach(function(p) {
+  ['text', 'tabelatura', 'nahravky', 'diskuse', 'napady'].forEach(function(p) {
     nacistPanel(p, panelDone);
   });
 });
@@ -39,9 +39,9 @@ function nacistPanel(panel, callback) {
 
 function nacistVsechnyPanely() {
   pbStart();
-  var pending = 4;
+  var pending = 5;
   function done() { if (--pending === 0) pbDone(); }
-  ['text','nahravky','diskuse','napady'].forEach(function(p) { nacistPanel(p, done); });
+  ['text', 'tabelatura', 'nahravky', 'diskuse', 'napady'].forEach(function(p) { nacistPanel(p, done); });
 }
 
 // ── Přepnutí válu ──
@@ -75,7 +75,7 @@ function switchVal(val, nazev, el) {
   });
 }
 
-// ── Desktop view ──
+// ── Desktop view (Přidána podpora panelu tabelatury) ──
 function desktopView(view, el) {
   document.querySelectorAll('.topnav a').forEach(function(a) { a.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -84,11 +84,11 @@ function desktopView(view, el) {
   if (window.innerWidth <= 768) return;
 
   if (view === 'napady') {
-    $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'none');
+    $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'none');
     $('#panel-napady').css('display', 'flex');
   } else {
     $('#panel-napady').css('display', 'none');
-    $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'flex');
+    $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'flex');
   }
 }
 
@@ -133,7 +133,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// ── Looper (Starý testovací kód vyčištěn, ostrý kód je v index.php) ──
+// ── Looper ──
 function looperOtevrit(soubor, label) {
   document.getElementById('looper-bar').classList.remove('hidden');
   document.getElementById('lname').textContent = label || 'Nahrávka';
@@ -149,22 +149,45 @@ function looperZavrit() {
   document.getElementById('looper-bar').classList.add('hidden');
 }
 
-// Prázdné obslužné metody vyčištěny, obstarává je nyní nový kód v index.php
 
-// ── Edit text modal ──
-function otevritEditText() {
-  $.get('/php/ajax/ajax_text_raw.php', function(data) {
+// ── 🌟 DYNAMICKÝ EDIT TEXT / TABELATURA MODAL ──
+function otevritEditText(typ) {
+  typ = typ || 'text'; // Fallback pro jistotu, pokud by nebyl zadaný
+
+  // Zažádáme příslušný PHP wrapper o data (předpoklad: máte ajax_text_raw.php a ajax_tabelatura_raw.php)
+  $.get('/php/ajax/ajax_' + typ + '_raw.php', function(data) {
     if (data.obsah !== undefined) {
       var textarea = document.getElementById('editor');
       var input    = document.getElementById('modal_soubor_akordu');
       var label    = document.getElementById('modal_zmenit_text_label');
+      // Propojíme akci formuláře podle typu souboru, abychom zapsali do správného cíle
+      var form     = document.querySelector('#modal_zmenit_text form');
+
       if (textarea) textarea.value = data.obsah;
-      if (input)    input.value    = data.nazev_souboru || 'akordy.txt';
-      if (label)    label.textContent = 'UPRAVIT ' + (data.nazev_souboru || 'akordy.txt') + ' — ' + (data.slozka || '');
+      
+      // Dosadí se specifický název souboru
+      var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
+      if (input) input.value = data.nazev_souboru || vychoziNazev;
+      
+      if (label) label.textContent = 'UPRAVIT ' + (data.nazev_souboru || vychoziNazev) + ' — ' + (data.slozka || '');
+      
+      // DYNAMICKÁ ZMĚNA CÍLE FORMULÁŘE (Action)
+      if (form) {
+        form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
+      }
     }
     $('#modal_zmenit_text').modal('show');
   }, 'json').fail(function(xhr) {
-    console.error('ajax_text_raw chyba:', xhr.status, xhr.responseText);
+    console.error('ajax_' + typ + '_raw chyba:', xhr.status, xhr.responseText);
+    
+    // Pokud selhalo (např. soubor ještě neexistuje), otevřeme s prázdným textem ale připravené
+    var label = document.getElementById('modal_zmenit_text_label');
+    var form  = document.querySelector('#modal_zmenit_text form');
+    var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
+    
+    if (label) label.textContent = 'VYTVOŘIT ' + vychoziNazev;
+    if (form) form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
+    
     $('#modal_zmenit_text').modal('show');
   });
 }
@@ -369,16 +392,16 @@ window.addEventListener('resize', function() {
     var el = document.getElementById('panel-' + (VZ.aktivniMobPanel || 'text'));
     if (el) el.classList.add('mob-active');
   } else {
-    // Odstranit mob-active, nastavit desktop layout
+    // Odstranit mob-active, nastavit desktop layout včetně panelu tabelatura
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); p.style.display = ''; });
     var napadyAktivni = document.getElementById('nav-napady') &&
                         document.getElementById('nav-napady').classList.contains('active');
     if (napadyAktivni) {
-      $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'none');
+      $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'none');
       $('#panel-napady').css('display', 'flex');
     } else {
       $('#panel-napady').css('display', 'none');
-      $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'flex');
+      $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'flex');
     }
   }
 });
@@ -394,20 +417,17 @@ $(document).on('show.bs.modal', '#modal_presunout', function() {
     kontejner.innerHTML = '';
     
     data.forEach(function(s) {
-      // Skryje složku, ve které právě jsme (aby soubor nešel přesunout tam, kde už je)
+      // Skryje složku, ve které právě jsme
       if (s.aktivni) return;
 
       var btn = document.createElement('button');
       btn.type = 'submit';
-      // Tohle zaručí, že po kliknutí se do PHP pošle správná hodnota
       btn.name = 'presunout_kam'; 
       btn.value = s.slozka;
       btn.className = 'list-group-item list-group-item-action';
       
-      // Inline stylování pro dark-mode design
       btn.style.cssText = 'background: #1e2226; color: #e0e0e0; border: 1px solid #3a3e44; margin-bottom: 5px; border-radius: 5px; padding: 10px 12px; font-size: 13px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; transition: 0.2s;';
 
-      // Hover efekty (přes JS, aby ladily s barvou kapely)
       btn.onmouseover = function() { this.style.borderColor = 'var(--barva)'; this.style.color = 'var(--barva)'; };
       btn.onmouseout  = function() { this.style.borderColor = '#3a3e44'; this.style.color = '#e0e0e0'; };
 
@@ -415,7 +435,6 @@ $(document).on('show.bs.modal', '#modal_presunout', function() {
       kontejner.appendChild(btn);
     });
     
-    // Pokud je kapela jen s jednou složkou
     if(kontejner.innerHTML === '') {
       kontejner.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">Nemáte vytvořené žádné další skladby.</div>';
     }
@@ -423,6 +442,7 @@ $(document).on('show.bs.modal', '#modal_presunout', function() {
     kontejner.innerHTML = '<div style="color:#ff8888; font-size:12px; padding:10px;">Chyba načítání skladeb.</div>';
   });
 });
+
 // ── Upload souboru s progress barem ──
 $(document).on('submit', '#form_upload', function(e) {
   e.preventDefault();
