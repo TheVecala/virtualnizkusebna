@@ -473,239 +473,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 85, 85, 0); }
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 85, 85, 0); }
 }
-
-/* ── recording ── */
-/* ── PŘEPÍNAČ (toggle switch) ── */
-.rec-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 0;
-  border-bottom: 1px solid #3a3e44;
-  gap: 10px;
-}
-.rec-toggle-row:last-child { border-bottom: none; }
-
-.rec-toggle-label {
-  font-size: 11px;
-  color: #aaa;
-  flex: 1;
-  line-height: 1.3;
-}
-.rec-toggle-label small {
-  display: block;
-  font-size: 10px;
-  color: #666;
-  margin-top: 1px;
-}
-
-.toggle-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.toggle-wrap input[type="checkbox"] { display: none; }
-.toggle-sw {
-  position: relative;
-  width: 34px;
-  height: 18px;
-  background: #3a3e44;
-  border-radius: 9px;
-  cursor: pointer;
-  transition: background .2s;
-  flex-shrink: 0;
-}
-.toggle-sw::after {
-  content: '';
-  position: absolute;
-  width: 14px; height: 14px;
-  background: #888;
-  border-radius: 50%;
-  top: 2px; left: 2px;
-  transition: all .2s;
-}
-input[type="checkbox"]:checked + .toggle-sw {
-  background: #a7ac38;
-}
-input[type="checkbox"]:checked + .toggle-sw::after {
-  left: 18px;
-  background: #fff;
-}
-.toggle-val {
-  font-size: 10px;
-  color: #666;
-  width: 22px;
-  text-align: right;
-}
-
-/* ── SLIDER ── */
-.rec-slider-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  border-bottom: 1px solid #3a3e44;
-}
-.rec-slider-row:last-child { border-bottom: none; }
-.rec-slider-label {
-  font-size: 11px;
-  color: #aaa;
-  width: 90px;
-  flex-shrink: 0;
-}
-.rec-slider-row input[type="range"] {
-  flex: 1;
-  -webkit-appearance: none;
-  height: 4px;
-  background: #3a3e44;
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-}
-.rec-slider-row input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 14px; height: 14px;
-  background: #a7ac38;
-  border-radius: 50%;
-}
-.rec-slider-val {
-  font-size: 11px;
-  color: #a7ac38;
-  width: 38px;
-  text-align: right;
-  flex-shrink: 0;
-  font-family: monospace;
-}
-
-/* ── PEAK METER ── */
-#rec-peak-meter {
-  height: 8px;
-  background: #15181a;
-  border-radius: 4px;
-  border: 1px solid #3a3e44;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-#rec-peak-bar {
-  height: 100%;
-  width: 0%;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #4caf50 0%, #a7ac38 60%, #ffc107 80%, #ff5555 95%);
-  transition: width 0.05s;
-}
-#rec-peak-label {
-  font-size: 10px;
-  color: #666;
-  text-align: right;
-  margin-bottom: 6px;
-}
-#rec-clip-warning {
-  display: none;
-  font-size: 10px;
-  color: #ff5555;
-  font-weight: bold;
-  text-align: center;
-  letter-spacing: 1px;
-  animation: blink-clip .5s infinite;
-  margin-bottom: 6px;
-}
-@keyframes blink-clip { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-/* ── SEKCE FILTRŮ (sbalitelná) ── */
-#rec-filters-panel {
-  background: #15181a;
-  border: 1px solid #3a3e44;
-  border-radius: 6px;
-  margin-bottom: 12px;
-  overflow: hidden;
-  transition: max-height .3s ease;
-  max-height: 0;
-}
-#rec-filters-panel.open {
-  max-height: 500px;
-}
-#rec-filters-inner {
-  padding: 10px 12px;
-}
-
-.rec-section-title {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #666;
-  padding: 6px 0 4px;
-  margin-top: 8px;
-  border-bottom: 1px solid #2a2e33;
-}
-.rec-section-title:first-child { margin-top: 0; }
-
-/* ── STATUS ── */
-#rec-status-line {
-  font-size: 11px;
-  color: #666;
-  text-align: center;
-  min-height: 16px;
-  margin-bottom: 6px;
-}
-
-/* ── PREVIEW AREA ── */
-#rec-nahravka-preview {
-  margin-top: 10px;
-}
-#rec-preview-wave {
-  width: 100%;
-  height: 60px;
-  background: #15181a;
-  border-radius: 5px;
-  border: 1px solid #3a3e44;
-  margin-bottom: 8px;
-  overflow: hidden;
-}
-#rec-preview-player {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-/* ── UPLOAD PROGRESS ── */
-#rec-upload-progress-wrap {
-  display: none;
-  margin-top: 10px;
-}
-#rec-upload-progress-bg {
-  background: #1e2226;
-  border-radius: 4px;
-  height: 6px;
-  overflow: hidden;
-  margin-bottom: 4px;
-}
-#rec-upload-progress-bar {
-  height: 100%;
-  width: 0%;
-  background: var(--barva);
-  transition: width .1s;
-}
-#rec-upload-status {
-  font-size: 11px;
-  color: var(--muted);
-  text-align: center;
-}
-
-.filters-toggle-btn {
-  background: none;
-  border: 1px solid #3a3e44;
-  color: #888;
-  border-radius: 4px;
-  font-size: 10px;
-  padding: 2px 8px;
-  cursor: pointer;
-  transition: all .15s;
-}
-.filters-toggle-btn:hover {
-  border-color: #a7ac38;
-  color: #a7ac38;
-}
-
 </style>
 </head>
 <body>
@@ -1196,450 +963,252 @@ if (typeof otevritEditText === 'undefined') {
     };
 }
 
-// ══════════════════════════════════════════════════════════════════════
-//  STUDIOVÉ NAHRÁVÁNÍ — výstup webm/opus, upload přímo na server
-//  Závislosti: WaveSurfer 7 + Record plugin (již načteny v <head>)
-// ══════════════════════════════════════════════════════════════════════
-(function () {
 
-    // ── STAV ──
-    var recButton      = document.getElementById('record_btn');
-    var recordSurfer   = null;
-    var recordPlugin   = null;
-    var previewSurfer  = null;
-    var mediaStream    = null;
-    var audioContext   = null;
-    var gainNode       = null;
-    var compressorNode = null;
-    var analyserNode   = null;
-    var processedDest  = null;
-    var mediaRecorder  = null;
+// ── ROBUSTNÍ STUDIOVÉ NAHRÁVÁNÍ S ROZHRANÍM ONSTOP (BEZ CHYB A PRÁZDNÝCH SOUBORŮ) ──
+(function() {
+    var recButton = document.getElementById('record_btn');
+    var recordSurfer = null;
+    var recordPlugin = null;
+    var mediaStream = null;
+    var audioContext = null;
+    var mediaRecorder = null;
     var recordedChunks = [];
     var isRecordingNow = false;
-    var peakTimer      = null;
-    var clipTimeout    = null;
-    var posledniBlob   = null;
-    var posledniMime   = '';
+    
+    // Globální proměnné pro bezpečné předání audio dat do odesílacího tlačítka
+    var posledniAudioBlob = null; 
+    var posledniMimeType = "";
 
-    // ── Číst hodnoty filtrů z UI ──
-    function getFilterSettings() {
-        return {
-            agc:       document.getElementById('flt-agc')?.checked       ?? false,
-            noise:     document.getElementById('flt-noise')?.checked     ?? false,
-            echo:      document.getElementById('flt-echo')?.checked      ?? false,
-            gain:      parseFloat(document.getElementById('flt-gain')?.value ?? '0.85'),
-            comp:      document.getElementById('flt-comp')?.checked      ?? true,
-            threshold: parseFloat(document.getElementById('flt-threshold')?.value ?? '-18'),
-            ratio:     parseFloat(document.getElementById('flt-ratio')?.value    ?? '4'),
-            knee:      parseFloat(document.getElementById('flt-knee')?.value     ?? '6'),
-        };
-    }
-
-    // ── MODAL: otevření / zavření ──
-    $('#modal_nahrat_zvuk').on('shown.bs.modal', function () { inicializovat(); });
-    $('#modal_nahrat_zvuk').on('hidden.bs.modal', function () { zastavitVse(); });
-
-    // ── Panel filtrů: toggle ──
-    document.getElementById('rec-filters-toggle-btn')?.addEventListener('click', function () {
-        document.getElementById('rec-filters-panel')?.classList.toggle('open');
+    $('#modal_nahrat_zvuk').on('shown.bs.modal', function () {
+        inicializovatNahravaciWave();
     });
 
-    // ── Slidery: živý popisek ──
-    function bindSlider(id, valId, fmt) {
-        var el = document.getElementById(id);
-        var vl = document.getElementById(valId);
-        if (!el || !vl) return;
-        el.addEventListener('input', function () { vl.textContent = fmt(this.value); });
-    }
-    bindSlider('flt-gain',      'flt-gain-val',      function (v) { return parseFloat(v).toFixed(2) + '×'; });
-    bindSlider('flt-threshold', 'flt-threshold-val', function (v) { return (v >= 0 ? '' : '−') + Math.abs(v) + ' dB'; });
-    bindSlider('flt-ratio',     'flt-ratio-val',     function (v) { return v + ' : 1'; });
-    bindSlider('flt-knee',      'flt-knee-val',      function (v) { return v + ' dB'; });
-
-    // ── Toggle switche: živý popisek ──
-    function bindToggle(id, valId) {
-        var el = document.getElementById(id);
-        var vl = document.getElementById(valId);
-        if (!el || !vl) return;
-        el.addEventListener('change', function () { vl.textContent = this.checked ? 'zap' : 'vyp'; });
-    }
-    bindToggle('flt-agc',   'flt-agc-val');
-    bindToggle('flt-noise', 'flt-noise-val');
-    bindToggle('flt-echo',  'flt-echo-val');
-    bindToggle('flt-comp',  'flt-comp-val');
-
-    // ── Kompresor ON/OFF: skrýt/zobrazit slidery ──
-    document.getElementById('flt-comp')?.addEventListener('change', function () {
-        ['comp-row-threshold', 'comp-row-ratio', 'comp-row-knee'].forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el) el.style.display = this.checked ? '' : 'none';
-        }.bind(this));
+    $('#modal_nahrat_zvuk').on('hidden.bs.modal', function () {
+        zastavitVsechnyZdroje();
     });
 
-    // ─────────────────────────────────────────────────────────────────
-    // INICIALIZACE WAVEFORM
-    // ─────────────────────────────────────────────────────────────────
-    function inicializovat() {
-        zastavitVse();
-        resetUI();
+    function inicializovatNahravaciWave() {
+        if (recordSurfer) {
+            recordSurfer.destroy();
+        }
 
-        if (recordSurfer) { try { recordSurfer.destroy(); } catch (e) {} }
+        var containerSelector = '#record-waveform';
+        if (!document.querySelector(containerSelector)) {
+            var preview = document.querySelector('#nahravka-preview');
+            if (preview) {
+                preview.innerHTML = '<div id="record-waveform" style="width:100%; height:80px; background:#15181a; border-radius:5px; border:1px solid #3a3e44; margin-bottom:10px;"></div>';
+            }
+        }
 
         recordSurfer = WaveSurfer.create({
-            container:     '#record-waveform',
-            waveColor:     '#ff5555',
+            container: '#record-waveform',
+            waveColor: '#ff5555',
             progressColor: '#ff8888',
-            cursorWidth:   0,
-            height:        75,
-            barWidth:      2,
-            barGap:        1,
-            barRadius:     1,
+            cursorWidth: 0,
+            height: 80,
+            barWidth: 2,
+            barGap: 1,
+            barRadius: 1
         });
 
         recordPlugin = recordSurfer.registerPlugin(WaveSurfer.Record.create({
-            scrollingWaveform:   true,
-            renderRecordedAudio: false,
+            scrollingWaveform: true,
+            renderRecordedAudio: false
         }));
 
         if (recButton) {
-            recButton.textContent   = '⏺ Spustit nahrávání';
-            recButton.style.cssText = 'background:#2a2e33;border:1px solid #3a3e44;color:#e0e0e0;';
-            recButton.onclick       = toggleNahravani;
+            recButton.textContent = 'Spustit nahrávání';
+            recButton.classList.remove('btn-danger');
+            recButton.onclick = toggleNahrávání;
         }
-
-        setStatus('Připraven k nahrávání');
+        
+        $('#custom-name-wrap').hide();
+        $('#save_recording_bridge').hide();
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // RESET UI
-    // ─────────────────────────────────────────────────────────────────
-    function resetUI() {
-        document.getElementById('rec-nahravka-preview').style.display     = 'none';
-        document.getElementById('rec-wf-hint').style.display              = 'flex';
-        document.getElementById('rec-peak-label').textContent             = 'úroveň vstupu: —';
-        document.getElementById('rec-clip-warning').style.display         = 'none';
-        document.getElementById('rec-custom-name').value                  = '';
-        document.getElementById('rec-upload-progress-wrap').style.display = 'none';
-        document.getElementById('rec-upload-progress-bar').style.width    = '0%';
-        document.getElementById('rec-upload-status').textContent          = 'odesílám...';
-        document.getElementById('rec-odeslat-btn').disabled               = false;
-        setPeak(0);
-        animateRecDot(false);
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // PEAK METER
-    // ─────────────────────────────────────────────────────────────────
-    function setPeak(val) {
-        document.getElementById('rec-peak-bar').style.width = Math.min(100, Math.round(val * 100)) + '%';
-    }
-
-    function startPeakMeter() {
-        if (!analyserNode) return;
-        var buf = new Float32Array(analyserNode.fftSize);
-        peakTimer = setInterval(function () {
-            analyserNode.getFloatTimeDomainData(buf);
-            var peak = 0;
-            for (var i = 0; i < buf.length; i++) {
-                var abs = Math.abs(buf[i]);
-                if (abs > peak) peak = abs;
-            }
-            setPeak(peak);
-            document.getElementById('rec-peak-label').textContent = 'úroveň vstupu: ' + (peak * 100).toFixed(1) + '%';
-
-            if (peak >= 0.97) {
-                document.getElementById('rec-clip-warning').style.display = 'block';
-                clearTimeout(clipTimeout);
-                clipTimeout = setTimeout(function () {
-                    document.getElementById('rec-clip-warning').style.display = 'none';
-                }, 1500);
-            }
-        }, 60);
-    }
-
-    function stopPeakMeter() {
-        clearInterval(peakTimer);
-        peakTimer = null;
-        setPeak(0);
-        document.getElementById('rec-peak-label').textContent = 'úroveň vstupu: —';
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────────────────────────────
-    function animateRecDot(on) {
-        var dot = document.getElementById('rec-dot');
-        if (!dot) return;
-        dot.style.opacity   = on ? '1' : '0.4';
-        dot.style.animation = on ? 'pulse_rec 1.5s infinite' : 'none';
-    }
-
-    function setStatus(text) {
-        var el = document.getElementById('rec-status-line');
-        if (el) el.textContent = text;
-    }
-
-    // Sanitizace názvu souboru na klientovi (server sanitizuje znovu)
-    function sanitizeName(raw) {
-        var s = raw.trim();
-        if (!s) s = 'nahravka_' + Date.now();
-        return s
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .replace(/[^a-z0-9_\-\s]/g, '')
-            .trim()
-            .replace(/\s+/g, '_') || ('nahravka_' + Date.now());
-    }
-
-    // Přípona dle mimeType
-    function extZMime(mime) {
-        if (mime.includes('mp4') || mime.includes('m4a')) return '.m4a';
-        if (mime.includes('ogg'))                          return '.ogg';
-        return '.webm';
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // TOGGLE: SPUSTIT / ZASTAVIT NAHRÁVÁNÍ
-    // ─────────────────────────────────────────────────────────────────
-    async function toggleNahravani() {
-
-        // ── STOP ──
+    async function toggleNahrávání() {
         if (isRecordingNow) {
-            if (recordPlugin && recordPlugin.isRecording()) recordPlugin.stopRecording();
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-            stopPeakMeter();
+            // ── ZASTAVENÍ NAHRÁVÁNÍ ──
+            if (recordPlugin && recordPlugin.isRecording()) {
+                recordPlugin.stopRecording();
+            }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop(); // Odpálí mediaRecorder.onstop
+            }
             isRecordingNow = false;
-            setStatus('Zpracovávám nahrávku...');
-            recButton.textContent   = '⏺ Spustit nahrávání';
-            recButton.style.cssText = 'background:#2a2e33;border:1px solid #3a3e44;color:#e0e0e0;';
-            animateRecDot(false);
+            recButton.textContent = 'Spustit nahrávání';
+            recButton.classList.remove('btn-danger');
+        } else {
+            // ── SPUŠTĚNÍ NAHRÁVÁNÍ ──
+            recordedChunks = [];
+            try {
+                // Vyžádání surového audio streamu s vypnutými tlumícími filtry pro kapely
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false, // 🚫 Vypnuto pro zachování přirozené akustiky zkušebny
+                        noiseSuppression: false, // 🚫 Vypnuto, aby činely nebyly považovány za šum
+                        autoGainControl: false,  // 🚫 Vypnuto, aby kapela nezpůsobila skokové zesílení a přebuzení
+                        channelCount: 1,
+                        sampleRate: 44100
+                    }
+                });
+
+                // Spuštění vizuální červené vlny na displeji
+                recordPlugin.startRecording({ stream: mediaStream });
+
+                // Výběr nejlepšího podporovaného formátu v prohlížeči
+                var options = {};
+                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    options.mimeType = 'audio/webm;codecs=opus';
+                } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    options.mimeType = 'audio/mp4';
+                }
+
+                // 🌟 KLÍČOVÁ ZMĚNA: Nahráváme přímo ze surového mediaStream, abychom zamezili
+                // tichu způsobenému bezpečnostním omezením AudioContext Destination v prohlížečích!
+                mediaRecorder = new MediaRecorder(mediaStream, options);
+                
+                // Ukládání příchozích zvukových dat
+                mediaRecorder.ondataavailable = function(e) {
+                    if (e.data && e.data.size > 0) {
+                        recordedChunks.push(e.data);
+                    }
+                };
+
+                // Počkáme, až prohlížeč stoprocentně dokončí kódování
+                mediaRecorder.onstop = function() {
+                    zpracovatNahranéAudio();
+                };
+
+                mediaRecorder.start();
+
+                isRecordingNow = true;
+                recButton.textContent = 'ZASTAVIT NAHRÁVÁNÍ (REC)';
+                recButton.classList.add('btn-danger');
+
+            } catch (err) {
+                console.error("Chyba při startu nahrávání:", err);
+                alert("Nepodařilo se spustit nahrávání. Ujistěte se, že jste povolili přístup k mikrofonu.");
+            }
+        }
+    }
+
+    function zpracovatNahranéAudio() {
+        var mimeType = mediaRecorder ? mediaRecorder.mimeType : 'audio/mp3';
+        var audioBlob = new Blob(recordedChunks, { type: mimeType });
+        
+        // Nouzová pojistka pro prázdná data
+        if (audioBlob.size === 0) {
+            console.warn("Detekován neočekávaný prázdný buffer.");
+            alert("Nahrávka se neuložila správně. Zkuste to prosím znovu.");
             return;
         }
 
-        // ── START ──
-        recordedChunks = [];
-        var f = getFilterSettings();
+        posledniAudioBlob = audioBlob; 
+        posledniMimeType = mimeType;
 
-        try {
-            // 1. Mikrofon
-            mediaStream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    autoGainControl:      f.agc,
-                    noiseSuppression:     f.noise,
-                    echoCancellation:     f.echo,
-                    googAutoGainControl:  f.agc,
-                    googNoiseSuppression: f.noise,
-                    googHighpassFilter:   false,
-                    channelCount: 1,
-                    sampleRate:   44100,
-                }
+        var audioURL = URL.createObjectURL(audioBlob);
+        var player = new Audio(audioURL);
+        player.controls = true;
+        player.style.width = '100%';
+        player.style.marginTop = '10px';
+
+        var previewContainer = document.querySelector('#nahravka-preview');
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+            var statDiv = document.createElement('div');
+            statDiv.id = 'recorded-preview-wave';
+            statDiv.style.width = '100%';
+            statDiv.style.height = '60px';
+            statDiv.style.marginBottom = '10px';
+            previewContainer.appendChild(statDiv);
+            previewContainer.appendChild(player);
+
+            var previewSurfer = WaveSurfer.create({
+                container: '#recorded-preview-wave',
+                waveColor: '#a7ac38',
+                progressColor: '#ffc107',
+                height: 60,
+                url: audioURL
             });
 
-            // 2. Web Audio processing chain
-            audioContext  = new AudioContext({ sampleRate: 44100 });
-            var source    = audioContext.createMediaStreamSource(mediaStream);
-            gainNode      = audioContext.createGain();
-            gainNode.gain.value = f.gain;
-            analyserNode  = audioContext.createAnalyser();
-            analyserNode.fftSize = 2048;
-            processedDest = audioContext.createMediaStreamDestination();
-
-            if (f.comp) {
-                compressorNode                  = audioContext.createDynamicsCompressor();
-                compressorNode.threshold.value  = f.threshold;
-                compressorNode.ratio.value      = f.ratio;
-                compressorNode.knee.value       = f.knee;
-                compressorNode.attack.value     = 0.003;
-                compressorNode.release.value    = 0.25;
-                // source → gain → compressor → analyser → dest
-                source.connect(gainNode);
-                gainNode.connect(compressorNode);
-                compressorNode.connect(analyserNode);
-            } else {
-                // source → gain → analyser → dest
-                source.connect(gainNode);
-                gainNode.connect(analyserNode);
-            }
-            analyserNode.connect(processedDest);
-
-            // 3. WaveSurfer vizualizace (surový stream — nezávislé na processing chain)
-            recordPlugin.startRecording({ stream: mediaStream });
-
-            // 4. MediaRecorder ze ZPRACOVANÉHO streamu
-            var options = {};
-            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                options.mimeType = 'audio/webm;codecs=opus';
-            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                options.mimeType = 'audio/mp4';
-            }
-            mediaRecorder = new MediaRecorder(processedDest.stream, options);
-            mediaRecorder.ondataavailable = function (e) {
-                if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-            };
-            mediaRecorder.onstop = zpracovatAudio;
-            mediaRecorder.start();
-
-            // 5. Peak meter
-            startPeakMeter();
-
-            isRecordingNow          = true;
-            recButton.textContent   = '⏹ ZASTAVIT  (REC ●)';
-            recButton.style.cssText = 'background:#5a1a1a;border:1px solid #a03030;color:#ff9999;font-weight:bold;';
-            animateRecDot(true);
-            document.getElementById('rec-wf-hint').style.display = 'none';
-            setStatus('Nahrávám… klikni pro zastavení');
-
-        } catch (err) {
-            console.error('Chyba mikrofonu:', err);
-            setStatus('⚠ Nepodařilo se získat přístup k mikrofonu: ' + err.message);
-            zastavitVse();
+            player.onplay = function() { previewSurfer.play(); };
+            player.onpause = function() { previewSurfer.pause(); };
+            player.onseeked = function() { previewSurfer.setTime(player.currentTime); };
         }
+
+        // Zobrazíme políčko pro název a tlačítko odeslání
+        $('#custom-name-wrap').fadeIn();
+        $('#save_recording_bridge').fadeIn();
+
+        zastavitVsechnyZdroje();
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // PO ZASTAVENÍ — sestavení preview
-    // ─────────────────────────────────────────────────────────────────
-    function zpracovatAudio() {
-        var mimeType = (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm';
-        var blob     = new Blob(recordedChunks, { type: mimeType });
-
-        if (blob.size < 1000) {
-            setStatus('⚠ Nahrávka je prázdná. Zkus to znovu.');
-            inicializovat();
-            return;
+    // ODESLÁNÍ DO BULK UPLOADU
+    $(document).ready(function() {
+        function odstranitDiakritiku(text) {
+            return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
 
-        posledniBlob = blob;
-        posledniMime = mimeType;
+   $('#save_recording_bridge').on('click', function() {
+            if (!posledniAudioBlob) return;
 
-        var audioURL = URL.createObjectURL(blob);
+            var zadaneJmeno = $('#custom_rec_name').val().trim();
+            if (!zadaneJmeno) {
+                zadaneJmeno = 'nahravka_' + Date.now();
+            }
 
-        // Preview area
-        document.getElementById('rec-nahravka-preview').style.display = 'block';
+            var bezpecneJmeno = odstranitDiakritiku(zadaneJmeno)
+                                .toLowerCase()
+                                .replace(/[^a-z0-9_\-\s]/g, '')
+                                .trim()
+                                .replace(/\s+/g, '_');
 
-        // Přehrávač
-        var player = document.getElementById('rec-preview-player');
-        player.src = audioURL;
+            // 🌟 OPRAVA: Určíme skutečnou příponu podle mimeType, aby se nahrál reálný WebM / M4A soubor
+            var pripona = '.webm'; // Výchozí pro Android/Chrome
+            if (posledniMimeType.includes('mp4') || posledniMimeType.includes('m4a') || posledniMimeType.includes('aac')) {
+                pripona = '.m4a';  // Pro iOS (Apple Safari)
+            }
+            
+            var finalniNazevSouboru = bezpecneJmeno + pripona;
 
-        // WaveSurfer preview
-        if (previewSurfer) { try { previewSurfer.destroy(); } catch (e) {} }
-        document.getElementById('rec-preview-wave').innerHTML = '';
-        previewSurfer = WaveSurfer.create({
-            container:     '#rec-preview-wave',
-            waveColor:     '#a7ac38',
-            progressColor: '#ffc107',
-            height:        60,
-            url:           audioURL,
+            var souborProOdeslani = new File([posledniAudioBlob], finalniNazevSouboru, {
+                type: posledniMimeType,
+                lastModified: Date.now()
+            });
+
+            var fileInput = document.getElementById('upload_file');
+            if (!fileInput) {
+                alert("Systémová chyba: Odesílací formulář nebyl nalezen.");
+                return;
+            }
+
+            var dataTransfer = new DataTransfer();
+            dataTransfer.items.add(souborProOdeslani);
+            fileInput.files = dataTransfer.files;
+
+            $('#modal_nahrat_zvuk').modal('hide');
+            
+            setTimeout(function() {
+                $('#modal_vlozit_soubor').modal('show');
+                $('#form_upload').submit();
+            }, 400);
         });
-        previewSurfer.on('ready', function () {
-            player.onplay   = function () { previewSurfer.play(); };
-            player.onpause  = function () { previewSurfer.pause(); };
-            player.onseeked = function () { previewSurfer.setTime(player.currentTime); };
-        });
-
-        setStatus('Nahrávka připravena — poslechni si ji a pojmenuj.');
-        recButton.textContent   = '⏺ Spustit nahrávání';
-        recButton.style.cssText = 'background:#2a2e33;border:1px solid #3a3e44;color:#e0e0e0;';
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // TLAČÍTKO: Nahrát znovu
-    // ─────────────────────────────────────────────────────────────────
-    document.getElementById('rec-znovu-btn')?.addEventListener('click', function () {
-        posledniBlob = null;
-        inicializovat();
     });
 
-    // ─────────────────────────────────────────────────────────────────
-    // TLAČÍTKO: Uložit do zkušebny (upload webm)
-    // ─────────────────────────────────────────────────────────────────
-    document.getElementById('rec-odeslat-btn')?.addEventListener('click', function () {
-        if (!posledniBlob) return;
-
-        var nazev    = sanitizeName(document.getElementById('rec-custom-name')?.value || '');
-        var ext      = extZMime(posledniMime);
-        var fileName = nazev + ext;
-        var file     = new File([posledniBlob], fileName, { type: posledniMime, lastModified: Date.now() });
-
-        var fd = new FormData();
-        fd.append('fileToUpload', file, fileName);
-        fd.append('nazev', nazev);
-        fd.append('navrat', window.location.href);   // pro navrat.php (fallback)
-
-        // UI
-        var progressWrap = document.getElementById('rec-upload-progress-wrap');
-        var progressBar  = document.getElementById('rec-upload-progress-bar');
-        var progressTxt  = document.getElementById('rec-upload-status');
-        progressWrap.style.display                            = 'block';
-        progressBar.style.width                               = '0%';
-        progressTxt.textContent                               = 'Odesílám…';
-        document.getElementById('rec-odeslat-btn').disabled  = true;
-        setStatus('Nahrávám na server…');
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/php/upload_zvuk.php', true);   // ← cesta ke skriptu
-
-        xhr.upload.onprogress = function (e) {
-            if (e.lengthComputable) {
-                var pct = Math.round((e.loaded / e.total) * 100);
-                progressBar.style.width = pct + '%';
-                progressTxt.textContent = 'Upload: ' + pct + '%';
-            }
-        };
-
-        xhr.onload = function () {
-            progressBar.style.width = '100%';
-            var resp = null;
-            try { resp = JSON.parse(xhr.responseText); } catch (e) {}
-
-            if (resp && resp.ok) {
-                progressTxt.textContent = '✅ Uloženo: ' + (resp.soubor || fileName);
-                setStatus('Hotovo! Nahrávka je ve zkušebně.');
-                setTimeout(function () {
-                    nacistPanel('nahravky');
-                    $('#modal_nahrat_zvuk').modal('hide');
-                }, 1800);
-            } else {
-                var chyba = (resp && resp.zprava) ? resp.zprava : 'Neznámá chyba serveru';
-                progressTxt.textContent = '⚠ Chyba: ' + chyba;
-                setStatus('Chyba: ' + chyba);
-                document.getElementById('rec-odeslat-btn').disabled = false;
-            }
-        };
-
-        xhr.onerror = function () {
-            progressTxt.textContent = '⚠ Chyba sítě.';
-            setStatus('Chyba sítě při odesílání.');
-            document.getElementById('rec-odeslat-btn').disabled = false;
-        };
-
-        xhr.send(fd);
-    });
-
-    // ─────────────────────────────────────────────────────────────────
-    // CLEANUP
-    // ─────────────────────────────────────────────────────────────────
-    function zastavitVse() {
-        stopPeakMeter();
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            try { mediaRecorder.stop(); } catch (e) {}
-        }
+    function zastavitVsechnyZdroje() {
         if (mediaStream) {
-            mediaStream.getTracks().forEach(function (t) { t.stop(); });
+            mediaStream.getTracks().forEach(function(track) { track.stop(); });
             mediaStream = null;
         }
         if (audioContext && audioContext.state !== 'closed') {
             audioContext.close();
             audioContext = null;
         }
-        gainNode = compressorNode = analyserNode = processedDest = null;
-        isRecordingNow = false;
-        animateRecDot(false);
     }
-
 })();
 
- 
+
 
 </script>
 

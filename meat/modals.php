@@ -467,182 +467,66 @@
   </div>
 </div>
 
-<!-- ── MODAL: NAHRÁVÁNÍ ── -->
+ <!-- ── MODAL PRO ŠPIČKOVÉ NAHRÁVÁNÍ ZVUKU (REC) - VARIANTA A S NÁZVEM ── -->
 <div class="modal fade" id="modal_nahrat_zvuk" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 520px;">
-    <div class="modal-content" style="background: #1a1d20; border: 1px solid #3a3e44; border-radius: 8px; color: #e0e0e0;">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content" style="background: #1a1d20; border: 1px solid #3a3e44; color: #e0e0e0; border-radius: 8px;">
 
-      <!-- Hlavička -->
-      <div class="modal-header" style="border-bottom: 1px solid #3a3e44; padding: 10px 16px;">
-        <h5 class="modal-title" style="color: #ff5555; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px;">
-          <span id="rec-dot" style="display:inline-block; width:9px; height:9px; background:#ff5555; border-radius:50%;"></span>
-          NAHRÁVÁNÍ DO ZKUŠEBNY
+      <!-- Hlavička modalu -->
+      <div class="modal-header" style="border-bottom: 1px solid #3a3e44; padding: 12px 16px;">
+        <h5 class="modal-title" style="color: #ff5555; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px;">
+          <span style="display: inline-block; width: 10px; height: 10px; background: #ff5555; border-radius: 50%; animation: pulse_rec 1.5s infinite;"></span>
+          NAHRÁVÁNÍ DO SKLADBY
         </h5>
-        <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
-          <button class="filters-toggle-btn" id="rec-filters-toggle-btn">⚙ filtry</button>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít" style="color:#888; opacity:1; text-shadow:none; margin:0; padding:0 0 0 8px; font-size:20px;">&times;</button>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít" style="color: #888; text-shadow: none; opacity: 0.8; outline: none;">
+          <span aria-hidden="true" style="font-size: 20px;">&times;</span>
+        </button>
+      </div>
+
+      <!-- Tělo modalu -->
+      <div class="modal-body" style="padding: 20px;">
+        <div class="text-center">
+          
+          <!-- Ovládací tlačítko -->
+          <button id="record_btn" class="btn btn-vz btn-block" style="font-size: 14px; padding: 10px 16px; font-weight: bold; background: #2a2e33; border: 1px solid #3a3e44; color: #e0e0e0; margin-bottom: 15px; border-radius: 6px; outline: none;">
+            Spustit nahrávání
+          </button>
+
+          <!-- Běžící vlna během nahrávání -->
+          <div id="record-waveform" style="width: 100%; height: 80px; background: #15181a; border-radius: 6px; border: 1px solid #3a3e44; margin-bottom: 15px; overflow: hidden; position: relative;">
+            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #555; font-size: 11px; pointer-events: none;">
+              [ zde se po spuštění vykreslí běžící vlna ]
+            </div>
+          </div>
+
+          <!-- Náhled a kontrolní přehrávač po dokončení nahrávky -->
+          <div id="nahravka-preview" style="width: 100%; margin-top: 15px;"></div>
+
+          <!-- 🌟 NOVÉ: Políčko pro zadání názvu nahrávky před odesláním (zobrazí se po nahrání) -->
+          <div id="custom-name-wrap" style="display: none; margin-top: 15px; text-align: left;">
+            <label style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Název nahrávky:</label>
+            <input type="text" id="custom_rec_name" class="form-control" placeholder="např. Zkouska_sol, rago_tempo..." style="background: #15181a; border: 1px solid #3a3e44; border-radius: 5px; color: #e0e0e0; font-size: 12px; padding: 6px 10px;">
+          </div>
+
+          <!-- Tlačítko pro spuštění přemostění do odesílacího modalu -->
+          <button type="button" id="save_recording_bridge" class="btn btn-block btn-vz primary" style="font-size: 13px; font-weight: bold; padding: 10px 16px; margin-top: 15px; display: none; border-radius: 6px;">
+            💾 Odeslat nahrávku do zkušebny
+          </button>
+
         </div>
       </div>
 
-      <!-- Tělo -->
-      <div class="modal-body" style="padding: 16px;">
-
-        <!-- ── PANEL FILTRŮ (sbalitelný) ── -->
-        <div id="rec-filters-panel">
-          <div id="rec-filters-inner">
-
-            <div class="rec-section-title">Vstupní zpracování</div>
-
-            <!-- AGC -->
-            <div class="rec-toggle-row">
-              <div class="rec-toggle-label">
-                Auto Gain Control
-                <small>Automatické zesilování — vypnout pro přirozený zvuk kapely</small>
-              </div>
-              <div class="toggle-wrap">
-                <input type="checkbox" id="flt-agc">
-                <label class="toggle-sw" for="flt-agc"></label>
-                <span class="toggle-val" id="flt-agc-val">vyp</span>
-              </div>
-            </div>
-
-            <!-- Noise Suppression -->
-            <div class="rec-toggle-row">
-              <div class="rec-toggle-label">
-                Potlačení šumu
-                <small>Nevhodné pro nástroje — maže harmoniky a činely</small>
-              </div>
-              <div class="toggle-wrap">
-                <input type="checkbox" id="flt-noise">
-                <label class="toggle-sw" for="flt-noise"></label>
-                <span class="toggle-val" id="flt-noise-val">vyp</span>
-              </div>
-            </div>
-
-            <!-- Echo Cancellation -->
-            <div class="rec-toggle-row">
-              <div class="rec-toggle-label">
-                Potlačení ozvěny
-                <small>Zapnout při nahrávání přes reproduktory (online session)</small>
-              </div>
-              <div class="toggle-wrap">
-                <input type="checkbox" id="flt-echo">
-                <label class="toggle-sw" for="flt-echo"></label>
-                <span class="toggle-val" id="flt-echo-val">vyp</span>
-              </div>
-            </div>
-
-            <div class="rec-section-title">Web Audio — Zpracování signálu</div>
-
-            <!-- Gain -->
-            <div class="rec-slider-row">
-              <div class="rec-slider-label">Vstupní zisk</div>
-              <input type="range" id="flt-gain" min="0.1" max="2.0" step="0.05" value="0.85">
-              <span class="rec-slider-val" id="flt-gain-val">0.85×</span>
-            </div>
-
-            <!-- Kompresor -->
-            <div class="rec-toggle-row" style="padding-top:8px;">
-              <div class="rec-toggle-label">
-                Dynamický kompresor
-                <small>Chrání před clippingem — doporučeno zapnout</small>
-              </div>
-              <div class="toggle-wrap">
-                <input type="checkbox" id="flt-comp" checked>
-                <label class="toggle-sw" for="flt-comp"></label>
-                <span class="toggle-val" id="flt-comp-val">zap</span>
-              </div>
-            </div>
-
-            <!-- Threshold -->
-            <div class="rec-slider-row" id="comp-row-threshold">
-              <div class="rec-slider-label">Threshold</div>
-              <input type="range" id="flt-threshold" min="-60" max="0" step="1" value="-18">
-              <span class="rec-slider-val" id="flt-threshold-val">−18 dB</span>
-            </div>
-
-            <!-- Ratio -->
-            <div class="rec-slider-row" id="comp-row-ratio">
-              <div class="rec-slider-label">Ratio</div>
-              <input type="range" id="flt-ratio" min="1" max="20" step="0.5" value="4">
-              <span class="rec-slider-val" id="flt-ratio-val">4 : 1</span>
-            </div>
-
-            <!-- Knee -->
-            <div class="rec-slider-row" id="comp-row-knee">
-              <div class="rec-slider-label">Knee</div>
-              <input type="range" id="flt-knee" min="0" max="40" step="1" value="6">
-              <span class="rec-slider-val" id="flt-knee-val">6 dB</span>
-            </div>
-
-          </div>
-        </div>
-        <!-- /PANEL FILTRŮ -->
-
-        <!-- ── PEAK METER ── -->
-        <div id="rec-clip-warning">⚠ CLIPPING!</div>
-        <div id="rec-peak-meter"><div id="rec-peak-bar"></div></div>
-        <div id="rec-peak-label">úroveň vstupu: —</div>
-
-        <!-- ── STATUS ── -->
-        <div id="rec-status-line">Připraven k nahrávání</div>
-
-        <!-- ── WAVEFORM (živá vlna při nahrávání) ── -->
-        <div id="record-waveform" style="width:100%; height:75px; background:#15181a; border-radius:6px; border:1px solid #3a3e44; overflow:hidden; position:relative; margin-bottom:12px;">
-          <div id="rec-wf-hint" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#444; font-size:11px; pointer-events:none;">
-            po spuštění se zde vykreslí waveform
-          </div>
-        </div>
-
-        <!-- ── HLAVNÍ TLAČÍTKO ── -->
-        <button id="record_btn" class="btn btn-block"
-          style="font-size:13px; padding:9px 16px; font-weight:bold; background:#2a2e33; border:1px solid #3a3e44; color:#e0e0e0; border-radius:6px; margin-bottom:12px; outline:none; transition:all .2s;">
-          ⏺ Spustit nahrávání
+      <!-- Patička modalu -->
+      <div class="modal-footer" style="border-top: 1px solid #3a3e44; padding: 10px 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="btn btn-vz danger" data-dismiss="modal" style="font-size: 11px; padding: 5px 12px;">
+          ZAVŘÍT
         </button>
-
-        <!-- ── PREVIEW PO NAHRÁNÍ ── -->
-        <div id="rec-nahravka-preview" style="display:none;">
-          <div id="rec-preview-wave"></div>
-          <audio id="rec-preview-player" controls style="width:100%; margin-bottom:8px;"></audio>
-
-          <!-- Název -->
-          <div style="margin-bottom:10px;">
-            <label style="font-size:10px; color:#888; text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:4px;">Název nahrávky:</label>
-            <input type="text" id="rec-custom-name" class="form-control"
-              placeholder="např. zkouska_basa, riff_C_120bpm..."
-              style="background:#15181a; border:1px solid #3a3e44; border-radius:5px; color:#e0e0e0; font-size:12px; padding:6px 10px;">
-          </div>
-
-          <!-- Nahrát znovu -->
-          <button id="rec-znovu-btn" class="btn btn-secondary btn-sm" style="font-size:11px; margin-bottom:10px;">
-            ↩ Nahrát znovu
-          </button>
-
-          <!-- Upload progress -->
-          <div id="rec-upload-progress-wrap">
-            <div id="rec-upload-progress-bg">
-              <div id="rec-upload-progress-bar"></div>
-            </div>
-            <div id="rec-upload-status">odesílám...</div>
-          </div>
-
-          <!-- Odeslat -->
-          <button id="rec-odeslat-btn" class="btn btn-block btn-vz primary"
-            style="font-size:13px; font-weight:bold; padding:9px 16px; border-radius:6px;">
-            💾 Uložit do zkušebny
-          </button>
-        </div>
-        <!-- /PREVIEW -->
-
-      </div><!-- /modal-body -->
-
-      <div class="modal-footer" style="border-top:1px solid #3a3e44; padding:8px 16px; justify-content:flex-end;">
-        <button type="button" class="btn btn-vz danger" data-dismiss="modal" style="font-size:11px; padding:4px 12px;">ZAVŘÍT</button>
       </div>
 
     </div>
   </div>
 </div>
+  
 
     <!-- The Modal modal_zmenit_text -->
 <div class="modal" id="modal_zmenit_text">
