@@ -964,8 +964,8 @@ if (typeof otevritEditText === 'undefined') {
 }
 
 
-// ── ROBUSTNÍ STUDIOVÉ NAHRÁVÁNÍ S ROZHRANÍM ONSTOP (BEZ CHYB A PRÁZDNÝCH SOUBORŮ) ──
-(function() {
+// ── MODERNÍ STUDIOVÉ NAHRÁVÁNÍ S WAVESURFER RECORD PLUGINEM ──
+ (function() {
     var recButton = document.getElementById('record_btn');
     var recordSurfer = null;
     var recordPlugin = null;
@@ -975,9 +975,8 @@ if (typeof otevritEditText === 'undefined') {
     var recordedChunks = [];
     var isRecordingNow = false;
     
-    // Globální proměnné pro bezpečné předání audio dat do odesílacího tlačítka
-    var posledniAudioBlob = null; 
-    var posledniMimeType = "";
+    // 🌟 Globální proměnná pro dočasné uchování vygenerovaného souboru
+    var posledniNahranysoubor = null; 
 
     $('#modal_nahrat_zvuk').on('shown.bs.modal', function () {
         inicializovatNahravaciWave();
@@ -1016,47 +1015,65 @@ if (typeof otevritEditText === 'undefined') {
             renderRecordedAudio: false
         }));
 
+        recordPlugin.on('record-end', function(blob) {
+            zpracovatNahranéAudio(blob);
+        });
+
         if (recButton) {
             recButton.textContent = 'Spustit nahrávání';
             recButton.classList.remove('btn-danger');
             recButton.onclick = toggleNahrávání;
         }
         
-        $('#custom-name-wrap').hide();
+        // Schováme odesílací tlačítko před startem
         $('#save_recording_bridge').hide();
     }
 
     async function toggleNahrávání() {
         if (isRecordingNow) {
-            // ── ZASTAVENÍ NAHRÁVÁNÍ ──
             if (recordPlugin && recordPlugin.isRecording()) {
                 recordPlugin.stopRecording();
             }
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop(); // Odpálí mediaRecorder.onstop
+                mediaRecorder.stop();
             }
             isRecordingNow = false;
             recButton.textContent = 'Spustit nahrávání';
             recButton.classList.remove('btn-danger');
         } else {
-            // ── SPUŠTĚNÍ NAHRÁVÁNÍ ──
             recordedChunks = [];
             try {
-                // Vyžádání surového audio streamu s vypnutými tlumícími filtry pro kapely
                 mediaStream = await navigator.mediaDevices.getUserMedia({
                     audio: {
-                        echoCancellation: false, // 🚫 Vypnuto pro zachování přirozené akustiky zkušebny
-                        noiseSuppression: false, // 🚫 Vypnuto, aby činely nebyly považovány za šum
-                        autoGainControl: false,  // 🚫 Vypnuto, aby kapela nezpůsobila skokové zesílení a přebuzení
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false,
                         channelCount: 1,
                         sampleRate: 44100
                     }
                 });
 
-                // Spuštění vizuální červené vlny na displeji
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                var source = audioContext.createMediaStreamSource(mediaStream);
+                
+                var compressor = audioContext.createDynamicsCompressor();
+                compressor.threshold.setValueAtTime(-12, audioContext.currentTime); 
+                compressor.knee.setValueAtTime(4, audioContext.currentTime);        
+                compressor.ratio.setValueAtTime(12, audioContext.currentTime);      
+                compressor.attack.setValueAtTime(0.003, audioContext.currentTime);  
+                compressor.release.setValueAtTime(0.25, audioContext.currentTime);  
+
+                var padGain = audioContext.createGain();
+                padGain.gain.setValueAtTime(0.7, audioContext.currentTime);
+
+                source.connect(padGain);
+                padGain.connect(compressor);
+                
+                var destination = audioContext.createMediaStreamDestination();
+                compressor.connect(destination);
+
                 recordPlugin.startRecording({ stream: mediaStream });
 
-                // Výběr nejlepšího podporovaného formátu v prohlížeči
                 var options = {};
                 if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
                     options.mimeType = 'audio/webm;codecs=opus';
@@ -1064,22 +1081,12 @@ if (typeof otevritEditText === 'undefined') {
                     options.mimeType = 'audio/mp4';
                 }
 
-                // 🌟 KLÍČOVÁ ZMĚNA: Nahráváme přímo ze surového mediaStream, abychom zamezili
-                // tichu způsobenému bezpečnostním omezením AudioContext Destination v prohlížečích!
-                mediaRecorder = new MediaRecorder(mediaStream, options);
-                
-                // Ukládání příchozích zvukových dat
+                mediaRecorder = new MediaRecorder(destination.stream, options);
                 mediaRecorder.ondataavailable = function(e) {
                     if (e.data && e.data.size > 0) {
                         recordedChunks.push(e.data);
                     }
                 };
-
-                // Počkáme, až prohlížeč stoprocentně dokončí kódování
-                mediaRecorder.onstop = function() {
-                    zpracovatNahranéAudio();
-                };
-
                 mediaRecorder.start();
 
                 isRecordingNow = true;
@@ -1087,110 +1094,90 @@ if (typeof otevritEditText === 'undefined') {
                 recButton.classList.add('btn-danger');
 
             } catch (err) {
-                console.error("Chyba při startu nahrávání:", err);
-                alert("Nepodařilo se spustit nahrávání. Ujistěte se, že jste povolili přístup k mikrofonu.");
+                console.error("Chyba mikrofonu:", err);
+                alert("Nepodařilo se spustit mikrofon. Ověřte oprávnění.");
             }
         }
     }
 
-    function zpracovatNahranéAudio() {
-        var mimeType = mediaRecorder ? mediaRecorder.mimeType : 'audio/mp3';
-        var audioBlob = new Blob(recordedChunks, { type: mimeType });
-        
-        // Nouzová pojistka pro prázdná data
-        if (audioBlob.size === 0) {
-            console.warn("Detekován neočekávaný prázdný buffer.");
-            alert("Nahrávka se neuložila správně. Zkuste to prosím znovu.");
-            return;
-        }
-
-        posledniAudioBlob = audioBlob; 
-        posledniMimeType = mimeType;
-
-        var audioURL = URL.createObjectURL(audioBlob);
-        var player = new Audio(audioURL);
-        player.controls = true;
-        player.style.width = '100%';
-        player.style.marginTop = '10px';
-
-        var previewContainer = document.querySelector('#nahravka-preview');
-        if (previewContainer) {
-            previewContainer.innerHTML = '';
-            var statDiv = document.createElement('div');
-            statDiv.id = 'recorded-preview-wave';
-            statDiv.style.width = '100%';
-            statDiv.style.height = '60px';
-            statDiv.style.marginBottom = '10px';
-            previewContainer.appendChild(statDiv);
-            previewContainer.appendChild(player);
-
-            var previewSurfer = WaveSurfer.create({
-                container: '#recorded-preview-wave',
-                waveColor: '#a7ac38',
-                progressColor: '#ffc107',
-                height: 60,
-                url: audioURL
-            });
-
-            player.onplay = function() { previewSurfer.play(); };
-            player.onpause = function() { previewSurfer.pause(); };
-            player.onseeked = function() { previewSurfer.setTime(player.currentTime); };
-        }
-
-        // Zobrazíme políčko pro název a tlačítko odeslání
-        $('#custom-name-wrap').fadeIn();
-        $('#save_recording_bridge').fadeIn();
-
-        zastavitVsechnyZdroje();
-    }
-
-    // ODESLÁNÍ DO BULK UPLOADU
-    $(document).ready(function() {
-        function odstranitDiakritiku(text) {
-            return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        }
-
-   $('#save_recording_bridge').on('click', function() {
-            if (!posledniAudioBlob) return;
-
-            var zadaneJmeno = $('#custom_rec_name').val().trim();
-            if (!zadaneJmeno) {
-                zadaneJmeno = 'nahravka_' + Date.now();
-            }
-
-            var bezpecneJmeno = odstranitDiakritiku(zadaneJmeno)
-                                .toLowerCase()
-                                .replace(/[^a-z0-9_\-\s]/g, '')
-                                .trim()
-                                .replace(/\s+/g, '_');
-
-            // 🌟 OPRAVA: Určíme skutečnou příponu podle mimeType, aby se nahrál reálný WebM / M4A soubor
-            var pripona = '.webm'; // Výchozí pro Android/Chrome
-            if (posledniMimeType.includes('mp4') || posledniMimeType.includes('m4a') || posledniMimeType.includes('aac')) {
-                pripona = '.m4a';  // Pro iOS (Apple Safari)
-            }
+    function zpracovatNahranéAudio(rawBlob) {
+        setTimeout(function() {
+            var mimeType = mediaRecorder ? mediaRecorder.mimeType : 'audio/mp3';
+            var audioBlob = new Blob(recordedChunks, { type: mimeType });
             
-            var finalniNazevSouboru = bezpecneJmeno + pripona;
+            // Určíme koncovku pro správné zatřídění na serveru
+            var pripona = '.mp3';
+            if (mimeType.includes('webm')) pripona = '.webm';
+            else if (mimeType.includes('mp4') || mimeType.includes('m4a')) pripona = '.m4a';
 
-            var souborProOdeslani = new File([posledniAudioBlob], finalniNazevSouboru, {
-                type: posledniMimeType,
+            // Vygenerujeme fyzický File objekt s časovou značkou v názvu
+            posledniNahranysoubor = new File([audioBlob], 'nahravka_' + Date.now() + pripona, {
+                type: mimeType,
                 lastModified: Date.now()
             });
 
+            var audioURL = URL.createObjectURL(posledniNahranysoubor);
+            var player = new Audio(audioURL);
+            player.controls = true;
+            player.style.width = '100%';
+            player.style.marginTop = '10px';
+
+            var previewContainer = document.querySelector('#nahravka-preview');
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+                var statDiv = document.createElement('div');
+                statDiv.id = 'recorded-preview-wave';
+                statDiv.style.width = '100%';
+                statDiv.style.height = '60px';
+                statDiv.style.marginBottom = '10px';
+                previewContainer.appendChild(statDiv);
+                previewContainer.appendChild(player);
+
+                var previewSurfer = WaveSurfer.create({
+                    container: '#recorded-preview-wave',
+                    waveColor: '#a7ac38',
+                    progressColor: '#ffc107',
+                    height: 60,
+                    url: audioURL
+                });
+
+                player.onplay = function() { previewSurfer.play(); };
+                player.onpause = function() { previewSurfer.pause(); };
+                player.onseeked = function() { previewSurfer.setTime(player.currentTime); };
+            }
+
+            // 🌟 Zobrazíme tlačítko pro uložení nahrávky
+            $('#save_recording_bridge').fadeIn();
+
+            zastavitVsechnyZdroje();
+        }, 300);
+    }
+
+    // 🌟 AKCE: KLIKNUTÍ NA ULOŽIT (PŘEMOSTĚNÍ DO BULK UPLOADU)
+    $(document).ready(function() {
+        $('#save_recording_bridge').on('click', function() {
+            if (!posledniNahranysoubor) return;
+
+            // 1. Vyhledáme políčko pro vkládání souborů v hlavním modalu
             var fileInput = document.getElementById('upload_file');
             if (!fileInput) {
                 alert("Systémová chyba: Odesílací formulář nebyl nalezen.");
                 return;
             }
 
+            // 2. Vložíme náš nahraný soubor přímo do inputu přes DataTransfer
             var dataTransfer = new DataTransfer();
-            dataTransfer.items.add(souborProOdeslani);
+            dataTransfer.items.add(posledniNahranysoubor);
             fileInput.files = dataTransfer.files;
 
+            // 3. Schováme nahrávací modal a otevřeme modal pro nahrání souborů
             $('#modal_nahrat_zvuk').modal('hide');
             
+            // Počkáme 400ms (dokončení animace zavírání), než otevřeme a odpálíme upload
             setTimeout(function() {
                 $('#modal_vlozit_soubor').modal('show');
+                
+                // 4. Automaticky odešleme formulář, čímž aktivujeme stávající AJAX skript s procenty!
                 $('#form_upload').submit();
             }, 400);
         });
