@@ -153,6 +153,7 @@ function looperZavrit() {
 // ── 🌟 DYNAMICKÝ EDIT TEXT / TABELATURA MODAL ──
 function otevritEditText(typ) {
   typ = typ || 'text'; // Fallback pro jistotu, pokud by nebyl zadaný
+  VZ.editTyp = typ;    // Zapamatovat pro historii (zobrazHistorii + nacistZalohu)
 
   // Zažádáme příslušný PHP wrapper o data (předpoklad: máte ajax_text_raw.php a ajax_tabelatura_raw.php)
   $.get('/php/ajax/ajax_' + typ + '_raw.php', function(data) {
@@ -176,6 +177,9 @@ function otevritEditText(typ) {
         form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
       }
     }
+    // Reset panelu historie — nesmí přetékat z předchozího otevření
+    document.getElementById('panel-historie').style.display = 'none';
+    document.getElementById('seznam-zaloh').innerHTML = '';
     $('#modal_zmenit_text').modal('show');
   }, 'json').fail(function(xhr) {
     console.error('ajax_' + typ + '_raw chyba:', xhr.status, xhr.responseText);
@@ -188,6 +192,9 @@ function otevritEditText(typ) {
     if (label) label.textContent = 'VYTVOŘIT ' + vychoziNazev;
     if (form) form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
     
+    // Reset panelu historie — nesmí přetékat z předchozího otevření
+    document.getElementById('panel-historie').style.display = 'none';
+    document.getElementById('seznam-zaloh').innerHTML = '';
     $('#modal_zmenit_text').modal('show');
   });
 }
@@ -299,7 +306,7 @@ function zobrazHistorii() {
   seznam.innerHTML    = '<div style="color:#888;font-size:12px">načítám...</div>';
   panel.style.display = 'block';
 
-  $.get('/php/ajax/ajax_history.php', { akce: 'seznam' }, function(data) {
+  $.get('/php/ajax/ajax_history.php', { akce: 'seznam', typ: VZ.editTyp || 'akordy' }, function(data) {
     if (!data.ok || data.zalohy.length === 0) {
       seznam.innerHTML = '<div style="color:#888;font-size:12px">Žádné zálohy.</div>';
       return;
@@ -319,7 +326,7 @@ function zobrazHistorii() {
 }
 
 function nacistZalohu(soubor) {
-  $.get('/php/ajax/ajax_history.php', { akce: 'nacist', soubor: soubor }, function(data) {
+  $.get('/php/ajax/ajax_history.php', { akce: 'nacist', soubor: soubor, typ: VZ.editTyp || 'akordy' }, function(data) {
     if (data.ok) {
       document.getElementById('editor').value = data.obsah;
       document.getElementById('panel-historie').style.display = 'none';

@@ -10,7 +10,13 @@ if (empty($_SESSION['login'])) {
 $kapela            = $_SESSION['kapela']                     ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";
 $slozka_souboru    = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
-$aktualni_text     = $_SESSION['aktualni_text']              ?? "akordy.txt";
+
+// Typ souboru — preferujeme GET parametr (posílá JS), fallback na session
+$typ_z_get     = $_GET['typ'] ?? '';
+$aktualni_text = in_array($typ_z_get, ['tabelatura', 'akordy'], true)
+    ? $typ_z_get . '.txt'
+    : ($_SESSION['aktualni_text'] ?? "akordy.txt");
+
 $akce              = $_GET['akce']                           ?? "seznam";
 $soubor_zalohy     = basename($_GET['soubor']                ?? "");
 
