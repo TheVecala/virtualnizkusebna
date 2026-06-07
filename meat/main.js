@@ -199,6 +199,43 @@ function otevritEditText(typ) {
   });
 }
 
+// ── Uložení textu/tabelatury přes AJAX (bez page reload = žádný back button dialog) ──
+$(document).on('submit', '#modal_zmenit_text form', function(e) {
+  e.preventDefault();
+  var $form      = $(this);
+  var url        = $form.attr('action');
+  var $btn       = $form.find('[type="submit"]');
+  var puvodniTxt = $btn.text();
+
+  $btn.prop('disabled', true).text('ukládám...');
+  pbStart();
+
+  $.post(url, $form.serialize(), function(resp) {
+    pbDone();
+    $btn.prop('disabled', false).text(puvodniTxt);
+    if (resp.ok) {
+      $('#modal_zmenit_text').modal('hide');
+      nacistPanel(VZ.editTyp || 'text');
+    } else {
+      var $info = $form.find('.editor-chyba');
+      if (!$info.length) {
+        $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px;text-align:left"></div>');
+        $form.find('.modal-footer p').after($info);
+      }
+      $info.text(resp.vysledek || 'Chyba uložení');
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    $btn.prop('disabled', false).text(puvodniTxt);
+    var $info = $form.find('.editor-chyba');
+    if (!$info.length) {
+      $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px;text-align:left"></div>');
+      $form.find('.modal-footer p').after($info);
+    }
+    $info.text('Chyba spojení se serverem');
+  });
+});
+
 // ── Přejmenování / smazání válu ──
 function otevritPrejmenovani(val, nazev) {
   document.getElementById('modal_rename_val_label').value      = val;
