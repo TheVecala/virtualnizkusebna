@@ -364,6 +364,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .dval:hover { background: var(--card); color: var(--text); }
 .dval.active { color: var(--barva); background: var(--card); }
+.dval .val-nazev { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dval .val-actions { display: flex; gap: 3px; flex-shrink: 0; }
 .drawer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 4px 12px 8px; }
 
 
@@ -696,7 +698,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
        data-id="<?php echo htmlspecialchars($s, ENT_QUOTES); ?>"
        onclick="switchVal('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>', null)">
       <img src="meat/ikona_kombo.png" alt="" style="width: 20px; height: 20px; object-fit: contain; flex-shrink: 0;">
-      <span><?php echo htmlspecialchars($nazev_s); ?></span>
+      <span class="val-nazev"><?php echo htmlspecialchars($nazev_s); ?></span>
+      <div class="val-actions">
+        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat">✏</button>
+        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat">🗑</button>
+      </div>
   </div>
   <?php endforeach; ?>
 
