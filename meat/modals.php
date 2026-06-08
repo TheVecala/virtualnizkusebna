@@ -368,57 +368,66 @@
 </div> 
    
      
-    <!-- The Modal DELETE vál -->
-<div class="modal" id="modal_delete_val">
+  <!-- Modal: PŘEJMENOVAT skladbu -->
+<div class="modal" id="modal_rename_val">
   <div class="modal-dialog">
     <div class="modal-content">
 
-      <!-- Modal Header -->
       <div class="modal-header">
-        <p id="modal_delete_val_label" class="modal-title">žádná skladba</p>
+        <p id="modal_rename_val_title" class="modal-title">PŘEJMENOVAT SKLADBU</p>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-      <!-- Modal body -->
-      <div class="modal-body">
-
-        <!-- Smazání válu -->
-        <form action="/php/smazat_val.php" method="post" style="display:inline">
-          <div class="form-group" style="display:none">
-            <input id="modal_delete_val_deleter" type="text" class="form-control" value="" name="val_ke_smazani">
-          </div>
-          <div class="form-group" style="display:none">
-            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-          </div>
-          <button type="submit" class="btn btn-danger">odstranit celou skladbu</button>
-          <p>Pozor! Smazat lze pouze prázdnou skladbu!</p>
-        </form>
-
-        <hr>
-
-        <!-- Přejmenování válu -->
-        <form action="/php/prejmenovat_val.php" method="post" style="display:inline">
+      <form action="/php/prejmenovat_val.php" method="post">
+        <div class="modal-body">
           <div class="form-group" style="display:none">
             <input id="modal_rename_val_label" type="text" class="form-control" value=""
               name="puvodni_jmeno_valu_k_prejmenovani">
           </div>
           <div class="form-group">
-            <label for="modal_rename_val_label_novy">nový název skladby:</label>
+            <label for="modal_rename_val_label_novy">Nový název skladby:</label>
             <input id="modal_rename_val_label_novy" type="text" class="form-control" value=""
               name="nove_jmeno_valu_k_prejmenovani" placeholder="nový název">
           </div>
           <div class="form-group" style="display:none">
             <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
           </div>
+        </div>
+        <div class="modal-footer">
           <button type="submit" class="btn btn-warning">přejmenovat</button>
-        </form>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+        </div>
+      </form>
 
+    </div>
+  </div>
+</div>
+
+  <!-- Modal: SMAZAT skladbu -->
+<div class="modal" id="modal_delete_val">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <p id="modal_delete_val_label" class="modal-title">žádná skladba</p>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-      <!-- Modal footer -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-dismiss="modal">ZAVŘÍT</button>
-      </div>
+      <form action="/php/smazat_val.php" method="post">
+        <div class="modal-body">
+          <p>Pozor! Smazat lze pouze <strong>prázdnou</strong> skladbu!</p>
+          <div class="form-group" style="display:none">
+            <input id="modal_delete_val_deleter" type="text" class="form-control" value="" name="val_ke_smazani">
+          </div>
+          <div class="form-group" style="display:none">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">odstranit celou skladbu</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+        </div>
+      </form>
 
     </div>
   </div>

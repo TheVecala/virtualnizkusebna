@@ -238,10 +238,10 @@ $(document).on('submit', '#modal_zmenit_text form', function(e) {
 
 // ── Přejmenování / smazání válu ──
 function otevritPrejmenovani(val, nazev) {
-  document.getElementById('modal_rename_val_label').value      = val;
-  document.getElementById('modal_rename_val_label_novy').value = '';
-  document.getElementById('modal_delete_val_label').textContent = nazev;
-  $('#modal_delete_val').modal('show');
+  document.getElementById('modal_rename_val_label').value       = val;
+  document.getElementById('modal_rename_val_label_novy').value  = '';
+  document.getElementById('modal_rename_val_title').textContent = 'PŘEJMENOVAT: ' + nazev;
+  $('#modal_rename_val').modal('show');
 }
 
 function otevritSmazani(val) {
