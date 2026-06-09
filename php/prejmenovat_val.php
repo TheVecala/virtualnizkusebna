@@ -54,6 +54,19 @@ if (rename($odkud, $kam)) {
         $_SESSION['slozka_souboru_k_zobrazeni'] = $nove_jmeno;
     }
 
+    // Aktualizovat pořadí v poradi.json (starý název → nový název)
+    $soubor_poradi = "../" . $cesta_slozek . "poradi.json";
+    if (file_exists($soubor_poradi)) {
+        $poradi = json_decode(file_get_contents($soubor_poradi), true);
+        if (is_array($poradi)) {
+            $idx = array_search($puvodni_jmeno, $poradi);
+            if ($idx !== false) {
+                $poradi[$idx] = $nove_jmeno;
+                file_put_contents($soubor_poradi, json_encode($poradi));
+            }
+        }
+    }
+
     // Aktualizovat název v souboru nazev_valu.txt
     $soubor_nazvu = $kam . "/data/nazev_valu.txt";
     if (file_exists($soubor_nazvu)) {
