@@ -437,7 +437,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #bottom-nav { display: none; }
   #content-area { flex-direction: row; }
   /* Přidán i panel-tabelatura */
-  #panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse { display: flex !important; }
+  #panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse { display: flex; }
 }
 
 /* ── Progress bar ── */
@@ -484,9 +484,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   <span class="brand">/</span>
   <span id="topbar-val"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
-    <!-- 🌟 Text tlačítka v horní liště je doplněn o taby -->
-    <a href="#" class="active" id="nav-main" onclick="desktopView('main',this);return false">text + taby + nahrávky</a>
-    <a href="#" id="nav-napady" onclick="desktopView('napady',this);return false">
+    <a href="#" class="active" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
+    <a href="#" class="active" id="nav-tabelatura" onclick="toggleDesktopPanel('tabelatura',this);return false">tabelatura</a>
+    <a href="#" class="active" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
+    <a href="#" class="active" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">poznámky</a>
+    <a href="#" id="nav-napady"                    onclick="toggleDesktopPanel('napady',this);return false">
       nápady <span class="napady-badge">DK</span>
     </a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
@@ -902,16 +904,16 @@ if (typeof toggleValDrawer === 'undefined') {
     };
 }
 
-if (typeof desktopView === 'undefined') {
-    window.desktopView = function(view, btn) {
-        $('.topnav a').removeClass('active');
-        $(btn).addClass('active');
-        if (view === 'main') {
-            $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').show();
-            $('#panel-napady').hide();
-        } else if (view === 'napady') {
-            $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').hide();
-            $('#panel-napady').show();
+if (typeof toggleDesktopPanel === 'undefined') {
+    window.toggleDesktopPanel = function(panelId, btn) {
+        var $panel = $('#panel-' + panelId);
+        var $btn   = $(btn);
+        if ($panel.is(':visible')) {
+            $panel.hide();
+            $btn.removeClass('active');
+        } else {
+            $panel.css('display', 'flex');
+            $btn.addClass('active');
         }
     };
 }
