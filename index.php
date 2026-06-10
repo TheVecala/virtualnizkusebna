@@ -1,5 +1,6 @@
 <?php session_start();
 error_reporting(0);
+require_once 'php/config.php';
 
 // Inicializace SESSION barev
 $_SESSION['barva1']     = $_SESSION['barva1']     ?? "a7ac38";
@@ -16,33 +17,19 @@ $globalni_heslo_kapely    = "krpole";      // Tvoje heslo pro vstup
 /* ────────────────────────────────────────────────── */
 
 
-// Zpracování odeslaného formuláře z loginboxu
-if (isset($_POST['submit_single'])) {
-    $zadani_hesla = $_POST['heslo'] ?? '';
-    
-    if ($zadani_hesla === $globalni_heslo_kapely) {
-        $_SESSION['logged_in_single'] = true;
-        unset($_SESSION['chyba_prihlaseni_single']);
-    } else {
-        $_SESSION['chyba_prihlaseni_single'] = "wrong_heslo";
-    }
-}
-
-
-// Kontrola, zda je uživatel přihlášen
+// Kontrola přihlášení — vše řeší loginbox4.php
 if (empty($_SESSION['logged_in_single'])) {
     require "php/loginbox4.php";
     exit;
 }
 
-// Pokud přihlášen JE, podstrčíme systému identitu tvé kapely
-$_SESSION['login']             = $single_login;
-$_SESSION['kapela']            = $single_kapela;
-$_SESSION['befelemepesseveze'] = $single_befelemepesseveze;
-
+// Podstrčit identitu kapely do session (jednou po přihlášení)
+if (empty($_SESSION['kapela'])) {
+    $_SESSION['kapela']            = $single_kapela;
+    $_SESSION['befelemepesseveze'] = $single_befelemepesseveze;
+}
 
 // Nastavit lokální proměnné
-$login             = $_SESSION['login'];
 $kapela            = $_SESSION['kapela']            ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
 $sekce             = "uploads";
@@ -316,6 +303,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   border: 1px solid var(--border); background: var(--card); color: var(--text);
   transition: all .15s; white-space: nowrap;
 }
+.btn-locked { opacity: 0.38; cursor: not-allowed !important; pointer-events: none; }
+.btn-locked::after { content: ' 🔒'; font-size: 9px; }
 .btn-vz:hover { border-color: var(--barva); color: var(--barva); }
 .btn-vz.danger { background: #5a1a1a; border-color: #8a3a3a; color: #ff9999; }
 .btn-vz.rec { animation: pulse 2s infinite; }
@@ -364,8 +353,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .dval:hover { background: var(--card); color: var(--text); }
 .dval.active { color: var(--barva); background: var(--card); }
-.dval .val-nazev { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dval .val-actions { display: flex; gap: 3px; flex-shrink: 0; }
 .drawer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 4px 12px 8px; }
 
 
@@ -437,7 +424,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #bottom-nav { display: none; }
   #content-area { flex-direction: row; }
   /* Přidán i panel-tabelatura */
-  #panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse { display: flex; }
+  #panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse { display: flex !important; }
 }
 
 /* ── Progress bar ── */
@@ -484,11 +471,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   <span class="brand">/</span>
   <span id="topbar-val"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
-    <a href="#" class="active" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
-    <a href="#" class="active" id="nav-tabelatura" onclick="toggleDesktopPanel('tabelatura',this);return false">tabelatura</a>
-    <a href="#" class="active" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
-    <a href="#" class="active" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">poznámky</a>
-    <a href="#" id="nav-napady"                    onclick="toggleDesktopPanel('napady',this);return false">
+    <!-- 🌟 Text tlačítka v horní liště je doplněn o taby -->
+    <a href="#" class="active" id="nav-main" onclick="desktopView('main',this);return false">text + taby + nahrávky</a>
+    <a href="#" id="nav-napady" onclick="desktopView('napady',this);return false">
       nápady <span class="napady-badge">DK</span>
     </a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
@@ -500,7 +485,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
  <div id="sidebar">
   <div class="sidebar-label" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 4px;">
     <span>Skladby</span>
-    <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" style="padding: 2px 6px; font-size: 10px;">+ nová</button>
+    <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" style="padding: 2px 6px; font-size: 10px;" class="btn-vz<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>">+ nová</button>
   </div>
 <div id="sidebar-playlist">
     <?php foreach ($pole_slozek as $s):
@@ -514,8 +499,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <img src="meat/ikona_kombo.png" alt="" style="width: 20px; height: 20px; object-fit: contain; flex-shrink: 0;">
       <span class="val-nazev"><?php echo htmlspecialchars($nazev_s); ?></span>
       <div class="val-actions">
-        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat">✏</button>
-        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat">🗑</button>
+        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat" class="<?= ma_pravo('rename_val') ? '' : 'btn-locked' ?>">✏</button>
+        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat" class="<?= ma_pravo('delete_val') ? '' : 'btn-locked' ?>">🗑</button>
       </div>
     </div>
     <?php endforeach; ?>
@@ -556,7 +541,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <div class="panel-header">
         <h2>TEXT</h2>
         <div class="acts">
-          <button class="btn-vz" onclick="otevritEditText('text')">změnit</button>
+          <button class="btn-vz" onclick="otevritEditText('text')" class="btn-vz<?= ma_pravo('edit_text') ? '' : ' btn-locked' ?>">změnit</button>
         </div>
       </div>
       <div class="panel-body" id="body-text">
@@ -569,7 +554,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <div class="panel-header">
         <h2>TABELATURA</h2>
         <div class="acts">
-          <button class="btn-vz" onclick="otevritEditText('tabelatura')">změnit</button>
+          <button class="btn-vz" onclick="otevritEditText('tabelatura')" class="btn-vz<?= ma_pravo('edit_text') ? '' : ' btn-locked' ?>">změnit</button>
         </div>
       </div>
       <div class="panel-body" id="body-tabelatura">
@@ -582,8 +567,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <div class="panel-header">
         <h2>NAHRÁVKY</h2>
         <div class="acts">
-          <button class="btn-vz" data-toggle="modal" data-target="#modal_vlozit_soubor">⬆ vložit</button>
-          <button class="btn-vz danger rec" data-toggle="modal" data-target="#modal_nahrat_zvuk">⏺ REC</button>
+          <button class="btn-vz" data-toggle="modal" data-target="#modal_vlozit_soubor" class="btn-vz<?= ma_pravo('upload') ? '' : ' btn-locked' ?>">⬆ vložit</button>
+          <button class="btn-vz danger rec" data-toggle="modal" data-target="#modal_nahrat_zvuk" class="btn-vz danger rec<?= ma_pravo('upload') ? '' : ' btn-locked' ?>">⏺ REC</button>
         </div>
       </div>
       <div class="panel-body" id="body-nahravky">
@@ -687,7 +672,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   
   <div class="drawer-header nodrag" style="padding: 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
       <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Seznam skladeb</span>
-      <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')">
+      <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')" class="btn-vz<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>">
           + nová skladba
       </button>
   </div>
@@ -702,8 +687,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <img src="meat/ikona_kombo.png" alt="" style="width: 20px; height: 20px; object-fit: contain; flex-shrink: 0;">
       <span class="val-nazev"><?php echo htmlspecialchars($nazev_s); ?></span>
       <div class="val-actions">
-        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat">✏</button>
-        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat">🗑</button>
+        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat" class="<?= ma_pravo('rename_val') ? '' : 'btn-locked' ?>">✏</button>
+        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat" class="<?= ma_pravo('delete_val') ? '' : 'btn-locked' ?>">🗑</button>
       </div>
   </div>
   <?php endforeach; ?>
@@ -904,16 +889,16 @@ if (typeof toggleValDrawer === 'undefined') {
     };
 }
 
-if (typeof toggleDesktopPanel === 'undefined') {
-    window.toggleDesktopPanel = function(panelId, btn) {
-        var $panel = $('#panel-' + panelId);
-        var $btn   = $(btn);
-        if ($panel.is(':visible')) {
-            $panel.hide();
-            $btn.removeClass('active');
-        } else {
-            $panel.css('display', 'flex');
-            $btn.addClass('active');
+if (typeof desktopView === 'undefined') {
+    window.desktopView = function(view, btn) {
+        $('.topnav a').removeClass('active');
+        $(btn).addClass('active');
+        if (view === 'main') {
+            $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').show();
+            $('#panel-napady').hide();
+        } else if (view === 'napady') {
+            $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').hide();
+            $('#panel-napady').show();
         }
     };
 }

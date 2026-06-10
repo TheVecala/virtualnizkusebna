@@ -160,7 +160,7 @@
       <!-- Modal footer -->
             <div class="modal-footer">
 	  						 
-				<button  id= "nahrat" type="submit" class="btn btn-danger">smazat</button>
+				<button  id= "nahrat" type="submit" class="btn btn-danger<?= ma_pravo('delete_file') ? '' : ' btn-locked' ?>">smazat</button>
  				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	 
 	  
  
@@ -203,7 +203,7 @@
           </div>
           <div id="upload-result" style="font-size:12px; margin-bottom:8px; display:none;"></div>
 
-          <button type="submit" class="btn btn-primary" id="upload-btn">VLOŽIT SOUBOR</button>
+          <button type="submit" class="btn btn-primary<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" id="upload-btn">VLOŽIT SOUBOR</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
         </form>
       </div>
@@ -246,7 +246,7 @@
                           <input type="text" class="form-control" name="navrat" value="<?php echo $_SERVER['PHP_SELF']; ?>" >  
                         </div>
 						
-						<button  id= "vytvorit_adresar" type="submit" class="btn btn-primary" >vytvořit</button>
+						<button  id= "vytvorit_adresar" type="submit" class="btn btn-primary<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" >vytvořit</button>
 					  </form>
 					  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	   
 			  
@@ -368,66 +368,57 @@
 </div> 
    
      
-  <!-- Modal: PŘEJMENOVAT skladbu -->
-<div class="modal" id="modal_rename_val">
-  <div class="modal-dialog">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <p id="modal_rename_val_title" class="modal-title">PŘEJMENOVAT SKLADBU</p>
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-      </div>
-
-      <form action="/php/prejmenovat_val.php" method="post">
-        <div class="modal-body">
-          <div class="form-group" style="display:none">
-            <input id="modal_rename_val_label" type="text" class="form-control" value=""
-              name="puvodni_jmeno_valu_k_prejmenovani">
-          </div>
-          <div class="form-group">
-            <label for="modal_rename_val_label_novy">Nový název skladby:</label>
-            <input id="modal_rename_val_label_novy" type="text" class="form-control" value=""
-              name="nove_jmeno_valu_k_prejmenovani" placeholder="nový název">
-          </div>
-          <div class="form-group" style="display:none">
-            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-warning">přejmenovat</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
-        </div>
-      </form>
-
-    </div>
-  </div>
-</div>
-
-  <!-- Modal: SMAZAT skladbu -->
+    <!-- The Modal DELETE vál -->
 <div class="modal" id="modal_delete_val">
   <div class="modal-dialog">
     <div class="modal-content">
 
+      <!-- Modal Header -->
       <div class="modal-header">
         <p id="modal_delete_val_label" class="modal-title">žádná skladba</p>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
 
-      <form action="/php/smazat_val.php" method="post">
-        <div class="modal-body">
-          <p>Pozor! Smazat lze pouze <strong>prázdnou</strong> skladbu!</p>
+      <!-- Modal body -->
+      <div class="modal-body">
+
+        <!-- Smazání válu -->
+        <form action="/php/smazat_val.php" method="post" style="display:inline">
           <div class="form-group" style="display:none">
             <input id="modal_delete_val_deleter" type="text" class="form-control" value="" name="val_ke_smazani">
           </div>
           <div class="form-group" style="display:none">
             <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-danger">odstranit celou skladbu</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
-        </div>
-      </form>
+          <button type="submit" class="btn btn-danger<?= ma_pravo('delete_val') ? '' : ' btn-locked' ?>">odstranit celou skladbu</button>
+          <p>Pozor! Smazat lze pouze prázdnou skladbu!</p>
+        </form>
+
+        <hr>
+
+        <!-- Přejmenování válu -->
+        <form action="/php/prejmenovat_val.php" method="post" style="display:inline">
+          <div class="form-group" style="display:none">
+            <input id="modal_rename_val_label" type="text" class="form-control" value=""
+              name="puvodni_jmeno_valu_k_prejmenovani">
+          </div>
+          <div class="form-group">
+            <label for="modal_rename_val_label_novy">nový název skladby:</label>
+            <input id="modal_rename_val_label_novy" type="text" class="form-control" value=""
+              name="nove_jmeno_valu_k_prejmenovani" placeholder="nový název">
+          </div>
+          <div class="form-group" style="display:none">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+          <button type="submit" class="btn btn-warning<?= ma_pravo('rename_val') ? '' : ' btn-locked' ?>">přejmenovat</button>
+        </form>
+
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">ZAVŘÍT</button>
+      </div>
 
     </div>
   </div>
@@ -541,7 +532,7 @@
       <!-- Modal footer -->
             <div class="modal-footer">
  			   <p>Pozor! Přepíše původní text.</p>
-				<button type="submit" class="btn btn-danger">uložit změny</button>
+				<button type="submit" class="btn btn-danger<?= ma_pravo('edit_text') ? '' : ' btn-locked' ?>">uložit změny</button>
 				<button type="button" class="btn btn-secondary" onclick="zobrazHistorii()">📋 historie</button>
  				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display:inline">ZAVŘÍT</button>
             </div>
