@@ -3,7 +3,7 @@ session_start();
 error_reporting(0);
 
 // Kontrola single-band přihlášení
-if (empty($_SESSION['logged_in_single'])) { echo ''; exit; }
+if (empty($_SESSION['role'])) { echo ''; exit; }
 
 include "../login/connect.php";
 

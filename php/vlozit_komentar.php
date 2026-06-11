@@ -1,13 +1,16 @@
 <?php
 session_start();
 error_reporting(0);
+require_once __DIR__ . '/../config.php';
+
+if (!ma_pravo('comment')) {
+    echo json_encode(["ok" => false, "chyba" => "Nemáte oprávnění"]);
+    exit;
+}
 header('Content-Type: application/json; charset=utf-8');
 
 // 1. ZMĚNA: Kontrola single-band přihlášení
-if (empty($_SESSION['logged_in_single'])) {
-    echo json_encode(["ok" => false, "chyba" => "Nejste přihlášen"]);
-    exit;
-}
+
 
 include "login/connect.php";
 

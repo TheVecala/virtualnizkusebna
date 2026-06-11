@@ -1,13 +1,15 @@
 <?php session_start();
 error_reporting(0);
+require_once __DIR__ . '/../config.php';
+
+if (!ma_pravo('edit_text')) {
+    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
+    require "navrat.php"; exit;
+}
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
-if (empty($_SESSION['login'])) {
-    $_SESSION['vysledek'] = "chyba - nejste přihlášen";
-    require "navrat.php";
-    exit;
-}
+
 
 $akordy        = $_POST["editor"] ?? "";
 $nazev_souboru = basename($_POST["soubor_akordu"] ?? "akordy.txt");

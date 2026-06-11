@@ -2,25 +2,31 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . "/../config.php";
 
 $_SESSION['barva1']        = "a7ac38";
 $_SESSION['barva2']        = "yellow";
 $_SESSION['barva_pozadi']  = "202428"; 
 
-/* ── KONFIGURACE JEDNOHO HESLA PRO KAPELU ── */
-$globalni_heslo_kapely = "krpole"; // Zde si nastav své tajné heslo pro kapelu
-/* ────────────────────────────────────────── */
-
 // Zpracování odeslaného formuláře
 if (isset($_POST['submit_single'])) {
     $zadani_hesla = $_POST['heslo'] ?? '';
-    
-    if ($zadani_hesla === $globalni_heslo_kapely) {
+
+    if ($zadani_hesla === HESLO_ADMIN) {
+        $_SESSION['role']             = 'admin';
         $_SESSION['logged_in_single'] = true;
         unset($_SESSION['chyba_prihlaseni_single']);
-        // Obnovíme stránku, index.php si už uživatele přebere
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
+        header("Location: " . $_SERVER['PHP_SELF']); exit;
+    } elseif ($zadani_hesla === HESLO_MUZIKANT) {
+        $_SESSION['role']             = 'muzikant';
+        $_SESSION['logged_in_single'] = true;
+        unset($_SESSION['chyba_prihlaseni_single']);
+        header("Location: " . $_SERVER['PHP_SELF']); exit;
+    } elseif ($zadani_hesla === HESLO_HOST) {
+        $_SESSION['role']             = 'host';
+        $_SESSION['logged_in_single'] = true;
+        unset($_SESSION['chyba_prihlaseni_single']);
+        header("Location: " . $_SERVER['PHP_SELF']); exit;
     } else {
         $_SESSION['chyba_prihlaseni_single'] = "wrong_heslo";
     }

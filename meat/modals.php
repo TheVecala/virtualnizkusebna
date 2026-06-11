@@ -160,7 +160,7 @@
       <!-- Modal footer -->
             <div class="modal-footer">
 	  						 
-				<button  id= "nahrat" type="submit" class="btn btn-danger">smazat</button>
+				<button  id= "nahrat" type="submit" class="btn btn-danger<?= ma_pravo('delete_file') ? '' : ' btn-locked' ?>">smazat</button>
  				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	 
 	  
  
@@ -203,7 +203,7 @@
           </div>
           <div id="upload-result" style="font-size:12px; margin-bottom:8px; display:none;"></div>
 
-          <button type="submit" class="btn btn-primary" id="upload-btn">VLOŽIT SOUBOR</button>
+          <button type="submit" class="btn btn-primary<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" id="upload-btn">VLOŽIT SOUBOR</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
         </form>
       </div>
@@ -246,7 +246,7 @@
                           <input type="text" class="form-control" name="navrat" value="<?php echo $_SERVER['PHP_SELF']; ?>" >  
                         </div>
 						
-						<button  id= "vytvorit_adresar" type="submit" class="btn btn-primary" >vytvořit</button>
+						<button  id= "vytvorit_adresar" type="submit" class="btn btn-primary<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" >vytvořit</button>
 					  </form>
 					  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	   
 			  
@@ -301,7 +301,7 @@
 
   <div id="komentar_chyba" style="color:red; display:none"></div>
 
-  <button type="submit" class="btn btn-primary">ULOŽIT</button>
+  <button type="submit" class="btn btn-primary<?= ma_pravo('comment') ? '' : ' btn-locked' ?>">ULOŽIT</button>
 </form> 
 	 
       </div>
@@ -394,7 +394,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-warning">přejmenovat</button>
+          <button type="submit" class="btn btn-warning<?= ma_pravo('rename_val') ? '' : ' btn-locked' ?>">přejmenovat</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
         </div>
       </form>
@@ -424,7 +424,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-danger">odstranit celou skladbu</button>
+          <button type="submit" class="btn btn-danger<?= ma_pravo('delete_val') ? '' : ' btn-locked' ?>">odstranit celou skladbu</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
         </div>
       </form>
@@ -541,7 +541,7 @@
       <!-- Modal footer -->
             <div class="modal-footer">
  			   <p>Pozor! Přepíše původní text.</p>
-				<button type="submit" class="btn btn-danger">uložit změny</button>
+				<button type="submit" class="btn btn-danger<?= ma_pravo('edit_text') ? '' : ' btn-locked' ?>">uložit změny</button>
 				<button type="button" class="btn btn-secondary" onclick="zobrazHistorii()">📋 historie</button>
  				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display:inline">ZAVŘÍT</button>
             </div>

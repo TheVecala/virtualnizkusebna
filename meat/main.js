@@ -76,19 +76,15 @@ function switchVal(val, nazev, el) {
 }
 
 // ── Desktop view (Přidána podpora panelu tabelatury) ──
-function desktopView(view, el) {
-  document.querySelectorAll('.topnav a').forEach(function(a) { a.classList.remove('active'); });
-  if (el) el.classList.add('active');
-
-  // Pouze na desktopu — na mobilu řídí mobilePanel
-  if (window.innerWidth <= 768) return;
-
-  if (view === 'napady') {
-    $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'none');
-    $('#panel-napady').css('display', 'flex');
+function toggleDesktopPanel(panelId, btn) {
+  var $panel = $('#panel-' + panelId);
+  var $btn   = $(btn);
+  if ($panel.is(':visible')) {
+    $panel.hide();
+    $btn.removeClass('active');
   } else {
-    $('#panel-napady').css('display', 'none');
-    $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'flex');
+    $panel.css('display', 'flex');
+    $btn.addClass('active');
   }
 }
 
@@ -230,6 +226,43 @@ $(document).on('submit', '#modal_zmenit_text form', function(e) {
     var $info = $form.find('.editor-chyba');
     if (!$info.length) {
       $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px;text-align:left"></div>');
+      $form.find('.modal-footer p').after($info);
+    }
+    $info.text('Chyba spojení se serverem');
+  });
+});
+
+// ── Uložení textu/tabelatury přes AJAX (bez page reload = žádný back button dialog) ──
+$(document).on('submit', '#modal_zmenit_text form', function(e) {
+  e.preventDefault();
+  var $form      = $(this);
+  var url        = $form.attr('action');
+  var $btn       = $form.find('[type="submit"]');
+  var puvodniTxt = $btn.text();
+
+  $btn.prop('disabled', true).text('ukládám...');
+  pbStart();
+
+  $.post(url, $form.serialize(), function(resp) {
+    pbDone();
+    $btn.prop('disabled', false).text(puvodniTxt);
+    if (resp.ok) {
+      $('#modal_zmenit_text').modal('hide');
+      nacistPanel(VZ.editTyp || 'text');
+    } else {
+      var $info = $form.find('.editor-chyba');
+      if (!$info.length) {
+        $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px"></div>');
+        $form.find('.modal-footer p').after($info);
+      }
+      $info.text(resp.vysledek || 'Chyba uložení');
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    $btn.prop('disabled', false).text(puvodniTxt);
+    var $info = $form.find('.editor-chyba');
+    if (!$info.length) {
+      $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px"></div>');
       $form.find('.modal-footer p').after($info);
     }
     $info.text('Chyba spojení se serverem');

@@ -1,5 +1,6 @@
 <?php session_start();
 error_reporting(0);
+require_once 'config.php';
 
 // Inicializace SESSION barev
 $_SESSION['barva1']     = $_SESSION['barva1']     ?? "a7ac38";
@@ -7,47 +8,29 @@ $_SESSION['barva_pozadi'] = $_SESSION['barva_pozadi'] ?? "202428";
 
 
 /* ── HARDCODED CONFIGURATION PRO SINGLE-BAND VERZI ── */
-// !!! TADY ZKONTROLUJ PŘESNOU SHODU S FTP (i malá/velká písmena) !!!
-$single_login             = "kapela";             
-$single_kapela            = "kapela";       // Název složky v user/
-$single_befelemepesseveze = "471707760"; // Přesný název vnitřní složky
-
-$globalni_heslo_kapely    = "krpole";      // Tvoje heslo pro vstup
+$single_kapela            = "kapela";
+$single_befelemepesseveze = "471707760";
 /* ────────────────────────────────────────────────── */
 
 
-// Zpracování odeslaného formuláře z loginboxu
-if (isset($_POST['submit_single'])) {
-    $zadani_hesla = $_POST['heslo'] ?? '';
-    
-    if ($zadani_hesla === $globalni_heslo_kapely) {
-        $_SESSION['logged_in_single'] = true;
-        unset($_SESSION['chyba_prihlaseni_single']);
-    } else {
-        $_SESSION['chyba_prihlaseni_single'] = "wrong_heslo";
-    }
-}
-
-
-// Kontrola, zda je uživatel přihlášen
+// Kontrola přihlášení — vše řeší loginbox4.php
 if (empty($_SESSION['logged_in_single'])) {
     require "php/loginbox4.php";
     exit;
 }
 
-// Pokud přihlášen JE, podstrčíme systému identitu tvé kapely
-$_SESSION['login']             = $single_login;
-$_SESSION['kapela']            = $single_kapela;
-$_SESSION['befelemepesseveze'] = $single_befelemepesseveze;
-
+// Podstrčit identitu kapely do session (jednou po přihlášení)
+if (empty($_SESSION['kapela'])) {
+    $_SESSION['kapela']            = $single_kapela;
+    $_SESSION['befelemepesseveze'] = $single_befelemepesseveze;
+}
 
 // Nastavit lokální proměnné
-$login             = $_SESSION['login'];
 $kapela            = $_SESSION['kapela']            ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
 $sekce             = "uploads";
 $aktualni_text     = $_SESSION['aktualni_text']     ?? "akordy.txt";
-$aktualni_tab      = $_SESSION['aktualni_tab']      ?? "tabelatura.txt"; // Přidána session pro tabelaturu
+$aktualni_tab      = $_SESSION['aktualni_tab']      ?? "tabelatura.txt";
 $aktualni_diskuse  = $_SESSION['diskuse']           ?? "";
 
 
@@ -317,6 +300,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   transition: all .15s; white-space: nowrap;
 }
 .btn-vz:hover { border-color: var(--barva); color: var(--barva); }
+.btn-locked { opacity: 0.38; cursor: not-allowed !important; pointer-events: none; }
+.btn-locked::after { content: ' 🔒'; font-size: 9px; }
 .btn-vz.danger { background: #5a1a1a; border-color: #8a3a3a; color: #ff9999; }
 .btn-vz.rec { animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.75} }
@@ -500,7 +485,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
  <div id="sidebar">
   <div class="sidebar-label" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 4px;">
     <span>Skladby</span>
-    <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" style="padding: 2px 6px; font-size: 10px;">+ nová</button>
+    <button class="btn-vz<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nova_slozka" style="padding: 2px 6px; font-size: 10px;">+ nová</button>
   </div>
 <div id="sidebar-playlist">
     <?php foreach ($pole_slozek as $s):
@@ -514,8 +499,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <img src="meat/ikona_kombo.png" alt="" style="width: 20px; height: 20px; object-fit: contain; flex-shrink: 0;">
       <span class="val-nazev"><?php echo htmlspecialchars($nazev_s); ?></span>
       <div class="val-actions">
-        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat">✏</button>
-        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat">🗑</button>
+        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat" class="<?= ma_pravo('rename_val') ? '' : 'btn-locked' ?>">✏</button>
+        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat" class="<?= ma_pravo('delete_val') ? '' : 'btn-locked' ?>">🗑</button>
       </div>
     </div>
     <?php endforeach; ?>
@@ -556,7 +541,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <div class="panel-header">
         <h2>TEXT</h2>
         <div class="acts">
-          <button class="btn-vz" onclick="otevritEditText('text')">změnit</button>
+          <button class="btn-vz<?= ma_pravo('edit_text') ? '' : ' btn-locked' ?>" onclick="otevritEditText('text')">změnit</button>
         </div>
       </div>
       <div class="panel-body" id="body-text">
@@ -569,7 +554,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <div class="panel-header">
         <h2>TABELATURA</h2>
         <div class="acts">
-          <button class="btn-vz" onclick="otevritEditText('tabelatura')">změnit</button>
+          <button class="btn-vz<?= ma_pravo('edit_text') ? '' : ' btn-locked' ?>" onclick="otevritEditText('tabelatura')">změnit</button>
         </div>
       </div>
       <div class="panel-body" id="body-tabelatura">
@@ -582,8 +567,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <div class="panel-header">
         <h2>NAHRÁVKY</h2>
         <div class="acts">
-          <button class="btn-vz" data-toggle="modal" data-target="#modal_vlozit_soubor">⬆ vložit</button>
-          <button class="btn-vz danger rec" data-toggle="modal" data-target="#modal_nahrat_zvuk">⏺ REC</button>
+          <button class="btn-vz<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_vlozit_soubor">⬆ vložit</button>
+          <button class="btn-vz danger rec<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nahrat_zvuk">⏺ REC</button>
         </div>
       </div>
       <div class="panel-body" id="body-nahravky">
@@ -687,7 +672,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   
   <div class="drawer-header nodrag" style="padding: 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
       <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Seznam skladeb</span>
-      <button class="btn-vz" data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')">
+      <button class="btn-vz<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')">
           + nová skladba
       </button>
   </div>
@@ -702,8 +687,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <img src="meat/ikona_kombo.png" alt="" style="width: 20px; height: 20px; object-fit: contain; flex-shrink: 0;">
       <span class="val-nazev"><?php echo htmlspecialchars($nazev_s); ?></span>
       <div class="val-actions">
-        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat">✏</button>
-        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat">🗑</button>
+        <button onclick="event.stopPropagation();otevritPrejmenovani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>','<?php echo htmlspecialchars($nazev_s, ENT_QUOTES); ?>')" title="přejmenovat" class="<?= ma_pravo('rename_val') ? '' : 'btn-locked' ?>">✏</button>
+        <button onclick="event.stopPropagation();otevritSmazani('<?php echo htmlspecialchars($s, ENT_QUOTES); ?>')" title="smazat" class="<?= ma_pravo('delete_val') ? '' : 'btn-locked' ?>">🗑</button>
       </div>
   </div>
   <?php endforeach; ?>

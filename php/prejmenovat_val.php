@@ -1,5 +1,12 @@
 <?php session_start();
+require_once __DIR__ . \'/../config.php\';
 require "remove_accents.php";
+
+if (!ma_pravo('rename_val')) {
+    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
+    require "navrat.php"; exit;
+}
+
 
 $puvodni_jmeno     = trim($_POST["puvodni_jmeno_valu_k_prejmenovani"] ?? "");
 $nove_jmeno_raw    = trim($_POST["nove_jmeno_valu_k_prejmenovani"]    ?? "");

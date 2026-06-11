@@ -1,13 +1,16 @@
 <?php
 session_start();
 error_reporting(0);
+require_once __DIR__ . '/../config.php';
+
+if (!ma_pravo('reorder')) {
+    echo json_encode(["ok" => false, "chyba" => "Nemáte oprávnění"]);
+    exit;
+}
 header('Content-Type: application/json; charset=utf-8');
 
 // Kontrola zabezpečení - musí být přihlášený
-if (empty($_SESSION['logged_in_single'])) { 
-    echo json_encode(["ok" => false, "chyba" => "Nejste přihlášen"]); 
-    exit; 
-}
+
 
 // Přijmeme pole 'poradi' z Javascriptu
 $poradi = $_POST['poradi'] ?? null;

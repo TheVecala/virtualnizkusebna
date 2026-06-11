@@ -3,7 +3,7 @@ session_start();
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
-if (empty($_SESSION['login'])) { echo json_encode([]); exit; }
+if (empty($_SESSION['role'])) { echo json_encode([]); exit; }
 
 $kapela            = $_SESSION['kapela']                     ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";
