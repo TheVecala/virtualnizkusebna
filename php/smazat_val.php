@@ -1,10 +1,4 @@
 <?php session_start();
-require_once __DIR__ . '/../config.php';
-
-if (!ma_pravo('delete_val')) {
-    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
-}
 
 $val_ke_smazani    = trim($_POST["val_ke_smazani"] ?? "");
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";

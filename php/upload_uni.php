@@ -1,9 +1,5 @@
 <?php session_start(); ?>
 <?php
-if (!ma_pravo('upload')) {
-    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
-}
 require_once __DIR__ . "/../config.php";
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";

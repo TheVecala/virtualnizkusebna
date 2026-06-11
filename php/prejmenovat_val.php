@@ -1,10 +1,4 @@
 <?php session_start();
-require_once __DIR__ . '/../config.php';
-
-if (!ma_pravo('rename_val')) {
-    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
-}
 require "remove_accents.php";
 
 $puvodni_jmeno     = trim($_POST["puvodni_jmeno_valu_k_prejmenovani"] ?? "");
@@ -58,6 +52,19 @@ if (rename($odkud, $kam)) {
     // Přepnout SESSION na nový název pokud byl přejmenován aktuálně zobrazený vál
     if ($_SESSION['slozka_souboru_k_zobrazeni'] == $puvodni_jmeno) {
         $_SESSION['slozka_souboru_k_zobrazeni'] = $nove_jmeno;
+    }
+
+    // Aktualizovat pořadí v poradi.json (starý název → nový název)
+    $soubor_poradi = "../" . $cesta_slozek . "poradi.json";
+    if (file_exists($soubor_poradi)) {
+        $poradi = json_decode(file_get_contents($soubor_poradi), true);
+        if (is_array($poradi)) {
+            $idx = array_search($puvodni_jmeno, $poradi);
+            if ($idx !== false) {
+                $poradi[$idx] = $nove_jmeno;
+                file_put_contents($soubor_poradi, json_encode($poradi));
+            }
+        }
     }
 
     // Aktualizovat název v souboru nazev_valu.txt

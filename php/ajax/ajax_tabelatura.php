@@ -2,7 +2,7 @@
 session_start();
 error_reporting(0);
 
-if (empty($_SESSION['role'])) { echo ''; exit; }
+if (empty($_SESSION['login'])) { echo ''; exit; }
 
 $kapela            = $_SESSION['kapela']                     ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";

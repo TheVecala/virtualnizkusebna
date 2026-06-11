@@ -1,11 +1,5 @@
 <?php session_start(); ?>
 <?php
-require_once __DIR__ . '/../config.php';
-
-if (!ma_pravo('create_val')) {
-    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
-}
 require "remove_accents.php";
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";

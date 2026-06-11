@@ -1,11 +1,5 @@
 <?php session_start(); ?>
 <?php
-require_once __DIR__ . '/../config.php';
-
-if (!ma_pravo('move_file')) {
-    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
-}
 
 $presunout_odkud = $_POST["presunout_odkud"] ?? "";
 $presunout_co    = $_POST["presunout_co"]    ?? "";

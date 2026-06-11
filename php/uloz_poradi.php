@@ -4,9 +4,9 @@ error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
 // Kontrola zabezpečení - musí být přihlášený
-if (!ma_pravo('reorder')) {
-    echo json_encode(["ok" => false, "chyba" => "Nemáte oprávnění"]);
-    exit;
+if (empty($_SESSION['logged_in_single'])) { 
+    echo json_encode(["ok" => false, "chyba" => "Nejste přihlášen"]); 
+    exit; 
 }
 
 // Přijmeme pole 'poradi' z Javascriptu
