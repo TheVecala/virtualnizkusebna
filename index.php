@@ -147,6 +147,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 #topbar-val::before { content: '🎵 '; }
 .topnav { display: flex; gap: 2px; margin-left: auto; }
+.topbar-mob-actions { display: none; gap: 2px; margin-left: auto; }
 .topnav a {
   color: var(--muted); text-decoration: none; font-size: 12px;
   padding: 5px 10px; border-radius: 5px; transition: all .15s; white-space: nowrap;
@@ -362,6 +363,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
   #bottom-nav { display: flex; }
   .topnav { display: none; }
+  .topbar-mob-actions { display: flex; }
   #topbar-val { font-size: 11px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #content-area { flex-direction: column; }
   .panel { display: none !important; border-right: none; border-bottom: 1px solid var(--border); }
@@ -479,6 +481,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
+  <div class="topbar-mob-actions">
+    <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">about</a>
+    <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">odhlásit</a>
+  </div>
 </div>
 
 <!-- ── SIDEBAR ── -->
