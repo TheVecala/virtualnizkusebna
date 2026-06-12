@@ -344,9 +344,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 /* Val drawer (mobil) */
 #val-drawer {
-  display: none; position: fixed; bottom: var(--bottom-h); left: 0; right: 0;
+  display: none; position: fixed; bottom: var(--bottom-h); left: 0; 
   background: var(--tmava); border-top: 1px solid var(--border);
-  max-height: 55vh; overflow-y: auto; z-index: 999; padding: 8px;
+  max-height: 90vh; overflow-y: auto; z-index: 999; padding: 8px;
 }
 #val-drawer.open { display: block; }
 .dval {

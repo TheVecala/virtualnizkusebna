@@ -37,7 +37,7 @@ if (isset($_POST['submit_single'])) {
 <head> 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Virtuální zkušebna - Vstup</title>
+    <title>Zkušebna DK</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
@@ -50,12 +50,14 @@ if (isset($_POST['submit_single'])) {
     </style>
 </head>
 <body>
-   
+ 
+<!-- ── BOTTOM NAV ── 
 <header>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
         <a class="navbar-brand" href="#">VIRTUÁLNÍ ZKUŠEBNA - SEKCE KAPELY</a>
     </nav>
 </header>
+   --> 
    
 <div class="site-wrapper">
     <div class="site-wrapper-inner">
@@ -65,8 +67,8 @@ if (isset($_POST['submit_single'])) {
 	
                     <div id="formular_prihlaseni" class="card login_box text-white"> 
                         <div class="card-body" style="text-align:center">           
-                            <h1 class="card-title">VIRTUÁLNÍ ZKUŠEBNA</h1> 
-                            <h3 class="mb-4">Vstup pro kapelu</h3>    
+                            <h1 class="card-title">ZKUŠEBNA DK!</h1> 
+                            <h4 class="mb-4">VSTUP PRO KAPELU</h4>    
                             
                             <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">     
                                 <div class="form-group d-flex justify-content-center align-items-center gap-2" style="max-width: 320px; margin: 0 auto 15px;">
