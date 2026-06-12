@@ -379,6 +379,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
   #bottom-nav { display: flex; }
   .topnav { display: none; }
+  .topbar-mob-actions { display: flex; }
   #content-area { flex-direction: row; }
   
   /* Skryjeme výchozí zobrazení všech */
