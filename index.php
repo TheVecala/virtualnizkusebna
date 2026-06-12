@@ -19,6 +19,11 @@ if (empty($_SESSION['logged_in_single'])) {
     exit;
 }
 
+// Zpětná kompatibilita: session bez role (přihlášení před zavedením rolí) → muzikant
+if (empty($_SESSION['role'])) {
+    $_SESSION['role'] = 'muzikant';
+}
+
 // Podstrčit identitu kapely do session (jednou po přihlášení)
 if (empty($_SESSION['kapela'])) {
     $_SESSION['kapela']            = $single_kapela;
