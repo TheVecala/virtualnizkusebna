@@ -63,6 +63,8 @@ if (!mkdir($cil_adresare . $ocesany_jmeno . "/texty")) {
     exit;
 }
 copy("../data/akordy.txt", $cil_adresare . $ocesany_jmeno . "/texty/akordy.txt");
+copy("../data/tabelatura.txt", $cil_adresare . $ocesany_jmeno . "/texty/tabelatura.txt");
+
 
 // Vytvoření podsložky data + uložení názvu válu
 if (!mkdir($cil_adresare . $ocesany_jmeno . "/data")) {

@@ -3,7 +3,7 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 error_reporting(0);
 
-if (empty($_SESSION['login'])) {
+if (empty($_SESSION['role'])) {
     echo json_encode(["ok" => false]);
     exit;
 }
