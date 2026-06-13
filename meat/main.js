@@ -611,3 +611,134 @@ $(document).on('hidden.bs.modal', '#modal_vlozit_soubor', function() {
   var btn = document.getElementById('upload-btn');
   if (btn) { btn.disabled = false; btn.textContent = 'VLOŽIT SOUBOR'; }
 });
+
+
+// ── Editace a mazání komentářů (diskuse + nápady) ──
+
+// Otevřít inline edit
+$(document).on('click', '.vzk-btn-edit', function() {
+  var $card = $(this).closest('[data-cas]');
+
+  // Zrušit případný probíhající delete confirm
+  $card.find('.vzk-confirm-wrap').remove();
+  // Zavřít případný otevřený edit jiného komentáře
+  $card.find('.vzk-edit-wrap').remove();
+
+  // Schovat text a tlačítka akcí
+  $card.find('.dk-text, .ctext').hide();
+  $card.find('.vzk-actions').css('display', 'none');
+
+  // Vytvořit inline edit UI
+  var $ta = $('<textarea class="vzk-edit-ta" rows="3"></textarea>').val($card.attr('data-text'));
+  var $btns = $(
+    '<div class="vzk-edit-btns">' +
+      '<button class="vzk-save-btn">✓ uložit</button>' +
+      '<button class="vzk-cancel-btn">✗ zrušit</button>' +
+      '<span class="vzk-edit-chyba"></span>' +
+    '</div>'
+  );
+  var $wrap = $('<div class="vzk-edit-wrap"></div>').append($ta).append($btns);
+
+  // Vložit těsně před .dk-meta / .cmeta
+  $card.find('.dk-meta, .cmeta').before($wrap);
+  $ta.focus();
+});
+
+// Zrušit editaci
+$(document).on('click', '.vzk-cancel-btn', function() {
+  var $card = $(this).closest('[data-cas]');
+  $card.find('.vzk-edit-wrap').remove();
+  $card.find('.dk-text, .ctext').show();
+  $card.find('.vzk-actions').css('display', 'flex');
+});
+
+// Uložit editaci
+$(document).on('click', '.vzk-save-btn', function() {
+  var $btn  = $(this);
+  var $card = $btn.closest('[data-cas]');
+  var text  = $card.find('.vzk-edit-ta').val().trim();
+  if (!text) return;
+
+  $btn.prop('disabled', true).text('ukládám...');
+  $card.find('.vzk-edit-chyba').hide();
+  pbStart();
+
+  $.post('/php/ajax/upravit_komentar.php', {
+    cas:  $card.data('cas'),
+    typ:  $card.data('typ'),
+    text: text
+  }, function(data) {
+    pbDone();
+    if (data.ok) {
+      $card.attr('data-text', text);
+      $card.find('.dk-text, .ctext').html(data.vzkaz_html).show();
+      $card.find('.vzk-actions').css('display', 'flex');
+      $card.find('.vzk-edit-wrap').remove();
+    } else {
+      $card.find('.vzk-edit-chyba').text(data.chyba || 'Chyba').show();
+      $btn.prop('disabled', false).text('✓ uložit');
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    $card.find('.vzk-edit-chyba').text('Chyba spojení').show();
+    $btn.prop('disabled', false).text('✓ uložit');
+  });
+});
+
+// Otevřít / zavřít delete confirm
+$(document).on('click', '.vzk-btn-del', function() {
+  var $card = $(this).closest('[data-cas]');
+
+  // Zrušit případný probíhající edit
+  if ($card.find('.vzk-edit-wrap').length) {
+    $card.find('.vzk-edit-wrap').remove();
+    $card.find('.dk-text, .ctext').show();
+    $card.find('.vzk-actions').css('display', 'flex');
+  }
+
+  // Toggle: druhý klik zavře confirm
+  if ($card.find('.vzk-confirm-wrap').length) {
+    $card.find('.vzk-confirm-wrap').remove();
+    return;
+  }
+
+  $card.append(
+    '<div class="vzk-confirm-wrap">' +
+      'Smazat tento komentář?&nbsp;' +
+      '<button class="vzk-del-yes-btn">ano, smazat</button>' +
+      '<button class="vzk-del-no-btn">ne</button>' +
+    '</div>'
+  );
+});
+
+// Zrušit mazání
+$(document).on('click', '.vzk-del-no-btn', function() {
+  $(this).closest('.vzk-confirm-wrap').remove();
+});
+
+// Potvrdit mazání
+$(document).on('click', '.vzk-del-yes-btn', function() {
+  var $btn  = $(this);
+  var $card = $btn.closest('[data-cas]');
+
+  $btn.prop('disabled', true).text('mažu...');
+  $card.find('.vzk-del-no-btn').prop('disabled', true);
+  pbStart();
+
+  $.post('/php/ajax/smazat_komentar.php', {
+    cas: $card.data('cas'),
+    typ: $card.data('typ')
+  }, function(data) {
+    pbDone();
+    if (data.ok) {
+      $card.fadeOut(250, function() { $(this).remove(); });
+    } else {
+      $card.find('.vzk-confirm-wrap').html(
+        '<span style="color:#ff8888">' + (data.chyba || 'Chyba') + '</span>'
+      );
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    $card.find('.vzk-confirm-wrap').html('<span style="color:#ff8888">Chyba spojení</span>');
+  });
+});
