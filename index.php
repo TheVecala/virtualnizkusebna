@@ -736,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 delay: 150, // Zpoždění pro myš i mobil
-                
+                delayOnTouchOnly: true, // delay se aplikuje jen na dotyk, ne na myš
                 // Povolíme tahání POUZE pro prvky s touto třídou (hlavička zůstane přibitá)
                 draggable: '.' + tridaPolozky,
                 filter: '.nodrag, button',
