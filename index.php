@@ -150,7 +150,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   background: var(--card); border: 1px solid var(--border);
   border-radius: 5px; padding: 2px 9px; white-space: nowrap;
 }
-#topbar-val::before { content: '🎵 '; }
+#topbar-val::before { content: ''; }
 .topnav { display: flex; gap: 2px; margin-left: auto; }
 .topbar-mob-actions { display: none; gap: 2px; margin-left: auto; }
 .topnav a {
@@ -662,10 +662,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   <button class="bnav active" id="bn-text" onclick="mobilePanel('text',this)">
     <img src="meat/ikona_text.png" class="bi" alt="text">text
   </button>
-  
-  <!-- 🌟 Přidáno tlačítko Tabelatura do spodní lišty (se zbarvenou ikonou pro odlišení) -->
   <button class="bnav" id="bn-tabelatura" onclick="mobilePanel('tabelatura',this)">
-    <img src="meat/ikona_text.png" class="bi" alt="tabelatura" style="filter: hue-rotate(90deg);">taby
+    <img src="meat/drinking2.png" class="bi" alt="tabelatura">taby
   </button>
   
   <button class="bnav" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
