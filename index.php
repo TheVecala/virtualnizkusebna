@@ -342,6 +342,54 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   filter: drop-shadow(0 0 5px var(--accent));
 }
 
+/* ── SKLADBY: navigační tlačítko, vizuálně oddělené od panelových ── */
+#bn-skladby {
+  color: var(--barva);                                /* barva kapely, ne --muted */
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 5px 2px 5px 6px;                           /* vnější odsazení od skupiny panelů */
+  background: rgba(255,255,255,0.03);
+  position: relative;
+  padding-top: 14px;                                  /* místo pro šipku nahoře */
+  flex-shrink: 0;
+}
+
+/* Oddělovač — čára vlevo od prvního panelového tlačítka */
+#bn-skladby + .bnav {
+  border-left: 1px solid var(--border);
+  margin-left: 3px;
+}
+
+/* Šipka nahoru (drawer zavřen) */
+#bn-skladby::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid var(--barva);
+  opacity: 0.55;
+  transition: opacity .2s, border .15s;
+}
+
+/* Šipka dolů (drawer otevřen) */
+#bn-skladby.drawer-open::before {
+  border-bottom: none;
+  border-top: 5px solid var(--barva);
+  opacity: 1;
+}
+
+/* bn-skladby nesdílí žlutý .bnav.active highlight — pojistka */
+#bn-skladby.active {
+  color: var(--barva) !important;
+}
+#bn-skladby.active img.bi {
+  filter: drop-shadow(0 0 5px var(--barva)) !important;
+}
+
 /* Val drawer (mobil) */
 #val-drawer {
   display: none; position: fixed; bottom: var(--bottom-h); left: 0; 
@@ -895,7 +943,15 @@ if (typeof mobilePanel === 'undefined') {
 
 if (typeof toggleValDrawer === 'undefined') {
     window.toggleValDrawer = function() {
-        $('#val-drawer').toggleClass('open');
+        var d    = document.getElementById('val-drawer');
+        var btnS = document.getElementById('bn-skladby');
+        $(d).toggleClass('open');
+        var isOpen = d.classList.contains('open');
+        if (btnS) btnS.classList.toggle('drawer-open', isOpen);
+        // bn-skladby nikdy nedostane 'active' — obnovit panelové tlačítko
+        $('.bnav').removeClass('active');
+        var prev = document.getElementById('bn-' + ((typeof VZ !== 'undefined' && VZ.aktivniMobPanel) || 'text'));
+        if (prev) prev.classList.add('active');
     };
 }
 

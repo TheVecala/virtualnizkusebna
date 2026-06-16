@@ -106,15 +106,18 @@ function mobilePanel(panel, el) {
 
 // ── Val drawer ──
 function toggleValDrawer() {
-  var d = document.getElementById('val-drawer');
+  var d    = document.getElementById('val-drawer');
+  var btnS = document.getElementById('bn-skladby');
   d.classList.toggle('open');
+  var isOpen = d.classList.contains('open');
+
+  // bn-skladby nikdy nezíská 'active' — jen 'drawer-open' pro vizuální šipku
+  if (btnS) btnS.classList.toggle('drawer-open', isOpen);
+
+  // Panelová tlačítka: vždy zachovat aktivní panel (bez ohledu na drawer)
   document.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
-  if (d.classList.contains('open')) {
-    document.getElementById('bn-skladby').classList.add('active');
-  } else {
-    var prev = document.getElementById('bn-' + VZ.aktivniMobPanel);
-    if (prev) prev.classList.add('active');
-  }
+  var prev = document.getElementById('bn-' + VZ.aktivniMobPanel);
+  if (prev) prev.classList.add('active');
 }
 
 document.addEventListener('click', function(e) {
@@ -123,6 +126,7 @@ document.addEventListener('click', function(e) {
   if (!drawer || !btn) return;
   if (!drawer.contains(e.target) && !btn.contains(e.target) && drawer.classList.contains('open')) {
     drawer.classList.remove('open');
+    btn.classList.remove('drawer-open');
     document.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
     var prev = document.getElementById('bn-' + VZ.aktivniMobPanel);
     if (prev) prev.classList.add('active');
