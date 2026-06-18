@@ -163,6 +163,15 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   background: #2a3a10; color: #a7d050; border: 1px solid #4a6a20;
   border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 3px;
 }
+#nav-skladby-tab {
+  display: none; align-items: center; gap: 2px;
+  color: var(--barva); font-size: 12px; padding: 5px 8px; text-decoration: none; font-weight: 500;
+}
+#nav-napady-tab {
+  display: none; align-items: center; gap: 2px;
+  color: var(--muted); font-size: 12px; padding: 5px 8px; text-decoration: none;
+}
+#nav-napady-tab.active { color: var(--barva); }
 
 /* ── SIDEBAR ── */
 #sidebar {
@@ -314,7 +323,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .btn-vz.primary { background: #2a3a10; border-color: var(--barva); color: var(--barva); }
 
 /* ── BOTTOM NAV ── */
-#bottom-nav {
+#bottom-nav, #bottom-nav-tab {
   display: none; position: fixed; bottom: 0; left: 0; right: 0;
   height: var(--bottom-h); background: var(--tmava);
   border-top: 1px solid var(--border); z-index: 1000;
@@ -324,7 +333,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   flex: 1; display: flex; flex-direction: column; align-items: center;
   justify-content: center; gap: 4px; color: var(--muted); font-size: 10px;
   cursor: pointer; border: none; background: none; transition: all .15s;
-  padding: 6px 0;
+  padding: 6px 0; text-align: center; line-height: 1.3;
 }
 .bnav img.bi {
   width: 24px;
@@ -358,6 +367,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   margin-left: 3px;
 }
 
+/* ── TABLET: dvě poloviny dolní lišty, každá se 4 tlačítky pro svůj panel ── */
+.tab-footer { display: flex; flex: 1; }
+.tab-footer .bnav { flex: 1; }
+.tab-footer-divider { width: 1px; background: var(--border); flex-shrink: 0; margin: 8px 0; }
+
 /* Val drawer (mobil) */
 #val-drawer {
   display: none; position: fixed; bottom: var(--bottom-h); left: 0; 
@@ -383,8 +397,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #sidebar { display: none; }
   #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
   #bottom-nav { display: flex; }
+  #bottom-nav-tab { display: none; }
   .topnav { display: none; }
   .topbar-mob-actions { display: flex; }
+  #nav-skladby-tab { display: none; }
+  #nav-napady-tab { display: none; }
   #topbar-val { font-size: 11px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #content-area { flex-direction: column; }
   .panel { display: none !important; border-right: none; border-bottom: 1px solid var(--border); }
@@ -398,45 +415,36 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 @media (min-width: 768px) and (max-width: 1199px) {
   #sidebar { display: none; }
   #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
-  #bottom-nav { display: flex; }
+  #bottom-nav { display: none; }
+  #bottom-nav-tab { display: flex; }
   .topnav { display: none; }
   .topbar-mob-actions { display: flex; }
+  #nav-skladby-tab { display: inline-flex; }
+  #nav-napady-tab { display: inline-flex; }
   #content-area { flex-direction: row; }
-  
+
   /* Skryjeme výchozí zobrazení všech */
   .panel { display: none !important; width: 50%; }
-  
-  /* A) Vybrán Text nebo Tabelatura -> Zobrazí se TEXT + TABELATURA */
-  #content-area[data-active-panel="text"] #panel-text,
-  #content-area[data-active-panel="text"] #panel-tabelatura,
-  #content-area[data-active-panel="tabelatura"] #panel-text,
-  #content-area[data-active-panel="tabelatura"] #panel-tabelatura {
-    display: flex !important;
+
+  /* Levá polovina — kterýkoli ze 4 typů obsahu, řízeno footerem levého panelu */
+  #content-area[data-left="text"] #panel-text,
+  #content-area[data-left="tabelatura"] #panel-tabelatura,
+  #content-area[data-left="nahravky"] #panel-nahravky,
+  #content-area[data-left="diskuse"] #panel-diskuse {
+    display: flex !important; order: 1;
   }
-  
-  /* B) Vybrány Nahrávky -> TABELATURA + NAHRÁVKY */
-  #content-area[data-active-panel="nahravky"] #panel-tabelatura,
-  #content-area[data-active-panel="nahravky"] #panel-nahravky {
-    display: flex !important;
+
+  /* Pravá polovina — nezávisle na levé, řízeno footerem pravého panelu */
+  #content-area[data-right="text"] #panel-text,
+  #content-area[data-right="tabelatura"] #panel-tabelatura,
+  #content-area[data-right="nahravky"] #panel-nahravky,
+  #content-area[data-right="diskuse"] #panel-diskuse {
+    display: flex !important; order: 2;
   }
-  
-  /* C) Vybrána Diskuse -> Zobrazí se NAHRÁVKY + DISKUSE */
-  #content-area[data-active-panel="diskuse"] #panel-nahravky,
-  #content-area[data-active-panel="diskuse"] #panel-diskuse {
-    display: flex !important;
-  }
-  
-  /* D) Vybrány Nápady -> Zobrazí se NAHRÁVKY + NÁPADY */
-  #content-area[data-active-panel="napady"] #panel-nahravky,
-  #content-area[data-active-panel="napady"] #panel-napady {
-    display: flex !important;
-  }
-  
-  /* Záchranný fallback (pokud není atribut nastaven, ukážeme základní dvojici) */
-  #content-area:not([data-active-panel]) #panel-text,
-  #content-area:not([data-active-panel]) #panel-tabelatura {
-    display: flex !important;
-  }
+
+  /* Nápady: solo režim přes celou šířku (otevřeno z horní lišty), nahrazuje obě poloviny */
+  #content-area[data-napady-open] .panel { display: none !important; }
+  #content-area[data-napady-open] #panel-napady { display: flex !important; width: 100%; }
 }
 
 /* 3. DESKTOP (od 1200px výše): Všechny čtyři panely vedle sebe + trvalý sidebar */
@@ -444,6 +452,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #sidebar { display: flex; }
   #main { margin-left: var(--sidebar-w); }
   #bottom-nav { display: none; }
+  #bottom-nav-tab { display: none; }
   #content-area { flex-direction: row; }
   /* Přidán i panel-tabelatura */
   #panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse { display: flex; }
@@ -504,6 +513,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
   <div class="topbar-mob-actions">
+    <a href="#" id="nav-skladby-tab" onclick="toggleValDrawer();return false">skladby</a>
+    <a href="#" id="nav-napady-tab" onclick="tabletNapady(this);return false">nápady <span class="napady-badge">DK</span></a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">about</a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">odhlásit</a>
   </div>
@@ -691,6 +702,39 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   <button class="bnav" id="bn-napady" onclick="mobilePanel('napady',this)">
     <img src="meat/ikona_napady.png" class="bi" alt="nápady">nápady
   </button>
+</div>
+
+<!-- ── BOTTOM NAV (TABLET: vlastní 4 tlačítka pro levý a pravý panel) ── -->
+<div id="bottom-nav-tab">
+  <div class="tab-footer" id="tab-footer-left">
+    <button class="bnav active" data-panel="text" onclick="tabletPick('left','text',this)">
+      <img src="meat/ikona_text.png" class="bi" alt="text">text
+    </button>
+    <button class="bnav" data-panel="tabelatura" onclick="tabletPick('left','tabelatura',this)">
+      <img src="meat/drinking2.png" class="bi" alt="tabelatura">taby
+    </button>
+    <button class="bnav" data-panel="nahravky" onclick="tabletPick('left','nahravky',this)">
+      <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
+    </button>
+    <button class="bnav" data-panel="diskuse" onclick="tabletPick('left','diskuse',this)">
+      <img src="meat/ikona_diskuse.png" class="bi" alt="diskuse">diskuse
+    </button>
+  </div>
+  <div class="tab-footer-divider"></div>
+  <div class="tab-footer" id="tab-footer-right">
+    <button class="bnav" data-panel="text" onclick="tabletPick('right','text',this)">
+      <img src="meat/ikona_text.png" class="bi" alt="text">text
+    </button>
+    <button class="bnav active" data-panel="tabelatura" onclick="tabletPick('right','tabelatura',this)">
+      <img src="meat/drinking2.png" class="bi" alt="tabelatura">taby
+    </button>
+    <button class="bnav" data-panel="nahravky" onclick="tabletPick('right','nahravky',this)">
+      <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
+    </button>
+    <button class="bnav" data-panel="diskuse" onclick="tabletPick('right','diskuse',this)">
+      <img src="meat/ikona_diskuse.png" class="bi" alt="diskuse">diskuse
+    </button>
+  </div>
 </div>
 
 <!-- VAL DRAWER (mobil) -->
@@ -885,11 +929,9 @@ function looperZavrit() {
 <script>
 $(document).on('click', '.bnav', function() {
     var id = $(this).attr('id');
-    if (id) {
-        var panelId = id.replace('bn-', '');
-        if (panelId === 'skladby') return; 
-        $('#content-area').attr('data-active-panel', panelId);
-    }
+    if (!id || id === 'bn-skladby') return;
+    var panelId = id.replace('bn-', '');
+    $('#content-area').attr('data-active-panel', panelId);
 });
 
 if (typeof mobilePanel === 'undefined') {
@@ -914,6 +956,46 @@ if (typeof toggleValDrawer === 'undefined') {
     window.toggleValDrawer = function() {
         $('#val-drawer').toggleClass('open');
         // bn-skladby se vůbec nedotýká active logiky panelových tlačítek
+    };
+}
+
+if (typeof tabletPick === 'undefined') {
+    window.tabletPick = function(strana, panelId, btn) {
+        var druha = strana === 'left' ? 'right' : 'left';
+        if (typeof VZ === 'undefined') return;
+        VZ.tabPanels = VZ.tabPanels || { left: 'text', right: 'tabelatura' };
+        var aktualni = VZ.tabPanels;
+
+        if (aktualni[druha] === panelId) {
+            aktualni[druha] = aktualni[strana];
+            $('#tab-footer-' + druha + ' .bnav').removeClass('active');
+            $('#tab-footer-' + druha + ' .bnav[data-panel="' + aktualni[druha] + '"]').addClass('active');
+        }
+        aktualni[strana] = panelId;
+
+        var $ca = $('#content-area');
+        $ca.removeAttr('data-napady-open');
+        $ca.attr('data-left', aktualni.left);
+        $ca.attr('data-right', aktualni.right);
+        $('#nav-napady-tab').removeClass('active');
+
+        if (btn) {
+            $('#tab-footer-' + strana + ' .bnav').removeClass('active');
+            $(btn).addClass('active');
+        }
+    };
+}
+
+if (typeof tabletNapady === 'undefined') {
+    window.tabletNapady = function(link) {
+        var jeOtevreno = $(link).hasClass('active');
+        if (jeOtevreno) {
+            $(link).removeClass('active');
+            $('#content-area').removeAttr('data-napady-open');
+        } else {
+            $(link).addClass('active');
+            $('#content-area').attr('data-napady-open', '1');
+        }
     };
 }
 

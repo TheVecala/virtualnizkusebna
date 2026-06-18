@@ -113,9 +113,68 @@ function toggleValDrawer() {
 document.addEventListener('click', function(e) {
   var drawer = document.getElementById('val-drawer');
   var btn    = document.getElementById('bn-skladby');
-  if (!drawer || !btn) return;
-  if (!drawer.contains(e.target) && !btn.contains(e.target) && drawer.classList.contains('open')) {
+  var btnTab = document.getElementById('nav-skladby-tab');
+  if (!drawer) return;
+  var naSpoustec = (btn && btn.contains(e.target)) || (btnTab && btnTab.contains(e.target));
+  if (!drawer.contains(e.target) && !naSpoustec && drawer.classList.contains('open')) {
     drawer.classList.remove('open');
+  }
+});
+
+// ── Tablet: levý a pravý panel, každý se svými 4 tlačítky ──
+var TABLET_DEFAULT = { left: 'text', right: 'tabelatura' };
+
+function tabletPick(strana, panelId, btn) {
+  var druha = strana === 'left' ? 'right' : 'left';
+  VZ.tabPanels = VZ.tabPanels || {};
+  var aktualni = Object.assign({}, TABLET_DEFAULT, VZ.tabPanels);
+
+  // Stejný obsah už běží na druhé straně -> prohodit, aby nezmizel
+  if (aktualni[druha] === panelId) {
+    aktualni[druha] = aktualni[strana];
+    var druhyFooter = document.getElementById('tab-footer-' + druha);
+    if (druhyFooter) {
+      druhyFooter.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
+      var noveTl = druhyFooter.querySelector('.bnav[data-panel="' + aktualni[druha] + '"]');
+      if (noveTl) noveTl.classList.add('active');
+    }
+  }
+  aktualni[strana] = panelId;
+  VZ.tabPanels = aktualni;
+
+  var ca = document.getElementById('content-area');
+  ca.removeAttribute('data-napady-open');
+  ca.setAttribute('data-left', aktualni.left);
+  ca.setAttribute('data-right', aktualni.right);
+
+  var napadyLink = document.getElementById('nav-napady-tab');
+  if (napadyLink) napadyLink.classList.remove('active');
+
+  if (btn) {
+    var tentoFooter = document.getElementById('tab-footer-' + strana);
+    if (tentoFooter) tentoFooter.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+}
+
+function tabletNapady(link) {
+  var jeOtevreno = link.classList.contains('active');
+  var ca = document.getElementById('content-area');
+
+  if (jeOtevreno) {
+    link.classList.remove('active');
+    ca.removeAttribute('data-napady-open');
+  } else {
+    link.classList.add('active');
+    ca.setAttribute('data-napady-open', '1');
+  }
+}
+
+$(function() {
+  var ca = document.getElementById('content-area');
+  if (ca && !ca.hasAttribute('data-left')) {
+    ca.setAttribute('data-left', TABLET_DEFAULT.left);
+    ca.setAttribute('data-right', TABLET_DEFAULT.right);
   }
 });
 
