@@ -91,7 +91,7 @@ function toggleDesktopPanel(panelId, btn) {
 // ── Mobil: přepínání panelů ──
 function mobilePanel(panel, el) {
   document.getElementById('val-drawer').classList.remove('open');
-  document.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.bnav:not(#bn-skladby)').forEach(function(b) { b.classList.remove('active'); });
   if (el) el.classList.add('active');
   VZ.aktivniMobPanel = panel;
 
@@ -104,16 +104,18 @@ function mobilePanel(panel, el) {
   document.getElementById('panel-' + panel).classList.add('mob-active');
 }
 
-// ── Val drawer (otevírá se klikem na #topbar-val — mobil i tablet) ──
+// ── Val drawer (otevírá se klikem na #topbar-val nebo #bn-skladby) ──
 function toggleValDrawer() {
   document.getElementById('val-drawer').classList.toggle('open');
 }
 
 document.addEventListener('click', function(e) {
-  var drawer  = document.getElementById('val-drawer');
-  var trigger = document.getElementById('topbar-val');
+  var drawer   = document.getElementById('val-drawer');
+  var trigger1 = document.getElementById('topbar-val');
+  var trigger2 = document.getElementById('bn-skladby');
   if (!drawer) return;
-  var naSpoustec = trigger && trigger.contains(e.target);
+  var naSpoustec = (trigger1 && trigger1.contains(e.target)) ||
+                   (trigger2 && trigger2.contains(e.target));
   if (!drawer.contains(e.target) && !naSpoustec && drawer.classList.contains('open')) {
     drawer.classList.remove('open');
   }

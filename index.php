@@ -358,6 +358,22 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   filter: drop-shadow(0 0 5px var(--accent));
 }
 
+/* ── SKLADBY (mobil): vizuálně oddělené od panelových tlačítek ── */
+#bn-skladby {
+  color: var(--barva);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 5px 2px 5px 6px;
+  background: rgba(255,255,255,0.03);
+  flex-shrink: 0;
+}
+#bn-skladby + .bnav {
+  border-left: 1px solid var(--border);
+  margin-left: 3px;
+}
+/* bn-skladby nesdílí yellow active highlight */
+#bn-skladby.active { color: var(--barva) !important; }
+
 /* ── TABLET: dvě poloviny dolní lišty, každá se 4 tlačítky pro svůj panel ── */
 .tab-footer { display: flex; flex: 1; }
 .tab-footer .bnav { flex: 1; }
@@ -681,6 +697,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 <!-- ── BOTTOM NAV ── -->
 <div id="bottom-nav">
+  <button class="bnav" id="bn-skladby" onclick="toggleValDrawer()">
+    <img src="meat/ikona_skladby.png" class="bi" alt="skladby">skladby
+  </button>
   <button class="bnav active" id="bn-text" onclick="mobilePanel('text',this)">
     <img src="meat/ikona_text.png" class="bi" alt="text">text
   </button>
@@ -924,7 +943,7 @@ function looperZavrit() {
 <script>
 $(document).on('click', '.bnav', function() {
     var id = $(this).attr('id');
-    if (!id) return;
+    if (!id || id === 'bn-skladby') return;
     var panelId = id.replace('bn-', '');
     $('#content-area').attr('data-active-panel', panelId);
 });
@@ -934,7 +953,7 @@ if (typeof mobilePanel === 'undefined') {
         $('.panel').removeClass('mob-active');
         $('#panel-' + panelId).addClass('mob-active');
 
-        $('.bnav').removeClass('active');
+        $('.bnav:not(#bn-skladby)').removeClass('active');
         if (btn) {
             $(btn).addClass('active');
         } else {
