@@ -149,8 +149,19 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   font-size: 12px; color: var(--text);
   background: var(--card); border: 1px solid var(--border);
   border-radius: 5px; padding: 2px 9px; white-space: nowrap;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background .15s;
 }
-#topbar-val::before { content: ''; }
+#topbar-val:hover { background: var(--border); }
+#topbar-val::after {
+  content: '';
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--muted);
+  flex-shrink: 0;
+}
 .topnav { display: flex; gap: 2px; margin-left: auto; }
 .topbar-mob-actions { display: none; gap: 2px; margin-left: auto; }
 .topnav a {
@@ -162,10 +173,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .napady-badge {
   background: #2a3a10; color: #a7d050; border: 1px solid #4a6a20;
   border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 3px;
-}
-#nav-skladby-tab {
-  display: none; align-items: center; gap: 2px;
-  color: var(--barva); font-size: 12px; padding: 5px 8px; text-decoration: none; font-weight: 500;
 }
 #nav-napady-tab {
   display: none; align-items: center; gap: 2px;
@@ -351,22 +358,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   filter: drop-shadow(0 0 5px var(--accent));
 }
 
-/* ── SKLADBY: navigační tlačítko, vizuálně oddělené od panelových ── */
-#bn-skladby {
-  color: var(--barva);                                /* barva kapely, ne --muted */
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin: 5px 2px 5px 6px;
-  background: rgba(255,255,255,0.03);
-  flex-shrink: 0;
-}
-
-/* Oddělovač — čára vlevo od prvního panelového tlačítka */
-#bn-skladby + .bnav {
-  border-left: 1px solid var(--border);
-  margin-left: 3px;
-}
-
 /* ── TABLET: dvě poloviny dolní lišty, každá se 4 tlačítky pro svůj panel ── */
 .tab-footer { display: flex; flex: 1; }
 .tab-footer .bnav { flex: 1; }
@@ -400,7 +391,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #bottom-nav-tab { display: none; }
   .topnav { display: none; }
   .topbar-mob-actions { display: flex; }
-  #nav-skladby-tab { display: none; }
   #nav-napady-tab { display: none; }
   #topbar-val { font-size: 11px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #content-area { flex-direction: column; }
@@ -419,7 +409,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #bottom-nav-tab { display: flex; }
   .topnav { display: none; }
   .topbar-mob-actions { display: flex; }
-  #nav-skladby-tab { display: inline-flex; }
   #nav-napady-tab { display: inline-flex; }
   #content-area { flex-direction: row; }
 
@@ -454,6 +443,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #bottom-nav { display: none; }
   #bottom-nav-tab { display: none; }
   #content-area { flex-direction: row; }
+  /* Sidebar už řeší výběr skladby, klik na topbar-val tu nic neotvírá */
+  #topbar-val { cursor: default; pointer-events: none; }
+  #topbar-val::after { display: none; }
   /* Přidán i panel-tabelatura */
   #panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse { display: flex; }
 }
@@ -500,7 +492,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   <span class="brand">/</span>
   <span class="brand">DK</span>
   <span class="brand">/</span>
-  <span id="topbar-val"><?php echo htmlspecialchars($nazev_valu); ?></span>
+  <span id="topbar-val" onclick="toggleValDrawer()"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
     <a href="#" class="active" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
     <a href="#" class="active" id="nav-tabelatura" onclick="toggleDesktopPanel('tabelatura',this);return false">tabelatura</a>
@@ -513,7 +505,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
   <div class="topbar-mob-actions">
-    <a href="#" id="nav-skladby-tab" onclick="toggleValDrawer();return false">skladby</a>
     <a href="#" id="nav-napady-tab" onclick="tabletNapady(this);return false">nápady <span class="napady-badge">DK</span></a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">about</a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">odhlásit</a>
@@ -683,9 +674,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 <!-- ── BOTTOM NAV ── -->
 <div id="bottom-nav">
-  <button class="bnav" id="bn-skladby" onclick="toggleValDrawer()">
-    <img src="meat/ikona_skladby.png" class="bi" alt="skladby">skladby
-  </button>
   <button class="bnav active" id="bn-text" onclick="mobilePanel('text',this)">
     <img src="meat/ikona_text.png" class="bi" alt="text">text
   </button>
@@ -929,7 +917,7 @@ function looperZavrit() {
 <script>
 $(document).on('click', '.bnav', function() {
     var id = $(this).attr('id');
-    if (!id || id === 'bn-skladby') return;
+    if (!id) return;
     var panelId = id.replace('bn-', '');
     $('#content-area').attr('data-active-panel', panelId);
 });
@@ -939,8 +927,7 @@ if (typeof mobilePanel === 'undefined') {
         $('.panel').removeClass('mob-active');
         $('#panel-' + panelId).addClass('mob-active');
 
-        // bn-skladby se vůbec nedotýká active logiky panelových tlačítek
-        $('.bnav:not(#bn-skladby)').removeClass('active');
+        $('.bnav').removeClass('active');
         if (btn) {
             $(btn).addClass('active');
         } else {
@@ -955,7 +942,6 @@ if (typeof mobilePanel === 'undefined') {
 if (typeof toggleValDrawer === 'undefined') {
     window.toggleValDrawer = function() {
         $('#val-drawer').toggleClass('open');
-        // bn-skladby se vůbec nedotýká active logiky panelových tlačítek
     };
 }
 
