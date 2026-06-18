@@ -432,8 +432,15 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   }
 
   /* Nápady: solo režim přes celou šířku (otevřeno z horní lišty), nahrazuje obě poloviny */
-  #content-area[data-napady-open] .panel { display: none !important; }
-  #content-area[data-napady-open] #panel-napady { display: flex !important; width: 100%; }
+  #content-area[data-napady-open] #panel-text,
+  #content-area[data-napady-open] #panel-tabelatura,
+  #content-area[data-napady-open] #panel-nahravky,
+  #content-area[data-napady-open] #panel-diskuse {
+    display: none !important;
+  }
+  #content-area[data-napady-open] #panel-napady {
+    display: flex !important; width: 100%; order: 0;
+  }
 }
 
 /* 3. DESKTOP (od 1200px výše): Všechny čtyři panely vedle sebe + trvalý sidebar */
