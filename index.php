@@ -367,7 +367,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 #val-drawer {
   display: none; position: fixed; bottom: var(--bottom-h); left: 0; 
   background: var(--tmava); border-top: 1px solid var(--border);
-  max-height: 90vh; overflow-y: auto; z-index: 999; padding: 8px;
+  max-height: calc(100vh - var(--top-h) - var(--bottom-h)); overflow-y: auto; z-index: 999; padding: 8px;
 }
 #val-drawer.open { display: block; }
 .dval {
