@@ -2,30 +2,26 @@
 error_reporting(0);
 require_once __DIR__ . '/../config.php';
 
+header('Content-Type: application/json; charset=utf-8');
+
 if (!ma_pravo('edit_text')) {
-    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
+    echo json_encode(["ok" => false, "vysledek" => "chyba - nemáte oprávnění"]);
+    exit;
 }
-
-$adresa_pro_navrat = $_POST["navrat"] ?? "/";
-
-
 
 $akordy        = $_POST["editor"] ?? "";
 $nazev_souboru = basename($_POST["soubor_akordu"] ?? "akordy.txt");
 
 // Ochrana proti prázdnému obsahu
 if (trim($akordy) === "") {
-    $_SESSION['vysledek'] = "chyba - nelze uložit prázdný text (předchozí verze zachována)";
-    require "navrat.php";
+    echo json_encode(["ok" => false, "vysledek" => "chyba - nelze uložit prázdný text (předchozí verze zachována)"]);
     exit;
 }
 
 // Pouze .txt soubory
 $pripona = strtolower(pathinfo($nazev_souboru, PATHINFO_EXTENSION));
 if ($pripona !== "txt") {
-    $_SESSION['vysledek'] = "chyba - lze ukládat pouze .txt soubory";
-    require "navrat.php";
+    echo json_encode(["ok" => false, "vysledek" => "chyba - lze ukládat pouze .txt soubory"]);
     exit;
 }
 
@@ -35,8 +31,7 @@ $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";
 $slozka_souboru    = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 
 if (empty($kapela) || empty($befelemepesseveze) || empty($slozka_souboru)) {
-    $_SESSION['vysledek'] = "chyba - chybí kontext skladby";
-    require "navrat.php";
+    echo json_encode(["ok" => false, "vysledek" => "chyba - chybí kontext skladby"]);
     exit;
 }
 
@@ -44,8 +39,7 @@ $slozka_textu = "../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . 
 $soubor       = $slozka_textu . $nazev_souboru;
 
 if (!file_exists($soubor)) {
-    $_SESSION['vysledek'] = "chyba - soubor " . $nazev_souboru . " neexistuje";
-    require "navrat.php";
+    echo json_encode(["ok" => false, "vysledek" => "chyba - soubor " . $nazev_souboru . " neexistuje"]);
     exit;
 }
 
@@ -71,9 +65,7 @@ if ($zalohy && count($zalohy) > 20) {
 
 // ── Uložení ──
 if (file_put_contents($soubor, $akordy) !== false) {
-    $_SESSION['vysledek'] = "text uložen";
+    echo json_encode(["ok" => true, "vysledek" => "text uložen"]);
 } else {
-    $_SESSION['vysledek'] = "chyba - text se nepodařilo uložit";
+    echo json_encode(["ok" => false, "vysledek" => "chyba - text se nepodařilo uložit"]);
 }
-
-require "navrat.php";
