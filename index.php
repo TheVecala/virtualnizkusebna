@@ -459,18 +459,22 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   }
 }
 
-/* 3. DESKTOP (od 1200px výše): Všechny čtyři panely vedle sebe + trvalý sidebar */
+/* 3. DESKTOP (od 1200px): tři panely vedle sebe + trvalý sidebar */
 @media (min-width: 1200px) {
   #sidebar { display: flex; }
   #main { margin-left: var(--sidebar-w); }
   #bottom-nav { display: none; }
   #bottom-nav-tab { display: none; }
   #content-area { flex-direction: row; }
-  /* Sidebar už řeší výběr skladby, klik na topbar-val tu nic neotvírá */
   #topbar-val { cursor: default; pointer-events: none; }
   #topbar-val::after { display: none; }
-  /* Přidán i panel-tabelatura */
-  #panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse { display: flex; }
+  #panel-text, #panel-tabelatura, #panel-nahravky { display: flex; }
+  #panel-diskuse { display: none; }
+}
+
+/* 4. XL (od 1800px): čtyři panely — přidají se i poznámky */
+@media (min-width: 1800px) {
+  #panel-diskuse { display: flex; }
 }
 
 /* ── Progress bar ── */
