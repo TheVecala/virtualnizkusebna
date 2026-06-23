@@ -208,7 +208,11 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
             <button class="fbtn looper-btn"
                     data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
                     data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
-                    title="Otevřít v looperu">Looper</button>
+                    title="Otevřít křivku nahrávky">Looper</button>
+			<button class="fbtn poznamky-btn"
+                    data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
+                    title="zobrazit prudící seznam">Poznámky</button>		
+					
           <?php endif; ?>
 
           <button class="fbtn presunout-btn"
@@ -230,6 +234,21 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
                   data-toggle="modal" 
                   data-target="#modal_delete" 
                   title="Smazat">Smazat</button>
+
+        </div>
+		
+		<div class="poznamky-panel"
+			 data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
+			 style="display:none;margin-top:12px;">
+
+			<div class="poznamky-seznam"></div>
+
+			<?php if ($je_audio): ?>
+			<button class="fbtn pridat-poznamku-btn"
+					data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
+				Přidat poznámku k aktuálnímu času
+			</button>
+			<?php endif; ?>
 
         </div>
         

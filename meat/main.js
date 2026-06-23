@@ -756,3 +756,85 @@ $(document).on('click', '.vzk-del-yes-btn', function() {
     $card.find('.vzk-confirm-wrap').html('<span style="color:#ff8888">Chyba spojení</span>');
   });
 });
+
+//  -------------------
+
+$(document).on('click', '.poznamky-btn', function() {
+
+    let panel = $(this)
+        .closest('.nahravka-vysuvna')
+        .find('.poznamky-panel');
+
+    panel.toggle();
+
+    if(panel.is(':visible'))
+    {
+        loadRecordingNotes(panel);
+    }
+});
+
+function loadRecordingNotes(panel)
+{
+    $.post(
+        'php/ajax/ajax_nahravka_poznamky.php',
+        {
+            akce: 'list',
+            file_path: panel.data('cesta')
+        },
+        function(html)
+        {
+            panel.find('.poznamky-seznam').html(html);
+        }
+    );
+}
+
+$(document).on('click', '.pridat-poznamku-btn', function() {
+
+    let panel = $(this).closest('.poznamky-panel');
+
+    let audio = $(this)
+        .closest('.nahravka-vysuvna')
+        .find('audio')[0];
+
+    let cas = 0;
+
+    if(audio)
+    {
+        cas = Math.round(audio.currentTime * 1000);
+    }
+
+    let text = prompt('Poznámka');
+
+    if(!text)
+    {
+        return;
+    }
+
+    $.post(
+        'php/ajax/ajax_nahravka_poznamky.php',
+        {
+            akce: 'add',
+            file_path: panel.data('cesta'),
+            cas: cas,
+            poznamka: text
+        },
+        function()
+        {
+            loadRecordingNotes(panel);
+        }
+    );
+});
+
+$(document).on('click', '.note-time', function() {
+
+    let ms = parseInt($(this).data('ms'));
+
+    let audio = $(this)
+        .closest('.nahravka-vysuvna')
+        .find('audio')[0];
+
+    if(audio)
+    {
+        audio.currentTime = ms / 1000;
+    }
+});
