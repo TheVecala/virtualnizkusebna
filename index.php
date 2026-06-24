@@ -575,6 +575,17 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
       <div id="waveform"></div>
     </div>
 
+	<div id="looper-notes" style="
+    display:none;
+    max-height:120px;
+    overflow-y:auto;
+    padding:8px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:6px;
+    font-size:12px;">
+    </div>
+	
     <!-- 2. ŘÁDEK: Ovládací prvky zarovnané pod vlnou -->
     <div class="looper-ovladani-rada">
       <div class="lctrl">
@@ -853,7 +864,7 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
     var cesta = $(this).data('cesta');
     var nazev = $(this).data('nazev');
 	looperCurrentFile = cesta;
-    
+    loadLooperNotes(cesta);
     // Zobrazíme looper bar a resetujeme stav
     $('#looper-bar').removeClass('hidden');
     $('#lname').text(nazev);
@@ -940,6 +951,7 @@ function looperZavrit() {
         wavesurfer = null;
     }
 	looperCurrentFile = null;
+	$('#looper-notes').hide().empty();
     $('#looper-bar').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
@@ -1091,22 +1103,26 @@ if (typeof otevritEditText === 'undefined') {
     };
 }
 
-
-
-function jumpToTimestamp(ms, filePath)
+function loadLooperNotes(filePath)
 {
-    // pokud je otevřený looper se stejným souborem
-    if (
-        wavesurfer &&
-        looperCurrentFile === filePath
-    )
-    {
-        wavesurfer.setTime(ms / 1000);
+    $.post(
+        'php/ajax/ajax_nahravka_poznamky.php',
+        {
+            akce: 'list',
+            file_path: filePath,
+            looper: 1
+        },
+        function(html)
+        {
+            $('#looper-notes')
+                .html(html)
+                .show();
+        }
+    );
+}
 
-        return;
-    }
-
-    // jinak klasický audio přehrávač
+ function jumpToTimestamp(ms, filePath)
+{
     $('.poznamky-panel').each(function() {
 
         if ($(this).data('cesta') !== filePath)

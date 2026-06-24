@@ -846,3 +846,15 @@ $(document).on('click', '.note-time', function() {
     );
 
 });
+
+$(document).on('click', '.looper-note-time', function() {
+
+    if (!wavesurfer)
+    {
+        return;
+    }
+
+    wavesurfer.setTime(
+        parseInt($(this).data('ms')) / 1000
+    );
+});
