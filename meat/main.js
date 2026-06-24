@@ -796,12 +796,25 @@ $(document).on('click', '.pridat-poznamku-btn', function() {
         .closest('.nahravka-vysuvna')
         .find('audio')[0];
 
-    let cas = 0;
+let cas = 0;
 
-    if(audio)
-    {
-        cas = Math.round(audio.currentTime * 1000);
-    }
+if (
+    typeof wavesurfer !== 'undefined' &&
+    wavesurfer &&
+    typeof looperCurrentFile !== 'undefined' &&
+    looperCurrentFile === panel.data('cesta')
+)
+{
+    cas = Math.round(
+        wavesurfer.getCurrentTime() * 1000
+    );
+}
+else if (audio)
+{
+    cas = Math.round(
+        audio.currentTime * 1000
+    );
+}
 
     let text = prompt('Poznámka');
 
@@ -827,14 +840,9 @@ $(document).on('click', '.pridat-poznamku-btn', function() {
 
 $(document).on('click', '.note-time', function() {
 
-    let ms = parseInt($(this).data('ms'));
+    jumpToTimestamp(
+        parseInt($(this).data('ms')),
+        $(this).data('file')
+    );
 
-    let audio = $(this)
-        .closest('.nahravka-vysuvna')
-        .find('audio')[0];
-
-    if(audio)
-    {
-        audio.currentTime = ms / 1000;
-    }
 });

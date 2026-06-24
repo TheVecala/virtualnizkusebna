@@ -52,6 +52,7 @@ if ($akce == "list")
         <div class="note-row" style="padding:4px 0;">
             <span class="note-time"
                   data-ms="'.$ms.'"
+				  data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'"
                   style="cursor:pointer;font-weight:bold;color:#7fbfff;">
                   '.$cas_text.'
             </span>

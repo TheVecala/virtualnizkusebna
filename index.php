@@ -846,11 +846,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 var wavesurfer = null;
 var isLooping = false;
+var looperCurrentFile = null;
 
 // Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
 $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
     var cesta = $(this).data('cesta');
     var nazev = $(this).data('nazev');
+	looperCurrentFile = cesta;
     
     // Zobrazíme looper bar a resetujeme stav
     $('#looper-bar').removeClass('hidden');
@@ -937,6 +939,7 @@ function looperZavrit() {
         wavesurfer.destroy();
         wavesurfer = null;
     }
+	looperCurrentFile = null;
     $('#looper-bar').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
@@ -1087,6 +1090,44 @@ if (typeof otevritEditText === 'undefined') {
         $('#modal_zmenit_text').modal('show');
     };
 }
+
+
+
+function jumpToTimestamp(ms, filePath)
+{
+    // pokud je otevřený looper se stejným souborem
+    if (
+        wavesurfer &&
+        looperCurrentFile === filePath
+    )
+    {
+        wavesurfer.setTime(ms / 1000);
+
+        return;
+    }
+
+    // jinak klasický audio přehrávač
+    $('.poznamky-panel').each(function() {
+
+        if ($(this).data('cesta') !== filePath)
+        {
+            return;
+        }
+
+        let audio = $(this)
+            .closest('.nahravka-vysuvna')
+            .find('audio')[0];
+
+        if (audio)
+        {
+            audio.currentTime = ms / 1000;
+        }
+    });
+}
+
+
+
+
 </script>
 
 <script src="meat/main.js"></script>
