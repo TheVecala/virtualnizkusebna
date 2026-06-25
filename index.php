@@ -116,6 +116,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <title>Virtuální zkušebna</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
       xintegrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <link href="css/sticky-footer-navbar.css" rel="stylesheet">
 <style>
 /* ── Proměnné ── */

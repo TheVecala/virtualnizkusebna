@@ -107,51 +107,78 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   margin-top: 10px;
 }
 
-/* Automaticky rozdělí šířku roletky rovnoměrně mezi všechny potomky (button i odkaz) */
-.vysuvna-tlacitka > button,
-.vysuvna-tlacitka > a {
-  flex: 1;
-  min-width: 0;
-}
-
-/* UNIVERZÁLNÍ TEXTOVÉ TLAČÍTKO */
+/* Textové tlačítko – používá se pro "Přidat poznámku" uvnitř poznámkového panelu */
 .fbtn {
-  background: #2a3a10 !important;
-  color: #<?php echo $barva; ?> !important;
-  border: 1px solid #<?php echo $barva; ?> !important;
+  background: #2a3a10;
+  color: #<?php echo $barva; ?>;
+  border: 1px solid #<?php echo $barva; ?>;
   border-radius: 5px;
-  width: 100%; /* Vyplní celou šířku přidělenou flexboxem (důležité uvnitř tagu <a>) */
-  
-  /* Výška se nyní plně přizpůsobuje velikosti písma a paddingu */
-  padding: 8px 2px; 
-  font-size: 11px; /* Kompaktní velikost, aby se nápisy vešly i na menší mobily */
+  width: 100%;
+  padding: 7px 4px;
+  font-size: 11px;
   font-weight: bold;
-  text-transform: uppercase; /* Jednotný vzhled velkých písmen */
+  text-transform: uppercase;
+  letter-spacing: .5px;
   text-align: center;
-  letter-spacing: 0.5px;
-  
   cursor: pointer;
-  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  transition: all .15s;
+}
+.fbtn:hover { background: #<?php echo $barva; ?>; color: #202428; }
+
+/* Ikonové tlačítko — sloupec ikona + popisek */
+.icon-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 1px solid #3a3e44;
+  background: #1e2226;
+  color: #<?php echo $barva; ?>;
+  transition: border-color .15s, background .15s;
+  text-decoration: none; /* pro <a> verzi */
+  box-sizing: border-box;
+  min-width: 0;
 }
 
-.fbtn:active, .fbtn:hover {
-  background: #<?php echo $barva; ?> !important;
-  color: #202428 !important;
+.icon-btn i {
+  font-size: 18px;
+  line-height: 1;
 }
 
-/* Speciální barvy pro tlačítko SMAZAT */
-.fbtn.smazat-btn {
-  color: #ff5555 !important;
-  border-color: #633030 !important;
-  background: #341c1c !important;
+.icon-btn span {
+  font-size: 9px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: #888;
+  white-space: nowrap;
 }
-.fbtn.smazat-btn:active, .fbtn.smazat-btn:hover {
-  background: #ff5555 !important;
-  color: #202428 !important;
+
+.icon-btn:hover {
+  border-color: #<?php echo $barva; ?>;
+  background: #2a3a10;
+  text-decoration: none;
+  color: #<?php echo $barva; ?>;
+}
+
+/* Smazat — červená varianta */
+.icon-btn.del {
+  color: #ff5555;
+}
+
+.icon-btn.del:hover {
+  border-color: #633030;
+  background: #341c1c;
+  color: #ff5555;
 }
 </style>
 
@@ -206,35 +233,54 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
         <div class="vysuvna-tlacitka">
           
           <?php if ($je_audio): ?>
-            <button class="fbtn looper-btn"
+            <button class="icon-btn looper-btn"
                     data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
                     data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
-                    title="Otevřít křivku nahrávky">Looper</button>
-			<button class="fbtn poznamky-btn"
+                    title="Otevřít křivku nahrávky"
+                    aria-label="Looper">
+              <i class="ti ti-activity" aria-hidden="true"></i>
+              <span>Looper</span>
+            </button>
+            <button class="icon-btn poznamky-btn"
                     data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
-                    title="zobrazit prudící seznam">Poznámky</button>		
-					
+                    title="Zobrazit timestampy"
+                    aria-label="Poznámky">
+              <i class="ti ti-flag" aria-hidden="true"></i>
+              <span>Poznámky</span>
+            </button>
           <?php endif; ?>
 
-          <button class="fbtn presunout-btn"
+          <button class="icon-btn presunout-btn"
                   data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
                   data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
                   data-toggle="modal" 
-                  data-target="#modal_presunout" 
-                  title="Přesunout do jiné skladby">Přesun</button>
+                  data-target="#modal_presunout"
+                  title="Přesunout do jiné skladby"
+                  aria-label="Přesun">
+            <i class="ti ti-arrow-right" aria-hidden="true"></i>
+            <span>Přesun</span>
+          </button>
 
-          <a href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
+          <a class="icon-btn"
+             href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
              download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+             title="Stáhnout"
+             aria-label="Stáhnout"
              onclick="return confirm('Opravdu stáhnout soubor: <?php echo htmlspecialchars($soub, ENT_QUOTES); ?>?');">
-            <button class="fbtn" title="Stáhnout">Stáhnout</button>
+            <i class="ti ti-download" aria-hidden="true"></i>
+            <span>Stáhnout</span>
           </a>
 
-          <button class="fbtn smazat-btn" 
+          <button class="icon-btn del smazat-btn" 
                   data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
                   data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
                   data-toggle="modal" 
-                  data-target="#modal_delete" 
-                  title="Smazat">Smazat</button>
+                  data-target="#modal_delete"
+                  title="Smazat"
+                  aria-label="Smazat">
+            <i class="ti ti-trash" aria-hidden="true"></i>
+            <span>Smazat</span>
+          </button>
 
         </div>
 		
