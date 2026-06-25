@@ -562,7 +562,6 @@ $(document).on('submit', '#form_upload', function(e) {
   res.style.display  = 'none';
   btn.disabled = true;
   btn.textContent = 'nahrávám...';
-  pbStart();
 
   var xhr = new XMLHttpRequest();
 
@@ -575,7 +574,6 @@ $(document).on('submit', '#form_upload', function(e) {
   };
 
   xhr.onload = function() {
-    pbDone();
     btn.disabled = false;
     btn.textContent = 'VLOŽIT SOUBOR';
     bar.style.width = '100%';
@@ -604,7 +602,6 @@ $(document).on('submit', '#form_upload', function(e) {
   };
 
   xhr.onerror = function() {
-    pbDone();
     btn.disabled = false;
     btn.textContent = 'VLOŽIT SOUBOR';
     res.style.display = 'block';
