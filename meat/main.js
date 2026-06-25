@@ -835,23 +835,14 @@ else if (audio)
     );
 });
 
-$(document).on('click', '.note-time', function() {
+$(document).on('click', '.note-row', function() {
+    var ms   = parseInt($(this).data('ms'));
+    var file = $(this).data('file');
 
-    jumpToTimestamp(
-        parseInt($(this).data('ms')),
-        $(this).data('file')
-    );
-
-});
-
-$(document).on('click', '.looper-note-time', function() {
-
-    if (!wavesurfer)
-    {
-        return;
+    if ($(this).data('looper')) {
+        if (!wavesurfer) return;
+        wavesurfer.setTime(ms / 1000);
+    } else {
+        jumpToTimestamp(ms, file);
     }
-
-    wavesurfer.setTime(
-        parseInt($(this).data('ms')) / 1000
-    );
 });

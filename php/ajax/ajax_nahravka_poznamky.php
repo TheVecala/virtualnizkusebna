@@ -49,16 +49,13 @@ if ($akce == "list")
         $cas_text = sprintf("%02d:%02d", $min, $sec);
 
         echo '
-        <div class="note-row" style="padding:4px 0;">
-            <span class="'.($looper ? 'looper-note-time' : 'note-time').'"
-                  data-ms="'.$ms.'"
-				  data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'"
-                  style="cursor:pointer;font-weight:bold;color:#7fbfff;">
-                  '.$cas_text.'
-            </span>
-            <span style="margin-left:8px;">'.
-                htmlspecialchars($r["poznamka"]).
-            '</span>
+        <div class="note-row"
+             data-ms="'.$ms.'"
+             data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'"
+             '.($looper ? 'data-looper="1"' : '').'
+             style="padding:4px 0; cursor:pointer;">
+            <span style="font-weight:bold;color:#7fbfff;">'.$cas_text.'</span>
+            <span style="margin-left:8px;">'.htmlspecialchars($r["poznamka"]).'</span>
         </div>';
     }
 
