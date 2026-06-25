@@ -853,70 +853,123 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- OVLÁDÁNÍ A INICIALIZACE WAVESURFER LOOPERU -->
+<!-- OVLÁDÁNÍ A INICIALIZACE WAVESURFER LOOPERU (s peaks cachováním) -->
 <script>
 var wavesurfer = null;
 var isLooping = false;
 var looperCurrentFile = null;
 
-// Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
-$(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
-    var cesta = $(this).data('cesta');
-    var nazev = $(this).data('nazev');
-	looperCurrentFile = cesta;
-    loadLooperNotes(cesta);
-    // Zobrazíme looper bar a resetujeme stav
-    $('#looper-bar').removeClass('hidden');
-    $('#lname').text(nazev);
-    $('#wf-placeholder').text('načítám nahrávku...').show();
-    
-    isLooping = false;
-    $('#btn-loop').removeClass('on');
-    
-    if (wavesurfer) {
-        wavesurfer.destroy();
+/**
+ * Vytvoří a inicializuje WaveSurfer instanci.
+ *
+ * @param {string} cesta     - relativní URL audio souboru
+ * @param {object|null} peaksData - { peaks: [[...]], duration: X } nebo null
+ */
+function initWaveSurfer(cesta, peaksData) {
+    var barvaKapely = getComputedStyle(document.documentElement)
+                        .getPropertyValue('--barva').trim() || '#a7ac38';
+
+    var wsConfig = {
+        container:     '#waveform',
+        waveColor:     'rgba(255, 255, 255, 0.15)',
+        progressColor: barvaKapely,
+        cursorColor:   '#ffffff',
+        cursorWidth:   2,
+        barWidth:      2,
+        barGap:        1,
+        barRadius:     1,
+        height:        98,
+        url:           cesta
+    };
+
+    // Pokud máme uložené peaks, předáme je WaveSurferu →
+    // audio se NEKÓDUJE znovu, vykreslení je okamžité
+    var maPeaks = peaksData &&
+                  Array.isArray(peaksData.peaks) &&
+                  peaksData.peaks.length > 0 &&
+                  peaksData.duration > 0;
+
+    if (maPeaks) {
+        wsConfig.peaks    = peaksData.peaks;
+        wsConfig.duration = peaksData.duration;
     }
-    
-    // Dynamicky zjistíme barvu kapely z CSS proměnné
-    var barvaKapely = getComputedStyle(document.documentElement).getPropertyValue('--barva').trim() || '#a7ac38';
-    
-    // Inicializace WaveSurfer v7 (výška upravena na 98px pro velkou vlnu)
-    wavesurfer = WaveSurfer.create({
-        container: '#waveform',
-        waveColor: 'rgba(255, 255, 255, 0.15)', // Krásná průhledná bílá, co se přizpůsobí pozadí
-        progressColor: barvaKapely,             // Barva odehrané části (aktivní barva kapely)
-        cursorColor: '#ffffff',     
-        cursorWidth: 2,
-        barWidth: 2,                
-        barGap: 1,
-        barRadius: 1,
-        height: 98,                 
-        url: cesta                  
-    });
-    
+
+    wavesurfer = WaveSurfer.create(wsConfig);
+
     wavesurfer.on('ready', function() {
-        $('#wf-placeholder').hide(); 
-        wavesurfer.play();           
+        $('#wf-placeholder').hide();
+        wavesurfer.play();
+
+        // Peaks ještě nebyly uloženy → exportujeme a pošleme na server
+        if (!maPeaks) {
+            var peaks    = wavesurfer.exportPeaks();
+            var duration = wavesurfer.getDuration();
+
+            if (Array.isArray(peaks) && peaks.length > 0 && duration > 0) {
+                $.ajax({
+                    url:         'php/ajax/ulozit_peaks.php',
+                    method:      'POST',
+                    contentType: 'application/json',
+                    data:        JSON.stringify({ cesta: cesta, peaks: peaks, duration: duration }),
+                    error: function() {
+                        console.warn('[Looper] Peaks se nepodařilo uložit.');
+                    }
+                });
+            }
+        }
     });
-    
+
     wavesurfer.on('play', function() {
         $('#btn-play').addClass('on');
         $('#btn-pause').removeClass('on');
     });
-    
+
     wavesurfer.on('pause', function() {
         $('#btn-play').removeClass('on');
         $('#btn-pause').addClass('on');
     });
-    
+
     wavesurfer.on('finish', function() {
         if (isLooping) {
-            wavesurfer.play(); 
+            wavesurfer.play();
         } else {
             $('#btn-play').removeClass('on');
             $('#btn-pause').addClass('on');
         }
     });
+}
+
+// Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
+$(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
+    var cesta = $(this).data('cesta');
+    var nazev = $(this).data('nazev');
+
+    looperCurrentFile = cesta;
+    loadLooperNotes(cesta);
+
+    // Zobrazíme looper bar a resetujeme stav
+    $('#looper-bar').removeClass('hidden');
+    $('#lname').text(nazev);
+    $('#wf-placeholder').text('načítám nahrávku...').show();
+
+    isLooping = false;
+    $('#btn-loop').removeClass('on');
+
+    if (wavesurfer) {
+        wavesurfer.destroy();
+        wavesurfer = null;
+    }
+
+    // Zkusíme načíst uložené peaks ze serveru.
+    // .done()  → peaks existují → WaveSurfer vykreslí okamžitě bez dekódování audia
+    // .fail()  → peaks neexistují (404) nebo chyba → standardní dekódování, peaks se poté uloží
+    $.getJSON('php/ajax/nacist_peaks.php', { cesta: cesta })
+        .done(function(peaksData) {
+            initWaveSurfer(cesta, peaksData);
+        })
+        .fail(function() {
+            initWaveSurfer(cesta, null);
+        });
 });
 
 /* --- Globální funkce pro tlačítka v looper-baru --- */
@@ -950,8 +1003,8 @@ function looperZavrit() {
         wavesurfer.destroy();
         wavesurfer = null;
     }
-	looperCurrentFile = null;
-	$('#looper-notes').hide().empty();
+    looperCurrentFile = null;
+    $('#looper-notes').hide().empty();
     $('#looper-bar').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');

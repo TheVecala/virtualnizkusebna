@@ -18,7 +18,8 @@ $soubory = [];
 if (!empty($slozka_souboru) && is_dir($cesta_slozky)) {
     foreach (scandir($cesta_slozky) as $f) {
         if ($f === "." || $f === ".." || is_dir($cesta_slozky . $f)) continue;
-        if ($f === "." || substr($f, 0, 1) === ".") continue;
+        if (substr($f, 0, 1) === ".") continue;
+        if (substr($f, -11) === '.peaks.json') continue; // WaveSurfer cache — nezobrazovat
         $soubory[] = $f;
     }
 }
