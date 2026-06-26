@@ -563,41 +563,4 @@
   </div>
 </div>
 
-
-<script>
-// ── Přesunout: potvrzovací panel ─────────────────────────────────────────────
-// Voláno z main.js místo přímého submitu:
-function presunoutVybratSlozku(nazevSlozky) {
-  var soubor = $('#modal_presunout_co').val();
-  $('#presunout_confirm_soubor').text(soubor);
-  $('#presunout_confirm_cil').text(nazevSlozky);
-  $('#modal_presunout_kam').val(nazevSlozky);
-  $('#presunout_confirm_panel').slideDown(160);
-  // Scrollni na confirm panel
-  var $body = $('#modal_presunout').find('.modal-body');
-  $body.animate({ scrollTop: $body[0].scrollHeight }, 200);
-}
-
-$(document).on('click', '.presun-slozka-btn', function(e) {
-  e.preventDefault();
-  presunoutVybratSlozku($(this).data('slozka'));
-});
-
-$('#presunout_confirm_zrusit').on('click', function() {
-  $('#presunout_confirm_panel').slideUp(150);
-  $('#modal_presunout_kam').val('');
-});
-
-$('#modal_presunout').on('hidden.bs.modal', function() {
-  $('#presunout_confirm_panel').hide();
-  $('#modal_presunout_kam').val('');
-});
-
-// ── Rename val: naplnit ctx label ────────────────────────────────────────────
-// V main.js kde nastavuješ $('#modal_rename_val_label').val(nazev), přidej:
-// $('#modal_rename_val_ctx').text(nazev);
-//
-// ── Presunout: naplnit "Ze složky" ──────────────────────────────────────────
-// V main.js kde nastavuješ $('#modal_presunout_odkud').val(slozka), přidej:
-// $('#modal_presunout_from_label').text(slozka);
-</script>
+ 

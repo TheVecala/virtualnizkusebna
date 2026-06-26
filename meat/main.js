@@ -287,7 +287,8 @@ $(document).on('submit', '#modal_zmenit_text form', function(e) {
 function otevritPrejmenovani(val, nazev) {
   document.getElementById('modal_rename_val_label').value       = val;
   document.getElementById('modal_rename_val_label_novy').value  = '';
-  document.getElementById('modal_rename_val_title').textContent = 'PŘEJMENOVAT: ' + nazev;
+  document.getElementById('modal_rename_val_title').textContent = 'PŘEJMENOVAT SKLADBU';
+  document.getElementById('modal_rename_val_ctx').textContent   = nazev;
   $('#modal_rename_val').modal('show');
 }
 
@@ -364,13 +365,17 @@ $(document).on('click', '.looper-btn', function() {
 });
 
 $(document).on('click', '.presunout-btn', function() {
-  var val = $(this).data('soubor'), label = $(this).data('nazev');
-  var odkud = document.getElementById('modal_presunout_odkud');
-  var lbl   = document.getElementById('modal_presunout_label');
-  var co    = document.getElementById('modal_presunout_co');
-  if (odkud) odkud.value    = val;
-  if (lbl)   lbl.innerHTML  = label;
-  if (co)    co.value       = label;
+  var val   = $(this).data('soubor');
+  var label = $(this).data('nazev');
+
+  $('#modal_presunout_odkud').val(val);
+  $('#modal_presunout_label').text(label);
+  $('#modal_presunout_co').val(label);
+  $('#modal_presunout_from_label').text(VZ.aktualniNazev || val);
+
+  // Reset potvrzovacího panelu pro případ znovuotevření
+  $('#presunout_confirm_panel').hide();
+  $('#modal_presunout_kam').val('');
 });
 
 $(document).on('click', '.smazat-btn', function() {
@@ -512,10 +517,9 @@ $(document).on('show.bs.modal', '#modal_presunout', function() {
       if (s.aktivni) return;
 
       var btn = document.createElement('button');
-      btn.type = 'submit';
-      btn.name = 'presunout_kam'; 
-      btn.value = s.slozka;
-      btn.className = 'list-group-item list-group-item-action';
+      btn.type = 'button';
+      btn.className = 'list-group-item list-group-item-action presun-slozka-btn';
+      btn.dataset.slozka = s.slozka;
       
       btn.style.cssText = 'background: #1e2226; color: #e0e0e0; border: 1px solid #3a3e44; margin-bottom: 5px; border-radius: 5px; padding: 10px 12px; font-size: 13px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; transition: 0.2s;';
 
@@ -526,12 +530,38 @@ $(document).on('show.bs.modal', '#modal_presunout', function() {
       kontejner.appendChild(btn);
     });
     
-    if(kontejner.innerHTML === '') {
+    if (kontejner.innerHTML === '') {
       kontejner.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">Nemáte vytvořené žádné další skladby.</div>';
     }
   }, 'json').fail(function() {
     kontejner.innerHTML = '<div style="color:#ff8888; font-size:12px; padding:10px;">Chyba načítání skladeb.</div>';
   });
+});
+
+// ── Přesunout: potvrzovací panel ──
+function presunoutVybratSlozku(nazevSlozky) {
+  var soubor = $('#modal_presunout_co').val();
+  $('#presunout_confirm_soubor').text(soubor);
+  $('#presunout_confirm_cil').text(nazevSlozky);
+  $('#modal_presunout_kam').val(nazevSlozky);
+  $('#presunout_confirm_panel').slideDown(160);
+  // Scrollnout na potvrzovací panel
+  var $body = $('#modal_presunout').find('.modal-body');
+  $body.animate({ scrollTop: $body[0].scrollHeight }, 200);
+}
+
+$(document).on('click', '.presun-slozka-btn', function() {
+  presunoutVybratSlozku($(this).data('slozka'));
+});
+
+$(document).on('click', '#presunout_confirm_zrusit', function() {
+  $('#presunout_confirm_panel').slideUp(150);
+  $('#modal_presunout_kam').val('');
+});
+
+$(document).on('hidden.bs.modal', '#modal_presunout', function() {
+  $('#presunout_confirm_panel').hide();
+  $('#modal_presunout_kam').val('');
 });
 
 // ── Upload souboru s progress barem ──
