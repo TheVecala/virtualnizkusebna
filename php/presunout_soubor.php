@@ -49,6 +49,13 @@ if (!is_dir("../" . $cesta_slozek . $presunout_kam)) {
 // Přesunutí
 if (rename($start_souboru, $cil_souboru)) {
     $_SESSION['vysledek'] = "soubor " . $presunout_co . " přesunut do " . $presunout_kam;
+
+    // Přesunout také WaveSurfer peaks cache, pokud existuje
+    $peaks_start = $start_souboru . ".peaks.json";
+    $peaks_cil   = $cil_souboru   . ".peaks.json";
+    if (file_exists($peaks_start)) {
+        rename($peaks_start, $peaks_cil);
+    }
 } else {
     $_SESSION['vysledek'] = "chyba - soubor se nepodařilo přesunout";
 }

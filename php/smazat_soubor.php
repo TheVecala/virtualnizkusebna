@@ -43,6 +43,12 @@ if (!file_exists($target_file)) {
 
 if (unlink($target_file)) {
     $_SESSION['vysledek'] = "soubor \"" . basename($soubor_ke_smazani) . "\" byl smazán";
+
+    // Smazat také WaveSurfer peaks cache, pokud existuje
+    $peaks_file = $target_file . ".peaks.json";
+    if (file_exists($peaks_file)) {
+        @unlink($peaks_file);
+    }
 } else {
     $_SESSION['vysledek'] = "chyba - soubor se nepodařilo smazat";
 }
