@@ -277,6 +277,72 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .lclose:hover { color: var(--text); }
 
+#looper-header{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:6px 10px;
+
+    background:#2b3035;
+    border-bottom:1px solid #3d4349;
+}
+
+.looper-left{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.looper-title{
+
+    color:var(--barva);
+    font-weight:700;
+    letter-spacing:1px;
+    white-space:nowrap;
+}
+
+.looper-buttons{
+
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+
+#looper-time{
+
+    flex:1;
+
+    text-align:center;
+
+    color:#ddd;
+
+    font-size:13px;
+
+    font-family:monospace;
+
+    white-space:nowrap;
+}
+
+.looper-right{
+
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+
+#looper-content{
+
+    padding:8px;
+}
+
+#looper-notes{
+
+    margin-top:10px;
+}
+
 /* ── CONTENT AREA ── */
 #content-area { flex: 1; display: flex; overflow: hidden; }
 
@@ -570,37 +636,72 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
   <!-- LOOPER BAR (DVOUŘÁDKOVÝ VELKÝ) -->
   <div id="looper-bar" class="hidden">
-    <!-- 1. ŘÁDEK: Vlna přes celou šířku -->
-    <div id="waveform-container">
-      <div class="wf-placeholder" id="wf-placeholder">načítám nahrávku...</div>
-      <div id="waveform"></div>
+
+<!-- HLAVIČKA -->
+<div id="looper-header">
+
+    <div class="looper-left">
+
+        <div class="looper-title">
+            LOOPER
+        </div>
+
+        <div class="looper-buttons">
+
+            <button class="wave-btn on"
+                    id="btn-play"
+                    onclick="looperPlay()">▶</button>
+
+            <button class="wave-btn"
+                    id="btn-pause"
+                    onclick="looperPause()">⏸</button>
+
+            <button class="wave-btn"
+                    id="btn-loop"
+                    onclick="looperLoop()">⟳</button>
+
+            <button class="wave-btn"
+                    onclick="looperRestart()">↺</button>
+
+        </div>
+
     </div>
 
-	<div id="looper-notes" style="
-    display:none;
-    max-height:120px;
-    overflow-y:auto;
-    padding:8px;
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:6px;
-    font-size:12px;">
+    <div id="looper-time">
+        00:00 / 00:00
     </div>
-	
-    <!-- 2. ŘÁDEK: Ovládací prvky zarovnané pod vlnou -->
-    <div class="looper-ovladani-rada">
-      <div class="lctrl">
-        <button class="wave-btn on" id="btn-play" onclick="looperPlay()">▶</button>
-        <button class="wave-btn" id="btn-pause" onclick="looperPause()">⏸</button>
-        <button class="wave-btn" onclick="looperRestart()">↩</button>
-        <button class="wave-btn" id="btn-loop" onclick="looperLoop()">⟳</button>
-      </div>
-      
-      <span class="lname" id="lname">—</span>
-      
-      <button class="lclose" onclick="looperZavrit()">✕</button>
+
+    <div class="looper-right">
+
+        <button class="wave-btn"
+                id="btn-collapse"
+                onclick="looperToggle()">▭</button>
+
+        <button class="wave-btn"
+                onclick="looperZavrit()">✕</button>
+
     </div>
-  </div>
+
+</div>
+
+    <!-- OBSAH -->
+    <div id="looper-content">
+
+        <div id="waveform-container">
+            <div class="wf-placeholder"
+                 id="wf-placeholder">
+                načítám nahrávku...
+            </div>
+
+            <div id="waveform"></div>
+
+        </div>
+
+        <div id="looper-notes"></div>
+
+    </div>
+
+</div>
 
   <!-- CONTENT AREA (Přidán výchozí atribut data-active-panel pro správný start 2-panelové verze) -->
   <div id="content-area" data-active-panel="text">
@@ -996,6 +1097,11 @@ function looperLoop() {
     } else {
         $('#btn-loop').removeClass('on');
     }
+}
+
+function looperToggle()
+{
+
 }
 
 function looperZavrit() {
