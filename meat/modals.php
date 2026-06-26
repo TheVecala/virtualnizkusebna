@@ -14,8 +14,7 @@
   border-radius: 8px 8px 0 0;
 }
 .modal-header .modal-title,
-.modal-header h4,
-.modal-header p.modal-title {
+.modal-header h5.modal-title {
   color: var(--accent);
   font-size: 12px;
   font-weight: bold;
@@ -29,12 +28,14 @@
   text-shadow: none;
 }
 .modal-header .close:hover { color: var(--text); }
-.modal-body  { padding: 14px 16px; background: #2e3338; }
+.modal-body { padding: 14px 16px; background: #2e3338; }
 .modal-footer {
   border-top: 1px solid #4a4e55;
   padding: 10px 16px;
   background: #383d43;
   border-radius: 0 0 8px 8px;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 /* Formulářové prvky */
@@ -72,6 +73,77 @@
 .modal-content .btn-secondary:hover { border-color: var(--barva); color: var(--barva); }
 .modal-content .btn-dark      { background: #3a3f45; border-color: #555; color: var(--text); }
 
+/* Kontextový blok — co a kde se děje */
+.modal-ctx {
+  background: #252a2e;
+  border-left: 3px solid var(--barva);
+  border-radius: 0 5px 5px 0;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.modal-ctx strong { color: var(--text) !important; }
+.modal-ctx .ctx-action {
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+/* Dark code editor (akordový text / tablatura) */
+#editor, #editor_tab {
+  background: #0d1117 !important;
+  color: #c9d1d9 !important;
+  border: 1px solid #30363d !important;
+  border-radius: 5px;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size: 13px;
+  line-height: 1.6;
+  width: 100%;
+  resize: vertical;
+  padding: 10px;
+  box-sizing: border-box;
+}
+#editor:focus, #editor_tab:focus {
+  border-color: var(--barva) !important;
+  box-shadow: 0 0 0 2px rgba(167,172,56,.15) !important;
+  outline: none;
+}
+
+/* Potvrzovací panel přesunu */
+#presunout_confirm_panel {
+  display: none;
+  margin-top: 12px;
+  background: #1a2010;
+  border: 1px solid var(--barva);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12px;
+}
+#presunout_confirm_panel .confirm-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 8px;
+}
+#presunout_confirm_panel .confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+#presunout_confirm_panel .confirm-file { color: var(--text); font-weight: bold; }
+#presunout_confirm_panel .confirm-arrow { color: #555; }
+#presunout_confirm_panel .confirm-to { color: var(--accent); font-weight: bold; }
+#presunout_confirm_panel .confirm-btns { display: flex; gap: 6px; }
+
 /* Panel historie */
 #panel-historie { background: #252a2e; border-top: 1px solid #4a4e55; padding: 10px 16px; }
 #panel-historie .btn-zaloha {
@@ -80,120 +152,97 @@
   padding: 2px 8px; font-size: 11px; cursor: pointer;
 }
 #panel-historie .btn-zaloha:hover { background: #3a4a15; }
+
+/* Nápis "varování" v footeru editoru */
+.modal-footer-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-right: auto;
+  align-self: center;
+}
 </style>
 
-	<!-- The Modal INFO-->
-<div class="modal modal-centered " id="myModal">
+
+<!-- ───────────────────────── O APLIKACI ───────────────────────── -->
+<div class="modal modal-centered" id="myModal">
   <div class="modal-dialog">
     <div class="modal-content">
-
-      <!-- Modal Header -->
       <div class="modal-header">
-        <h4 class="modal-title">A B O U T</h4>
+        <h5 class="modal-title">O APLIKACI</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
-      <!-- Modal body -->
       <div class="modal-body">
-	      <p>
-        DIY projekt ze Štatlu. <br><br>
-		Plugin pro sdílení informací o rozpracovaných skladbách <br> hudební skupiny  mezi jejímy členy. <br>   <br>
-		Tohle není prostor pro volné ukládání dat většího množství uživatelů. 
-		Vhodná je instalace na vlastní doménu pro plnou kontrolu nad obsahem.
-		<br> <br><br>
-		Pro více info pište na adresu: <i>  the@vecala.cz  </i> 
-	    
-		</p>
-		<p>
-		Thanks to:<br>
-		<a href="https://www.jakpsatweb.cz/">Jak psát web</a><br>
-		wavesurfer.js<br>
-	
-		
-          </p>
-		  <button type="button" class="btn btn-secondary"  >INSTALACE NA VLASTNÍ DOMÉNĚ</button><br>
-         
+        <p>DIY projekt ze Štatlu.</p>
+        <p>Plugin pro sdílení informací o rozpracovaných skladbách hudební skupiny mezi jejímy členy.</p>
+        <p>Tohle není prostor pro volné ukládání dat většího množství uživatelů. Vhodná je instalace na vlastní doménu pro plnou kontrolu nad obsahem.</p>
+        <p>Pro více info pište na adresu: <i>the@vecala.cz</i></p>
+        <p>Thanks to:<br><a href="https://www.jakpsatweb.cz/">Jak psát web</a><br>wavesurfer.js</p>
+        <button type="button" class="btn btn-secondary">INSTALACE NA VLASTNÍ DOMÉNĚ</button>
       </div>
-
-      <!-- Modal footer -->
       <div class="modal-footer">
- 
-        <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
       </div>
-
     </div>
   </div>
 </div>
-	
-	
-  <!-- The Modal DELETE soubor-->
-<div class="modal" id="modal_delete">
-  <div class="modal-dialog  ">
-    <div class="modal-content">
 
-      <!-- Modal Header -->
+
+<!-- ───────────────────────── SMAZAT SOUBOR ───────────────────────── -->
+<div class="modal" id="modal_delete">
+  <div class="modal-dialog">
+    <div class="modal-content">
       <div class="modal-header">
-	      smazat soubor:
-		
+        <h5 class="modal-title">SMAZAT SOUBOR</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
-      <!-- Modal body -->
-	  
-	 	<form action="/php/smazat_soubor.php" method="post" enctype="multipart/form-data"  style="display:inline">
-	
-             <div class="modal-body">
-     		       
-                     <p id="modal_delete_label" class="modal-title">  Soubor   </p>
-					  <div class="form-group"  style="display:none">
-						<label for="soubor_ke_smazani">smazat soubor:</label>
-						<input id="modal_delete_deleter" type="text" class="form-control"  value="soubor ke smazání_nevložen " name="soubor_ke_smazani">
-					  </div>				
-										 							 
-					  <div class="form-group"  style="display:none">
-						<label for="navrat">navrat:</label>
-						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>
-			  		
-            </div>	  
-
-      <!-- Modal footer -->
-            <div class="modal-footer">
-	  						 
-				<button  id= "nahrat" type="submit" class="btn btn-danger<?= ma_pravo('delete_file') ? '' : ' btn-locked' ?>">smazat</button>
- 				<button type="button" class="btn btn-primary" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	 
-	  
- 
-        
+      <form action="/php/smazat_soubor.php" method="post" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="modal-ctx">
+            <div class="ctx-action">⚠ Nevratná akce</div>
+            <div>Soubor: <strong id="modal_delete_label">—</strong></div>
           </div>
-	   </form>
+          <p>Soubor bude trvale odstraněn a nelze jej obnovit.</p>
+          <div style="display:none">
+            <input id="modal_delete_deleter" type="text" class="form-control" value="" name="soubor_ke_smazani">
+          </div>
+          <div style="display:none">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZRUŠIT</button>
+          <button type="submit" class="btn btn-danger<?= ma_pravo('delete_file') ? '' : ' btn-locked' ?>">SMAZAT</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
- 
- 
- 
-   
-  <!-- The Modal vlozit_soubor -->
+
+
+<!-- ───────────────────────── VLOŽIT SOUBOR ───────────────────────── -->
 <div class="modal" id="modal_vlozit_soubor">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <p class="modal-title">VLOŽENÍ SOUBORU</p>
+        <h5 class="modal-title">VLOŽENÍ SOUBORU</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body">
-        <p>Skladba: <strong><?php echo htmlspecialchars($slozka_souboru); ?></strong></p>
+        <div class="modal-ctx">
+          <div class="ctx-action">Nahrávám do</div>
+          <div>Skladba: <strong><?php echo htmlspecialchars($slozka_souboru); ?></strong></div>
+        </div>
         <form id="form_upload">
           <div class="form-group">
             <label>Vybrat soubor:</label>
             <input type="file" class="form-control" id="upload_file"
               accept=".mp3,.wav,.ogg,.flac,.aac,.pdf,.txt,.jpg,.jpeg,.png,.gif">
           </div>
-          <div class="checkbox" style="margin-bottom:10px">
-            <label><input id="upload_odeslat" type="checkbox" value="true"> Odeslat info na mail</label>
+          <div class="form-check" style="margin-bottom:10px">
+            <label class="form-check-label">
+              <input id="upload_odeslat" type="checkbox" value="true"> Odeslat info na mail
+            </label>
           </div>
-
           <!-- Progress bar uploadu -->
           <div id="upload-progress-wrap" style="display:none; margin-bottom:10px;">
             <div style="background:#1e2226; border-radius:4px; height:6px; overflow:hidden;">
@@ -202,374 +251,307 @@
             <div id="upload-progress-text" style="font-size:11px; color:var(--muted); margin-top:4px; text-align:center;">0%</div>
           </div>
           <div id="upload-result" style="font-size:12px; margin-bottom:8px; display:none;"></div>
-
-          <button type="submit" class="btn btn-primary<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" id="upload-btn">VLOŽIT SOUBOR</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
         </form>
       </div>
-      <div class="modal-footer"></div>
-    </div>
-  </div>
-</div>
-
- 
- 
-   
-  <!-- The Modal nova_slozka -->
-<div class="modal" id="modal_nova_slozka">
-  <div class="modal-dialog  ">
-    <div class="modal-content">
-
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <p class="modal-title">VLOŽENÍ NOVÉ SLOŽKY</p>		
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-      </div>
-
-      <!-- Modal body -->
-      <div class="modal-body">
-     
-	   	      
-								 
-					  <form action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data" style="display: inline">
-					  
-					    <div class="form-group">
-                          <label for="jmeno_adresare">vytvořit novou složku:</label>
-                          <input type="text" class="form-control" name="jmeno_adresare">  
-                        </div>
-                        <div class="form-group"  style="display:none">
-                          <label for="sekce">sekce:</label>
-                          <input type="text" class="form-control" name="sekce" value="<?php echo $sekce ; ?>" >  
-                        </div>
-                        <div class="form-group"  style="display:none">
-                          <label for="navrat">navrat:</label>
-                          <input type="text" class="form-control" name="navrat" value="<?php echo $_SERVER['PHP_SELF']; ?>" >  
-                        </div>
-						
-						<button  id= "vytvorit_adresar" type="submit" class="btn btn-primary<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" >vytvořit</button>
-					  </form>
-					  <button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	   
-			  
-		
-      </div>
-      <!-- Modal footer -->
       <div class="modal-footer">
-       
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+        <button type="submit" form="form_upload" class="btn btn-primary<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" id="upload-btn">VLOŽIT SOUBOR</button>
       </div>
-
     </div>
   </div>
-</div> 
-   
-      
-  <!-- The Modal vložit komentař -->
+</div>
+
+
+<!-- ───────────────────────── NOVÁ SKLADBA ───────────────────────── -->
+<div class="modal" id="modal_nova_slozka">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">NOVÁ SKLADBA</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <form id="form_nova_slozka" action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="jmeno_adresare">Název nové skladby:</label>
+            <input type="text" class="form-control" name="jmeno_adresare" autofocus>
+          </div>
+          <div style="display:none">
+            <input type="text" class="form-control" name="sekce" value="<?php echo $sekce; ?>">
+          </div>
+          <div style="display:none">
+            <input type="text" class="form-control" name="navrat" value="<?php echo $_SERVER['PHP_SELF']; ?>">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZRUŠIT</button>
+          <button id="vytvorit_adresar" type="submit" class="btn btn-primary<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>">VYTVOŘIT</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- ───────────────────────── VLOŽIT KOMENTÁŘ ───────────────────────── -->
 <div class="modal" id="modal_vlozit_komentar">
-  <div class="modal-dialog  ">
-   <div class="modal-content">
-
-      <!-- Modal Header -->
+  <div class="modal-dialog">
+    <div class="modal-content">
       <div class="modal-header">
-        <p class="modal-title">VLOŽENÍ POZNÁMKY</p>		
+        <h5 class="modal-title">VLOŽENÍ POZNÁMKY</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
-      <!-- Modal body -->
       <div class="modal-body">
-     	 
-	 <!--<h1>Vložení komentáře</h1>-->
-	 <form id="form_komentar">
-
-  <div class="form-group">
-    <label>Text:</label>
-    <textarea class="form-control" id="komentar_text" name="text" rows="5"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label>Odkaz (pokud chceš):</label>
-    <input type="text" class="form-control" id="komentar_odkaz" name="odkaz">
-  </div>
-
-  <div class="form-group">
-    <label>YouTube odkaz (pokud chceš):</label>
-    <input type="text" class="form-control" id="komentar_odkaz2" name="odkaz2">
-  </div>
-
-  <div class="form-group">
-    <label>Jméno:</label>
-    <input type="text" class="form-control" id="komentar_jmeno" name="name">
-  </div>
-
-  <div id="komentar_chyba" style="color:red; display:none"></div>
-
-  <button type="submit" class="btn btn-primary<?= ma_pravo('comment') ? '' : ' btn-locked' ?>">ULOŽIT</button>
-</form> 
-	 
+        <form id="form_komentar">
+          <div class="form-group">
+            <label>Text:</label>
+            <textarea class="form-control" id="komentar_text" name="text" rows="5"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Odkaz (pokud chceš):</label>
+            <input type="text" class="form-control" id="komentar_odkaz" name="odkaz">
+          </div>
+          <div class="form-group">
+            <label>YouTube odkaz (pokud chceš):</label>
+            <input type="text" class="form-control" id="komentar_odkaz2" name="odkaz2">
+          </div>
+          <div class="form-group">
+            <label>Jméno:</label>
+            <input type="text" class="form-control" id="komentar_jmeno" name="name">
+          </div>
+          <div id="komentar_chyba" style="color:#ff7b7b; display:none; font-size:12px;"></div>
+        </form>
       </div>
-      <!-- Modal footer -->
-      <div class="modal-footer">       		
-        <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+        <button type="submit" form="form_komentar" class="btn btn-primary<?= ma_pravo('comment') ? '' : ' btn-locked' ?>">ULOŽIT</button>
       </div>
-
     </div>
   </div>
-</div> 
-   
-  
-         
-  <!-- The Modal  modal_skin -->
+</div>
+
+
+<!-- ───────────────────────── NASTAVENÍ ───────────────────────── -->
 <div class="modal" id="modal_skin">
-  <div class="modal-dialog  ">
-   <div class="modal-content">
-
-      <!-- Modal Header -->
+  <div class="modal-dialog">
+    <div class="modal-content">
       <div class="modal-header">
-        <p class="modal-title">NASTAVENÍ</p>
-		
+        <h5 class="modal-title">NASTAVENÍ ZOBRAZENÍ</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
-      <!-- Modal body -->
       <div class="modal-body">
-      
-	    <button  id="skin_default" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> rozbalit vše /desktop/</button>
-	  	<button  id="skin_mini" type="button" class="btn btn-sm btn-secondary"  style=" display: inline"> sbalit vše /mobil/</button>
-
-	<!--  <form id="form" name="form" method="post" action="php/zmenit_skin.php">
- 
- <div class="form-check">
-  <label class="form-check-label">
-    <input type="radio" class="form-check-input" name="skin" value="skin1">DEFAULT
-  </label>
-</div>
-<div class="form-check">
-  <label class="form-check-label">
-    <input type="radio" class="form-check-input "   name="skin" value="skin2">FUNKY
-  </label>
-</div>
-<div class="form-check  ">
-  <label class="form-check-label">
-    <input type="radio" class="form-check-input "   name="skin" value="skin3">MINI
-  </label>
-</div> 
-
-   <button  id= "odeslat" type="submit" class="btn btn-primary">NASTAVIT</button>
-  
-</form>  -->
-	 
+        <p>Způsob zobrazení skladeb:</p>
+        <button id="skin_default" type="button" class="btn btn-secondary">
+          rozbalit vše <span style="color:var(--muted); font-size:11px;">/desktop/</span>
+        </button>
+        <button id="skin_mini" type="button" class="btn btn-secondary">
+          sbalit vše <span style="color:var(--muted); font-size:11px;">/mobil/</span>
+        </button>
       </div>
-      <!-- Modal footer -->
-      <div class="modal-footer">   
-	  
-        <button type="button" class="btn btn-danger" data-dismiss="modal">ZAVŘÍT</button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
       </div>
-
     </div>
   </div>
-</div> 
-   
-     
-  <!-- Modal: PŘEJMENOVAT skladbu -->
+</div>
+
+
+<!-- ───────────────────────── PŘEJMENOVAT SKLADBU ───────────────────────── -->
 <div class="modal" id="modal_rename_val">
   <div class="modal-dialog">
     <div class="modal-content">
-
       <div class="modal-header">
-        <p id="modal_rename_val_title" class="modal-title">PŘEJMENOVAT SKLADBU</p>
+        <h5 id="modal_rename_val_title" class="modal-title">PŘEJMENOVAT SKLADBU</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
       <form action="/php/prejmenovat_val.php" method="post">
         <div class="modal-body">
-          <div class="form-group" style="display:none">
-            <input id="modal_rename_val_label" type="text" class="form-control" value=""
-              name="puvodni_jmeno_valu_k_prejmenovani">
+          <div class="modal-ctx">
+            <div class="ctx-action">Přejmenuji</div>
+            <div>Skladba: <strong id="modal_rename_val_ctx">—</strong></div>
+          </div>
+          <div style="display:none">
+            <input id="modal_rename_val_label" type="text" class="form-control" value="" name="puvodni_jmeno_valu_k_prejmenovani">
           </div>
           <div class="form-group">
-            <label for="modal_rename_val_label_novy">Nový název skladby:</label>
+            <label for="modal_rename_val_label_novy">Nový název:</label>
             <input id="modal_rename_val_label_novy" type="text" class="form-control" value=""
-              name="nove_jmeno_valu_k_prejmenovani" placeholder="nový název">
+              name="nove_jmeno_valu_k_prejmenovani" placeholder="nový název" autofocus>
           </div>
-          <div class="form-group" style="display:none">
+          <div style="display:none">
             <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-warning<?= ma_pravo('rename_val') ? '' : ' btn-locked' ?>">přejmenovat</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZRUŠIT</button>
+          <button type="submit" class="btn btn-warning<?= ma_pravo('rename_val') ? '' : ' btn-locked' ?>">PŘEJMENOVAT</button>
         </div>
       </form>
-
     </div>
   </div>
 </div>
 
-  <!-- Modal: SMAZAT skladbu -->
+
+<!-- ───────────────────────── SMAZAT SKLADBU ───────────────────────── -->
 <div class="modal" id="modal_delete_val">
   <div class="modal-dialog">
     <div class="modal-content">
-
       <div class="modal-header">
-        <p id="modal_delete_val_label" class="modal-title">žádná skladba</p>
+        <h5 class="modal-title">SMAZAT SKLADBU</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
       <form action="/php/smazat_val.php" method="post">
         <div class="modal-body">
-          <p>Pozor! Smazat lze pouze <strong>prázdnou</strong> skladbu!</p>
-          <div class="form-group" style="display:none">
+          <div class="modal-ctx">
+            <div class="ctx-action">⚠ Nevratná akce</div>
+            <div>Skladba: <strong id="modal_delete_val_label">—</strong></div>
+          </div>
+          <p>Pozor! Smazat lze pouze <strong>prázdnou</strong> skladbu. Pokud složka obsahuje soubory, akce selže.</p>
+          <div style="display:none">
             <input id="modal_delete_val_deleter" type="text" class="form-control" value="" name="val_ke_smazani">
           </div>
-          <div class="form-group" style="display:none">
+          <div style="display:none">
             <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-danger<?= ma_pravo('delete_val') ? '' : ' btn-locked' ?>">odstranit celou skladbu</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZRUŠIT</button>
+          <button type="submit" class="btn btn-danger<?= ma_pravo('delete_val') ? '' : ' btn-locked' ?>">SMAZAT SKLADBU</button>
         </div>
       </form>
-
     </div>
   </div>
 </div>
-  
-  
-  <!-- The Modal presunout soubor-->
- <div class="modal fade" id="modal_presunout">
-  <div class="modal-dialog">
-    <div class="modal-content">
 
+
+<!-- ───────────────────────── PŘESUNOUT SOUBOR ───────────────────────── -->
+<!--
+  POZOR – main.js musí být upraven:
+  Klik na položku složky v #seznam_slozek_pro_presun NESMÍ rovnou submitovat form.
+  Místo toho zavolej: presunoutVybratSlozku(nazevSlozky, nazevSouboru)
+  Tlačítka složek musí mít: data-slozka="nazevSlozky" a class="presun-slozka-btn"
+  Při otevření modalu nastav také: $('#modal_presunout_from_label').text(aktualni_slozka)
+-->
+<div class="modal fade" id="modal_presunout">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">PŘESUNOUT SOUBOR</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
-      <form action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data">
+      <form id="form_presunout" action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
-          
-          <p id="modal_presunout_label" style="color: var(--barva); font-weight: bold; margin-bottom: 15px;">Soubor</p>
-
-          <div class="form-group" style="display:none">
-            <input id="modal_presunout_co" type="text" class="form-control" value="" name="presunout_co">
+          <div class="modal-ctx">
+            <div class="ctx-action">Přesouvám</div>
+            <div>Soubor: <strong id="modal_presunout_label">—</strong></div>
+            <div>Ze složky: <strong id="modal_presunout_from_label" style="color:var(--muted)">—</strong></div>
           </div>
-          <div class="form-group" style="display:none">
+          <div style="display:none">
+            <input id="modal_presunout_co"    type="text" class="form-control" value="" name="presunout_co">
             <input id="modal_presunout_odkud" type="text" class="form-control" value="" name="presunout_odkud">
-          </div>
-          <div class="form-group" style="display:none">
+            <input id="modal_presunout_kam"   type="text" class="form-control" value="" name="presunout_kam">
             <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
           </div>
-
-          <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Kliknutím na složku rovnou přesunete:</p>
-
-          <div id="seznam_slozek_pro_presun" class="list-group" style="max-height: 300px; overflow-y: auto; padding-right: 4px;">
-            <div style="color: var(--muted); font-size: 12px; padding: 10px;">načítám...</div>
+          <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">Vyberte cílovou složku:</p>
+          <div id="seznam_slozek_pro_presun" class="list-group" style="max-height:240px; overflow-y:auto; padding-right:4px;">
+            <div style="color:var(--muted); font-size:12px; padding:10px;">načítám...</div>
           </div>
 
+          <!-- Potvrzovací panel — zobrazí se po výběru složky -->
+          <div id="presunout_confirm_panel">
+            <div class="confirm-label">Potvrdit přesun</div>
+            <div class="confirm-row">
+              <span class="confirm-file" id="presunout_confirm_soubor">—</span>
+              <span class="confirm-arrow">→</span>
+              <span class="confirm-to" id="presunout_confirm_cil">—</span>
+            </div>
+            <div class="confirm-btns">
+              <button type="submit" form="form_presunout" class="btn btn-primary btn-sm">✓ Přesunout</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="presunout_confirm_zrusit">✗ Zrušit výběr</button>
+            </div>
+          </div>
         </div>
-
         <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-dismiss="modal">ZRUŠIT</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
         </div>
       </form>
-      
     </div>
   </div>
 </div>
 
-    <!-- The Modal nahrat_zvuk -->
+
+<!-- ───────────────────────── NAHRÁVÁNÍ ───────────────────────── -->
 <div class="modal" id="modal_nahrat_zvuk">
-  <div class="modal-dialog  ">
+  <div class="modal-dialog">
     <div class="modal-content">
-
-      <!-- Modal Header -->
       <div class="modal-header">
-            <p>RECORD</p>
-		  <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h5 class="modal-title">NAHRÁVÁNÍ</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
-      <!-- Modal body -->  
-	  
-             <div class="modal-body">
-     	    	<div class="container text-center">
-					 <p>Nahrávka se ukládá do dočasné paměti a je třeba ji manuálně uložit pomocí pravého tlačítka myši.</p>
-					 <p>Je možno udělat více nahrávek, poté poslechnout a případně uložit.</p>
-					 <p>Pozor! Znovunačtení stránky způsobí smazání neuložených nahrávek.</p>
-					<button  id="record_button" class="btn btn-primary">ZAČÍT NAHRÁVAT</button> <!--  nahrávání   -->
-					<ul id="playlist"></ul> <!--  cíl nahrávání   -->
-               </div>		  		
-            </div>	  
-
-      <!-- Modal footer -->
-            <div class="modal-footer">	 
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display: inline">ZAVŘÍT</button>	         
-            </div>
-	  
+      <div class="modal-body">
+        <div class="container text-center">
+          <p>Nahrávka se ukládá do dočasné paměti a je třeba ji manuálně uložit pomocí pravého tlačítka myši.</p>
+          <p>Je možno udělat více nahrávek, poté poslechnout a případně uložit.</p>
+          <p style="color:#cc8844;">⚠ Znovunačtení stránky způsobí smazání neuložených nahrávek.</p>
+          <button id="record_button" class="btn btn-primary">ZAČÍT NAHRÁVAT</button>
+          <ul id="playlist"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+      </div>
     </div>
   </div>
 </div>
-  
 
-    <!-- The Modal modal_zmenit_text -->
+
+<!-- ───────────────────────── UPRAVIT TEXT / AKORDY ───────────────────────── -->
 <div class="modal" id="modal_zmenit_text">
-  <div class="modal-dialog  ">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
-
-      <!-- Modal Header -->
       <div class="modal-header">
-          <p id="modal_zmenit_text_label">UPRAVIT <?php echo htmlspecialchars($aktualni_text); ?></p>
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h5 class="modal-title" id="modal_zmenit_text_label">UPRAVIT TEXT / AKORDY</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-
-      <!-- Modal body -->
-	     <form action="/php/vlozit_akordy.php" method="post" enctype="multipart/form-data" style="display:inline">
-             <div class="modal-body">
-     	    	<div class="container text-center">
-                     <span class="vzkaz">
-					   <div class="form-group" style="display:none">
-						<input id="modal_soubor_akordu" type="text" class="form-control" value="<?php echo htmlspecialchars($aktualni_text); ?>" name="soubor_akordu">
-					  </div>
-
-					  <textarea id="editor" name="editor" style="overflow-x:auto; font-family:Courier,monospace; width:100%" rows="20"></textarea>
-
-				     </span>
-               </div>
-                      <div class="form-group" style="display:none">
-						<input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
-					  </div>
-            </div>
-
-      <!-- Modal footer -->
-            <div class="modal-footer">
- 			   <p>Pozor! Přepíše původní text.</p>
-				<button type="submit" class="btn btn-danger<?= ma_pravo('edit_text') ? '' : ' btn-locked' ?>">uložit změny</button>
-				<button type="button" class="btn btn-secondary" onclick="zobrazHistorii()">📋 historie</button>
- 				<button type="button" class="btn btn-danger" data-dismiss="modal" style="display:inline">ZAVŘÍT</button>
-            </div>
-     </form>
-     <!-- Panel historie -->
-     <div id="panel-historie" style="display:none; padding:10px; border-top:1px solid #3a3e44; max-height:200px; overflow-y:auto;">
-       <div style="font-size:11px;color:#888;margin-bottom:6px">Kliknutím na zálohu ji načteš do editoru. Uložením ji obnovíš.</div>
-       <div id="seznam-zaloh"></div>
-     </div>
-	  
+      <form action="/php/vlozit_akordy.php" method="post" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="modal-ctx">
+            <div class="ctx-action">Editace textu / akordů</div>
+            <div>Skladba: <strong><?php echo htmlspecialchars($aktualni_text); ?></strong></div>
+          </div>
+          <div style="display:none">
+            <input id="modal_soubor_akordu" type="text" class="form-control"
+              value="<?php echo htmlspecialchars($aktualni_text); ?>" name="soubor_akordu">
+            <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
+          </div>
+          <textarea id="editor" name="editor" rows="22"></textarea>
+        </div>
+        <div class="modal-footer">
+          <span class="modal-footer-hint">Záloha se uchovává v historii.</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="zobrazHistorii()">📋 Historie</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+          <button type="submit" class="btn btn-warning<?= ma_pravo('edit_text') ? '' : ' btn-locked' ?>">ULOŽIT ZMĚNY</button>
+        </div>
+      </form>
+      <!-- Panel historie -->
+      <div id="panel-historie" style="display:none; max-height:200px; overflow-y:auto;">
+        <div style="font-size:11px; color:#888; margin-bottom:6px;">Kliknutím na zálohu ji načteš do editoru. Uložením ji obnovíš.</div>
+        <div id="seznam-zaloh"></div>
+      </div>
     </div>
   </div>
-</div>  
+</div>
 
 
-
-
-<!-- ── ODHLÁŠENÍ ── -->
+<!-- ───────────────────────── ODHLÁŠENÍ ───────────────────────── -->
 <div class="modal" id="modal_logout">
   <div class="modal-dialog modal-sm">
     <div class="modal-content" style="text-align:center">
       <div class="modal-header" style="justify-content:center; border-bottom:none; padding-bottom:0">
         <h5 class="modal-title">🎸</h5>
       </div>
-      <div class="modal-body" style="padding: 10px 20px 20px">
-        <p style="color:var(--text); font-size:14px; margin-bottom:16px">
-          Opravdu chceš opustit zkušebnu?
-        </p>
+      <div class="modal-body" style="padding:10px 20px 20px">
+        <p style="color:var(--text); font-size:14px; margin-bottom:16px">Opravdu chceš opustit zkušebnu?</p>
         <a href="/php/login/logout.php" class="btn btn-danger" style="display:block; margin-bottom:8px">
           zpět do reálného světa
         </a>
@@ -580,3 +562,42 @@
     </div>
   </div>
 </div>
+
+
+<script>
+// ── Přesunout: potvrzovací panel ─────────────────────────────────────────────
+// Voláno z main.js místo přímého submitu:
+function presunoutVybratSlozku(nazevSlozky) {
+  var soubor = $('#modal_presunout_co').val();
+  $('#presunout_confirm_soubor').text(soubor);
+  $('#presunout_confirm_cil').text(nazevSlozky);
+  $('#modal_presunout_kam').val(nazevSlozky);
+  $('#presunout_confirm_panel').slideDown(160);
+  // Scrollni na confirm panel
+  var $body = $('#modal_presunout').find('.modal-body');
+  $body.animate({ scrollTop: $body[0].scrollHeight }, 200);
+}
+
+$(document).on('click', '.presun-slozka-btn', function(e) {
+  e.preventDefault();
+  presunoutVybratSlozku($(this).data('slozka'));
+});
+
+$('#presunout_confirm_zrusit').on('click', function() {
+  $('#presunout_confirm_panel').slideUp(150);
+  $('#modal_presunout_kam').val('');
+});
+
+$('#modal_presunout').on('hidden.bs.modal', function() {
+  $('#presunout_confirm_panel').hide();
+  $('#modal_presunout_kam').val('');
+});
+
+// ── Rename val: naplnit ctx label ────────────────────────────────────────────
+// V main.js kde nastavuješ $('#modal_rename_val_label').val(nazev), přidej:
+// $('#modal_rename_val_ctx').text(nazev);
+//
+// ── Presunout: naplnit "Ze složky" ──────────────────────────────────────────
+// V main.js kde nastavuješ $('#modal_presunout_odkud').val(slozka), přidej:
+// $('#modal_presunout_from_label').text(slozka);
+</script>
