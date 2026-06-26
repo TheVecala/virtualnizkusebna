@@ -516,12 +516,13 @@
       <form action="/php/vlozit_akordy.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="modal-ctx">
-            <div class="ctx-action">Editace textu / akordů</div>
-            <div>Skladba: <strong><?php echo htmlspecialchars($aktualni_text); ?></strong></div>
+            <div class="ctx-action" id="modal_editor_ctx_action">—</div>
+            <div>Soubor: <strong id="modal_editor_ctx_soubor">—</strong></div>
+            <div>Skladba: <strong id="modal_editor_ctx_slozka">—</strong></div>
           </div>
           <div style="display:none">
             <input id="modal_soubor_akordu" type="text" class="form-control"
-              value="<?php echo htmlspecialchars($aktualni_text); ?>" name="soubor_akordu">
+              value="" name="soubor_akordu">
             <input type="text" class="form-control" value="<?php echo $_SERVER['PHP_SELF'] ?>" name="navrat">
           </div>
           <textarea id="editor" name="editor" rows="22"></textarea>
@@ -563,4 +564,3 @@
   </div>
 </div>
 
- 

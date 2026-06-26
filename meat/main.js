@@ -213,9 +213,18 @@ function otevritEditText(typ) {
       
       // Dosadí se specifický název souboru
       var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
-      if (input) input.value = data.nazev_souboru || vychoziNazev;
+      var nazev = data.nazev_souboru || vychoziNazev;
+      if (input) input.value = nazev;
       
-      if (label) label.textContent = 'UPRAVIT ' + (data.nazev_souboru || vychoziNazev) + ' — ' + (data.slozka || '');
+      if (label) label.textContent = 'UPRAVIT ' + nazev + ' — ' + (data.slozka || '');
+
+      // Naplnit modal-ctx dynamicky (soubor + skladba)
+      var ctxAction = document.getElementById('modal_editor_ctx_action');
+      var ctxSoubor = document.getElementById('modal_editor_ctx_soubor');
+      var ctxSlozka = document.getElementById('modal_editor_ctx_slozka');
+      if (ctxAction) ctxAction.textContent = (typ === 'tabelatura') ? 'Editace tabelatury' : 'Editace textu / akordů';
+      if (ctxSoubor) ctxSoubor.textContent = nazev;
+      if (ctxSlozka) ctxSlozka.textContent = data.slozka || VZ.aktualniNazev || '';
       
       // DYNAMICKÁ ZMĚNA CÍLE FORMULÁŘE (Action)
       if (form) {
@@ -233,9 +242,17 @@ function otevritEditText(typ) {
     var label = document.getElementById('modal_zmenit_text_label');
     var form  = document.querySelector('#modal_zmenit_text form');
     var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
-    
+
     if (label) label.textContent = 'VYTVOŘIT ' + vychoziNazev;
     if (form) form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
+
+    // Naplnit modal-ctx i v případě fail větve
+    var ctxAction = document.getElementById('modal_editor_ctx_action');
+    var ctxSoubor = document.getElementById('modal_editor_ctx_soubor');
+    var ctxSlozka = document.getElementById('modal_editor_ctx_slozka');
+    if (ctxAction) ctxAction.textContent = (typ === 'tabelatura') ? 'Nová tabelatura' : 'Nový text / akordy';
+    if (ctxSoubor) ctxSoubor.textContent = vychoziNazev;
+    if (ctxSlozka) ctxSlozka.textContent = VZ.aktualniNazev || '';
     
     // Reset panelu historie — nesmí přetékat z předchozího otevření
     document.getElementById('panel-historie').style.display = 'none';
