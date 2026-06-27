@@ -1004,7 +1004,11 @@ function initWaveSurfer(cesta, peaksData) {
     wavesurfer.on('ready', function() {
         $('#wf-placeholder').hide();
         wavesurfer.play();
+        var delka = wavesurfer.getDuration();
 
+		$('#looper-time').text(
+			formatTime(0) + ' / ' + formatTime(delka)
+		);
         // Peaks ještě nebyly uloženy → exportujeme a pošleme na server
         if (!maPeaks) {
             var peaks    = wavesurfer.exportPeaks();
@@ -1042,6 +1046,26 @@ function initWaveSurfer(cesta, peaksData) {
             $('#btn-pause').addClass('on');
         }
     });
+	
+	wavesurfer.on('timeupdate', function(sec){
+
+    $('#looper-time').text(
+
+        formatTime(sec)
+
+        +
+
+        ' / '
+
+        +
+
+        formatTime(
+            wavesurfer.getDuration()
+        )
+
+    );
+
+});
 }
 
 // Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
@@ -1080,6 +1104,20 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
 });
 
 /* --- Globální funkce pro tlačítka v looper-baru --- */
+function formatTime(sec)
+{
+    sec = Math.floor(sec);
+
+    let m = Math.floor(sec / 60);
+    let s = sec % 60;
+
+    return (
+        (m < 10 ? '0' : '') + m +
+        ':' +
+        (s < 10 ? '0' : '') + s
+    );
+}
+
 function looperPlay() {
     if (wavesurfer) wavesurfer.play();
 }
@@ -1128,6 +1166,7 @@ function looperZavrit() {
     $('#looper-notes').hide().empty();
   	$('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▭');
+    $('#looper-time').text('00:00 / 00:00');
     $('#looper-bar').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
