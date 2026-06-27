@@ -338,6 +338,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     padding:8px;
 }
 
+#looper-content.hidden{
+    display:none;
+}
 #looper-notes{
 
     margin-top:10px;
@@ -1051,6 +1054,8 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
 
     // Zobrazíme looper bar a resetujeme stav
     $('#looper-bar').removeClass('hidden');
+	$('#looper-content').removeClass('hidden');
+    $('#btn-collapse').html('▭');
     $('#lname').text(nazev);
     $('#wf-placeholder').text('načítám nahrávku...').show();
 
@@ -1101,7 +1106,16 @@ function looperLoop() {
 
 function looperToggle()
 {
+    $('#looper-content').toggleClass('hidden');
 
+    if ($('#looper-content').hasClass('hidden'))
+    {
+        $('#btn-collapse').html('▣');
+    }
+    else
+    {
+        $('#btn-collapse').html('▭');
+    }
 }
 
 function looperZavrit() {
@@ -1112,6 +1126,8 @@ function looperZavrit() {
     }
     looperCurrentFile = null;
     $('#looper-notes').hide().empty();
+  	$('#looper-content').removeClass('hidden');
+    $('#btn-collapse').html('▭');
     $('#looper-bar').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
