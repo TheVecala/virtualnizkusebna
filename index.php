@@ -336,10 +336,29 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 #looper-content{
 
     padding:8px;
+
+    overflow:hidden;
+
+    max-height:600px;
+
+    opacity:1;
+
+    transition:
+        max-height .18s ease,
+        opacity .15s ease,
+        padding .18s ease;
 }
 
 #looper-content.hidden{
-    display:none;
+
+    max-height:0;
+
+    opacity:0;
+
+    padding-top:0;
+    padding-bottom:0;
+
+    overflow:hidden;
 }
 #looper-notes{
 
