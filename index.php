@@ -251,14 +251,33 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
 
-#waveform-container {
-  width: 100%; 
-  height: 100px; 
-  background: var(--card);
-  border-radius: 6px; 
-  border: 1px solid var(--border);
-  position: relative; 
-  overflow: hidden;
+#waveform-container{
+    position:relative;
+}
+
+#looper-time{
+
+    position:absolute;
+
+    top:4px;
+    right:8px;
+
+    z-index:20;
+
+    font-size:10px;
+    font-family:monospace;
+
+    color:rgba(255,255,255,.80);
+
+    background:rgba(0,0,0,.25);
+
+    padding:2px 5px;
+
+    border-radius:4px;
+
+    pointer-events:none;
+
+    user-select:none;
 }
 #waveform-container .wf-placeholder {
   position: absolute; inset: 0; display: flex; align-items: center;
@@ -310,22 +329,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     align-items:center;
     gap:5px;
 }
-
-#looper-time{
-
-    flex:1;
-
-    text-align:center;
-
-    color:#ddd;
-
-    font-size:13px;
-
-    font-family:monospace;
-
-    white-space:nowrap;
-}
-
+ 
 .looper-right{
 
     display:flex;
@@ -689,9 +693,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
     </div>
 
-    <div id="looper-time">
-        00:00 / 00:00
-    </div>
+
 
     <div class="looper-right">
 
@@ -708,8 +710,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
     <!-- OBSAH -->
     <div id="looper-content">
-
         <div id="waveform-container">
+	        <div id="looper-time">
+               00:00 / 00:00
+            </div>
             <div class="wf-placeholder"
                  id="wf-placeholder">
                 načítám nahrávku...
