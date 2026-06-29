@@ -15,6 +15,24 @@ function pbDone() {
   pbTimer = setTimeout(function() { pb.className = ''; }, 700);
 }
 
+// ── Success overlay v modalu ──
+function modalSuccess(modalId, zprava) {
+  var $modal   = $('#' + modalId);
+  var $content = $modal.find('.modal-content');
+  var $overlay = $(
+    '<div class="modal-success-overlay">' +
+      '<div class="modal-success-icon">✓</div>' +
+      '<div class="modal-success-text">' + (zprava || 'Hotovo') + '</div>' +
+    '</div>'
+  );
+  $content.append($overlay);
+  setTimeout(function() {
+    // .one() musí být registrován PŘED modal('hide'), jinak může event proletět dřív
+    $modal.one('hidden.bs.modal', function() { $overlay.remove(); });
+    $modal.modal('hide');
+  }, 1000);
+}
+
 // ── Načtení panelů při startu (Nyní včetně tabelatury) ──
 $(function() {
   pbStart();
@@ -197,48 +215,51 @@ function looperZavrit() {
 
 // ── 🌟 DYNAMICKÝ EDIT TEXT / TABELATURA MODAL ──
 function otevritEditText(typ) {
-  typ = typ || 'text'; // Fallback pro jistotu, pokud by nebyl zadaný
-  VZ.editTyp = typ;    // Zapamatovat pro historii (zobrazHistorii + nacistZalohu)
+  typ = typ || 'text';
+  VZ.editTyp = typ;
 
-  // Zažádáme příslušný PHP wrapper o data (předpoklad: máte ajax_text_raw.php a ajax_tabelatura_raw.php)
+  pbStart();
   $.get('/php/ajax/ajax_' + typ + '_raw.php', function(data) {
+    pbDone();
     if (data.obsah !== undefined) {
       var textarea = document.getElementById('editor');
       var input    = document.getElementById('modal_soubor_akordu');
       var label    = document.getElementById('modal_zmenit_text_label');
-      // Propojíme akci formuláře podle typu souboru, abychom zapsali do správného cíle
       var form     = document.querySelector('#modal_zmenit_text form');
 
-      if (textarea) textarea.value = data.obsah;
-      
-      // Dosadí se specifický název souboru
+      if (textarea) {
+        textarea.value = data.obsah;
+        // Bug 1 fix: číst zpět z textarey — browser normalizuje \r\n → \n,
+        // takže porovnání při dirty-check bude konzistentní
+        VZ.editorPuvodniObsah = textarea.value;
+      }
+
       var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
       var nazev = data.nazev_souboru || vychoziNazev;
       if (input) input.value = nazev;
-      
+
       if (label) label.textContent = 'UPRAVIT ' + nazev + ' — ' + (data.slozka || '');
 
-      // Naplnit modal-ctx dynamicky (soubor + skladba)
       var ctxAction = document.getElementById('modal_editor_ctx_action');
       var ctxSoubor = document.getElementById('modal_editor_ctx_soubor');
       var ctxSlozka = document.getElementById('modal_editor_ctx_slozka');
       if (ctxAction) ctxAction.textContent = (typ === 'tabelatura') ? 'Editace tabelatury' : 'Editace textu / akordů';
       if (ctxSoubor) ctxSoubor.textContent = nazev;
       if (ctxSlozka) ctxSlozka.textContent = data.slozka || VZ.aktualniNazev || '';
-      
-      // DYNAMICKÁ ZMĚNA CÍLE FORMULÁŘE (Action)
+
       if (form) {
         form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
       }
     }
-    // Reset panelu historie — nesmí přetékat z předchozího otevření
     document.getElementById('panel-historie').style.display = 'none';
     document.getElementById('seznam-zaloh').innerHTML = '';
+    // Bug 2 fix: smazat overlay z případného předchozího uložení (pojistka)
+    $('#modal_zmenit_text .modal-success-overlay').remove();
     $('#modal_zmenit_text').modal('show');
   }, 'json').fail(function(xhr) {
+    pbDone();
     console.error('ajax_' + typ + '_raw chyba:', xhr.status, xhr.responseText);
-    
-    // Pokud selhalo (např. soubor ještě neexistuje), otevřeme s prázdným textem ale připravené
+
     var label = document.getElementById('modal_zmenit_text_label');
     var form  = document.querySelector('#modal_zmenit_text form');
     var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
@@ -246,17 +267,18 @@ function otevritEditText(typ) {
     if (label) label.textContent = 'VYTVOŘIT ' + vychoziNazev;
     if (form) form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
 
-    // Naplnit modal-ctx i v případě fail větve
     var ctxAction = document.getElementById('modal_editor_ctx_action');
     var ctxSoubor = document.getElementById('modal_editor_ctx_soubor');
     var ctxSlozka = document.getElementById('modal_editor_ctx_slozka');
     if (ctxAction) ctxAction.textContent = (typ === 'tabelatura') ? 'Nová tabelatura' : 'Nový text / akordy';
     if (ctxSoubor) ctxSoubor.textContent = vychoziNazev;
     if (ctxSlozka) ctxSlozka.textContent = VZ.aktualniNazev || '';
-    
-    // Reset panelu historie — nesmí přetékat z předchozího otevření
+
+    VZ.editorPuvodniObsah = '';
+
     document.getElementById('panel-historie').style.display = 'none';
     document.getElementById('seznam-zaloh').innerHTML = '';
+    $('#modal_zmenit_text .modal-success-overlay').remove();
     $('#modal_zmenit_text').modal('show');
   });
 }
@@ -276,13 +298,15 @@ $(document).on('submit', '#modal_zmenit_text form', function(e) {
     pbDone();
     $btn.prop('disabled', false).text(puvodniTxt);
     if (resp.ok) {
-      $('#modal_zmenit_text').modal('hide');
+      // Vyčistit dirty flag — obsah je teď uložen
+      VZ.editorPuvodniObsah = document.getElementById('editor').value;
       nacistPanel(VZ.editTyp || 'text');
+      modalSuccess('modal_zmenit_text', 'Text uložen');
     } else {
       var $info = $form.find('.editor-chyba');
       if (!$info.length) {
         $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px;text-align:left"></div>');
-        $form.find('.modal-footer p').after($info);
+        $form.find('.modal-footer').prepend($info);
       }
       $info.text(resp.vysledek || 'Chyba uložení');
     }
@@ -292,10 +316,21 @@ $(document).on('submit', '#modal_zmenit_text form', function(e) {
     var $info = $form.find('.editor-chyba');
     if (!$info.length) {
       $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px;text-align:left"></div>');
-      $form.find('.modal-footer p').after($info);
+      $form.find('.modal-footer').prepend($info);
     }
     $info.text('Chyba spojení se serverem');
   });
+});
+
+// ── Dirty-state warning v editoru ──
+$(document).on('hide.bs.modal', '#modal_zmenit_text', function(e) {
+  var ta = document.getElementById('editor');
+  if (!ta || VZ.editorPuvodniObsah === undefined) return;
+  if (ta.value !== VZ.editorPuvodniObsah) {
+    if (!confirm('Máš neuložené změny. Opravdu chceš zavřít editor?')) {
+      e.preventDefault();
+    }
+  }
 });
 
 
@@ -328,18 +363,17 @@ $(document).on('submit', '#form_komentar', function(e) {
     odkaz2: $('#komentar_odkaz2').val() || '',
     name:   $('#komentar_jmeno').val(),
   }, function(data) {
+    pbDone();
     if (data.ok) {
       nacistPanel('diskuse');
-      $('#komentar_text').val('');
-      $('#komentar_jmeno').val('');
-      pbDone();
+      $('#komentar_text, #komentar_odkaz, #komentar_odkaz2').val('');
+      modalSuccess('modal_vlozit_komentar', 'Komentář přidán');
     } else {
       if (chyba) { chyba.innerHTML = data.chyba || 'Chyba'; chyba.style.display = 'block'; }
-      pbDone();
     }
   }, 'json').fail(function() {
-    if (chyba) { chyba.innerHTML = 'Chyba spojení'; chyba.style.display = 'block'; }
     pbDone();
+    if (chyba) { chyba.innerHTML = 'Chyba spojení'; chyba.style.display = 'block'; }
   });
 });
 
@@ -411,8 +445,10 @@ function zobrazHistorii() {
 
   seznam.innerHTML    = '<div style="color:#888;font-size:12px">načítám...</div>';
   panel.style.display = 'block';
+  pbStart();
 
   $.get('/php/ajax/ajax_history.php', { akce: 'seznam', typ: VZ.editTyp || 'akordy' }, function(data) {
+    pbDone();
     if (!data.ok || data.zalohy.length === 0) {
       seznam.innerHTML = '<div style="color:#888;font-size:12px">Žádné zálohy.</div>';
       return;
@@ -427,17 +463,20 @@ function zobrazHistorii() {
     });
     seznam.innerHTML = html;
   }, 'json').fail(function() {
+    pbDone();
     seznam.innerHTML = '<div style="color:#888;font-size:12px">Chyba načítání.</div>';
   });
 }
 
 function nacistZalohu(soubor) {
+  pbStart();
   $.get('/php/ajax/ajax_history.php', { akce: 'nacist', soubor: soubor, typ: VZ.editTyp || 'akordy' }, function(data) {
+    pbDone();
     if (data.ok) {
       document.getElementById('editor').value = data.obsah;
       document.getElementById('panel-historie').style.display = 'none';
     }
-  }, 'json');
+  }, 'json').fail(function() { pbDone(); });
 }
 
 $(document).on('click', '.btn-zaloha', function() {
@@ -523,10 +562,12 @@ window.addEventListener('resize', function() {
 $(document).on('show.bs.modal', '#modal_presunout', function() {
   var kontejner = document.getElementById('seznam_slozek_pro_presun');
   if (!kontejner) return;
-  
+
   kontejner.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px;">načítám...</div>';
+  pbStart();
 
   $.get('/php/ajax/ajax_slozky.php', function(data) {
+    pbDone();
     kontejner.innerHTML = '';
     
     data.forEach(function(s) {
@@ -551,6 +592,7 @@ $(document).on('show.bs.modal', '#modal_presunout', function() {
       kontejner.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">Nemáte vytvořené žádné další skladby.</div>';
     }
   }, 'json').fail(function() {
+    pbDone();
     kontejner.innerHTML = '<div style="color:#ff8888; font-size:12px; padding:10px;">Chyba načítání skladeb.</div>';
   });
 });

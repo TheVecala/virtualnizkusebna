@@ -160,6 +160,28 @@
   margin-right: auto;
   align-self: center;
 }
+
+/* ── Success overlay ── */
+.modal-content { position: relative; }
+.modal-success-overlay {
+  position: absolute;
+  inset: 0;
+  background: #2e3338;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  gap: 10px;
+  animation: fadeInOverlay .15s ease;
+}
+@keyframes fadeInOverlay {
+  from { opacity: 0; transform: scale(.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.modal-success-icon { font-size: 40px; color: var(--barva); line-height: 1; }
+.modal-success-text { font-size: 13px; color: var(--text); }
 </style>
 
 
