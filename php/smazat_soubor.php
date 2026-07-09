@@ -1,5 +1,11 @@
 <?php session_start(); ?>
 <?php
+require_once __DIR__ . '/../config.php';
+
+if (!ma_pravo('delete_file')) {
+    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
+    require "navrat.php"; exit;
+}
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
@@ -37,6 +43,12 @@ if (!file_exists($target_file)) {
 
 if (unlink($target_file)) {
     $_SESSION['vysledek'] = "soubor \"" . basename($soubor_ke_smazani) . "\" byl smazán";
+
+    // Smazat také WaveSurfer peaks cache, pokud existuje
+    $peaks_file = $target_file . ".peaks.json";
+    if (file_exists($peaks_file)) {
+        @unlink($peaks_file);
+    }
 } else {
     $_SESSION['vysledek'] = "chyba - soubor se nepodařilo smazat";
 }

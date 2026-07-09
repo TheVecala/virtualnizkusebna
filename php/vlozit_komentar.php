@@ -1,12 +1,16 @@
 <?php
 session_start();
 error_reporting(0);
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/../config.php';
 
-if (empty($_SESSION['login'])) {
-    echo json_encode(["ok" => false, "chyba" => "Nejste přihlášen"]);
+if (!ma_pravo('comment')) {
+    echo json_encode(["ok" => false, "chyba" => "Nemáte oprávnění"]);
     exit;
 }
+header('Content-Type: application/json; charset=utf-8');
+
+// 1. ZMĚNA: Kontrola single-band přihlášení
+
 
 include "login/connect.php";
 
@@ -17,27 +21,37 @@ $jmeno  = htmlspecialchars(trim($_POST["name"]   ?? ""), ENT_QUOTES);
 $pouzit_hlavni = !empty($_POST["pouzit_hlavni_diskusi"]);
 
 if (empty($text)) {
-    echo json_encode(["ok" => false, "chyba" => "Text nesmí být prázdný"]);
+    echo json_encode(["ok" => false, "chyba" => "Něco sem musíš napsat."]);
     exit;
 }
 
-$komentar = '<pre style="overflow-x:auto">' . $text . '</pre>';
-if (!empty($odkaz))  { $komentar .= '<a href="' . $odkaz . '">' . $odkaz . '</a>'; }
-if (!empty($odkaz2)) { $komentar .= ' ' . $odkaz2; }
+$komentar = $text;
+// if (!empty($odkaz))  { $komentar .= "\n" . $odkaz; }
+// if (!empty($odkaz2)) { $komentar .= " " . $odkaz2; }
 
 $kapela  = $_SESSION['kapela']                     ?? "";
 $slozka  = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 
 // Výběr tabulky diskuse
 if ($pouzit_hlavni || empty($slozka)) {
-    // Nápady kapely — hlavní diskuse
-    if (empty($_SESSION['diskuse'])) {
-        echo json_encode(["ok" => false, "chyba" => "Diskuse není nastavena"]);
+    
+    // 2. ZMĚNA: Nápady kapely — hlavní diskuse (dynamický název)
+    if (empty($kapela)) {
+        echo json_encode(["ok" => false, "chyba" => "Název kapely není nastaven"]);
         exit;
     }
-    $aktualni_diskuse = $mysqli->real_escape_string($_SESSION['diskuse']);
+    
+    $aktualni_diskuse = "napady_" . $mysqli->real_escape_string($kapela);
+    
+    // Vytvořit tabulku pro nápady, pokud náhodou ještě neexistuje
+    $mysqli->query("CREATE TABLE IF NOT EXISTS `$aktualni_diskuse` (
+        cas   INT(11)     NOT NULL,
+        vzkaz TEXT        NOT NULL,
+        jmeno VARCHAR(50) NOT NULL
+    )");
+
 } else {
-    // Diskuse per-vál
+    // Diskuse per-vál (zůstává beze změny)
     $aktualni_diskuse = "diskuse_" . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
 
     // Vytvořit tabulku pokud neexistuje
@@ -58,7 +72,7 @@ $ok = $mysqli->query("INSERT INTO `$aktualni_diskuse` (cas, vzkaz, jmeno)
 if ($ok) {
     echo json_encode([
         "ok"    => true,
-        "vzkaz" => $komentar,
+        "vzkaz" => nl2br($komentar),
         "jmeno" => htmlspecialchars(strip_tags($jmeno)),
         "datum" => date("j.n.Y G:i:s", $cas),
     ]);

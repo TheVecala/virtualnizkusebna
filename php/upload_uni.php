@@ -2,6 +2,12 @@
 <?php
 require_once __DIR__ . "/../config.php";
 
+if (!ma_pravo('upload')) {
+    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
+    require "navrat.php"; exit;
+}
+
+
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
 // Povolené přípony souborů - php a spustitelné soubory NESMÍ být povoleny

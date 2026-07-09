@@ -1,4 +1,10 @@
 <?php session_start();
+require_once __DIR__ . '/../config.php';
+
+if (!ma_pravo('delete_val')) {
+    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
+    require "navrat.php"; exit;
+}
 
 $val_ke_smazani    = trim($_POST["val_ke_smazani"] ?? "");
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
@@ -29,13 +35,23 @@ if ($pocet > 4) {
     exit;
 }
 
-// Smazání podsložky texty
-if (file_exists($target_dir . "/texty/akordy.txt")) {
-    unlink($target_dir . "/texty/akordy.txt");
+// ── Rekurzivní smazání složky a všeho uvnitř ──
+function smazat_slozku(string $cesta): bool {
+    if (!is_dir($cesta)) return true;
+    foreach (scandir($cesta) as $polozka) {
+        if ($polozka === '.' || $polozka === '..') continue;
+        $plna = $cesta . '/' . $polozka;
+        if (is_dir($plna)) {
+            smazat_slozku($plna);
+        } else {
+            unlink($plna);
+        }
+    }
+    return rmdir($cesta);
 }
-if (is_dir($target_dir . "/texty")) {
-    rmdir($target_dir . "/texty");
-}
+
+// Smazání podsložky texty (akordy.txt, tabelatura.txt, _history/...)
+smazat_slozku($target_dir . "/texty");
 
 // Smazání podsložky data
 if (file_exists($target_dir . "/data/nazev_valu.txt")) {

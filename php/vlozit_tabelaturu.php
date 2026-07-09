@@ -10,7 +10,7 @@ if (!ma_pravo('edit_text')) {
 }
 
 $akordy        = $_POST["editor"] ?? "";
-$nazev_souboru = basename($_POST["soubor_akordu"] ?? "akordy.txt");
+$nazev_souboru = basename($_POST["soubor_akordu"] ?? "tabelatura.txt");
 
 // Ochrana proti prázdnému obsahu
 if (trim($akordy) === "") {

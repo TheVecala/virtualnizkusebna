@@ -1,5 +1,11 @@
 <?php session_start(); ?>
 <?php
+require_once __DIR__ . '/../config.php';
+
+if (!ma_pravo('create_val')) {
+    $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
+    require "navrat.php"; exit;
+}
 require "remove_accents.php";
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
@@ -57,6 +63,8 @@ if (!mkdir($cil_adresare . $ocesany_jmeno . "/texty")) {
     exit;
 }
 copy("../data/akordy.txt", $cil_adresare . $ocesany_jmeno . "/texty/akordy.txt");
+copy("../data/tabelatura.txt", $cil_adresare . $ocesany_jmeno . "/texty/tabelatura.txt");
+
 
 // Vytvoření podsložky data + uložení názvu válu
 if (!mkdir($cil_adresare . $ocesany_jmeno . "/data")) {
@@ -78,10 +86,10 @@ $mysqli->query("CREATE TABLE IF NOT EXISTS `$adresa_diskuse_valu` (
     jmeno VARCHAR(50) NOT NULL
 )");
 
-$cas   = time();
-$vzkaz = $mysqli->real_escape_string("Sem je možno vkládat");
-$mysqli->query("INSERT INTO `$adresa_diskuse_valu` (cas, vzkaz, jmeno)
-    VALUES ('$cas', '$vzkaz', 'admin')");
+// $cas   = time();
+// $vzkaz = $mysqli->real_escape_string("Sem je možno vkládat");
+// $mysqli->query("INSERT INTO `$adresa_diskuse_valu` (cas, vzkaz, jmeno)
+//     VALUES ('$cas', '$vzkaz', 'admin')");
 
 // Přepnout zobrazení na novou složku
 $_SESSION['slozka_souboru_k_zobrazeni'] = $ocesany_jmeno;

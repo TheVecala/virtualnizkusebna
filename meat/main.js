@@ -15,12 +15,30 @@ function pbDone() {
   pbTimer = setTimeout(function() { pb.className = ''; }, 700);
 }
 
-// ── Načtení panelů při startu ──
+// ── Success overlay v modalu ──
+function modalSuccess(modalId, zprava) {
+  var $modal   = $('#' + modalId);
+  var $content = $modal.find('.modal-content');
+  var $overlay = $(
+    '<div class="modal-success-overlay">' +
+      '<div class="modal-success-icon">✓</div>' +
+      '<div class="modal-success-text">' + (zprava || 'Hotovo') + '</div>' +
+    '</div>'
+  );
+  $content.append($overlay);
+  setTimeout(function() {
+    // .one() musí být registrován PŘED modal('hide'), jinak může event proletět dřív
+    $modal.one('hidden.bs.modal', function() { $overlay.remove(); });
+    $modal.modal('hide');
+  }, 1000);
+}
+
+// ── Načtení panelů při startu (Nyní včetně tabelatury) ──
 $(function() {
   pbStart();
-  var pending = 4;
+  var pending = 5; // 🌟 Zvýšeno na 5 panelů
   function panelDone() { if (--pending === 0) pbDone(); }
-  ['text','nahravky','diskuse','napady'].forEach(function(p) {
+  ['text', 'tabelatura', 'nahravky', 'diskuse', 'napady'].forEach(function(p) {
     nacistPanel(p, panelDone);
   });
 });
@@ -39,9 +57,9 @@ function nacistPanel(panel, callback) {
 
 function nacistVsechnyPanely() {
   pbStart();
-  var pending = 4;
+  var pending = 5;
   function done() { if (--pending === 0) pbDone(); }
-  ['text','nahravky','diskuse','napady'].forEach(function(p) { nacistPanel(p, done); });
+  ['text', 'tabelatura', 'nahravky', 'diskuse', 'napady'].forEach(function(p) { nacistPanel(p, done); });
 }
 
 // ── Přepnutí válu ──
@@ -75,27 +93,23 @@ function switchVal(val, nazev, el) {
   });
 }
 
-// ── Desktop view ──
-function desktopView(view, el) {
-  document.querySelectorAll('.topnav a').forEach(function(a) { a.classList.remove('active'); });
-  if (el) el.classList.add('active');
-
-  // Pouze na desktopu — na mobilu řídí mobilePanel
-  if (window.innerWidth <= 768) return;
-
-  if (view === 'napady') {
-    $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'none');
-    $('#panel-napady').css('display', 'flex');
+// ── Desktop view (Přidána podpora panelu tabelatury) ──
+function toggleDesktopPanel(panelId, btn) {
+  var $panel = $('#panel-' + panelId);
+  var $btn   = $(btn);
+  if ($panel.is(':visible')) {
+    $panel.hide();
+    $btn.removeClass('active');
   } else {
-    $('#panel-napady').css('display', 'none');
-    $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'flex');
+    $panel.css('display', 'flex');
+    $btn.addClass('active');
   }
 }
 
 // ── Mobil: přepínání panelů ──
 function mobilePanel(panel, el) {
   document.getElementById('val-drawer').classList.remove('open');
-  document.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.bnav:not(#bn-skladby)').forEach(function(b) { b.classList.remove('active'); });
   if (el) el.classList.add('active');
   VZ.aktivniMobPanel = panel;
 
@@ -108,76 +122,222 @@ function mobilePanel(panel, el) {
   document.getElementById('panel-' + panel).classList.add('mob-active');
 }
 
-// ── Val drawer ──
+// ── Val drawer (otevírá se klikem na #topbar-val nebo #bn-skladby) ──
 function toggleValDrawer() {
-  var d = document.getElementById('val-drawer');
-  d.classList.toggle('open');
-  document.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
-  if (d.classList.contains('open')) {
-    document.getElementById('bn-skladby').classList.add('active');
-  } else {
-    var prev = document.getElementById('bn-' + VZ.aktivniMobPanel);
-    if (prev) prev.classList.add('active');
-  }
+  document.getElementById('val-drawer').classList.toggle('open');
 }
 
 document.addEventListener('click', function(e) {
-  var drawer = document.getElementById('val-drawer');
-  var btn    = document.getElementById('bn-skladby');
-  if (!drawer || !btn) return;
-  if (!drawer.contains(e.target) && !btn.contains(e.target) && drawer.classList.contains('open')) {
+  var drawer   = document.getElementById('val-drawer');
+  var trigger1 = document.getElementById('topbar-val');
+  var trigger2 = document.getElementById('bn-skladby');
+  if (!drawer) return;
+  var naSpoustec = (trigger1 && trigger1.contains(e.target)) ||
+                   (trigger2 && trigger2.contains(e.target));
+  if (!drawer.contains(e.target) && !naSpoustec && drawer.classList.contains('open')) {
     drawer.classList.remove('open');
-    document.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
-    var prev = document.getElementById('bn-' + VZ.aktivniMobPanel);
-    if (prev) prev.classList.add('active');
+  }
+});
+
+// ── Tablet: levý a pravý panel, každý se svými 4 tlačítky ──
+var TABLET_DEFAULT = { left: 'text', right: 'tabelatura' };
+
+function tabletPick(strana, panelId, btn) {
+  var druha = strana === 'left' ? 'right' : 'left';
+  VZ.tabPanels = VZ.tabPanels || {};
+  var aktualni = Object.assign({}, TABLET_DEFAULT, VZ.tabPanels);
+
+  // Stejný obsah už běží na druhé straně -> prohodit, aby nezmizel
+  if (aktualni[druha] === panelId) {
+    aktualni[druha] = aktualni[strana];
+    var druhyFooter = document.getElementById('tab-footer-' + druha);
+    if (druhyFooter) {
+      druhyFooter.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
+      var noveTl = druhyFooter.querySelector('.bnav[data-panel="' + aktualni[druha] + '"]');
+      if (noveTl) noveTl.classList.add('active');
+    }
+  }
+  aktualni[strana] = panelId;
+  VZ.tabPanels = aktualni;
+
+  var ca = document.getElementById('content-area');
+  ca.removeAttribute('data-napady-open');
+  ca.setAttribute('data-left', aktualni.left);
+  ca.setAttribute('data-right', aktualni.right);
+
+  var napadyLink = document.getElementById('nav-napady-tab');
+  if (napadyLink) napadyLink.classList.remove('active');
+
+  if (btn) {
+    var tentoFooter = document.getElementById('tab-footer-' + strana);
+    if (tentoFooter) tentoFooter.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+}
+
+function tabletNapady(link) {
+  var jeOtevreno = link.classList.contains('active');
+  var ca = document.getElementById('content-area');
+
+  if (jeOtevreno) {
+    link.classList.remove('active');
+    ca.removeAttribute('data-napady-open');
+  } else {
+    link.classList.add('active');
+    ca.setAttribute('data-napady-open', '1');
+  }
+}
+
+$(function() {
+  var ca = document.getElementById('content-area');
+  if (ca && !ca.hasAttribute('data-left')) {
+    ca.setAttribute('data-left', TABLET_DEFAULT.left);
+    ca.setAttribute('data-right', TABLET_DEFAULT.right);
   }
 });
 
 // ── Looper ──
 function looperOtevrit(soubor, label) {
   document.getElementById('looper-bar').classList.remove('hidden');
-  document.getElementById('lname').textContent = label || soubor;
-  document.getElementById('wf-placeholder').textContent = soubor;
-  // wavesurfer.load(soubor) — až bude knihovna aktivní
+  document.getElementById('lname').textContent = label || 'Nahrávka';
+  
+  // BEZPEČNOSTNÍ ÚPRAVA: Už nevypisujeme celou FTP cestu k souboru na disku
+  var placeholder = document.getElementById('wf-placeholder');
+  if (placeholder) {
+    placeholder.textContent = 'načítám nahrávku...';
+  }
 }
 
-function looperZavrit() {
-  document.getElementById('looper-bar').classList.add('hidden');
-  // wavesurfer.stop(); wavesurfer.empty();
-}
 
-function looperPlay()    { /* wavesurfer.play() */ }
-function looperPause()   { /* wavesurfer.pause() */ }
-function looperRestart() { /* wavesurfer.play(0) */ }
-function looperLoop() {
-  document.getElementById('btn-loop').classList.toggle('on');
-  // wavesurfer addRegion / clearRegions
-}
+// ── 🌟 DYNAMICKÝ EDIT TEXT / TABELATURA MODAL ──
+function otevritEditText(typ) {
+  typ = typ || 'text';
+  VZ.editTyp = typ;
 
-// ── Edit text modal ──
-function otevritEditText() {
-  $.get('/php/ajax/ajax_text_raw.php', function(data) {
+  pbStart();
+  $.get('/php/ajax/ajax_' + typ + '_raw.php', function(data) {
+    pbDone();
     if (data.obsah !== undefined) {
       var textarea = document.getElementById('editor');
       var input    = document.getElementById('modal_soubor_akordu');
       var label    = document.getElementById('modal_zmenit_text_label');
-      if (textarea) textarea.value = data.obsah;
-      if (input)    input.value    = data.nazev_souboru || 'akordy.txt';
-      if (label)    label.textContent = 'UPRAVIT ' + (data.nazev_souboru || 'akordy.txt') + ' — ' + (data.slozka || '');
+      var form     = document.querySelector('#modal_zmenit_text form');
+
+      if (textarea) {
+        textarea.value = data.obsah;
+        // Bug 1 fix: číst zpět z textarey — browser normalizuje \r\n → \n,
+        // takže porovnání při dirty-check bude konzistentní
+        VZ.editorPuvodniObsah = textarea.value;
+      }
+
+      var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
+      var nazev = data.nazev_souboru || vychoziNazev;
+      if (input) input.value = nazev;
+
+      if (label) label.textContent = 'UPRAVIT ' + nazev + ' — ' + (data.slozka || '');
+
+      var ctxAction = document.getElementById('modal_editor_ctx_action');
+      var ctxSoubor = document.getElementById('modal_editor_ctx_soubor');
+      var ctxSlozka = document.getElementById('modal_editor_ctx_slozka');
+      if (ctxAction) ctxAction.textContent = (typ === 'tabelatura') ? 'Editace tabelatury' : 'Editace textu / akordů';
+      if (ctxSoubor) ctxSoubor.textContent = nazev;
+      if (ctxSlozka) ctxSlozka.textContent = data.slozka || VZ.aktualniNazev || '';
+
+      if (form) {
+        form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
+      }
     }
+    document.getElementById('panel-historie').style.display = 'none';
+    document.getElementById('seznam-zaloh').innerHTML = '';
+    // Bug 2 fix: smazat overlay z případného předchozího uložení (pojistka)
+    $('#modal_zmenit_text .modal-success-overlay').remove();
     $('#modal_zmenit_text').modal('show');
   }, 'json').fail(function(xhr) {
-    console.error('ajax_text_raw chyba:', xhr.status, xhr.responseText);
+    pbDone();
+    console.error('ajax_' + typ + '_raw chyba:', xhr.status, xhr.responseText);
+
+    var label = document.getElementById('modal_zmenit_text_label');
+    var form  = document.querySelector('#modal_zmenit_text form');
+    var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
+
+    if (label) label.textContent = 'VYTVOŘIT ' + vychoziNazev;
+    if (form) form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
+
+    var ctxAction = document.getElementById('modal_editor_ctx_action');
+    var ctxSoubor = document.getElementById('modal_editor_ctx_soubor');
+    var ctxSlozka = document.getElementById('modal_editor_ctx_slozka');
+    if (ctxAction) ctxAction.textContent = (typ === 'tabelatura') ? 'Nová tabelatura' : 'Nový text / akordy';
+    if (ctxSoubor) ctxSoubor.textContent = vychoziNazev;
+    if (ctxSlozka) ctxSlozka.textContent = VZ.aktualniNazev || '';
+
+    VZ.editorPuvodniObsah = '';
+
+    document.getElementById('panel-historie').style.display = 'none';
+    document.getElementById('seznam-zaloh').innerHTML = '';
+    $('#modal_zmenit_text .modal-success-overlay').remove();
     $('#modal_zmenit_text').modal('show');
   });
 }
 
+// ── Uložení textu/tabelatury přes AJAX (bez page reload = žádný back button dialog) ──
+$(document).on('submit', '#modal_zmenit_text form', function(e) {
+  e.preventDefault();
+  var $form      = $(this);
+  var url        = $form.attr('action');
+  var $btn       = $form.find('[type="submit"]');
+  var puvodniTxt = $btn.text();
+
+  $btn.prop('disabled', true).text('ukládám...');
+  pbStart();
+
+  $.post(url, $form.serialize(), function(resp) {
+    pbDone();
+    $btn.prop('disabled', false).text(puvodniTxt);
+    if (resp.ok) {
+      // Vyčistit dirty flag — obsah je teď uložen
+      VZ.editorPuvodniObsah = document.getElementById('editor').value;
+      nacistPanel(VZ.editTyp || 'text');
+      modalSuccess('modal_zmenit_text', 'Text uložen');
+    } else {
+      var $info = $form.find('.editor-chyba');
+      if (!$info.length) {
+        $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px;text-align:left"></div>');
+        $form.find('.modal-footer').prepend($info);
+      }
+      $info.text(resp.vysledek || 'Chyba uložení');
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    $btn.prop('disabled', false).text(puvodniTxt);
+    var $info = $form.find('.editor-chyba');
+    if (!$info.length) {
+      $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px;text-align:left"></div>');
+      $form.find('.modal-footer').prepend($info);
+    }
+    $info.text('Chyba spojení se serverem');
+  });
+});
+
+// ── Dirty-state warning v editoru ──
+$(document).on('hide.bs.modal', '#modal_zmenit_text', function(e) {
+  var ta = document.getElementById('editor');
+  if (!ta || VZ.editorPuvodniObsah === undefined) return;
+  if (ta.value !== VZ.editorPuvodniObsah) {
+    if (!confirm('Máš neuložené změny. Opravdu chceš zavřít editor?')) {
+      e.preventDefault();
+    }
+  }
+});
+
+
+
 // ── Přejmenování / smazání válu ──
 function otevritPrejmenovani(val, nazev) {
-  document.getElementById('modal_rename_val_label').value      = val;
-  document.getElementById('modal_rename_val_label_novy').value = '';
-  document.getElementById('modal_delete_val_label').textContent = nazev;
-  $('#modal_delete_val').modal('show');
+  document.getElementById('modal_rename_val_label').value       = val;
+  document.getElementById('modal_rename_val_label_novy').value  = '';
+  document.getElementById('modal_rename_val_title').textContent = 'PŘEJMENOVAT SKLADBU';
+  document.getElementById('modal_rename_val_ctx').textContent   = nazev;
+  $('#modal_rename_val').modal('show');
 }
 
 function otevritSmazani(val) {
@@ -199,18 +359,17 @@ $(document).on('submit', '#form_komentar', function(e) {
     odkaz2: $('#komentar_odkaz2').val() || '',
     name:   $('#komentar_jmeno').val(),
   }, function(data) {
+    pbDone();
     if (data.ok) {
       nacistPanel('diskuse');
-      $('#komentar_text').val('');
-      $('#komentar_jmeno').val('');
-      pbDone();
+      $('#komentar_text, #komentar_odkaz, #komentar_odkaz2').val('');
+      modalSuccess('modal_vlozit_komentar', 'Komentář přidán');
     } else {
       if (chyba) { chyba.innerHTML = data.chyba || 'Chyba'; chyba.style.display = 'block'; }
-      pbDone();
     }
   }, 'json').fail(function() {
-    if (chyba) { chyba.innerHTML = 'Chyba spojení'; chyba.style.display = 'block'; }
     pbDone();
+    if (chyba) { chyba.innerHTML = 'Chyba spojení'; chyba.style.display = 'block'; }
   });
 });
 
@@ -253,13 +412,17 @@ $(document).on('click', '.looper-btn', function() {
 });
 
 $(document).on('click', '.presunout-btn', function() {
-  var val = $(this).data('soubor'), label = $(this).data('nazev');
-  var odkud = document.getElementById('modal_presunout_odkud');
-  var lbl   = document.getElementById('modal_presunout_label');
-  var co    = document.getElementById('modal_presunout_co');
-  if (odkud) odkud.value    = val;
-  if (lbl)   lbl.innerHTML  = label;
-  if (co)    co.value       = label;
+  var val   = $(this).data('soubor');
+  var label = $(this).data('nazev');
+
+  $('#modal_presunout_odkud').val(val);
+  $('#modal_presunout_label').text(label);
+  $('#modal_presunout_co').val(label);
+  $('#modal_presunout_from_label').text(VZ.aktualniNazev || val);
+
+  // Reset potvrzovacího panelu pro případ znovuotevření
+  $('#presunout_confirm_panel').hide();
+  $('#modal_presunout_kam').val('');
 });
 
 $(document).on('click', '.smazat-btn', function() {
@@ -278,8 +441,10 @@ function zobrazHistorii() {
 
   seznam.innerHTML    = '<div style="color:#888;font-size:12px">načítám...</div>';
   panel.style.display = 'block';
+  pbStart();
 
-  $.get('/php/ajax/ajax_history.php', { akce: 'seznam' }, function(data) {
+  $.get('/php/ajax/ajax_history.php', { akce: 'seznam', typ: VZ.editTyp || 'akordy' }, function(data) {
+    pbDone();
     if (!data.ok || data.zalohy.length === 0) {
       seznam.innerHTML = '<div style="color:#888;font-size:12px">Žádné zálohy.</div>';
       return;
@@ -294,17 +459,20 @@ function zobrazHistorii() {
     });
     seznam.innerHTML = html;
   }, 'json').fail(function() {
+    pbDone();
     seznam.innerHTML = '<div style="color:#888;font-size:12px">Chyba načítání.</div>';
   });
 }
 
 function nacistZalohu(soubor) {
-  $.get('/php/ajax/ajax_history.php', { akce: 'nacist', soubor: soubor }, function(data) {
+  pbStart();
+  $.get('/php/ajax/ajax_history.php', { akce: 'nacist', soubor: soubor, typ: VZ.editTyp || 'akordy' }, function(data) {
+    pbDone();
     if (data.ok) {
       document.getElementById('editor').value = data.obsah;
       document.getElementById('panel-historie').style.display = 'none';
     }
-  }, 'json');
+  }, 'json').fail(function() { pbDone(); });
 }
 
 $(document).on('click', '.btn-zaloha', function() {
@@ -372,38 +540,83 @@ window.addEventListener('resize', function() {
     var el = document.getElementById('panel-' + (VZ.aktivniMobPanel || 'text'));
     if (el) el.classList.add('mob-active');
   } else {
-    // Odstranit mob-active, nastavit desktop layout
+    // Odstranit mob-active, nastavit desktop layout včetně panelu tabelatura
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); p.style.display = ''; });
     var napadyAktivni = document.getElementById('nav-napady') &&
                         document.getElementById('nav-napady').classList.contains('active');
     if (napadyAktivni) {
-      $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'none');
+      $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'none');
       $('#panel-napady').css('display', 'flex');
     } else {
       $('#panel-napady').css('display', 'none');
-      $('#panel-text, #panel-nahravky, #panel-diskuse').css('display', 'flex');
+      $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'flex');
     }
   }
 });
 
-// ── Modal přesunout — dynamické naplnění selectu ──
+ // ── Modal přesunout — dynamické naplnění seznamu tlačítek ──
 $(document).on('show.bs.modal', '#modal_presunout', function() {
-  var select = document.getElementById('modal_presunout_kam');
-  if (!select) return;
-  select.innerHTML = '<option disabled>načítám...</option>';
+  var kontejner = document.getElementById('seznam_slozek_pro_presun');
+  if (!kontejner) return;
+
+  kontejner.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px;">načítám...</div>';
+  pbStart();
 
   $.get('/php/ajax/ajax_slozky.php', function(data) {
-    select.innerHTML = '';
+    pbDone();
+    kontejner.innerHTML = '';
+    
     data.forEach(function(s) {
-      var opt = document.createElement('option');
-      opt.value = s.slozka;
-      opt.textContent = s.nazev;
-      if (s.aktivni) opt.selected = true;
-      select.appendChild(opt);
+      // Skryje složku, ve které právě jsme
+      if (s.aktivni) return;
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'list-group-item list-group-item-action presun-slozka-btn';
+      btn.dataset.slozka = s.slozka;
+      
+      btn.style.cssText = 'background: #1e2226; color: #e0e0e0; border: 1px solid #3a3e44; margin-bottom: 5px; border-radius: 5px; padding: 10px 12px; font-size: 13px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; transition: 0.2s;';
+
+      btn.onmouseover = function() { this.style.borderColor = 'var(--barva)'; this.style.color = 'var(--barva)'; };
+      btn.onmouseout  = function() { this.style.borderColor = '#3a3e44'; this.style.color = '#e0e0e0'; };
+
+      btn.innerHTML = '<span style="font-size:16px;">📁</span> ' + s.nazev;
+      kontejner.appendChild(btn);
     });
+    
+    if (kontejner.innerHTML === '') {
+      kontejner.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px; text-align:center;">Nemáte vytvořené žádné další skladby.</div>';
+    }
   }, 'json').fail(function() {
-    select.innerHTML = '<option>Chyba načítání</option>';
+    pbDone();
+    kontejner.innerHTML = '<div style="color:#ff8888; font-size:12px; padding:10px;">Chyba načítání skladeb.</div>';
   });
+});
+
+// ── Přesunout: potvrzovací panel ──
+function presunoutVybratSlozku(nazevSlozky) {
+  var soubor = $('#modal_presunout_co').val();
+  $('#presunout_confirm_soubor').text(soubor);
+  $('#presunout_confirm_cil').text(nazevSlozky);
+  $('#modal_presunout_kam').val(nazevSlozky);
+  $('#presunout_confirm_panel').slideDown(160);
+  // Scrollnout na potvrzovací panel
+  var $body = $('#modal_presunout').find('.modal-body');
+  $body.animate({ scrollTop: $body[0].scrollHeight }, 200);
+}
+
+$(document).on('click', '.presun-slozka-btn', function() {
+  presunoutVybratSlozku($(this).data('slozka'));
+});
+
+$(document).on('click', '#presunout_confirm_zrusit', function() {
+  $('#presunout_confirm_panel').slideUp(150);
+  $('#modal_presunout_kam').val('');
+});
+
+$(document).on('hidden.bs.modal', '#modal_presunout', function() {
+  $('#presunout_confirm_panel').hide();
+  $('#modal_presunout_kam').val('');
 });
 
 // ── Upload souboru s progress barem ──
@@ -434,7 +647,6 @@ $(document).on('submit', '#form_upload', function(e) {
   res.style.display  = 'none';
   btn.disabled = true;
   btn.textContent = 'nahrávám...';
-  pbStart();
 
   var xhr = new XMLHttpRequest();
 
@@ -447,7 +659,6 @@ $(document).on('submit', '#form_upload', function(e) {
   };
 
   xhr.onload = function() {
-    pbDone();
     btn.disabled = false;
     btn.textContent = 'VLOŽIT SOUBOR';
     bar.style.width = '100%';
@@ -476,7 +687,6 @@ $(document).on('submit', '#form_upload', function(e) {
   };
 
   xhr.onerror = function() {
-    pbDone();
     btn.disabled = false;
     btn.textContent = 'VLOŽIT SOUBOR';
     res.style.display = 'block';
@@ -496,4 +706,228 @@ $(document).on('hidden.bs.modal', '#modal_vlozit_soubor', function() {
   document.getElementById('upload-result').style.display = 'none';
   var btn = document.getElementById('upload-btn');
   if (btn) { btn.disabled = false; btn.textContent = 'VLOŽIT SOUBOR'; }
+});
+
+
+// ── Editace a mazání komentářů (diskuse + nápady) ──
+
+// Otevřít inline edit
+$(document).on('click', '.vzk-btn-edit', function() {
+  var $card = $(this).closest('[data-cas]');
+
+  // Zrušit případný probíhající delete confirm
+  $card.find('.vzk-confirm-wrap').remove();
+  // Zavřít případný otevřený edit jiného komentáře
+  $card.find('.vzk-edit-wrap').remove();
+
+  // Schovat text a tlačítka akcí
+  $card.find('.dk-text, .ctext').hide();
+  $card.find('.vzk-actions').css('display', 'none');
+
+  // Vytvořit inline edit UI
+  var $ta = $('<textarea class="vzk-edit-ta" rows="3"></textarea>').val($card.attr('data-text'));
+  var $btns = $(
+    '<div class="vzk-edit-btns">' +
+      '<button class="vzk-save-btn">✓ uložit</button>' +
+      '<button class="vzk-cancel-btn">✗ zrušit</button>' +
+      '<span class="vzk-edit-chyba"></span>' +
+    '</div>'
+  );
+  var $wrap = $('<div class="vzk-edit-wrap"></div>').append($ta).append($btns);
+
+  // Vložit těsně před .dk-meta / .cmeta
+  $card.find('.dk-meta, .cmeta').before($wrap);
+  $ta.focus();
+});
+
+// Zrušit editaci
+$(document).on('click', '.vzk-cancel-btn', function() {
+  var $card = $(this).closest('[data-cas]');
+  $card.find('.vzk-edit-wrap').remove();
+  $card.find('.dk-text, .ctext').show();
+  $card.find('.vzk-actions').css('display', 'flex');
+});
+
+// Uložit editaci
+$(document).on('click', '.vzk-save-btn', function() {
+  var $btn  = $(this);
+  var $card = $btn.closest('[data-cas]');
+  var text  = $card.find('.vzk-edit-ta').val().trim();
+  if (!text) return;
+
+  $btn.prop('disabled', true).text('ukládám...');
+  $card.find('.vzk-edit-chyba').hide();
+  pbStart();
+
+  $.post('/php/ajax/upravit_komentar.php', {
+    cas:  $card.data('cas'),
+    typ:  $card.data('typ'),
+    text: text
+  }, function(data) {
+    pbDone();
+    if (data.ok) {
+      $card.attr('data-text', text);
+      $card.find('.dk-text, .ctext').html(data.vzkaz_html).show();
+      $card.find('.vzk-actions').css('display', 'flex');
+      $card.find('.vzk-edit-wrap').remove();
+    } else {
+      $card.find('.vzk-edit-chyba').text(data.chyba || 'Chyba').show();
+      $btn.prop('disabled', false).text('✓ uložit');
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    $card.find('.vzk-edit-chyba').text('Chyba spojení').show();
+    $btn.prop('disabled', false).text('✓ uložit');
+  });
+});
+
+// Otevřít / zavřít delete confirm
+$(document).on('click', '.vzk-btn-del', function() {
+  var $card = $(this).closest('[data-cas]');
+
+  // Zrušit případný probíhající edit
+  if ($card.find('.vzk-edit-wrap').length) {
+    $card.find('.vzk-edit-wrap').remove();
+    $card.find('.dk-text, .ctext').show();
+    $card.find('.vzk-actions').css('display', 'flex');
+  }
+
+  // Toggle: druhý klik zavře confirm
+  if ($card.find('.vzk-confirm-wrap').length) {
+    $card.find('.vzk-confirm-wrap').remove();
+    return;
+  }
+
+  $card.append(
+    '<div class="vzk-confirm-wrap">' +
+      'Smazat tento komentář?&nbsp;' +
+      '<button class="vzk-del-yes-btn">ano, smazat</button>' +
+      '<button class="vzk-del-no-btn">ne</button>' +
+    '</div>'
+  );
+});
+
+// Zrušit mazání
+$(document).on('click', '.vzk-del-no-btn', function() {
+  $(this).closest('.vzk-confirm-wrap').remove();
+});
+
+// Potvrdit mazání
+$(document).on('click', '.vzk-del-yes-btn', function() {
+  var $btn  = $(this);
+  var $card = $btn.closest('[data-cas]');
+
+  $btn.prop('disabled', true).text('mažu...');
+  $card.find('.vzk-del-no-btn').prop('disabled', true);
+  pbStart();
+
+  $.post('/php/ajax/smazat_komentar.php', {
+    cas: $card.data('cas'),
+    typ: $card.data('typ')
+  }, function(data) {
+    pbDone();
+    if (data.ok) {
+      $card.fadeOut(250, function() { $(this).remove(); });
+    } else {
+      $card.find('.vzk-confirm-wrap').html(
+        '<span style="color:#ff8888">' + (data.chyba || 'Chyba') + '</span>'
+      );
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    $card.find('.vzk-confirm-wrap').html('<span style="color:#ff8888">Chyba spojení</span>');
+  });
+});
+
+//  -------------------
+
+$(document).on('click', '.poznamky-btn', function() {
+
+    let panel = $(this)
+        .closest('.nahravka-vysuvna')
+        .find('.poznamky-panel');
+
+    panel.toggle();
+
+    if(panel.is(':visible'))
+    {
+        loadRecordingNotes(panel);
+    }
+});
+
+function loadRecordingNotes(panel)
+{
+    $.post(
+        'php/ajax/ajax_nahravka_poznamky.php',
+        {
+            akce: 'list',
+            file_path: panel.data('cesta')
+        },
+        function(html)
+        {
+            panel.find('.poznamky-seznam').html(html);
+        }
+    );
+}
+
+$(document).on('click', '.pridat-poznamku-btn', function() {
+
+    let panel = $(this).closest('.poznamky-panel');
+
+    let audio = $(this)
+        .closest('.nahravka-vysuvna')
+        .find('audio')[0];
+
+let cas = 0;
+
+if (
+    typeof wavesurfer !== 'undefined' &&
+    wavesurfer &&
+    typeof looperCurrentFile !== 'undefined' &&
+    looperCurrentFile === panel.data('cesta')
+)
+{
+    cas = Math.round(
+        wavesurfer.getCurrentTime() * 1000
+    );
+}
+else if (audio)
+{
+    cas = Math.round(
+        audio.currentTime * 1000
+    );
+}
+
+    let text = prompt('Poznámka');
+
+    if(!text)
+    {
+        return;
+    }
+
+    $.post(
+        'php/ajax/ajax_nahravka_poznamky.php',
+        {
+            akce: 'add',
+            file_path: panel.data('cesta'),
+            cas: cas,
+            poznamka: text
+        },
+        function()
+        {
+            loadRecordingNotes(panel);
+        }
+    );
+});
+
+$(document).on('click', '.note-row', function() {
+    var ms   = parseInt($(this).data('ms'));
+    var file = $(this).data('file');
+
+    if ($(this).data('looper')) {
+        if (!wavesurfer) return;
+        wavesurfer.setTime(ms / 1000);
+    } else {
+        jumpToTimestamp(ms, file);
+    }
 });
