@@ -55,14 +55,32 @@ if ($akce == "list")
         $cas_text = sprintf("%02d:%02d", $min, $sec);
 
         echo '
-        <div class="note-row"
-             data-ms="'.$ms.'"
-             data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'"
-             '.($looper ? 'data-looper="1"' : '').'
-             style="padding:4px 0; cursor:pointer;">
-            <span style="font-weight:bold;color:#7fbfff;">'.$cas_text.'</span>
-            <span style="margin-left:8px;">'.htmlspecialchars($r["poznamka"]).'</span>
-        </div>';
+<div class="note-row"
+     data-id="'.$r["id"].'"
+     data-ms="'.$ms.'"
+     data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'"
+     '.($looper ? 'data-looper="1"' : '').'
+     style="padding:4px 0; display:flex; align-items:center; gap:8px;">
+
+    <span class="note-time"
+          style="font-weight:bold;color:#7fbfff;cursor:pointer;">
+        '.$cas_text.'
+    </span>
+
+    <span class="note-text"
+          style="flex:1;">
+        '.htmlspecialchars($r["poznamka"]).'
+    </span>
+
+    <span class="note-edit"
+          title="Upravit"
+          style="cursor:pointer;">✏️</span>
+
+    <span class="note-delete"
+          title="Smazat"
+          style="cursor:pointer;">🗑️</span>
+
+</div>';
     }
 
     exit;
@@ -116,5 +134,39 @@ if ($akce == "add")
 
     echo "OK";
 
+    exit;
+}
+
+if ($akce == "update")
+{
+    $id   = intval($_POST["id"] ?? 0);
+    $text = trim($_POST["text"] ?? "");
+
+    $stmt = $mysqli->prepare("
+        UPDATE nahravka_poznamky
+        SET text = ?
+        WHERE id = ?
+    ");
+
+    $stmt->bind_param("si", $text, $id);
+    $stmt->execute();
+
+    echo "OK";
+    exit;
+}
+
+if ($akce == "delete")
+{
+    $id = intval($_POST["id"] ?? 0);
+
+    $stmt = $mysqli->prepare("
+        DELETE FROM nahravka_poznamky
+        WHERE id = ?
+    ");
+
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    echo "OK";
     exit;
 }
