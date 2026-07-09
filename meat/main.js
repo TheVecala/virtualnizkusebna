@@ -208,10 +208,6 @@ function looperOtevrit(soubor, label) {
   }
 }
 
-function looperZavrit() {
-  document.getElementById('looper-bar').classList.add('hidden');
-}
-
 
 // ── 🌟 DYNAMICKÝ EDIT TEXT / TABELATURA MODAL ──
 function otevritEditText(typ) {

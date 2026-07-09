@@ -35,6 +35,12 @@ if ($akce == "list")
         WHERE file_path='$file_path'
         ORDER BY cas ASC
     ");
+	echo '
+	<div style="margin-bottom:10px;">
+		<button type="button" class="pridat-poznamku-btn">
+			+ Přidat poznámku k aktuálnímu času
+		</button>
+	</div>';
 
     while($r = $res->fetch_assoc())
     {

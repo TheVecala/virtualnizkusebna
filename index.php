@@ -251,14 +251,33 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
 
-#waveform-container {
-  width: 100%; 
-  height: 100px; 
-  background: var(--card);
-  border-radius: 6px; 
-  border: 1px solid var(--border);
-  position: relative; 
-  overflow: hidden;
+#waveform-container{
+    position:relative;
+}
+
+#looper-time{
+
+    position:absolute;
+
+    top:4px;
+    right:8px;
+
+    z-index:20;
+
+    font-size:10px;
+    font-family:monospace;
+
+    color:rgba(255,255,255,.80);
+
+    background:rgba(0,0,0,.25);
+
+    padding:2px 5px;
+
+    border-radius:4px;
+
+    pointer-events:none;
+
+    user-select:none;
 }
 #waveform-container .wf-placeholder {
   position: absolute; inset: 0; display: flex; align-items: center;
@@ -276,6 +295,79 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   font-size: 22px; line-height: 1; padding: 0 4px; flex-shrink: 0;
 }
 .lclose:hover { color: var(--text); }
+
+#looper-header{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:6px 10px;
+
+    background:#2b3035;
+    border-bottom:1px solid #3d4349;
+}
+
+.looper-left{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.looper-title{
+
+    color:var(--barva);
+    font-weight:700;
+    letter-spacing:1px;
+    white-space:nowrap;
+}
+
+.looper-buttons{
+
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+ 
+.looper-right{
+
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+
+#looper-content{
+
+    padding:8px;
+
+    overflow:hidden;
+
+    max-height:600px;
+
+    opacity:1;
+
+    transition:
+        max-height .18s ease,
+        opacity .15s ease,
+        padding .18s ease;
+}
+
+#looper-content.hidden{
+
+    max-height:0;
+
+    opacity:0;
+
+    padding-top:0;
+    padding-bottom:0;
+
+    overflow:hidden;
+}
+#looper-notes{
+
+    margin-top:10px;
+}
 
 /* ── CONTENT AREA ── */
 #content-area { flex: 1; display: flex; overflow: hidden; }
@@ -570,37 +662,72 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
   <!-- LOOPER BAR (DVOUŘÁDKOVÝ VELKÝ) -->
   <div id="looper-bar" class="hidden">
-    <!-- 1. ŘÁDEK: Vlna přes celou šířku -->
-    <div id="waveform-container">
-      <div class="wf-placeholder" id="wf-placeholder">načítám nahrávku...</div>
-      <div id="waveform"></div>
+
+<!-- HLAVIČKA -->
+<div id="looper-header">
+
+    <div class="looper-left">
+
+        <div class="looper-title">
+            LOOPER
+        </div>
+
+        <div class="looper-buttons">
+
+            <button class="wave-btn on"
+                    id="btn-play"
+                    onclick="looperPlay()">▶</button>
+
+            <button class="wave-btn"
+                    id="btn-pause"
+                    onclick="looperPause()">⏸</button>
+
+            <button class="wave-btn"
+                    id="btn-loop"
+                    onclick="looperLoop()">⟳</button>
+
+            <button class="wave-btn"
+                    onclick="looperRestart()">↺</button>
+
+        </div>
+
     </div>
 
-	<div id="looper-notes" style="
-    display:none;
-    max-height:120px;
-    overflow-y:auto;
-    padding:8px;
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:6px;
-    font-size:12px;">
+
+
+    <div class="looper-right">
+
+        <button class="wave-btn"
+                id="btn-collapse"
+                onclick="looperToggle()">▭</button>
+
+        <button class="wave-btn"
+                onclick="looperZavrit()">✕</button>
+
     </div>
-	
-    <!-- 2. ŘÁDEK: Ovládací prvky zarovnané pod vlnou -->
-    <div class="looper-ovladani-rada">
-      <div class="lctrl">
-        <button class="wave-btn on" id="btn-play" onclick="looperPlay()">▶</button>
-        <button class="wave-btn" id="btn-pause" onclick="looperPause()">⏸</button>
-        <button class="wave-btn" onclick="looperRestart()">↩</button>
-        <button class="wave-btn" id="btn-loop" onclick="looperLoop()">⟳</button>
-      </div>
-      
-      <span class="lname" id="lname">—</span>
-      
-      <button class="lclose" onclick="looperZavrit()">✕</button>
+
+</div>
+
+    <!-- OBSAH -->
+    <div id="looper-content">
+        <div id="waveform-container">
+	        <div id="looper-time">
+               00:00 / 00:00
+            </div>
+            <div class="wf-placeholder"
+                 id="wf-placeholder">
+                načítám nahrávku...
+            </div>
+
+            <div id="waveform"></div>
+
+        </div>
+
+        <div id="looper-notes"></div>
+
     </div>
-  </div>
+
+</div>
 
   <!-- CONTENT AREA (Přidán výchozí atribut data-active-panel pro správný start 2-panelové verze) -->
   <div id="content-area" data-active-panel="text">
@@ -900,7 +1027,11 @@ function initWaveSurfer(cesta, peaksData) {
     wavesurfer.on('ready', function() {
         $('#wf-placeholder').hide();
         wavesurfer.play();
+        var delka = wavesurfer.getDuration();
 
+		$('#looper-time').text(
+			formatTime(0) + ' / ' + formatTime(delka)
+		);
         // Peaks ještě nebyly uloženy → exportujeme a pošleme na server
         if (!maPeaks) {
             var peaks    = wavesurfer.exportPeaks();
@@ -938,6 +1069,26 @@ function initWaveSurfer(cesta, peaksData) {
             $('#btn-pause').addClass('on');
         }
     });
+	
+	wavesurfer.on('timeupdate', function(sec){
+
+    $('#looper-time').text(
+
+        formatTime(sec)
+
+        +
+
+        ' / '
+
+        +
+
+        formatTime(
+            wavesurfer.getDuration()
+        )
+
+    );
+
+});
 }
 
 // Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
@@ -950,6 +1101,8 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
 
     // Zobrazíme looper bar a resetujeme stav
     $('#looper-bar').removeClass('hidden');
+	$('#looper-content').removeClass('hidden');
+    $('#btn-collapse').html('▭');
     $('#lname').text(nazev);
     $('#wf-placeholder').text('načítám nahrávku...').show();
 
@@ -974,6 +1127,20 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
 });
 
 /* --- Globální funkce pro tlačítka v looper-baru --- */
+function formatTime(sec)
+{
+    sec = Math.floor(sec);
+
+    let m = Math.floor(sec / 60);
+    let s = sec % 60;
+
+    return (
+        (m < 10 ? '0' : '') + m +
+        ':' +
+        (s < 10 ? '0' : '') + s
+    );
+}
+
 function looperPlay() {
     if (wavesurfer) wavesurfer.play();
 }
@@ -998,6 +1165,20 @@ function looperLoop() {
     }
 }
 
+function looperToggle()
+{
+    $('#looper-content').toggleClass('hidden');
+
+    if ($('#looper-content').hasClass('hidden'))
+    {
+        $('#btn-collapse').html('▣');
+    }
+    else
+    {
+        $('#btn-collapse').html('▭');
+    }
+}
+
 function looperZavrit() {
     if (wavesurfer) {
         wavesurfer.pause();
@@ -1006,6 +1187,9 @@ function looperZavrit() {
     }
     looperCurrentFile = null;
     $('#looper-notes').hide().empty();
+  	$('#looper-content').removeClass('hidden');
+    $('#btn-collapse').html('▭');
+    $('#looper-time').text('00:00 / 00:00');
     $('#looper-bar').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
