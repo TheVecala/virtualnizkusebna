@@ -1000,3 +1000,10 @@ $(document).on('click', '.note-delete', function(e)
         }
     );
 });
+
+$(document).on('click', '.export-timestampy-btn', function ()
+{
+    window.location =
+        'php/ajax/export_timestampy.php?file_path=' +
+        encodeURIComponent($(this).data('file'));
+});

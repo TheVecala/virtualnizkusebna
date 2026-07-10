@@ -293,7 +293,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
 			<?php if ($je_audio): ?>
 			<button class="fbtn pridat-poznamku-btn"
 					data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
-				Přidat poznámku k aktuálnímu času
+				tenhle button odstranit
 			</button>
 			<?php endif; ?>
 

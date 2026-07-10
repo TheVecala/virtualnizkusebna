@@ -35,12 +35,20 @@ if ($akce == "list")
         WHERE file_path='$file_path'
         ORDER BY cas ASC
     ");
-	echo '
-	<div style="margin-bottom:10px;">
-		<button type="button" class="pridat-poznamku-btn">
-			+ Přidat poznámku k aktuálnímu času
-		</button>
-	</div>';
+echo '
+<div style="margin-bottom:10px; display:flex; gap:8px;">
+
+    <button type="button" class="pridat-poznamku-btn">
+        + Přidat poznámku k aktuálnímu času
+    </button>
+
+    <button type="button"
+            class="export-timestampy-btn"
+            data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
+        📄 Export TXT
+    </button>
+
+</div>';
 
     while($r = $res->fetch_assoc())
     {

@@ -1,0 +1,1 @@
+tady bude script pro export timestampů do txt
