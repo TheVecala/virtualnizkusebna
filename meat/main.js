@@ -199,7 +199,7 @@ $(function() {
 // ── Looper ──
 function looperOtevrit(soubor, label) {
   document.getElementById('looper-bar').classList.remove('hidden');
-  document.getElementById('lname').textContent = label || 'Nahrávka';
+  // document.getElementById('lname').textContent = label || 'Nahrávka';
   
   // BEZPEČNOSTNÍ ÚPRAVA: Už nevypisujeme celou FTP cestu k souboru na disku
   var placeholder = document.getElementById('wf-placeholder');
@@ -952,7 +952,7 @@ $(document).on('click', '.note-edit', function(e)
     }
 
     $.post(
-        "ajax/ajax_nahravka_poznamky.php",
+        "php/ajax/ajax_nahravka_poznamky.php",
         {
             akce: "update",
             id: id,
@@ -961,6 +961,42 @@ $(document).on('click', '.note-edit', function(e)
         function()
         {
             textEl.text(novyText);
+        }
+    );
+});
+
+$(document).on('click', '.note-delete', function(e)
+{
+    e.stopPropagation();
+
+    let row = $(this).closest('.note-row');
+
+    let id = row.data('id');
+
+    if (!confirm("Opravdu smazat tuto poznámku?"))
+    {
+        return;
+    }
+
+    $.post(
+        "php/ajax/ajax_nahravka_poznamky.php",
+        {
+            akce: "delete",
+            id: id
+        },
+        function(response)
+        {
+            if (response.trim() == "OK")
+            {
+                row.slideUp(150, function()
+                {
+                    $(this).remove();
+                });
+            }
+            else
+            {
+                alert("Mazání se nezdařilo.");
+            }
         }
     );
 });
