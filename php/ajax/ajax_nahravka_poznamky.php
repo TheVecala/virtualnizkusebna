@@ -139,28 +139,30 @@ if ($akce == "add")
 
 if ($akce == "update")
 {
-    $id   = intval($_POST["id"] ?? 0);
-    $text = trim($_POST["text"] ?? "");
+    $id = intval($_POST["id"] ?? 0);
+
+    $poznamka = trim($_POST["text"] ?? "");
 
     $stmt = $mysqli->prepare("
-        UPDATE nahravka_poznamky
-        SET text = ?
+        UPDATE recording_notes
+        SET poznamka = ?
         WHERE id = ?
     ");
 
-    $stmt->bind_param("si", $text, $id);
+    $stmt->bind_param("si", $poznamka, $id);
+
     $stmt->execute();
 
     echo "OK";
+
     exit;
 }
-
 if ($akce == "delete")
 {
     $id = intval($_POST["id"] ?? 0);
 
     $stmt = $mysqli->prepare("
-        DELETE FROM nahravka_poznamky
+        DELETE FROM recording_notes
         WHERE id = ?
     ");
 

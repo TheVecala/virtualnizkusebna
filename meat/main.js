@@ -931,3 +931,36 @@ $(document).on('click', '.note-row', function() {
         jumpToTimestamp(ms, file);
     }
 });
+
+$(document).on('click', '.note-edit', function(e)
+{
+    e.stopPropagation();
+
+    let row = $(this).closest('.note-row');
+
+    let id = row.data('id');
+
+    let textEl = row.find('.note-text');
+
+    let puvodniText = textEl.text().trim();
+
+    let novyText = prompt("Upravit poznámku:", puvodniText);
+
+    if (novyText === null)
+    {
+        return;
+    }
+
+    $.post(
+        "ajax/ajax_nahravka_poznamky.php",
+        {
+            akce: "update",
+            id: id,
+            text: novyText
+        },
+        function()
+        {
+            textEl.text(novyText);
+        }
+    );
+});
