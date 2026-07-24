@@ -856,18 +856,27 @@ $(document).on('click', '.poznamky-btn', function() {
 });
 
 function loadRecordingNotes(panel)
-{
-    $.post(
-        'php/ajax/ajax_nahravka_poznamky.php',
-        {
-            akce: 'list',
-            file_path: panel.data('cesta')
-        },
-        function(html)
-        {
-            panel.find('.poznamky-seznam').html(html);
-        }
+{   panel.find('.poznamky-seznam').html(
+    '<div class="poznamky-loading">⏳<span class="spinner-border spinner-border-sm"></span> Načítám poznámky…</div>'
     );
+    $.post(
+    "php/ajax/ajax_nahravka_poznamky.php",
+    {
+        akce: "list",
+        file_path: panel.data("cesta"),
+        looper: panel.closest("#looper-bar").length ? 1 : 0
+    },
+    function(html)
+    {
+        panel.find(".poznamky-seznam").html(html);
+    }
+)
+.fail(function()
+{
+    panel.find(".poznamky-seznam").html(
+        '<div class="poznamky-loading">⚠ Nepodařilo se načíst poznámky.</div>'
+    );
+});
 }
 
 $(document).on('click', '.pridat-poznamku-btn', function() {

@@ -599,6 +599,13 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   color: var(--tmava) !important;
 }
 
+.poznamky-loading
+{
+    padding: 12px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
 </style>
 </head>
 <body>
