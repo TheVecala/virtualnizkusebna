@@ -5,6 +5,8 @@ error_reporting(0);
 if (empty($_SESSION['role'])) {
     exit;
 }
+const NOTE_SONG   = 0;
+const NOTE_NORMAL = 1;
 
 include "../login/connect.php";
 
