@@ -142,7 +142,7 @@ if ($akce == "add")
         INSERT INTO recording_notes
         (
             file_path,
-            cas,,
+            cas,
             typ,
             jmeno,
             poznamka

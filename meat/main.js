@@ -1,5 +1,6 @@
 /* ── main.js — Virtuální zkušebna ── */
-
+const NOTE_SONG   = 0;
+const NOTE_NORMAL = 1;
 // ── Progress bar ──
 var pbTimer = null;
 function pbStart() {
@@ -881,6 +882,13 @@ function loadRecordingNotes(panel)
 
 $(document).on('click', '.pridat-poznamku-btn', function() {
 
+    let typ = $(this).data('typ');
+
+	if (typeof typ === 'undefined')
+	{
+		typ = NOTE_NORMAL;
+	}
+	
     let panel = $(this).closest('.poznamky-panel');
 
     let audio = $(this)
@@ -920,6 +928,7 @@ else if (audio)
             akce: 'add',
             file_path: panel.data('cesta'),
             cas: cas,
+			typ: typ,
             poznamka: text
         },
         function()
