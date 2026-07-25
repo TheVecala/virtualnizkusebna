@@ -55,7 +55,8 @@ echo '
     while($r = $res->fetch_assoc())
     {
         $ms = (int)$r["cas"];
-
+        
+		$typ = (int)$r["typ"];
         $sec = floor($ms / 1000);
 
         $min = floor($sec / 60);
@@ -118,6 +119,7 @@ if ($akce == "add")
     $file_path = $mysqli->real_escape_string($_POST["file_path"]);
 
     $cas = intval($_POST["cas"]);
+	$typ = intval($_POST["typ"] ?? NOTE_NORMAL);
 
     $poznamka = $mysqli->real_escape_string($_POST["poznamka"]);
 
@@ -129,7 +131,8 @@ if ($akce == "add")
         INSERT INTO recording_notes
         (
             file_path,
-            cas,
+            cas,,
+            typ,
             jmeno,
             poznamka
         )
@@ -137,6 +140,7 @@ if ($akce == "add")
         (
             '$file_path',
             $cas,
+            $typ,
             '$jmeno',
             '$poznamka'
         )
