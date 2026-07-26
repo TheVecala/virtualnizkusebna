@@ -1,6 +1,10 @@
 /* ── main.js — Virtuální zkušebna ── */
 const NOTE_SONG   = 0;
 const NOTE_NORMAL = 1;
+let noteAction = "";
+let noteId = 0;
+let noteFile = "";
+let noteTime = 0;
 // ── Progress bar ──
 var pbTimer = null;
 function pbStart() {
@@ -962,25 +966,32 @@ $(document).on('click', '.note-edit', function(e)
 
     let puvodniText = textEl.text().trim();
 
-    let novyText = prompt("Upravit poznámku:", puvodniText);
+	noteAction = "edit";
 
-    if (novyText === null)
-    {
-        return;
-    }
+	noteId = id;
 
-    $.post(
-        "php/ajax/ajax_nahravka_poznamky.php",
-        {
-            akce: "update",
-            id: id,
-            text: novyText
-        },
-        function()
-        {
-            textEl.text(novyText);
-        }
-    );
+	$("#modal_poznamka_title").text("Upravit poznámku");
+
+	$("#modal_poznamka_info").html(
+		"Čas: <strong>" + row.find(".note-time").text().trim() + "</strong>"
+	);
+
+	$("#modal_poznamka_text").val(puvodniText);
+
+	$("#modal_poznamka_text").show();
+
+	$("#modal_poznamka_confirm").hide();
+
+	$("#modal_poznamka_ok")
+		.removeClass("btn-danger")
+		.addClass("btn-primary")
+		.text("Uložit");
+
+	$("#modal_poznamka").modal("show");
+
+	return;
+
+  
 });
 
 $(document).on('click', '.note-delete', function(e)
@@ -1024,4 +1035,37 @@ $(document).on('click', '.export-timestampy-btn', function ()
     window.location =
         'php/ajax/export_timestampy.php?file_path=' +
         encodeURIComponent($(this).data('file'));
+});
+
+$(document).on("click", "#modal_poznamka_ok", function ()
+{
+    if (noteAction != "edit")
+    {
+        return;
+    }
+
+    let novyText = $("#modal_poznamka_text").val().trim();
+
+    if (novyText == "")
+    {
+        alert("Poznámka nesmí být prázdná.");
+        return;
+    }
+
+    $.post(
+        "php/ajax/ajax_nahravka_poznamky.php",
+        {
+            akce: "update",
+            id: noteId,
+            text: novyText
+        },
+        function ()
+        {
+            $(".note-row[data-id='" + noteId + "']")
+                .find(".note-text")
+                .text(novyText);
+
+            $("#modal_poznamka").modal("hide");
+        }
+    );
 });
