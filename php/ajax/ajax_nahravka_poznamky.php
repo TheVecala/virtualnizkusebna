@@ -68,6 +68,16 @@ echo '
         $ms = (int)$r["cas"];
         
 		$typ = (int)$r["typ"];
+		
+		if ($typ == NOTE_SONG)
+		{
+			$rowClass = "note-song";
+		}
+		else
+		{
+			$rowClass = "note-normal";
+		}
+		
         $sec = floor($ms / 1000);
 
         $min = floor($sec / 60);
@@ -77,20 +87,20 @@ echo '
         $cas_text = sprintf("%02d:%02d", $min, $sec);
 
         echo '
-<div class="note-row"
+<div class="note-row '.$rowClass.'"
      data-id="'.$r["id"].'"
      data-ms="'.$ms.'"
      data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'"
      '.($looper ? 'data-looper="1"' : '').'
-     style="padding:4px 0; display:flex; align-items:center; gap:8px;">
+     style="padding:4px 0; display:flex; align-items:center; gap:8px; '.($typ == NOTE_NORMAL ? ' padding-left:20px;' : '').'   ">
 
     <span class="note-time"
           style="font-weight:bold;color:#7fbfff;cursor:pointer;">
-        '.$cas_text.'
+        '.($typ == NOTE_SONG ? '🎵 ' : '').$cas_text.'
     </span>
 
     <span class="note-text"
-          style="flex:1;">
+          style="margin-right:20px;'.($typ == NOTE_NORMAL ? 'padding-left:20px;' : 'font-weight:bold;').'">
         '.htmlspecialchars($r["poznamka"]).'
     </span>
 
