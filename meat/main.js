@@ -1002,10 +1002,34 @@ $(document).on('click', '.note-delete', function(e)
 
     let id = row.data('id');
 
-    if (!confirm("Opravdu smazat tuto poznámku?"))
-    {
-        return;
-    }
+   noteAction = "delete";
+
+	noteId = id;
+
+	$("#modal_poznamka_title").text("Smazat poznámku");
+
+	$("#modal_poznamka_info").html(
+		"Čas: <strong>" + row.find(".note-time").text().trim() + "</strong>"
+	);
+
+	$("#modal_poznamka_confirm").html(
+		"Opravdu chcete smazat tuto poznámku?<br><br><strong>" +
+		row.find(".note-text").text() +
+		"</strong>"
+	);
+
+	$("#modal_poznamka_text").hide();
+
+	$("#modal_poznamka_confirm").show();
+
+	$("#modal_poznamka_ok")
+		.removeClass("btn-primary")
+		.addClass("btn-danger")
+		.text("Smazat");
+
+	$("#modal_poznamka").modal("show");
+
+	return;
 
     $.post(
         "php/ajax/ajax_nahravka_poznamky.php",
@@ -1039,11 +1063,31 @@ $(document).on('click', '.export-timestampy-btn', function ()
 
 $(document).on("click", "#modal_poznamka_ok", function ()
 {
-    if (noteAction != "edit")
-    {
-        return;
-    }
+if (noteAction == "edit")
+{
+    // sem zůstane celý současný kód editace
 
+    return;
+}
+
+if (noteAction == "delete")
+{
+    $.post(
+        "php/ajax/ajax_nahravka_poznamky.php",
+        {
+            akce: "delete",
+            id: noteId
+        },
+        function ()
+        {
+            $(".note-row[data-id='" + noteId + "']").remove();
+
+            $("#modal_poznamka").modal("hide");
+        }
+    );
+
+    return;
+}
     let novyText = $("#modal_poznamka_text").val().trim();
 
     if (novyText == "")
