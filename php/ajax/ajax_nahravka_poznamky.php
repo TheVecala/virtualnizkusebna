@@ -96,13 +96,13 @@ echo '
 
     <span class="note-time"
           style="font-weight:bold;color:#7fbfff;cursor:pointer;">
-        '.($typ == NOTE_SONG ? '🎵 ' : '').$cas_text.'
+        '.($typ == NOTE_SONG ? ' ' : '').$cas_text.'
     </span>
 
     <span class="note-text"
-          style="margin-right:20px;'.($typ == NOTE_NORMAL ? 'padding-left:20px;' : 'font-weight:bold;').'">
+          style="flex:1;'.($typ == NOTE_NORMAL ? 'padding-left:20px;' : 'font-weight:bold;').'">
         '.htmlspecialchars($r["poznamka"]).'
-    </span>
+    </span>         
 
     <span class="note-edit"
           title="Upravit"

@@ -606,6 +606,31 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     color: #999;
     font-style: italic;
 }
+
+.note-row
+{
+    transition: background-color .15s ease;
+    border-radius: 4px;
+	 cursor: pointer;
+}
+
+.note-row:hover
+{
+    background: rgba(127,191,255,.12);
+}
+
+.note-edit,
+.note-delete
+{
+    opacity: .7;
+    transition: opacity .15s;
+}
+
+.note-row:hover .note-edit,
+.note-row:hover .note-delete
+{
+    opacity: 1;
+}
 </style>
 </head>
 <body>
