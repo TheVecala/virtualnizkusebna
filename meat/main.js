@@ -1161,3 +1161,13 @@ if (noteAction == "add")
 }
 
 });
+
+$(document).on("click", ".nahravka-hlavni", function(e)
+{
+    if ($(e.target).closest(".btn-nastaveni").length)
+    {
+        return;
+    }
+
+    $(this).find(".btn-nastaveni").trigger("click");
+});
