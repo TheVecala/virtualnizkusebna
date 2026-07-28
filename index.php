@@ -641,7 +641,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 .poznamky-toolbar .fbtn
 {
-    flex: 1;
+    flex: 0 1 180px;
 }
 </style>
 </head>
