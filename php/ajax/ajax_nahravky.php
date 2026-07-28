@@ -290,12 +290,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
 
 			<div class="poznamky-seznam"></div>
 
-			<?php if ($je_audio): ?>
-			<button class="fbtn pridat-poznamku-btn"
-					data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
-				tenhle button odstranit
-			</button>
-			<?php endif; ?>
+		 
 
         </div>
         

@@ -631,6 +631,18 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 {
     opacity: 1;
 }
+
+.poznamky-toolbar
+{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.poznamky-toolbar .fbtn
+{
+    flex: 1;
+}
 </style>
 </head>
 <body>

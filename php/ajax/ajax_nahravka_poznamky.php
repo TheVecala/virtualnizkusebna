@@ -38,29 +38,30 @@ if ($akce == "list")
         ORDER BY cas ASC
     ");
 echo '
-<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
-
+<div class="poznamky-toolbar">
+  
     <button
         type="button"
-        class="pridat-poznamku-btn"
+        class="fbtn pridat-poznamku-btn"
         data-typ="'.NOTE_SONG.'">
-         Začátek válu
+         📌 ZAČÁTEK VÁLU
     </button>
 
     <button
         type="button"
-        class="pridat-poznamku-btn"
+        class="fbtn pridat-poznamku-btn"
         data-typ="'.NOTE_NORMAL.'">
-        + Poznámka k času
+        📌 POZNÁMKA
     </button>
 
     <button
         type="button"
-        class="export-timestampy-btn"
+        class="fbtn export-timestampy-btn"
         data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
-        📄 Export TXT
+        📄 EXPORT
     </button>
-
+   
+  
 </div>';
 
     while($r = $res->fetch_assoc())
@@ -96,7 +97,7 @@ echo '
 
     <span class="note-time"
           style="font-weight:bold;color:#7fbfff;cursor:pointer;">
-        '.($typ == NOTE_SONG ? ' ' : '').$cas_text.'
+        '.($typ == NOTE_SONG ? '🎸' : '').($typ == NOTE_NORMAL ? '📍' : '').$cas_text.'
     </span>
 
     <span class="note-text"
