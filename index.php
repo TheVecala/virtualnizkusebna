@@ -1043,7 +1043,7 @@ function initWaveSurfer(cesta, peaksData) {
 
     var wsConfig = {
         container:     '#waveform',
-        waveColor:     'rgba(255, 255, 255, 0.15)',
+        waveColor:     '#b8b8b8',
         progressColor: barvaKapely,
         cursorColor:   '#ffffff',
         cursorWidth:   2,
