@@ -705,7 +705,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <div id="main">
 
   <!-- LOOPER BAR (DVOUŘÁDKOVÝ VELKÝ) -->
-  <div id="looper-bar" class="hidden">
+  <div id="looper-bar" class="collapsed">
 
 <!-- HLAVIČKA -->
 <div id="looper-header">
@@ -753,14 +753,14 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 </div>
 
     <!-- OBSAH -->
-    <div id="looper-content">
+    <div id="looper-content" class="hidden">
         <div id="waveform-container">
 	        <div id="looper-time">
                00:00 / 00:00
             </div>
             <div class="wf-placeholder"
                  id="wf-placeholder">
-                načítám nahrávku...
+                Vyberte nahrávku...
             </div>
 
             <div id="waveform"></div>
@@ -1215,11 +1215,11 @@ function looperToggle()
 
     if ($('#looper-content').hasClass('hidden'))
     {
-        $('#btn-collapse').html('▣');
+        $('#btn-collapse').html('▼');
     }
     else
     {
-        $('#btn-collapse').html('▭');
+        $('#btn-collapse').html('▲');
     }
 }
 
@@ -1231,13 +1231,24 @@ function looperZavrit() {
     }
     looperCurrentFile = null;
     $('#looper-notes').hide().empty();
-  	$('#looper-content').removeClass('hidden');
-    $('#btn-collapse').html('▭');
+  	//$('#looper-content').removeClass('hidden');
+    $('#btn-collapse').html('▼');
     $('#looper-time').text('00:00 / 00:00');
-    $('#looper-bar').addClass('hidden');
+    $('#looper-content').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
+	$('#wf-placeholder').text('Vyberte nahrávku...');
 }
+
+if ($('#looper-content').hasClass('hidden'))
+{
+    $('#btn-collapse').html('▼');
+}
+else
+{
+    $('#btn-collapse').html('▲');
+}
+
 </script>
 
 <!-- ── BEZPEČNÝ FALLBACK PRO NAVIGAČNÍ FUNKCE ── -->
