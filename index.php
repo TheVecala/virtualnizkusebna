@@ -758,11 +758,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 	        <div id="looper-time">
                00:00 / 00:00
             </div>
-            <div class="wf-placeholder"
-                 id="wf-placeholder">
+          <div id="looper-empty">
+          <div class="wf-placeholder">
                 Vyberte nahrávku...
             </div>
-
+           </div>
             <div id="waveform"></div>
 
         </div>
