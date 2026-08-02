@@ -722,6 +722,35 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     }
 }
 
+#guide-preview-list
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guide-file
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 4px 8px;
+
+    border: 1px solid #555;
+    border-radius: 4px;
+
+    background: rgba(255,255,255,.05);
+
+    font-size: 11px;
+}
+
+.guide-file img
+{
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
 </style>
 </head>
 <body>
@@ -853,9 +882,13 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
             </div>
 
             <div class="guide-preview" id="guide-preview-list">
-                <!-- miniatura seznamu -->
-            </div>
 
+    <div class="guide-file">
+        <img src="meat/ikona_kazeta.png" alt="">
+        <span>song.mp3</span>
+    </div>
+
+</div>
         </div>
 
         <div class="guide-down">↓</div>
