@@ -758,11 +758,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 	        <div id="looper-time">
                00:00 / 00:00
             </div>
-          <div id="looper-empty">
-          <div class="wf-placeholder">
-                Vyberte nahrávku...
-            </div>
-           </div>
+<div class="wf-placeholder"
+     id="wf-placeholder">
+    Vyberte nahrávku...
+</div>
             <div id="waveform"></div>
 
         </div>
@@ -1228,6 +1227,10 @@ function looperZavrit() {
         wavesurfer.pause();
         wavesurfer.destroy();
         wavesurfer = null;
+		$('#wf-placeholder')
+            .text('Vyberte nahrávku...')
+            .show();
+	
     }
     looperCurrentFile = null;
     $('#looper-notes').hide().empty();
@@ -1237,7 +1240,7 @@ function looperZavrit() {
     $('#looper-content').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
-	$('#wf-placeholder').text('Vyberte nahrávku...');
+
 }
 
 if ($('#looper-content').hasClass('hidden'))
