@@ -643,6 +643,85 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 {
     flex: 0 1 180px;
 }
+
+/* ===========================
+   Infografika looperu
+   =========================== */
+
+.looper-guide
+{
+    max-width: 520px;
+    margin: 8px auto;
+    font-size: 13px;
+}
+
+.looper-guide-row
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.guide-text
+{
+    flex: 0 0 46%;
+    line-height: 1.35;
+}
+
+.guide-arrow
+{
+    flex: 0 0 24px;
+    text-align: center;
+    font-size: 18px;
+    color: #888;
+}
+
+.guide-preview
+{
+    flex: 1;
+    min-height: 58px;
+
+    border: 1px solid #555;
+    border-radius: 6px;
+
+    background: rgba(255,255,255,.03);
+}
+
+.guide-down
+{
+    text-align: center;
+    font-size: 18px;
+    color: #777;
+    margin: 2px 0;
+}
+
+/* ---------- Mobil ---------- */
+
+@media (max-width:700px)
+{
+    .looper-guide
+    {
+        font-size: 12px;
+    }
+
+    .guide-preview
+    {
+        min-height: 46px;
+    }
+
+    .guide-arrow
+    {
+        flex-basis: 18px;
+        font-size: 16px;
+    }
+
+    .guide-down
+    {
+        font-size: 16px;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -758,10 +837,70 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 	        <div id="looper-time">
                00:00 / 00:00
             </div>
-<div class="wf-placeholder"
-     id="wf-placeholder">
-    Vyberte nahrávku...
+
+<div id="wf-placeholder">
+
+    <div class="looper-guide">
+
+        <div class="looper-guide-row">
+
+            <div class="guide-text">
+                <strong>① Vyber nahrávku ze seznamu.</strong>
+            </div>
+
+            <div class="guide-arrow">
+                ➜
+            </div>
+
+            <div class="guide-preview" id="guide-preview-list">
+                <!-- miniatura seznamu -->
+            </div>
+
+        </div>
+
+        <div class="guide-down">↓</div>
+
+        <div class="looper-guide-row">
+
+            <div class="guide-text">
+                <strong>② Otevři ji v Looperu.</strong>
+            </div>
+
+            <div class="guide-arrow">
+                ➜
+            </div>
+
+            <div class="guide-preview" id="guide-preview-looper">
+                <!-- miniatura looperu -->
+            </div>
+
+        </div>
+
+        <div class="guide-down">↓</div>
+
+        <div class="looper-guide-row">
+
+            <div class="guide-text">
+                <strong>③ Přehrávej a označuj důležitá místa.</strong><br>
+
+                📝 Poznámky<br>
+                🎵 Začátky skladeb
+            </div>
+
+            <div class="guide-arrow">
+                ➜
+            </div>
+
+            <div class="guide-preview" id="guide-preview-waveform">
+                <!-- miniatura waveformu -->
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
+
             <div id="waveform"></div>
 
         </div>
@@ -1227,9 +1366,7 @@ function looperZavrit() {
         wavesurfer.pause();
         wavesurfer.destroy();
         wavesurfer = null;
-		$('#wf-placeholder')
-            .text('Vyberte nahrávku...')
-            .show();
+		$('#wf-placeholder').show();
 	
     }
     looperCurrentFile = null;
