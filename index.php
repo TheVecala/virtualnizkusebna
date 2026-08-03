@@ -772,6 +772,32 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     cursor:default;
     pointer-events:none;
 } 
+
+#guide-preview-wave
+{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+ 
+ 
+#guide-preview-wave
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guide-wave-image
+{
+    display: block;
+
+    width: 100%;
+    max-width: 170px;
+    height: auto;
+
+    border-radius: 4px;
+} 
 </style>
 </head>
 <body>
@@ -952,9 +978,13 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
                 ➜
             </div>
 
-            <div class="guide-preview" id="guide-preview-waveform">
-                <!-- miniatura waveformu -->
-            </div>
+            <div class="guide-preview" id="guide-preview-wave">
+
+				<img src="meat/guide_wave.jpg"
+					 alt="Looper - přidávání poznámek a skladeb"
+					 class="guide-wave-image">
+
+			</div>
 
         </div>
 
