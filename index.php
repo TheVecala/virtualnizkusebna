@@ -751,6 +751,27 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     height: 18px;
     object-fit: contain;
 }
+
+#guide-preview-looper
+{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.guide-looper-btn
+{
+    padding:4px 10px;
+    border:1px solid #555;
+    border-radius:5px;
+
+    background:#333;
+    color:#fff;
+
+    font-size:11px;
+    cursor:default;
+    pointer-events:none;
+} 
 </style>
 </head>
 <body>
@@ -903,10 +924,17 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
                 ➜
             </div>
 
-            <div class="guide-preview" id="guide-preview-looper">
-                <!-- miniatura looperu -->
-            </div>
+			 <div class="guide-preview" id="guide-preview-looper">
 
+				<button class="icon-btn guide-looper-btn"
+						title="Looper">
+
+					<i class="ti ti-activity" aria-hidden="true"></i>
+					<span>Looper</span>
+
+				</button>
+
+			</div>
         </div>
 
         <div class="guide-down">↓</div>
