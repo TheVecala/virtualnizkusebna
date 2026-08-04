@@ -918,10 +918,22 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
     <div class="looper-guide">
 
+		<div class="looper-guide-row">
+		    <div class="guide-text">
+                <strong>Není vybranej žádnej vál!</strong>
+            </div>
+			 <div class="guide-arrow">
+                ➜
+            </div>
+		    <div class="guide-text">
+                <strong>Postupuj podle návodu!</strong>
+            </div>			
+		</div>
+	
         <div class="looper-guide-row">
 
             <div class="guide-text">
-                <strong>① Vyber nahrávku ze seznamu.</strong>
+                <strong>① Vyber vál ze seznamu nahrávek.</strong>
             </div>
 
             <div class="guide-arrow">
@@ -930,35 +942,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
             <div class="guide-preview" id="guide-preview-list">
 
-    <div class="guide-file">
-        <img src="meat/ikona_kazeta.png" alt="">
-        <span>song.mp3</span>
-    </div>
-
-</div>
-        </div>
-
-        <div class="guide-down">↓</div>
-
-        <div class="looper-guide-row">
-
-            <div class="guide-text">
-                <strong>② Otevři ji v Looperu.</strong>
-            </div>
-
-            <div class="guide-arrow">
-                ➜
-            </div>
-
-			 <div class="guide-preview" id="guide-preview-looper">
-
-				<button class="icon-btn guide-looper-btn"
-						title="Looper">
-
-					<i class="ti ti-activity" aria-hidden="true"></i>
-					<span>Looper</span>
-
-				</button>
+				 <img src="meat/guide_nahravky.jpg"
+					 alt="seznam válů"
+					 class="guide-wave-image">
 
 			</div>
         </div>
@@ -968,10 +954,28 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
         <div class="looper-guide-row">
 
             <div class="guide-text">
-                <strong>③ Přehrávej a označuj důležitá místa.</strong><br>
+                <strong>② Klikni na tlačítko Looper.</strong>
+            </div>
 
-                📝 Poznámky<br>
-                🎵 Začátky skladeb
+            <div class="guide-arrow">
+                ➜
+            </div>
+
+			 <div class="guide-preview" id="guide-preview-looper">
+
+			    <img src="meat/guide_looper.jpg"
+					 alt="spustit Looper"tl
+					 class="guide-wave-image">
+
+			</div>
+        </div>
+
+        <div class="guide-down">↓</div>
+
+        <div class="looper-guide-row">
+
+            <div class="guide-text">
+                <strong>③ Přehrávej a označuj důležitá místa v konkrétním čase.</strong><br>
             </div>
 
             <div class="guide-arrow">
@@ -981,7 +985,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
             <div class="guide-preview" id="guide-preview-wave">
 
 				<img src="meat/guide_wave.jpg"
-					 alt="Looper - přidávání poznámek a skladeb"
+					 alt="Přidat poznámku"
 					 class="guide-wave-image">
 
 			</div>
