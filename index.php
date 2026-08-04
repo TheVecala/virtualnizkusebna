@@ -1373,7 +1373,7 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
 	$('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▭');
     $('#lname').text(nazev);
-    $('#wf-placeholder').text('načítám nahrávku...').show();
+    $('#wf-placeholder').text('načítám index...').show();
 
     isLooping = false;
     $('#btn-loop').removeClass('on');

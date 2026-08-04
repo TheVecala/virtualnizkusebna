@@ -222,9 +222,8 @@ function looperOtevrit(soubor, label) {
   
   // BEZPEČNOSTNÍ ÚPRAVA: Už nevypisujeme celou FTP cestu k souboru na disku
   var placeholder = document.getElementById('wf-placeholder');
-  if (placeholder) {
-    placeholder.textContent = 'načítám nahrávku...';
-  }
+  
+  if (placeholder) { placeholder.textContent = 'načítám main...';}
 }
 
 
