@@ -256,28 +256,19 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 
 #looper-time{
-
     position:absolute;
-
     top:4px;
     right:8px;
-
     z-index:20;
-
     font-size:10px;
     font-family:monospace;
-
     color:rgba(255,255,255,.80);
-
     background:rgba(0,0,0,.25);
-
     padding:2px 5px;
-
     border-radius:4px;
-
     pointer-events:none;
-
     user-select:none;
+	display: none;
 }
 #waveform-container .wf-placeholder {
   position: absolute; inset: 0; display: flex; align-items: center;
@@ -1303,6 +1294,7 @@ function initWaveSurfer(cesta, peaksData) {
 
     wavesurfer.on('ready', function() {
         $('#wf-placeholder').hide();
+		$('#looper-time').show();
         wavesurfer.play();
         var delka = wavesurfer.getDuration();
 
@@ -1468,10 +1460,11 @@ function looperZavrit() {
     $('#looper-notes').hide().empty();
   	//$('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▼');
-    $('#looper-time').text('00:00 / 00:00');
+    $('#looper-time').text('00:00 / 00:00').hide();
     $('#looper-content').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
+	
 
 }
 
