@@ -43,6 +43,14 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+    cursor: pointer;
+    transition: background-color .15s ease;
+    border-radius: 4px; 
+}
+
+.nahravka-hlavni:hover
+{
+    background: rgba(127,191,255,.10);
 }
 
 /* Zajištění, že se dlouhý název souboru nikdy nezalomí a elegantně se zkrátí */
@@ -290,12 +298,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
 
 			<div class="poznamky-seznam"></div>
 
-			<?php if ($je_audio): ?>
-			<button class="fbtn pridat-poznamku-btn"
-					data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
-				tenhle button odstranit
-			</button>
-			<?php endif; ?>
+		 
 
         </div>
         

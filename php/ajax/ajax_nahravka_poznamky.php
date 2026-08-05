@@ -5,6 +5,8 @@ error_reporting(0);
 if (empty($_SESSION['role'])) {
     exit;
 }
+const NOTE_SONG   = 0;
+const NOTE_NORMAL = 1;
 
 include "../login/connect.php";
 
@@ -36,24 +38,47 @@ if ($akce == "list")
         ORDER BY cas ASC
     ");
 echo '
-<div style="margin-bottom:10px; display:flex; gap:8px;">
-
-    <button type="button" class="pridat-poznamku-btn">
-        + Přidat poznámku k aktuálnímu času
+<div class="poznamky-toolbar">
+  
+    <button
+        type="button"
+        class="fbtn pridat-poznamku-btn"
+        data-typ="'.NOTE_SONG.'">
+         📌 ZAČÁTEK VÁLU
     </button>
 
-    <button type="button"
-            class="export-timestampy-btn"
-            data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
-        📄 Export TXT
+    <button
+        type="button"
+        class="fbtn pridat-poznamku-btn"
+        data-typ="'.NOTE_NORMAL.'">
+        📌 POZNÁMKA
     </button>
 
+    <button
+        type="button"
+        class="fbtn export-timestampy-btn"
+        data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
+        📄 EXPORT
+    </button>
+   
+  
 </div>';
 
     while($r = $res->fetch_assoc())
     {
         $ms = (int)$r["cas"];
-
+        
+		$typ = (int)$r["typ"];
+		
+		if ($typ == NOTE_SONG)
+		{
+			$rowClass = "note-song";
+		}
+		else
+		{
+			$rowClass = "note-normal";
+		}
+		
         $sec = floor($ms / 1000);
 
         $min = floor($sec / 60);
@@ -63,22 +88,22 @@ echo '
         $cas_text = sprintf("%02d:%02d", $min, $sec);
 
         echo '
-<div class="note-row"
+<div class="note-row '.$rowClass.'"
      data-id="'.$r["id"].'"
      data-ms="'.$ms.'"
      data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'"
      '.($looper ? 'data-looper="1"' : '').'
-     style="padding:4px 0; display:flex; align-items:center; gap:8px;">
+     style="padding:4px 0; display:flex; align-items:center; gap:8px; '.($typ == NOTE_NORMAL ? ' padding-left:20px;' : '').'   ">
 
     <span class="note-time"
           style="font-weight:bold;color:#7fbfff;cursor:pointer;">
-        '.$cas_text.'
+        '.($typ == NOTE_SONG ? '🎸' : '').($typ == NOTE_NORMAL ? '📍' : '').$cas_text.'
     </span>
 
     <span class="note-text"
-          style="flex:1;">
+          style="flex:1;'.($typ == NOTE_NORMAL ? 'padding-left:20px;' : 'font-weight:bold;').'">
         '.htmlspecialchars($r["poznamka"]).'
-    </span>
+    </span>         
 
     <span class="note-edit"
           title="Upravit"
@@ -116,6 +141,7 @@ if ($akce == "add")
     $file_path = $mysqli->real_escape_string($_POST["file_path"]);
 
     $cas = intval($_POST["cas"]);
+	$typ = intval($_POST["typ"] ?? NOTE_NORMAL);
 
     $poznamka = $mysqli->real_escape_string($_POST["poznamka"]);
 
@@ -128,6 +154,7 @@ if ($akce == "add")
         (
             file_path,
             cas,
+            typ,
             jmeno,
             poznamka
         )
@@ -135,6 +162,7 @@ if ($akce == "add")
         (
             '$file_path',
             $cas,
+            $typ,
             '$jmeno',
             '$poznamka'
         )

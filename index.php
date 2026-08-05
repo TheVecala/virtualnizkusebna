@@ -256,28 +256,19 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 
 #looper-time{
-
     position:absolute;
-
     top:4px;
     right:8px;
-
     z-index:20;
-
     font-size:10px;
     font-family:monospace;
-
     color:rgba(255,255,255,.80);
-
     background:rgba(0,0,0,.25);
-
     padding:2px 5px;
-
     border-radius:4px;
-
     pointer-events:none;
-
     user-select:none;
+	display: none;
 }
 #waveform-container .wf-placeholder {
   position: absolute; inset: 0; display: flex; align-items: center;
@@ -606,6 +597,198 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     color: #999;
     font-style: italic;
 }
+
+.note-row
+{
+    transition: background-color .15s ease;
+    border-radius: 4px;
+	 cursor: pointer;
+}
+
+.note-row:hover
+{
+    background: rgba(127,191,255,.12);
+}
+
+.note-edit,
+.note-delete
+{
+    opacity: .7;
+    transition: opacity .15s;
+}
+
+.note-row:hover .note-edit,
+.note-row:hover .note-delete
+{
+    opacity: 1;
+}
+
+.poznamky-toolbar
+{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.poznamky-toolbar .fbtn
+{
+    flex: 0 1 180px;
+}
+
+/* ===========================
+   Infografika looperu
+   =========================== */
+
+.looper-guide
+{
+    max-width: 520px;
+    margin: 8px auto;
+    font-size: 13px;
+}
+
+.looper-guide-row
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.guide-text
+{
+    flex: 0 0 46%;
+    line-height: 1.35;
+}
+
+.guide-arrow
+{
+    flex: 0 0 24px;
+    text-align: center;
+    font-size: 18px;
+    color: #888;
+}
+
+.guide-preview
+{
+    flex: 1;
+    min-height: 58px;
+
+    border: 1px solid #555;
+    border-radius: 6px;
+
+    background: rgba(255,255,255,.03);
+}
+
+.guide-down
+{
+    text-align: center;
+    font-size: 18px;
+    color: #777;
+    margin: 2px 0;
+}
+
+/* ---------- Mobil ---------- */
+
+@media (max-width:700px)
+{
+    .looper-guide
+    {
+        font-size: 12px;
+    }
+
+    .guide-preview
+    {
+        min-height: 46px;
+    }
+
+    .guide-arrow
+    {
+        flex-basis: 18px;
+        font-size: 16px;
+    }
+
+    .guide-down
+    {
+        font-size: 16px;
+    }
+}
+
+#guide-preview-list
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guide-file
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 4px 8px;
+
+    border: 1px solid #555;
+    border-radius: 4px;
+
+    background: rgba(255,255,255,.05);
+
+    font-size: 11px;
+}
+
+.guide-file img
+{
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+#guide-preview-looper
+{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.guide-looper-btn
+{
+    padding:4px 10px;
+    border:1px solid #555;
+    border-radius:5px;
+
+    background:#333;
+    color:#fff;
+
+    font-size:11px;
+    cursor:default;
+    pointer-events:none;
+} 
+
+#guide-preview-wave
+{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+ 
+ 
+#guide-preview-wave
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guide-wave-image
+{
+    display: block;
+
+    width: 100%;
+    max-width: 170px;
+    height: auto;
+
+    border-radius: 4px;
+} 
 </style>
 </head>
 <body>
@@ -668,7 +851,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 <div id="main">
 
   <!-- LOOPER BAR (DVOUŘÁDKOVÝ VELKÝ) -->
-  <div id="looper-bar" class="hidden">
+  <div id="looper-bar" class="collapsed">
 
 <!-- HLAVIČKA -->
 <div id="looper-header">
@@ -716,15 +899,93 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 </div>
 
     <!-- OBSAH -->
-    <div id="looper-content">
+    <div id="looper-content" class="hidden">
         <div id="waveform-container">
 	        <div id="looper-time">
                00:00 / 00:00
             </div>
-            <div class="wf-placeholder"
-                 id="wf-placeholder">
-                načítám nahrávku...
+
+<div id="wf-placeholder">
+
+    <div class="looper-guide">
+
+		<div class="looper-guide-row">
+		    <div class="guide-text">
+                <strong>Není vybranej žádnej vál!</strong>
             </div>
+			 <div class="guide-arrow">
+                ➜
+            </div>
+		    <div class="guide-text">
+                <strong>Postupuj podle návodu!</strong>
+            </div>			
+		</div>
+	
+        <div class="looper-guide-row">
+
+            <div class="guide-text">
+                <strong>① Vyber vál ze seznamu nahrávek.</strong>
+            </div>
+
+            <div class="guide-arrow">
+                ➜
+            </div>
+
+            <div class="guide-preview" id="guide-preview-list">
+
+				 <img src="meat/guide_nahravky.jpg"
+					 alt="seznam válů"
+					 class="guide-wave-image">
+
+			</div>
+        </div>
+
+        <div class="guide-down">↓</div>
+
+        <div class="looper-guide-row">
+
+            <div class="guide-text">
+                <strong>② Klikni na tlačítko Looper.</strong>
+            </div>
+
+            <div class="guide-arrow">
+                ➜
+            </div>
+
+			 <div class="guide-preview" id="guide-preview-looper">
+
+			    <img src="meat/guide_looper.jpg"
+					 alt="spustit Looper"tl
+					 class="guide-wave-image">
+
+			</div>
+        </div>
+
+        <div class="guide-down">↓</div>
+
+        <div class="looper-guide-row">
+
+            <div class="guide-text">
+                <strong>③ Přehrávej a označuj důležitá místa v konkrétním čase.</strong><br>
+            </div>
+
+            <div class="guide-arrow">
+                ➜
+            </div>
+
+            <div class="guide-preview" id="guide-preview-wave">
+
+				<img src="meat/guide_wave.jpg"
+					 alt="Přidat poznámku"
+					 class="guide-wave-image">
+
+			</div>
+
+        </div>
+
+    </div>
+
+</div>
 
             <div id="waveform"></div>
 
@@ -1006,7 +1267,7 @@ function initWaveSurfer(cesta, peaksData) {
 
     var wsConfig = {
         container:     '#waveform',
-        waveColor:     'rgba(255, 255, 255, 0.15)',
+        waveColor:     '#b8b8b8',
         progressColor: barvaKapely,
         cursorColor:   '#ffffff',
         cursorWidth:   2,
@@ -1033,6 +1294,7 @@ function initWaveSurfer(cesta, peaksData) {
 
     wavesurfer.on('ready', function() {
         $('#wf-placeholder').hide();
+		$('#looper-time').show();
         wavesurfer.play();
         var delka = wavesurfer.getDuration();
 
@@ -1111,7 +1373,7 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
 	$('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▭');
     $('#lname').text(nazev);
-    $('#wf-placeholder').text('načítám nahrávku...').show();
+    $('#wf-placeholder').text('načítám index...').show();
 
     isLooping = false;
     $('#btn-loop').removeClass('on');
@@ -1178,11 +1440,11 @@ function looperToggle()
 
     if ($('#looper-content').hasClass('hidden'))
     {
-        $('#btn-collapse').html('▣');
+        $('#btn-collapse').html('▼');
     }
     else
     {
-        $('#btn-collapse').html('▭');
+        $('#btn-collapse').html('▲');
     }
 }
 
@@ -1191,16 +1453,30 @@ function looperZavrit() {
         wavesurfer.pause();
         wavesurfer.destroy();
         wavesurfer = null;
+		$('#wf-placeholder').show();
+	
     }
     looperCurrentFile = null;
     $('#looper-notes').hide().empty();
-  	$('#looper-content').removeClass('hidden');
-    $('#btn-collapse').html('▭');
-    $('#looper-time').text('00:00 / 00:00');
-    $('#looper-bar').addClass('hidden');
+  	//$('#looper-content').removeClass('hidden');
+    $('#btn-collapse').html('▼');
+    $('#looper-time').text('00:00 / 00:00').hide();
+    $('#looper-content').addClass('hidden');
     isLooping = false;
     $('#btn-loop').removeClass('on');
+	
+
 }
+
+if ($('#looper-content').hasClass('hidden'))
+{
+    $('#btn-collapse').html('▼');
+}
+else
+{
+    $('#btn-collapse').html('▲');
+}
+
 </script>
 
 <!-- ── BEZPEČNÝ FALLBACK PRO NAVIGAČNÍ FUNKCE ── -->

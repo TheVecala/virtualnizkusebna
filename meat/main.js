@@ -1,5 +1,24 @@
 /* ── main.js — Virtuální zkušebna ── */
+const NOTE_SONG   = 0;
+const NOTE_NORMAL = 1;
+let noteAction = "";
+let noteId = 0;
+let noteFile = "";
+let noteTime = 0;
+let noteType = NOTE_NORMAL;
 
+function formatTime(ms)
+{
+    let sec = Math.floor(ms / 1000);
+
+    let min = Math.floor(sec / 60);
+
+    sec = sec % 60;
+
+    return String(min).padStart(2, "0") +
+           ":" +
+           String(sec).padStart(2, "0");
+}
 // ── Progress bar ──
 var pbTimer = null;
 function pbStart() {
@@ -203,9 +222,8 @@ function looperOtevrit(soubor, label) {
   
   // BEZPEČNOSTNÍ ÚPRAVA: Už nevypisujeme celou FTP cestu k souboru na disku
   var placeholder = document.getElementById('wf-placeholder');
-  if (placeholder) {
-    placeholder.textContent = 'načítám nahrávku...';
-  }
+  
+  if (placeholder) { placeholder.textContent = 'načítám main...';}
 }
 
 
@@ -881,6 +899,13 @@ function loadRecordingNotes(panel)
 
 $(document).on('click', '.pridat-poznamku-btn', function() {
 
+    let typ = $(this).data('typ');
+
+	if (typeof typ === 'undefined')
+	{
+		typ = NOTE_NORMAL;
+	}
+	
     let panel = $(this).closest('.poznamky-panel');
 
     let audio = $(this)
@@ -907,26 +932,35 @@ else if (audio)
     );
 }
 
-    let text = prompt('Poznámka');
+noteAction = "add";
 
-    if(!text)
-    {
-        return;
-    }
+noteFile = panel.data("cesta");
+noteTime = cas;
+noteType = typ;
 
-    $.post(
-        'php/ajax/ajax_nahravka_poznamky.php',
-        {
-            akce: 'add',
-            file_path: panel.data('cesta'),
-            cas: cas,
-            poznamka: text
-        },
-        function()
-        {
-            loadRecordingNotes(panel);
-        }
-    );
+$("#modal_poznamka_title").text(
+    typ == NOTE_SONG ? "Začátek skladby" : "Nová poznámka"
+);
+
+$("#modal_poznamka_info").html(
+    "Čas: <strong>" + formatTime(cas) + "</strong>"
+);
+
+$("#modal_poznamka_text").val("");
+
+$("#modal_poznamka_text").show();
+$("#modal_poznamka_confirm").hide();
+
+$("#modal_poznamka_ok")
+    .removeClass("btn-danger")
+    .addClass("btn-primary")
+    .text("Přidat");
+
+$("#modal_poznamka").modal("show");
+
+return;
+
+
 });
 
 $(document).on('click', '.note-row', function() {
@@ -953,25 +987,32 @@ $(document).on('click', '.note-edit', function(e)
 
     let puvodniText = textEl.text().trim();
 
-    let novyText = prompt("Upravit poznámku:", puvodniText);
+	noteAction = "edit";
 
-    if (novyText === null)
-    {
-        return;
-    }
+	noteId = id;
 
-    $.post(
-        "php/ajax/ajax_nahravka_poznamky.php",
-        {
-            akce: "update",
-            id: id,
-            text: novyText
-        },
-        function()
-        {
-            textEl.text(novyText);
-        }
-    );
+	$("#modal_poznamka_title").text("Upravit poznámku");
+
+	$("#modal_poznamka_info").html(
+		"Čas: <strong>" + row.find(".note-time").text().trim() + "</strong>"
+	);
+
+	$("#modal_poznamka_text").val(puvodniText);
+
+	$("#modal_poznamka_text").show();
+
+	$("#modal_poznamka_confirm").hide();
+
+	$("#modal_poznamka_ok")
+		.removeClass("btn-danger")
+		.addClass("btn-primary")
+		.text("Uložit");
+
+	$("#modal_poznamka").modal("show");
+
+	return;
+
+  
 });
 
 $(document).on('click', '.note-delete', function(e)
@@ -982,10 +1023,34 @@ $(document).on('click', '.note-delete', function(e)
 
     let id = row.data('id');
 
-    if (!confirm("Opravdu smazat tuto poznámku?"))
-    {
-        return;
-    }
+   noteAction = "delete";
+
+	noteId = id;
+
+	$("#modal_poznamka_title").text("Smazat poznámku");
+
+	$("#modal_poznamka_info").html(
+		"Čas: <strong>" + row.find(".note-time").text().trim() + "</strong>"
+	);
+
+	$("#modal_poznamka_confirm").html(
+		"Opravdu chcete smazat tuto poznámku?<br><br><strong>" +
+		row.find(".note-text").text() +
+		"</strong>"
+	);
+
+	$("#modal_poznamka_text").hide();
+
+	$("#modal_poznamka_confirm").show();
+
+	$("#modal_poznamka_ok")
+		.removeClass("btn-primary")
+		.addClass("btn-danger")
+		.text("Smazat");
+
+	$("#modal_poznamka").modal("show");
+
+	return;
 
     $.post(
         "php/ajax/ajax_nahravka_poznamky.php",
@@ -1015,4 +1080,93 @@ $(document).on('click', '.export-timestampy-btn', function ()
     window.location =
         'php/ajax/export_timestampy.php?file_path=' +
         encodeURIComponent($(this).data('file'));
+});
+
+$(document).on("click", "#modal_poznamka_ok", function ()
+{
+let novyText = $("#modal_poznamka_text").val().trim();
+
+if (noteAction != "delete" && novyText == "")
+{
+    alert("Poznámka nesmí být prázdná.");
+    return;
+}
+	
+if (noteAction == "edit")
+{
+       $.post(
+        "php/ajax/ajax_nahravka_poznamky.php",
+        {
+            akce: "update",
+            id: noteId,
+            text: novyText
+        },
+        function ()
+        {
+            $(".note-row[data-id='" + noteId + "']")
+                .find(".note-text")
+                .text(novyText);
+
+            $("#modal_poznamka").modal("hide");
+        }
+    );
+    return;
+}
+
+if (noteAction == "delete")
+{
+    $.post(
+        "php/ajax/ajax_nahravka_poznamky.php",
+        {
+            akce: "delete",
+            id: noteId
+        },
+        function ()
+        {
+            $(".note-row[data-id='" + noteId + "']").remove();
+
+            $("#modal_poznamka").modal("hide");
+        }
+    );
+
+    return;
+}
+
+if (noteAction == "add")
+{
+    $.post(
+        "php/ajax/ajax_nahravka_poznamky.php",
+        {
+            akce: "add",
+            file_path: noteFile,
+            cas: noteTime,
+            typ: noteType,
+            poznamka: novyText
+        },
+        function ()
+        {
+            $("#modal_poznamka").modal("hide");
+
+            let panel = $(".poznamky-panel[data-cesta='" + noteFile + "']");
+
+            if (panel.length)
+            {
+                loadRecordingNotes(panel);
+            }
+        }
+    );
+
+    return;
+}
+
+});
+
+$(document).on("click", ".nahravka-hlavni", function(e)
+{
+    if ($(e.target).closest(".btn-nastaveni").length)
+    {
+        return;
+    }
+
+    $(this).find(".btn-nastaveni").trigger("click");
 });

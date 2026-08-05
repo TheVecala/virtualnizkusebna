@@ -586,3 +586,62 @@
   </div>
 </div>
 
+<!-- ───────────────────────── editace timestampu ───────────────────────── -->
+
+<div class="modal fade" id="modal_poznamka" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal_poznamka_title">
+                    Poznámka
+                </h5>
+
+                <button type="button"
+                        class="close"
+                        data-dismiss="modal"
+                        aria-label="Zavřít">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="modal-ctx mb-3" id="modal_poznamka_info">
+                    Čas:
+                </div>
+
+                <textarea
+                    id="modal_poznamka_text"
+                    class="form-control"
+                    rows="5"></textarea>
+
+                <div id="modal_poznamka_confirm"
+                     class="mt-3"
+                     style="display:none;">
+                    Opravdu chcete tuto poznámku smazat?
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal">
+                    Zrušit
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        id="modal_poznamka_ok">
+                    Uložit
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
