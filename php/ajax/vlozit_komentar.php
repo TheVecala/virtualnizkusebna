@@ -1,7 +1,7 @@
 <?php
 session_start();
 error_reporting(0);
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../config.php';
 
 if (!ma_pravo('comment')) {
     echo json_encode(["ok" => false, "chyba" => "Nemáte oprávnění"]);
@@ -12,7 +12,7 @@ header('Content-Type: application/json; charset=utf-8');
 // 1. ZMĚNA: Kontrola single-band přihlášení
 
 
-include "login/connect.php";
+include __DIR__ . "/../login/connect.php";
 
 $text   = htmlspecialchars(trim($_POST["text"]   ?? ""), ENT_QUOTES);
 $odkaz  = htmlspecialchars(trim($_POST["odkaz"]  ?? ""), ENT_QUOTES);
@@ -34,15 +34,15 @@ $slozka  = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 
 // Výběr tabulky diskuse
 if ($pouzit_hlavni || empty($slozka)) {
-    
+
     // 2. ZMĚNA: Nápady kapely — hlavní diskuse (dynamický název)
     if (empty($kapela)) {
         echo json_encode(["ok" => false, "chyba" => "Název kapely není nastaven"]);
         exit;
     }
-    
+
     $aktualni_diskuse = "napady_" . $mysqli->real_escape_string($kapela);
-    
+
     // Vytvořit tabulku pro nápady, pokud náhodou ještě neexistuje
     $mysqli->query("CREATE TABLE IF NOT EXISTS `$aktualni_diskuse` (
         cas   INT(11)     NOT NULL,

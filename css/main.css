@@ -1,0 +1,671 @@
+/* ── Proměnné ──
+   POZOR: --barva a --pozadi jsou dynamické (nastavuje je uživatel v session)
+   a nastavují se v malém inline <style> bloku přímo v index.php.
+   Zde jsou proto NEuvedeny, aby nedošlo k přebití session hodnot. ── */
+:root {
+  --tmava:     #1a1d20;
+  --card:      #2a2e33;
+  --border:    #3a3e44;
+  --text:      #e0e0e0;
+  --muted:     #888;
+  --accent:    #ffc107;
+  --sidebar-w: 220px;
+  --bottom-h:  58px;
+  --top-h:     46px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--pozadi); color: var(--text); font-family: sans-serif; font-size: 14px; margin: 0; }
+
+/* ── TOPBAR ── */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--top-h);
+  background: var(--tmava); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px; gap: 10px; z-index: 1000;
+}
+.brand { font-weight: bold; color: var(--barva); letter-spacing: 1px; font-size: 13px; white-space: nowrap; }
+.topbar-sep { color: var(--border); }
+.kapela-chip { font-size: 12px; color: var(--muted); white-space: nowrap; }
+#topbar-val {
+  font-size: 12px; color: var(--text);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 5px; padding: 2px 9px; white-space: nowrap;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background .15s;
+}
+#topbar-val:hover { background: var(--border); }
+#topbar-val::after {
+  content: '';
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--muted);
+  flex-shrink: 0;
+}
+.topnav { display: flex; gap: 2px; margin-left: auto; }
+.topbar-mob-actions { display: none; gap: 2px; margin-left: auto; }
+.topnav a {
+  color: var(--muted); text-decoration: none; font-size: 12px;
+  padding: 5px 10px; border-radius: 5px; transition: all .15s; white-space: nowrap;
+}
+.topnav a:hover { color: var(--text); background: var(--card); }
+.topnav a.active { color: var(--accent); background: var(--card); }
+.napady-badge {
+  background: #2a3a10; color: #a7d050; border: 1px solid #4a6a20;
+  border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 3px;
+}
+#nav-napady-tab {
+  display: none; align-items: center; gap: 2px;
+  color: var(--muted); font-size: 12px; padding: 5px 8px; text-decoration: none;
+}
+#nav-napady-tab.active { color: var(--barva); }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  position: fixed; top: var(--top-h); left: 0; bottom: 0; width: var(--sidebar-w);
+  background: var(--tmava); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 900; overflow: hidden;
+}
+.sidebar-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); padding: 10px 14px 4px; flex-shrink: 0;
+}
+#sidebar-playlist { flex: 1; overflow-y: auto; padding: 0 8px; }
+.val-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; color: var(--muted); transition: all .15s; position: relative;
+}
+.val-item:hover { background: var(--card); color: var(--text); }
+.val-item.active { background: var(--card); color: var(--barva); font-weight: 500; }
+.val-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.val-item.active .val-dot { background: var(--barva); }
+.val-nazev { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.val-actions { display: none; gap: 3px; flex-shrink: 0; }
+.val-item:hover .val-actions { display: flex; }
+.val-actions button {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 3px; padding: 1px 5px; font-size: 10px; cursor: pointer; transition: all .15s;
+}
+.val-actions button:hover { color: var(--accent); border-color: var(--accent); }
+.sidebar-add {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 12px; color: var(--muted); transition: all .15s;
+  border: 1px dashed var(--border); margin: 6px 8px; flex-shrink: 0;
+}
+.sidebar-add:hover { border-color: var(--barva); color: var(--barva); }
+
+/* ── MAIN ── */
+#main {
+  margin-left: var(--sidebar-w); margin-top: var(--top-h);
+  display: flex; flex-direction: column; height: calc(100vh - var(--top-h)); overflow: hidden;
+}
+
+/* ── LOOPER BAR VÝRAZNÝ A VELKÝ ── */
+#looper-bar {
+  background: var(--tmava); 
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: stretch; 
+  gap: 12px; 
+  flex-shrink: 0;
+  transition: all .2s;
+}
+#looper-bar.hidden { display: none; }
+
+.looper-ovladani-rada {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.lctrl { display: flex; gap: 6px; flex-shrink: 0; }
+.wave-btn {
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  border-radius: 5px; padding: 6px 12px; cursor: pointer; font-size: 14px; transition: all .15s;
+}
+.wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
+
+#waveform-container{
+    position:relative;
+}
+
+#looper-time{
+    position:absolute;
+    top:4px;
+    right:8px;
+    z-index:20;
+    font-size:10px;
+    font-family:monospace;
+    color:rgba(255,255,255,.80);
+    background:rgba(0,0,0,.25);
+    padding:2px 5px;
+    border-radius:4px;
+    pointer-events:none;
+    user-select:none;
+	display: none;
+}
+#waveform-container .wf-placeholder {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  padding: 0 12px; color: var(--muted); font-size: 12px;
+}
+#waveform { width: 100%; height: 100%; }
+
+.lname {
+  font-size: 13px; color: var(--text); font-weight: bold;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+  flex: 1; text-align: center;
+}
+.lclose {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 22px; line-height: 1; padding: 0 4px; flex-shrink: 0;
+}
+.lclose:hover { color: var(--text); }
+
+#looper-header{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:6px 10px;
+
+    background:#2b3035;
+    border-bottom:1px solid #3d4349;
+}
+
+.looper-left{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.looper-title{
+
+    color:var(--barva);
+    font-weight:700;
+    letter-spacing:1px;
+    white-space:nowrap;
+}
+
+.looper-buttons{
+
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+ 
+.looper-right{
+
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+
+#looper-content{
+
+    padding:8px;
+
+    overflow:hidden;
+
+    max-height:600px;
+
+    opacity:1;
+
+    transition:
+        max-height .18s ease,
+        opacity .15s ease,
+        padding .18s ease;
+}
+
+#looper-content.hidden{
+
+    max-height:0;
+
+    opacity:0;
+
+    padding-top:0;
+    padding-bottom:0;
+
+    overflow:hidden;
+}
+#looper-notes{
+
+    margin-top:10px;
+}
+
+/* ── CONTENT AREA ── */
+#content-area { flex: 1; display: flex; overflow: hidden; }
+
+.panel {
+  display: flex; flex-direction: column; overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.panel:last-child { border-right: none; }
+#panel-text       { flex: 2; }
+#panel-tabelatura { flex: 2; } /* Nový panel Tabelatura */
+#panel-nahravky   { flex: 2; }
+#panel-diskuse    { flex: 1.5; }
+#panel-napady     { flex: 1.5; display: none; }
+
+.panel-header {
+  padding: 8px 12px; background: var(--tmava);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.panel-header h2 {
+  color: var(--accent); font-weight: bold; font-size: 11px;
+  text-shadow: 1px -1px 5px var(--accent); letter-spacing: 1px; margin: 0;
+}
+.panel-header .acts { margin-left: auto; display: flex; gap: 5px; }
+
+.panel-body { flex: 1; overflow-y: auto; padding: 12px; }
+
+/* Loading spinner */
+.panel-loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 80px; color: var(--muted); font-size: 12px; gap: 8px;
+}
+.spinner {
+  width: 16px; height: 16px; border: 2px solid var(--border);
+  border-top-color: var(--barva); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── BTNS ── */
+.btn-vz {
+  border-radius: 5px; padding: 3px 9px; font-size: 11px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--card); color: var(--text);
+  transition: all .15s; white-space: nowrap;
+}
+.btn-vz:hover { border-color: var(--barva); color: var(--barva); }
+.btn-locked { opacity: 0.38; cursor: not-allowed !important; pointer-events: none; }
+.btn-locked::after { content: ' 🔒'; font-size: 9px; }
+.btn-vz.danger { background: #5a1a1a; border-color: #8a3a3a; color: #ff9999; }
+.btn-vz.rec { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.75} }
+.btn-vz.primary { background: #2a3a10; border-color: var(--barva); color: var(--barva); }
+
+/* ── BOTTOM NAV ── */
+#bottom-nav, #bottom-nav-tab {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--bottom-h); background: var(--tmava);
+  border-top: 1px solid var(--border); z-index: 1000;
+  justify-content: space-around; align-items: stretch;
+}
+.bnav {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 4px; color: var(--muted); font-size: 10px;
+  cursor: pointer; border: none; background: none; transition: all .15s;
+  padding: 6px 0; text-align: center; line-height: 1.3;
+}
+.bnav img.bi {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  // opacity: 0.55;
+  transition: all .15s ease-in-out;
+}
+.bnav:hover img.bi {
+  opacity: 0.85;
+}
+.bnav.active { color: var(--accent); }
+.bnav.active img.bi {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px var(--accent));
+}
+
+/* ── SKLADBY (mobil): vizuálně oddělené od panelových tlačítek ── */
+#bn-skladby {
+  color: var(--barva);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 5px 2px 5px 6px;
+  background: rgba(255,255,255,0.03);
+  flex-shrink: 0;
+}
+#bn-skladby + .bnav {
+  border-left: 1px solid var(--border);
+  margin-left: 3px;
+}
+/* bn-skladby nesdílí yellow active highlight */
+#bn-skladby.active { color: var(--barva) !important; }
+
+/* ── TABLET: dvě poloviny dolní lišty, každá se 4 tlačítky pro svůj panel ── */
+.tab-footer { display: flex; flex: 1; }
+.tab-footer .bnav { flex: 1; }
+.tab-footer-divider { width: 1px; background: var(--border); flex-shrink: 0; margin: 8px 0; }
+
+/* Val drawer (mobil) */
+#val-drawer {
+  display: none; position: fixed; bottom: var(--bottom-h); left: 0; 
+  background: var(--tmava); border-top: 1px solid var(--border);
+  max-height: calc(100vh - var(--top-h) - var(--bottom-h)); overflow-y: auto; z-index: 999; padding: 8px;
+}
+#val-drawer.open { display: block; }
+.dval {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 13px; transition: all .15s;
+}
+.dval:hover { background: var(--card); color: var(--text); }
+.dval.active { color: var(--barva); background: var(--card); }
+.dval .val-nazev { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dval .val-actions { display: flex; gap: 3px; flex-shrink: 0; }
+.drawer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 4px 12px 8px; }
+
+
+/* ── RESPONZIVNÍ ROZHRANÍ (MEDIA QUERIES) ── */
+
+/* 1. MALÝ MOBIL (na výšku, do 767px): Pouze jeden panel */
+@media (max-width: 767px) {
+  #sidebar { display: none; }
+  #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
+  #bottom-nav { display: flex; }
+  #bottom-nav-tab { display: none; }
+  .topnav { display: none; }
+  .topbar-mob-actions { display: flex; }
+  #nav-napady-tab { display: none; }
+  #topbar-val { font-size: 11px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #content-area { flex-direction: column; }
+  .panel { display: none !important; border-right: none; border-bottom: 1px solid var(--border); }
+  .panel.mob-active { display: flex !important; }
+  #napady-fields { display: none; }
+  #napady-fields.open { display: block; }
+  #napady-toggle-btn { display: block !important; }
+}
+
+/* 2. STŘEDNÍ VARIANT (768px až 1199px): Přesně dva panely vedle sebe! */
+@media (min-width: 768px) and (max-width: 1199px) {
+  #sidebar { display: none; }
+  #main { margin-left: 0; margin-bottom: var(--bottom-h); height: calc(100vh - var(--top-h) - var(--bottom-h)); }
+  #bottom-nav { display: none; }
+  #bottom-nav-tab { display: flex; }
+  .topnav { display: none; }
+  .topbar-mob-actions { display: flex; }
+  #nav-napady-tab { display: inline-flex; }
+  #content-area { flex-direction: row; }
+
+  /* Skryjeme výchozí zobrazení všech */
+  .panel { display: none !important; width: 50%; }
+
+  /* Levá polovina — kterýkoli ze 4 typů obsahu, řízeno footerem levého panelu */
+  #content-area[data-left="text"] #panel-text,
+  #content-area[data-left="tabelatura"] #panel-tabelatura,
+  #content-area[data-left="nahravky"] #panel-nahravky,
+  #content-area[data-left="diskuse"] #panel-diskuse {
+    display: flex !important; order: 1;
+  }
+
+  /* Pravá polovina — nezávisle na levé, řízeno footerem pravého panelu */
+  #content-area[data-right="text"] #panel-text,
+  #content-area[data-right="tabelatura"] #panel-tabelatura,
+  #content-area[data-right="nahravky"] #panel-nahravky,
+  #content-area[data-right="diskuse"] #panel-diskuse {
+    display: flex !important; order: 2;
+  }
+
+  /* Nápady: solo režim přes celou šířku (otevřeno z horní lišty), nahrazuje obě poloviny */
+  #content-area[data-napady-open] #panel-text,
+  #content-area[data-napady-open] #panel-tabelatura,
+  #content-area[data-napady-open] #panel-nahravky,
+  #content-area[data-napady-open] #panel-diskuse {
+    display: none !important;
+  }
+  #content-area[data-napady-open] #panel-napady {
+    display: flex !important; width: 100%; order: 0;
+  }
+}
+
+/* 3. DESKTOP (od 1200px): tři panely vedle sebe + trvalý sidebar */
+@media (min-width: 1200px) {
+  #sidebar { display: flex; }
+  #main { margin-left: var(--sidebar-w); }
+  #bottom-nav { display: none; }
+  #bottom-nav-tab { display: none; }
+  #content-area { flex-direction: row; }
+  #topbar-val { cursor: default; pointer-events: none; }
+  #topbar-val::after { display: none; }
+  #panel-text, #panel-tabelatura, #panel-nahravky { display: flex; }
+  #panel-diskuse { display: none; }
+}
+
+/* 4. XL (od 1800px): čtyři panely — přidají se i poznámky */
+@media (min-width: 1800px) {
+  #panel-diskuse { display: flex; }
+}
+
+/* ── Progress bar ── */
+#progress-bar {
+  position: fixed; top: var(--top-h); left: 0; right: 0;
+  height: 3px; z-index: 2000; pointer-events: none;
+  opacity: 0; transition: opacity .2s;
+}
+#progress-bar.loading {
+  opacity: 1;
+  background: linear-gradient(90deg, var(--barva) 0%, #ffc107 50%, var(--barva) 100%);
+  background-size: 200% 100%;
+  animation: pb-slide 1.2s linear infinite;
+}
+#progress-bar.done {
+  opacity: 0;
+  background: var(--barva);
+  transition: opacity .5s ease .2s;
+  animation: none;
+}
+@keyframes pb-slide {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background: var(--barva) !important;
+  color: var(--tmava) !important;
+}
+
+.poznamky-loading
+{
+    padding: 12px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
+.note-row
+{
+    transition: background-color .15s ease;
+    border-radius: 4px;
+	 cursor: pointer;
+}
+
+.note-row:hover
+{
+    background: rgba(127,191,255,.12);
+}
+
+.note-edit,
+.note-delete
+{
+    opacity: .7;
+    transition: opacity .15s;
+}
+
+.note-row:hover .note-edit,
+.note-row:hover .note-delete
+{
+    opacity: 1;
+}
+
+.poznamky-toolbar
+{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.poznamky-toolbar .fbtn
+{
+    flex: 0 1 180px;
+}
+
+/* ===========================
+   Infografika looperu
+   =========================== */
+
+.looper-guide
+{
+    max-width: 520px;
+    margin: 8px auto;
+    font-size: 13px;
+}
+
+.looper-guide-row
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.guide-text
+{
+    flex: 0 0 46%;
+    line-height: 1.35;
+}
+
+.guide-arrow
+{
+    flex: 0 0 24px;
+    text-align: center;
+    font-size: 18px;
+    color: #888;
+}
+
+.guide-preview
+{
+    flex: 1;
+    min-height: 58px;
+
+    border: 1px solid #555;
+    border-radius: 6px;
+
+    background: rgba(255,255,255,.03);
+}
+
+.guide-down
+{
+    text-align: center;
+    font-size: 18px;
+    color: #777;
+    margin: 2px 0;
+}
+
+/* ---------- Mobil ---------- */
+
+@media (max-width:700px)
+{
+    .looper-guide
+    {
+        font-size: 12px;
+    }
+
+    .guide-preview
+    {
+        min-height: 46px;
+    }
+
+    .guide-arrow
+    {
+        flex-basis: 18px;
+        font-size: 16px;
+    }
+
+    .guide-down
+    {
+        font-size: 16px;
+    }
+}
+
+#guide-preview-list
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guide-file
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 4px 8px;
+
+    border: 1px solid #555;
+    border-radius: 4px;
+
+    background: rgba(255,255,255,.05);
+
+    font-size: 11px;
+}
+
+.guide-file img
+{
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+#guide-preview-looper
+{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.guide-looper-btn
+{
+    padding:4px 10px;
+    border:1px solid #555;
+    border-radius:5px;
+
+    background:#333;
+    color:#fff;
+
+    font-size:11px;
+    cursor:default;
+    pointer-events:none;
+} 
+
+#guide-preview-wave
+{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+ 
+ 
+#guide-preview-wave
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guide-wave-image
+{
+    display: block;
+
+    width: 100%;
+    max-width: 170px;
+    height: auto;
+
+    border-radius: 4px;
+} 

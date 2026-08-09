@@ -104,7 +104,7 @@ function switchVal(val, nazev, el) {
 
   document.getElementById('val-drawer').classList.remove('open');
 
-  $.post('/php/zmenit_slozku_ajax.php', { cilova_slozka: val }, function() {
+  $.post('/php/ajax/zmenit_slozku_ajax.php', { cilova_slozka: val }, function() {
     $('.panel-body').css('opacity', '0.3');
     setTimeout(function() { $('.panel-body').css('opacity', '1'); }, 200);
     nacistVsechnyPanely();
@@ -262,7 +262,7 @@ function otevritEditText(typ) {
       if (ctxSlozka) ctxSlozka.textContent = data.slozka || VZ.aktualniNazev || '';
 
       if (form) {
-        form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
+        form.action = (typ === 'tabelatura') ? '/php/actions/vlozit_tabelaturu.php' : '/php/actions/vlozit_akordy.php';
       }
     }
     document.getElementById('panel-historie').style.display = 'none';
@@ -279,7 +279,7 @@ function otevritEditText(typ) {
     var vychoziNazev = (typ === 'tabelatura') ? 'tabelatura.txt' : 'akordy.txt';
 
     if (label) label.textContent = 'VYTVOŘIT ' + vychoziNazev;
-    if (form) form.action = (typ === 'tabelatura') ? '/php/vlozit_tabelaturu.php' : '/php/vlozit_akordy.php';
+    if (form) form.action = (typ === 'tabelatura') ? '/php/actions/vlozit_tabelaturu.php' : '/php/actions/vlozit_akordy.php';
 
     var ctxAction = document.getElementById('modal_editor_ctx_action');
     var ctxSoubor = document.getElementById('modal_editor_ctx_soubor');
@@ -371,7 +371,7 @@ $(document).on('submit', '#form_komentar', function(e) {
   if (chyba) chyba.style.display = 'none';
   pbStart();
 
-  $.post('/php/vlozit_komentar.php', {
+  $.post('/php/ajax/vlozit_komentar.php', {
     text:   $('#komentar_text').val(),
     odkaz:  $('#komentar_odkaz').val()  || '',
     odkaz2: $('#komentar_odkaz2').val() || '',
@@ -517,7 +517,7 @@ $(document).on('submit', '#form_napady', function(e) {
   chyba.style.display = 'none';
   pbStart();
 
-  $.post('/php/vlozit_komentar.php', {
+  $.post('/php/ajax/vlozit_komentar.php', {
     text:                 $('#napady_text').val(),
     name:                 $('#napady_jmeno').val(),
     odkaz:                '',
@@ -712,7 +712,7 @@ $(document).on('submit', '#form_upload', function(e) {
     res.textContent = 'Chyba spojení.';
   };
 
-  xhr.open('POST', '/php/upload_uni.php');
+  xhr.open('POST', '/php/actions/upload_uni.php');
   xhr.send(formData);
 });
 
@@ -1170,3 +1170,331 @@ $(document).on("click", ".nahravka-hlavni", function(e)
 
     $(this).find(".btn-nastaveni").trigger("click");
 });
+
+/* ═══════════════════════════════════════════════════════════
+   Následující bloky byly přesunuty z inline <script> v index.php
+   při restrukturalizaci projektu (viz VZ.md).
+   ═══════════════════════════════════════════════════════════ */
+
+// ── Delegovaný handler pro spodní navigaci (nastavuje data-active-panel) ──
+$(document).on('click', '.bnav', function() {
+    var id = $(this).attr('id');
+    if (!id || id === 'bn-skladby') return;
+    var panelId = id.replace('bn-', '');
+    $('#content-area').attr('data-active-panel', panelId);
+});
+
+// ── Poznámky k looper nahrávce ──
+function loadLooperNotes(filePath)
+{
+    $.post(
+        'php/ajax/ajax_nahravka_poznamky.php',
+        {
+            akce: 'list',
+            file_path: filePath,
+            looper: 1
+        },
+        function(html)
+        {
+            $('#looper-notes')
+                .html(html)
+                .show();
+        }
+    );
+}
+
+// ── Skok na konkrétní timestamp v poznámce ──
+ function jumpToTimestamp(ms, filePath)
+{
+    $('.poznamky-panel').each(function() {
+
+        if ($(this).data('cesta') !== filePath)
+        {
+            return;
+        }
+
+        let audio = $(this)
+            .closest('.nahravka-vysuvna')
+            .find('audio')[0];
+
+        if (audio)
+        {
+            audio.currentTime = ms / 1000;
+        }
+    });
+}
+
+// ── Inicializace SortableJS (drag&drop pořadí skladeb) ──
+// Inicializace SortableJS po načtení stránky
+document.addEventListener('DOMContentLoaded', function() {
+    
+    function aktivovatSortable(idKontejneru, tridaPolozky) {
+        var el = document.getElementById(idKontejneru);
+        if (el) {
+            var sortable = Sortable.create(el, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                delay: 150, // Zpoždění pro myš i mobil
+                delayOnTouchOnly: true, // delay se aplikuje jen na dotyk, ne na myš
+                // Povolíme tahání POUZE pro prvky s touto třídou (hlavička zůstane přibitá)
+                draggable: '.' + tridaPolozky,
+                filter: '.nodrag, button',
+                preventOnFilter: true,
+                onEnd: function (evt) {
+                    var novePoradi = sortable.toArray();
+                    
+                    $.ajax({
+                        url: '/php/ajax/uloz_poradi.php',
+                        method: 'POST',
+                        data: { poradi: novePoradi },
+                        success: function(response) {
+                            console.log('Nové pořadí bylo uloženo z panelu: ' + idKontejneru);
+                        },
+                        error: function() {
+                            alert('Chyba při ukládání pořadí. Zkuste to znovu.');
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    // Aktivujeme přetahování a předáme třídy písniček
+    aktivovatSortable('val-drawer', 'dval');           // Mobilní menu
+    aktivovatSortable('sidebar-playlist', 'val-item'); // Desktopový panel
+});
+
+// ── WaveSurfer / Looper (s peaks cachováním) ──
+var wavesurfer = null;
+var isLooping = false;
+var looperCurrentFile = null;
+
+/**
+ * Vytvoří a inicializuje WaveSurfer instanci.
+ *
+ * @param {string} cesta     - relativní URL audio souboru
+ * @param {object|null} peaksData - { peaks: [[...]], duration: X } nebo null
+ */
+function initWaveSurfer(cesta, peaksData) {
+    var barvaKapely = getComputedStyle(document.documentElement)
+                        .getPropertyValue('--barva').trim() || '#a7ac38';
+
+    var wsConfig = {
+        container:     '#waveform',
+        waveColor:     '#b8b8b8',
+        progressColor: barvaKapely,
+        cursorColor:   '#ffffff',
+        cursorWidth:   2,
+        barWidth:      2,
+        barGap:        1,
+        barRadius:     1,
+        height:        98,
+        url:           cesta
+    };
+
+    // Pokud máme uložené peaks, předáme je WaveSurferu →
+    // audio se NEKÓDUJE znovu, vykreslení je okamžité
+    var maPeaks = peaksData &&
+                  Array.isArray(peaksData.peaks) &&
+                  peaksData.peaks.length > 0 &&
+                  peaksData.duration > 0;
+
+    if (maPeaks) {
+        wsConfig.peaks    = peaksData.peaks;
+        wsConfig.duration = peaksData.duration;
+    }
+
+    wavesurfer = WaveSurfer.create(wsConfig);
+
+    wavesurfer.on('ready', function() {
+        $('#wf-placeholder').hide();
+		$('#looper-time').show();
+        wavesurfer.play();
+        var delka = wavesurfer.getDuration();
+
+		$('#looper-time').text(
+			formatLooperTime(0) + ' / ' + formatLooperTime(delka)
+		);
+        // Peaks ještě nebyly uloženy → exportujeme a pošleme na server
+        if (!maPeaks) {
+            var peaks    = wavesurfer.exportPeaks();
+            var duration = wavesurfer.getDuration();
+
+            if (Array.isArray(peaks) && peaks.length > 0 && duration > 0) {
+                $.ajax({
+                    url:         'php/ajax/ulozit_peaks.php',
+                    method:      'POST',
+                    contentType: 'application/json',
+                    data:        JSON.stringify({ cesta: cesta, peaks: peaks, duration: duration }),
+                    error: function() {
+                        console.warn('[Looper] Peaks se nepodařilo uložit.');
+                    }
+                });
+            }
+        }
+    });
+
+    wavesurfer.on('play', function() {
+        $('#btn-play').addClass('on');
+        $('#btn-pause').removeClass('on');
+    });
+
+    wavesurfer.on('pause', function() {
+        $('#btn-play').removeClass('on');
+        $('#btn-pause').addClass('on');
+    });
+
+    wavesurfer.on('finish', function() {
+        if (isLooping) {
+            wavesurfer.play();
+        } else {
+            $('#btn-play').removeClass('on');
+            $('#btn-pause').addClass('on');
+        }
+    });
+	
+	wavesurfer.on('timeupdate', function(sec){
+
+    $('#looper-time').text(
+
+        formatLooperTime(sec)
+
+        +
+
+        ' / '
+
+        +
+
+        formatLooperTime(
+            wavesurfer.getDuration()
+        )
+
+    );
+
+});
+}
+
+// Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
+$(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
+    var cesta = $(this).data('cesta');
+    var nazev = $(this).data('nazev');
+
+    looperCurrentFile = cesta;
+    loadLooperNotes(cesta);
+
+    // Zobrazíme looper bar a resetujeme stav
+    $('#looper-bar').removeClass('hidden');
+	$('#looper-content').removeClass('hidden');
+    $('#btn-collapse').html('▭');
+    $('#lname').text(nazev);
+    $('#wf-placeholder').text('načítám index...').show();
+
+    isLooping = false;
+    $('#btn-loop').removeClass('on');
+
+    if (wavesurfer) {
+        wavesurfer.destroy();
+        wavesurfer = null;
+    }
+
+    // Zkusíme načíst uložené peaks ze serveru.
+    // .done()  → peaks existují → WaveSurfer vykreslí okamžitě bez dekódování audia
+    // .fail()  → peaks neexistují (404) nebo chyba → standardní dekódování, peaks se poté uloží
+    $.getJSON('php/ajax/nacist_peaks.php', { cesta: cesta })
+        .done(function(peaksData) {
+            initWaveSurfer(cesta, peaksData);
+        })
+        .fail(function() {
+            initWaveSurfer(cesta, null);
+        });
+});
+
+/* --- Globální funkce pro tlačítka v looper-baru --- */
+function formatLooperTime(sec)
+{
+    sec = Math.floor(sec);
+
+    let m = Math.floor(sec / 60);
+    let s = sec % 60;
+
+    return (
+        (m < 10 ? '0' : '') + m +
+        ':' +
+        (s < 10 ? '0' : '') + s
+    );
+}
+
+function looperPlay() {
+    if (wavesurfer) wavesurfer.play();
+}
+
+function looperPause() {
+    if (wavesurfer) wavesurfer.pause();
+}
+
+function looperRestart() {
+    if (wavesurfer) {
+        wavesurfer.setTime(0);
+        wavesurfer.play();
+    }
+}
+
+function looperLoop() {
+    isLooping = !isLooping;
+    if (isLooping) {
+        $('#btn-loop').addClass('on');
+    } else {
+        $('#btn-loop').removeClass('on');
+    }
+}
+
+function looperToggle()
+{
+    $('#looper-content').toggleClass('hidden');
+
+    if ($('#looper-content').hasClass('hidden'))
+    {
+        $('#btn-collapse').html('▼');
+    }
+    else
+    {
+        $('#btn-collapse').html('▲');
+    }
+}
+
+function looperZavrit() {
+    if (wavesurfer) {
+        wavesurfer.pause();
+        wavesurfer.destroy();
+        wavesurfer = null;
+		$('#wf-placeholder').show();
+	
+    }
+    looperCurrentFile = null;
+    $('#looper-notes').hide().empty();
+  	//$('#looper-content').removeClass('hidden');
+    $('#btn-collapse').html('▼');
+    $('#looper-time').text('00:00 / 00:00').hide();
+    $('#looper-content').addClass('hidden');
+    isLooping = false;
+    $('#btn-loop').removeClass('on');
+	
+
+}
+
+if ($('#looper-content').hasClass('hidden'))
+{
+    $('#btn-collapse').html('▼');
+}
+else
+{
+    $('#btn-collapse').html('▲');
+}
+
+
+// ── Nastavení počátečního stavu tlačítka collapse loop panelu ──
+if ($('#looper-content').hasClass('hidden')) {
+    $('#btn-collapse').html('▼');
+} else {
+    $('#btn-collapse').html('▲');
+}

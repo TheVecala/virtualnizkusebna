@@ -1,9 +1,9 @@
 <?php session_start();
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../config.php';
 
 if (!ma_pravo('delete_val')) {
     $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
+    require __DIR__ . "/../inc/navrat.php"; exit;
 }
 
 $val_ke_smazani    = trim($_POST["val_ke_smazani"] ?? "");
@@ -12,17 +12,17 @@ $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 // Ochrana proti path traversal
 if (empty($val_ke_smazani) || strpos($val_ke_smazani, "..") !== false) {
     $_SESSION['vysledek'] = "chyba - neplatný název válu";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
 // Cesta se sestavuje ze SESSION, ne z POST
 $cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/";
-$target_dir   = "../" . $cesta_slozek . $val_ke_smazani;
+$target_dir   = "../../" . $cesta_slozek . $val_ke_smazani;
 
 if (!is_dir($target_dir)) {
     $_SESSION['vysledek'] = "chyba - vál neexistuje";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -31,7 +31,7 @@ $pocet  = count($slozka); // . a .. jsou vždy 2, texty a data jsou 2 = celkem 4
 
 if ($pocet > 4) {
     $_SESSION['vysledek'] = "chyba - vál není prázdný, nejdříve smažte nahrávky";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -72,5 +72,5 @@ if (rmdir($target_dir)) {
     $_SESSION['vysledek'] = "chyba - vál se nepodařilo smazat";
 }
 
-require "navrat.php";
+require __DIR__ . "/../inc/navrat.php";
 ?>

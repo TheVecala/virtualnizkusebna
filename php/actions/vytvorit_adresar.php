@@ -1,12 +1,12 @@
 <?php session_start(); ?>
 <?php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../config.php';
 
 if (!ma_pravo('create_val')) {
     $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
+    require __DIR__ . "/../inc/navrat.php"; exit;
 }
-require "remove_accents.php";
+require __DIR__ . "/../inc/remove_accents.php";
 
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 
@@ -17,7 +17,7 @@ $sekce  = $_POST["sekce"] ?? "uploads";
 
 if (empty($kapela) || empty($befelemepesseveze)) {
     $_SESSION['vysledek'] = "chyba - nejste přihlášen";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -25,7 +25,7 @@ if (empty($kapela) || empty($befelemepesseveze)) {
 $cely_jmeno = trim($_POST["jmeno_adresare"] ?? "");
 if (empty($cely_jmeno)) {
     $_SESSION['vysledek'] = "chyba - chybí jméno složky";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -36,46 +36,46 @@ $ocesany_jmeno = trim($ocesany_jmeno);
 
 if (empty($ocesany_jmeno)) {
     $_SESSION['vysledek'] = "chyba - název složky obsahuje pouze nepodporované znaky";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
-$cil_adresare = "../user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/";
+$cil_adresare = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/";
 
 // Ověření že složka ještě neexistuje
 if (is_dir($cil_adresare . $ocesany_jmeno)) {
     $_SESSION['vysledek'] = "chyba - složka s tímto názvem již existuje";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
 // Vytvoření hlavní složky
 if (!mkdir($cil_adresare . $ocesany_jmeno)) {
     $_SESSION['vysledek'] = "chyba - složku se nepodařilo vytvořit";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
 // Vytvoření podsložky texty + vzorový soubor akordů
 if (!mkdir($cil_adresare . $ocesany_jmeno . "/texty")) {
     $_SESSION['vysledek'] = "chyba - složku texty se nepodařilo vytvořit";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
-copy("../data/akordy.txt", $cil_adresare . $ocesany_jmeno . "/texty/akordy.txt");
-copy("../data/tabelatura.txt", $cil_adresare . $ocesany_jmeno . "/texty/tabelatura.txt");
+copy("../../data/akordy.txt", $cil_adresare . $ocesany_jmeno . "/texty/akordy.txt");
+copy("../../data/tabelatura.txt", $cil_adresare . $ocesany_jmeno . "/texty/tabelatura.txt");
 
 
 // Vytvoření podsložky data + uložení názvu válu
 if (!mkdir($cil_adresare . $ocesany_jmeno . "/data")) {
     $_SESSION['vysledek'] = "chyba - složku data se nepodařilo vytvořit";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 file_put_contents($cil_adresare . $ocesany_jmeno . "/data/nazev_valu.txt", $cely_jmeno);
 
 // Vytvoření tabulky diskuse pro nový vál
-include "login/connect.php";
+include __DIR__ . "/../login/connect.php";
 $kapela_db = $mysqli->real_escape_string($kapela);
 $jmeno_db  = $mysqli->real_escape_string($ocesany_jmeno);
 $adresa_diskuse_valu = "diskuse_" . $kapela_db . "_" . $jmeno_db;
@@ -95,5 +95,5 @@ $mysqli->query("CREATE TABLE IF NOT EXISTS `$adresa_diskuse_valu` (
 $_SESSION['slozka_souboru_k_zobrazeni'] = $ocesany_jmeno;
 $_SESSION['vysledek'] = "Složka \"" . $cely_jmeno . "\" byla úspěšně vytvořena";
 
-require "navrat.php";
+require __DIR__ . "/../inc/navrat.php";
 ?>

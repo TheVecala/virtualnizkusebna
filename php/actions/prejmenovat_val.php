@@ -1,11 +1,11 @@
 <?php session_start();
-require_once __DIR__ . "/../config.php";
+require_once __DIR__ . "/../../config.php";
 
-require "remove_accents.php";
+require __DIR__ . "/../inc/remove_accents.php";
 
 if (!ma_pravo('rename_val')) {
     $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
+    require __DIR__ . "/../inc/navrat.php"; exit;
 }
 
 
@@ -22,37 +22,37 @@ $nove_jmeno = trim($nove_jmeno);
 // Validace
 if (empty($puvodni_jmeno) || empty($nove_jmeno)) {
     $_SESSION['vysledek'] = "chyba - chybí název válu";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
 if (strpos($puvodni_jmeno, "..") !== false || strpos($nove_jmeno, "..") !== false) {
     $_SESSION['vysledek'] = "chyba - neplatný název";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
 if ($puvodni_jmeno === $nove_jmeno) {
     $_SESSION['vysledek'] = "chyba - nové jméno je stejné jako původní";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
 // Cesta ze SESSION, ne z POST
 $cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/";
 
-$odkud = "../" . $cesta_slozek . $puvodni_jmeno;
-$kam   = "../" . $cesta_slozek . $nove_jmeno;
+$odkud = "../../" . $cesta_slozek . $puvodni_jmeno;
+$kam   = "../../" . $cesta_slozek . $nove_jmeno;
 
 if (!is_dir($odkud)) {
     $_SESSION['vysledek'] = "chyba - původní vál neexistuje: " . $puvodni_jmeno;
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
 if (is_dir($kam)) {
     $_SESSION['vysledek'] = "chyba - vál s tímto názvem už existuje: " . $nove_jmeno;
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -63,7 +63,7 @@ if (rename($odkud, $kam)) {
     }
 
     // Aktualizovat pořadí v poradi.json (starý název → nový název)
-    $soubor_poradi = "../" . $cesta_slozek . "poradi.json";
+    $soubor_poradi = "../../" . $cesta_slozek . "poradi.json";
     if (file_exists($soubor_poradi)) {
         $poradi = json_decode(file_get_contents($soubor_poradi), true);
         if (is_array($poradi)) {
@@ -86,5 +86,5 @@ if (rename($odkud, $kam)) {
     $_SESSION['vysledek'] = "chyba - vál se nepodařilo přejmenovat";
 }
 
-require "navrat.php";
+require __DIR__ . "/../inc/navrat.php";
 ?>

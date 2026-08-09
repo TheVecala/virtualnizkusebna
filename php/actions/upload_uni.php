@@ -1,10 +1,10 @@
 <?php session_start(); ?>
 <?php
-require_once __DIR__ . "/../config.php";
+require_once __DIR__ . "/../../config.php";
 
 if (!ma_pravo('upload')) {
     $_SESSION['vysledek'] = "chyba - nemáte oprávnění";
-    require "navrat.php"; exit;
+    require __DIR__ . "/../inc/navrat.php"; exit;
 }
 
 
@@ -25,7 +25,7 @@ if (!isset($_FILES["fileToUpload"]) || $_FILES["fileToUpload"]["error"] !== UPLO
     ];
     $kod = $_FILES["fileToUpload"]["error"] ?? UPLOAD_ERR_NO_FILE;
     $_SESSION['vysledek'] = $chyby[$kod] ?? "Chyba při nahrávání souboru.";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -36,15 +36,15 @@ $slozka       = $_SESSION['slozka_souboru_k_zobrazeni'];
 // Ochrana proti path traversal v názvu složky
 if (empty($slozka) || strpos($slozka, "..") !== false) {
     $_SESSION['vysledek'] = "chyba - neplatná cílová složka";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
-$cil_slozky = "../" . $cesta_slozek . $slozka . "/";
+$cil_slozky = "../../" . $cesta_slozek . $slozka . "/";
 
 if (!is_dir($cil_slozky)) {
     $_SESSION['vysledek'] = "chyba - cílová složka neexistuje";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -64,7 +64,7 @@ if (empty($jmeno_bez_ext)) {
 // Ověření přípony
 if (!in_array($pripona, $povolene_pripony)) {
     $_SESSION['vysledek'] = "chyba - nepovolen typ souboru ." . $pripona . ". Povolené: " . implode(', ', $povolene_pripony);
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -74,7 +74,7 @@ $target_file    = $cil_slozky . $bezpecne_jmeno;
 // Kontrola duplicity
 if (file_exists($target_file)) {
     $_SESSION['vysledek'] = "Soubor stejného jména už ve složce je.";
-    require "navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -84,7 +84,7 @@ if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
 
     // Odeslání mailů (přeskočit pokud mysql nefunguje)
     if ($_POST["odeslat"] == "true" && isset($_SESSION['kapela'])) {
-        @include "login/connect.php";
+        @include __DIR__ . "/../login/connect.php";
         if (function_exists('mysqli_query') && isset($mysqli)) {
             $seznam_mailu = "maily_" . mysqli_real_escape_string($mysqli, $_SESSION['kapela']);
             $maily = mysqli_query($mysqli, "SELECT mail FROM $seznam_mailu");
@@ -101,5 +101,5 @@ if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
     $_SESSION['vysledek'] = "chyba - soubor se nepodařilo nahrát";
 }
 
-require "navrat.php";
+require __DIR__ . "/../inc/navrat.php";
 ?>
