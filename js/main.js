@@ -392,6 +392,26 @@ $(document).on('submit', '#form_komentar', function(e) {
 });
 
 // ── Nahrávky ──
+// ── Smazat soubor (AJAX, bez reloadu stránky — panel Nahrávky zůstává otevřený) ──
+$(document).on('submit', '#form_smazat_soubor', function(e) {
+  e.preventDefault();
+  pbStart();
+  var $form = $(this);
+
+  $.post('/php/actions/smazat_soubor.php', $form.serialize(), function(data) {
+    pbDone();
+    if (data.ok) {
+      nacistPanel('nahravky');
+      modalSuccess('modal_delete', data.vysledek || 'Smazáno');
+    } else {
+      alert(data.vysledek || 'Chyba při mazání souboru');
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    alert('Chyba spojení se serverem');
+  });
+});
+
 function pauseOthers(aktualni) {
   document.querySelectorAll('audio').forEach(function(a) {
     if (a !== aktualni) { a.pause(); }
@@ -635,6 +655,28 @@ $(document).on('click', '#presunout_confirm_zrusit', function() {
 $(document).on('hidden.bs.modal', '#modal_presunout', function() {
   $('#presunout_confirm_panel').hide();
   $('#modal_presunout_kam').val('');
+});
+
+// ── Přesunout soubor (AJAX, bez reloadu stránky — panel Nahrávky zůstává otevřený) ──
+$(document).on('submit', '#form_presunout', function(e) {
+  e.preventDefault();
+  pbStart();
+  var $form = $(this);
+
+  $.post('/php/actions/presunout_soubor.php', $form.serialize(), function(data) {
+    pbDone();
+    if (data.ok) {
+      nacistPanel('nahravky');
+      $('#presunout_confirm_panel').hide();
+      $('#modal_presunout_kam').val('');
+      modalSuccess('modal_presunout', data.vysledek || 'Přesunuto');
+    } else {
+      alert(data.vysledek || 'Chyba při přesunu souboru');
+    }
+  }, 'json').fail(function() {
+    pbDone();
+    alert('Chyba spojení se serverem');
+  });
 });
 
 // ── Upload souboru s progress barem ──

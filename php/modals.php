@@ -217,7 +217,7 @@
         <h5 class="modal-title">SMAZAT SOUBOR</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form action="/php/actions/smazat_soubor.php" method="post" enctype="multipart/form-data">
+      <form id="form_smazat_soubor" action="/php/actions/smazat_soubor.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="modal-ctx">
             <div class="ctx-action">⚠ Nevratná akce</div>
