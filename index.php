@@ -540,7 +540,11 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 var VZ = {
   aktualniVal:     <?php echo json_encode($slozka_souboru); ?>,
   aktualniNazev:   <?php echo json_encode($nazev_valu); ?>,
-  aktivniMobPanel: 'text'
+  aktivniMobPanel: 'text',
+  pravo: {
+    rename_val: <?php echo json_encode(ma_pravo('rename_val')); ?>,
+    delete_val: <?php echo json_encode(ma_pravo('delete_val')); ?>
+  }
 };
 </script>
 

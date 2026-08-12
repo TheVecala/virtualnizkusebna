@@ -386,7 +386,7 @@
         <h5 id="modal_rename_val_title" class="modal-title">PŘEJMENOVAT SKLADBU</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form action="/php/actions/prejmenovat_val.php" method="post">
+      <form id="form_rename_val" action="/php/actions/prejmenovat_val.php" method="post">
         <div class="modal-body">
           <div class="modal-ctx">
             <div class="ctx-action">Přejmenuji</div>
@@ -422,7 +422,7 @@
         <h5 class="modal-title">SMAZAT SKLADBU</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form action="/php/actions/smazat_val.php" method="post">
+      <form id="form_delete_val" action="/php/actions/smazat_val.php" method="post">
         <div class="modal-body">
           <div class="modal-ctx">
             <div class="ctx-action">⚠ Nevratná akce</div>
