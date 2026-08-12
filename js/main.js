@@ -144,22 +144,60 @@ function renderSeznamValu(data) {
   }
 }
 
-// Načte aktuální seznam válů ze serveru, přenačte sidebar+drawer a synchronizuje VZ stav
+function nastavitTopbarNazev(nazev) {
+  var topbarVal    = document.getElementById('topbar-val');
+  var diskuseLabel = document.getElementById('diskuse-val-label');
+  if (topbarVal)    topbarVal.textContent    = nazev;
+  if (diskuseLabel) diskuseLabel.textContent = nazev;
+}
+
+// Načte aktuální seznam válů ze serveru, přenačte sidebar+drawer a synchronizuje VZ stav.
+// Sama pozná, jestli se "aktivní" vál oproti předchozímu stavu změnil (přejmenování aktivního
+// válu, nebo zmizení aktivního válu po smazání) a podle toho přenačte i panely — volající to
+// tedy nemusí řešit ručně.
 function obnovitSeznamValu(callback) {
+  var predchoziVal = VZ.aktualniVal;
+
   $.get('/php/ajax/ajax_slozky.php', function(data) {
     renderSeznamValu(data);
 
     var aktivni = data.find(function(s) { return s.aktivni; });
+
     if (aktivni) {
+      // Server zná aktivní vál a ten v datech skutečně existuje
+      var zmenilSe = (aktivni.slozka !== predchoziVal);
       VZ.aktualniVal   = aktivni.slozka;
       VZ.aktualniNazev = aktivni.nazev;
-      var topbarVal = document.getElementById('topbar-val');
-      var diskuseLabel = document.getElementById('diskuse-val-label');
-      if (topbarVal)    topbarVal.textContent    = aktivni.nazev;
-      if (diskuseLabel) diskuseLabel.textContent = aktivni.nazev;
-    }
+      nastavitTopbarNazev(aktivni.nazev);
+      if (zmenilSe) {
+        nacistVsechnyPanely();
+        looperZavrit();
+      }
+      if (typeof callback === 'function') callback();
 
-    if (typeof callback === 'function') callback();
+    } else if (data.length > 0) {
+      // Vál, na který ukazuje SESSION, už neexistuje (typicky: právě jsme smazali aktivní vál)
+      // → přepnout na první dostupný, stejně jako běžný klik na položku v seznamu
+      var prvni = data[0];
+      var sidebarEl = null;
+      document.querySelectorAll('#sidebar-playlist .val-item').forEach(function(v) {
+        if (v.dataset.val === prvni.slozka) sidebarEl = v;
+      });
+      document.querySelectorAll('#val-drawer .dval').forEach(function(v) {
+        v.classList.toggle('active', v.dataset.id === prvni.slozka);
+      });
+      switchVal(prvni.slozka, prvni.nazev, sidebarEl);
+      if (typeof callback === 'function') callback();
+
+    } else {
+      // Nezbyl žádný vál
+      VZ.aktualniVal   = '';
+      VZ.aktualniNazev = '';
+      nastavitTopbarNazev('—');
+      nacistVsechnyPanely();
+      looperZavrit();
+      if (typeof callback === 'function') callback();
+    }
   }, 'json').fail(function() {
     if (typeof callback === 'function') callback();
   });
@@ -773,8 +811,6 @@ $(document).on('submit', '#form_nova_slozka', function(e) {
     if (data.ok) {
       obnovitSeznamValu(function() {
         pbDone();
-        nacistVsechnyPanely();
-        looperZavrit();
         $form.find('input[name="jmeno_adresare"]').val('');
         modalSuccess('modal_nova_slozka', data.vysledek || 'Vytvořeno');
       });
@@ -820,8 +856,6 @@ $(document).on('submit', '#form_delete_val', function(e) {
     if (data.ok) {
       obnovitSeznamValu(function() {
         pbDone();
-        nacistVsechnyPanely();
-        looperZavrit();
         modalSuccess('modal_delete_val', data.vysledek || 'Smazáno');
       });
     } else {
