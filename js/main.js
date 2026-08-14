@@ -25,6 +25,10 @@ function pbStart() {
   clearTimeout(pbTimer);
   var pb = document.getElementById('progress-bar');
   if (!pb) return;
+  // Pokud je otevřený modal, má vlastní zpětnou vazbu (modalSuccess/alert) a horní
+  // progress bar by přes něj jen vizuálně přejížděl (vyšší z-index) — v tom případě
+  // ho vynecháme.
+  if (document.querySelector('.modal.show')) return;
   pb.className = 'loading';
 }
 function pbDone() {

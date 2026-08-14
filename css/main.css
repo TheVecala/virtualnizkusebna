@@ -444,7 +444,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 /* ── Progress bar ── */
 #progress-bar {
   position: fixed; top: var(--top-h); left: 0; right: 0;
-  height: 3px; z-index: 2000; pointer-events: none;
+  height: 3px; z-index: 1030; pointer-events: none;
   opacity: 0; transition: opacity .2s;
 }
 #progress-bar.loading {
