@@ -518,6 +518,80 @@ $(document).on('submit', '#form_komentar', function(e) {
 });
 
 // ── Nahrávky ──
+
+// ── Popisek nahrávky (inline editace, stejný vzor jako editace komentářů) ──
+$(document).on('click', '.popisek-edit-btn', function(e) {
+  e.stopPropagation();
+  var $wrap = $(this).closest('.nahravka-popisek');
+
+  // Zavřít případnou jinou rozeditovanou popisku
+  $('.popisek-edit-wrap').remove();
+  $('.nahravka-popisek').show();
+
+  var puvodniText = $wrap.find('.popisek-text').text().trim();
+  if (puvodniText === 'bez popisku') puvodniText = '';
+
+  $wrap.hide();
+
+  var $input = $('<input type="text" class="popisek-edit-input" maxlength="255" placeholder="popisek nahrávky...">').val(puvodniText);
+  var $editRow = $('<div class="popisek-edit-wrap"></div>').append($input).append(
+    $('<button class="popisek-save-btn">✓</button>'),
+    $('<button class="popisek-cancel-btn">✗</button>')
+  );
+
+  $wrap.after($editRow);
+  $input.focus();
+});
+
+$(document).on('click', '.popisek-cancel-btn', function(e) {
+  e.stopPropagation();
+  var $editRow = $(this).closest('.popisek-edit-wrap');
+  $editRow.prev('.nahravka-popisek').show();
+  $editRow.remove();
+});
+
+$(document).on('click', '.popisek-save-btn', function(e) {
+  e.stopPropagation();
+  var $btn     = $(this);
+  var $editRow = $btn.closest('.popisek-edit-wrap');
+  var $wrap    = $editRow.prev('.nahravka-popisek');
+  var cesta    = $wrap.data('cesta');
+  var text     = $editRow.find('.popisek-edit-input').val().trim();
+
+  $btn.prop('disabled', true);
+  pbStart();
+
+  $.post('/php/ajax/ajax_nahravka_poznamky.php', {
+    akce: 'popisek_set',
+    file_path: cesta,
+    popisek: text
+  }, function(resp) {
+    pbDone();
+    if (resp === 'OK') {
+      var $text = $wrap.find('.popisek-text');
+      if (text === '') {
+        $text.text('bez popisku').addClass('popisek-prazdny');
+      } else {
+        $text.text(text).removeClass('popisek-prazdny');
+      }
+      $wrap.show();
+      $editRow.remove();
+    } else {
+      alert(resp || 'Chyba při ukládání popisku');
+      $btn.prop('disabled', false);
+    }
+  }).fail(function() {
+    pbDone();
+    alert('Chyba spojení se serverem');
+    $btn.prop('disabled', false);
+  });
+});
+
+$(document).on('keydown', '.popisek-edit-input', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); $(this).closest('.popisek-edit-wrap').find('.popisek-save-btn').click(); }
+  if (e.key === 'Escape') { $(this).closest('.popisek-edit-wrap').find('.popisek-cancel-btn').click(); }
+});
+
 // ── Smazat soubor (AJAX, bez reloadu stránky — panel Nahrávky zůstává otevřený) ──
 $(document).on('submit', '#form_smazat_soubor', function(e) {
   e.preventDefault();
