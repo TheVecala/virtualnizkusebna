@@ -1482,6 +1482,13 @@ $(document).on("click", ".nahravka-hlavni", function(e)
         return;
     }
 
+    // Klik na tužku popisku nebo do rozeditovaného pole/tlačítek uložit/zrušit
+    // nesmí otevřít/zavřít roletku s přehrávačem.
+    if ($(e.target).closest(".popisek-edit-btn, .popisek-edit-wrap").length)
+    {
+        return;
+    }
+
     $(this).find(".btn-nastaveni").trigger("click");
 });
 
@@ -1511,6 +1518,8 @@ function loadLooperNotes(filePath)
         function(html)
         {
             $('#looper-notes')
+                .addClass('poznamky-panel')
+                .attr('data-cesta', filePath)
                 .html(html)
                 .show();
         }
@@ -1785,7 +1794,7 @@ function looperZavrit() {
 	
     }
     looperCurrentFile = null;
-    $('#looper-notes').hide().empty();
+    $('#looper-notes').hide().empty().removeAttr('data-cesta');
   	//$('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▼');
     $('#looper-time').text('00:00 / 00:00').hide();
