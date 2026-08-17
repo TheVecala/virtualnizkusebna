@@ -56,6 +56,18 @@ if (rename($start_souboru, $cil_souboru)) {
     if (file_exists($peaks_start)) {
         rename($peaks_start, $peaks_cil);
     }
+
+    // Přesunout i DB záznamy vázané na file_path — časové poznámky i popisek
+    // nahrávky leží ve stejné tabulce recording_notes (viz ajax_nahravka_poznamky.php),
+    // klíčované přesně tímhle file_path, takže je stačí jedním UPDATE přepsat na nový.
+    // Tabulka se vytváří líně až při první poznámce, proto @ (nemusí ještě existovat).
+    $novy_file_path = $cesta_slozek . $presunout_kam . "/" . $presunout_co;
+    include __DIR__ . "/../login/connect.php";
+    $stmt = @$mysqli->prepare("UPDATE recording_notes SET file_path = ? WHERE file_path = ?");
+    if ($stmt) {
+        $stmt->bind_param("ss", $novy_file_path, $presunout_odkud);
+        $stmt->execute();
+    }
 } else {
     $_SESSION['vysledek'] = "chyba - soubor se nepodařilo přesunout";
 }
