@@ -81,6 +81,31 @@ if (rename($odkud, $kam)) {
         file_put_contents($soubor_nazvu, $nove_jmeno_raw);
     }
 
+    // ── Domigrovat DB záznamy vázané na starý slug ──
+    include __DIR__ . "/../login/connect.php";
+    $kapela_db = $mysqli->real_escape_string($_SESSION['kapela']);
+
+    // 1) Diskusní tabulka válu (jméno tabulky nese starý slug) — přejmenovat.
+    //    @ potlačuje warning, pokud tabulka ještě nikdy nevznikla (nikdo nekomentoval).
+    $stara_tab = "diskuse_" . $kapela_db . "_" . $mysqli->real_escape_string($puvodni_jmeno);
+    $nova_tab  = "diskuse_" . $kapela_db . "_" . $mysqli->real_escape_string($nove_jmeno);
+    @$mysqli->query("RENAME TABLE `$stara_tab` TO `$nova_tab`");
+
+    // 2) recording_notes (časové poznámky i popisky nahrávek) — file_path všech
+    //    souborů uvnitř válu obsahuje starý slug jako prefix, přepsat na nový.
+    $stary_prefix = $cesta_slozek . $puvodni_jmeno . "/";
+    $novy_prefix  = $cesta_slozek . $nove_jmeno . "/";
+    $stmt = @$mysqli->prepare("
+        UPDATE recording_notes
+        SET file_path = CONCAT(?, SUBSTRING(file_path, ?))
+        WHERE file_path LIKE CONCAT(?, '%')
+    ");
+    if ($stmt) {
+        $pozice = strlen($stary_prefix) + 1;
+        $stmt->bind_param("sis", $novy_prefix, $pozice, $stary_prefix);
+        $stmt->execute();
+    }
+
     $_SESSION['vysledek'] = "vál přejmenován na \"" . $nove_jmeno . "\"";
 } else {
     $_SESSION['vysledek'] = "chyba - vál se nepodařilo přejmenovat";

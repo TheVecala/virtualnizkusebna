@@ -67,6 +67,16 @@ if (rmdir($target_dir)) {
     if ($_SESSION['slozka_souboru_k_zobrazeni'] == $val_ke_smazani) {
         $_SESSION['slozka_souboru_k_zobrazeni'] = "slozka_smazana";
     }
+
+    // Smazat i diskusní tabulku válu, ať po sobě nezůstává mrtvý balast v DB.
+    // Poznámka: recording_notes se řešit nemusí — vál šlo smazat jen prázdný
+    // (viz kontrola $pocet > 4 výše), takže žádné nahrávky s poznámkami/popiskem
+    // v něm být nemohly.
+    include __DIR__ . "/../login/connect.php";
+    $kapela_db = $mysqli->real_escape_string($_SESSION['kapela']);
+    $tabulka   = "diskuse_" . $kapela_db . "_" . $mysqli->real_escape_string($val_ke_smazani);
+    @$mysqli->query("DROP TABLE IF EXISTS `$tabulka`");
+
     $_SESSION['vysledek'] = "vál \"" . $val_ke_smazani . "\" byl smazán";
 } else {
     $_SESSION['vysledek'] = "chyba - vál se nepodařilo smazat";
