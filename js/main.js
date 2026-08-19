@@ -1219,36 +1219,41 @@ $(document).on('click', '.pridat-poznamku-btn', function() {
 	{
 		typ = NOTE_NORMAL;
 	}
-	
-    let panel = $(this).closest('.poznamky-panel');
 
-    let audio = $(this)
-        .closest('.nahravka-vysuvna')
-        .find('audio')[0];
+    // Tlačítko žije buď v běžném řádku nahrávky (.poznamky-panel s data-cesta),
+    // nebo v looperu (#looper-notes, který žádný takový obal nemá — soubor tam
+    // víme z looperCurrentFile). Tyhle dva kontexty se musí řešit odděleně,
+    // jinak dochází ke kolizi (viz komentář u loadLooperNotes/loadRecordingNotes).
+    let jeLooper = $(this).closest('#looper-notes').length > 0;
 
-let cas = 0;
+    let cilovyFile;
+    let cas = 0;
 
-if (
-    typeof wavesurfer !== 'undefined' &&
-    wavesurfer &&
-    typeof looperCurrentFile !== 'undefined' &&
-    looperCurrentFile === panel.data('cesta')
-)
-{
-    cas = Math.round(
-        wavesurfer.getCurrentTime() * 1000
-    );
-}
-else if (audio)
-{
-    cas = Math.round(
-        audio.currentTime * 1000
-    );
-}
+    if (jeLooper)
+    {
+        cilovyFile = looperCurrentFile;
+
+        if (typeof wavesurfer !== 'undefined' && wavesurfer)
+        {
+            cas = Math.round(wavesurfer.getCurrentTime() * 1000);
+        }
+    }
+    else
+    {
+        let panel = $(this).closest('.poznamky-panel');
+        let audio = $(this).closest('.nahravka-vysuvna').find('audio')[0];
+
+        cilovyFile = panel.data('cesta');
+
+        if (audio)
+        {
+            cas = Math.round(audio.currentTime * 1000);
+        }
+    }
 
 noteAction = "add";
 
-noteFile = panel.data("cesta");
+noteFile = cilovyFile;
 noteTime = cas;
 noteType = typ;
 
@@ -1461,6 +1466,16 @@ if (noteAction == "add")
         {
             $("#modal_poznamka").modal("hide");
 
+            // Looper otevřený přesně na tomhle souboru → přenačíst jeho vlastní
+            // seznam přes loadLooperNotes (jediná funkce, co ví, jak #looper-notes
+            // správně naplnit — nemá vnořený .poznamky-seznam jako běžný řádek).
+            if (typeof looperCurrentFile !== 'undefined' && looperCurrentFile === noteFile)
+            {
+                loadLooperNotes(noteFile);
+            }
+
+            // Řádek v běžném seznamu nahrávek pro tenhle soubor, pokud je zrovna
+            // rozbalený (může nastat současně s looperem otevřeným na stejném souboru).
             let panel = $(".poznamky-panel[data-cesta='" + noteFile + "']");
 
             if (panel.length)
@@ -1518,8 +1533,6 @@ function loadLooperNotes(filePath)
         function(html)
         {
             $('#looper-notes')
-                .addClass('poznamky-panel')
-                .attr('data-cesta', filePath)
                 .html(html)
                 .show();
         }
@@ -1794,7 +1807,7 @@ function looperZavrit() {
 	
     }
     looperCurrentFile = null;
-    $('#looper-notes').hide().empty().removeAttr('data-cesta');
+    $('#looper-notes').hide().empty();
   	//$('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▼');
     $('#looper-time').text('00:00 / 00:00').hide();
