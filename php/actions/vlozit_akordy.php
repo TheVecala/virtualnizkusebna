@@ -1,6 +1,6 @@
 <?php session_start();
 error_reporting(0);
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../config.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -10,7 +10,7 @@ if (!ma_pravo('edit_text')) {
 }
 
 $akordy        = $_POST["editor"] ?? "";
-$nazev_souboru = basename($_POST["soubor_akordu"] ?? "tabelatura.txt");
+$nazev_souboru = basename($_POST["soubor_akordu"] ?? "akordy.txt");
 
 // Ochrana proti prázdnému obsahu
 if (trim($akordy) === "") {
@@ -35,7 +35,7 @@ if (empty($kapela) || empty($befelemepesseveze) || empty($slozka_souboru)) {
     exit;
 }
 
-$slozka_textu = "../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/texty/";
+$slozka_textu = "../../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/texty/";
 $soubor       = $slozka_textu . $nazev_souboru;
 
 if (!file_exists($soubor)) {

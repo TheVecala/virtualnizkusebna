@@ -1,6 +1,7 @@
 <?php
 session_start();
 error_reporting(0);
+require_once __DIR__ . '/../../config.php';
 
 if (empty($_SESSION['role'])) {
     exit;
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS recording_notes (
     id INT NOT NULL AUTO_INCREMENT,
     file_path VARCHAR(1000) NOT NULL,
     cas BIGINT NOT NULL,
+    typ TINYINT NOT NULL DEFAULT 1,
     jmeno VARCHAR(50) NOT NULL,
     poznamka TEXT NOT NULL,
     PRIMARY KEY (id),
@@ -34,7 +36,7 @@ if ($akce == "list")
     $res = $mysqli->query("
         SELECT *
         FROM recording_notes
-        WHERE file_path='$file_path'
+        WHERE file_path='$file_path' AND cas >= 0
         ORDER BY cas ASC
     ");
 echo '
@@ -126,7 +128,7 @@ if ($akce == "count")
     $res = $mysqli->query("
         SELECT COUNT(*) pocet
         FROM recording_notes
-        WHERE file_path='$file_path'
+        WHERE file_path='$file_path' AND cas >= 0
     ");
 
     $r = $res->fetch_assoc();
@@ -204,6 +206,75 @@ if ($akce == "delete")
 
     $stmt->bind_param("i", $id);
     $stmt->execute();
+
+    echo "OK";
+    exit;
+}
+
+// ── Popisek nahrávky ──
+// Uložený jako řádek v recording_notes se sentinel hodnotou cas = -1 (skutečné
+// časové poznámky mají cas >= 0, takže -1 nikdy nekoliduje). Sloupec `typ` je
+// u tohohle řádku bezvýznamný (NOTE_SONG/NOTE_NORMAL řeší jen časové poznámky),
+// ale musí se vyplnit kvůli NOT NULL — bere se NOTE_NORMAL jako neutrální výchozí.
+// Díky společné tabulce se popisek automaticky "veze" se stejnou logikou jako
+// časové poznámky (stejný file_path klíč) — jen je z list/count/export vyloučený.
+
+if ($akce == "popisek_get")
+{
+    $file_path = $mysqli->real_escape_string($_POST["file_path"]);
+
+    $res = $mysqli->query("
+        SELECT poznamka
+        FROM recording_notes
+        WHERE file_path='$file_path' AND cas=-1
+        LIMIT 1
+    ");
+
+    $r = $res ? $res->fetch_assoc() : null;
+
+    echo $r ? htmlspecialchars($r["poznamka"]) : "";
+
+    exit;
+}
+
+if ($akce == "popisek_set")
+{
+    if (!ma_pravo('edit_recording_label')) {
+        echo "CHYBA: nemáte oprávnění upravovat popisek";
+        exit;
+    }
+
+    $file_path = $mysqli->real_escape_string($_POST["file_path"]);
+    $popisek   = trim($_POST["popisek"] ?? "");
+    $popisek_db = $mysqli->real_escape_string($popisek);
+
+    $existujici = $mysqli->query("
+        SELECT id
+        FROM recording_notes
+        WHERE file_path='$file_path' AND cas=-1
+        LIMIT 1
+    ");
+
+    if ($popisek === "") {
+        // Prázdný popisek = smazat řádek (žádný popisek se pak nezobrazí)
+        if ($existujici && $existujici->num_rows > 0) {
+            $mysqli->query("DELETE FROM recording_notes WHERE file_path='$file_path' AND cas=-1");
+        }
+        echo "OK";
+        exit;
+    }
+
+    if ($existujici && $existujici->num_rows > 0) {
+        $radek = $existujici->fetch_assoc();
+        $stmt = $mysqli->prepare("UPDATE recording_notes SET poznamka = ? WHERE id = ?");
+        $stmt->bind_param("si", $popisek, $radek["id"]);
+        $stmt->execute();
+    } else {
+        $mysqli->query("
+            INSERT INTO recording_notes (file_path, cas, typ, jmeno, poznamka)
+            VALUES ('$file_path', -1, " . NOTE_NORMAL . ", '', '$popisek_db')
+        ");
+    }
 
     echo "OK";
     exit;

@@ -1,0 +1,41 @@
+**Plán implementace: Kešování zvukových souborů v aplikaci Zkušebna**
+
+**Architektura a technický zásobník**
+
+* **Frontend:** Wavesurfer.js v7 (s `backend: 'MediaElement'` pro úsporu RAM).
+* **Úložiště:** IndexedDB spravovaná přes lightweight knihovnu `idb-keyval` (UMD verze načítaná přes klasický `<script defer>`).
+ 
+
+---
+
+**Kroky k implementaci v novém vlákně**
+
+1. **Příprava knihoven a skriptů:**
+* Načíst `idb-keyval` v UMD verzi přes `<script defer>` (vyhnout se `import/export` ES modulům).
+* Ověřit, že inicializace Wavesurferu spoléhá na `backend: 'MediaElement'`.
+
+
+2. **Detekce stavu při načtení stránky (Init):**
+* Při načtení stopy nejprve vykreslit vlnovku z připraveného JSON souboru (`peaks`).
+* Pomocí `idbKeyval.get(FILE_KEY)` zkontrolovat, zda je příslušná zvukový soubor uložena v IndexedDB.
+* **Pokud ANO:** Vytvořit dočasný lokální odkaz přes `URL.createObjectURL(blob)`, předat ho Wavesurferu a zaškrtnout UI přepínač.
+* **Pokud NE:** Nastavit Wavesurfer na přímou síťovou URL souboru a přepínač nechat odškrtnutý.
+
+
+3. **Obsluha UI přepínače (Checkbox / Tlačítko uložení):**
+implementovat přepínač do současného rozhraní
+* **Při zaškrtnutí (Uložit):**
+1. Stáhnout zvukový soubor přes `fetch(AUDIO_URL)` jako `Blob`.
+2. Uložit `Blob` do IndexedDB pomocí `idbKeyval.set(FILE_KEY, blob)`.
+3. Přepnout zdroj Wavesurferu na lokální `Blob` a aktualizovat stavový text v UI.
+
+
+* **Při odzaškrtnutí (Smazat):**
+1. Odstranit záznam z databáze pomocí `idbKeyval.del(FILE_KEY)`.
+2. Vrátit zdroj Wavesurferu zpět na běžnou síťovou URL.
+
+
+
+
+4. **Správa paměti a čistění (Doplňkově):**
+* Připravit možnost pro globální vyčištění všech uložených soborů naráz pomocí `idbKeyval.clear()`.

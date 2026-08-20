@@ -17,7 +17,7 @@ if (empty($cilova_slozka) || strpos($cilova_slozka, "..") !== false || strpos($c
 }
 
 // Ověření že složka existuje
-$cesta = "../user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/" . $cilova_slozka;
+$cesta = "../../user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/" . $cilova_slozka;
 if (!is_dir($cesta)) {
     echo json_encode(["ok" => false, "chyba" => "Složka neexistuje"]);
     exit;

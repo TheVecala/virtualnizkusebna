@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/../config.php";
+require_once __DIR__ . "/../../config.php";
 
 // AJAX požadavek (odeslaný přes jQuery $.post) → vrátit JSON, nepřesměrovávat
 $is_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
