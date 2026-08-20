@@ -238,6 +238,25 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 #looper-notes{
 
     margin-top:10px;
+    max-height: 260px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+
+    /* Tenký, viditelný posuvník ladící s tmavým motivem (Firefox) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--barva) var(--card);
+}
+/* Tenký, viditelný posuvník (WebKit/Chromium — desktop i mobilní Safari/Chrome) */
+#looper-notes::-webkit-scrollbar {
+    width: 8px;
+}
+#looper-notes::-webkit-scrollbar-track {
+    background: var(--card);
+    border-radius: 4px;
+}
+#looper-notes::-webkit-scrollbar-thumb {
+    background: var(--barva);
+    border-radius: 4px;
 }
 
 /* ── CONTENT AREA ── */
@@ -379,6 +398,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #napady-fields { display: none; }
   #napady-fields.open { display: block; }
   #napady-toggle-btn { display: block !important; }
+
+  /* Na malém mobilu je méně místa nad seznamem poznámek (vlnovka + ovládání
+     zaberou víc podílu obrazovky) — nižší strop, ať zbyde místo i na ně. */
+  #looper-notes { max-height: 180px; }
 }
 
 /* 2. STŘEDNÍ VARIANT (768px až 1199px): Přesně dva panely vedle sebe! */
