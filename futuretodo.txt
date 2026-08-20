@@ -1,0 +1,5 @@
+ maximalizace looperu na celou obrazovku s možností odeslání odkazu na to
+ 
+ uprava modalu vkladani timestampu: 
+  - tlačítka pro upravu casu - aktualizovat, +1, -1 , uložit a vrátit na čas,
+  
