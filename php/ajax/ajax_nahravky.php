@@ -85,7 +85,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: bold;
   color: #e0e0e0;
   white-space: nowrap;
@@ -157,8 +157,8 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 11px;
-  color: #888;
+  font-size: 14px;
+   
   margin-top: 2px;
 }
 
@@ -310,7 +310,10 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
       
       <div class="nahravka-hlavni">
         <div class="nahravka-popis-wrap">
-          <div class="nahravka-popisek" data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
+        <div class="nahravka-nazev" title="<?php echo htmlspecialchars($soub); ?>">
+            <?php echo $je_audio ? '<img src="meat/ikona_kazeta.png" alt="" style="width: 16px; height: 16px; object-fit: contain; flex-shrink: 0;">' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
+        </div>
+		<div class="nahravka-popisek" data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
             <?php if ($popisek !== ''): ?>
               <span class="popisek-text"><?php echo htmlspecialchars($popisek); ?></span>
             <?php else: ?>
@@ -320,9 +323,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
               <button class="popisek-edit-btn" title="upravit popisek">✏</button>
             <?php endif; ?>
           </div>
-          <div class="nahravka-nazev" title="<?php echo htmlspecialchars($soub); ?>">
-            <?php echo $je_audio ? '<img src="meat/ikona_kazeta.png" alt="" style="width: 16px; height: 16px; object-fit: contain; flex-shrink: 0;">' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
-          </div>
+
         </div>
         <div>
           <button class="btn-nastaveni collapsed" 
