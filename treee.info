@@ -1,0 +1,115 @@
+/
+├── index.php                              [ZMĚNĚNO] css/js přesunuty ven, defer, VZ init + zjednodušený shim
+├── config.php                             beze změny
+├── favicon.ico                            beze změny
+├── 404.html                               beze změny
+│
+├── css/
+│   ├── main.css                           [NOVÝ] extrahováno z index.php (dynamické --barva/--pozadi zůstaly v index.php)
+│   ├── sticky-footer-navbar.css           beze změny
+│   └── cover.css                          beze změny (používá ho loginbox4.php)
+│
+├── js/
+│   ├── main.js                            [ZMĚNĚNO] sloučeno s inline bloky z index.php, formatTime→formatLooperTime, opravené cesty
+│   └── jquery-3.7.1.min.js                beze změny
+│
+├── php/
+│   ├── loginbox4.php                      beze změny (zůstává v php/, ne v podsložce)
+│   ├── modals.php                         [PŘESUNUTO z meat/] opravené <form action> cesty na php/actions/
+│   │
+│   ├── actions/                           [NOVÁ SLOŽKA] — klasický form POST, navrat.php redirect
+│   │   ├── vytvorit_adresar.php           [PŘESUNUTO+OPRAVENO] hloubka cest, require přes __DIR__
+│   │   ├── prejmenovat_val.php            [PŘESUNUTO+OPRAVENO]
+│   │   ├── smazat_val.php                 [PŘESUNUTO+OPRAVENO]
+│   │   ├── smazat_soubor.php              [PŘESUNUTO+OPRAVENO]
+│   │   ├── presunout_soubor.php           [PŘESUNUTO+OPRAVENO]
+│   │   ├── upload_uni.php                 [PŘESUNUTO+OPRAVENO]
+│   │   ├── vlozit_akordy.php              [PŘESUNUTO+OPRAVENO]
+│   │   └── vlozit_tabelaturu.php          [PŘESUNUTO+OPRAVENO]
+│   │
+│   ├── ajax/                              JSON AJAX endpointy
+│   │   ├── zmenit_slozku_ajax.php         [PŘESUNUTO z php/] opravená hloubka cesty k user/
+│   │   ├── vlozit_komentar.php            [PŘESUNUTO z php/] opravené cesty
+│   │   ├── uloz_poradi.php                [PŘESUNUTO z php/] opravené cesty
+│   │   ├── ajax_diskuse.php               beze změny (už zde byl)
+│   │   ├── ajax_history.php               beze změny
+│   │   ├── ajax_nahravka_poznamky.php     beze změny
+│   │   ├── ajax_nahravky.php              beze změny
+│   │   ├── ajax_napady.php                beze změny
+│   │   ├── ajax_slozky.php                beze změny
+│   │   ├── ajax_tabelatura.php            beze změny
+│   │   ├── ajax_tabelatura_raw.php        beze změny
+│   │   ├── ajax_text.php                  beze změny
+│   │   ├── ajax_text_raw.php              beze změny
+│   │   ├── export_timestampy.php          beze změny
+│   │   ├── nacist_peaks.php               beze změny
+│   │   ├── smazat_komentar.php            beze změny
+│   │   ├── ulozit_peaks.php               beze změny
+│   │   └── upravit_komentar.php           beze změny
+│   │
+│   ├── inc/                               [NOVÁ SLOŽKA] sdílené helpery
+│   │   ├── navrat.php                     [PŘESUNUTO z php/] opravená hloubka k config.php
+│   │   └── remove_accents.php             [PŘESUNUTO z php/] obsah beze změny
+│   │
+│   └── login/
+│       ├── connect.php                    beze změny (už zde byl, cesty už seděly)
+│       ├── login.php                      [OPRAVENO] require navrat.php → přes php/inc/
+│       └── logout.php                     [OPRAVENO] require navrat.php → přes php/inc/
+│
+├── meat/                                  JEN obrázky/media (žádné PHP/JS/CSS)
+│   ├── guide_wave.jpg
+│   ├── guide_nahravky.jpg
+│   ├── guide_looper.jpg
+│   ├── ikona_vinyl.png
+│   ├── ikona_skladby.png
+│   ├── ikona_text.png
+│   ├── ikona_nahravky.png
+│   ├── ikona_napady.png
+│   ├── ikona_kombo.png
+│   ├── ikona_kazeta.png
+│   ├── ikona_folder1.png
+│   ├── ikona_folder2.png
+│   ├── ikona_diskuse.png
+│   └── drinking2.png
+│
+├── fonts/
+│   ├── glyphicons-halflings-regular.woff2
+│   ├── glyphicons-halflings-regular.woff
+│   ├── glyphicons-halflings-regular.ttf
+│   ├── glyphicons-halflings-regular.svg
+│   └── glyphicons-halflings-regular.eot
+│
+└── data/
+    ├── tabelatura.txt
+    ├── karton.jpg
+    ├── akordy.txt
+    └── ikony/
+        ├── kytarista.png
+        ├── icons8-voice-50.png
+        ├── icons8-voice-50-2.png
+        ├── icons8-sound-wave-50.png
+        ├── icons8-sound-cloud-50.png
+        ├── icons8-rock-music-50.png
+        ├── icons8-repeat-50_LI.jpg
+        ├── icons8-punk-50.png
+        ├── icons8-punk-50(1).png
+        ├── icons8-note-64.png
+        ├── icons8-music-record-50.png
+        ├── icons8-mute-50.png
+        ├── icons8-music-folder-80.png
+        ├── icons8-music-folder-50.png
+        ├── icons8-music-folder-50-2.png
+        ├── icons8-music-conductor-50.png
+        ├── icons8-mp3-50.png
+        ├── icons8-metronome-50.png
+        ├── icons8-metal-music-32.png
+        ├── icons8-frequency-64.png
+        ├── icons8-fl-studio-50.png
+        ├── icons8-fl-studio-48.png
+        ├── icons8-electronic-music-50.png
+        ├── icons8-electronic-music-50-2.png
+        ├── icons8-electronic-music-50-3.png
+        ├── icons8-deezer-50.png
+        ├── glyphicons-441-folder-closed.png
+        ├── glyphicons-18-music.png
+        └── glyphicons-145-folder-open.png

@@ -24,6 +24,27 @@ if (!empty($slozka_souboru) && is_dir($cesta_slozky)) {
     }
 }
 
+// ── Popisky nahrávek (jeden dotaz pro celý vál, ne N+1) ──
+$popisky = [];
+$mohu_upravit_popisek = in_array($_SESSION['role'] ?? '', ['muzikant', 'admin']);
+if (!empty($soubory)) {
+    include "../login/connect.php";
+    $prefix_cesty = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/";
+    $cesty_escaped = array_map(function($f) use ($mysqli, $prefix_cesty) {
+        return "'" . $mysqli->real_escape_string($prefix_cesty . $f) . "'";
+    }, $soubory);
+    $res_popisky = $mysqli->query("
+        SELECT file_path, poznamka
+        FROM recording_notes
+        WHERE cas = -1 AND file_path IN (" . implode(',', $cesty_escaped) . ")
+    ");
+    if ($res_popisky) {
+        while ($rp = $res_popisky->fetch_assoc()) {
+            $popisky[$rp['file_path']] = $rp['poznamka'];
+        }
+    }
+}
+
 $barva = $_SESSION['barva1'] ?? "a7ac38";
 ?>
 
@@ -43,17 +64,102 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+    cursor: pointer;
+    transition: background-color .15s ease;
+    border-radius: 4px; 
 }
 
-/* Zajištění, že se dlouhý název souboru nikdy nezalomí a elegantně se zkrátí */
-.nahravka-nazev {
+.nahravka-hlavni:hover
+{
+    background: rgba(127,191,255,.10);
+}
+
+/* Obal pro popisek + název souboru (nahrazuje dřívější přímé umístění .nahravka-nazev) */
+.nahravka-popis-wrap {
   flex: 1;
   min-width: 0;
+}
+
+/* Popisek — primární, hned viditelný text (název souboru může být zavádějící) */
+.nahravka-popisek {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #e0e0e0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 14px;
+}
+.popisek-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.popisek-prazdny {
+  color: #888;
+  font-weight: normal;
+  font-style: italic;
+}
+.popisek-edit-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity .15s, color .15s;
+}
+.popisek-edit-btn:hover { opacity: 1; color: var(--barva); }
+
+/* Inline editace popisku */
+.popisek-edit-wrap {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+}
+.popisek-edit-input {
+  flex: 1;
+  min-width: 0;
+  background: #1a1d20;
+  border: 1px solid #4a5060;
+  border-radius: 4px;
   color: #e0e0e0;
+  font-size: 13px;
+  padding: 3px 7px;
+  box-sizing: border-box;
+}
+.popisek-edit-input:focus { outline: none; border-color: var(--barva); }
+.popisek-save-btn, .popisek-cancel-btn {
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.popisek-save-btn {
+  background: #2a3a10; border: 1px solid var(--barva); color: var(--barva);
+}
+.popisek-save-btn:disabled { opacity: 0.5; cursor: default; }
+.popisek-cancel-btn {
+  background: none; border: 1px solid #555; color: #888;
+}
+.popisek-cancel-btn:hover { border-color: #888; color: #aaa; }
+
+/* Název souboru — teď jen podřádek, sekundární informace */
+.nahravka-nazev {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
 }
 
 /* Styling pro velké otočné šipkové tlačítko */
@@ -196,14 +302,27 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
     $cesta_fs = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/" . $soub;
     $ext      = strtolower(pathinfo($soub, PATHINFO_EXTENSION));
     $je_audio = in_array($ext, $povolene_audio);
+    $popisek  = $popisky[$cesta_fs] ?? '';
     
     $id_roletky = "roletka_" . $i;
   ?>
     <div class="nahravka-box">
       
       <div class="nahravka-hlavni">
-        <div class="nahravka-nazev" title="<?php echo htmlspecialchars($soub); ?>">
-          <?php echo $je_audio ? '<img src="meat/ikona_kazeta.png" alt="" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
+        <div class="nahravka-popis-wrap">
+          <div class="nahravka-popisek" data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
+            <?php if ($popisek !== ''): ?>
+              <span class="popisek-text"><?php echo htmlspecialchars($popisek); ?></span>
+            <?php else: ?>
+              <span class="popisek-text popisek-prazdny">bez popisku</span>
+            <?php endif; ?>
+            <?php if ($mohu_upravit_popisek): ?>
+              <button class="popisek-edit-btn" title="upravit popisek">✏</button>
+            <?php endif; ?>
+          </div>
+          <div class="nahravka-nazev" title="<?php echo htmlspecialchars($soub); ?>">
+            <?php echo $je_audio ? '<img src="meat/ikona_kazeta.png" alt="" style="width: 16px; height: 16px; object-fit: contain; flex-shrink: 0;">' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
+          </div>
         </div>
         <div>
           <button class="btn-nastaveni collapsed" 
@@ -290,12 +409,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
 
 			<div class="poznamky-seznam"></div>
 
-			<?php if ($je_audio): ?>
-			<button class="fbtn pridat-poznamku-btn"
-					data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
-				Přidat poznámku k aktuálnímu času
-			</button>
-			<?php endif; ?>
+		 
 
         </div>
         

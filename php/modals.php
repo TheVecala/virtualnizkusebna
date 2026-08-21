@@ -217,7 +217,7 @@
         <h5 class="modal-title">SMAZAT SOUBOR</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form action="/php/smazat_soubor.php" method="post" enctype="multipart/form-data">
+      <form id="form_smazat_soubor" action="/php/actions/smazat_soubor.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="modal-ctx">
             <div class="ctx-action">⚠ Nevratná akce</div>
@@ -292,7 +292,7 @@
         <h5 class="modal-title">NOVÁ SKLADBA</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form id="form_nova_slozka" action="/php/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
+      <form id="form_nova_slozka" action="/php/actions/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="form-group">
             <label for="jmeno_adresare">Název nové skladby:</label>
@@ -386,7 +386,7 @@
         <h5 id="modal_rename_val_title" class="modal-title">PŘEJMENOVAT SKLADBU</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form action="/php/prejmenovat_val.php" method="post">
+      <form id="form_rename_val" action="/php/actions/prejmenovat_val.php" method="post">
         <div class="modal-body">
           <div class="modal-ctx">
             <div class="ctx-action">Přejmenuji</div>
@@ -422,7 +422,7 @@
         <h5 class="modal-title">SMAZAT SKLADBU</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form action="/php/smazat_val.php" method="post">
+      <form id="form_delete_val" action="/php/actions/smazat_val.php" method="post">
         <div class="modal-body">
           <div class="modal-ctx">
             <div class="ctx-action">⚠ Nevratná akce</div>
@@ -461,7 +461,7 @@
         <h5 class="modal-title">PŘESUNOUT SOUBOR</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form id="form_presunout" action="/php/presunout_soubor.php" method="post" enctype="multipart/form-data">
+      <form id="form_presunout" action="/php/actions/presunout_soubor.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="modal-ctx">
             <div class="ctx-action">Přesouvám</div>
@@ -535,7 +535,7 @@
         <h5 class="modal-title" id="modal_zmenit_text_label">UPRAVIT TEXT / AKORDY</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
-      <form action="/php/vlozit_akordy.php" method="post" enctype="multipart/form-data">
+      <form action="/php/actions/vlozit_akordy.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="modal-ctx">
             <div class="ctx-action" id="modal_editor_ctx_action">—</div>
@@ -586,3 +586,62 @@
   </div>
 </div>
 
+<!-- ───────────────────────── editace timestampu ───────────────────────── -->
+
+<div class="modal fade" id="modal_poznamka" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal_poznamka_title">
+                    Poznámka
+                </h5>
+
+                <button type="button"
+                        class="close"
+                        data-dismiss="modal"
+                        aria-label="Zavřít">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="modal-ctx mb-3" id="modal_poznamka_info">
+                    Čas:
+                </div>
+
+                <textarea
+                    id="modal_poznamka_text"
+                    class="form-control"
+                    rows="5"></textarea>
+
+                <div id="modal_poznamka_confirm"
+                     class="mt-3"
+                     style="display:none;">
+                    Opravdu chcete tuto poznámku smazat?
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal">
+                    Zrušit
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        id="modal_poznamka_ok">
+                    Uložit
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
