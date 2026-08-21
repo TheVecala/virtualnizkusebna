@@ -61,7 +61,7 @@ $(function() {
   pbStart();
   var pending = 5; // 🌟 Zvýšeno na 5 panelů
   function panelDone() { if (--pending === 0) pbDone(); }
-  ['text', 'tabelatura', 'nahravky', 'diskuse', 'napady'].forEach(function(p) {
+  ['nahravky', 'text', 'tabelatura', 'diskuse', 'napady'].forEach(function(p) {
     nacistPanel(p, panelDone);
   });
 });
@@ -82,7 +82,7 @@ function nacistVsechnyPanely() {
   pbStart();
   var pending = 5;
   function done() { if (--pending === 0) pbDone(); }
-  ['text', 'tabelatura', 'nahravky', 'diskuse', 'napady'].forEach(function(p) { nacistPanel(p, done); });
+  ['nahravky', 'text', 'tabelatura', 'diskuse', 'napady'].forEach(function(p) { nacistPanel(p, done); });
 }
 
 // ── Znovu vykreslit seznam válů (sidebar + drawer) z dat ajax_slozky.php ──
@@ -285,7 +285,7 @@ document.addEventListener('click', function(e) {
 });
 
 // ── Tablet: levý a pravý panel, každý se svými 4 tlačítky ──
-var TABLET_DEFAULT = { left: 'text', right: 'tabelatura' };
+var TABLET_DEFAULT = { left: 'nahravky', right: 'text' };
 
 function tabletPick(strana, panelId, btn) {
   var druha = strana === 'left' ? 'right' : 'left';
@@ -775,7 +775,7 @@ window.addEventListener('resize', function() {
     document.querySelectorAll('.panel').forEach(function(p) { p.style.display = ''; });
     // Aktivovat správný panel
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); });
-    var el = document.getElementById('panel-' + (VZ.aktivniMobPanel || 'text'));
+    var el = document.getElementById('panel-' + (VZ.aktivniMobPanel || 'nahravky'));
     if (el) el.classList.add('mob-active');
   } else {
     // Odstranit mob-active, nastavit desktop layout včetně panelu tabelatura

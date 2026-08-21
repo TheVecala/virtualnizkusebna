@@ -149,9 +149,9 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
   <span class="brand">/</span>
   <span id="topbar-val" onclick="toggleValDrawer()"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
+    <a href="#" class="active" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
     <a href="#" class="active" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
     <a href="#" class="active" id="nav-tabelatura" onclick="toggleDesktopPanel('tabelatura',this);return false">tabelatura</a>
-    <a href="#" class="active" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
     <a href="#" class="active" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">poznámky</a>
     <a href="#" id="nav-napady"                    onclick="toggleDesktopPanel('napady',this);return false">
       nápady <span class="napady-badge">DK</span>
@@ -343,10 +343,24 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 </div>
 
   <!-- CONTENT AREA (Přidán výchozí atribut data-active-panel pro správný start 2-panelové verze) -->
-  <div id="content-area" data-active-panel="text">
+  <div id="content-area" data-active-panel="nahravky">
+
+    <!-- PANEL NAHRÁVKY -->
+    <div class="panel mob-active" id="panel-nahravky">
+      <div class="panel-header">
+        <h2>NAHRÁVKY</h2>
+        <div class="acts">
+          <button class="btn-vz<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_vlozit_soubor">⬆ vložit</button>
+          <button class="btn-vz danger rec<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nahrat_zvuk">⏺ REC</button>
+        </div>
+      </div>
+      <div class="panel-body" id="body-nahravky">
+        <div class="panel-loading"><div class="spinner"></div>načítám...</div>
+      </div>
+    </div>
 
     <!-- PANEL TEXT -->
-    <div class="panel mob-active" id="panel-text">
+    <div class="panel" id="panel-text">
       <div class="panel-header">
         <h2>TEXT</h2>
         <div class="acts">
@@ -367,20 +381,6 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
         </div>
       </div>
       <div class="panel-body" id="body-tabelatura">
-        <div class="panel-loading"><div class="spinner"></div>načítám...</div>
-      </div>
-    </div>
-
-    <!-- PANEL NAHRÁVKY -->
-    <div class="panel" id="panel-nahravky">
-      <div class="panel-header">
-        <h2>NAHRÁVKY</h2>
-        <div class="acts">
-          <button class="btn-vz<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_vlozit_soubor">⬆ vložit</button>
-          <button class="btn-vz danger rec<?= ma_pravo('upload') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nahrat_zvuk">⏺ REC</button>
-        </div>
-      </div>
-      <div class="panel-body" id="body-nahravky">
         <div class="panel-loading"><div class="spinner"></div>načítám...</div>
       </div>
     </div>
@@ -456,16 +456,16 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
   <button class="bnav" id="bn-skladby" onclick="toggleValDrawer()">
     <img src="meat/ikona_skladby.png" class="bi" alt="skladby">skladby
   </button>
-  <button class="bnav active" id="bn-text" onclick="mobilePanel('text',this)">
+  <button class="bnav active" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
+    <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
+  </button>
+  <button class="bnav" id="bn-text" onclick="mobilePanel('text',this)">
     <img src="meat/ikona_text.png" class="bi" alt="text">text
   </button>
   <button class="bnav" id="bn-tabelatura" onclick="mobilePanel('tabelatura',this)">
     <img src="meat/drinking2.png" class="bi" alt="tabelatura">taby
   </button>
   
-  <button class="bnav" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
-    <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
-  </button>
   <button class="bnav" id="bn-diskuse" onclick="mobilePanel('diskuse',this)">
     <img src="meat/ikona_diskuse.png" class="bi" alt="diskuse">diskuse
   </button>
@@ -477,14 +477,14 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <!-- ── BOTTOM NAV (TABLET: vlastní 4 tlačítka pro levý a pravý panel) ── -->
 <div id="bottom-nav-tab">
   <div class="tab-footer" id="tab-footer-left">
-    <button class="bnav active" data-panel="text" onclick="tabletPick('left','text',this)">
+    <button class="bnav active" data-panel="nahravky" onclick="tabletPick('left','nahravky',this)">
+      <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
+    </button>
+    <button class="bnav" data-panel="text" onclick="tabletPick('left','text',this)">
       <img src="meat/ikona_text.png" class="bi" alt="text">text
     </button>
     <button class="bnav" data-panel="tabelatura" onclick="tabletPick('left','tabelatura',this)">
       <img src="meat/drinking2.png" class="bi" alt="tabelatura">taby
-    </button>
-    <button class="bnav" data-panel="nahravky" onclick="tabletPick('left','nahravky',this)">
-      <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
     </button>
     <button class="bnav" data-panel="diskuse" onclick="tabletPick('left','diskuse',this)">
       <img src="meat/ikona_diskuse.png" class="bi" alt="diskuse">diskuse
@@ -492,14 +492,14 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
   </div>
   <div class="tab-footer-divider"></div>
   <div class="tab-footer" id="tab-footer-right">
-    <button class="bnav" data-panel="text" onclick="tabletPick('right','text',this)">
-      <img src="meat/ikona_text.png" class="bi" alt="text">text
-    </button>
-    <button class="bnav active" data-panel="tabelatura" onclick="tabletPick('right','tabelatura',this)">
-      <img src="meat/drinking2.png" class="bi" alt="tabelatura">taby
-    </button>
     <button class="bnav" data-panel="nahravky" onclick="tabletPick('right','nahravky',this)">
       <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
+    </button>
+    <button class="bnav active" data-panel="text" onclick="tabletPick('right','text',this)">
+      <img src="meat/ikona_text.png" class="bi" alt="text">text
+    </button>
+    <button class="bnav" data-panel="tabelatura" onclick="tabletPick('right','tabelatura',this)">
+      <img src="meat/drinking2.png" class="bi" alt="tabelatura">taby
     </button>
     <button class="bnav" data-panel="diskuse" onclick="tabletPick('right','diskuse',this)">
       <img src="meat/ikona_diskuse.png" class="bi" alt="diskuse">diskuse
@@ -540,7 +540,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 var VZ = {
   aktualniVal:     <?php echo json_encode($slozka_souboru); ?>,
   aktualniNazev:   <?php echo json_encode($nazev_valu); ?>,
-  aktivniMobPanel: 'text',
+  aktivniMobPanel: 'nahravky',
   pravo: {
     rename_val: <?php echo json_encode(ma_pravo('rename_val')); ?>,
     delete_val: <?php echo json_encode(ma_pravo('delete_val')); ?>
