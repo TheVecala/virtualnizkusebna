@@ -130,6 +130,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   border-radius: 5px; padding: 6px 12px; cursor: pointer; font-size: 14px; transition: all .15s;
 }
 .wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
+.audio-cache-control { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; color: var(--muted); font-size: 11px; cursor: pointer; white-space: nowrap; }
+.audio-cache-control input { accent-color: var(--barva); }
+.audio-cache-status { margin-left: 4px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.audio-cache-clear { margin-left: 6px; padding: 2px 5px; border: 0; background: transparent; color: var(--muted); font-size: 10px; cursor: pointer; }
+.audio-cache-clear:hover { color: var(--text); }
 
 #waveform-container{
     position:relative;

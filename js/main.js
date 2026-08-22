@@ -1604,14 +1604,56 @@ document.addEventListener('DOMContentLoaded', function() {
 var wavesurfer = null;
 var isLooping = false;
 var looperCurrentFile = null;
+var looperCurrentPeaks = null;
+var looperCurrentSourceUrl = null;
+var looperCurrentObjectUrl = null;
+var audioCacheStore = null;
+
+function getAudioCacheStore() {
+    if (!audioCacheStore && window.idbKeyval) {
+        // Vlastní store zajistí, že clear() nesmaže případná jiná IndexedDB data webu.
+        audioCacheStore = idbKeyval.createStore('zkusebna-audio-cache', 'audio-files');
+    }
+    return audioCacheStore;
+}
+
+function getAudioCacheKey(cesta) {
+    return 'audio-v1:' + new URL(cesta, window.location.href).href;
+}
+
+function setAudioCacheUi(isCached, status, disabled) {
+    var $control = $('#audio-cache-control');
+    var $toggle = $('#audio-cache-toggle');
+
+    $control.prop('hidden', !looperCurrentFile);
+    $('#audio-cache-clear').prop('hidden', !looperCurrentFile);
+    $toggle.prop('checked', !!isCached).prop('disabled', !!disabled);
+    $('#audio-cache-status').text(status || '');
+}
+
+function releaseLooperObjectUrl() {
+    if (looperCurrentObjectUrl) {
+        URL.revokeObjectURL(looperCurrentObjectUrl);
+        looperCurrentObjectUrl = null;
+    }
+}
+
+function destroyLooperWaveSurfer() {
+    if (wavesurfer) {
+        wavesurfer.destroy();
+        wavesurfer = null;
+    }
+    releaseLooperObjectUrl();
+}
 
 /**
  * Vytvoří a inicializuje WaveSurfer instanci.
  *
  * @param {string} cesta     - relativní URL audio souboru
+ * @param {string} sourceUrl - síťová URL nebo dočasná blob URL
  * @param {object|null} peaksData - { peaks: [[...]], duration: X } nebo null
  */
-function initWaveSurfer(cesta, peaksData) {
+function initWaveSurfer(cesta, sourceUrl, peaksData) {
     var barvaKapely = getComputedStyle(document.documentElement)
                         .getPropertyValue('--barva').trim() || '#a7ac38';
 
@@ -1625,7 +1667,9 @@ function initWaveSurfer(cesta, peaksData) {
         barGap:        1,
         barRadius:     1,
         height:        98,
-        url:           cesta
+        // MediaElement přehrává proudově a nedekóduje celou stopu do RAM.
+        backend:       'MediaElement',
+        url:           sourceUrl
     };
 
     // Pokud máme uložené peaks, předáme je WaveSurferu →
@@ -1728,20 +1772,114 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
     isLooping = false;
     $('#btn-loop').removeClass('on');
 
-    if (wavesurfer) {
-        wavesurfer.destroy();
-        wavesurfer = null;
-    }
+    destroyLooperWaveSurfer();
 
-    // Zkusíme načíst uložené peaks ze serveru.
-    // .done()  → peaks existují → WaveSurfer vykreslí okamžitě bez dekódování audia
-    // .fail()  → peaks neexistují (404) nebo chyba → standardní dekódování, peaks se poté uloží
+    // Nejdříve načteme peaks a až poté vybereme zdroj zvuku z IndexedDB nebo ze sítě.
     $.getJSON('php/ajax/nacist_peaks.php', { cesta: cesta })
         .done(function(peaksData) {
-            initWaveSurfer(cesta, peaksData);
+            openLooperAudio(cesta, peaksData);
         })
         .fail(function() {
-            initWaveSurfer(cesta, null);
+            openLooperAudio(cesta, null);
+        });
+});
+
+function openLooperAudio(cesta, peaksData) {
+    var cacheStore = getAudioCacheStore();
+    looperCurrentPeaks = peaksData;
+    looperCurrentSourceUrl = cesta;
+    setAudioCacheUi(false, cacheStore ? 'kontroluji offline kopii…' : 'offline úložiště není dostupné', !cacheStore);
+
+    if (!cacheStore) {
+        initWaveSurfer(cesta, cesta, peaksData);
+        return;
+    }
+
+    idbKeyval.get(getAudioCacheKey(cesta), cacheStore)
+        .then(function(blob) {
+            // Mezitím mohl uživatel otevřít jinou stopu.
+            if (looperCurrentFile !== cesta) return;
+
+            if (blob instanceof Blob) {
+                looperCurrentObjectUrl = URL.createObjectURL(blob);
+                looperCurrentSourceUrl = looperCurrentObjectUrl;
+                setAudioCacheUi(true, 'uloženo pro offline poslech', false);
+            } else {
+                setAudioCacheUi(false, 'přehrávám ze sítě', false);
+            }
+            initWaveSurfer(cesta, looperCurrentSourceUrl, peaksData);
+        })
+        .catch(function(error) {
+            console.warn('[Looper] Offline kopii se nepodařilo načíst.', error);
+            if (looperCurrentFile !== cesta) return;
+            setAudioCacheUi(false, 'přehrávám ze sítě', false);
+            initWaveSurfer(cesta, cesta, peaksData);
+        });
+}
+
+$(document).on('change', '#audio-cache-toggle', function() {
+    var toggle = this;
+    var cesta = looperCurrentFile;
+    var cacheStore = getAudioCacheStore();
+    if (!cesta || !cacheStore) return;
+
+    toggle.disabled = true;
+    if (toggle.checked) {
+        setAudioCacheUi(true, 'stahuji pro offline poslech…', true);
+        fetch(cesta)
+            .then(function(response) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.blob();
+            })
+            .then(function(blob) {
+                if (looperCurrentFile !== cesta) return;
+                return idbKeyval.set(getAudioCacheKey(cesta), blob, cacheStore).then(function() {
+                    if (looperCurrentFile !== cesta) return;
+                    destroyLooperWaveSurfer();
+                    looperCurrentObjectUrl = URL.createObjectURL(blob);
+                    looperCurrentSourceUrl = looperCurrentObjectUrl;
+                    setAudioCacheUi(true, 'uloženo pro offline poslech', false);
+                    initWaveSurfer(cesta, looperCurrentSourceUrl, looperCurrentPeaks);
+                });
+            })
+            .catch(function(error) {
+                console.warn('[Looper] Zvuk se nepodařilo uložit offline.', error);
+                if (looperCurrentFile === cesta) setAudioCacheUi(false, 'offline uložení se nezdařilo', false);
+            });
+    } else {
+        setAudioCacheUi(false, 'mažu offline kopii…', true);
+        idbKeyval.del(getAudioCacheKey(cesta), cacheStore)
+            .then(function() {
+                if (looperCurrentFile !== cesta) return;
+                destroyLooperWaveSurfer();
+                looperCurrentSourceUrl = cesta;
+                setAudioCacheUi(false, 'přehrávám ze sítě', false);
+                initWaveSurfer(cesta, cesta, looperCurrentPeaks);
+            })
+            .catch(function(error) {
+                console.warn('[Looper] Offline kopii se nepodařilo smazat.', error);
+                if (looperCurrentFile === cesta) setAudioCacheUi(true, 'offline kopii se nepodařilo smazat', false);
+            });
+    }
+});
+
+$(document).on('click', '#audio-cache-clear', function() {
+    var cacheStore = getAudioCacheStore();
+    var cesta = looperCurrentFile;
+    if (!cacheStore || !window.confirm('Smazat všechny nahrávky uložené pro offline poslech?')) return;
+
+    setAudioCacheUi(false, 'mažu offline soubory…', true);
+    idbKeyval.clear(cacheStore)
+        .then(function() {
+            if (!cesta || looperCurrentFile !== cesta) return;
+            destroyLooperWaveSurfer();
+            looperCurrentSourceUrl = cesta;
+            setAudioCacheUi(false, 'offline soubory byly smazány', false);
+            initWaveSurfer(cesta, looperCurrentSourceUrl, looperCurrentPeaks);
+        })
+        .catch(function(error) {
+            console.warn('[Looper] Offline soubory se nepodařilo smazat.', error);
+            if (looperCurrentFile) setAudioCacheUi(true, 'offline soubory se nepodařilo smazat', false);
         });
 });
 
@@ -1801,12 +1939,13 @@ function looperToggle()
 function looperZavrit() {
     if (wavesurfer) {
         wavesurfer.pause();
-        wavesurfer.destroy();
-        wavesurfer = null;
-		$('#wf-placeholder').show();
-	
     }
+    destroyLooperWaveSurfer();
+	$('#wf-placeholder').show();
     looperCurrentFile = null;
+    looperCurrentPeaks = null;
+    looperCurrentSourceUrl = null;
+    setAudioCacheUi(false, '', true);
     $('#looper-notes').hide().empty();
   	//$('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▼');

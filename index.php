@@ -133,6 +133,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" crossorigin="anonymous" defer></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" crossorigin="anonymous" defer></script>
 <script src="https://unpkg.com/wavesurfer.js@7" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
 <script src="js/main.js" defer></script>
 </head>
@@ -225,6 +226,15 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
                     onclick="looperRestart()">↺</button>
 
         </div>
+
+        <label id="audio-cache-control" class="audio-cache-control" hidden>
+            <input type="checkbox" id="audio-cache-toggle">
+            <span>uložit pro offline poslech</span>
+        </label>
+        <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
+        <button id="audio-cache-clear" class="audio-cache-clear" type="button" hidden title="Smazat všechny lokálně uložené nahrávky">
+            smazat offline soubory
+        </button>
 
     </div>
 
