@@ -51,6 +51,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .topnav a:hover { color: var(--text); background: var(--card); }
 .topnav a.active { color: var(--accent); background: var(--card); }
+.audio-cache-clear-mobile { color: var(--muted); font-size: 12px; padding: 5px 8px; text-decoration: none; white-space: nowrap; }
+.audio-cache-clear-mobile:hover { color: var(--text); background: var(--card); border-radius: 5px; }
+.cache-clear-short { display: none; }
 .napady-badge {
   background: #2a3a10; color: #a7d050; border: 1px solid #4a6a20;
   border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 3px;
@@ -130,11 +133,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   border-radius: 5px; padding: 6px 12px; cursor: pointer; font-size: 14px; transition: all .15s;
 }
 .wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
-.audio-cache-control { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; color: var(--muted); font-size: 11px; cursor: pointer; white-space: nowrap; }
+.audio-cache-control { display: inline-flex; align-items: center; gap: 5px; min-width: 0; margin-left: 4px; padding: 4px 7px; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 5px; font-size: 11px; cursor: pointer; white-space: nowrap; }
 .audio-cache-control input { accent-color: var(--barva); }
-.audio-cache-status { margin-left: 4px; color: var(--muted); font-size: 11px; white-space: nowrap; }
-.audio-cache-clear { margin-left: 6px; padding: 2px 5px; border: 0; background: transparent; color: var(--muted); font-size: 10px; cursor: pointer; }
-.audio-cache-clear:hover { color: var(--text); }
+.audio-cache-control:has(input:checked) { border-color: var(--barva); }
+.audio-cache-label { color: var(--text); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+.audio-cache-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--muted); font-size: 11px; }
 
 #waveform-container{
     position:relative;
@@ -154,6 +157,24 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     pointer-events:none;
     user-select:none;
 	display: none;
+}
+#looper-file-name {
+    position: absolute;
+    top: 4px;
+    left: 8px;
+    right: 92px;
+    z-index: 20;
+    display: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: rgba(255,255,255,.80);
+    background: rgba(0,0,0,.25);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 10px;
+    pointer-events: none;
+    user-select: none;
 }
 #waveform-container .wf-placeholder {
   position: absolute; inset: 0; display: flex; align-items: center;
@@ -188,6 +209,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
     display:flex;
     align-items:center;
+    min-width:0;
+    flex:1;
+    flex-wrap:wrap;
     gap:12px;
 }
 
@@ -211,6 +235,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     display:flex;
     align-items:center;
     gap:5px;
+    flex-shrink:0;
 }
 
 #looper-content{
@@ -407,6 +432,16 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   /* Na malém mobilu je méně místa nad seznamem poznámek (vlnovka + ovládání
      zaberou víc podílu obrazovky) — nižší strop, ať zbyde místo i na ně. */
   #looper-notes { max-height: 180px; }
+  #looper-header { gap: 8px; }
+  .audio-cache-control { max-width: 190px; }
+}
+
+@media (max-width: 480px) {
+  .audio-cache-clear-mobile { font-size: 10px; padding: 4px 5px; }
+  .cache-clear-long { display: none; }
+  .cache-clear-short { display: inline; }
+  .audio-cache-control { order: 3; margin-left: 0; max-width: 100%; }
+  #looper-file-name { right: 86px; }
 }
 
 /* 2. STŘEDNÍ VARIANT (768px až 1199px): Přesně dva panely vedle sebe! */

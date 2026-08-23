@@ -1626,7 +1626,6 @@ function setAudioCacheUi(isCached, status, disabled) {
     var $toggle = $('#audio-cache-toggle');
 
     $control.prop('hidden', !looperCurrentFile);
-    $('#audio-cache-clear').prop('hidden', !looperCurrentFile);
     $toggle.prop('checked', !!isCached).prop('disabled', !!disabled);
     $('#audio-cache-status').text(status || '');
 }
@@ -1764,9 +1763,9 @@ $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
 
     // Zobrazíme looper bar a resetujeme stav
     $('#looper-bar').removeClass('hidden');
-	$('#looper-content').removeClass('hidden');
+    $('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▭');
-    $('#lname').text(nazev);
+    $('#looper-file-name').text(nazev).attr('title', nazev).show();
     $('#wf-placeholder').text('načítám index...').show();
 
     isLooping = false;
@@ -1863,7 +1862,8 @@ $(document).on('change', '#audio-cache-toggle', function() {
     }
 });
 
-$(document).on('click', '#audio-cache-clear', function() {
+$(document).on('click', '#audio-cache-clear', function(event) {
+    event.preventDefault();
     var cacheStore = getAudioCacheStore();
     var cesta = looperCurrentFile;
     if (!cacheStore || !window.confirm('Smazat všechny nahrávky uložené pro offline poslech?')) return;
@@ -1881,6 +1881,11 @@ $(document).on('click', '#audio-cache-clear', function() {
             console.warn('[Looper] Offline soubory se nepodařilo smazat.', error);
             if (looperCurrentFile) setAudioCacheUi(true, 'offline soubory se nepodařilo smazat', false);
         });
+});
+
+$(document).on('click', '.audio-cache-clear-mobile', function(event) {
+    event.preventDefault();
+    $('#audio-cache-clear').trigger('click');
 });
 
 /* --- Globální funkce pro tlačítka v looper-baru --- */
@@ -1946,6 +1951,7 @@ function looperZavrit() {
     looperCurrentPeaks = null;
     looperCurrentSourceUrl = null;
     setAudioCacheUi(false, '', true);
+    $('#looper-file-name').text('').attr('title', '').hide();
     $('#looper-notes').hide().empty();
   	//$('#looper-content').removeClass('hidden');
     $('#btn-collapse').html('▼');

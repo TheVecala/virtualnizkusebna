@@ -158,11 +158,13 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
       nápady <span class="napady-badge">DK</span>
     </a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
+    <a href="#" id="audio-cache-clear" title="Smazat všechny lokálně uložené nahrávky">zahodit offline soubory</a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
   <div class="topbar-mob-actions">
     <a href="#" id="nav-napady-tab" onclick="tabletNapady(this);return false">nápady <span class="napady-badge">DK</span></a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">about</a>
+    <a href="#" class="audio-cache-clear-mobile" title="Smazat všechny lokálně uložené nahrávky"><span class="cache-clear-long">zahodit offline soubory</span><span class="cache-clear-short">offline</span></a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">odhlásit</a>
   </div>
 </div>
@@ -229,12 +231,9 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
         <label id="audio-cache-control" class="audio-cache-control" hidden>
             <input type="checkbox" id="audio-cache-toggle">
-            <span>uložit pro offline poslech</span>
+            <span class="audio-cache-label">offline</span>
+            <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
         </label>
-        <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
-        <button id="audio-cache-clear" class="audio-cache-clear" type="button" hidden title="Smazat všechny lokálně uložené nahrávky">
-            smazat offline soubory
-        </button>
 
     </div>
 
@@ -256,6 +255,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
     <!-- OBSAH -->
     <div id="looper-content" class="hidden">
         <div id="waveform-container">
+	        <div id="looper-file-name" title=""></div>
 	        <div id="looper-time">
                00:00 / 00:00
             </div>
