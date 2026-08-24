@@ -286,6 +286,19 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   background: #341c1c;
   color: #ff5555;
 }
+
+/* Offline je záměrně kompaktní: je šestým tlačítkem v řadě audio nahrávky. */
+.icon-btn.native-audio-cache-toggle[aria-pressed="true"] {
+  border-color: #<?php echo $barva; ?>;
+  background: #2a3a10;
+}
+
+@media (max-width: 440px) {
+  .vysuvna-tlacitka { gap: 4px; }
+  .icon-btn { padding: 7px 2px; }
+  .icon-btn.download-btn span,
+  .icon-btn.del span { display: none; }
+}
 </style>
 
 <?php if (empty($slozka_souboru)): ?>
@@ -340,7 +353,9 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
         
         <?php if ($je_audio): ?>
           <div class="vysuvna-prehravac">
-            <audio controls style="width: 100%; height: 40px;">
+            <audio controls style="width: 100%; height: 40px;"
+                   data-audio-cache-url="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
+                   data-network-src="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>">
               <?php 
               $mime_typy = ['mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg', 'flac' => 'audio/flac', 'aac' => 'audio/aac'];
               $m_type = $mime_typy[$ext] ?? 'audio/mpeg';
@@ -368,6 +383,14 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
               <i class="ti ti-flag" aria-hidden="true"></i>
               <span>Poznámky</span>
             </button>
+            <button type="button" class="icon-btn native-audio-cache-toggle"
+                    data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
+                    aria-pressed="false"
+                    title="Uložit pro offline přehrávání"
+                    aria-label="Uložit pro offline přehrávání">
+              <i class="ti ti-download" aria-hidden="true"></i>
+              <span>Offline</span>
+            </button>
           <?php endif; ?>
 
           <button class="icon-btn presunout-btn"
@@ -381,7 +404,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
             <span>Přesun</span>
           </button>
 
-          <a class="icon-btn"
+          <a class="icon-btn download-btn"
              href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
              download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
              title="Stáhnout"

@@ -70,7 +70,9 @@ $(function() {
 function nacistPanel(panel, callback) {
   pbStart();
   $.get('/php/ajax/ajax_' + panel + '.php', function(html) {
+    if (panel === 'nahravky') releaseNativeAudioObjectUrls();
     $('#body-' + panel).html(html);
+    if (panel === 'nahravky') refreshNativeAudioCacheControls();
     if (callback) callback(); else pbDone();
   }).fail(function() {
     $('#body-' + panel).html('<div style="color:#888;padding:12px;font-size:12px">Chyba načítání</div>');
@@ -1608,6 +1610,7 @@ var looperCurrentPeaks = null;
 var looperCurrentSourceUrl = null;
 var looperCurrentObjectUrl = null;
 var audioCacheStore = null;
+var audioCacheRequests = {};
 
 function getAudioCacheStore() {
     if (!audioCacheStore && window.idbKeyval) {
@@ -1631,6 +1634,98 @@ function setAudioCacheUi(isCached, status, disabled) {
         .attr('aria-pressed', !!isCached)
         .text(isCached ? 'zahodit z paměti' : 'podržet v paměti');
     $('#audio-cache-status').text(status || '');
+}
+
+function nativeAudioElements(cesta) {
+    return $('audio[data-audio-cache-url]').filter(function() {
+        return $(this).data('audio-cache-url') === cesta;
+    });
+}
+
+function setNativeAudioCacheUi(cesta, isCached, disabled, status) {
+    $('.native-audio-cache-toggle').filter(function() {
+        return $(this).data('cesta') === cesta;
+    }).each(function() {
+        var $toggle = $(this);
+        $toggle
+            .prop('disabled', !!disabled)
+            .attr('aria-pressed', !!isCached)
+            .attr('title', isCached ? 'Odebrat offline kopii' : 'Uložit pro offline přehrávání')
+            .attr('aria-label', isCached ? 'Odebrat offline kopii' : 'Uložit pro offline přehrávání');
+        $toggle.find('span').text(disabled ? 'čekám…' : (isCached ? 'Offline' : 'Offline'));
+        $toggle.find('i').attr('class', isCached ? 'ti ti-device-floppy' : 'ti ti-download');
+        if (status) $toggle.attr('data-status', status); else $toggle.removeAttr('data-status');
+    });
+}
+
+function setNativeAudioSource(cesta, blob) {
+    nativeAudioElements(cesta).each(function() {
+        var audio = this;
+        if (audio._audioCacheObjectUrl) URL.revokeObjectURL(audio._audioCacheObjectUrl);
+        audio._audioCacheObjectUrl = blob ? URL.createObjectURL(blob) : null;
+        audio.src = blob ? audio._audioCacheObjectUrl : audio.dataset.networkSrc;
+        audio.load();
+    });
+}
+
+function releaseNativeAudioObjectUrls() {
+    $('audio[data-audio-cache-url]').each(function() {
+        if (this._audioCacheObjectUrl) URL.revokeObjectURL(this._audioCacheObjectUrl);
+    });
+}
+
+function syncAudioCacheUi(cesta, isCached, status, disabled) {
+    setNativeAudioCacheUi(cesta, isCached, disabled, status);
+    if (looperCurrentFile === cesta) setAudioCacheUi(isCached, status, disabled);
+}
+
+// Jedna sdílená Promise zabraňuje dvojímu fetchi, pokud uživatel klikne na Offline
+// v nativním přehrávači a v looperu téměř zároveň.
+function getOrDownloadAudioBlob(cesta) {
+    var cacheStore = getAudioCacheStore();
+    if (!cacheStore) return Promise.reject(new Error('Offline úložiště není dostupné.'));
+    if (audioCacheRequests[cesta]) return audioCacheRequests[cesta];
+
+    audioCacheRequests[cesta] = idbKeyval.get(getAudioCacheKey(cesta), cacheStore)
+        .then(function(blob) {
+            if (blob instanceof Blob) return blob;
+            return fetch(cesta).then(function(response) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.blob();
+            }).then(function(downloadedBlob) {
+                return idbKeyval.set(getAudioCacheKey(cesta), downloadedBlob, cacheStore)
+                    .then(function() { return downloadedBlob; });
+            });
+        });
+
+    return audioCacheRequests[cesta].then(function(blob) {
+        delete audioCacheRequests[cesta];
+        return blob;
+    }, function(error) {
+        delete audioCacheRequests[cesta];
+        throw error;
+    });
+}
+
+function refreshNativeAudioCacheControls() {
+    var cacheStore = getAudioCacheStore();
+    if (!cacheStore) {
+        $('.native-audio-cache-toggle').prop('disabled', true);
+        return;
+    }
+    var checked = {};
+    $('.native-audio-cache-toggle').each(function() {
+        var cesta = $(this).data('cesta');
+        if (!cesta || checked[cesta]) return;
+        checked[cesta] = true;
+        idbKeyval.get(getAudioCacheKey(cesta), cacheStore).then(function(blob) {
+            var isCached = blob instanceof Blob;
+            setNativeAudioCacheUi(cesta, isCached, false);
+            if (isCached) setNativeAudioSource(cesta, blob);
+        }).catch(function() {
+            setNativeAudioCacheUi(cesta, false, false);
+        });
+    });
 }
 
 function releaseLooperObjectUrl() {
@@ -1820,48 +1915,64 @@ function openLooperAudio(cesta, peaksData) {
 }
 
 $(document).on('click', '#audio-cache-toggle', function() {
-    var toggle = this;
     var cesta = looperCurrentFile;
     var cacheStore = getAudioCacheStore();
     if (!cesta || !cacheStore) return;
 
-    toggle.disabled = true;
-    if (toggle.getAttribute('aria-pressed') !== 'true') {
-        setAudioCacheUi(true, 'stahuji pro offline poslech…', true);
-        fetch(cesta)
-            .then(function(response) {
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                return response.blob();
-            })
-            .then(function(blob) {
-                if (looperCurrentFile !== cesta) return;
-                return idbKeyval.set(getAudioCacheKey(cesta), blob, cacheStore).then(function() {
-                    if (looperCurrentFile !== cesta) return;
-                    destroyLooperWaveSurfer();
-                    looperCurrentObjectUrl = URL.createObjectURL(blob);
-                    looperCurrentSourceUrl = looperCurrentObjectUrl;
-                    setAudioCacheUi(true, 'uloženo pro offline poslech', false);
-                    initWaveSurfer(cesta, looperCurrentSourceUrl, looperCurrentPeaks);
-                });
-            })
-            .catch(function(error) {
-                console.warn('[Looper] Zvuk se nepodařilo uložit offline.', error);
-                if (looperCurrentFile === cesta) setAudioCacheUi(false, 'offline uložení se nezdařilo', false);
-            });
+    if (this.getAttribute('aria-pressed') !== 'true') {
+        cacheAudioForOffline(cesta);
     } else {
-        setAudioCacheUi(false, 'mažu offline kopii…', true);
-        idbKeyval.del(getAudioCacheKey(cesta), cacheStore)
-            .then(function() {
-                if (looperCurrentFile !== cesta) return;
-                destroyLooperWaveSurfer();
-                looperCurrentSourceUrl = cesta;
-                setAudioCacheUi(false, 'přehrávám ze sítě', false);
-                initWaveSurfer(cesta, cesta, looperCurrentPeaks);
-            })
-            .catch(function(error) {
-                console.warn('[Looper] Offline kopii se nepodařilo smazat.', error);
-                if (looperCurrentFile === cesta) setAudioCacheUi(true, 'offline kopii se nepodařilo smazat', false);
-            });
+        removeAudioFromOfflineCache(cesta);
+    }
+});
+
+function useCachedBlobInLooper(cesta, blob) {
+    if (looperCurrentFile !== cesta) return;
+    destroyLooperWaveSurfer();
+    looperCurrentObjectUrl = URL.createObjectURL(blob);
+    looperCurrentSourceUrl = looperCurrentObjectUrl;
+    initWaveSurfer(cesta, looperCurrentSourceUrl, looperCurrentPeaks);
+}
+
+function cacheAudioForOffline(cesta) {
+    syncAudioCacheUi(cesta, true, 'stahuji pro offline poslech…', true);
+    getOrDownloadAudioBlob(cesta).then(function(blob) {
+        setNativeAudioSource(cesta, blob);
+        useCachedBlobInLooper(cesta, blob);
+        syncAudioCacheUi(cesta, true, 'uloženo pro offline poslech', false);
+    }).catch(function(error) {
+        console.warn('[Offline audio] Zvuk se nepodařilo uložit.', error);
+        syncAudioCacheUi(cesta, false, 'offline uložení se nezdařilo', false);
+    });
+}
+
+function removeAudioFromOfflineCache(cesta) {
+    var cacheStore = getAudioCacheStore();
+    if (!cacheStore) return;
+    syncAudioCacheUi(cesta, false, 'mažu offline kopii…', true);
+    idbKeyval.del(getAudioCacheKey(cesta), cacheStore).then(function() {
+        setNativeAudioSource(cesta, null);
+        if (looperCurrentFile === cesta) {
+            destroyLooperWaveSurfer();
+            looperCurrentSourceUrl = cesta;
+            initWaveSurfer(cesta, cesta, looperCurrentPeaks);
+        }
+        syncAudioCacheUi(cesta, false, 'přehrávám ze sítě', false);
+    }).catch(function(error) {
+        console.warn('[Offline audio] Offline kopii se nepodařilo smazat.', error);
+        syncAudioCacheUi(cesta, true, 'offline kopii se nepodařilo smazat', false);
+    });
+}
+
+$(document).on('click', '.native-audio-cache-toggle', function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    var cesta = $(this).data('cesta');
+    if (!cesta || this.disabled) return;
+    if (this.getAttribute('aria-pressed') === 'true') {
+        removeAudioFromOfflineCache(cesta);
+    } else {
+        cacheAudioForOffline(cesta);
     }
 });
 
@@ -1874,6 +1985,11 @@ $(document).on('click', '#audio-cache-clear', function(event) {
     setAudioCacheUi(false, 'mažu offline soubory…', true);
     idbKeyval.clear(cacheStore)
         .then(function() {
+            $('audio[data-audio-cache-url]').each(function() {
+                var cestaNahravky = $(this).data('audio-cache-url');
+                setNativeAudioSource(cestaNahravky, null);
+                setNativeAudioCacheUi(cestaNahravky, false, false);
+            });
             if (!cesta || looperCurrentFile !== cesta) return;
             destroyLooperWaveSurfer();
             looperCurrentSourceUrl = cesta;
