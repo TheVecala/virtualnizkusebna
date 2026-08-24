@@ -229,11 +229,12 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
         </div>
 
-        <label id="audio-cache-control" class="audio-cache-control" hidden>
-            <input type="checkbox" id="audio-cache-toggle">
-            <span class="audio-cache-label">offline</span>
+        <div id="audio-cache-control" class="audio-cache-control" hidden>
+            <button type="button" id="audio-cache-toggle" class="audio-cache-toggle" aria-pressed="false">
+                podržet v paměti
+            </button>
             <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
-        </label>
+        </div>
 
     </div>
 

@@ -133,10 +133,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   border-radius: 5px; padding: 6px 12px; cursor: pointer; font-size: 14px; transition: all .15s;
 }
 .wave-btn:hover, .wave-btn.on { border-color: var(--barva); color: var(--barva); }
-.audio-cache-control { display: inline-flex; align-items: center; gap: 5px; min-width: 0; margin-left: 4px; padding: 4px 7px; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 5px; font-size: 11px; cursor: pointer; white-space: nowrap; }
-.audio-cache-control input { accent-color: var(--barva); }
-.audio-cache-control:has(input:checked) { border-color: var(--barva); }
-.audio-cache-label { color: var(--text); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+.audio-cache-control { display: inline-flex; align-items: center; gap: 5px; min-width: 0; margin-left: 4px; padding: 4px 7px; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 5px; font-size: 11px; white-space: nowrap; }
+.audio-cache-toggle { padding: 0; color: var(--text); background: none; border: 0; font: inherit; cursor: pointer; }
+.audio-cache-toggle:hover:not(:disabled), .audio-cache-toggle[aria-pressed="true"] { color: var(--barva); }
+.audio-cache-toggle:disabled { cursor: wait; opacity: .65; }
+.audio-cache-control:has(.audio-cache-toggle[aria-pressed="true"]) { border-color: var(--barva); }
 .audio-cache-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--muted); font-size: 11px; }
 
 #waveform-container{
