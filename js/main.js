@@ -1626,7 +1626,10 @@ function setAudioCacheUi(isCached, status, disabled) {
     var $toggle = $('#audio-cache-toggle');
 
     $control.prop('hidden', !looperCurrentFile);
-    $toggle.prop('checked', !!isCached).prop('disabled', !!disabled);
+    $toggle
+        .prop('disabled', !!disabled)
+        .attr('aria-pressed', !!isCached)
+        .text(isCached ? 'zahodit z paměti' : 'podržet v paměti');
     $('#audio-cache-status').text(status || '');
 }
 
@@ -1816,14 +1819,14 @@ function openLooperAudio(cesta, peaksData) {
         });
 }
 
-$(document).on('change', '#audio-cache-toggle', function() {
+$(document).on('click', '#audio-cache-toggle', function() {
     var toggle = this;
     var cesta = looperCurrentFile;
     var cacheStore = getAudioCacheStore();
     if (!cesta || !cacheStore) return;
 
     toggle.disabled = true;
-    if (toggle.checked) {
+    if (toggle.getAttribute('aria-pressed') !== 'true') {
         setAudioCacheUi(true, 'stahuji pro offline poslech…', true);
         fetch(cesta)
             .then(function(response) {
