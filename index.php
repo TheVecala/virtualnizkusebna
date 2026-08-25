@@ -158,7 +158,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
       nápady <span class="napady-badge">DK</span>
     </a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
-    <a href="#" id="audio-cache-clear" title="Smazat všechny lokálně uložené nahrávky">zahodit offline soubory</a>
+    <a href="#" id="audio-cache-clear" title="Spravovat lokálně uložené nahrávky">smazat offline soubory</a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
   <div class="topbar-mob-actions">
@@ -169,7 +169,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
       </summary>
       <div class="topbar-more-menu-items">
         <a href="#" data-toggle="modal" data-target="#myModal" onclick="this.closest('details').removeAttribute('open')">about</a>
-        <a href="#" class="audio-cache-clear-mobile" title="Smazat všechny lokálně uložené nahrávky" onclick="this.closest('details').removeAttribute('open')">zahodit offline soubory</a>
+        <a href="#" class="audio-cache-clear-mobile" title="Spravovat lokálně uložené nahrávky" onclick="this.closest('details').removeAttribute('open')">smazat offline soubory</a>
         <a href="#" data-toggle="modal" data-target="#modal_logout" onclick="this.closest('details').removeAttribute('open')">odhlásit</a>
       </div>
     </details>

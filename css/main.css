@@ -71,6 +71,20 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   text-decoration: none; white-space: nowrap;
 }
 .topbar-more-menu-items a:hover { color: var(--text); background: var(--card); }
+.offline-files-list { display: flex; flex-direction: column; gap: 8px; }
+.offline-file-item {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center;
+  padding: 8px 10px; background: #252a2e; border-left: 3px solid var(--barva); border-radius: 0 5px 5px 0;
+}
+.offline-file-name, .offline-file-context { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.offline-file-name { color: var(--text); font-size: 13px; }
+.offline-file-context { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.offline-file-size { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.offline-file-item .btn { white-space: nowrap; }
+.offline-files-empty, .offline-files-error { margin: 0 !important; color: var(--muted) !important; }
+.offline-files-error { color: #ff8888 !important; }
+.offline-files-footer { align-items: center; }
+.offline-files-summary { margin-right: auto; color: var(--muted); font-size: 12px; }
 .napady-badge {
   background: #2a3a10; color: #a7d050; border: 1px solid #4a6a20;
   border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 3px;
@@ -455,6 +469,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 
 @media (max-width: 480px) {
+  .offline-file-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .offline-file-size { grid-column: 1; }
+  .offline-file-item .btn { grid-column: 2; grid-row: 1 / span 2; }
   .audio-cache-control { order: 3; margin-left: 0; max-width: 100%; }
   #looper-file-name { right: 86px; }
 }
