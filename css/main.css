@@ -51,9 +51,26 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 .topnav a:hover { color: var(--text); background: var(--card); }
 .topnav a.active { color: var(--accent); background: var(--card); }
-.audio-cache-clear-mobile { color: var(--muted); font-size: 12px; padding: 5px 8px; text-decoration: none; white-space: nowrap; }
-.audio-cache-clear-mobile:hover { color: var(--text); background: var(--card); border-radius: 5px; }
-.cache-clear-short { display: none; }
+.topbar-more-menu { position: relative; }
+.topbar-more-menu summary {
+  width: 32px; height: 30px; padding: 6px 7px; border: 1px solid var(--border);
+  border-radius: 5px; cursor: pointer; list-style: none;
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+}
+.topbar-more-menu summary::-webkit-details-marker { display: none; }
+.topbar-more-menu summary:hover,
+.topbar-more-menu[open] summary { background: var(--card); border-color: var(--muted); }
+.topbar-more-menu summary span { display: block; height: 2px; background: var(--muted); border-radius: 1px; }
+.topbar-more-menu-items {
+  position: absolute; top: calc(100% + 6px); right: 0; min-width: 210px; padding: 4px;
+  background: var(--tmava); border: 1px solid var(--border); border-radius: 5px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .35); z-index: 1001;
+}
+.topbar-more-menu-items a {
+  display: block; color: var(--muted); font-size: 12px; padding: 8px; border-radius: 4px;
+  text-decoration: none; white-space: nowrap;
+}
+.topbar-more-menu-items a:hover { color: var(--text); background: var(--card); }
 .napady-badge {
   background: #2a3a10; color: #a7d050; border: 1px solid #4a6a20;
   border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 3px;
@@ -438,9 +455,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 
 @media (max-width: 480px) {
-  .audio-cache-clear-mobile { font-size: 10px; padding: 4px 5px; }
-  .cache-clear-long { display: none; }
-  .cache-clear-short { display: inline; }
   .audio-cache-control { order: 3; margin-left: 0; max-width: 100%; }
   #looper-file-name { right: 86px; }
 }
