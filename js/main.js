@@ -1964,6 +1964,93 @@ function removeAudioFromOfflineCache(cesta) {
     });
 }
 
+function formatOfflineFileSize(size) {
+    var megabytes = size / (1024 * 1024);
+    return new Intl.NumberFormat('cs-CZ', {
+        maximumFractionDigits: megabytes < 10 ? 1 : 0
+    }).format(megabytes) + ' MB';
+}
+
+function formatOfflineFilesSummary(count, totalSize) {
+    var soubory = count === 1 ? 'soubor' : (count >= 2 && count <= 4 ? 'soubory' : 'souborů');
+    return count + ' ' + soubory + ' · ' + formatOfflineFileSize(totalSize);
+}
+
+function offlineFileDetails(key) {
+    var url = new URL(key.replace(/^audio-v1:/, ''), window.location.href);
+    var pathParts = url.pathname.split('/').filter(Boolean).map(function(part) {
+        try { return decodeURIComponent(part); } catch (error) { return part; }
+    });
+    return {
+        name: pathParts.pop() || url.href,
+        context: pathParts.join(' / ')
+    };
+}
+
+function refreshOfflineFilesModal() {
+    var cacheStore = getAudioCacheStore();
+    var $list = $('#offline-files-list').empty();
+    var $empty = $('#offline-files-empty').prop('hidden', true);
+    var $error = $('#offline-files-error').prop('hidden', true);
+    var $summary = $('#offline-files-summary').text('načítám…');
+    var $clearAll = $('#offline-files-clear-all').prop('disabled', true);
+
+    if (!cacheStore) {
+        $summary.text('0 souborů · 0 MB');
+        $error.text('Offline úložiště není dostupné.').prop('hidden', false);
+        return;
+    }
+
+    idbKeyval.keys(cacheStore).then(function(keys) {
+        return Promise.all(keys.filter(function(key) {
+            return typeof key === 'string' && key.indexOf('audio-v1:') === 0;
+        }).map(function(key) {
+            return idbKeyval.get(key, cacheStore).then(function(blob) {
+                return blob instanceof Blob ? { key: key, blob: blob } : null;
+            });
+        }));
+    }).then(function(entries) {
+        entries = entries.filter(Boolean);
+        var totalSize = entries.reduce(function(total, entry) { return total + entry.blob.size; }, 0);
+        $summary.text(formatOfflineFilesSummary(entries.length, totalSize));
+        $clearAll.prop('disabled', entries.length === 0);
+        $empty.prop('hidden', entries.length !== 0);
+
+        entries.forEach(function(entry) {
+            var details = offlineFileDetails(entry.key);
+            var $item = $('<div>', { 'class': 'offline-file-item' });
+            var $info = $('<div>');
+            $('<div>', { 'class': 'offline-file-name', text: details.name, title: details.name }).appendTo($info);
+            if (details.context) $('<div>', { 'class': 'offline-file-context', text: details.context, title: details.context }).appendTo($info);
+            $info.appendTo($item);
+            $('<div>', { 'class': 'offline-file-size', text: formatOfflineFileSize(entry.blob.size) }).appendTo($item);
+            $('<button>', { type: 'button', 'class': 'btn btn-danger btn-sm offline-file-delete', text: 'SMAZAT' })
+                .data('cache-key', entry.key).appendTo($item);
+            $item.appendTo($list);
+        });
+    }).catch(function(error) {
+        console.warn('[Offline audio] Seznam offline souborů se nepodařilo načíst.', error);
+        $summary.text('0 souborů · 0 MB');
+        $error.text('Offline soubory se nepodařilo načíst.').prop('hidden', false);
+    });
+}
+
+function resetOfflineCacheUiForKey(key, status) {
+    $('audio[data-audio-cache-url]').each(function() {
+        var cesta = $(this).data('audio-cache-url');
+        if (cesta && getAudioCacheKey(cesta) === key) {
+            setNativeAudioSource(cesta, null);
+            setNativeAudioCacheUi(cesta, false, false);
+        }
+    });
+    if (looperCurrentFile && getAudioCacheKey(looperCurrentFile) === key) {
+        destroyLooperWaveSurfer();
+        looperCurrentSourceUrl = looperCurrentFile;
+        setAudioCacheUi(false, status, false);
+        initWaveSurfer(looperCurrentFile, looperCurrentSourceUrl, looperCurrentPeaks);
+    }
+}
+
 $(document).on('click', '.native-audio-cache-toggle', function(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -1978,33 +2065,55 @@ $(document).on('click', '.native-audio-cache-toggle', function(event) {
 
 $(document).on('click', '#audio-cache-clear', function(event) {
     event.preventDefault();
-    var cacheStore = getAudioCacheStore();
-    var cesta = looperCurrentFile;
-    if (!cacheStore || !window.confirm('Smazat všechny nahrávky uložené pro offline poslech?')) return;
-
-    setAudioCacheUi(false, 'mažu offline soubory…', true);
-    idbKeyval.clear(cacheStore)
-        .then(function() {
-            $('audio[data-audio-cache-url]').each(function() {
-                var cestaNahravky = $(this).data('audio-cache-url');
-                setNativeAudioSource(cestaNahravky, null);
-                setNativeAudioCacheUi(cestaNahravky, false, false);
-            });
-            if (!cesta || looperCurrentFile !== cesta) return;
-            destroyLooperWaveSurfer();
-            looperCurrentSourceUrl = cesta;
-            setAudioCacheUi(false, 'offline soubory byly smazány', false);
-            initWaveSurfer(cesta, looperCurrentSourceUrl, looperCurrentPeaks);
-        })
-        .catch(function(error) {
-            console.warn('[Looper] Offline soubory se nepodařilo smazat.', error);
-            if (looperCurrentFile) setAudioCacheUi(true, 'offline soubory se nepodařilo smazat', false);
-        });
+    $('#modal_offline_files').modal('show');
 });
 
 $(document).on('click', '.audio-cache-clear-mobile', function(event) {
     event.preventDefault();
     $('#audio-cache-clear').trigger('click');
+});
+
+$('#modal_offline_files').on('shown.bs.modal', refreshOfflineFilesModal);
+
+$(document).on('click', '.offline-file-delete', function() {
+    var key = $(this).data('cache-key');
+    var cacheStore = getAudioCacheStore();
+    if (!key || !cacheStore) return;
+
+    $(this).prop('disabled', true);
+    idbKeyval.del(key, cacheStore).then(function() {
+        resetOfflineCacheUiForKey(key, 'přehrávám ze sítě');
+        refreshOfflineFilesModal();
+    }).catch(function(error) {
+        console.warn('[Offline audio] Offline soubor se nepodařilo smazat.', error);
+        refreshOfflineFilesModal();
+    });
+});
+
+$(document).on('click', '#offline-files-clear-all', function() {
+    var cacheStore = getAudioCacheStore();
+    if (!cacheStore || !window.confirm('Smazat všechny nahrávky uložené pro offline poslech?')) return;
+
+    $(this).prop('disabled', true);
+    setAudioCacheUi(false, 'mažu offline soubory…', true);
+    idbKeyval.clear(cacheStore).then(function() {
+        $('audio[data-audio-cache-url]').each(function() {
+            var cesta = $(this).data('audio-cache-url');
+            setNativeAudioSource(cesta, null);
+            setNativeAudioCacheUi(cesta, false, false);
+        });
+        if (looperCurrentFile) {
+            destroyLooperWaveSurfer();
+            looperCurrentSourceUrl = looperCurrentFile;
+            setAudioCacheUi(false, 'offline soubory byly smazány', false);
+            initWaveSurfer(looperCurrentFile, looperCurrentSourceUrl, looperCurrentPeaks);
+        }
+        refreshOfflineFilesModal();
+    }).catch(function(error) {
+        console.warn('[Looper] Offline soubory se nepodařilo smazat.', error);
+        if (looperCurrentFile) setAudioCacheUi(true, 'offline soubory se nepodařilo smazat', false);
+        refreshOfflineFilesModal();
+    });
 });
 
 /* --- Globální funkce pro tlačítka v looper-baru --- */
