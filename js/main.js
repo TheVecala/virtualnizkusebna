@@ -6,6 +6,8 @@ let noteId = 0;
 let noteFile = "";
 let noteTime = 0;
 let noteType = NOTE_NORMAL;
+let notePlaybackContext = "";
+let noteAudio = null;
 
 function formatTime(ms)
 {
@@ -18,6 +20,36 @@ function formatTime(ms)
     return String(min).padStart(2, "0") +
            ":" +
            String(sec).padStart(2, "0");
+}
+
+function getNotePlaybackTime()
+{
+    if (notePlaybackContext === "looper")
+    {
+        return wavesurfer ? Math.round(wavesurfer.getCurrentTime() * 1000) : null;
+    }
+
+    return noteAudio ? Math.round(noteAudio.currentTime * 1000) : null;
+}
+
+function setNotePlaybackTime(ms)
+{
+    let sec = Math.max(0, ms) / 1000;
+
+    if (notePlaybackContext === "looper")
+    {
+        if (wavesurfer) wavesurfer.setTime(sec);
+        return;
+    }
+
+    if (noteAudio) noteAudio.currentTime = sec;
+}
+
+function zobrazPripravenyCas()
+{
+    $("#modal_poznamka_info").html(
+        "Čas: <strong>" + formatTime(noteTime) + "</strong>"
+    );
 }
 // ── Progress bar ──
 var pbTimer = null;
@@ -1231,6 +1263,9 @@ $(document).on('click', '.pridat-poznamku-btn', function() {
     let cilovyFile;
     let cas = 0;
 
+    notePlaybackContext = jeLooper ? "looper" : "audio";
+    noteAudio = null;
+
     if (jeLooper)
     {
         cilovyFile = looperCurrentFile;
@@ -1244,6 +1279,8 @@ $(document).on('click', '.pridat-poznamku-btn', function() {
     {
         let panel = $(this).closest('.poznamky-panel');
         let audio = $(this).closest('.nahravka-vysuvna').find('audio')[0];
+
+        noteAudio = audio || null;
 
         cilovyFile = panel.data('cesta');
 
@@ -1263,9 +1300,7 @@ $("#modal_poznamka_title").text(
     typ == NOTE_SONG ? "Začátek skladby" : "Nová poznámka"
 );
 
-$("#modal_poznamka_info").html(
-    "Čas: <strong>" + formatTime(cas) + "</strong>"
-);
+zobrazPripravenyCas();
 
 $("#modal_poznamka_text").val("");
 
@@ -1276,6 +1311,8 @@ $("#modal_poznamka_ok")
     .removeClass("btn-danger")
     .addClass("btn-primary")
     .text("Přidat");
+
+$("#modal_poznamka_cas_controls, #modal_poznamka_pridat_a_vratit").show();
 
 $("#modal_poznamka").modal("show");
 
@@ -1329,6 +1366,8 @@ $(document).on('click', '.note-edit', function(e)
 		.addClass("btn-primary")
 		.text("Uložit");
 
+	$("#modal_poznamka_cas_controls, #modal_poznamka_pridat_a_vratit").hide();
+
 	$("#modal_poznamka").modal("show");
 
 	return;
@@ -1369,6 +1408,8 @@ $(document).on('click', '.note-delete', function(e)
 		.addClass("btn-danger")
 		.text("Smazat");
 
+	$("#modal_poznamka_cas_controls, #modal_poznamka_pridat_a_vratit").hide();
+
 	$("#modal_poznamka").modal("show");
 
 	return;
@@ -1401,6 +1442,79 @@ $(document).on('click', '.export-timestampy-btn', function ()
     window.location =
         'php/ajax/export_timestampy.php?file_path=' +
         encodeURIComponent($(this).data('file'));
+});
+
+$(document).on("click", "#modal_poznamka_aktualizovat", function ()
+{
+    let aktualniCas = getNotePlaybackTime();
+
+    if (aktualniCas === null) return;
+
+    noteTime = aktualniCas;
+    zobrazPripravenyCas();
+});
+
+$(document).on("click", "#modal_poznamka_zpet", function ()
+{
+    let aktualniCas = getNotePlaybackTime();
+
+    if (aktualniCas === null) return;
+
+    setNotePlaybackTime(aktualniCas - 5000);
+});
+
+function ulozitNovouPoznamku(vratitNaTimestamp)
+{
+    let novyText = $("#modal_poznamka_text").val().trim();
+
+    if (novyText == "")
+    {
+        alert("Poznámka nesmí být prázdná.");
+        return;
+    }
+
+    // Uložit lokální kopii: přehrávání může během AJAX požadavku pokračovat,
+    // ale volba "Přidat a vrátit" se musí vrátit na skutečně uložený timestamp.
+    let ulozenyCas = noteTime;
+
+    $.post(
+        "php/ajax/ajax_nahravka_poznamky.php",
+        {
+            akce: "add",
+            file_path: noteFile,
+            cas: ulozenyCas,
+            typ: noteType,
+            poznamka: novyText
+        },
+        function ()
+        {
+            if (vratitNaTimestamp) setNotePlaybackTime(ulozenyCas);
+
+            $("#modal_poznamka").modal("hide");
+
+            // Looper otevřený přesně na tomhle souboru → přenačíst jeho vlastní
+            // seznam přes loadLooperNotes (jediná funkce, co ví, jak #looper-notes
+            // správně naplnit — nemá vnořený .poznamky-seznam jako běžný řádek).
+            if (typeof looperCurrentFile !== 'undefined' && looperCurrentFile === noteFile)
+            {
+                loadLooperNotes(noteFile);
+            }
+
+            // Řádek v běžném seznamu nahrávek pro tenhle soubor, pokud je zrovna
+            // rozbalený (může nastat současně s looperem otevřeným na stejném souboru).
+            let panel = $(".poznamky-panel[data-cesta='" + noteFile + "']");
+
+            if (panel.length)
+            {
+                loadRecordingNotes(panel);
+            }
+        }
+    );
+}
+
+$(document).on("click", "#modal_poznamka_pridat_a_vratit", function ()
+{
+    if (noteAction === "add") ulozitNovouPoznamku(true);
 });
 
 $(document).on("click", "#modal_poznamka_ok", function ()
@@ -1455,37 +1569,7 @@ if (noteAction == "delete")
 
 if (noteAction == "add")
 {
-    $.post(
-        "php/ajax/ajax_nahravka_poznamky.php",
-        {
-            akce: "add",
-            file_path: noteFile,
-            cas: noteTime,
-            typ: noteType,
-            poznamka: novyText
-        },
-        function ()
-        {
-            $("#modal_poznamka").modal("hide");
-
-            // Looper otevřený přesně na tomhle souboru → přenačíst jeho vlastní
-            // seznam přes loadLooperNotes (jediná funkce, co ví, jak #looper-notes
-            // správně naplnit — nemá vnořený .poznamky-seznam jako běžný řádek).
-            if (typeof looperCurrentFile !== 'undefined' && looperCurrentFile === noteFile)
-            {
-                loadLooperNotes(noteFile);
-            }
-
-            // Řádek v běžném seznamu nahrávek pro tenhle soubor, pokud je zrovna
-            // rozbalený (může nastat současně s looperem otevřeným na stejném souboru).
-            let panel = $(".poznamky-panel[data-cesta='" + noteFile + "']");
-
-            if (panel.length)
-            {
-                loadRecordingNotes(panel);
-            }
-        }
-    );
+    ulozitNovouPoznamku(false);
 
     return;
 }

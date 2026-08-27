@@ -633,6 +633,20 @@
                     Čas:
                 </div>
 
+                <div id="modal_poznamka_cas_controls" class="mb-3">
+                    <button type="button"
+                            class="btn btn-secondary btn-sm"
+                            id="modal_poznamka_aktualizovat">
+                        Aktualizovat
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-secondary btn-sm"
+                            id="modal_poznamka_zpet">
+                        Zpět o 5 sekund
+                    </button>
+                </div>
+
                 <textarea
                     id="modal_poznamka_text"
                     class="form-control"
@@ -658,6 +672,13 @@
                         class="btn btn-primary"
                         id="modal_poznamka_ok">
                     Uložit
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        id="modal_poznamka_pridat_a_vratit"
+                        style="display:none;">
+                    Přidat a vrátit
                 </button>
 
             </div>
