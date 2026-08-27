@@ -133,6 +133,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" crossorigin="anonymous" defer></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" crossorigin="anonymous" defer></script>
 <script src="https://unpkg.com/wavesurfer.js@7" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
 <script src="js/main.js" defer></script>
 </head>
@@ -157,12 +158,21 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
       nápady <span class="napady-badge">DK</span>
     </a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
+    <a href="#" id="audio-cache-clear" title="Spravovat lokálně uložené nahrávky">smazat offline soubory</a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
   <div class="topbar-mob-actions">
     <a href="#" id="nav-napady-tab" onclick="tabletNapady(this);return false">nápady <span class="napady-badge">DK</span></a>
-    <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">about</a>
-    <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted);font-size:12px;padding:5px 8px;text-decoration:none;">odhlásit</a>
+    <details class="topbar-more-menu">
+      <summary aria-label="Další možnosti" title="Další možnosti">
+        <span></span><span></span><span></span>
+      </summary>
+      <div class="topbar-more-menu-items">
+        <a href="#" data-toggle="modal" data-target="#myModal" onclick="this.closest('details').removeAttribute('open')">about</a>
+        <a href="#" class="audio-cache-clear-mobile" title="Spravovat lokálně uložené nahrávky" onclick="this.closest('details').removeAttribute('open')">smazat offline soubory</a>
+        <a href="#" data-toggle="modal" data-target="#modal_logout" onclick="this.closest('details').removeAttribute('open')">odhlásit</a>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -226,6 +236,13 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
         </div>
 
+        <div id="audio-cache-control" class="audio-cache-control" hidden>
+            <button type="button" id="audio-cache-toggle" class="audio-cache-toggle" aria-pressed="false">
+                podržet v paměti
+            </button>
+            <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
+        </div>
+
     </div>
 
 
@@ -246,6 +263,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
     <!-- OBSAH -->
     <div id="looper-content" class="hidden">
         <div id="waveform-container">
+	        <div id="looper-file-name" title=""></div>
 	        <div id="looper-time">
                00:00 / 00:00
             </div>

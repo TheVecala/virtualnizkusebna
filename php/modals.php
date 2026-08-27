@@ -567,6 +567,27 @@
 
 
 <!-- ───────────────────────── ODHLÁŠENÍ ───────────────────────── -->
+<div class="modal fade" id="modal_offline_files" tabindex="-1" role="dialog" aria-labelledby="modal_offline_files_title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal_offline_files_title">OFFLINE SOUBORY</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div id="offline-files-list" class="offline-files-list" aria-live="polite"></div>
+        <p id="offline-files-empty" class="offline-files-empty" hidden>Žádné offline soubory.</p>
+        <p id="offline-files-error" class="offline-files-error" hidden>Offline soubory se nepodařilo načíst.</p>
+      </div>
+      <div class="modal-footer offline-files-footer">
+        <span id="offline-files-summary" class="offline-files-summary">0 souborů · 0 MB</span>
+        <button type="button" id="offline-files-clear-all" class="btn btn-danger" disabled>SMAZAT VŠE</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modal_logout">
   <div class="modal-dialog modal-sm">
     <div class="modal-content" style="text-align:center">
@@ -612,6 +633,20 @@
                     Čas:
                 </div>
 
+                <div id="modal_poznamka_cas_controls" class="mb-3">
+                    <button type="button"
+                            class="btn btn-secondary btn-sm"
+                            id="modal_poznamka_aktualizovat">
+                        Aktualizovat
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-secondary btn-sm"
+                            id="modal_poznamka_zpet">
+                        Zpět o 5 sekund
+                    </button>
+                </div>
+
                 <textarea
                     id="modal_poznamka_text"
                     class="form-control"
@@ -637,6 +672,13 @@
                         class="btn btn-primary"
                         id="modal_poznamka_ok">
                     Uložit
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        id="modal_poznamka_pridat_a_vratit"
+                        style="display:none;">
+                    Přidat a vrátit
                 </button>
 
             </div>
