@@ -270,6 +270,9 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     flex-shrink:0;
 }
 
+/* Tlačítko celé obrazovky je určené pro mobilní rozhraní. */
+.looper-fullscreen-btn { display: none; }
+
 #looper-content{
 
     padding:8px;
@@ -466,6 +469,38 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #looper-notes { max-height: 180px; }
   #looper-header { gap: 8px; }
   .audio-cache-control { max-width: 190px; }
+  .looper-fullscreen-btn { display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Looper jako samostatná mobilní obrazovka — překryje horní i spodní navigaci. */
+  #looper-bar.looper-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    box-sizing: border-box;
+    height: 100dvh;
+    padding: 8px;
+    gap: 8px;
+  }
+  #looper-bar.looper-fullscreen #looper-content {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    padding: 8px 0 0;
+  }
+  #looper-bar.looper-fullscreen #waveform-container {
+    flex: 0 0 auto;
+  }
+  #looper-bar.looper-fullscreen #looper-notes {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    margin-top: 8px;
+  }
+  #looper-bar.looper-fullscreen .looper-fullscreen-btn {
+    border-color: var(--barva);
+    color: var(--barva);
+  }
 }
 
 @media (max-width: 480px) {

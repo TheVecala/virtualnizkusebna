@@ -804,6 +804,11 @@ $(document).on('submit', '#form_napady', function(e) {
 window.addEventListener('resize', function() {
   var isMobile = window.innerWidth <= 768;
 
+  // Celoobrazovkový režim existuje jen pro úzké mobilní rozložení.
+  if (window.innerWidth > 767 && document.getElementById('looper-bar').classList.contains('looper-fullscreen')) {
+    looperFullscreenToggle(false);
+  }
+
   if (isMobile) {
     // Odstranit inline display styly z desktopView
     document.querySelectorAll('.panel').forEach(function(p) { p.style.display = ''; });
@@ -1695,6 +1700,21 @@ var looperCurrentSourceUrl = null;
 var looperCurrentObjectUrl = null;
 var audioCacheStore = null;
 var audioCacheRequests = {};
+var looperFullscreenWasCollapsed = false;
+
+function getLooperWaveHeight() {
+    var looperBar = document.getElementById('looper-bar');
+    if (looperBar && looperBar.classList.contains('looper-fullscreen')) {
+        return Math.max(160, Math.min(360, Math.round(window.innerHeight * 0.32)));
+    }
+    return 98;
+}
+
+function refreshLooperWaveformSize() {
+    if (wavesurfer && typeof wavesurfer.setOptions === 'function') {
+        wavesurfer.setOptions({ height: getLooperWaveHeight() });
+    }
+}
 
 function getAudioCacheStore() {
     if (!audioCacheStore && window.idbKeyval) {
@@ -1847,7 +1867,7 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
         barWidth:      2,
         barGap:        1,
         barRadius:     1,
-        height:        98,
+        height:        getLooperWaveHeight(),
         // MediaElement přehrává proudově a nedekóduje celou stopu do RAM.
         backend:       'MediaElement',
         url:           sourceUrl
@@ -2253,7 +2273,51 @@ function looperToggle()
     }
 }
 
+function looperFullscreenToggle(forceFullscreen)
+{
+    var looperBar = document.getElementById('looper-bar');
+    var content = document.getElementById('looper-content');
+    var button = document.getElementById('btn-looper-fullscreen');
+    if (!looperBar || !content || !button) return;
+
+    var otevrit = typeof forceFullscreen === 'boolean'
+        ? forceFullscreen
+        : !looperBar.classList.contains('looper-fullscreen');
+
+    if (otevrit && window.innerWidth > 767) return;
+
+    if (otevrit) {
+        looperFullscreenWasCollapsed = content.classList.contains('hidden');
+        looperBar.classList.add('looper-fullscreen');
+        content.classList.remove('hidden');
+        $('#btn-collapse').html('▲');
+    } else {
+        looperBar.classList.remove('looper-fullscreen');
+        if (looperFullscreenWasCollapsed) {
+            content.classList.add('hidden');
+            $('#btn-collapse').html('▼');
+        }
+        looperFullscreenWasCollapsed = false;
+    }
+
+    button.setAttribute('aria-pressed', String(otevrit));
+    button.setAttribute('aria-label', otevrit
+        ? 'Zavřít celoobrazovkový looper'
+        : 'Otevřít looper přes celou obrazovku');
+    button.title = otevrit ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
+    button.textContent = otevrit ? '⤢' : '⛶';
+
+    window.requestAnimationFrame(refreshLooperWaveformSize);
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && $('#looper-bar').hasClass('looper-fullscreen')) {
+        looperFullscreenToggle(false);
+    }
+});
+
 function looperZavrit() {
+    looperFullscreenToggle(false);
     if (wavesurfer) {
         wavesurfer.pause();
     }

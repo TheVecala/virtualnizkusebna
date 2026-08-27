@@ -253,6 +253,14 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
                 id="btn-collapse"
                 onclick="looperToggle()">▭</button>
 
+        <button class="wave-btn looper-fullscreen-btn"
+                id="btn-looper-fullscreen"
+                type="button"
+                onclick="looperFullscreenToggle()"
+                aria-label="Otevřít looper přes celou obrazovku"
+                aria-pressed="false"
+                title="Celá obrazovka">⛶</button>
+
         <button class="wave-btn"
                 onclick="looperZavrit()">✕</button>
 
