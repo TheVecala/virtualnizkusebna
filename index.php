@@ -278,23 +278,19 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
             <button class="wave-btn"
                     onclick="looperRestart()">↺</button>
 
-            <button class="wave-btn looper-link-btn"
-                    type="button"
-                    onclick="looperCreateLink()">Vytvořit odkaz</button>
-            <span id="looper-link-status" class="audio-cache-status" aria-live="polite"></span>
-
+ 
         </div>
 
         <div id="audio-cache-control" class="audio-cache-control" hidden>
-            <button type="button" id="audio-cache-toggle" class="audio-cache-toggle" aria-pressed="false">
-                podržet v paměti
-            </button>
-            <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
+           <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>  
+           <button type="button" id="audio-cache-toggle" class="audio-cache-toggle" aria-pressed="false">
+                podržet
+           </button>
         </div>
 
         <div id="looper-link-control" class="audio-cache-control" hidden>
             <button type="button" class="audio-cache-toggle" onclick="looperCreateLink()">
-                Vytvořit odkaz
+                vytvořit odkaz
             </button>
             <span id="looper-link-status" class="audio-cache-status" aria-live="polite"></span>
         </div>
