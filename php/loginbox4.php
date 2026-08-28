@@ -16,17 +16,23 @@ if (isset($_POST['submit_single'])) {
         $_SESSION['role']             = 'admin';
         $_SESSION['logged_in_single'] = true;
         unset($_SESSION['chyba_prihlaseni_single']);
-        header("Location: " . $_SERVER['PHP_SELF']); exit;
+        $deep_link_query = $_SESSION['deep_link_after_login'] ?? '';
+        unset($_SESSION['deep_link_after_login']);
+        header("Location: " . $_SERVER['PHP_SELF'] . ($deep_link_query !== '' ? '?' . $deep_link_query : '')); exit;
     } elseif ($zadani_hesla === HESLO_MUZIKANT) {
         $_SESSION['role']             = 'muzikant';
         $_SESSION['logged_in_single'] = true;
         unset($_SESSION['chyba_prihlaseni_single']);
-        header("Location: " . $_SERVER['PHP_SELF']); exit;
+        $deep_link_query = $_SESSION['deep_link_after_login'] ?? '';
+        unset($_SESSION['deep_link_after_login']);
+        header("Location: " . $_SERVER['PHP_SELF'] . ($deep_link_query !== '' ? '?' . $deep_link_query : '')); exit;
     } elseif ($zadani_hesla === HESLO_HOST) {
         $_SESSION['role']             = 'host';
         $_SESSION['logged_in_single'] = true;
         unset($_SESSION['chyba_prihlaseni_single']);
-        header("Location: " . $_SERVER['PHP_SELF']); exit;
+        $deep_link_query = $_SESSION['deep_link_after_login'] ?? '';
+        unset($_SESSION['deep_link_after_login']);
+        header("Location: " . $_SERVER['PHP_SELF'] . ($deep_link_query !== '' ? '?' . $deep_link_query : '')); exit;
     } else {
         $_SESSION['chyba_prihlaseni_single'] = "wrong_heslo";
     }

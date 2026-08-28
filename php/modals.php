@@ -607,6 +607,21 @@
   </div>
 </div>
 
+<div class="modal" id="modal_deep_link_error" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">CHYBA</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body"><p style="color:var(--text);margin:0">Nahrávka nebyla nalezena</p></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ───────────────────────── editace timestampu ───────────────────────── -->
 
 <div class="modal fade" id="modal_poznamka" tabindex="-1" role="dialog" aria-hidden="true">
