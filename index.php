@@ -2,6 +2,19 @@
 error_reporting(0);
 require_once 'config.php';
 
+// Deep link poznáme už před přihlášením. Do session ukládáme pouze znovu
+// sestavený lokální query string, nikdy uživatelem dodanou návratovou URL.
+$deep_link_requested = isset($_GET['val']) || isset($_GET['nahravka']) || isset($_GET['time']);
+if ($deep_link_requested && empty($_SESSION['logged_in_single'])) {
+    $deep_link_params = [];
+    foreach (['val', 'nahravka', 'time'] as $param) {
+        if (isset($_GET[$param]) && is_string($_GET[$param])) {
+            $deep_link_params[$param] = $_GET[$param];
+        }
+    }
+    $_SESSION['deep_link_after_login'] = http_build_query($deep_link_params, '', '&', PHP_QUERY_RFC3986);
+}
+
 // Inicializace SESSION barev
 $_SESSION['barva1']     = $_SESSION['barva1']     ?? "a7ac38";
 $_SESSION['barva_pozadi'] = $_SESSION['barva_pozadi'] ?? "202428";
@@ -94,6 +107,37 @@ $slozka_souboru = $_SESSION['slozka_souboru_k_zobrazeni'] ?? ($pole_slozek[0] ??
 if ($slozka_souboru === "slozka_smazana" || !in_array($slozka_souboru, $pole_slozek)) {
     $slozka_souboru = $pole_slozek[0] ?? "";
     $_SESSION['slozka_souboru_k_zobrazeni'] = $slozka_souboru;
+}
+
+// Validace deep linku proti skutečnému seznamu válů a nahrávek. Přesné členství
+// v $pole_slozek + basename vylučuje path traversal i načtení vedlejšího souboru.
+$deep_link = null;
+if ($deep_link_requested) {
+    $deep_val  = isset($_GET['val']) && is_string($_GET['val']) ? $_GET['val'] : '';
+    $deep_file = isset($_GET['nahravka']) && is_string($_GET['nahravka']) ? $_GET['nahravka'] : '';
+    $deep_time = isset($_GET['time']) && is_string($_GET['time']) && ctype_digit($_GET['time'])
+        ? (int) $_GET['time'] : 0;
+    $audio_extensions = ['mp3', 'wav', 'ogg', 'flac', 'aac'];
+    $valid_names = $deep_val !== '' && $deep_file !== ''
+        && basename($deep_val) === $deep_val && basename($deep_file) === $deep_file
+        && !str_contains($deep_val, '..') && !str_contains($deep_file, '..');
+    $deep_path = $valid_names && in_array($deep_val, $pole_slozek, true)
+        ? $slozka_slozek . $deep_val . '/' . $deep_file : '';
+    $valid_file = $deep_path !== '' && is_file($deep_path)
+        && in_array(strtolower(pathinfo($deep_file, PATHINFO_EXTENSION)), $audio_extensions, true);
+
+    if ($valid_file) {
+        $slozka_souboru = $deep_val;
+        $_SESSION['slozka_souboru_k_zobrazeni'] = $deep_val;
+        $deep_link = [
+            'valid' => true,
+            'file'  => $deep_file,
+            'path'  => $relativni_slozka_slozek . $deep_val . '/' . $deep_file,
+            'time'  => max(0, $deep_time),
+        ];
+    } else {
+        $deep_link = ['valid' => false];
+    }
 }
 
 // Název válu (z nazev_valu.txt pokud existuje) - upraveno o absolutní cestu
@@ -233,6 +277,11 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
             <button class="wave-btn"
                     onclick="looperRestart()">↺</button>
+
+            <button class="wave-btn looper-link-btn"
+                    type="button"
+                    onclick="looperCreateLink()">Vytvořit odkaz</button>
+            <span id="looper-link-status" class="audio-cache-status" aria-live="polite"></span>
 
         </div>
 
@@ -566,6 +615,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 var VZ = {
   aktualniVal:     <?php echo json_encode($slozka_souboru); ?>,
   aktualniNazev:   <?php echo json_encode($nazev_valu); ?>,
+  deepLink:        <?php echo json_encode($deep_link, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>,
   aktivniMobPanel: 'nahravky',
   pravo: {
     rename_val: <?php echo json_encode(ma_pravo('rename_val')); ?>,
