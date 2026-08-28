@@ -1739,6 +1739,7 @@ function setAudioCacheUi(isCached, status, disabled) {
     var $toggle = $('#audio-cache-toggle');
 
     $control.prop('hidden', !looperCurrentFile);
+    $('#looper-link-control').prop('hidden', !looperCurrentFile);
     $toggle
         .prop('disabled', !!disabled)
         .attr('aria-pressed', !!isCached)
@@ -2397,6 +2398,7 @@ function looperZavrit() {
     destroyLooperWaveSurfer();
 	$('#wf-placeholder').show();
     looperCurrentFile = null;
+    looperCurrentName = null;
     looperCurrentPeaks = null;
     looperCurrentSourceUrl = null;
     setAudioCacheUi(false, '', true);
