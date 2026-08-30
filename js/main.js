@@ -807,11 +807,6 @@ $(document).on('submit', '#form_napady', function(e) {
 window.addEventListener('resize', function() {
   var isMobile = window.innerWidth <= 768;
 
-  // Celoobrazovkový režim existuje jen pro úzké mobilní rozložení.
-  if (window.innerWidth > 767 && document.getElementById('looper-bar').classList.contains('looper-fullscreen')) {
-    looperFullscreenToggle(false);
-  }
-
   if (isMobile) {
     // Odstranit inline display styly z desktopView
     document.querySelectorAll('.panel').forEach(function(p) { p.style.display = ''; });
@@ -2339,11 +2334,13 @@ function looperToggle()
 
     if ($('#looper-content').hasClass('hidden'))
     {
-        $('#btn-collapse').html('▼');
+        $('#btn-collapse-icon').text('▼');
+        $('#btn-collapse-label').text('Obnovit');
     }
     else
     {
-        $('#btn-collapse').html('▲');
+        $('#btn-collapse-icon').text('▲');
+        $('#btn-collapse-label').text('Minimalizovat');
     }
 }
 
@@ -2358,36 +2355,62 @@ function looperFullscreenToggle(forceFullscreen)
         ? forceFullscreen
         : !looperBar.classList.contains('looper-fullscreen');
 
-    if (otevrit && window.innerWidth > 767) return;
-
     if (otevrit) {
         looperFullscreenWasCollapsed = content.classList.contains('hidden');
         looperBar.classList.add('looper-fullscreen');
         content.classList.remove('hidden');
-        $('#btn-collapse').html('▲');
+        $('#btn-collapse-icon').text('▲');
+        $('#btn-collapse-label').text('Minimalizovat');
     } else {
         looperBar.classList.remove('looper-fullscreen');
         if (looperFullscreenWasCollapsed) {
             content.classList.add('hidden');
-            $('#btn-collapse').html('▼');
+            $('#btn-collapse-icon').text('▼');
+            $('#btn-collapse-label').text('Obnovit');
         }
         looperFullscreenWasCollapsed = false;
     }
 
     button.setAttribute('aria-pressed', String(otevrit));
-    button.setAttribute('aria-label', otevrit
-        ? 'Zavřít celoobrazovkový looper'
-        : 'Otevřít looper přes celou obrazovku');
-    button.title = otevrit ? 'Zavřít celou obrazovku' : 'Celá obrazovka';
-    button.textContent = otevrit ? '⤢' : '⛶';
+    button.setAttribute('aria-label', otevrit ? 'Obnovit velikost looperu' : 'Maximalizovat looper');
+    $('#btn-looper-fullscreen-label').text(otevrit ? 'Obnovit velikost' : 'Maximalizovat');
 
     window.requestAnimationFrame(refreshLooperWaveformSize);
 }
 
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape' && $('#looper-bar').hasClass('looper-fullscreen')) {
-        looperFullscreenToggle(false);
+function setLooperMenuOpen(open) {
+    var menu = document.getElementById('looper-menu');
+    var button = document.getElementById('btn-looper-menu');
+    if (!menu || !button) return;
+    menu.hidden = !open;
+    button.setAttribute('aria-expanded', String(open));
+    button.setAttribute('aria-label', open ? 'Zavřít menu Looperu' : 'Otevřít menu Looperu');
+}
+
+function closeLooperMenu() {
+    var menu = document.getElementById('looper-menu');
+    if (!menu || menu.hidden) return false;
+    setLooperMenuOpen(false);
+    return true;
+}
+
+document.addEventListener('click', function(event) {
+    var menuWrap = document.querySelector('.looper-menu-wrap');
+    if (!menuWrap) return;
+
+    if (event.target.closest('#btn-looper-menu')) {
+        setLooperMenuOpen(document.getElementById('looper-menu').hidden);
+    } else if (!menuWrap.contains(event.target)) {
+        closeLooperMenu();
+    } else if (event.target.closest('[data-looper-menu-close]')) {
+        closeLooperMenu();
     }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.key !== 'Escape') return;
+    if (closeLooperMenu()) return;
+    if ($('#looper-bar').hasClass('looper-fullscreen')) looperFullscreenToggle(false);
 });
 
 function looperZavrit() {
@@ -2405,7 +2428,8 @@ function looperZavrit() {
     $('#looper-file-name').text('').attr('title', '').hide();
     $('#looper-notes').hide().empty();
   	//$('#looper-content').removeClass('hidden');
-    $('#btn-collapse').html('▼');
+    $('#btn-collapse-icon').text('▼');
+    $('#btn-collapse-label').text('Obnovit');
     $('#looper-time').text('00:00 / 00:00').hide();
     $('#looper-content').addClass('hidden');
     isLooping = false;
@@ -2416,11 +2440,13 @@ function looperZavrit() {
 
 if ($('#looper-content').hasClass('hidden'))
 {
-    $('#btn-collapse').html('▼');
+    $('#btn-collapse-icon').text('▼');
+    $('#btn-collapse-label').text('Obnovit');
 }
 else
 {
-    $('#btn-collapse').html('▲');
+    $('#btn-collapse-icon').text('▲');
+    $('#btn-collapse-label').text('Minimalizovat');
 }
 
 

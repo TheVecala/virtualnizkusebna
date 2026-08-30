@@ -281,40 +281,47 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
  
         </div>
 
-        <div id="audio-cache-control" class="audio-cache-control" hidden>
-           <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>  
-           <button type="button" id="audio-cache-toggle" class="audio-cache-toggle" aria-pressed="false">
-                podržet
-           </button>
-        </div>
-
-        <div id="looper-link-control" class="audio-cache-control" hidden>
-            <button type="button" class="audio-cache-toggle" onclick="looperCreateLink()">
-                vytvořit odkaz
-            </button>
-            <span id="looper-link-status" class="audio-cache-status" aria-live="polite"></span>
-        </div>
-
     </div>
 
-
-
     <div class="looper-right">
+        <div class="looper-menu-wrap">
+            <button class="wave-btn looper-menu-toggle"
+                    id="btn-looper-menu"
+                    type="button"
+                    aria-label="Otevřít menu Looperu"
+                    aria-expanded="false"
+                    aria-controls="looper-menu">☰</button>
 
-        <button class="wave-btn"
-                id="btn-collapse"
-                onclick="looperToggle()">▭</button>
+            <div id="looper-menu" class="looper-menu" hidden>
+                <div class="looper-menu-section">
+                    <button class="looper-menu-item" id="btn-collapse" type="button" data-looper-menu-close onclick="looperToggle()">
+                        <span id="btn-collapse-icon" aria-hidden="true">▭</span><span id="btn-collapse-label">Minimalizovat</span>
+                    </button>
+                    <button class="looper-menu-item" id="btn-looper-fullscreen" type="button" data-looper-menu-close
+                            onclick="looperFullscreenToggle()" aria-label="Maximalizovat looper" aria-pressed="false">
+                        <span aria-hidden="true">⛶</span><span id="btn-looper-fullscreen-label">Maximalizovat</span>
+                    </button>
+                    <button class="looper-menu-item" type="button" data-looper-menu-close onclick="looperZavrit()">
+                        <span aria-hidden="true">✕</span><span>Zavřít</span>
+                    </button>
+                </div>
 
-        <button class="wave-btn looper-fullscreen-btn"
-                id="btn-looper-fullscreen"
-                type="button"
-                onclick="looperFullscreenToggle()"
-                aria-label="Otevřít looper přes celou obrazovku"
-                aria-pressed="false"
-                title="Celá obrazovka">⛶</button>
+                <div class="looper-menu-section looper-menu-offline">
+                    <span class="looper-menu-heading">Offline</span>
+                    <div id="audio-cache-control" class="audio-cache-control" hidden>
+                        <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
+                        <button type="button" id="audio-cache-toggle" class="audio-cache-toggle" aria-pressed="false">podržet</button>
+                    </div>
+                </div>
 
-        <button class="wave-btn"
-                onclick="looperZavrit()">✕</button>
+                <div class="looper-menu-section">
+                    <div id="looper-link-control" class="audio-cache-control" hidden>
+                        <button type="button" class="audio-cache-toggle" data-looper-menu-close onclick="looperCreateLink()">vytvořit odkaz</button>
+                        <span id="looper-link-status" class="audio-cache-status" aria-live="polite"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
 

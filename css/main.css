@@ -226,15 +226,14 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .lclose:hover { color: var(--text); }
 
 #looper-header{
-
     display:flex;
     align-items:center;
     justify-content:space-between;
-
     padding:6px 10px;
-
     background:#2b3035;
     border-bottom:1px solid #3d4349;
+    position:relative;
+    z-index:30;
 }
 
 .looper-left{
@@ -243,8 +242,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     align-items:center;
     min-width:0;
     flex:1;
-    flex-wrap:wrap;
     gap:12px;
+    overflow:hidden;
 }
 
 .looper-title{
@@ -263,15 +262,74 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
  
 .looper-right{
-
     display:flex;
     align-items:center;
-    gap:5px;
     flex-shrink:0;
 }
 
-/* Tlačítko celé obrazovky je určené pro mobilní rozhraní. */
-.looper-fullscreen-btn { display: none; }
+.looper-menu-wrap { position: relative; }
+.looper-menu-toggle { min-width: 40px; padding-inline: 10px; }
+.looper-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  width: max-content;
+  max-width: min(340px, calc(100vw - 32px));
+  padding: 6px;
+  background: var(--tmava);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
+}
+.looper-menu[hidden] { display: none; }
+.looper-menu-section { display: flex; flex-direction: column; gap: 3px; padding: 5px 0; }
+.looper-menu-section + .looper-menu-section { border-top: 1px solid var(--border); }
+.looper-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.looper-menu-item:hover { color: var(--barva); background: var(--card); }
+.looper-menu-heading { padding: 1px 7px 3px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.looper-menu .audio-cache-control { width: 100%; max-width: 100%; box-sizing: border-box; margin: 0; white-space: normal; }
+.looper-menu .audio-cache-status { flex: 1; }
+
+/* Stejný existující fullscreen stav jako na mobilu, jen s desktopovou výškou. */
+@media (min-width: 768px) {
+  #looper-bar.looper-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    box-sizing: border-box;
+    height: 100vh;
+    padding: 8px;
+    gap: 8px;
+  }
+  #looper-bar.looper-fullscreen #looper-content {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    padding: 8px 0 0;
+  }
+  #looper-bar.looper-fullscreen #waveform-container { flex: 0 0 auto; }
+  #looper-bar.looper-fullscreen #looper-notes {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    margin-top: 8px;
+  }
+}
 
 #looper-content{
 
@@ -468,8 +526,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
      zaberou víc podílu obrazovky) — nižší strop, ať zbyde místo i na ně. */
   #looper-notes { max-height: 180px; }
   #looper-header { gap: 8px; }
-  .audio-cache-control { max-width: 190px; }
-  .looper-fullscreen-btn { display: inline-flex; align-items: center; justify-content: center; }
+  #looper-header { padding-inline: 8px; }
+  .looper-left { gap: 7px; }
+  .looper-buttons { gap: 3px; }
+  .looper-buttons .wave-btn { padding: 6px 9px; }
 
   /* Looper jako samostatná mobilní obrazovka — překryje horní i spodní navigaci. */
   #looper-bar.looper-fullscreen {
@@ -497,17 +557,12 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     max-height: none;
     margin-top: 8px;
   }
-  #looper-bar.looper-fullscreen .looper-fullscreen-btn {
-    border-color: var(--barva);
-    color: var(--barva);
-  }
 }
 
 @media (max-width: 480px) {
   .offline-file-item { grid-template-columns: minmax(0, 1fr) auto; }
   .offline-file-size { grid-column: 1; }
   .offline-file-item .btn { grid-column: 2; grid-row: 1 / span 2; }
-  .audio-cache-control { order: 3; margin-left: 0; max-width: 100%; }
   #looper-file-name { right: 86px; }
 }
 
