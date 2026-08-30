@@ -1,5 +1,9 @@
 <style>
 /* ── Jednotný styl všech modalů ── */
+/* Maximalizovaný Looper je nad běžným rozhraním (z-index 1100), proto musí
+   Bootstrap modal i jeho backdrop zůstat nad ním. */
+.modal { z-index: 1200; }
+.modal-backdrop { z-index: 1190; }
 .modal-content {
   background: #2e3338 !important;
   border: 1px solid #a7ac38;
