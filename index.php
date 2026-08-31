@@ -288,7 +288,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
             <button class="wave-btn looper-menu-toggle"
                     id="btn-looper-menu"
                     type="button"
-                    aria-label="Otevřít menu Looperu"
+                    aria-label="Otevřít nápovědu Looperu"
                     aria-expanded="false"
                     aria-controls="looper-menu">☰</button>
 
@@ -338,6 +338,10 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <div id="wf-placeholder">
 
     <div class="looper-guide">
+
+        <div class="looper-guide-actions">
+            <button type="button" class="wave-btn" onclick="closeLooperGuide()">Zavřít nápovědu</button>
+        </div>
 
 		<div class="looper-guide-row">
 		    <div class="guide-text">

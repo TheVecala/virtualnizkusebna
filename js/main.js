@@ -386,7 +386,7 @@ function looperOtevrit(soubor, label) {
   // BEZPEČNOSTNÍ ÚPRAVA: Už nevypisujeme celou FTP cestu k souboru na disku
   var placeholder = document.getElementById('wf-placeholder');
   
-  if (placeholder) { placeholder.textContent = 'načítám main...';}
+  if (placeholder) { placeholder.style.display = 'none'; }
 }
 
 
@@ -1972,9 +1972,11 @@ function openRecordingInLooper(cesta, nazev, options) {
     // Zobrazíme looper bar a resetujeme stav
     $('#looper-bar').removeClass('hidden');
     $('#looper-content').removeClass('hidden');
-    $('#btn-collapse').html('▭');
+    $('#btn-collapse-icon').text('▭');
+    $('#btn-collapse-label').text('Minimalizovat');
     $('#looper-file-name').text(nazev).attr('title', nazev).show();
-    $('#wf-placeholder').text('načítám index...').show();
+    $('#wf-placeholder').hide();
+    setLooperMenuOpen(false);
 
     isLooping = false;
     $('#btn-loop').removeClass('on');
@@ -2374,6 +2376,7 @@ function looperFullscreenToggle(forceFullscreen)
     button.setAttribute('aria-pressed', String(otevrit));
     button.setAttribute('aria-label', otevrit ? 'Obnovit velikost looperu' : 'Maximalizovat looper');
     $('#btn-looper-fullscreen-label').text(otevrit ? 'Obnovit velikost' : 'Maximalizovat');
+    $('#btn-collapse').prop('hidden', otevrit);
 
     window.requestAnimationFrame(refreshLooperWaveformSize);
 }
@@ -2385,6 +2388,26 @@ function setLooperMenuOpen(open) {
     menu.hidden = !open;
     button.setAttribute('aria-expanded', String(open));
     button.setAttribute('aria-label', open ? 'Zavřít menu Looperu' : 'Otevřít menu Looperu');
+}
+
+function setLooperGuideOpen(open) {
+    var content = document.getElementById('looper-content');
+    if (!content || looperCurrentFile) return;
+
+    content.classList.toggle('hidden', !open);
+    $('#wf-placeholder').toggle(open);
+    $('#btn-collapse-icon').text(open ? '▲' : '▼');
+    $('#btn-collapse-label').text(open ? 'Minimalizovat' : 'Obnovit');
+
+    var button = document.getElementById('btn-looper-menu');
+    if (button) {
+        button.setAttribute('aria-expanded', String(open));
+        button.setAttribute('aria-label', open ? 'Zavřít nápovědu Looperu' : 'Otevřít nápovědu Looperu');
+    }
+}
+
+function closeLooperGuide() {
+    setLooperGuideOpen(false);
 }
 
 function closeLooperMenu() {
@@ -2399,7 +2422,11 @@ document.addEventListener('click', function(event) {
     if (!menuWrap) return;
 
     if (event.target.closest('#btn-looper-menu')) {
-        setLooperMenuOpen(document.getElementById('looper-menu').hidden);
+        if (looperCurrentFile) {
+            setLooperMenuOpen(document.getElementById('looper-menu').hidden);
+        } else {
+            setLooperGuideOpen(document.getElementById('looper-content').classList.contains('hidden'));
+        }
     } else if (!menuWrap.contains(event.target)) {
         closeLooperMenu();
     } else if (event.target.closest('[data-looper-menu-close]')) {
@@ -2432,6 +2459,12 @@ function looperZavrit() {
     $('#btn-collapse-label').text('Obnovit');
     $('#looper-time').text('00:00 / 00:00').hide();
     $('#looper-content').addClass('hidden');
+    closeLooperMenu();
+    var menuButton = document.getElementById('btn-looper-menu');
+    if (menuButton) {
+        menuButton.setAttribute('aria-expanded', 'false');
+        menuButton.setAttribute('aria-label', 'Otevřít nápovědu Looperu');
+    }
     isLooping = false;
     $('#btn-loop').removeClass('on');
 	
@@ -2447,12 +2480,4 @@ else
 {
     $('#btn-collapse-icon').text('▲');
     $('#btn-collapse-label').text('Minimalizovat');
-}
-
-
-// ── Nastavení počátečního stavu tlačítka collapse loop panelu ──
-if ($('#looper-content').hasClass('hidden')) {
-    $('#btn-collapse').html('▼');
-} else {
-    $('#btn-collapse').html('▲');
 }

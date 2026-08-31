@@ -711,6 +711,12 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     font-size: 13px;
 }
 
+.looper-guide-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
 .looper-guide-row
 {
     display: flex;
