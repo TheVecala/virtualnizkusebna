@@ -1,6 +1,7 @@
 /* ── main.js — Virtuální zkušebna ── */
 const NOTE_SONG   = 0;
 const NOTE_NORMAL = 1;
+const NOTE_PASSAGE = 2;
 let noteAction = "";
 let noteId = 0;
 let noteFile = "";
@@ -20,6 +21,13 @@ function formatTime(ms)
     return String(min).padStart(2, "0") +
            ":" +
            String(sec).padStart(2, "0");
+}
+
+function getNoteTypeName(typ)
+{
+    if (typ === NOTE_SONG) return "Začátek skladby";
+    if (typ === NOTE_PASSAGE) return "Pasáž";
+    return "Poznámka";
 }
 
 function getNotePlaybackTime()
@@ -1248,6 +1256,23 @@ function loadRecordingNotes(panel)
 });
 }
 
+function refreshTimestampViews(filePath)
+{
+    if (typeof looperCurrentFile !== 'undefined' && looperCurrentFile === filePath)
+    {
+        loadLooperNotes(filePath);
+    }
+
+    $('.poznamky-panel').filter(function() {
+        return $(this).data('cesta') === filePath;
+    }).each(function() {
+        var $panel = $(this);
+        if ($panel.is(':visible') || $panel.find('.poznamky-seznam').children().length) {
+            loadRecordingNotes($panel);
+        }
+    });
+}
+
 $(document).on('click', '.pridat-poznamku-btn', function() {
 
     let typ = $(this).data('typ');
@@ -1299,9 +1324,7 @@ noteFile = cilovyFile;
 noteTime = cas;
 noteType = typ;
 
-$("#modal_poznamka_title").text(
-    typ == NOTE_SONG ? "Začátek skladby" : "Nová poznámka"
-);
+$("#modal_poznamka_title").text("Nový timestamp: " + getNoteTypeName(typ));
 
 zobrazPripravenyCas();
 
@@ -1336,13 +1359,56 @@ $(document).on('click', '.note-row', function() {
     }
 });
 
+$(document).on('click', '.waveform-marker', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (wavesurfer) wavesurfer.setTime(Number($(this).data('ms')) / 1000);
+});
+
+$(document).on('click', '.note-loop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var $row = $(this).closest('.note-row');
+    var typ = Number($row.data('typ'));
+    if (typ !== NOTE_SONG && typ !== NOTE_PASSAGE) return;
+
+    var timestamps = collectTimestampData($row.closest('#looper-notes, .poznamky-seznam'));
+    var startMs = Number($row.data('ms'));
+    var endMs = findTimestampLoopEndMs(startMs, typ, timestamps);
+    var filePath = $row.data('file');
+
+    if (looperCurrentFile === filePath) {
+        looperOpenOptions.autoplay = true;
+        looperOpenOptions.timeMs = startMs;
+        looperOpenOptions.loopRange = { startMs: startMs, endMs: endMs };
+        activateTimestampLoop(startMs, endMs);
+        return;
+    }
+
+    var $recording = $row.closest('.nahravka-vysuvna');
+    var $looperButton = $recording.find('.looper-btn').first();
+    if (!$looperButton.length) return;
+
+    var nativeAudio = $recording.find('audio')[0];
+    if (nativeAudio) nativeAudio.pause();
+
+    openRecordingInLooper(
+        filePath,
+        $looperButton.data('nazev'),
+        { autoplay: true, timeMs: startMs, loopRange: { startMs: startMs, endMs: endMs } }
+    );
+});
+
 $(document).on('click', '.note-edit', function(e)
 {
     e.stopPropagation();
 
     let row = $(this).closest('.note-row');
 
-    let id = row.data('id');
+	let id = row.data('id');
+	noteFile = row.data('file');
+	noteType = Number(row.data('typ'));
 
     let textEl = row.find('.note-text');
 
@@ -1352,10 +1418,10 @@ $(document).on('click', '.note-edit', function(e)
 
 	noteId = id;
 
-	$("#modal_poznamka_title").text("Upravit poznámku");
+	$("#modal_poznamka_title").text("Upravit: " + getNoteTypeName(noteType));
 
 	$("#modal_poznamka_info").html(
-		"Čas: <strong>" + row.find(".note-time").text().trim() + "</strong>"
+		"Čas: <strong>" + formatTime(Number(row.data('ms'))) + "</strong>"
 	);
 
 	$("#modal_poznamka_text").val(puvodniText);
@@ -1384,20 +1450,22 @@ $(document).on('click', '.note-delete', function(e)
 
     let row = $(this).closest('.note-row');
 
-    let id = row.data('id');
+	let id = row.data('id');
+	noteFile = row.data('file');
+	noteType = Number(row.data('typ'));
 
    noteAction = "delete";
 
 	noteId = id;
 
-	$("#modal_poznamka_title").text("Smazat poznámku");
+	$("#modal_poznamka_title").text("Smazat: " + getNoteTypeName(noteType));
 
 	$("#modal_poznamka_info").html(
-		"Čas: <strong>" + row.find(".note-time").text().trim() + "</strong>"
+		"Čas: <strong>" + formatTime(Number(row.data('ms'))) + "</strong>"
 	);
 
 	$("#modal_poznamka_confirm").html(
-		"Opravdu chcete smazat tuto poznámku?<br><br><strong>" +
+		"Opravdu chcete smazat tento timestamp?<br><br><strong>" +
 		row.find(".note-text").text() +
 		"</strong>"
 	);
@@ -1472,7 +1540,7 @@ function ulozitNovouPoznamku(vratitNaTimestamp)
 
     if (novyText == "")
     {
-        alert("Poznámka nesmí být prázdná.");
+        alert("Text timestampu nesmí být prázdný.");
         return;
     }
 
@@ -1495,22 +1563,7 @@ function ulozitNovouPoznamku(vratitNaTimestamp)
 
             $("#modal_poznamka").modal("hide");
 
-            // Looper otevřený přesně na tomhle souboru → přenačíst jeho vlastní
-            // seznam přes loadLooperNotes (jediná funkce, co ví, jak #looper-notes
-            // správně naplnit — nemá vnořený .poznamky-seznam jako běžný řádek).
-            if (typeof looperCurrentFile !== 'undefined' && looperCurrentFile === noteFile)
-            {
-                loadLooperNotes(noteFile);
-            }
-
-            // Řádek v běžném seznamu nahrávek pro tenhle soubor, pokud je zrovna
-            // rozbalený (může nastat současně s looperem otevřeným na stejném souboru).
-            let panel = $(".poznamky-panel[data-cesta='" + noteFile + "']");
-
-            if (panel.length)
-            {
-                loadRecordingNotes(panel);
-            }
+            refreshTimestampViews(noteFile);
         }
     );
 }
@@ -1526,7 +1579,7 @@ let novyText = $("#modal_poznamka_text").val().trim();
 
 if (noteAction != "delete" && novyText == "")
 {
-    alert("Poznámka nesmí být prázdná.");
+    alert("Text timestampu nesmí být prázdný.");
     return;
 }
 	
@@ -1541,11 +1594,8 @@ if (noteAction == "edit")
         },
         function ()
         {
-            $(".note-row[data-id='" + noteId + "']")
-                .find(".note-text")
-                .text(novyText);
-
             $("#modal_poznamka").modal("hide");
+            refreshTimestampViews(noteFile);
         }
     );
     return;
@@ -1561,9 +1611,8 @@ if (noteAction == "delete")
         },
         function ()
         {
-            $(".note-row[data-id='" + noteId + "']").remove();
-
             $("#modal_poznamka").modal("hide");
+            refreshTimestampViews(noteFile);
         }
     );
 
@@ -1621,9 +1670,11 @@ function loadLooperNotes(filePath)
         },
         function(html)
         {
+            if (looperCurrentFile !== filePath) return;
             $('#looper-notes')
                 .html(html)
                 .show();
+            syncLooperTimestampsFromList();
         }
     );
 }
@@ -1702,6 +1753,160 @@ var audioCacheRequests = {};
 var looperFullscreenWasCollapsed = false;
 var looperOpenOptions = { autoplay: true, timeMs: 0 };
 var deepLinkProcessed = false;
+var looperTimestamps = [];
+var loopRangeStartSec = null;
+var loopRangeEndSec = null;
+
+function collectTimestampData($root)
+{
+    var timestamps = [];
+    $root.find('.note-row').each(function() {
+        timestamps.push({
+            id: Number($(this).data('id')),
+            ms: Number($(this).data('ms')),
+            typ: Number($(this).data('typ')),
+            text: $(this).find('.note-text').text().trim()
+        });
+    });
+
+    return timestamps.sort(function(a, b) {
+        return a.ms - b.ms || a.id - b.id;
+    });
+}
+
+function findTimestampLoopEndMs(startMs, typ, timestamps)
+{
+    for (var i = 0; i < timestamps.length; i++) {
+        var timestamp = timestamps[i];
+        if (timestamp.ms <= startMs) continue;
+
+        if (typ === NOTE_SONG && timestamp.typ === NOTE_SONG) return timestamp.ms;
+        if (typ === NOTE_PASSAGE &&
+            (timestamp.typ === NOTE_PASSAGE || timestamp.typ === NOTE_SONG)) {
+            return timestamp.ms;
+        }
+    }
+
+    return null;
+}
+
+function getTimestampVisual(typ)
+{
+    if (typ === NOTE_SONG) return { className: 'song', icon: '♪' };
+    if (typ === NOTE_PASSAGE) return { className: 'passage', icon: '↔' };
+    return { className: 'normal', icon: '●' };
+}
+
+function syncLooperTimestampsFromList()
+{
+    looperTimestamps = collectTimestampData($('#looper-notes'));
+    renderLooperMarkers();
+}
+
+function renderLooperMarkers()
+{
+    var layer = document.getElementById('waveform-markers');
+    if (!layer) return;
+    layer.innerHTML = '';
+
+    if (!wavesurfer) return;
+    var duration = wavesurfer.getDuration();
+    if (!(duration > 0)) return;
+
+    var width = layer.clientWidth || 1;
+    var mobile = width < 768;
+    var lastRightByLevel = [-Infinity, -Infinity, -Infinity];
+
+    looperTimestamps.forEach(function(timestamp) {
+        var visual = getTimestampVisual(timestamp.typ);
+        var percent = Math.max(0, Math.min(100, timestamp.ms / 1000 / duration * 100));
+        var x = percent / 100 * width;
+        var estimatedWidth = mobile
+            ? 88
+            : Math.min(155, Math.max(74, 42 + timestamp.text.length * 5.5));
+        var level = -1;
+
+        for (var i = 0; i < lastRightByLevel.length; i++) {
+            if (x >= lastRightByLevel[i] + 6) {
+                level = i;
+                break;
+            }
+        }
+
+        var crowded = level === -1;
+        if (crowded) {
+            level = lastRightByLevel.indexOf(Math.min.apply(Math, lastRightByLevel));
+        }
+        lastRightByLevel[level] = x + estimatedWidth;
+
+        var marker = document.createElement('button');
+        marker.type = 'button';
+        marker.className = 'waveform-marker waveform-marker--' + visual.className +
+            (crowded ? ' is-crowded' : '');
+        marker.style.left = percent + '%';
+        marker.style.setProperty('--marker-level', (level * 23) + 'px');
+        marker.dataset.ms = timestamp.ms;
+        marker.dataset.edge = x + estimatedWidth > width ? 'end' : 'start';
+        marker.title = getNoteTypeName(timestamp.typ) + ': ' + timestamp.text +
+            ' (' + formatTime(timestamp.ms) + ')';
+        marker.setAttribute('aria-label', marker.title);
+
+        var line = document.createElement('span');
+        line.className = 'waveform-marker-line';
+        line.setAttribute('aria-hidden', 'true');
+
+        var label = document.createElement('span');
+        label.className = 'waveform-marker-label';
+
+        var icon = document.createElement('span');
+        icon.className = 'waveform-marker-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = visual.icon;
+
+        var text = document.createElement('span');
+        text.className = 'waveform-marker-text';
+        text.textContent = timestamp.text + ' · ' + formatTime(timestamp.ms);
+
+        label.appendChild(icon);
+        label.appendChild(text);
+        marker.appendChild(line);
+        marker.appendChild(label);
+        layer.appendChild(marker);
+    });
+}
+
+function setLooperLooping(enabled)
+{
+    isLooping = !!enabled;
+    $('#btn-loop')
+        .toggleClass('on', isLooping)
+        .attr('aria-pressed', isLooping ? 'true' : 'false');
+}
+
+function getLoopStartSec()
+{
+    return loopRangeStartSec === null ? 0 : loopRangeStartSec;
+}
+
+function getLoopEndSec()
+{
+    var duration = wavesurfer ? wavesurfer.getDuration() : 0;
+    if (loopRangeEndSec !== null) {
+        return duration > 0 ? Math.min(loopRangeEndSec, duration) : loopRangeEndSec;
+    }
+    return duration;
+}
+
+function activateTimestampLoop(startMs, endMs)
+{
+    loopRangeStartSec = Math.max(0, startMs / 1000);
+    loopRangeEndSec = endMs === null ? null : Math.max(loopRangeStartSec, endMs / 1000);
+    setLooperLooping(true);
+
+    if (!wavesurfer || !(wavesurfer.getDuration() > 0)) return;
+    wavesurfer.setTime(loopRangeStartSec);
+    wavesurfer.play();
+}
 
 function getLooperWaveHeight() {
     var looperBar = document.getElementById('looper-bar');
@@ -1714,6 +1919,7 @@ function getLooperWaveHeight() {
 function refreshLooperWaveformSize() {
     if (wavesurfer && typeof wavesurfer.setOptions === 'function') {
         wavesurfer.setOptions({ height: getLooperWaveHeight() });
+        renderLooperMarkers();
     }
 }
 
@@ -1846,6 +2052,7 @@ function destroyLooperWaveSurfer() {
         wavesurfer.destroy();
         wavesurfer = null;
     }
+    $('#waveform-markers').empty();
     releaseLooperObjectUrl();
 }
 
@@ -1894,10 +2101,16 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
 		$('#looper-time').show();
         var delka = wavesurfer.getDuration();
 
+        if (loopRangeStartSec !== null) {
+            loopRangeStartSec = Math.min(delka, loopRangeStartSec);
+            if (loopRangeEndSec !== null) loopRangeEndSec = Math.min(delka, loopRangeEndSec);
+        }
+
         var pozice = Math.min(delka, Math.max(0, looperOpenOptions.timeMs / 1000));
         wavesurfer.setTime(pozice);
         if (looperOpenOptions.autoplay) wavesurfer.play();
         else wavesurfer.pause();
+        renderLooperMarkers();
 
 		$('#looper-time').text(
 			formatLooperTime(0) + ' / ' + formatLooperTime(delka)
@@ -1933,6 +2146,7 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
 
     wavesurfer.on('finish', function() {
         if (isLooping) {
+            wavesurfer.setTime(getLoopStartSec());
             wavesurfer.play();
         } else {
             $('#btn-play').removeClass('on');
@@ -1941,6 +2155,15 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
     });
 	
 	wavesurfer.on('timeupdate', function(sec){
+
+    if (isLooping && loopRangeStartSec !== null) {
+        var loopEnd = getLoopEndSec();
+        if (loopEnd > loopRangeStartSec && sec >= loopEnd) {
+            wavesurfer.setTime(loopRangeStartSec);
+            wavesurfer.play();
+            return;
+        }
+    }
 
     $('#looper-time').text(
 
@@ -1963,10 +2186,12 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
 
 // Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
 function openRecordingInLooper(cesta, nazev, options) {
-    looperOpenOptions = Object.assign({ autoplay: true, timeMs: 0 }, options || {});
+    looperOpenOptions = Object.assign({ autoplay: true, timeMs: 0, loopRange: null }, options || {});
 
     looperCurrentFile = cesta;
     looperCurrentName = nazev;
+    looperTimestamps = [];
+    $('#looper-notes').empty().hide();
     loadLooperNotes(cesta);
 
     // Zobrazíme looper bar a resetujeme stav
@@ -1978,8 +2203,17 @@ function openRecordingInLooper(cesta, nazev, options) {
     $('#wf-placeholder').hide();
     setLooperMenuOpen(false);
 
-    isLooping = false;
-    $('#btn-loop').removeClass('on');
+    if (looperOpenOptions.loopRange) {
+        loopRangeStartSec = Math.max(0, Number(looperOpenOptions.loopRange.startMs) / 1000);
+        loopRangeEndSec = looperOpenOptions.loopRange.endMs === null
+            ? null
+            : Math.max(loopRangeStartSec, Number(looperOpenOptions.loopRange.endMs) / 1000);
+        setLooperLooping(true);
+    } else {
+        loopRangeStartSec = null;
+        loopRangeEndSec = null;
+        setLooperLooping(false);
+    }
 
     destroyLooperWaveSurfer();
 
@@ -2329,17 +2563,19 @@ function looperPause() {
 
 function looperRestart() {
     if (wavesurfer) {
-        wavesurfer.setTime(0);
+        wavesurfer.setTime(isLooping ? getLoopStartSec() : 0);
         wavesurfer.play();
     }
 }
 
 function looperLoop() {
-    isLooping = !isLooping;
-    if (isLooping) {
-        $('#btn-loop').addClass('on');
-    } else {
-        $('#btn-loop').removeClass('on');
+    setLooperLooping(!isLooping);
+    if (isLooping && wavesurfer && loopRangeStartSec !== null) {
+        var current = wavesurfer.getCurrentTime();
+        var end = getLoopEndSec();
+        if (current < loopRangeStartSec || (end > loopRangeStartSec && current >= end)) {
+            wavesurfer.setTime(loopRangeStartSec);
+        }
     }
 }
 
@@ -2478,8 +2714,10 @@ function looperZavrit() {
         menuButton.setAttribute('aria-expanded', 'false');
         menuButton.setAttribute('aria-label', 'Otevřít nápovědu Looperu');
     }
-    isLooping = false;
-    $('#btn-loop').removeClass('on');
+	loopRangeStartSec = null;
+	loopRangeEndSec = null;
+	looperTimestamps = [];
+    setLooperLooping(false);
 	
 
 }

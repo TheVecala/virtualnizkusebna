@@ -8,6 +8,7 @@ if (empty($_SESSION['role'])) {
 }
 const NOTE_SONG   = 0;
 const NOTE_NORMAL = 1;
+const NOTE_PASSAGE = 2;
 
 include "../login/connect.php";
 
@@ -46,7 +47,14 @@ echo '
         type="button"
         class="fbtn pridat-poznamku-btn"
         data-typ="'.NOTE_SONG.'">
-         📌 ZAČÁTEK VÁLU
+         📌 ZAČÁTEK SKLADBY
+    </button>
+
+    <button
+        type="button"
+        class="fbtn pridat-poznamku-btn"
+        data-typ="'.NOTE_PASSAGE.'">
+        📌 PASÁŽ
     </button>
 
     <button
@@ -72,13 +80,15 @@ echo '
         
 		$typ = (int)$r["typ"];
 		
-		if ($typ == NOTE_SONG)
-		{
+		if ($typ == NOTE_SONG) {
 			$rowClass = "note-song";
-		}
-		else
-		{
+            $icon = "♪";
+		} elseif ($typ == NOTE_PASSAGE) {
+			$rowClass = "note-passage";
+            $icon = "↔";
+		} else {
 			$rowClass = "note-normal";
+            $icon = "●";
 		}
 		
         $sec = floor($ms / 1000);
@@ -93,19 +103,26 @@ echo '
 <div class="note-row '.$rowClass.'"
      data-id="'.$r["id"].'"
      data-ms="'.$ms.'"
+     data-typ="'.$typ.'"
      data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'"
      '.($looper ? 'data-looper="1"' : '').'
-     style="padding:4px 0; display:flex; align-items:center; gap:8px; '.($typ == NOTE_NORMAL ? ' padding-left:20px;' : '').'   ">
+     style="padding:4px 0; display:flex; align-items:center; gap:8px;">
 
     <span class="note-time"
-          style="font-weight:bold;color:#7fbfff;cursor:pointer;">
-        '.($typ == NOTE_SONG ? '🎸' : '').($typ == NOTE_NORMAL ? '📍' : '').$cas_text.'
+          style="font-weight:bold;cursor:pointer;">
+        <span class="note-type-icon" aria-hidden="true">'.$icon.'</span>'.$cas_text.'
     </span>
 
     <span class="note-text"
-          style="flex:1;'.($typ == NOTE_NORMAL ? 'padding-left:20px;' : 'font-weight:bold;').'">
-        '.htmlspecialchars($r["poznamka"]).'
-    </span>         
+          style="flex:1;'.($typ == NOTE_SONG ? 'font-weight:bold;' : '').'">
+        '.htmlspecialchars($r["poznamka"], ENT_QUOTES).'
+    </span>
+
+    '.($typ == NOTE_SONG || $typ == NOTE_PASSAGE ? '
+    <button type="button"
+            class="note-loop"
+            title="Loopovat tento úsek"
+            aria-label="Loopovat tento úsek">⟳</button>' : '').'
 
     <span class="note-edit"
           title="Upravit"
@@ -144,6 +161,9 @@ if ($akce == "add")
 
     $cas = intval($_POST["cas"]);
 	$typ = intval($_POST["typ"] ?? NOTE_NORMAL);
+    if (!in_array($typ, [NOTE_SONG, NOTE_NORMAL, NOTE_PASSAGE], true)) {
+        $typ = NOTE_NORMAL;
+    }
 
     $poznamka = $mysqli->real_escape_string($_POST["poznamka"]);
 
@@ -214,7 +234,7 @@ if ($akce == "delete")
 // ── Popisek nahrávky ──
 // Uložený jako řádek v recording_notes se sentinel hodnotou cas = -1 (skutečné
 // časové poznámky mají cas >= 0, takže -1 nikdy nekoliduje). Sloupec `typ` je
-// u tohohle řádku bezvýznamný (NOTE_SONG/NOTE_NORMAL řeší jen časové poznámky),
+// u tohohle řádku bezvýznamný (typy timestampů řeší jen časové poznámky),
 // ale musí se vyplnit kvůli NOT NULL — bere se NOTE_NORMAL jako neutrální výchozí.
 // Díky společné tabulce se popisek automaticky "veze" se stejnou logikou jako
 // časové poznámky (stejný file_path klíč) — jen je z list/count/export vyloučený.

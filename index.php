@@ -273,6 +273,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
             <button class="wave-btn"
                     id="btn-loop"
+                    aria-pressed="false"
                     onclick="looperLoop()">⟳</button>
 
             <button class="wave-btn"
@@ -422,6 +423,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 </div>
 
             <div id="waveform"></div>
+            <div id="waveform-markers" aria-label="Timestampy nahrávky"></div>
 
         </div>
 

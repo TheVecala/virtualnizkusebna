@@ -213,6 +213,69 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   padding: 0 12px; color: var(--muted); font-size: 12px;
 }
 #waveform { width: 100%; height: 100%; }
+#waveform-markers {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  overflow: hidden;
+  pointer-events: none;
+}
+.waveform-marker {
+  --marker-color: #58c878;
+  --marker-level: 0px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  padding: 0;
+  color: var(--marker-color);
+  background: transparent;
+  border: 0;
+  transform: translateX(-9px);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.waveform-marker-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 8px;
+  width: 2px;
+  background: var(--marker-color);
+  box-shadow: 0 0 4px rgba(0, 0, 0, .7);
+}
+.waveform-marker-label {
+  position: absolute;
+  top: calc(27px + var(--marker-level));
+  left: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 150px;
+  min-height: 18px;
+  padding: 1px 5px;
+  color: rgba(255, 255, 255, .88);
+  background: rgba(18, 21, 24, .68);
+  border: 1px solid var(--marker-color);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  backdrop-filter: blur(2px);
+}
+.waveform-marker[data-edge="end"] .waveform-marker-label {
+  right: 13px;
+  left: auto;
+}
+.waveform-marker-icon { color: var(--marker-color); font-weight: 800; }
+.waveform-marker-text { overflow: hidden; text-overflow: ellipsis; }
+.waveform-marker.is-crowded .waveform-marker-label { opacity: .55; }
+.waveform-marker:hover .waveform-marker-label,
+.waveform-marker:focus-visible .waveform-marker-label { opacity: 1; outline: none; }
+.waveform-marker--song { --marker-color: #58c878; }
+.waveform-marker--passage { --marker-color: #f0a044; }
+.waveform-marker--normal { --marker-color: #59aaf5; }
 
 .lname {
   font-size: 13px; color: var(--text); font-weight: bold;
@@ -670,6 +733,29 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 	 cursor: pointer;
 }
 
+.note-song .note-time,
+.note-song .note-type-icon { color: #58c878; }
+.note-passage .note-time,
+.note-passage .note-type-icon { color: #f0a044; }
+.note-normal .note-time,
+.note-normal .note-type-icon { color: #59aaf5; }
+.note-type-icon { display: inline-block; width: 17px; text-align: center; margin-right: 3px; }
+.note-loop {
+    flex: 0 0 auto;
+    min-width: 30px;
+    min-height: 28px;
+    padding: 1px 7px;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+.note-loop:hover,
+.note-loop:focus-visible { color: var(--barva); border-color: var(--barva); }
+
 .note-row:hover
 {
     background: rgba(127,191,255,.12);
@@ -691,6 +777,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .poznamky-toolbar
 {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 10px;
 }
@@ -698,6 +785,13 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .poznamky-toolbar .fbtn
 {
     flex: 0 1 180px;
+}
+
+@media (max-width: 767px) {
+  .waveform-marker-label { max-width: 86px; padding-inline: 4px; font-size: 9px; }
+  .poznamky-toolbar .fbtn { flex: 1 1 calc(50% - 8px); }
+  .note-row { gap: 5px !important; }
+  .note-text { min-width: 0; overflow-wrap: anywhere; }
 }
 
 /* ===========================
