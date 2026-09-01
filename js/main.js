@@ -2045,16 +2045,29 @@ function looperCreateLink() {
     url.searchParams.set('val', VZ.aktualniVal);
     url.searchParams.set('nahravka', looperCurrentName);
     url.searchParams.set('time', String(Math.round(wavesurfer.getCurrentTime() * 1000)));
-    var copy = navigator.clipboard && window.isSecureContext
-        ? navigator.clipboard.writeText(url.href)
-        : copyTextFallback(url.href);
-    copy.then(function() {
-        $('#looper-link-status').text('Odkaz zkopírován');
-        setTimeout(function() { $('#looper-link-status').text(''); }, 2200);
-    }).catch(function() {
-        $('#looper-link-status').text('Odkaz se nepodařilo zkopírovat');
-    });
+
+    $('#looper-link-url').val(url.href);
+    $('#looper-link-copy-status').text('');
+    $('#modal_looper_link').modal('show');
 }
+
+$(document).on('shown.bs.modal', '#modal_looper_link', function() {
+    var input = document.getElementById('looper-link-url');
+    if (input) input.select();
+});
+
+$(document).on('click', '#looper-link-copy', function() {
+    var url = $('#looper-link-url').val();
+    if (!url) return;
+    var copy = navigator.clipboard && window.isSecureContext
+        ? navigator.clipboard.writeText(url)
+        : copyTextFallback(url);
+    copy.then(function() {
+        $('#looper-link-copy-status').text('Odkaz zkopírován');
+    }).catch(function() {
+        $('#looper-link-copy-status').text('Odkaz se nepodařilo zkopírovat');
+    });
+});
 
 function openLooperAudio(cesta, peaksData) {
     var cacheStore = getAudioCacheStore();

@@ -626,6 +626,26 @@
   </div>
 </div>
 
+<div class="modal fade" id="modal_looper_link" tabindex="-1" role="dialog" aria-labelledby="modal_looper_link_title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal_looper_link_title">ODKAZ NA NAHRÁVKU</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <label for="looper-link-url">Odkaz včetně aktuální pozice:</label>
+        <input type="text" id="looper-link-url" class="form-control" readonly>
+        <span id="looper-link-copy-status" class="audio-cache-status d-block mt-2" aria-live="polite"></span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Zavřít</button>
+        <button type="button" class="btn btn-primary" id="looper-link-copy">Kopírovat odkaz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ───────────────────────── editace timestampu ───────────────────────── -->
 
 <div class="modal fade" id="modal_poznamka" tabindex="-1" role="dialog" aria-hidden="true">
