@@ -2,4 +2,6 @@
  
  uprava modalu vkladani timestampu: 
   - tlačítka pro upravu casu - aktualizovat, +1, -1 , uložit a vrátit na čas,
+
+  export poznamek ve formatu do tabulky
   
