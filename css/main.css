@@ -213,69 +213,59 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   padding: 0 12px; color: var(--muted); font-size: 12px;
 }
 #waveform { width: 100%; height: 100%; }
-#waveform-markers {
-  position: absolute;
-  inset: 0;
-  z-index: 12;
-  overflow: hidden;
-  pointer-events: none;
+#waveform ::part(region) { pointer-events: none; }
+#waveform ::part(marker) {
+  z-index: 6;
+  border-radius: 0;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, .8));
 }
-.waveform-marker {
-  --marker-color: #58c878;
-  --marker-level: 0px;
+#waveform ::part(region-content) {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 18px;
-  padding: 0;
-  color: var(--marker-color);
-  background: transparent;
-  border: 0;
-  transform: translateX(-9px);
-  pointer-events: auto;
-  cursor: pointer;
-}
-.waveform-marker-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 8px;
-  width: 2px;
-  background: var(--marker-color);
-  box-shadow: 0 0 4px rgba(0, 0, 0, .7);
-}
-.waveform-marker-label {
-  position: absolute;
-  top: calc(27px + var(--marker-level));
-  left: 13px;
-  display: flex;
+  top: 27px;
+  left: 5px;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  box-sizing: border-box;
   max-width: 150px;
   min-height: 18px;
   padding: 1px 5px;
+  overflow: hidden;
   color: rgba(255, 255, 255, .88);
-  background: rgba(18, 21, 24, .68);
-  border: 1px solid var(--marker-color);
+  background: rgba(18, 21, 24, .72);
+  border: 1px solid currentColor;
   border-radius: 4px;
   font-size: 10px;
   font-weight: 500;
   line-height: 1.35;
+  text-overflow: ellipsis;
   white-space: nowrap;
   backdrop-filter: blur(2px);
 }
-.waveform-marker[data-edge="end"] .waveform-marker-label {
-  right: 13px;
-  left: auto;
+#waveform-zoom-controls {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  z-index: 20;
+  display: flex;
+  gap: 3px;
 }
-.waveform-marker-icon { color: var(--marker-color); font-weight: 800; }
-.waveform-marker-text { overflow: hidden; text-overflow: ellipsis; }
-.waveform-marker.is-crowded .waveform-marker-label { opacity: .55; }
-.waveform-marker:hover .waveform-marker-label,
-.waveform-marker:focus-visible .waveform-marker-label { opacity: 1; outline: none; }
-.waveform-marker--song { --marker-color: #58c878; }
-.waveform-marker--passage { --marker-color: #f0a044; }
-.waveform-marker--normal { --marker-color: #59aaf5; }
+.waveform-zoom-button {
+  width: 25px;
+  height: 23px;
+  padding: 0;
+  color: rgba(255, 255, 255, .88);
+  background: rgba(18, 21, 24, .76);
+  border: 1px solid rgba(255, 255, 255, .3);
+  border-radius: 4px;
+  font-size: 17px;
+  line-height: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+.waveform-zoom-button:hover,
+.waveform-zoom-button:focus-visible { color: var(--barva); border-color: var(--barva); }
+.waveform-zoom-button:disabled { opacity: .35; cursor: default; }
 
 .lname {
   font-size: 13px; color: var(--text); font-weight: bold;
@@ -788,7 +778,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 }
 
 @media (max-width: 767px) {
-  .waveform-marker-label { max-width: 86px; padding-inline: 4px; font-size: 9px; }
+  #waveform ::part(region-content) { max-width: 86px; padding-inline: 4px; font-size: 9px; }
   .poznamky-toolbar .fbtn { flex: 1 1 calc(50% - 8px); }
   .note-row { gap: 5px !important; }
   .note-text { min-width: 0; overflow-wrap: anywhere; }

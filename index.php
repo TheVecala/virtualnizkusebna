@@ -176,7 +176,9 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" crossorigin="anonymous" defer></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" crossorigin="anonymous" defer></script>
-<script src="https://unpkg.com/wavesurfer.js@7" defer></script>
+<script src="https://unpkg.com/wavesurfer.js@7.12.11" defer></script>
+<script src="https://unpkg.com/wavesurfer.js@7.12.11/dist/plugins/regions.min.js" defer></script>
+<script src="https://unpkg.com/wavesurfer.js@7.12.11/dist/plugins/zoom.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
 <script src="js/main.js" defer></script>
@@ -423,7 +425,12 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 </div>
 
             <div id="waveform"></div>
-            <div id="waveform-markers" aria-label="Timestampy nahrávky"></div>
+            <div id="waveform-zoom-controls" aria-label="Přiblížení waveformu">
+                <button type="button" id="waveform-zoom-out" class="waveform-zoom-button"
+                        aria-label="Oddálit waveform" title="Oddálit" disabled>−</button>
+                <button type="button" id="waveform-zoom-in" class="waveform-zoom-button"
+                        aria-label="Přiblížit waveform" title="Přiblížit" disabled>+</button>
+            </div>
 
         </div>
 

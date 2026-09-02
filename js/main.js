@@ -1359,12 +1359,6 @@ $(document).on('click', '.note-row', function() {
     }
 });
 
-$(document).on('click', '.waveform-marker', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (wavesurfer) wavesurfer.setTime(Number($(this).data('ms')) / 1000);
-});
-
 $(document).on('click', '.note-loop', function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -1756,6 +1750,13 @@ var deepLinkProcessed = false;
 var looperTimestamps = [];
 var loopRangeStartSec = null;
 var loopRangeEndSec = null;
+var looperRegionsPlugin = null;
+var looperZoomPlugin = null;
+var looperZoomLevel = 0;
+var looperIsZoomed = false;
+var looperWaveformResizeTimer = null;
+var LOOPER_MAX_ZOOM = 1000;
+var LOOPER_ZOOM_STEP = 1.35;
 
 function collectTimestampData($root)
 {
@@ -1792,86 +1793,99 @@ function findTimestampLoopEndMs(startMs, typ, timestamps)
 
 function getTimestampVisual(typ)
 {
-    if (typ === NOTE_SONG) return { className: 'song', icon: '♪' };
-    if (typ === NOTE_PASSAGE) return { className: 'passage', icon: '↔' };
-    return { className: 'normal', icon: '●' };
+    if (typ === NOTE_SONG) return { icon: '♪', color: '#58c878' };
+    if (typ === NOTE_PASSAGE) return { icon: '↔', color: '#f0a044' };
+    return { icon: '●', color: '#59aaf5' };
 }
 
 function syncLooperTimestampsFromList()
 {
     looperTimestamps = collectTimestampData($('#looper-notes'));
-    renderLooperMarkers();
+    renderLooperRegions();
 }
 
-function renderLooperMarkers()
+function createTimestampRegionContent(timestamp, visual)
 {
-    var layer = document.getElementById('waveform-markers');
-    if (!layer) return;
-    layer.innerHTML = '';
+    var content = document.createElement('span');
+    var icon = document.createElement('span');
+    var text = document.createElement('span');
+
+    icon.textContent = visual.icon;
+    icon.setAttribute('aria-hidden', 'true');
+    icon.style.color = visual.color;
+    icon.style.fontWeight = '800';
+
+    text.textContent = timestamp.text + ' · ' + formatTime(timestamp.ms);
+    text.style.overflow = 'hidden';
+    text.style.textOverflow = 'ellipsis';
+
+    content.style.borderColor = visual.color;
+    content.appendChild(icon);
+    content.appendChild(text);
+    return content;
+}
+
+function renderLooperRegions()
+{
+    if (!looperRegionsPlugin) return;
+    looperRegionsPlugin.clearRegions();
 
     if (!wavesurfer) return;
     var duration = wavesurfer.getDuration();
     if (!(duration > 0)) return;
 
-    var width = layer.clientWidth || 1;
-    var mobile = width < 768;
-    var lastRightByLevel = [-Infinity, -Infinity, -Infinity];
+    // Plochy pasáží jsou pouze odvozená prezentace nad JSON timestampy.
+    looperTimestamps.forEach(function(timestamp) {
+        if (timestamp.typ !== NOTE_PASSAGE) return;
 
+        var start = Math.max(0, Math.min(duration, timestamp.ms / 1000));
+        var endMs = findTimestampLoopEndMs(timestamp.ms, timestamp.typ, looperTimestamps);
+        var end = endMs === null ? duration : Math.max(start, Math.min(duration, endMs / 1000));
+        if (!(end > start)) return;
+
+        var passageRegion = looperRegionsPlugin.addRegion({
+            id: 'timestamp-passage-' + timestamp.id,
+            start: start,
+            end: end,
+            color: 'rgba(240, 160, 68, .12)',
+            drag: false,
+            resize: false
+        });
+
+        if (passageRegion.element) {
+            passageRegion.element.style.pointerEvents = 'none';
+            passageRegion.element.setAttribute('aria-hidden', 'true');
+        }
+    });
+
+    // Každý timestamp zůstá samostatným bodem; Regions plugin kreslí i jeho tenkou linku.
     looperTimestamps.forEach(function(timestamp) {
         var visual = getTimestampVisual(timestamp.typ);
-        var percent = Math.max(0, Math.min(100, timestamp.ms / 1000 / duration * 100));
-        var x = percent / 100 * width;
-        var estimatedWidth = mobile
-            ? 88
-            : Math.min(155, Math.max(74, 42 + timestamp.text.length * 5.5));
-        var level = -1;
-
-        for (var i = 0; i < lastRightByLevel.length; i++) {
-            if (x >= lastRightByLevel[i] + 6) {
-                level = i;
-                break;
-            }
-        }
-
-        var crowded = level === -1;
-        if (crowded) {
-            level = lastRightByLevel.indexOf(Math.min.apply(Math, lastRightByLevel));
-        }
-        lastRightByLevel[level] = x + estimatedWidth;
-
-        var marker = document.createElement('button');
-        marker.type = 'button';
-        marker.className = 'waveform-marker waveform-marker--' + visual.className +
-            (crowded ? ' is-crowded' : '');
-        marker.style.left = percent + '%';
-        marker.style.setProperty('--marker-level', (level * 23) + 'px');
-        marker.dataset.ms = timestamp.ms;
-        marker.dataset.edge = x + estimatedWidth > width ? 'end' : 'start';
-        marker.title = getNoteTypeName(timestamp.typ) + ': ' + timestamp.text +
+        var start = Math.max(0, Math.min(duration, timestamp.ms / 1000));
+        var title = getNoteTypeName(timestamp.typ) + ': ' + timestamp.text +
             ' (' + formatTime(timestamp.ms) + ')';
-        marker.setAttribute('aria-label', marker.title);
+        var markerRegion = looperRegionsPlugin.addRegion({
+            id: 'timestamp-marker-' + timestamp.id,
+            start: start,
+            color: visual.color,
+            content: createTimestampRegionContent(timestamp, visual),
+            drag: false,
+            resize: false
+        });
 
-        var line = document.createElement('span');
-        line.className = 'waveform-marker-line';
-        line.setAttribute('aria-hidden', 'true');
-
-        var label = document.createElement('span');
-        label.className = 'waveform-marker-label';
-
-        var icon = document.createElement('span');
-        icon.className = 'waveform-marker-icon';
-        icon.setAttribute('aria-hidden', 'true');
-        icon.textContent = visual.icon;
-
-        var text = document.createElement('span');
-        text.className = 'waveform-marker-text';
-        text.textContent = timestamp.text + ' · ' + formatTime(timestamp.ms);
-
-        label.appendChild(icon);
-        label.appendChild(text);
-        marker.appendChild(line);
-        marker.appendChild(label);
-        layer.appendChild(marker);
+        if (markerRegion.element) {
+            markerRegion.element.style.zIndex = '6';
+            markerRegion.element.style.cursor = 'pointer';
+            markerRegion.element.setAttribute('role', 'button');
+            markerRegion.element.setAttribute('tabindex', '0');
+            markerRegion.element.setAttribute('title', title);
+            markerRegion.element.setAttribute('aria-label', title);
+            markerRegion.element.addEventListener('keydown', function(event) {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                if (wavesurfer) wavesurfer.setTime(markerRegion.start);
+            });
+        }
     });
 }
 
@@ -1916,12 +1930,108 @@ function getLooperWaveHeight() {
     return 98;
 }
 
+function getLooperWaveScrollElement()
+{
+    if (!wavesurfer || typeof wavesurfer.getWrapper !== 'function') return null;
+    var wrapper = wavesurfer.getWrapper();
+    return wrapper ? (wrapper.parentElement || wrapper) : null;
+}
+
+function getLooperFitZoom()
+{
+    if (!wavesurfer) return 0;
+    var duration = wavesurfer.getDuration();
+    var scrollElement = getLooperWaveScrollElement();
+    if (!(duration > 0) || !scrollElement) return 0;
+    return scrollElement.clientWidth / duration;
+}
+
+function getLooperCurrentZoom()
+{
+    if (!wavesurfer) return 0;
+    var duration = wavesurfer.getDuration();
+    var scrollElement = getLooperWaveScrollElement();
+    if (!(duration > 0) || !scrollElement) return 0;
+    return scrollElement.scrollWidth / duration;
+}
+
+function updateLooperZoomState(zoom)
+{
+    var fitZoom = getLooperFitZoom();
+    looperZoomLevel = zoom > 0 ? zoom : fitZoom;
+    looperIsZoomed = fitZoom > 0 && looperZoomLevel > fitZoom * 1.01;
+    $('#waveform-zoom-out').prop('disabled', !looperIsZoomed);
+    $('#waveform-zoom-in').prop('disabled', looperZoomLevel >= LOOPER_MAX_ZOOM * .999);
+}
+
+function setLooperZoomFromButton(direction)
+{
+    if (!wavesurfer || !(wavesurfer.getDuration() > 0)) return;
+
+    var scrollElement = getLooperWaveScrollElement();
+    var fitZoom = getLooperFitZoom();
+    var currentZoom = getLooperCurrentZoom() || fitZoom;
+    if (!scrollElement || !(fitZoom > 0)) return;
+
+    var nextZoom = direction > 0
+        ? Math.min(LOOPER_MAX_ZOOM, Math.max(fitZoom, currentZoom) * LOOPER_ZOOM_STEP)
+        : Math.max(fitZoom, currentZoom / LOOPER_ZOOM_STEP);
+    if (direction < 0 && nextZoom <= fitZoom * 1.01) nextZoom = fitZoom;
+    if (Math.abs(nextZoom - currentZoom) < .01) return;
+
+    var playhead = wavesurfer.getCurrentTime();
+    var playheadX = playhead * currentZoom - scrollElement.scrollLeft;
+    var anchorTime = playhead;
+    var anchorX = playheadX;
+
+    // Když je playhead mimo viewport, zachováme místo uprostřed aktuálního výřezu.
+    if (playheadX < 0 || playheadX > scrollElement.clientWidth) {
+        anchorX = scrollElement.clientWidth / 2;
+        anchorTime = (scrollElement.scrollLeft + anchorX) / currentZoom;
+    }
+
+    wavesurfer.zoom(nextZoom);
+    scrollElement.scrollLeft = Math.max(0, anchorTime * nextZoom - anchorX);
+}
+
 function refreshLooperWaveformSize() {
     if (wavesurfer && typeof wavesurfer.setOptions === 'function') {
+        var wasZoomed = looperIsZoomed;
+        var oldZoom = getLooperCurrentZoom();
+        var scrollElement = getLooperWaveScrollElement();
+        var anchorX = scrollElement ? scrollElement.clientWidth / 2 : 0;
+        var anchorTime = scrollElement && oldZoom > 0
+            ? (scrollElement.scrollLeft + anchorX) / oldZoom
+            : wavesurfer.getCurrentTime();
+
         wavesurfer.setOptions({ height: getLooperWaveHeight() });
-        renderLooperMarkers();
+        window.requestAnimationFrame(function() {
+            if (!wavesurfer || !(wavesurfer.getDuration() > 0)) return;
+            var newScrollElement = getLooperWaveScrollElement();
+            var fitZoom = getLooperFitZoom();
+            if (!newScrollElement || !(fitZoom > 0)) return;
+
+            var nextZoom = wasZoomed ? Math.max(fitZoom, oldZoom) : fitZoom;
+            wavesurfer.zoom(nextZoom);
+            if (wasZoomed) {
+                newScrollElement.scrollLeft = Math.max(
+                    0,
+                    anchorTime * nextZoom - newScrollElement.clientWidth / 2
+                );
+            } else {
+                newScrollElement.scrollLeft = 0;
+            }
+        });
     }
 }
+
+$(document).on('click', '#waveform-zoom-out', function() { setLooperZoomFromButton(-1); });
+$(document).on('click', '#waveform-zoom-in', function() { setLooperZoomFromButton(1); });
+
+window.addEventListener('resize', function() {
+    window.clearTimeout(looperWaveformResizeTimer);
+    looperWaveformResizeTimer = window.setTimeout(refreshLooperWaveformSize, 100);
+});
 
 function getAudioCacheStore() {
     if (!audioCacheStore && window.idbKeyval) {
@@ -2048,11 +2158,17 @@ function releaseLooperObjectUrl() {
 }
 
 function destroyLooperWaveSurfer() {
+    window.clearTimeout(looperWaveformResizeTimer);
     if (wavesurfer) {
         wavesurfer.destroy();
         wavesurfer = null;
     }
-    $('#waveform-markers').empty();
+    looperRegionsPlugin = null;
+    looperZoomPlugin = null;
+    looperZoomLevel = 0;
+    looperIsZoomed = false;
+    $('#waveform-zoom-out').prop('disabled', true);
+    $('#waveform-zoom-in').prop('disabled', true);
     releaseLooperObjectUrl();
 }
 
@@ -2067,6 +2183,14 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
     var barvaKapely = getComputedStyle(document.documentElement)
                         .getPropertyValue('--barva').trim() || '#a7ac38';
 
+    looperRegionsPlugin = WaveSurfer.Regions.create();
+    looperZoomPlugin = WaveSurfer.Zoom.create({
+        maxZoom: LOOPER_MAX_ZOOM,
+        deltaThreshold: 5,
+        exponentialZooming: true,
+        iterations: 24
+    });
+
     var wsConfig = {
         container:     '#waveform',
         waveColor:     '#b8b8b8',
@@ -2077,6 +2201,9 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
         barGap:        1,
         barRadius:     1,
         height:        getLooperWaveHeight(),
+        minPxPerSec:   0,
+        fillParent:    true,
+        plugins:       [looperRegionsPlugin, looperZoomPlugin],
         // MediaElement přehrává proudově a nedekóduje celou stopu do RAM.
         backend:       'MediaElement',
         url:           sourceUrl
@@ -2096,6 +2223,13 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
 
     wavesurfer = WaveSurfer.create(wsConfig);
 
+    looperRegionsPlugin.on('region-clicked', function(region, event) {
+        if (region.id.indexOf('timestamp-marker-') !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (wavesurfer) wavesurfer.setTime(region.start);
+    });
+
     wavesurfer.on('ready', function() {
         $('#wf-placeholder').hide();
 		$('#looper-time').show();
@@ -2110,7 +2244,8 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
         wavesurfer.setTime(pozice);
         if (looperOpenOptions.autoplay) wavesurfer.play();
         else wavesurfer.pause();
-        renderLooperMarkers();
+        renderLooperRegions();
+        updateLooperZoomState(getLooperCurrentZoom());
 
 		$('#looper-time').text(
 			formatLooperTime(0) + ' / ' + formatLooperTime(delka)
@@ -2142,6 +2277,10 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
     wavesurfer.on('pause', function() {
         $('#btn-play').removeClass('on');
         $('#btn-pause').addClass('on');
+    });
+
+    wavesurfer.on('zoom', function(minPxPerSec) {
+        updateLooperZoomState(minPxPerSec);
     });
 
     wavesurfer.on('finish', function() {
