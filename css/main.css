@@ -706,6 +706,29 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   100% { background-position: -100% 0; }
 }
 
+/* Jednotná odezva tlačítek během krátkých AJAX/IndexedDB operací. */
+.vz-action-spinner {
+  display: inline-block;
+  width: .85em;
+  height: .85em;
+  margin-right: .45em;
+  vertical-align: -.08em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: vz-action-spin .7s linear infinite;
+}
+
+[aria-busy="true"] { cursor: wait !important; }
+
+@keyframes vz-action-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vz-action-spinner { animation-duration: 1.4s; }
+}
+
 .sortable-ghost {
   opacity: 0.4;
   background: var(--barva) !important;

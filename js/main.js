@@ -78,6 +78,73 @@ function pbDone() {
   pbTimer = setTimeout(function() { pb.className = ''; }, 700);
 }
 
+// ── Jednotný stav krátkých asynchronních akcí ──
+// Procenta patří jen k přenosům, u kterých známe počet bajtů. U běžného AJAX
+// požadavku proto zobrazujeme spinner a přesný popis probíhající operace.
+function getFormActionButton($form, event) {
+  var originalEvent = event && event.originalEvent;
+  if (originalEvent && originalEvent.submitter) return $(originalEvent.submitter);
+
+  var $button = $form.find('button[type="submit"], input[type="submit"]').first();
+  var formId = $form.attr('id');
+  if (!$button.length && formId) {
+    $button = $('[type="submit"][form="' + formId + '"]').first();
+  }
+  return $button;
+}
+
+function setActionButtonBusy(button, busy, label) {
+  var $buttons = button && button.jquery ? button : $(button || []);
+
+  $buttons.each(function() {
+    var $button = $(this);
+
+    if (busy) {
+      if ($button.attr('aria-busy') === 'true') return;
+
+      $button.data('vz-busy-original-disabled', this.disabled);
+      $button.data('vz-busy-original-html', $button.html());
+      $button.data('vz-busy-original-value', $button.val());
+      $button.prop('disabled', true).attr('aria-busy', 'true');
+
+      if (this.tagName === 'INPUT') {
+        $button.val(label || 'pracuji…');
+      } else {
+        $button.empty()
+          .append($('<span>', { 'class': 'vz-action-spinner', 'aria-hidden': 'true' }))
+          .append(document.createTextNode(label || 'pracuji…'));
+      }
+      return;
+    }
+
+    if ($button.attr('aria-busy') !== 'true') return;
+
+    var originallyDisabled = !!$button.data('vz-busy-original-disabled');
+    if (this.tagName === 'INPUT') {
+      $button.val($button.data('vz-busy-original-value'));
+    } else {
+      $button.html($button.data('vz-busy-original-html'));
+    }
+    $button.prop('disabled', originallyDisabled).removeAttr('aria-busy')
+      .removeData('vz-busy-original-disabled')
+      .removeData('vz-busy-original-html')
+      .removeData('vz-busy-original-value');
+  });
+
+  return $buttons;
+}
+
+function beginFormAction($form, event, label) {
+  if ($form.data('vz-busy')) return null;
+  $form.data('vz-busy', true);
+  return setActionButtonBusy(getFormActionButton($form, event), true, label);
+}
+
+function finishFormAction($form, button) {
+  $form.removeData('vz-busy');
+  setActionButtonBusy(button, false);
+}
+
 // ── Success overlay v modalu ──
 function modalSuccess(modalId, zprava) {
   var $modal   = $('#' + modalId);
@@ -111,14 +178,16 @@ function nacistPanel(panel, callback) {
   pbStart();
   $.get('/php/ajax/ajax_' + panel + '.php', function(html) {
     if (panel === 'nahravky') releaseNativeAudioObjectUrls();
-    $('#body-' + panel).html(html);
+    $('#body-' + panel).html(html).css('opacity', '1').removeAttr('aria-busy');
     if (panel === 'nahravky') {
       refreshNativeAudioCacheControls();
       processDeepLink();
     }
     if (callback) callback(); else pbDone();
   }).fail(function() {
-    $('#body-' + panel).html('<div style="color:#888;padding:12px;font-size:12px">Chyba načítání</div>');
+    $('#body-' + panel)
+      .html('<div style="color:#888;padding:12px;font-size:12px">Chyba načítání</div>')
+      .css('opacity', '1').removeAttr('aria-busy');
     if (callback) callback(); else pbDone();
   });
 }
@@ -275,11 +344,15 @@ function switchVal(val, nazev, el) {
 
   document.getElementById('val-drawer').classList.remove('open');
 
+  pbStart();
+  $('.panel-body').css('opacity', '0.45').attr('aria-busy', 'true');
   $.post('/php/ajax/zmenit_slozku_ajax.php', { cilova_slozka: val }, function() {
-    $('.panel-body').css('opacity', '0.3');
-    setTimeout(function() { $('.panel-body').css('opacity', '1'); }, 200);
     nacistVsechnyPanely();
     looperZavrit();
+  }).fail(function() {
+    pbDone();
+    $('.panel-body').css('opacity', '1').removeAttr('aria-busy');
+    alert('Skladbu se nepodařilo načíst. Zkuste to znovu.');
   });
 }
 
@@ -473,15 +546,14 @@ $(document).on('submit', '#modal_zmenit_text form', function(e) {
   e.preventDefault();
   var $form      = $(this);
   var url        = $form.attr('action');
-  var $btn       = $form.find('[type="submit"]');
-  var puvodniTxt = $btn.text();
+  var $btn       = beginFormAction($form, e, 'ukládám…');
+  if ($btn === null) return;
 
-  $btn.prop('disabled', true).text('ukládám...');
   pbStart();
 
   $.post(url, $form.serialize(), function(resp) {
     pbDone();
-    $btn.prop('disabled', false).text(puvodniTxt);
+    finishFormAction($form, $btn);
     if (resp.ok) {
       // Vyčistit dirty flag — obsah je teď uložen
       VZ.editorPuvodniObsah = document.getElementById('editor').value;
@@ -497,7 +569,7 @@ $(document).on('submit', '#modal_zmenit_text form', function(e) {
     }
   }, 'json').fail(function() {
     pbDone();
-    $btn.prop('disabled', false).text(puvodniTxt);
+    finishFormAction($form, $btn);
     var $info = $form.find('.editor-chyba');
     if (!$info.length) {
       $info = $('<div class="editor-chyba" style="color:#ff8888;font-size:12px;margin-top:6px;text-align:left"></div>');
@@ -538,26 +610,33 @@ function otevritSmazani(val) {
 // ── Diskuse — komentář ──
 $(document).on('submit', '#form_komentar', function(e) {
   e.preventDefault();
-  var chyba = document.getElementById('komentar_chyba');
+  var $form = $(this);
+  var $btn = beginFormAction($form, e, 'ukládám…');
+  if ($btn === null) return;
+  var chyba = $form.find('#komentar_chyba')[0];
   if (chyba) chyba.style.display = 'none';
   pbStart();
 
   $.post('/php/ajax/vlozit_komentar.php', {
-    text:   $('#komentar_text').val(),
-    odkaz:  $('#komentar_odkaz').val()  || '',
-    odkaz2: $('#komentar_odkaz2').val() || '',
-    name:   $('#komentar_jmeno').val(),
+    text:   $form.find('#komentar_text').val(),
+    odkaz:  $form.find('#komentar_odkaz').val()  || '',
+    odkaz2: $form.find('#komentar_odkaz2').val() || '',
+    name:   $form.find('#komentar_jmeno').val(),
   }, function(data) {
     pbDone();
+    finishFormAction($form, $btn);
     if (data.ok) {
       nacistPanel('diskuse');
-      $('#komentar_text, #komentar_odkaz, #komentar_odkaz2').val('');
-      modalSuccess('modal_vlozit_komentar', 'Komentář přidán');
+      $form.find('#komentar_text, #komentar_odkaz, #komentar_odkaz2').val('');
+      if ($form.closest('#modal_vlozit_komentar').length) {
+        modalSuccess('modal_vlozit_komentar', 'Komentář přidán');
+      }
     } else {
       if (chyba) { chyba.innerHTML = data.chyba || 'Chyba'; chyba.style.display = 'block'; }
     }
   }, 'json').fail(function() {
     pbDone();
+    finishFormAction($form, $btn);
     if (chyba) { chyba.innerHTML = 'Chyba spojení'; chyba.style.display = 'block'; }
   });
 });
@@ -598,12 +677,13 @@ $(document).on('click', '.popisek-cancel-btn', function(e) {
 $(document).on('click', '.popisek-save-btn', function(e) {
   e.stopPropagation();
   var $btn     = $(this);
+  if ($btn.attr('aria-busy') === 'true') return;
   var $editRow = $btn.closest('.popisek-edit-wrap');
   var $wrap    = $editRow.prev('.nahravka-popisek');
   var cesta    = $wrap.data('cesta');
   var text     = $editRow.find('.popisek-edit-input').val().trim();
 
-  $btn.prop('disabled', true);
+  setActionButtonBusy($btn, true, 'ukládám…');
   pbStart();
 
   $.post('/php/ajax/ajax_nahravka_poznamky.php', {
@@ -623,12 +703,12 @@ $(document).on('click', '.popisek-save-btn', function(e) {
       $editRow.remove();
     } else {
       alert(resp || 'Chyba při ukládání popisku');
-      $btn.prop('disabled', false);
+      setActionButtonBusy($btn, false);
     }
   }).fail(function() {
     pbDone();
     alert('Chyba spojení se serverem');
-    $btn.prop('disabled', false);
+    setActionButtonBusy($btn, false);
   });
 });
 
@@ -640,11 +720,14 @@ $(document).on('keydown', '.popisek-edit-input', function(e) {
 // ── Smazat soubor (AJAX, bez reloadu stránky — panel Nahrávky zůstává otevřený) ──
 $(document).on('submit', '#form_smazat_soubor', function(e) {
   e.preventDefault();
-  pbStart();
   var $form = $(this);
+  var $btn = beginFormAction($form, e, 'mažu…');
+  if ($btn === null) return;
+  pbStart();
 
   $.post('/php/actions/smazat_soubor.php', $form.serialize(), function(data) {
     pbDone();
+    finishFormAction($form, $btn);
     if (data.ok) {
       nacistPanel('nahravky');
       modalSuccess('modal_delete', data.vysledek || 'Smazáno');
@@ -653,6 +736,7 @@ $(document).on('submit', '#form_smazat_soubor', function(e) {
     }
   }, 'json').fail(function() {
     pbDone();
+    finishFormAction($form, $btn);
     alert('Chyba spojení se serverem');
   });
 });
@@ -747,19 +831,28 @@ function zobrazHistorii() {
   });
 }
 
-function nacistZalohu(soubor) {
+function nacistZalohu(soubor, button) {
+  var $button = $(button);
+  if ($button.attr('aria-busy') === 'true') return;
+  setActionButtonBusy($button, true, 'načítám…');
   pbStart();
   $.get('/php/ajax/ajax_history.php', { akce: 'nacist', soubor: soubor, typ: VZ.editTyp || 'akordy' }, function(data) {
-    pbDone();
     if (data.ok) {
       document.getElementById('editor').value = data.obsah;
       document.getElementById('panel-historie').style.display = 'none';
+    } else {
+      alert(data.chyba || 'Zálohu se nepodařilo načíst.');
     }
-  }, 'json').fail(function() { pbDone(); });
+  }, 'json').fail(function() {
+    alert('Chyba spojení se serverem');
+  }).always(function() {
+    pbDone();
+    setActionButtonBusy($button, false);
+  });
 }
 
 $(document).on('click', '.btn-zaloha', function() {
-  nacistZalohu($(this).data('soubor'));
+  nacistZalohu($(this).data('soubor'), this);
 });
 
 // ── Nápady ──
@@ -778,6 +871,9 @@ function napodyToggle() {
 
 $(document).on('submit', '#form_napady', function(e) {
   e.preventDefault();
+  var $form = $(this);
+  var $btn = beginFormAction($form, e, 'ukládám…');
+  if ($btn === null) return;
   var chyba = document.getElementById('napady_chyba');
   chyba.style.display = 'none';
   pbStart();
@@ -789,6 +885,7 @@ $(document).on('submit', '#form_napady', function(e) {
     odkaz2:               '',
     pouzit_hlavni_diskusi: '1'
   }, function(data) {
+    finishFormAction($form, $btn);
     if (data.ok) {
       nacistPanel('napady');
       $('#napady_text').val('');
@@ -805,6 +902,7 @@ $(document).on('submit', '#form_napady', function(e) {
       pbDone();
     }
   }, 'json').fail(function() {
+    finishFormAction($form, $btn);
     chyba.innerHTML    = 'Chyba spojení';
     chyba.style.display = 'block';
     pbDone();
@@ -905,11 +1003,14 @@ $(document).on('hidden.bs.modal', '#modal_presunout', function() {
 // ── Přesunout soubor (AJAX, bez reloadu stránky — panel Nahrávky zůstává otevřený) ──
 $(document).on('submit', '#form_presunout', function(e) {
   e.preventDefault();
-  pbStart();
   var $form = $(this);
+  var $btn = beginFormAction($form, e, 'přesouvám…');
+  if ($btn === null) return;
+  pbStart();
 
   $.post('/php/actions/presunout_soubor.php', $form.serialize(), function(data) {
     pbDone();
+    finishFormAction($form, $btn);
     if (data.ok) {
       nacistPanel('nahravky');
       $('#presunout_confirm_panel').hide();
@@ -920,6 +1021,7 @@ $(document).on('submit', '#form_presunout', function(e) {
     }
   }, 'json').fail(function() {
     pbDone();
+    finishFormAction($form, $btn);
     alert('Chyba spojení se serverem');
   });
 });
@@ -927,22 +1029,27 @@ $(document).on('submit', '#form_presunout', function(e) {
 // ── Vytvořit novou skladbu/vál (AJAX, bez reloadu) ──
 $(document).on('submit', '#form_nova_slozka', function(e) {
   e.preventDefault();
-  pbStart();
   var $form = $(this);
+  var $btn = beginFormAction($form, e, 'vytvářím…');
+  if ($btn === null) return;
+  pbStart();
 
   $.post('/php/actions/vytvorit_adresar.php', $form.serialize(), function(data) {
     if (data.ok) {
       obnovitSeznamValu(function() {
         pbDone();
+        finishFormAction($form, $btn);
         $form.find('input[name="jmeno_adresare"]').val('');
         modalSuccess('modal_nova_slozka', data.vysledek || 'Vytvořeno');
       });
     } else {
       pbDone();
+      finishFormAction($form, $btn);
       alert(data.vysledek || 'Chyba při vytváření skladby');
     }
   }, 'json').fail(function() {
     pbDone();
+    finishFormAction($form, $btn);
     alert('Chyba spojení se serverem');
   });
 });
@@ -950,21 +1057,26 @@ $(document).on('submit', '#form_nova_slozka', function(e) {
 // ── Přejmenovat skladbu/vál (AJAX, bez reloadu) ──
 $(document).on('submit', '#form_rename_val', function(e) {
   e.preventDefault();
-  pbStart();
   var $form = $(this);
+  var $btn = beginFormAction($form, e, 'přejmenovávám…');
+  if ($btn === null) return;
+  pbStart();
 
   $.post('/php/actions/prejmenovat_val.php', $form.serialize(), function(data) {
     if (data.ok) {
       obnovitSeznamValu(function() {
         pbDone();
+        finishFormAction($form, $btn);
         modalSuccess('modal_rename_val', data.vysledek || 'Přejmenováno');
       });
     } else {
       pbDone();
+      finishFormAction($form, $btn);
       alert(data.vysledek || 'Chyba při přejmenování skladby');
     }
   }, 'json').fail(function() {
     pbDone();
+    finishFormAction($form, $btn);
     alert('Chyba spojení se serverem');
   });
 });
@@ -972,21 +1084,26 @@ $(document).on('submit', '#form_rename_val', function(e) {
 // ── Smazat skladbu/vál (AJAX, bez reloadu) ──
 $(document).on('submit', '#form_delete_val', function(e) {
   e.preventDefault();
-  pbStart();
   var $form = $(this);
+  var $btn = beginFormAction($form, e, 'mažu…');
+  if ($btn === null) return;
+  pbStart();
 
   $.post('/php/actions/smazat_val.php', $form.serialize(), function(data) {
     if (data.ok) {
       obnovitSeznamValu(function() {
         pbDone();
+        finishFormAction($form, $btn);
         modalSuccess('modal_delete_val', data.vysledek || 'Smazáno');
       });
     } else {
       pbDone();
+      finishFormAction($form, $btn);
       alert(data.vysledek || 'Chyba při mazání skladby');
     }
   }, 'json').fail(function() {
     pbDone();
+    finishFormAction($form, $btn);
     alert('Chyba spojení se serverem');
   });
 });
@@ -1128,11 +1245,12 @@ $(document).on('click', '.vzk-cancel-btn', function() {
 // Uložit editaci
 $(document).on('click', '.vzk-save-btn', function() {
   var $btn  = $(this);
+  if ($btn.attr('aria-busy') === 'true') return;
   var $card = $btn.closest('[data-cas]');
   var text  = $card.find('.vzk-edit-ta').val().trim();
   if (!text) return;
 
-  $btn.prop('disabled', true).text('ukládám...');
+  setActionButtonBusy($btn, true, 'ukládám…');
   $card.find('.vzk-edit-chyba').hide();
   pbStart();
 
@@ -1149,12 +1267,12 @@ $(document).on('click', '.vzk-save-btn', function() {
       $card.find('.vzk-edit-wrap').remove();
     } else {
       $card.find('.vzk-edit-chyba').text(data.chyba || 'Chyba').show();
-      $btn.prop('disabled', false).text('✓ uložit');
+      setActionButtonBusy($btn, false);
     }
   }, 'json').fail(function() {
     pbDone();
     $card.find('.vzk-edit-chyba').text('Chyba spojení').show();
-    $btn.prop('disabled', false).text('✓ uložit');
+    setActionButtonBusy($btn, false);
   });
 });
 
@@ -1192,9 +1310,10 @@ $(document).on('click', '.vzk-del-no-btn', function() {
 // Potvrdit mazání
 $(document).on('click', '.vzk-del-yes-btn', function() {
   var $btn  = $(this);
+  if ($btn.attr('aria-busy') === 'true') return;
   var $card = $btn.closest('[data-cas]');
 
-  $btn.prop('disabled', true).text('mažu...');
+  setActionButtonBusy($btn, true, 'mažu…');
   $card.find('.vzk-del-no-btn').prop('disabled', true);
   pbStart();
 
@@ -1528,7 +1647,26 @@ $(document).on("click", "#modal_poznamka_zpet", function ()
     setNotePlaybackTime(aktualniCas - 5000);
 });
 
-function ulozitNovouPoznamku(vratitNaTimestamp)
+function beginTimestampAction(button, label)
+{
+    var $buttons = $("#modal_poznamka_ok, #modal_poznamka_pridat_a_vratit");
+    if ($buttons.filter('[aria-busy="true"]').length) return null;
+
+    var $button = $(button);
+    setActionButtonBusy($button, true, label);
+    var $related = $buttons.not($button).prop("disabled", true).attr("data-vz-related-busy", "true");
+
+    return { button: $button, related: $related };
+}
+
+function finishTimestampAction(action)
+{
+    if (!action) return;
+    setActionButtonBusy(action.button, false);
+    action.related.prop("disabled", false).removeAttr("data-vz-related-busy");
+}
+
+function ulozitNovouPoznamku(vratitNaTimestamp, button)
 {
     let novyText = $("#modal_poznamka_text").val().trim();
 
@@ -1537,6 +1675,9 @@ function ulozitNovouPoznamku(vratitNaTimestamp)
         alert("Text timestampu nesmí být prázdný.");
         return;
     }
+
+    var action = beginTimestampAction(button, "ukládám…");
+    if (!action) return;
 
     // Uložit lokální kopii: přehrávání může během AJAX požadavku pokračovat,
     // ale volba "Přidat a vrátit" se musí vrátit na skutečně uložený timestamp.
@@ -1551,20 +1692,30 @@ function ulozitNovouPoznamku(vratitNaTimestamp)
             typ: noteType,
             poznamka: novyText
         },
-        function ()
+        function (response)
         {
+            if ($.trim(response) !== "OK") {
+                finishTimestampAction(action);
+                alert("Timestamp se nepodařilo uložit.");
+                return;
+            }
             if (vratitNaTimestamp) setNotePlaybackTime(ulozenyCas);
 
+            finishTimestampAction(action);
             $("#modal_poznamka").modal("hide");
 
             refreshTimestampViews(noteFile);
         }
-    );
+    ).fail(function()
+    {
+        finishTimestampAction(action);
+        alert("Chyba spojení se serverem");
+    });
 }
 
 $(document).on("click", "#modal_poznamka_pridat_a_vratit", function ()
 {
-    if (noteAction === "add") ulozitNovouPoznamku(true);
+    if (noteAction === "add") ulozitNovouPoznamku(true, this);
 });
 
 $(document).on("click", "#modal_poznamka_ok", function ()
@@ -1579,6 +1730,8 @@ if (noteAction != "delete" && novyText == "")
 	
 if (noteAction == "edit")
 {
+       var editAction = beginTimestampAction(this, "ukládám…");
+       if (!editAction) return;
        $.post(
         "php/ajax/ajax_nahravka_poznamky.php",
         {
@@ -1586,36 +1739,58 @@ if (noteAction == "edit")
             id: noteId,
             text: novyText
         },
-        function ()
+        function (response)
         {
+            if ($.trim(response) !== "OK") {
+                finishTimestampAction(editAction);
+                alert("Timestamp se nepodařilo uložit.");
+                return;
+            }
+            finishTimestampAction(editAction);
             $("#modal_poznamka").modal("hide");
             refreshTimestampViews(noteFile);
         }
-    );
+    ).fail(function()
+    {
+        finishTimestampAction(editAction);
+        alert("Chyba spojení se serverem");
+    });
     return;
 }
 
 if (noteAction == "delete")
 {
+    var deleteAction = beginTimestampAction(this, "mažu…");
+    if (!deleteAction) return;
     $.post(
         "php/ajax/ajax_nahravka_poznamky.php",
         {
             akce: "delete",
             id: noteId
         },
-        function ()
+        function (response)
         {
+            if ($.trim(response) !== "OK") {
+                finishTimestampAction(deleteAction);
+                alert("Timestamp se nepodařilo smazat.");
+                return;
+            }
+            finishTimestampAction(deleteAction);
             $("#modal_poznamka").modal("hide");
             refreshTimestampViews(noteFile);
         }
-    );
+    ).fail(function()
+    {
+        finishTimestampAction(deleteAction);
+        alert("Chyba spojení se serverem");
+    });
 
     return;
 }
 
 if (noteAction == "add")
 {
-    ulozitNovouPoznamku(false);
+    ulozitNovouPoznamku(false, this);
 
     return;
 }
@@ -1655,6 +1830,9 @@ $(document).on('click', '.bnav', function() {
 // ── Poznámky k looper nahrávce ──
 function loadLooperNotes(filePath)
 {
+    $('#looper-notes')
+        .html('<div class="poznamky-loading">⏳<span class="spinner-border spinner-border-sm"></span> Načítám poznámky…</div>')
+        .show();
     $.post(
         'php/ajax/ajax_nahravka_poznamky.php',
         {
@@ -1670,7 +1848,13 @@ function loadLooperNotes(filePath)
                 .show();
             syncLooperTimestampsFromList();
         }
-    );
+    ).fail(function()
+    {
+        if (looperCurrentFile !== filePath) return;
+        $('#looper-notes')
+            .html('<div class="poznamky-loading">⚠ Nepodařilo se načíst poznámky.</div>')
+            .show();
+    });
 }
 
 // ── Skok na konkrétní timestamp v poznámce ──
@@ -2079,7 +2263,8 @@ function setNativeAudioCacheUi(cesta, isCached, disabled, status) {
             .attr('aria-pressed', !!isCached)
             .attr('title', isCached ? 'Odebrat offline kopii' : 'Uložit pro offline přehrávání')
             .attr('aria-label', isCached ? 'Odebrat offline kopii' : 'Uložit pro offline přehrávání');
-        $toggle.find('span').text(disabled ? 'čekám…' : (isCached ? 'Offline' : 'Offline'));
+        var progressMatch = status && status.match(/(\d{1,3})\s*%/);
+        $toggle.find('span').text(disabled ? (progressMatch ? progressMatch[1] + ' %' : 'čekám…') : 'Offline');
         $toggle.find('i').attr('class', isCached ? 'ti ti-device-floppy' : 'ti ti-download');
         if (status) $toggle.attr('data-status', status); else $toggle.removeAttr('data-status');
     });
@@ -2108,7 +2293,37 @@ function syncAudioCacheUi(cesta, isCached, status, disabled) {
 
 // Jedna sdílená Promise zabraňuje dvojímu fetchi, pokud uživatel klikne na Offline
 // v nativním přehrávači a v looperu téměř zároveň.
-function getOrDownloadAudioBlob(cesta) {
+function downloadAudioBlob(cesta, onProgress) {
+    return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        var measurable = false;
+
+        xhr.open('GET', cesta, true);
+        xhr.responseType = 'blob';
+        xhr.onprogress = function(event) {
+            if (typeof onProgress !== 'function') return;
+            if (event.lengthComputable && event.total > 0) {
+                measurable = true;
+                onProgress(Math.max(0, Math.min(99, Math.round(event.loaded / event.total * 100))));
+            } else if (!measurable) {
+                onProgress(null);
+            }
+        };
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300 && xhr.response instanceof Blob) {
+                if (typeof onProgress === 'function') onProgress(100);
+                resolve(xhr.response);
+            } else {
+                reject(new Error('HTTP ' + xhr.status));
+            }
+        };
+        xhr.onerror = function() { reject(new Error('Chyba spojení.')); };
+        xhr.onabort = function() { reject(new Error('Stahování bylo zrušeno.')); };
+        xhr.send();
+    });
+}
+
+function getOrDownloadAudioBlob(cesta, onProgress) {
     var cacheStore = getAudioCacheStore();
     if (!cacheStore) return Promise.reject(new Error('Offline úložiště není dostupné.'));
     if (audioCacheRequests[cesta]) return audioCacheRequests[cesta];
@@ -2116,10 +2331,7 @@ function getOrDownloadAudioBlob(cesta) {
     audioCacheRequests[cesta] = idbKeyval.get(getAudioCacheKey(cesta), cacheStore)
         .then(function(blob) {
             if (blob instanceof Blob) return blob;
-            return fetch(cesta).then(function(response) {
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                return response.blob();
-            }).then(function(downloadedBlob) {
+            return downloadAudioBlob(cesta, onProgress).then(function(downloadedBlob) {
                 return idbKeyval.set(getAudioCacheKey(cesta), downloadedBlob, cacheStore)
                     .then(function() { return downloadedBlob; });
             });
@@ -2182,9 +2394,10 @@ function destroyLooperWaveSurfer() {
 }
 
 function setLooperButtonLoading(cesta, loading) {
-    $('.looper-btn').filter(function() {
+    var $buttons = $('.looper-btn').filter(function() {
         return $(this).data('cesta') === cesta;
-    }).prop('disabled', !!loading).attr('aria-busy', loading ? 'true' : 'false');
+    });
+    setActionButtonBusy($buttons, !!loading, 'načítám…');
 }
 
 function cancelPendingLooperOpen() {
@@ -2617,8 +2830,13 @@ function useCachedBlobInLooper(cesta, blob) {
 }
 
 function cacheAudioForOffline(cesta) {
-    syncAudioCacheUi(cesta, true, 'stahuji pro offline poslech…', true);
-    getOrDownloadAudioBlob(cesta).then(function(blob) {
+    syncAudioCacheUi(cesta, true, 'kontroluji offline kopii…', true);
+    getOrDownloadAudioBlob(cesta, function(percent) {
+        var status = percent === null
+            ? 'stahuji pro offline poslech…'
+            : 'stahuji pro offline poslech… ' + percent + ' %';
+        syncAudioCacheUi(cesta, true, status, true);
+    }).then(function(blob) {
         setNativeAudioSource(cesta, blob);
         useCachedBlobInLooper(cesta, blob);
         syncAudioCacheUi(cesta, true, 'uloženo pro offline poslech', false);
@@ -2758,25 +2976,31 @@ $(document).on('click', '.audio-cache-clear-mobile', function(event) {
 $('#modal_offline_files').on('shown.bs.modal', refreshOfflineFilesModal);
 
 $(document).on('click', '.offline-file-delete', function() {
+    var $button = $(this);
     var key = $(this).data('cache-key');
     var cacheStore = getAudioCacheStore();
     if (!key || !cacheStore) return;
 
-    $(this).prop('disabled', true);
+    if ($button.attr('aria-busy') === 'true') return;
+    setActionButtonBusy($button, true, 'mažu…');
     idbKeyval.del(key, cacheStore).then(function() {
         resetOfflineCacheUiForKey(key, 'přehrávám ze sítě');
+        setActionButtonBusy($button, false);
         refreshOfflineFilesModal();
     }).catch(function(error) {
         console.warn('[Offline audio] Offline soubor se nepodařilo smazat.', error);
+        setActionButtonBusy($button, false);
         refreshOfflineFilesModal();
     });
 });
 
 $(document).on('click', '#offline-files-clear-all', function() {
+    var $button = $(this);
     var cacheStore = getAudioCacheStore();
     if (!cacheStore || !window.confirm('Smazat všechny nahrávky uložené pro offline poslech?')) return;
 
-    $(this).prop('disabled', true);
+    if ($button.attr('aria-busy') === 'true') return;
+    setActionButtonBusy($button, true, 'mažu…');
     setAudioCacheUi(false, 'mažu offline soubory…', true);
     idbKeyval.clear(cacheStore).then(function() {
         $('audio[data-audio-cache-url]').each(function() {
@@ -2790,10 +3014,12 @@ $(document).on('click', '#offline-files-clear-all', function() {
             setAudioCacheUi(false, 'offline soubory byly smazány', false);
             initWaveSurfer(looperCurrentFile, looperCurrentSourceUrl, looperCurrentPeaks, looperActiveLoadId, false);
         }
+        setActionButtonBusy($button, false);
         refreshOfflineFilesModal();
     }).catch(function(error) {
         console.warn('[Looper] Offline soubory se nepodařilo smazat.', error);
         if (looperCurrentFile) setAudioCacheUi(true, 'offline soubory se nepodařilo smazat', false);
+        setActionButtonBusy($button, false);
         refreshOfflineFilesModal();
     });
 });
