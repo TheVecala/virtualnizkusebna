@@ -626,6 +626,37 @@
   </div>
 </div>
 
+<!-- ───────────────────────── VYTVOŘENÍ PRŮBĚHU PRO LOOPER ───────────────────────── -->
+<div class="modal fade" id="modal_looper_peaks" tabindex="-1" role="dialog" aria-labelledby="modal_looper_peaks_title" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal_looper_peaks_title">VYTVOŘIT PRŮBĚH NAHRÁVKY</h5>
+        <button type="button" class="close looper-peaks-back" aria-label="Zpět"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p>Pro tuto nahrávku ještě není vytvořený průběh. Looper ji otevře až po jeho vytvoření.</p>
+        <div class="modal-ctx mb-3">
+          <div class="ctx-action">Nahrávka</div>
+          <div><strong id="looper-peaks-file-name">—</strong></div>
+        </div>
+        <p class="small text-muted">Vytvoření jednorázově stáhne celou nahrávku. Během zpracování okno nezavírejte.</p>
+        <div id="looper-peaks-progress-wrap" hidden>
+          <div class="looper-peaks-progress-track">
+            <div id="looper-peaks-progress-bar"></div>
+          </div>
+          <div id="looper-peaks-progress-text" class="audio-cache-status text-center mt-1" aria-live="polite">0 %</div>
+        </div>
+        <div id="looper-peaks-result" class="small mt-2" role="status" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary looper-peaks-back">ZPĚT</button>
+        <button type="button" class="btn btn-primary" id="looper-peaks-create">VYTVOŘIT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="modal_looper_link" tabindex="-1" role="dialog" aria-labelledby="modal_looper_link_title" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">

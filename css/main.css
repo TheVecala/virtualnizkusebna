@@ -170,6 +170,10 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .audio-cache-toggle:disabled { cursor: wait; opacity: .65; }
 .audio-cache-control:has(.audio-cache-toggle[aria-pressed="true"]) { border-color: var(--barva); }
 .audio-cache-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--muted); font-size: 11px; }
+.looper-peaks-progress-track { height: 6px; overflow: hidden; background: #1e2226; border-radius: 4px; }
+#looper-peaks-progress-bar { width: 0; height: 100%; background: var(--barva); transition: width .1s; }
+#looper-peaks-result.is-error { color: #ff8888; }
+#looper-peaks-result.is-success { color: var(--barva); }
 
 #waveform-container{
     position:relative;

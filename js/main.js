@@ -1755,6 +1755,11 @@ var looperZoomPlugin = null;
 var looperZoomLevel = 0;
 var looperIsZoomed = false;
 var looperWaveformResizeTimer = null;
+var looperLoadSequence = 0;
+var looperActiveLoadId = 0;
+var looperPeaksRequest = null;
+var looperFetchController = null;
+var looperPendingGeneration = null;
 var LOOPER_MAX_ZOOM = 1000;
 var LOOPER_ZOOM_STEP = 1.35;
 
@@ -2159,6 +2164,10 @@ function releaseLooperObjectUrl() {
 
 function destroyLooperWaveSurfer() {
     window.clearTimeout(looperWaveformResizeTimer);
+    if (looperFetchController) {
+        looperFetchController.abort();
+        looperFetchController = null;
+    }
     if (wavesurfer) {
         wavesurfer.destroy();
         wavesurfer = null;
@@ -2172,6 +2181,23 @@ function destroyLooperWaveSurfer() {
     releaseLooperObjectUrl();
 }
 
+function setLooperButtonLoading(cesta, loading) {
+    $('.looper-btn').filter(function() {
+        return $(this).data('cesta') === cesta;
+    }).prop('disabled', !!loading).attr('aria-busy', loading ? 'true' : 'false');
+}
+
+function cancelPendingLooperOpen() {
+    looperActiveLoadId = ++looperLoadSequence;
+    if (looperPeaksRequest) {
+        looperPeaksRequest.abort();
+        looperPeaksRequest = null;
+    }
+    if (looperCurrentFile) setLooperButtonLoading(looperCurrentFile, false);
+    looperPendingGeneration = null;
+    destroyLooperWaveSurfer();
+}
+
 /**
  * Vytvoří a inicializuje WaveSurfer instanci.
  *
@@ -2179,7 +2205,7 @@ function destroyLooperWaveSurfer() {
  * @param {string} sourceUrl - síťová URL nebo dočasná blob URL
  * @param {object|null} peaksData - { peaks: [[...]], duration: X } nebo null
  */
-function initWaveSurfer(cesta, sourceUrl, peaksData) {
+function initWaveSurfer(cesta, sourceUrl, peaksData, loadId, generatingPeaks) {
     var barvaKapely = getComputedStyle(document.documentElement)
                         .getPropertyValue('--barva').trim() || '#a7ac38';
 
@@ -2191,6 +2217,7 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
         iterations: 24
     });
 
+    looperFetchController = typeof AbortController === 'function' ? new AbortController() : null;
     var wsConfig = {
         container:     '#waveform',
         waveColor:     '#b8b8b8',
@@ -2206,7 +2233,8 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
         plugins:       [looperRegionsPlugin, looperZoomPlugin],
         // MediaElement přehrává proudově a nedekóduje celou stopu do RAM.
         backend:       'MediaElement',
-        url:           sourceUrl
+        url:           sourceUrl,
+        fetchParams:   looperFetchController ? { signal: looperFetchController.signal } : undefined
     };
 
     // Pokud máme uložené peaks, předáme je WaveSurferu →
@@ -2221,7 +2249,16 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
         wsConfig.duration = peaksData.duration;
     }
 
-    wavesurfer = WaveSurfer.create(wsConfig);
+    // Každý callback smí pracovat pouze s instancí posledního požadavku na otevření.
+    var ws = WaveSurfer.create(wsConfig);
+    wavesurfer = ws;
+
+    ws.on('loading', function(percent) {
+        if (loadId !== looperActiveLoadId || !generatingPeaks) return;
+        var pct = Math.max(0, Math.min(100, Math.round(percent)));
+        $('#looper-peaks-progress-bar').css('width', pct + '%');
+        $('#looper-peaks-progress-text').text(pct + ' % · stahuji a vytvářím průběh…');
+    });
 
     looperRegionsPlugin.on('region-clicked', function(region, event) {
         if (region.id.indexOf('timestamp-marker-') !== 0) return;
@@ -2230,8 +2267,13 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
         if (wavesurfer) wavesurfer.setTime(region.start);
     });
 
-    wavesurfer.on('ready', function() {
+    ws.on('ready', function() {
+        if (loadId !== looperActiveLoadId || wavesurfer !== ws) {
+            ws.destroy();
+            return;
+        }
         $('#wf-placeholder').hide();
+		if (!generatingPeaks) setLooperButtonLoading(cesta, false);
 		$('#looper-time').show();
         var delka = wavesurfer.getDuration();
 
@@ -2242,7 +2284,7 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
 
         var pozice = Math.min(delka, Math.max(0, looperOpenOptions.timeMs / 1000));
         wavesurfer.setTime(pozice);
-        if (looperOpenOptions.autoplay) wavesurfer.play();
+        if (looperOpenOptions.autoplay && !generatingPeaks) wavesurfer.play();
         else wavesurfer.pause();
         renderLooperRegions();
         updateLooperZoomState(getLooperCurrentZoom());
@@ -2250,23 +2292,48 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
 		$('#looper-time').text(
 			formatLooperTime(0) + ' / ' + formatLooperTime(delka)
 		);
-        // Peaks ještě nebyly uloženy → exportujeme a pošleme na server
-        if (!maPeaks) {
-            var peaks    = wavesurfer.exportPeaks();
-            var duration = wavesurfer.getDuration();
+        // Peaks se vytvářejí jen po výslovném potvrzení uživatele v modalu.
+        if (!maPeaks && generatingPeaks) {
+            var peaks    = ws.exportPeaks();
+            var duration = ws.getDuration();
 
             if (Array.isArray(peaks) && peaks.length > 0 && duration > 0) {
+                $('#looper-peaks-progress-bar').css('width', '100%');
+                $('#looper-peaks-progress-text').text('100 % · ukládám průběh…');
                 $.ajax({
                     url:         'php/ajax/ulozit_peaks.php',
                     method:      'POST',
                     contentType: 'application/json',
                     data:        JSON.stringify({ cesta: cesta, peaks: peaks, duration: duration }),
+                    dataType:    'json',
+                    success: function(response) {
+                        if (loadId !== looperActiveLoadId) return;
+                        if (!response || !response.ok) {
+                            showLooperGenerationError((response && response.chyba) || 'Průběh se nepodařilo uložit.');
+                            return;
+                        }
+                        looperCurrentPeaks = { peaks: peaks, duration: duration };
+                        setLooperButtonLoading(cesta, false);
+                        looperPendingGeneration = null;
+                        $('#looper-peaks-result').removeClass('is-error').addClass('is-success').text('Průběh byl vytvořen.');
+                        $('#modal_looper_peaks').modal('hide');
+                        if (looperOpenOptions.autoplay) ws.play();
+                    },
                     error: function() {
-                        console.warn('[Looper] Peaks se nepodařilo uložit.');
+                        showLooperGenerationError('Průběh se nepodařilo uložit na server.');
                     }
                 });
+            } else {
+                showLooperGenerationError('Z nahrávky se nepodařilo vytvořit průběh.');
             }
         }
+    });
+
+    ws.on('error', function(error) {
+        if (loadId !== looperActiveLoadId || wavesurfer !== ws) return;
+        console.warn('[Looper] Nahrávku se nepodařilo načíst.', error);
+        setLooperButtonLoading(cesta, false);
+        if (generatingPeaks) showLooperGenerationError('Nahrávku se nepodařilo načíst nebo zpracovat.');
     });
 
     wavesurfer.on('play', function() {
@@ -2324,8 +2391,35 @@ function initWaveSurfer(cesta, sourceUrl, peaksData) {
 }
 
 // Odpojení jakýchkoliv starých click eventů na looper-btn a připojení nových
+function showLooperGenerationError(message) {
+    $('#looper-peaks-progress-text').text('Vytváření se nezdařilo.');
+    $('#looper-peaks-result').removeClass('is-success').addClass('is-error').text(message);
+    $('#looper-peaks-create').prop('disabled', false).text('ZKUSIT ZNOVU');
+    setLooperButtonLoading(looperCurrentFile, false);
+}
+
+function resetLooperGenerationModal() {
+    $('#looper-peaks-progress-wrap').prop('hidden', true);
+    $('#looper-peaks-progress-bar').css('width', '0');
+    $('#looper-peaks-progress-text').text('0 %');
+    $('#looper-peaks-result').removeClass('is-error is-success').text('');
+    $('#looper-peaks-create').prop('disabled', false).text('VYTVOŘIT');
+}
+
+function showLooperPeaksModal(cesta, nazev, loadId) {
+    looperPendingGeneration = { cesta: cesta, nazev: nazev, loadId: loadId };
+    resetLooperGenerationModal();
+    $('#looper-peaks-file-name').text(nazev);
+    $('#modal_looper_peaks').modal('show');
+}
+
 function openRecordingInLooper(cesta, nazev, options) {
+    if ($('.looper-btn').filter(function() { return $(this).data('cesta') === cesta; }).prop('disabled')) return;
     looperOpenOptions = Object.assign({ autoplay: true, timeMs: 0, loopRange: null }, options || {});
+
+    cancelPendingLooperOpen();
+    var loadId = ++looperLoadSequence;
+    looperActiveLoadId = loadId;
 
     looperCurrentFile = cesta;
     looperCurrentName = nazev;
@@ -2354,17 +2448,43 @@ function openRecordingInLooper(cesta, nazev, options) {
         setLooperLooping(false);
     }
 
-    destroyLooperWaveSurfer();
+    setLooperButtonLoading(cesta, true);
 
-    // Nejdříve načteme peaks a až poté vybereme zdroj zvuku z IndexedDB nebo ze sítě.
-    $.getJSON('php/ajax/nacist_peaks.php', { cesta: cesta })
+    // Bez uložených peaks se audio nestahuje automaticky. Uživatel musí potvrdit
+    // jednorázové stažení a vytvoření průběhu v modalu.
+    looperPeaksRequest = $.getJSON('php/ajax/nacist_peaks.php', { cesta: cesta })
         .done(function(peaksData) {
-            openLooperAudio(cesta, peaksData);
+            if (loadId !== looperActiveLoadId) return;
+            looperPeaksRequest = null;
+            openLooperAudio(cesta, peaksData, loadId, false);
         })
-        .fail(function() {
-            openLooperAudio(cesta, null);
+        .fail(function(xhr, status) {
+            if (status === 'abort' || loadId !== looperActiveLoadId) return;
+            looperPeaksRequest = null;
+            if (xhr.status === 404) {
+                showLooperPeaksModal(cesta, nazev, loadId);
+            } else {
+                setLooperButtonLoading(cesta, false);
+                alert('Nepodařilo se ověřit průběh nahrávky. Zkuste to znovu.');
+            }
         });
 }
+
+$(document).on('click', '#looper-peaks-create', function() {
+    var pending = looperPendingGeneration;
+    if (!pending || pending.loadId !== looperActiveLoadId) return;
+    $(this).prop('disabled', true).text('VYTVÁŘÍM…');
+    $('#looper-peaks-progress-wrap').prop('hidden', false);
+    $('#looper-peaks-result').removeClass('is-error is-success').text('');
+    setLooperButtonLoading(pending.cesta, true);
+    destroyLooperWaveSurfer();
+    openLooperAudio(pending.cesta, null, pending.loadId, true);
+});
+
+$(document).on('click', '.looper-peaks-back', function() {
+    $('#modal_looper_peaks').modal('hide');
+    looperZavrit();
+});
 
 $(document).off('click', '.looper-btn').on('click', '.looper-btn', function() {
     openRecordingInLooper($(this).data('cesta'), $(this).data('nazev'));
@@ -2442,21 +2562,22 @@ $(document).on('click', '#looper-link-copy', function() {
     });
 });
 
-function openLooperAudio(cesta, peaksData) {
+function openLooperAudio(cesta, peaksData, loadId, generatingPeaks) {
+    loadId = loadId || looperActiveLoadId;
     var cacheStore = getAudioCacheStore();
     looperCurrentPeaks = peaksData;
     looperCurrentSourceUrl = cesta;
     setAudioCacheUi(false, cacheStore ? 'kontroluji offline kopii…' : 'offline úložiště není dostupné', !cacheStore);
 
     if (!cacheStore) {
-        initWaveSurfer(cesta, cesta, peaksData);
+        initWaveSurfer(cesta, cesta, peaksData, loadId, generatingPeaks);
         return;
     }
 
     idbKeyval.get(getAudioCacheKey(cesta), cacheStore)
         .then(function(blob) {
             // Mezitím mohl uživatel otevřít jinou stopu.
-            if (looperCurrentFile !== cesta) return;
+            if (looperCurrentFile !== cesta || loadId !== looperActiveLoadId) return;
 
             if (blob instanceof Blob) {
                 looperCurrentObjectUrl = URL.createObjectURL(blob);
@@ -2465,13 +2586,13 @@ function openLooperAudio(cesta, peaksData) {
             } else {
                 setAudioCacheUi(false, 'přehrávám ze sítě', false);
             }
-            initWaveSurfer(cesta, looperCurrentSourceUrl, peaksData);
+            initWaveSurfer(cesta, looperCurrentSourceUrl, peaksData, loadId, generatingPeaks);
         })
         .catch(function(error) {
             console.warn('[Looper] Offline kopii se nepodařilo načíst.', error);
-            if (looperCurrentFile !== cesta) return;
+            if (looperCurrentFile !== cesta || loadId !== looperActiveLoadId) return;
             setAudioCacheUi(false, 'přehrávám ze sítě', false);
-            initWaveSurfer(cesta, cesta, peaksData);
+            initWaveSurfer(cesta, cesta, peaksData, loadId, generatingPeaks);
         });
 }
 
@@ -2492,7 +2613,7 @@ function useCachedBlobInLooper(cesta, blob) {
     destroyLooperWaveSurfer();
     looperCurrentObjectUrl = URL.createObjectURL(blob);
     looperCurrentSourceUrl = looperCurrentObjectUrl;
-    initWaveSurfer(cesta, looperCurrentSourceUrl, looperCurrentPeaks);
+    initWaveSurfer(cesta, looperCurrentSourceUrl, looperCurrentPeaks, looperActiveLoadId, false);
 }
 
 function cacheAudioForOffline(cesta) {
@@ -2516,7 +2637,7 @@ function removeAudioFromOfflineCache(cesta) {
         if (looperCurrentFile === cesta) {
             destroyLooperWaveSurfer();
             looperCurrentSourceUrl = cesta;
-            initWaveSurfer(cesta, cesta, looperCurrentPeaks);
+            initWaveSurfer(cesta, cesta, looperCurrentPeaks, looperActiveLoadId, false);
         }
         syncAudioCacheUi(cesta, false, 'přehrávám ze sítě', false);
     }).catch(function(error) {
@@ -2608,7 +2729,7 @@ function resetOfflineCacheUiForKey(key, status) {
         destroyLooperWaveSurfer();
         looperCurrentSourceUrl = looperCurrentFile;
         setAudioCacheUi(false, status, false);
-        initWaveSurfer(looperCurrentFile, looperCurrentSourceUrl, looperCurrentPeaks);
+        initWaveSurfer(looperCurrentFile, looperCurrentSourceUrl, looperCurrentPeaks, looperActiveLoadId, false);
     }
 }
 
@@ -2667,7 +2788,7 @@ $(document).on('click', '#offline-files-clear-all', function() {
             destroyLooperWaveSurfer();
             looperCurrentSourceUrl = looperCurrentFile;
             setAudioCacheUi(false, 'offline soubory byly smazány', false);
-            initWaveSurfer(looperCurrentFile, looperCurrentSourceUrl, looperCurrentPeaks);
+            initWaveSurfer(looperCurrentFile, looperCurrentSourceUrl, looperCurrentPeaks, looperActiveLoadId, false);
         }
         refreshOfflineFilesModal();
     }).catch(function(error) {
@@ -2829,11 +2950,11 @@ document.addEventListener('keydown', function(event) {
 });
 
 function looperZavrit() {
+    cancelPendingLooperOpen();
     looperFullscreenToggle(false);
     if (wavesurfer) {
         wavesurfer.pause();
     }
-    destroyLooperWaveSurfer();
 	$('#wf-placeholder').show();
     looperCurrentFile = null;
     looperCurrentName = null;
