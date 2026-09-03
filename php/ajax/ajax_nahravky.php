@@ -353,14 +353,14 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
         
         <?php if ($je_audio): ?>
           <div class="vysuvna-prehravac">
-            <audio controls style="width: 100%; height: 40px;"
+            <audio controls preload="metadata" style="width: 100%; height: 40px;"
                    data-audio-cache-url="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
                    data-network-src="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>">
               <?php 
               $mime_typy = ['mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg', 'flac' => 'audio/flac', 'aac' => 'audio/aac'];
               $m_type = $mime_typy[$ext] ?? 'audio/mpeg';
               ?>
-              <source src="<?php echo htmlspecialchars($cesta); ?>?t=<?php echo time(); ?>" type="<?php echo $m_type; ?>">
+              <source src="<?php echo htmlspecialchars($cesta); ?>?v=<?php echo (int) @filemtime(__DIR__ . '/../../' . $cesta); ?>" type="<?php echo $m_type; ?>">
             </audio>
           </div>
         <?php endif; ?>
