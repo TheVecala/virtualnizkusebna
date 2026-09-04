@@ -45,30 +45,34 @@ echo '
   
     <button
         type="button"
-        class="fbtn pridat-poznamku-btn"
+        class="icon-btn timestamp-action-btn pridat-poznamku-btn"
         data-typ="'.NOTE_SONG.'">
-         📌 ZAČÁTEK SKLADBY
+        <i class="ti ti-music" aria-hidden="true"></i>
+        <span>Vál</span>
     </button>
 
     <button
         type="button"
-        class="fbtn pridat-poznamku-btn"
+        class="icon-btn timestamp-action-btn pridat-poznamku-btn"
         data-typ="'.NOTE_PASSAGE.'">
-        📌 PASÁŽ
+        <i class="ti ti-repeat" aria-hidden="true"></i>
+        <span>Pasáž</span>
     </button>
 
     <button
         type="button"
-        class="fbtn pridat-poznamku-btn"
+        class="icon-btn timestamp-action-btn pridat-poznamku-btn"
         data-typ="'.NOTE_NORMAL.'">
-        📌 POZNÁMKA
+        <i class="ti ti-note" aria-hidden="true"></i>
+        <span>Poznámka</span>
     </button>
 
     <button
         type="button"
-        class="fbtn export-timestampy-btn"
+        class="icon-btn timestamp-action-btn export-timestampy-btn"
         data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
-        📄 EXPORT
+        <i class="ti ti-file-export" aria-hidden="true"></i>
+        <span>Export</span>
     </button>
    
   

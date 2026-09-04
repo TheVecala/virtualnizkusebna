@@ -794,19 +794,27 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .poznamky-toolbar
 {
     display: flex;
-    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 10px;
 }
 
-.poznamky-toolbar .fbtn
+.poznamky-toolbar .timestamp-action-btn
 {
-    flex: 0 1 180px;
+    border-color: #596b8a;
+    color: #8eb8ff;
+    background: #202936;
+}
+
+.poznamky-toolbar .timestamp-action-btn:hover
+{
+    border-color: #8eb8ff;
+    background: #29384b;
 }
 
 @media (max-width: 767px) {
   #waveform ::part(region-content) { max-width: 86px; padding-inline: 4px; font-size: 9px; }
-  .poznamky-toolbar .fbtn { flex: 1 1 calc(50% - 8px); }
+  .poznamky-toolbar { gap: 4px; }
+  .poznamky-toolbar .timestamp-action-btn { padding-inline: 2px; }
   .note-row { gap: 5px !important; }
   .note-text { min-width: 0; overflow-wrap: anywhere; }
 }

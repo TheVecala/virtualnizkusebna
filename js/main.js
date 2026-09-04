@@ -1623,9 +1623,62 @@ $(document).on('click', '.note-delete', function(e)
 
 $(document).on('click', '.export-timestampy-btn', function ()
 {
-    window.location =
-        'php/ajax/export_timestampy.php?file_path=' +
-        encodeURIComponent($(this).data('file'));
+    var $button = $(this);
+    var filePath = String($button.data('file') || '');
+    var fileName = filePath.split(/[\\/]/).pop();
+    var timestamps = collectTimestampData($button.closest('.poznamky-seznam'));
+
+    $('#modal_export_timestampy').data({
+        filePath: filePath,
+        fileName: fileName,
+        timestamps: timestamps
+    });
+    $('#copy_timestamp_song, #copy_timestamp_passage').prop('checked', true);
+    $('#copy_timestamp_note').prop('checked', false);
+    $('#copy_timestampy_table_confirm').prop('disabled', false);
+    $('#modal_export_timestampy').modal('show');
+});
+
+$(document).on('change', '#modal_export_timestampy input[type="checkbox"]', function ()
+{
+    var hasSelectedType = $('#modal_export_timestampy input[type="checkbox"]:checked').length > 0;
+    $('#copy_timestampy_table_confirm').prop('disabled', !hasSelectedType);
+});
+
+$(document).on('click', '#export_timestampy_txt', function ()
+{
+    var filePath = $('#modal_export_timestampy').data('filePath');
+    if (!filePath) return;
+    window.location = 'php/ajax/export_timestampy.php?file_path=' + encodeURIComponent(filePath);
+    $('#modal_export_timestampy').modal('hide');
+});
+
+$(document).on('click', '#copy_timestampy_table_confirm', function ()
+{
+    var $modal = $('#modal_export_timestampy');
+    var selectedTypes = [];
+    if ($('#copy_timestamp_song').prop('checked')) selectedTypes.push(NOTE_SONG);
+    if ($('#copy_timestamp_passage').prop('checked')) selectedTypes.push(NOTE_PASSAGE);
+    if ($('#copy_timestamp_note').prop('checked')) selectedTypes.push(NOTE_NORMAL);
+    if (!selectedTypes.length) return;
+
+    var rows = [String($modal.data('fileName') || '').replace(/[\t\r\n]+/g, ' ') + '\t'];
+    ($modal.data('timestamps') || []).forEach(function(timestamp) {
+        var name = String(timestamp.text || '').trim();
+        if (selectedTypes.indexOf(timestamp.typ) === -1 || !name) return;
+        rows.push(formatTime(timestamp.ms) + '\t' + name.replace(/[\t\r\n]+/g, ' '));
+    });
+
+    var tsv = rows.join('\n') + '\n';
+    var copy = navigator.clipboard && window.isSecureContext
+        ? navigator.clipboard.writeText(tsv)
+        : copyTextFallback(tsv);
+
+    copy.then(function() {
+        $modal.modal('hide');
+    }).catch(function() {
+        alert('Tabulku se nepodařilo zkopírovat do schránky.');
+    });
 });
 
 $(document).on("click", "#modal_poznamka_aktualizovat", function ()
