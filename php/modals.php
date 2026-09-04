@@ -688,25 +688,58 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <p>Pro kopírování do tabulky vyberte typy timestampů:</p>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="copy_timestamp_song" checked>
-                    <label class="form-check-label" for="copy_timestamp_song">Začátky skladeb</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="copy_timestamp_passage" checked>
-                    <label class="form-check-label" for="copy_timestamp_passage">Pasáže</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="copy_timestamp_note">
-                    <label class="form-check-label" for="copy_timestamp_note">Poznámky</label>
-                </div>
+            <div class="modal-body timestamp-export-body">
+                <section class="timestamp-export-section timestamp-export-section-table" aria-labelledby="timestamp_export_table_title">
+                    <div class="timestamp-export-section-header">
+                        <span class="timestamp-export-section-icon" aria-hidden="true">
+                            <i class="ti ti-table"></i>
+                        </span>
+                        <div>
+                            <h6 id="timestamp_export_table_title">Export do tabulky</h6>
+                            <p>Vyberte typy timestampů, které chcete zkopírovat.</p>
+                        </div>
+                    </div>
+
+                    <div class="timestamp-export-checks" role="group" aria-label="Typy timestampů pro tabulku">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="copy_timestamp_song" checked>
+                            <label class="form-check-label" for="copy_timestamp_song">Začátky skladeb</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="copy_timestamp_passage" checked>
+                            <label class="form-check-label" for="copy_timestamp_passage">Pasáže</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="copy_timestamp_note">
+                            <label class="form-check-label" for="copy_timestamp_note">Poznámky</label>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary timestamp-export-action" id="copy_timestampy_table_confirm">
+                        <i class="ti ti-copy" aria-hidden="true"></i>
+                        Kopírovat do schránky
+                    </button>
+                </section>
+
+                <section class="timestamp-export-section timestamp-export-section-text" aria-labelledby="timestamp_export_text_title">
+                    <div class="timestamp-export-section-header">
+                        <span class="timestamp-export-section-icon" aria-hidden="true">
+                            <i class="ti ti-file-text"></i>
+                        </span>
+                        <div>
+                            <h6 id="timestamp_export_text_title">Stažení textového souboru</h6>
+                            <p>Stáhne všechny timestampy jako soubor TXT.</p>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary timestamp-export-action" id="export_timestampy_txt">
+                        <i class="ti ti-download" aria-hidden="true"></i>
+                        Stáhnout TXT
+                    </button>
+                </section>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="export_timestampy_txt">Stáhnout TXT</button>
-                <button type="button" class="btn btn-primary" id="copy_timestampy_table_confirm">Kopírovat</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Zrušit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Zavřít</button>
             </div>
         </div>
     </div>

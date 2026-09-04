@@ -822,10 +822,92 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     color: #edcfff;
 }
 
+.timestamp-export-body
+{
+    display: grid;
+    gap: 12px;
+}
+
+.timestamp-export-section
+{
+    padding: 14px;
+    background: #252a2e;
+    border: 1px solid #4a4e55;
+    border-radius: 7px;
+}
+
+.timestamp-export-section-table
+{
+    border-left: 3px solid #a66ad8;
+}
+
+.timestamp-export-section-text
+{
+    border-left: 3px solid var(--barva);
+}
+
+.timestamp-export-section-header
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.timestamp-export-section-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    background: #33223f;
+    color: #d39cff;
+    font-size: 19px;
+}
+
+.timestamp-export-section-text .timestamp-export-section-icon
+{
+    background: #30351f;
+    color: var(--barva);
+}
+
+.timestamp-export-section h6
+{
+    margin: 1px 0 3px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.timestamp-export-section p
+{
+    margin: 0;
+}
+
+.timestamp-export-checks
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 14px 44px;
+}
+
+.timestamp-export-action
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 44px;
+}
+
 @media (max-width: 767px) {
   #waveform ::part(region-content) { max-width: 86px; padding-inline: 4px; font-size: 9px; }
   .poznamky-toolbar { gap: 4px; }
   .poznamky-toolbar .timestamp-action-btn { padding-inline: 2px; }
+  .timestamp-export-checks { grid-template-columns: 1fr; }
   .note-row { gap: 5px !important; }
   .note-text { min-width: 0; overflow-wrap: anywhere; }
 }
