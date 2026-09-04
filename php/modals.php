@@ -679,6 +679,37 @@
 
 <!-- ───────────────────────── editace timestampu ───────────────────────── -->
 
+<div class="modal fade" id="modal_copy_timestampy_table" tabindex="-1" role="dialog" aria-labelledby="modal_copy_timestampy_table_title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal_copy_timestampy_table_title">KOPÍROVAT JAKO TABULKU</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="copy_timestamp_song" checked>
+                    <label class="form-check-label" for="copy_timestamp_song">Začátky skladeb</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="copy_timestamp_passage" checked>
+                    <label class="form-check-label" for="copy_timestamp_passage">Pasáže</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="copy_timestamp_note">
+                    <label class="form-check-label" for="copy_timestamp_note">Poznámky</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="copy_timestampy_table_confirm">Kopírovat</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Zrušit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modal_poznamka" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
 
