@@ -570,7 +570,30 @@
 </div>
 
 
-<!-- ───────────────────────── ODHLÁŠENÍ ───────────────────────── -->
+<!-- ───────────────────────── OFFLINE SOUBORY ───────────────────────── -->
+<div class="modal fade" id="modal_offline_confirm" tabindex="-1" role="dialog"
+     aria-labelledby="modal_offline_confirm_title" aria-describedby="offline-cache-confirm-message" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal_offline_confirm_title">OFFLINE KOPIE</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-ctx">
+          <div class="ctx-action" id="offline-cache-confirm-action">OFFLINE KOPIE</div>
+          <strong id="offline-cache-confirm-name"></strong>
+        </div>
+        <p id="offline-cache-confirm-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZRUŠIT</button>
+        <button type="button" id="offline-cache-confirm-submit" class="btn btn-primary">ULOŽIT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="modal_offline_files" tabindex="-1" role="dialog" aria-labelledby="modal_offline_files_title" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable" role="document">
     <div class="modal-content">

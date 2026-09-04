@@ -2000,6 +2000,7 @@ var looperPendingGeneration = null;
 var looperVolume = 1;
 var looperLastAudibleVolume = 1;
 var looperMuted = false;
+var pendingOfflineCacheChange = null;
 var LOOPER_MAX_ZOOM = 1000;
 var LOOPER_ZOOM_STEP = 1.35;
 
@@ -2869,16 +2870,126 @@ function openLooperAudio(cesta, peaksData, loadId, generatingPeaks) {
         });
 }
 
+function offlineCacheDisplayName(cesta) {
+    if (looperCurrentFile === cesta && looperCurrentName) return looperCurrentName;
+
+    var fileName = String(cesta || '').split('/').pop() || 'Nahrávka';
+    try { return decodeURIComponent(fileName); } catch (error) { return fileName; }
+}
+
+function showOfflineCacheConfirmation(pending, options) {
+    pendingOfflineCacheChange = pending;
+
+    $('#modal_offline_confirm_title').text(options.title);
+    $('#offline-cache-confirm-action').text(options.action);
+    $('#offline-cache-confirm-name').text(options.name);
+    $('#offline-cache-confirm-message').text(options.message);
+    $('#offline-cache-confirm-submit')
+        .removeClass('btn-primary btn-danger')
+        .addClass(options.danger ? 'btn-danger' : 'btn-primary')
+        .text(options.submitLabel);
+
+    closeLooperMenu();
+    if (pending.returnToOfflineFiles && $('#modal_offline_files').hasClass('show')) {
+        $('#modal_offline_files').one('hidden.bs.modal', function() {
+            $('#modal_offline_confirm').modal('show');
+        }).modal('hide');
+    } else {
+        $('#modal_offline_confirm').modal('show');
+    }
+}
+
+function requestOfflineCacheConfirmation(cesta, shouldCache) {
+    if (!cesta || !getAudioCacheStore()) return;
+
+    showOfflineCacheConfirmation({
+        type: shouldCache ? 'cache' : 'remove',
+        cesta: cesta,
+        returnToOfflineFiles: false
+    }, {
+        title: shouldCache ? 'ULOŽIT OFFLINE KOPII?' : 'ODEBRAT OFFLINE KOPII?',
+        action: shouldCache ? 'Uložit pro offline' : 'Odebrat offline kopii',
+        name: offlineCacheDisplayName(cesta),
+        message: shouldCache
+            ? 'Nahrávka se stáhne a uloží do offline úložiště tohoto prohlížeče.'
+            : 'Offline kopie se odstraní z tohoto prohlížeče. Originální nahrávka na serveru zůstane beze změny.',
+        submitLabel: shouldCache ? 'ULOŽIT' : 'ODEBRAT',
+        danger: !shouldCache
+    });
+}
+
+function requestOfflineCacheKeyRemoval(key) {
+    if (!key || !getAudioCacheStore()) return;
+    var details = offlineFileDetails(key);
+
+    showOfflineCacheConfirmation({
+        type: 'remove-key',
+        key: key,
+        returnToOfflineFiles: true
+    }, {
+        title: 'ODEBRAT OFFLINE KOPII?',
+        action: 'Odebrat offline kopii',
+        name: details.name,
+        message: 'Offline kopie se odstraní z tohoto prohlížeče. Originální nahrávka na serveru zůstane beze změny.',
+        submitLabel: 'ODEBRAT',
+        danger: true
+    });
+}
+
+function requestOfflineCacheClearAll() {
+    if (!getAudioCacheStore()) return;
+
+    showOfflineCacheConfirmation({
+        type: 'clear-all',
+        returnToOfflineFiles: true
+    }, {
+        title: 'ODEBRAT VŠECHNY OFFLINE KOPIE?',
+        action: 'Vymazat offline úložiště',
+        name: 'Všechny uložené nahrávky',
+        message: 'Všechny offline kopie se odstraní z tohoto prohlížeče. Originální nahrávky na serveru zůstanou beze změny.',
+        submitLabel: 'ODEBRAT VŠE',
+        danger: true
+    });
+}
+
+function executeOfflineCacheChange(pending) {
+    if (pending.type === 'cache') return cacheAudioForOffline(pending.cesta);
+    if (pending.type === 'remove') return removeAudioFromOfflineCache(pending.cesta);
+    if (pending.type === 'remove-key') return removeOfflineCacheKey(pending.key);
+    if (pending.type === 'clear-all') return clearOfflineCache();
+    return Promise.resolve();
+}
+
+$(document).on('click', '#offline-cache-confirm-submit', function() {
+    var pending = pendingOfflineCacheChange;
+    if (!pending) return;
+
+    pendingOfflineCacheChange = null;
+    $('#modal_offline_confirm').one('hidden.bs.modal', function() {
+        var result = executeOfflineCacheChange(pending);
+        if (pending.returnToOfflineFiles) {
+            Promise.resolve(result).then(function() {
+                $('#modal_offline_files').modal('show');
+            }, function() {
+                $('#modal_offline_files').modal('show');
+            });
+        }
+    }).modal('hide');
+});
+
+$('#modal_offline_confirm').on('hidden.bs.modal', function() {
+    var cancelled = pendingOfflineCacheChange;
+    pendingOfflineCacheChange = null;
+    if (cancelled && cancelled.returnToOfflineFiles) {
+        $('#modal_offline_files').modal('show');
+    }
+});
+
 $(document).on('click', '#audio-cache-toggle', function() {
     var cesta = looperCurrentFile;
     var cacheStore = getAudioCacheStore();
     if (!cesta || !cacheStore) return;
-
-    if (this.getAttribute('aria-pressed') !== 'true') {
-        cacheAudioForOffline(cesta);
-    } else {
-        removeAudioFromOfflineCache(cesta);
-    }
+    requestOfflineCacheConfirmation(cesta, this.getAttribute('aria-pressed') !== 'true');
 });
 
 function useCachedBlobInLooper(cesta, blob) {
@@ -2891,7 +3002,7 @@ function useCachedBlobInLooper(cesta, blob) {
 
 function cacheAudioForOffline(cesta) {
     syncAudioCacheUi(cesta, true, 'kontroluji offline kopii…', true);
-    getOrDownloadAudioBlob(cesta, function(percent) {
+    return getOrDownloadAudioBlob(cesta, function(percent) {
         var status = percent === null
             ? 'stahuji pro offline poslech…'
             : 'stahuji pro offline poslech… ' + percent + ' %';
@@ -2908,9 +3019,9 @@ function cacheAudioForOffline(cesta) {
 
 function removeAudioFromOfflineCache(cesta) {
     var cacheStore = getAudioCacheStore();
-    if (!cacheStore) return;
+    if (!cacheStore) return Promise.resolve();
     syncAudioCacheUi(cesta, false, 'mažu offline kopii…', true);
-    idbKeyval.del(getAudioCacheKey(cesta), cacheStore).then(function() {
+    return idbKeyval.del(getAudioCacheKey(cesta), cacheStore).then(function() {
         setNativeAudioSource(cesta, null);
         if (looperCurrentFile === cesta) {
             destroyLooperWaveSurfer();
@@ -3016,11 +3127,7 @@ $(document).on('click', '.native-audio-cache-toggle', function(event) {
     event.stopPropagation();
     var cesta = $(this).data('cesta');
     if (!cesta || this.disabled) return;
-    if (this.getAttribute('aria-pressed') === 'true') {
-        removeAudioFromOfflineCache(cesta);
-    } else {
-        cacheAudioForOffline(cesta);
-    }
+    requestOfflineCacheConfirmation(cesta, this.getAttribute('aria-pressed') !== 'true');
 });
 
 $(document).on('click', '#audio-cache-clear', function(event) {
@@ -3035,34 +3142,23 @@ $(document).on('click', '.audio-cache-clear-mobile', function(event) {
 
 $('#modal_offline_files').on('shown.bs.modal', refreshOfflineFilesModal);
 
-$(document).on('click', '.offline-file-delete', function() {
-    var $button = $(this);
-    var key = $(this).data('cache-key');
+function removeOfflineCacheKey(key) {
     var cacheStore = getAudioCacheStore();
-    if (!key || !cacheStore) return;
+    if (!key || !cacheStore) return Promise.resolve();
 
-    if ($button.attr('aria-busy') === 'true') return;
-    setActionButtonBusy($button, true, 'mažu…');
-    idbKeyval.del(key, cacheStore).then(function() {
+    return idbKeyval.del(key, cacheStore).then(function() {
         resetOfflineCacheUiForKey(key, 'přehrávám ze sítě');
-        setActionButtonBusy($button, false);
-        refreshOfflineFilesModal();
     }).catch(function(error) {
         console.warn('[Offline audio] Offline soubor se nepodařilo smazat.', error);
-        setActionButtonBusy($button, false);
-        refreshOfflineFilesModal();
     });
-});
+}
 
-$(document).on('click', '#offline-files-clear-all', function() {
-    var $button = $(this);
+function clearOfflineCache() {
     var cacheStore = getAudioCacheStore();
-    if (!cacheStore || !window.confirm('Smazat všechny nahrávky uložené pro offline poslech?')) return;
+    if (!cacheStore) return Promise.resolve();
 
-    if ($button.attr('aria-busy') === 'true') return;
-    setActionButtonBusy($button, true, 'mažu…');
     setAudioCacheUi(false, 'mažu offline soubory…', true);
-    idbKeyval.clear(cacheStore).then(function() {
+    return idbKeyval.clear(cacheStore).then(function() {
         $('audio[data-audio-cache-url]').each(function() {
             var cesta = $(this).data('audio-cache-url');
             setNativeAudioSource(cesta, null);
@@ -3074,14 +3170,18 @@ $(document).on('click', '#offline-files-clear-all', function() {
             setAudioCacheUi(false, 'offline soubory byly smazány', false);
             initWaveSurfer(looperCurrentFile, looperCurrentSourceUrl, looperCurrentPeaks, looperActiveLoadId, false);
         }
-        setActionButtonBusy($button, false);
-        refreshOfflineFilesModal();
     }).catch(function(error) {
         console.warn('[Looper] Offline soubory se nepodařilo smazat.', error);
         if (looperCurrentFile) setAudioCacheUi(true, 'offline soubory se nepodařilo smazat', false);
-        setActionButtonBusy($button, false);
-        refreshOfflineFilesModal();
     });
+}
+
+$(document).on('click', '.offline-file-delete', function() {
+    requestOfflineCacheKeyRemoval($(this).data('cache-key'));
+});
+
+$(document).on('click', '#offline-files-clear-all', function() {
+    requestOfflineCacheClearAll();
 });
 
 /* --- Globální funkce pro tlačítka v looper-baru --- */
