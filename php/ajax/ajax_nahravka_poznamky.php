@@ -70,6 +70,13 @@ echo '
         data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
         📄 EXPORT
     </button>
+
+    <button
+        type="button"
+        class="fbtn copy-timestampy-table-btn"
+        data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
+        Kopírovat jako tabulku
+    </button>
    
   
 </div>';
