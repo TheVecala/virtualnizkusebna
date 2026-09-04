@@ -800,15 +800,26 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
 .poznamky-toolbar .timestamp-action-btn
 {
-    border-color: #596b8a;
-    color: #8eb8ff;
-    background: #202936;
+    border-color: #a66ad8;
+    color: #d39cff;
+    background: #33223f;
+}
+
+.poznamky-toolbar .timestamp-action-btn span
+{
+    color: #d39cff;
 }
 
 .poznamky-toolbar .timestamp-action-btn:hover
 {
-    border-color: #8eb8ff;
-    background: #29384b;
+    border-color: #d39cff;
+    background: #493057;
+    color: #edcfff;
+}
+
+.poznamky-toolbar .timestamp-action-btn:hover span
+{
+    color: #edcfff;
 }
 
 @media (max-width: 767px) {

@@ -74,13 +74,6 @@ echo '
         <i class="ti ti-file-export" aria-hidden="true"></i>
         <span>Export</span>
     </button>
-
-    <button
-        type="button"
-        class="fbtn copy-timestampy-table-btn"
-        data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
-        Kopírovat jako tabulku
-    </button>
    
   
 </div>';

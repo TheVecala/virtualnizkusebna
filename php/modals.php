@@ -705,7 +705,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="export_timestampy_txt">Stáhnout TXT</button>
-                <button type="button" class="btn btn-primary" id="copy_timestampy_table_confirm">Kopírovat jako tabulku</button>
+                <button type="button" class="btn btn-primary" id="copy_timestampy_table_confirm">Kopírovat</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Zrušit</button>
             </div>
         </div>

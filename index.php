@@ -162,7 +162,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
       xintegrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <link href="css/sticky-footer-navbar.css" rel="stylesheet">
-<link href="css/main.css" rel="stylesheet">
+<link href="css/main.css?v=<?= filemtime(__DIR__ . '/css/main.css') ?>" rel="stylesheet">
 
 <!-- ── Dynamické proměnné z SESSION (nemohou být ve statickém main.css) ── -->
 <style>
