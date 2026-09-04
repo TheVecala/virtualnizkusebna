@@ -1997,6 +1997,9 @@ var looperActiveLoadId = 0;
 var looperPeaksRequest = null;
 var looperFetchController = null;
 var looperPendingGeneration = null;
+var looperVolume = 1;
+var looperLastAudibleVolume = 1;
+var looperMuted = false;
 var LOOPER_MAX_ZOOM = 1000;
 var LOOPER_ZOOM_STEP = 1.35;
 
@@ -2290,13 +2293,17 @@ function getAudioCacheKey(cesta) {
 function setAudioCacheUi(isCached, status, disabled) {
     var $control = $('#audio-cache-control');
     var $toggle = $('#audio-cache-toggle');
+    var hasRecording = !!looperCurrentFile;
 
-    $control.prop('hidden', !looperCurrentFile);
-    $('#looper-link-control').prop('hidden', !looperCurrentFile);
+    $control.prop('hidden', !hasRecording);
+    $('#looper-link-control').prop('hidden', !hasRecording);
+    $('.looper-menu-recording-actions').prop('hidden', !hasRecording);
     $toggle
         .prop('disabled', !!disabled)
         .attr('aria-pressed', !!isCached)
-        .text(isCached ? 'zahodit z paměti' : 'podržet v paměti');
+        .attr('aria-label', isCached ? 'Odebrat offline kopii' : 'Uložit pro offline');
+    $('#audio-cache-label').text(isCached ? 'Odebrat offline kopii' : 'Uložit pro offline');
+    $('#audio-cache-icon').attr('class', isCached ? 'ti ti-trash' : 'ti ti-download');
     $('#audio-cache-status').text(status || '');
 }
 
@@ -2443,6 +2450,7 @@ function destroyLooperWaveSurfer() {
     looperIsZoomed = false;
     $('#waveform-zoom-out').prop('disabled', true);
     $('#waveform-zoom-in').prop('disabled', true);
+    updateLooperPlaybackUi(false);
     releaseLooperObjectUrl();
 }
 
@@ -2518,6 +2526,7 @@ function initWaveSurfer(cesta, sourceUrl, peaksData, loadId, generatingPeaks) {
     // Každý callback smí pracovat pouze s instancí posledního požadavku na otevření.
     var ws = WaveSurfer.create(wsConfig);
     wavesurfer = ws;
+    applyLooperVolume();
 
     ws.on('loading', function(percent) {
         if (loadId !== looperActiveLoadId || !generatingPeaks) return;
@@ -2603,13 +2612,11 @@ function initWaveSurfer(cesta, sourceUrl, peaksData, loadId, generatingPeaks) {
     });
 
     wavesurfer.on('play', function() {
-        $('#btn-play').addClass('on');
-        $('#btn-pause').removeClass('on');
+        updateLooperPlaybackUi(true);
     });
 
     wavesurfer.on('pause', function() {
-        $('#btn-play').removeClass('on');
-        $('#btn-pause').addClass('on');
+        updateLooperPlaybackUi(false);
     });
 
     wavesurfer.on('zoom', function(minPxPerSec) {
@@ -2621,8 +2628,7 @@ function initWaveSurfer(cesta, sourceUrl, peaksData, loadId, generatingPeaks) {
             wavesurfer.setTime(getLoopStartSec());
             wavesurfer.play();
         } else {
-            $('#btn-play').removeClass('on');
-            $('#btn-pause').addClass('on');
+            updateLooperPlaybackUi(false);
         }
     });
 	
@@ -2696,9 +2702,10 @@ function openRecordingInLooper(cesta, nazev, options) {
     // Zobrazíme looper bar a resetujeme stav
     $('#looper-bar').removeClass('hidden');
     $('#looper-content').removeClass('hidden');
-    $('#btn-collapse-icon').text('▭');
-    $('#btn-collapse-label').text('Minimalizovat');
+    updateLooperCollapsedUi(false);
     $('#looper-file-name').text(nazev).attr('title', nazev).show();
+    $('#looper-header-file-name').text(nazev).attr('title', nazev).prop('hidden', false);
+    $('#looper-guide-control').prop('hidden', true);
     $('#wf-placeholder').hide();
     setLooperMenuOpen(false);
 
@@ -3100,11 +3107,43 @@ function looperPause() {
     if (wavesurfer) wavesurfer.pause();
 }
 
+function updateLooperPlaybackUi(playing) {
+    var $button = $('#btn-play-pause');
+    var label = playing ? 'Pozastavit' : 'Přehrát';
+
+    $button
+        .toggleClass('on', !!playing)
+        .attr('aria-pressed', String(!!playing))
+        .attr('aria-label', label)
+        .attr('title', label);
+    $('#btn-play-pause-icon').attr('class', playing
+        ? 'ti ti-player-pause-filled'
+        : 'ti ti-player-play-filled');
+}
+
+function looperTogglePlayback() {
+    if (!wavesurfer) return;
+    if (wavesurfer.isPlaying()) wavesurfer.pause();
+    else wavesurfer.play();
+}
+
 function looperRestart() {
     if (wavesurfer) {
         wavesurfer.setTime(isLooping ? getLoopStartSec() : 0);
         wavesurfer.play();
     }
+}
+
+function looperSeekBy(seconds) {
+    if (!wavesurfer) return;
+
+    var duration = wavesurfer.getDuration();
+    if (!(duration > 0)) return;
+
+    var minimum = isLooping && loopRangeStartSec !== null ? getLoopStartSec() : 0;
+    var maximum = isLooping && loopRangeStartSec !== null ? getLoopEndSec() : duration;
+    var target = Math.max(minimum, Math.min(maximum, wavesurfer.getCurrentTime() + seconds));
+    wavesurfer.setTime(target);
 }
 
 function looperLoop() {
@@ -3118,20 +3157,91 @@ function looperLoop() {
     }
 }
 
-function looperToggle()
-{
-    $('#looper-content').toggleClass('hidden');
+function updateLooperVolumeUi() {
+    var muted = looperMuted || looperVolume <= 0;
+    var percent = Math.round(looperVolume * 100);
+    var iconClass = muted ? 'ti ti-volume-off' : 'ti ti-volume';
+    var label = muted ? 'Zapnout zvuk' : 'Ztlumit zvuk';
 
-    if ($('#looper-content').hasClass('hidden'))
-    {
-        $('#btn-collapse-icon').text('▼');
-        $('#btn-collapse-label').text('Obnovit');
+    $('.looper-volume-slider').val(percent);
+    $('.looper-volume-value').text(percent + '%');
+    $('.looper-mute-button')
+        .attr('aria-pressed', String(muted))
+        .attr('aria-label', label)
+        .attr('title', label)
+        .find('i').attr('class', iconClass);
+    $('#btn-looper-volume')
+        .toggleClass('on', muted)
+        .attr('data-muted', String(muted));
+    $('.looper-volume-button-icon').attr('class', 'looper-volume-button-icon ' + iconClass);
+}
+
+function applyLooperVolume() {
+    if (wavesurfer && typeof wavesurfer.setVolume === 'function') {
+        wavesurfer.setVolume(looperMuted ? 0 : looperVolume);
     }
-    else
-    {
-        $('#btn-collapse-icon').text('▲');
-        $('#btn-collapse-label').text('Minimalizovat');
+    updateLooperVolumeUi();
+}
+
+function looperSetVolume(value) {
+    var volume = Math.max(0, Math.min(100, Number(value))) / 100;
+    if (!Number.isFinite(volume)) return;
+
+    looperVolume = volume;
+    if (volume > 0) {
+        looperLastAudibleVolume = volume;
+        looperMuted = false;
+    } else {
+        looperMuted = true;
     }
+    applyLooperVolume();
+}
+
+function looperToggleMute() {
+    if (looperMuted || looperVolume <= 0) {
+        looperMuted = false;
+        if (looperVolume <= 0) looperVolume = looperLastAudibleVolume || 1;
+    } else {
+        looperLastAudibleVolume = looperVolume;
+        looperMuted = true;
+    }
+    applyLooperVolume();
+}
+
+function setLooperVolumePopoverOpen(open) {
+    var popover = document.getElementById('looper-volume-popover');
+    var button = document.getElementById('btn-looper-volume');
+    if (!popover || !button) return;
+
+    popover.hidden = !open;
+    button.setAttribute('aria-expanded', String(open));
+    button.setAttribute('aria-label', open ? 'Zavřít nastavení hlasitosti' : 'Otevřít nastavení hlasitosti');
+    if (open) setLooperMenuOpen(false);
+}
+
+function closeLooperVolumePopover() {
+    var popover = document.getElementById('looper-volume-popover');
+    if (!popover || popover.hidden) return false;
+    setLooperVolumePopoverOpen(false);
+    return true;
+}
+
+function updateLooperCollapsedUi(collapsed) {
+    var label = collapsed ? 'Obnovit looper' : 'Minimalizovat looper';
+    $('#btn-collapse')
+        .attr('aria-expanded', String(!collapsed))
+        .attr('aria-label', label)
+        .attr('title', label);
+    $('#btn-collapse-icon').attr('class', collapsed ? 'ti ti-chevron-down' : 'ti ti-chevron-up');
+    $('#btn-collapse-label').text(collapsed ? 'Obnovit' : 'Minimalizovat');
+}
+
+function looperToggle() {
+    var $content = $('#looper-content');
+    $content.toggleClass('hidden');
+    updateLooperCollapsedUi($content.hasClass('hidden'));
+    closeLooperVolumePopover();
+    window.requestAnimationFrame(refreshLooperWaveformSize);
 }
 
 function looperFullscreenToggle(forceFullscreen)
@@ -3149,22 +3259,22 @@ function looperFullscreenToggle(forceFullscreen)
         looperFullscreenWasCollapsed = content.classList.contains('hidden');
         looperBar.classList.add('looper-fullscreen');
         content.classList.remove('hidden');
-        $('#btn-collapse-icon').text('▲');
-        $('#btn-collapse-label').text('Minimalizovat');
+        updateLooperCollapsedUi(false);
     } else {
         looperBar.classList.remove('looper-fullscreen');
         if (looperFullscreenWasCollapsed) {
             content.classList.add('hidden');
-            $('#btn-collapse-icon').text('▼');
-            $('#btn-collapse-label').text('Obnovit');
         }
+        updateLooperCollapsedUi(content.classList.contains('hidden'));
         looperFullscreenWasCollapsed = false;
     }
 
     button.setAttribute('aria-pressed', String(otevrit));
-    button.setAttribute('aria-label', otevrit ? 'Obnovit velikost looperu' : 'Maximalizovat looper');
-    $('#btn-looper-fullscreen-label').text(otevrit ? 'Obnovit velikost' : 'Maximalizovat');
+    button.setAttribute('aria-label', otevrit ? 'Ukončit režim celé obrazovky' : 'Zobrazit looper na celé obrazovce');
+    $('#btn-looper-fullscreen-icon').attr('class', otevrit ? 'ti ti-minimize' : 'ti ti-maximize');
+    $('#btn-looper-fullscreen-label').text(otevrit ? 'Ukončit celou obrazovku' : 'Celá obrazovka');
     $('#btn-collapse').prop('hidden', otevrit);
+    closeLooperVolumePopover();
 
     window.requestAnimationFrame(refreshLooperWaveformSize);
 }
@@ -3176,6 +3286,7 @@ function setLooperMenuOpen(open) {
     menu.hidden = !open;
     button.setAttribute('aria-expanded', String(open));
     button.setAttribute('aria-label', open ? 'Zavřít menu Looperu' : 'Otevřít menu Looperu');
+    if (open) closeLooperVolumePopover();
 }
 
 function setLooperGuideOpen(open) {
@@ -3184,14 +3295,13 @@ function setLooperGuideOpen(open) {
 
     content.classList.toggle('hidden', !open);
     $('#wf-placeholder').toggle(open);
-    $('#btn-collapse-icon').text(open ? '▲' : '▼');
-    $('#btn-collapse-label').text(open ? 'Minimalizovat' : 'Obnovit');
+    updateLooperCollapsedUi(!open);
+    window.requestAnimationFrame(refreshLooperWaveformSize);
+}
 
-    var button = document.getElementById('btn-looper-menu');
-    if (button) {
-        button.setAttribute('aria-expanded', String(open));
-        button.setAttribute('aria-label', open ? 'Zavřít nápovědu Looperu' : 'Otevřít nápovědu Looperu');
-    }
+function looperToggleGuide() {
+    if (looperCurrentFile) return;
+    setLooperGuideOpen(document.getElementById('looper-content').classList.contains('hidden'));
 }
 
 function closeLooperGuide() {
@@ -3207,24 +3317,27 @@ function closeLooperMenu() {
 
 document.addEventListener('click', function(event) {
     var menuWrap = document.querySelector('.looper-menu-wrap');
-    if (!menuWrap) return;
+    var volumeWrap = document.querySelector('.looper-volume-mobile');
 
     if (event.target.closest('#btn-looper-menu')) {
-        if (looperCurrentFile) {
-            setLooperMenuOpen(document.getElementById('looper-menu').hidden);
-        } else {
-            setLooperGuideOpen(document.getElementById('looper-content').classList.contains('hidden'));
-        }
-    } else if (!menuWrap.contains(event.target)) {
-        closeLooperMenu();
+        setLooperMenuOpen(document.getElementById('looper-menu').hidden);
     } else if (event.target.closest('[data-looper-menu-close]')) {
         closeLooperMenu();
+    } else if (menuWrap && !menuWrap.contains(event.target)) {
+        closeLooperMenu();
+    }
+
+    if (event.target.closest('#btn-looper-volume')) {
+        setLooperVolumePopoverOpen(document.getElementById('looper-volume-popover').hidden);
+    } else if (volumeWrap && !volumeWrap.contains(event.target)) {
+        closeLooperVolumePopover();
     }
 });
 
 document.addEventListener('keydown', function(event) {
     if (event.key !== 'Escape') return;
     if (closeLooperMenu()) return;
+    if (closeLooperVolumePopover()) return;
     if ($('#looper-bar').hasClass('looper-fullscreen')) looperFullscreenToggle(false);
 });
 
@@ -3241,17 +3354,19 @@ function looperZavrit() {
     looperCurrentSourceUrl = null;
     setAudioCacheUi(false, '', true);
     $('#looper-file-name').text('').attr('title', '').hide();
+    $('#looper-header-file-name').text('').attr('title', '').prop('hidden', true);
+    $('#looper-guide-control').prop('hidden', false);
     $('#looper-notes').hide().empty();
   	//$('#looper-content').removeClass('hidden');
-    $('#btn-collapse-icon').text('▼');
-    $('#btn-collapse-label').text('Obnovit');
     $('#looper-time').text('00:00 / 00:00').hide();
     $('#looper-content').addClass('hidden');
+    updateLooperCollapsedUi(true);
     closeLooperMenu();
+    closeLooperVolumePopover();
     var menuButton = document.getElementById('btn-looper-menu');
     if (menuButton) {
         menuButton.setAttribute('aria-expanded', 'false');
-        menuButton.setAttribute('aria-label', 'Otevřít nápovědu Looperu');
+        menuButton.setAttribute('aria-label', 'Otevřít menu Looperu');
     }
 	loopRangeStartSec = null;
 	loopRangeEndSec = null;
@@ -3261,13 +3376,6 @@ function looperZavrit() {
 
 }
 
-if ($('#looper-content').hasClass('hidden'))
-{
-    $('#btn-collapse-icon').text('▼');
-    $('#btn-collapse-label').text('Obnovit');
-}
-else
-{
-    $('#btn-collapse-icon').text('▲');
-    $('#btn-collapse-label').text('Minimalizovat');
-}
+updateLooperCollapsedUi($('#looper-content').hasClass('hidden'));
+updateLooperPlaybackUi(false);
+updateLooperVolumeUi();

@@ -256,78 +256,180 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
 <!-- HLAVIČKA -->
 <div id="looper-header">
-
     <div class="looper-left">
+        <div class="looper-title">LOOPER</div>
+        <div id="looper-header-file-name" class="looper-header-file-name" title="" hidden></div>
+    </div>
 
-        <div class="looper-title">
-            LOOPER
-        </div>
+    <div class="looper-controls-row">
+        <div class="looper-buttons" role="group" aria-label="Ovládání přehrávání">
+            <button class="wave-btn looper-control-button"
+                    type="button"
+                    aria-label="Na začátek smyčky"
+                    title="Na začátek smyčky"
+                    onclick="looperRestart()">
+                <i class="ti ti-player-track-prev" aria-hidden="true"></i>
+            </button>
 
-        <div class="looper-buttons">
+            <button class="wave-btn looper-control-button"
+                    type="button"
+                    aria-label="Zpět o 5 sekund"
+                    title="Zpět o 5 sekund"
+                    onclick="looperSeekBy(-5)">
+                <i class="ti ti-player-skip-back" aria-hidden="true"></i>
+            </button>
 
-            <button class="wave-btn on"
-                    id="btn-play"
-                    onclick="looperPlay()">▶</button>
-
-            <button class="wave-btn"
-                    id="btn-pause"
-                    onclick="looperPause()">⏸</button>
-
-            <button class="wave-btn"
-                    id="btn-loop"
+            <button class="wave-btn looper-control-button looper-play-button"
+                    id="btn-play-pause"
+                    type="button"
+                    aria-label="Přehrát"
                     aria-pressed="false"
-                    onclick="looperLoop()">⟳</button>
+                    title="Přehrát"
+                    onclick="looperTogglePlayback()">
+                <i id="btn-play-pause-icon" class="ti ti-player-play-filled" aria-hidden="true"></i>
+            </button>
 
-            <button class="wave-btn"
-                    onclick="looperRestart()">↺</button>
+            <button class="wave-btn looper-control-button"
+                    type="button"
+                    aria-label="Vpřed o 5 sekund"
+                    title="Vpřed o 5 sekund"
+                    onclick="looperSeekBy(5)">
+                <i class="ti ti-player-skip-forward" aria-hidden="true"></i>
+            </button>
 
- 
+            <button class="wave-btn looper-control-button"
+                    id="btn-loop"
+                    type="button"
+                    aria-label="Opakovat smyčku"
+                    aria-pressed="false"
+                    title="Opakovat smyčku"
+                    onclick="looperLoop()">
+                <i class="ti ti-repeat" aria-hidden="true"></i>
+            </button>
         </div>
 
+        <div class="looper-control-divider" aria-hidden="true"></div>
+
+        <div class="looper-volume-desktop" role="group" aria-label="Hlasitost">
+            <button class="wave-btn looper-control-button looper-mute-button"
+                    type="button"
+                    aria-label="Ztlumit zvuk"
+                    aria-pressed="false"
+                    title="Ztlumit zvuk"
+                    onclick="looperToggleMute()">
+                <i class="ti ti-volume" aria-hidden="true"></i>
+            </button>
+            <input class="looper-volume-slider"
+                   type="range"
+                   min="0"
+                   max="100"
+                   step="1"
+                   value="100"
+                   aria-label="Hlasitost"
+                   oninput="looperSetVolume(this.value)">
+            <output class="looper-volume-value">100%</output>
+        </div>
+
+        <div class="looper-volume-mobile">
+            <button class="wave-btn looper-control-button"
+                    id="btn-looper-volume"
+                    type="button"
+                    aria-label="Otevřít nastavení hlasitosti"
+                    aria-expanded="false"
+                    aria-controls="looper-volume-popover"
+                    title="Hlasitost">
+                <i class="looper-volume-button-icon ti ti-volume" aria-hidden="true"></i>
+            </button>
+            <div id="looper-volume-popover" class="looper-volume-popover" hidden>
+                <button class="wave-btn looper-control-button looper-mute-button"
+                        type="button"
+                        aria-label="Ztlumit zvuk"
+                        aria-pressed="false"
+                        title="Ztlumit zvuk"
+                        onclick="looperToggleMute()">
+                    <i class="ti ti-volume" aria-hidden="true"></i>
+                </button>
+                <input class="looper-volume-slider"
+                       type="range"
+                       min="0"
+                       max="100"
+                       step="1"
+                       value="100"
+                       aria-label="Hlasitost"
+                       oninput="looperSetVolume(this.value)">
+                <output class="looper-volume-value">100%</output>
+            </div>
+        </div>
     </div>
 
     <div class="looper-right">
+        <button class="wave-btn looper-control-button looper-collapse-button"
+                id="btn-collapse"
+                type="button"
+                aria-label="Minimalizovat looper"
+                aria-expanded="true"
+                title="Minimalizovat looper"
+                onclick="looperToggle()">
+            <i id="btn-collapse-icon" class="ti ti-chevron-up" aria-hidden="true"></i>
+            <span id="btn-collapse-label" class="sr-only">Minimalizovat</span>
+        </button>
+
         <div class="looper-menu-wrap">
-            <button class="wave-btn looper-menu-toggle"
+            <button class="wave-btn looper-control-button looper-menu-toggle"
                     id="btn-looper-menu"
                     type="button"
-                    aria-label="Otevřít nápovědu Looperu"
+                    aria-label="Otevřít menu Looperu"
                     aria-expanded="false"
-                    aria-controls="looper-menu">☰</button>
+                    aria-haspopup="true"
+                    aria-controls="looper-menu"
+                    title="Další možnosti">
+                <i class="ti ti-dots-vertical" aria-hidden="true"></i>
+            </button>
 
             <div id="looper-menu" class="looper-menu" hidden>
                 <div class="looper-menu-section">
-                    <button class="looper-menu-item" id="btn-collapse" type="button" data-looper-menu-close onclick="looperToggle()">
-                        <span id="btn-collapse-icon" aria-hidden="true">▭</span><span id="btn-collapse-label">Minimalizovat</span>
-                    </button>
                     <button class="looper-menu-item" id="btn-looper-fullscreen" type="button" data-looper-menu-close
                             onclick="looperFullscreenToggle()" aria-label="Maximalizovat looper" aria-pressed="false">
-                        <span aria-hidden="true">⛶</span><span id="btn-looper-fullscreen-label">Maximalizovat</span>
+                        <i id="btn-looper-fullscreen-icon" class="ti ti-maximize" aria-hidden="true"></i>
+                        <span class="looper-menu-item-copy"><span id="btn-looper-fullscreen-label">Celá obrazovka</span></span>
                     </button>
-                    <button class="looper-menu-item" type="button" data-looper-menu-close onclick="looperZavrit()">
-                        <span aria-hidden="true">✕</span><span>Zavřít</span>
+                    <button class="looper-menu-item" id="looper-guide-control" type="button" data-looper-menu-close
+                            onclick="looperToggleGuide()">
+                        <i class="ti ti-help-circle" aria-hidden="true"></i>
+                        <span class="looper-menu-item-copy"><span>Nápověda looperu</span></span>
                     </button>
                 </div>
 
-                <div class="looper-menu-section looper-menu-offline">
-                    <span class="looper-menu-heading">Offline</span>
-                    <div id="audio-cache-control" class="audio-cache-control" hidden>
-                        <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
-                        <button type="button" id="audio-cache-toggle" class="audio-cache-toggle" aria-pressed="false">podržet</button>
+                <div class="looper-menu-section looper-menu-recording-actions" hidden>
+                    <div id="audio-cache-control" hidden>
+                        <button type="button" id="audio-cache-toggle" class="looper-menu-item" aria-pressed="false">
+                            <i id="audio-cache-icon" class="ti ti-download" aria-hidden="true"></i>
+                            <span class="looper-menu-item-copy">
+                                <span id="audio-cache-label">Uložit pro offline</span>
+                                <span id="audio-cache-status" class="looper-menu-item-status" aria-live="polite"></span>
+                            </span>
+                        </button>
+                    </div>
+                    <div id="looper-link-control" hidden>
+                        <button type="button" class="looper-menu-item" data-looper-menu-close onclick="looperCreateLink()">
+                            <i class="ti ti-link" aria-hidden="true"></i>
+                            <span class="looper-menu-item-copy">
+                                <span>Vytvořit odkaz na pozici</span>
+                                <span id="looper-link-status" class="looper-menu-item-status" aria-live="polite"></span>
+                            </span>
+                        </button>
                     </div>
                 </div>
 
                 <div class="looper-menu-section">
-                    <div id="looper-link-control" class="audio-cache-control" hidden>
-                        <button type="button" class="audio-cache-toggle" data-looper-menu-close onclick="looperCreateLink()">vytvořit odkaz</button>
-                        <span id="looper-link-status" class="audio-cache-status" aria-live="polite"></span>
-                    </div>
+                    <button class="looper-menu-item looper-menu-item-danger" type="button" data-looper-menu-close onclick="looperZavrit()">
+                        <i class="ti ti-x" aria-hidden="true"></i>
+                        <span class="looper-menu-item-copy"><span>Zavřít looper</span></span>
+                    </button>
                 </div>
             </div>
         </div>
-
     </div>
-
 </div>
 
     <!-- OBSAH -->
