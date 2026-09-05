@@ -1189,3 +1189,25 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 
     border-radius: 4px;
 } 
+.timestamp-time-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#modal_poznamka_cas_controls {
+    margin-left: auto;
+}
+
+.timestamp-type-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-bottom: 12px;
+}
+
+.timestamp-type-options legend {
+    font-size: 1rem;
+}

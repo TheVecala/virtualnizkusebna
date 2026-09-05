@@ -788,11 +788,12 @@
 
             <div class="modal-body">
 
-                <div class="modal-ctx mb-3" id="modal_poznamka_info">
+                <div class="timestamp-time-row mb-3">
+                <div class="modal-ctx" id="modal_poznamka_info">
                     Čas:
                 </div>
 
-                <div id="modal_poznamka_cas_controls" class="mb-3">
+                <div id="modal_poznamka_cas_controls">
                     <button type="button"
                             class="btn btn-secondary btn-sm"
                             id="modal_poznamka_aktualizovat">
@@ -805,11 +806,25 @@
                         Zpět o 5 sekund
                     </button>
                 </div>
+                </div>
 
                 <textarea
                     id="modal_poznamka_text"
                     class="form-control"
                     rows="5"></textarea>
+
+                <div id="modal_poznamka_add_options" class="mt-3">
+                    <fieldset class="timestamp-type-options">
+                        <legend>Druh timestampu</legend>
+                        <label><input type="radio" name="timestamp_type" value="0"> Vál</label>
+                        <label><input type="radio" name="timestamp_type" value="2"> Pasáž</label>
+                        <label><input type="radio" name="timestamp_type" value="1"> Poznámka</label>
+                    </fieldset>
+                    <label class="mb-0">
+                        <input type="checkbox" id="modal_poznamka_keep_open">
+                        Po uložení ponechat otevřené
+                    </label>
+                </div>
 
                 <div id="modal_poznamka_confirm"
                      class="mt-3"

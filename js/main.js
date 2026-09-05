@@ -9,6 +9,34 @@ let noteTime = 0;
 let noteType = NOTE_NORMAL;
 let notePlaybackContext = "";
 let noteAudio = null;
+let timestampPreferences = { type: NOTE_NORMAL, keepOpen: false };
+try {
+    const saved = JSON.parse(localStorage.getItem('timestampPreferences'));
+    if (saved) {
+        if ([NOTE_SONG, NOTE_NORMAL, NOTE_PASSAGE].includes(saved.type)) timestampPreferences.type = saved.type;
+        timestampPreferences.keepOpen = saved.keepOpen === true;
+    }
+} catch (e) { /* Nastavení je volitelné, ukládání funguje i bez localStorage. */ }
+
+function saveTimestampPreferences() {
+    try { localStorage.setItem('timestampPreferences', JSON.stringify(timestampPreferences)); }
+    catch (e) { /* Zachovat nastavení alespoň pro tuto stránku. */ }
+}
+
+$(document).on('change', 'input[name="timestamp_type"]', function() {
+    noteType = Number(this.value);
+    timestampPreferences.type = noteType;
+    saveTimestampPreferences();
+});
+
+$(document).on('change', '#modal_poznamka_keep_open', function() {
+    timestampPreferences.keepOpen = this.checked;
+    saveTimestampPreferences();
+});
+
+$(document).on('shown.bs.modal', '#modal_poznamka', function() {
+    if (noteAction === 'add') $('#modal_poznamka_text').trigger('focus');
+});
 
 function formatTime(ms)
 {
@@ -1400,7 +1428,7 @@ $(document).on('click', '.pridat-poznamku-btn', function() {
 
 	if (typeof typ === 'undefined')
 	{
-		typ = NOTE_NORMAL;
+		typ = timestampPreferences.type;
 	}
 
     // Tlačítko žije buď v běžném řádku nahrávky (.poznamky-panel s data-cesta),
@@ -1445,7 +1473,10 @@ noteFile = cilovyFile;
 noteTime = cas;
 noteType = typ;
 
-$("#modal_poznamka_title").text("Nový timestamp: " + getNoteTypeName(typ));
+$("#modal_poznamka_title").text("Přidat timestamp");
+$('input[name="timestamp_type"]').each(function() { this.checked = Number(this.value) === Number(typ); });
+$('#modal_poznamka_keep_open').prop('checked', timestampPreferences.keepOpen);
+$('#modal_poznamka_add_options').show();
 
 zobrazPripravenyCas();
 
@@ -1550,7 +1581,7 @@ $(document).on('click', '.note-edit', function(e)
 		.addClass("btn-primary")
 		.text("Uložit");
 
-	$("#modal_poznamka_cas_controls, #modal_poznamka_pridat_a_vratit").hide();
+	$("#modal_poznamka_cas_controls, #modal_poznamka_pridat_a_vratit, #modal_poznamka_add_options").hide();
 
 	$("#modal_poznamka").modal("show");
 
@@ -1594,7 +1625,7 @@ $(document).on('click', '.note-delete', function(e)
 		.addClass("btn-danger")
 		.text("Smazat");
 
-	$("#modal_poznamka_cas_controls, #modal_poznamka_pridat_a_vratit").hide();
+	$("#modal_poznamka_cas_controls, #modal_poznamka_pridat_a_vratit, #modal_poznamka_add_options").hide();
 
 	$("#modal_poznamka").modal("show");
 
@@ -1737,12 +1768,14 @@ function ulozitNovouPoznamku(vratitNaTimestamp, button)
     // Uložit lokální kopii: přehrávání může během AJAX požadavku pokračovat,
     // ale volba "Přidat a vrátit" se musí vrátit na skutečně uložený timestamp.
     let ulozenyCas = noteTime;
+    let ulozenyFile = noteFile;
+    let keepOpen = $('#modal_poznamka_keep_open').prop('checked');
 
     $.post(
         "php/ajax/ajax_nahravka_poznamky.php",
         {
             akce: "add",
-            file_path: noteFile,
+            file_path: ulozenyFile,
             cas: ulozenyCas,
             typ: noteType,
             poznamka: novyText
@@ -1757,9 +1790,16 @@ function ulozitNovouPoznamku(vratitNaTimestamp, button)
             if (vratitNaTimestamp) setNotePlaybackTime(ulozenyCas);
 
             finishTimestampAction(action);
-            $("#modal_poznamka").modal("hide");
+            if (keepOpen) {
+                $('#modal_poznamka_text').val('').trigger('focus');
+                let currentTime = getNotePlaybackTime();
+                if (currentTime !== null) noteTime = currentTime;
+                zobrazPripravenyCas();
+            } else {
+                $("#modal_poznamka").modal("hide");
+            }
 
-            refreshTimestampViews(noteFile);
+            refreshTimestampViews(ulozenyFile);
         }
     ).fail(function()
     {
