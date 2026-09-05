@@ -1374,6 +1374,11 @@ $(document).on('click', '.poznamky-btn', function() {
         .find('.poznamky-panel');
 
     panel.toggle();
+    var expanded = panel.is(':visible');
+    $(this).attr('aria-expanded', expanded)
+        .attr('aria-label', expanded ? 'Zavřít poznámky' : 'Otevřít poznámky')
+        .attr('title', expanded ? 'Zavřít poznámky' : 'Otevřít poznámky')
+        .find('span').text('Poznámky');
 
     if(panel.is(':visible'))
     {
@@ -2370,9 +2375,12 @@ function setNativeAudioCacheUi(cesta, isCached, disabled, status) {
             .attr('aria-pressed', !!isCached)
             .attr('title', isCached ? 'Odebrat offline kopii' : 'Uložit pro offline přehrávání')
             .attr('aria-label', isCached ? 'Odebrat offline kopii' : 'Uložit pro offline přehrávání');
-        var progressMatch = status && status.match(/(\d{1,3})\s*%/);
-        $toggle.find('span').text(disabled ? (progressMatch ? progressMatch[1] + ' %' : 'čekám…') : 'Offline');
-        $toggle.find('i').attr('class', isCached ? 'ti ti-device-floppy' : 'ti ti-download');
+        var label = isCached ? 'Odebrat offline' : 'Uložit pro offline';
+        var progressMatch = disabled && status && status.match(/(\d{1,3})\s*%/);
+        $toggle.find('.native-cache-label').text(disabled ? (progressMatch ? progressMatch[1] + ' %' : 'Čekám…') : label);
+        $toggle.attr('title', label + ' — ' + (status || (isCached ? 'Uloženo v tomto prohlížeči' : 'Do tohoto prohlížeče')));
+        $toggle.find('.native-cache-status').text(status || (isCached ? 'Uloženo v tomto prohlížeči' : 'Do tohoto prohlížeče'));
+        $toggle.find('i').attr('class', isCached ? 'ti ti-trash' : 'ti ti-download');
         if (status) $toggle.attr('data-status', status); else $toggle.removeAttr('data-status');
     });
 }
@@ -2456,7 +2464,7 @@ function getOrDownloadAudioBlob(cesta, onProgress) {
 function refreshNativeAudioCacheControls() {
     var cacheStore = getAudioCacheStore();
     if (!cacheStore) {
-        $('.native-audio-cache-toggle').prop('disabled', true);
+        $('.native-audio-cache-toggle').prop('disabled', true).find('.native-cache-status').text('Offline úložiště není dostupné');
         return;
     }
     var checked = {};

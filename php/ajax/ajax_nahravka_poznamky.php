@@ -43,28 +43,9 @@ if ($akce == "list")
 if (!$looper) {
 echo '<div class="poznamky-toolbar">
   
-    <button
-        type="button"
-        class="icon-btn timestamp-action-btn pridat-poznamku-btn"
-        data-typ="'.NOTE_SONG.'">
-        <i class="ti ti-music" aria-hidden="true"></i>
-        <span>Vál</span>
-    </button>
-
-    <button
-        type="button"
-        class="icon-btn timestamp-action-btn pridat-poznamku-btn"
-        data-typ="'.NOTE_PASSAGE.'">
-        <i class="ti ti-repeat" aria-hidden="true"></i>
-        <span>Pasáž</span>
-    </button>
-
-    <button
-        type="button"
-        class="icon-btn timestamp-action-btn pridat-poznamku-btn"
-        data-typ="'.NOTE_NORMAL.'">
-        <i class="ti ti-note" aria-hidden="true"></i>
-        <span>Poznámka</span>
+    <button type="button" class="icon-btn timestamp-action-btn pridat-poznamku-btn" aria-label="Přidat timestamp">
+        <i class="ti ti-plus" aria-hidden="true"></i>
+        <span>timestamp</span>
     </button>
 
     <button
