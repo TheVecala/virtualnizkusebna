@@ -1432,13 +1432,15 @@ $(document).on('click', '.pridat-poznamku-btn', function() {
 	}
 
     // Tlačítko žije buď v běžném řádku nahrávky (.poznamky-panel s data-cesta),
-    // nebo v looperu (#looper-notes, který žádný takový obal nemá — soubor tam
+    // nebo v looperu (#looper-bar, který žádný takový obal nemá — soubor tam
     // víme z looperCurrentFile). Tyhle dva kontexty se musí řešit odděleně,
     // jinak dochází ke kolizi (viz komentář u loadLooperNotes/loadRecordingNotes).
-    let jeLooper = $(this).closest('#looper-notes').length > 0;
+    let jeLooper = $(this).closest('#looper-bar').length > 0;
 
     let cilovyFile;
     let cas = 0;
+
+    if (jeLooper && !looperCurrentFile) return;
 
     notePlaybackContext = jeLooper ? "looper" : "audio";
     noteAudio = null;
@@ -1657,9 +1659,11 @@ $(document).on('click', '.note-delete', function(e)
 $(document).on('click', '.export-timestampy-btn', function ()
 {
     var $button = $(this);
-    var filePath = String($button.data('file') || '');
+    var isLooper = $button.closest('#looper-bar').length > 0;
+    var filePath = String((isLooper ? looperCurrentFile : $button.data('file')) || '');
+    if (!filePath) return;
     var fileName = filePath.split(/[\\/]/).pop();
-    var timestamps = collectTimestampData($button.closest('.poznamky-seznam'));
+    var timestamps = collectTimestampData(isLooper ? $('#looper-notes') : $button.closest('.poznamky-seznam'));
 
     $('#modal_export_timestampy').data({
         filePath: filePath,
@@ -2339,7 +2343,7 @@ function setAudioCacheUi(isCached, status, disabled) {
     var hasRecording = !!looperCurrentFile;
 
     $control.prop('hidden', !hasRecording);
-    $('#looper-link-control').prop('hidden', !hasRecording);
+    $('#looper-link-control, #looper-add-timestamp').prop('hidden', !hasRecording);
     $('.looper-menu-recording-actions').prop('hidden', !hasRecording);
     $toggle
         .prop('disabled', !!disabled)

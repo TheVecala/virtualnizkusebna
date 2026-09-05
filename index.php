@@ -308,6 +308,10 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
             </button>
         </div>
 
+        <button type="button" id="looper-add-timestamp"
+                class="wave-btn looper-control-button looper-add-timestamp pridat-poznamku-btn"
+                aria-label="Přidat timestamp" hidden>+ timestamp</button>
+
         <div class="looper-control-divider" aria-hidden="true"></div>
 
         <div class="looper-volume-desktop" role="group" aria-label="Hlasitost">
@@ -419,6 +423,10 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
                             </span>
                         </button>
                     </div>
+                    <button type="button" class="looper-menu-item export-timestampy-btn" data-looper-menu-close>
+                        <i class="ti ti-file-export" aria-hidden="true"></i>
+                        <span class="looper-menu-item-copy"><span>Export timestampů</span></span>
+                    </button>
                 </div>
 
                 <div class="looper-menu-section">
