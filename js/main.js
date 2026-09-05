@@ -357,16 +357,22 @@ function switchVal(val, nazev, el) {
 }
 
 // ── Desktop view (Přidána podpora panelu tabelatury) ──
+function syncDesktopNavigation() {
+  ['nahravky', 'text', 'tabelatura', 'diskuse', 'napady'].forEach(function(panelId) {
+    $('#nav-' + panelId).toggleClass('active', $('#panel-' + panelId).is(':visible'));
+  });
+}
+
+$(syncDesktopNavigation);
+
 function toggleDesktopPanel(panelId, btn) {
   var $panel = $('#panel-' + panelId);
-  var $btn   = $(btn);
   if ($panel.is(':visible')) {
     $panel.hide();
-    $btn.removeClass('active');
   } else {
     $panel.css('display', 'flex');
-    $btn.addClass('active');
   }
+  syncDesktopNavigation();
 }
 
 // ── Mobil: přepínání panelů ──
@@ -910,29 +916,25 @@ $(document).on('submit', '#form_napady', function(e) {
 });
 
 // ── Resize / otočení — reset layoutu ──
+var wasDesktopLayout = window.innerWidth >= 1200;
 window.addEventListener('resize', function() {
-  var isMobile = window.innerWidth <= 768;
+  var isMobile = window.innerWidth < 768;
+  var isDesktop = window.innerWidth >= 1200;
 
-  if (isMobile) {
-    // Odstranit inline display styly z desktopView
+  // Na desktopu zachovat ručně otevřené/zavřené panely; výchozí řídí CSS.
+  if (!isDesktop || !wasDesktopLayout) {
     document.querySelectorAll('.panel').forEach(function(p) { p.style.display = ''; });
+  }
+  if (isMobile) {
     // Aktivovat správný panel
     document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); });
     var el = document.getElementById('panel-' + (VZ.aktivniMobPanel || 'nahravky'));
     if (el) el.classList.add('mob-active');
   } else {
-    // Odstranit mob-active, nastavit desktop layout včetně panelu tabelatura
-    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); p.style.display = ''; });
-    var napadyAktivni = document.getElementById('nav-napady') &&
-                        document.getElementById('nav-napady').classList.contains('active');
-    if (napadyAktivni) {
-      $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'none');
-      $('#panel-napady').css('display', 'flex');
-    } else {
-      $('#panel-napady').css('display', 'none');
-      $('#panel-text, #panel-tabelatura, #panel-nahravky, #panel-diskuse').css('display', 'flex');
-    }
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('mob-active'); });
   }
+  wasDesktopLayout = isDesktop;
+  syncDesktopNavigation();
 });
 
  // ── Modal přesunout — dynamické naplnění seznamu tlačítek ──
