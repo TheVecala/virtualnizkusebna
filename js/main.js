@@ -2112,7 +2112,7 @@ function createTimestampRegionContent(timestamp, visual)
     icon.style.color = visual.color;
     icon.style.fontWeight = '800';
 
-    text.textContent = timestamp.text + ' · ' + formatTime(timestamp.ms);
+    text.textContent = timestamp.text;
     text.style.overflow = 'hidden';
     text.style.textOverflow = 'ellipsis';
 
