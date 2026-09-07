@@ -431,8 +431,10 @@
     function metadataRequestUrl(item) {
         if (item.metadataUrl) return new URL(item.metadataUrl, window.location.href).href;
         if (config.detailUrl) {
-            if (typeof config.detailUrl === 'function') return config.detailUrl(item.id);
-            return String(config.detailUrl).replace('{id}', encodeURIComponent(item.id));
+            var configuredUrl = typeof config.detailUrl === 'function'
+                ? config.detailUrl(item.id)
+                : String(config.detailUrl).replace('{id}', encodeURIComponent(item.id));
+            return new URL(configuredUrl, window.location.href).href;
         }
         var url = new URL(config.listUrl, window.location.href);
         url.searchParams.set('id', item.id);
