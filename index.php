@@ -2,6 +2,19 @@
 error_reporting(0);
 require_once 'config.php';
 
+// Deep link poznáme už před přihlášením. Do session ukládáme pouze znovu
+// sestavený lokální query string, nikdy uživatelem dodanou návratovou URL.
+$deep_link_requested = isset($_GET['val']) || isset($_GET['nahravka']) || isset($_GET['time']);
+if ($deep_link_requested && empty($_SESSION['logged_in_single'])) {
+    $deep_link_params = [];
+    foreach (['val', 'nahravka', 'time'] as $param) {
+        if (isset($_GET[$param]) && is_string($_GET[$param])) {
+            $deep_link_params[$param] = $_GET[$param];
+        }
+    }
+    $_SESSION['deep_link_after_login'] = http_build_query($deep_link_params, '', '&', PHP_QUERY_RFC3986);
+}
+
 // Inicializace SESSION barev
 $_SESSION['barva1']     = $_SESSION['barva1']     ?? "a7ac38";
 $_SESSION['barva_pozadi'] = $_SESSION['barva_pozadi'] ?? "202428";
@@ -96,6 +109,37 @@ if ($slozka_souboru === "slozka_smazana" || !in_array($slozka_souboru, $pole_slo
     $_SESSION['slozka_souboru_k_zobrazeni'] = $slozka_souboru;
 }
 
+// Validace deep linku proti skutečnému seznamu válů a nahrávek. Přesné členství
+// v $pole_slozek + basename vylučuje path traversal i načtení vedlejšího souboru.
+$deep_link = null;
+if ($deep_link_requested) {
+    $deep_val  = isset($_GET['val']) && is_string($_GET['val']) ? $_GET['val'] : '';
+    $deep_file = isset($_GET['nahravka']) && is_string($_GET['nahravka']) ? $_GET['nahravka'] : '';
+    $deep_time = isset($_GET['time']) && is_string($_GET['time']) && ctype_digit($_GET['time'])
+        ? (int) $_GET['time'] : 0;
+    $audio_extensions = ['mp3', 'wav', 'ogg', 'flac', 'aac'];
+    $valid_names = $deep_val !== '' && $deep_file !== ''
+        && basename($deep_val) === $deep_val && basename($deep_file) === $deep_file
+        && !str_contains($deep_val, '..') && !str_contains($deep_file, '..');
+    $deep_path = $valid_names && in_array($deep_val, $pole_slozek, true)
+        ? $slozka_slozek . $deep_val . '/' . $deep_file : '';
+    $valid_file = $deep_path !== '' && is_file($deep_path)
+        && in_array(strtolower(pathinfo($deep_file, PATHINFO_EXTENSION)), $audio_extensions, true);
+
+    if ($valid_file) {
+        $slozka_souboru = $deep_val;
+        $_SESSION['slozka_souboru_k_zobrazeni'] = $deep_val;
+        $deep_link = [
+            'valid' => true,
+            'file'  => $deep_file,
+            'path'  => $relativni_slozka_slozek . $deep_val . '/' . $deep_file,
+            'time'  => max(0, $deep_time),
+        ];
+    } else {
+        $deep_link = ['valid' => false];
+    }
+}
+
 // Název válu (z nazev_valu.txt pokud existuje) - upraveno o absolutní cestu
 function nacti_nazev_valu($slozka_slozek, $slozka) {
     $soubor = $slozka_slozek . $slozka . "/data/nazev_valu.txt";
@@ -118,7 +162,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
       xintegrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <link href="css/sticky-footer-navbar.css" rel="stylesheet">
-<link href="css/main.css" rel="stylesheet">
+<link href="css/main.css?v=<?= filemtime(__DIR__ . '/css/main.css') ?>" rel="stylesheet">
 
 <!-- ── Dynamické proměnné z SESSION (nemohou být ve statickém main.css) ── -->
 <style>
@@ -132,7 +176,9 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" crossorigin="anonymous" defer></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" crossorigin="anonymous" defer></script>
-<script src="https://unpkg.com/wavesurfer.js@7" defer></script>
+<script src="https://unpkg.com/wavesurfer.js@7.12.11" defer></script>
+<script src="https://unpkg.com/wavesurfer.js@7.12.11/dist/plugins/regions.min.js" defer></script>
+<script src="https://unpkg.com/wavesurfer.js@7.12.11/dist/plugins/zoom.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
 <script src="js/main.js" defer></script>
@@ -150,10 +196,10 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
   <span class="brand">/</span>
   <span id="topbar-val" onclick="toggleValDrawer()"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
-    <a href="#" class="active" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
-    <a href="#" class="active" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
-    <a href="#" class="active" id="nav-tabelatura" onclick="toggleDesktopPanel('tabelatura',this);return false">tabelatura</a>
-    <a href="#" class="active" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">poznámky</a>
+    <a href="#" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
+    <a href="#" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
+    <a href="#" id="nav-tabelatura" onclick="toggleDesktopPanel('tabelatura',this);return false">tabelatura</a>
+    <a href="#" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">poznámky</a>
     <a href="#" id="nav-napady"                    onclick="toggleDesktopPanel('napady',this);return false">
       nápady <span class="napady-badge">DK</span>
     </a>
@@ -210,54 +256,184 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
 <!-- HLAVIČKA -->
 <div id="looper-header">
-
     <div class="looper-left">
-
-        <div class="looper-title">
-            LOOPER
-        </div>
-
-        <div class="looper-buttons">
-
-            <button class="wave-btn on"
-                    id="btn-play"
-                    onclick="looperPlay()">▶</button>
-
-            <button class="wave-btn"
-                    id="btn-pause"
-                    onclick="looperPause()">⏸</button>
-
-            <button class="wave-btn"
-                    id="btn-loop"
-                    onclick="looperLoop()">⟳</button>
-
-            <button class="wave-btn"
-                    onclick="looperRestart()">↺</button>
-
-        </div>
-
-        <div id="audio-cache-control" class="audio-cache-control" hidden>
-            <button type="button" id="audio-cache-toggle" class="audio-cache-toggle" aria-pressed="false">
-                podržet v paměti
-            </button>
-            <span id="audio-cache-status" class="audio-cache-status" aria-live="polite"></span>
-        </div>
-
+        <div class="looper-title">LOOPER</div>
+        <div id="looper-header-file-name" class="looper-header-file-name" title="" hidden></div>
     </div>
 
+    <div class="looper-controls-row">
+        <div class="looper-buttons" role="group" aria-label="Ovládání přehrávání">
+            <button class="wave-btn looper-control-button"
+                    type="button"
+                    aria-label="Na začátek smyčky"
+                    title="Na začátek smyčky"
+                    onclick="looperRestart()">
+                <i class="ti ti-player-track-prev" aria-hidden="true"></i>
+            </button>
 
+            <button class="wave-btn looper-control-button"
+                    type="button"
+                    aria-label="Zpět o 5 sekund"
+                    title="Zpět o 5 sekund"
+                    onclick="looperSeekBy(-5)">
+                <i class="ti ti-player-skip-back" aria-hidden="true"></i>
+            </button>
+
+            <button class="wave-btn looper-control-button looper-play-button"
+                    id="btn-play-pause"
+                    type="button"
+                    aria-label="Přehrát"
+                    aria-pressed="false"
+                    title="Přehrát"
+                    onclick="looperTogglePlayback()">
+                <i id="btn-play-pause-icon" class="ti ti-player-play-filled" aria-hidden="true"></i>
+            </button>
+
+            <button class="wave-btn looper-control-button"
+                    type="button"
+                    aria-label="Vpřed o 5 sekund"
+                    title="Vpřed o 5 sekund"
+                    onclick="looperSeekBy(5)">
+                <i class="ti ti-player-skip-forward" aria-hidden="true"></i>
+            </button>
+
+            <button class="wave-btn looper-control-button"
+                    id="btn-loop"
+                    type="button"
+                    aria-label="Opakovat smyčku"
+                    aria-pressed="false"
+                    title="Opakovat smyčku"
+                    onclick="looperLoop()">
+                <i class="ti ti-repeat" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="looper-control-divider" aria-hidden="true"></div>
+
+        <div class="looper-volume-desktop" role="group" aria-label="Hlasitost">
+            <button class="wave-btn looper-control-button looper-mute-button"
+                    type="button"
+                    aria-label="Ztlumit zvuk"
+                    aria-pressed="false"
+                    title="Ztlumit zvuk"
+                    onclick="looperToggleMute()">
+                <i class="ti ti-volume" aria-hidden="true"></i>
+            </button>
+            <input class="looper-volume-slider"
+                   type="range"
+                   min="0"
+                   max="100"
+                   step="1"
+                   value="100"
+                   aria-label="Hlasitost"
+                   oninput="looperSetVolume(this.value)">
+            <output class="looper-volume-value">100%</output>
+        </div>
+
+        <div class="looper-volume-mobile">
+            <button class="wave-btn looper-control-button"
+                    id="btn-looper-volume"
+                    type="button"
+                    aria-label="Otevřít nastavení hlasitosti"
+                    aria-expanded="false"
+                    aria-controls="looper-volume-popover"
+                    title="Hlasitost">
+                <i class="looper-volume-button-icon ti ti-volume" aria-hidden="true"></i>
+            </button>
+            <div id="looper-volume-popover" class="looper-volume-popover" hidden>
+                <button class="wave-btn looper-control-button looper-mute-button"
+                        type="button"
+                        aria-label="Ztlumit zvuk"
+                        aria-pressed="false"
+                        title="Ztlumit zvuk"
+                        onclick="looperToggleMute()">
+                    <i class="ti ti-volume" aria-hidden="true"></i>
+                </button>
+                <input class="looper-volume-slider"
+                       type="range"
+                       min="0"
+                       max="100"
+                       step="1"
+                       value="100"
+                       aria-label="Hlasitost"
+                       oninput="looperSetVolume(this.value)">
+                <output class="looper-volume-value">100%</output>
+            </div>
+        </div>
+    </div>
 
     <div class="looper-right">
-
-        <button class="wave-btn"
+        <button class="wave-btn looper-control-button looper-collapse-button"
                 id="btn-collapse"
-                onclick="looperToggle()">▭</button>
+                type="button"
+                aria-label="Minimalizovat looper"
+                aria-expanded="true"
+                title="Minimalizovat looper"
+                onclick="looperToggle()">
+            <i id="btn-collapse-icon" class="ti ti-chevron-up" aria-hidden="true"></i>
+            <span id="btn-collapse-label" class="sr-only">Minimalizovat</span>
+        </button>
 
-        <button class="wave-btn"
-                onclick="looperZavrit()">✕</button>
+        <div class="looper-menu-wrap">
+            <button class="wave-btn looper-control-button looper-menu-toggle"
+                    id="btn-looper-menu"
+                    type="button"
+                    aria-label="Otevřít menu Looperu"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                    aria-controls="looper-menu"
+                    title="Další možnosti">
+                <i class="ti ti-dots-vertical" aria-hidden="true"></i>
+            </button>
 
+            <div id="looper-menu" class="looper-menu" hidden>
+                <div class="looper-menu-section">
+                    <button class="looper-menu-item" id="btn-looper-fullscreen" type="button" data-looper-menu-close
+                            onclick="looperFullscreenToggle()" aria-label="Maximalizovat looper" aria-pressed="false">
+                        <i id="btn-looper-fullscreen-icon" class="ti ti-maximize" aria-hidden="true"></i>
+                        <span class="looper-menu-item-copy"><span id="btn-looper-fullscreen-label">Celá obrazovka</span></span>
+                    </button>
+                    <button class="looper-menu-item" id="looper-guide-control" type="button" data-looper-menu-close
+                            onclick="looperToggleGuide()">
+                        <i class="ti ti-help-circle" aria-hidden="true"></i>
+                        <span class="looper-menu-item-copy"><span>Nápověda looperu</span></span>
+                    </button>
+                </div>
+
+                <div class="looper-menu-section looper-menu-recording-actions" hidden>
+                    <div id="audio-cache-control" hidden>
+                        <button type="button" id="audio-cache-toggle" class="looper-menu-item" aria-pressed="false">
+                            <i id="audio-cache-icon" class="ti ti-download" aria-hidden="true"></i>
+                            <span class="looper-menu-item-copy">
+                                <span id="audio-cache-label">Uložit pro offline</span>
+                                <span id="audio-cache-status" class="looper-menu-item-status" aria-live="polite"></span>
+                            </span>
+                        </button>
+                    </div>
+                    <div id="looper-link-control" hidden>
+                        <button type="button" class="looper-menu-item" data-looper-menu-close onclick="looperCreateLink()">
+                            <i class="ti ti-link" aria-hidden="true"></i>
+                            <span class="looper-menu-item-copy">
+                                <span>Vytvořit odkaz na pozici</span>
+                                <span id="looper-link-status" class="looper-menu-item-status" aria-live="polite"></span>
+                            </span>
+                        </button>
+                    </div>
+                    <button type="button" class="looper-menu-item export-timestampy-btn" data-looper-menu-close>
+                        <i class="ti ti-file-export" aria-hidden="true"></i>
+                        <span class="looper-menu-item-copy"><span>Export timestampů</span></span>
+                    </button>
+                </div>
+
+                <div class="looper-menu-section">
+                    <button class="looper-menu-item looper-menu-item-danger" type="button" data-looper-menu-close onclick="looperZavrit()">
+                        <i class="ti ti-x" aria-hidden="true"></i>
+                        <span class="looper-menu-item-copy"><span>Zavřít looper</span></span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-
 </div>
 
     <!-- OBSAH -->
@@ -271,6 +447,10 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <div id="wf-placeholder">
 
     <div class="looper-guide">
+
+        <div class="looper-guide-actions">
+            <button type="button" class="wave-btn" onclick="closeLooperGuide()">Zavřít nápovědu</button>
+        </div>
 
 		<div class="looper-guide-row">
 		    <div class="guide-text">
@@ -351,6 +531,12 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 </div>
 
             <div id="waveform"></div>
+            <div id="waveform-zoom-controls" aria-label="Přiblížení waveformu">
+                <button type="button" id="waveform-zoom-out" class="waveform-zoom-button"
+                        aria-label="Oddálit waveform" title="Oddálit" disabled>−</button>
+                <button type="button" id="waveform-zoom-in" class="waveform-zoom-button"
+                        aria-label="Přiblížit waveform" title="Přiblížit" disabled>+</button>
+            </div>
 
         </div>
 
@@ -558,6 +744,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 var VZ = {
   aktualniVal:     <?php echo json_encode($slozka_souboru); ?>,
   aktualniNazev:   <?php echo json_encode($nazev_valu); ?>,
+  deepLink:        <?php echo json_encode($deep_link, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>,
   aktivniMobPanel: 'nahravky',
   pravo: {
     rename_val: <?php echo json_encode(ma_pravo('rename_val')); ?>,

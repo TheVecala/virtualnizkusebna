@@ -1,5 +1,9 @@
 <style>
 /* ── Jednotný styl všech modalů ── */
+/* Maximalizovaný Looper je nad běžným rozhraním (z-index 1100), proto musí
+   Bootstrap modal i jeho backdrop zůstat nad ním. */
+.modal { z-index: 1200; }
+.modal-backdrop { z-index: 1190; }
 .modal-content {
   background: #2e3338 !important;
   border: 1px solid #a7ac38;
@@ -566,7 +570,30 @@
 </div>
 
 
-<!-- ───────────────────────── ODHLÁŠENÍ ───────────────────────── -->
+<!-- ───────────────────────── OFFLINE SOUBORY ───────────────────────── -->
+<div class="modal fade" id="modal_offline_confirm" tabindex="-1" role="dialog"
+     aria-labelledby="modal_offline_confirm_title" aria-describedby="offline-cache-confirm-message" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal_offline_confirm_title">OFFLINE KOPIE</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-ctx">
+          <div class="ctx-action" id="offline-cache-confirm-action">OFFLINE KOPIE</div>
+          <strong id="offline-cache-confirm-name"></strong>
+        </div>
+        <p id="offline-cache-confirm-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZRUŠIT</button>
+        <button type="button" id="offline-cache-confirm-submit" class="btn btn-primary">ULOŽIT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="modal_offline_files" tabindex="-1" role="dialog" aria-labelledby="modal_offline_files_title" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable" role="document">
     <div class="modal-content">
@@ -607,7 +634,139 @@
   </div>
 </div>
 
+<div class="modal" id="modal_deep_link_error" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">CHYBA</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body"><p style="color:var(--text);margin:0">Nahrávka nebyla nalezena</p></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ZAVŘÍT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────────────────── VYTVOŘENÍ PRŮBĚHU PRO LOOPER ───────────────────────── -->
+<div class="modal fade" id="modal_looper_peaks" tabindex="-1" role="dialog" aria-labelledby="modal_looper_peaks_title" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal_looper_peaks_title">VYTVOŘIT PRŮBĚH NAHRÁVKY</h5>
+        <button type="button" class="close looper-peaks-back" aria-label="Zpět"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p>Pro tuto nahrávku ještě není vytvořený průběh. Looper ji otevře až po jeho vytvoření.</p>
+        <div class="modal-ctx mb-3">
+          <div class="ctx-action">Nahrávka</div>
+          <div><strong id="looper-peaks-file-name">—</strong></div>
+        </div>
+        <p class="small text-muted">Vytvoření jednorázově stáhne celou nahrávku. Během zpracování okno nezavírejte.</p>
+        <div id="looper-peaks-progress-wrap" hidden>
+          <div class="looper-peaks-progress-track">
+            <div id="looper-peaks-progress-bar"></div>
+          </div>
+          <div id="looper-peaks-progress-text" class="audio-cache-status text-center mt-1" aria-live="polite">0 %</div>
+        </div>
+        <div id="looper-peaks-result" class="small mt-2" role="status" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary looper-peaks-back">ZPĚT</button>
+        <button type="button" class="btn btn-primary" id="looper-peaks-create">VYTVOŘIT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modal_looper_link" tabindex="-1" role="dialog" aria-labelledby="modal_looper_link_title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal_looper_link_title">ODKAZ NA NAHRÁVKU</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <label for="looper-link-url">Odkaz včetně aktuální pozice:</label>
+        <input type="text" id="looper-link-url" class="form-control" readonly>
+        <span id="looper-link-copy-status" class="audio-cache-status d-block mt-2" aria-live="polite"></span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Zavřít</button>
+        <button type="button" class="btn btn-primary" id="looper-link-copy">Kopírovat odkaz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ───────────────────────── editace timestampu ───────────────────────── -->
+
+<div class="modal fade" id="modal_export_timestampy" tabindex="-1" role="dialog" aria-labelledby="modal_export_timestampy_title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal_export_timestampy_title">EXPORT TIMESTAMPŮ</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body timestamp-export-body">
+                <section class="timestamp-export-section timestamp-export-section-table" aria-labelledby="timestamp_export_table_title">
+                    <div class="timestamp-export-section-header">
+                        <span class="timestamp-export-section-icon" aria-hidden="true">
+                            <i class="ti ti-table"></i>
+                        </span>
+                        <div>
+                            <h6 id="timestamp_export_table_title">Export do tabulky</h6>
+                            <p>Vyberte typy timestampů, které chcete zkopírovat.</p>
+                        </div>
+                    </div>
+
+                    <div class="timestamp-export-checks" role="group" aria-label="Typy timestampů pro tabulku">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="copy_timestamp_song" checked>
+                            <label class="form-check-label" for="copy_timestamp_song">Začátky skladeb</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="copy_timestamp_passage" checked>
+                            <label class="form-check-label" for="copy_timestamp_passage">Pasáže</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="copy_timestamp_note">
+                            <label class="form-check-label" for="copy_timestamp_note">Poznámky</label>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary timestamp-export-action" id="copy_timestampy_table_confirm">
+                        <i class="ti ti-copy" aria-hidden="true"></i>
+                        Kopírovat do schránky
+                    </button>
+                </section>
+
+                <section class="timestamp-export-section timestamp-export-section-text" aria-labelledby="timestamp_export_text_title">
+                    <div class="timestamp-export-section-header">
+                        <span class="timestamp-export-section-icon" aria-hidden="true">
+                            <i class="ti ti-file-text"></i>
+                        </span>
+                        <div>
+                            <h6 id="timestamp_export_text_title">Stažení textového souboru</h6>
+                            <p>Stáhne všechny timestampy jako soubor TXT.</p>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary timestamp-export-action" id="export_timestampy_txt">
+                        <i class="ti ti-download" aria-hidden="true"></i>
+                        Stáhnout TXT
+                    </button>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Zavřít</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="modal_poznamka" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -629,11 +788,12 @@
 
             <div class="modal-body">
 
-                <div class="modal-ctx mb-3" id="modal_poznamka_info">
+                <div class="timestamp-time-row mb-3">
+                <div class="modal-ctx" id="modal_poznamka_info">
                     Čas:
                 </div>
 
-                <div id="modal_poznamka_cas_controls" class="mb-3">
+                <div id="modal_poznamka_cas_controls">
                     <button type="button"
                             class="btn btn-secondary btn-sm"
                             id="modal_poznamka_aktualizovat">
@@ -646,11 +806,25 @@
                         Zpět o 5 sekund
                     </button>
                 </div>
+                </div>
 
                 <textarea
                     id="modal_poznamka_text"
                     class="form-control"
                     rows="5"></textarea>
+
+                <div id="modal_poznamka_add_options" class="mt-3">
+                    <fieldset class="timestamp-type-options">
+                        <legend>Druh timestampu</legend>
+                        <label><input type="radio" name="timestamp_type" value="0"> Vál</label>
+                        <label><input type="radio" name="timestamp_type" value="2"> Pasáž</label>
+                        <label><input type="radio" name="timestamp_type" value="1"> Poznámka</label>
+                    </fieldset>
+                    <label class="mb-0">
+                        <input type="checkbox" id="modal_poznamka_keep_open">
+                        Po uložení ponechat otevřené
+                    </label>
+                </div>
 
                 <div id="modal_poznamka_confirm"
                      class="mt-3"
