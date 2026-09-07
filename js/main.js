@@ -2348,7 +2348,7 @@ function setAudioCacheUi(isCached, status, disabled) {
     var hasRecording = !!looperCurrentFile;
 
     $control.prop('hidden', !hasRecording);
-    $('#looper-link-control, #looper-add-timestamp').prop('hidden', !hasRecording);
+    $('#looper-link-control').prop('hidden', !hasRecording);
     $('.looper-menu-recording-actions').prop('hidden', !hasRecording);
     $toggle
         .prop('disabled', !!disabled)
