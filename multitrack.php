@@ -167,7 +167,8 @@ $can_upload_multitrack = ma_pravo('upload');
                 <h5 class="modal-title" id="mt-upload-title">VLOŽIT NOVÝ MULTITRACK</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Zavřít"><span aria-hidden="true">&times;</span></button>
             </div>
-            <form id="mt-upload-form" enctype="multipart/form-data" novalidate>
+            <form id="mt-upload-form" action="php/actions/upload_multitrack.php" method="post"
+                  enctype="multipart/form-data" novalidate>
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="mt-upload-name">Název multitracku</label>
