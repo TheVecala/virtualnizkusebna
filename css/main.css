@@ -347,12 +347,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .looper-menu-item[hidden] { display: none; }
 .looper-control-button i { line-height: 1; }
 .looper-play-button { color: var(--barva); border-color: var(--barva); }
-.looper-add-timestamp {
-  width: auto;
-  padding: 0 10px;
-  font-size: 14px;
-  white-space: nowrap;
-}
 .looper-control-button:focus-visible,
 .looper-menu-item:focus-visible,
 .looper-volume-slider:focus-visible {
@@ -704,7 +698,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   }
   .looper-buttons { gap: 3px; }
   .looper-control-button { width: 40px; height: 40px; }
-  .looper-add-timestamp { width: auto; padding-inline: 7px; }
   .looper-controls-row { flex-wrap: wrap; }
   .looper-control-divider,
   .looper-volume-desktop { display: none; }
@@ -928,6 +921,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
     border-color: #a66ad8;
     color: #d39cff;
     background: #33223f;
+}
+
+#looper-notes .poznamky-toolbar .timestamp-action-btn
+{
+    flex: 0 0 auto;
 }
 
 .poznamky-toolbar .timestamp-action-btn span
