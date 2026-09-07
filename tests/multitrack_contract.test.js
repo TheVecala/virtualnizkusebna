@@ -29,6 +29,11 @@ assert.deepEqual(missingIds, [], `HTML postrádá ID používaná klientem: ${mi
 
 assert.match(page, /detailUrl[^\n]+multitracky\.php\?id=\{id\}/);
 assert.match(
+    client,
+    /return new URL\(configuredUrl, window\.location\.href\)\.href/,
+    'Relative detail URLs must be resolved before they are used as a metadata base URL'
+);
+assert.match(
     page,
     /<form id="mt-upload-form" action="php\/actions\/upload_multitrack\.php" method="post"\s+enctype="multipart\/form-data"/,
     'Upload form must remain a valid multipart POST even without JavaScript'
