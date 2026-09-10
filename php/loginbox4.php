@@ -1,4 +1,4 @@
- <?php 
+<?php
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -8,33 +8,24 @@ $_SESSION['barva1']        = "a7ac38";
 $_SESSION['barva2']        = "yellow";
 $_SESSION['barva_pozadi']  = "202428"; 
 
-// Zpracování odeslaného formuláře
+// Zpracování odeslaného formuláře; jediným údajem zůstává heslo.
+$login_unavailable = false;
 if (isset($_POST['submit_single'])) {
-    $zadani_hesla = $_POST['heslo'] ?? '';
-
-    if ($zadani_hesla === HESLO_ADMIN) {
-        $_SESSION['role']             = 'admin';
-        $_SESSION['logged_in_single'] = true;
-        unset($_SESSION['chyba_prihlaseni_single']);
-        $deep_link_query = $_SESSION['deep_link_after_login'] ?? '';
-        unset($_SESSION['deep_link_after_login']);
-        header("Location: " . $_SERVER['PHP_SELF'] . ($deep_link_query !== '' ? '?' . $deep_link_query : '')); exit;
-    } elseif ($zadani_hesla === HESLO_MUZIKANT) {
-        $_SESSION['role']             = 'muzikant';
-        $_SESSION['logged_in_single'] = true;
-        unset($_SESSION['chyba_prihlaseni_single']);
-        $deep_link_query = $_SESSION['deep_link_after_login'] ?? '';
-        unset($_SESSION['deep_link_after_login']);
-        header("Location: " . $_SERVER['PHP_SELF'] . ($deep_link_query !== '' ? '?' . $deep_link_query : '')); exit;
-    } elseif ($zadani_hesla === HESLO_HOST) {
-        $_SESSION['role']             = 'host';
-        $_SESSION['logged_in_single'] = true;
-        unset($_SESSION['chyba_prihlaseni_single']);
-        $deep_link_query = $_SESSION['deep_link_after_login'] ?? '';
-        unset($_SESSION['deep_link_after_login']);
-        header("Location: " . $_SERVER['PHP_SELF'] . ($deep_link_query !== '' ? '?' . $deep_link_query : '')); exit;
-    } else {
+    try {
+        $zadani_hesla = is_string($_POST['heslo'] ?? null) ? $_POST['heslo'] : '';
+        if (auth_login($zadani_hesla)) {
+            unset($_SESSION['chyba_prihlaseni_single']);
+            $deep_link_query = $_SESSION['deep_link_after_login'] ?? '';
+            unset($_SESSION['deep_link_after_login']);
+            header('Location: /index.php' . ($deep_link_query !== '' ? '?' . $deep_link_query : ''));
+            exit;
+        }
         $_SESSION['chyba_prihlaseni_single'] = "wrong_heslo";
+    } catch (Throwable $e) {
+        $login_unavailable = true;
+        http_response_code(503);
+        unset($_SESSION['chyba_prihlaseni_single']);
+        error_log('Zkušebna: přihlášení není dostupné.');
     }
 }
 ?>
@@ -83,6 +74,9 @@ if (isset($_POST['submit_single'])) {
                                 </div>
                                 
                                 <?php
+                                if ($login_unavailable) {
+                                    echo '<div role="alert" class="mb-3" style="color:#ff6b6b; font-weight:bold;">Přihlášení nyní není dostupné. Zkuste to později.</div>';
+                                }
                                 if (isset($_SESSION['chyba_prihlaseni_single']) && $_SESSION['chyba_prihlaseni_single'] == "wrong_heslo") { 
                                     echo '<div id="spatne_heslo" class="mb-3" style="color:#ff6b6b; font-weight:bold;">Špatné přístupové heslo!</div>';
                                 }

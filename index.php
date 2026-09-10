@@ -205,6 +205,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
     </a>
     <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
     <a href="help.php">nápověda</a>
+    <?php if (auth_is_admin()): ?><a href="admin.php">Administrace</a><?php endif; ?>
     <a href="#" id="audio-cache-clear" title="Spravovat lokálně uložené nahrávky">smazat offline soubory</a>
     <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
@@ -217,6 +218,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
       <div class="topbar-more-menu-items">
         <a href="#" data-toggle="modal" data-target="#myModal" onclick="this.closest('details').removeAttribute('open')">about</a>
         <a href="help.php">nápověda</a>
+        <?php if (auth_is_admin()): ?><a href="admin.php">Administrace</a><?php endif; ?>
         <a href="#" class="audio-cache-clear-mobile" title="Spravovat lokálně uložené nahrávky" onclick="this.closest('details').removeAttribute('open')">smazat offline soubory</a>
         <a href="#" data-toggle="modal" data-target="#modal_logout" onclick="this.closest('details').removeAttribute('open')">odhlásit</a>
       </div>

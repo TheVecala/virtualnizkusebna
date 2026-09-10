@@ -1,0 +1,32 @@
+.admin-page h1{margin:0 0 24px;font-size:28px;line-height:1.2}
+.admin-page h2{margin:0 0 16px;font-size:22px}
+.admin-page h3{margin:0 0 12px;font-size:16px}
+.admin-page .help-layout{gap:40px;padding-top:32px;grid-template-columns:180px minmax(0,1fr)}
+.admin-page .help-section{margin-bottom:36px}
+.member-list{border-top:1px solid var(--line)}
+.member-row{border-bottom:1px solid var(--line)}
+.member-row>summary{display:grid;grid-template-columns:minmax(0,1fr) 90px 75px 60px;gap:12px;align-items:center;padding:12px 0;list-style:none}
+.member-row>summary::-webkit-details-marker{display:none}
+.member-name{font-weight:650;overflow-wrap:anywhere}
+.member-role,.member-status{font-size:13px;color:var(--muted)}
+.edit-label,.add-member>summary{color:var(--green);font-size:13px}
+.admin-page summary{cursor:pointer}
+.admin-page summary:focus-visible,.admin-page button:focus-visible{outline:2px solid var(--green);outline-offset:4px}
+.member-row[open]>.admin-form,.add-member[open]>.admin-form{background:var(--panel);padding:16px;margin-bottom:12px;border-radius:5px}
+.add-member>summary{padding:14px 0}
+.form-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.admin-form label{display:block;font-size:13px}
+.admin-form input:not([type=checkbox]):not([type=hidden]),.admin-form select{display:block;width:100%;min-width:0;margin-top:5px;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--text);font:inherit;font-size:16px}
+.admin-form input:focus,.admin-form select:focus{outline:2px solid var(--green);outline-offset:1px}
+.admin-form .check-label{display:flex;gap:9px;align-items:center;margin:12px 0}
+.check-label input{width:17px;height:17px;accent-color:var(--green)}
+.form-hint,.placeholder-section p{color:var(--muted);font-size:13px}
+.admin-form button{border:1px solid var(--green);border-radius:4px;padding:9px 15px;background:var(--green);color:var(--bg);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.guest-access{border-top:1px solid var(--line);margin-top:22px;padding-top:22px}
+.guest-access details{margin:14px 0;font-size:13px}
+.admin-message{padding:12px 14px;border-left:3px solid var(--green);background:var(--panel);overflow-wrap:anywhere}
+.admin-message.error{border-color:#ff8383;color:#ffc1c1}
+.bootstrap-content{max-width:600px;margin:32px auto;padding:0 18px}
+.admin-page .back-link{font-size:13px}
+@media(max-width:850px){.admin-page .help-layout{grid-template-columns:1fr;gap:18px}.admin-page .help-nav{display:block;position:static}.admin-page .help-nav>strong{display:none}.admin-page .help-nav nav{flex-direction:row;gap:20px;border:0;margin:0}.admin-page .help-nav nav a{padding:3px 0;border:0}}
+@media(max-width:580px){.admin-page .help-layout{padding:24px 18px 50px}.member-row>summary{grid-template-columns:minmax(0,1fr) auto;gap:2px 12px}.member-name{grid-column:1;grid-row:1}.member-role{grid-column:1;grid-row:2}.member-status{grid-column:2;grid-row:2}.edit-label{grid-column:2;grid-row:1}.form-fields{grid-template-columns:1fr}.admin-page .help-header{gap:12px}.admin-page .back-link{font-size:12px}}
