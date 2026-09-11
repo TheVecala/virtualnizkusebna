@@ -3,6 +3,37 @@ session_start();
 require_once __DIR__ . '/config.php';
 auth_require_admin();
 header('Cache-Control: no-store');
+require_once __DIR__ . '/php/inc/admin_storage.php';
+
+$storageError = '';
+$storage = null;
+$storageRefresh = $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'storage_refresh';
+if ($storageRefresh) {
+    try {
+        auth_check_csrf($_POST);
+        $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
+        admin_storage_report($bandRoot, $_SESSION, true);
+        header('Location: admin.php#server', true, 303);
+        exit;
+    } catch (InvalidArgumentException $e) {
+        $storageError = $e->getMessage();
+        http_response_code(422);
+    } catch (Throwable $e) {
+        $storageError = 'Úložiště se nepodařilo přepočítat. Zkuste to později.';
+        http_response_code(503);
+    }
+}
+try {
+    $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
+    $storage = admin_storage_report($bandRoot, $_SESSION);
+} catch (Throwable $e) {
+    $storageError = 'Úložiště kapely není dostupné. Ověřte datový adresář a přístupová práva.';
+}
+$diskPath = isset($bandRoot) && is_dir($bandRoot) ? $bandRoot : __DIR__;
+$diskTotal = @disk_total_space($diskPath);
+$diskFree = @disk_free_space($diskPath);
+$diskPercent = $diskTotal !== false && $diskTotal > 0 && $diskFree !== false
+    ? round(max(0, min(100, 100 * (1 - $diskFree / $diskTotal))), 1) : null;
 
 $error = '';
 $notice = $_SESSION['admin_notice'] ?? '';
@@ -12,7 +43,7 @@ $users = [];
 $guest = [];
 try {
     $db = auth_db();
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$storageRefresh) {
         auth_check_csrf($_POST);
         $db->begin_transaction();
         try {
@@ -143,7 +174,7 @@ function admin_member_form(array $user): void {
         </div>
       </section>
       <?php endif; ?>
-      <section id="server" class="help-section placeholder-section"><h2>Server</h2><p>Zatím bez nastavení.</p></section>
+      <?php require __DIR__ . '/php/inc/admin_storage_view.php'; ?>
       <section id="nastaveni" class="help-section placeholder-section"><h2>Nastavení</h2><p>Zatím bez nastavení.</p></section>
     </main>
   </div>

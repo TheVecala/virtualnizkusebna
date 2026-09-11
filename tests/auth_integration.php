@@ -99,7 +99,8 @@ try {
     check((int) $db->query('SELECT guest_enabled FROM auth_settings WHERE id = 1')->fetch_row()[0] === 0, 'migration disables guest');
 
     foreach (['config.php', 'index.php', 'admin.php', 'create_first_admin.php', 'php/auth.php',
-        'php/loginbox4.php', 'php/login/connect.php', 'php/modals.php', 'css/help.css', 'css/admin.css'] as $file) {
+        'php/loginbox4.php', 'php/login/connect.php', 'php/modals.php',
+        'php/inc/admin_storage.php', 'php/inc/admin_storage_view.php', 'js/help-drawer.js', 'css/help.css', 'css/admin.css'] as $file) {
         if (!is_dir(dirname($temp . '/' . $file))) {
             mkdir(dirname($temp . '/' . $file), 0777, true);
         }
