@@ -77,11 +77,12 @@
 }
 
 .mt-picker-card {
+  width: min(520px, 100%);
   padding: 14px 16px;
   margin-bottom: 12px;
 }
 
-.mt-picker-card label,
+.mt-picker-card h2,
 .mt-panel-heading h2 {
   display: block;
   margin: 0 0 7px;
@@ -92,22 +93,50 @@
   text-transform: uppercase;
 }
 
-.mt-picker-row {
+.mt-recordings {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.mt-recording {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-#mt-selector {
-  max-width: 520px;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
   color: var(--text);
   background: var(--card);
-  border-color: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  text-align: left;
+  cursor: pointer;
 }
 
-#mt-selector:focus {
+.mt-recording:hover,
+.mt-recording[aria-pressed="true"] {
   border-color: var(--barva);
-  box-shadow: 0 0 0 .15rem color-mix(in srgb, var(--barva) 20%, transparent);
+  background: color-mix(in srgb, var(--barva) 8%, var(--card));
+}
+
+.mt-recording:focus-visible {
+  outline: 2px solid var(--barva);
+  outline-offset: -3px;
+}
+
+.mt-recording-icon { width: 20px; height: 20px; object-fit: contain; flex: 0 0 auto; }
+.mt-recording-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.mt-recording-name { overflow-wrap: anywhere; font-size: 14px; line-height: 1.3; }
+.mt-recording-meta { color: var(--muted); font-size: 11px; }
+.mt-recording-action { flex: 0 0 auto; color: var(--barva); font-size: 11px; }
+.mt-list-empty { margin: 0; padding: 10px 0; color: var(--muted); font-size: 12px; }
+
+/* Keep component sizing usable inside an index.php panel as well. */
+#multitrack {
+  min-width: 0;
+  container-type: inline-size;
 }
 
 .mt-picker-state {
@@ -138,6 +167,7 @@
 }
 
 .mt-loading-panel {
+  width: min(520px, 100%);
   padding: 13px 16px;
   margin-bottom: 12px;
 }
@@ -238,7 +268,7 @@
   color: var(--barva);
 }
 
-.wave-btn:disabled {
+#multitrack .wave-btn:disabled {
   cursor: not-allowed;
   opacity: .38;
 }
@@ -321,21 +351,23 @@
 
 .mt-tracks {
   display: flex;
-  flex: 1 0 auto;
-  gap: 8px;
-  padding-right: 16px;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding-right: 10px;
 }
 
 .mt-channel,
 .mt-master {
   display: flex;
-  flex: 0 0 112px;
-  min-width: 112px;
+  flex: 0 0 76px;
+  width: 76px;
+  min-width: 0;
+  box-sizing: border-box;
   height: 310px;
   flex-direction: column;
   align-items: center;
   gap: 9px;
-  padding: 12px 8px;
+  padding: 12px 5px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -353,8 +385,9 @@
 .mt-master {
   position: sticky;
   right: 0;
-  flex-basis: 126px;
-  min-width: 126px;
+  flex-basis: 82px;
+  width: 82px;
+  z-index: 1;
   background: #23292d;
   border-color: var(--barva);
   box-shadow: -10px 0 16px rgba(0, 0, 0, .24);
@@ -362,7 +395,8 @@
 
 .mt-channel-name {
   width: 100%;
-  min-height: 34px;
+  height: 34px;
+  flex-shrink: 0;
   overflow: hidden;
   color: var(--text);
   font-size: 11px;
@@ -375,11 +409,11 @@
 
 .mt-channel-buttons {
   display: flex;
-  gap: 5px;
+  gap: 4px;
 }
 
 .mt-channel-button {
-  width: 39px;
+  width: 29px;
   height: 29px;
   padding: 0;
   color: var(--muted);
@@ -400,21 +434,64 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 58px;
+  width: 44px;
   height: 164px;
+  flex: 0 0 164px;
   margin: 0;
   cursor: pointer;
   touch-action: none;
 }
 
 .mt-fader {
-  width: 150px;
-  height: 42px;
+  appearance: none;
+  -webkit-appearance: none;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 44px;
+  height: 150px;
+  min-width: 0;
+  padding: 0;
   margin: 0;
-  accent-color: var(--barva);
+  background: transparent;
+  border: 0;
   cursor: pointer;
-  transform: rotate(-90deg);
+  touch-action: none;
 }
+
+.mt-fader::-webkit-slider-runnable-track {
+  width: 6px;
+  height: 100%;
+  background: #14181b;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.mt-fader::-moz-range-track {
+  width: 4px;
+  height: 100%;
+  background: #14181b;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.mt-fader::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 28px;
+  height: 14px;
+  margin-left: -12px;
+  background: linear-gradient(to bottom, #dce0e2 0 43%, var(--barva) 43% 57%, #8c969d 57% 100%);
+  border: 1px solid #111;
+  border-radius: 3px;
+  box-shadow: 0 2px 3px #0008;
+}
+.mt-fader::-moz-range-thumb {
+  width: 26px;
+  height: 12px;
+  background: linear-gradient(to bottom, #dce0e2 0 43%, var(--barva) 43% 57%, #8c969d 57% 100%);
+  border: 1px solid #111;
+  border-radius: 3px;
+  box-shadow: 0 2px 3px #0008;
+}
+.mt-fader:focus-visible { outline: 2px solid var(--barva); outline-offset: 2px; border-radius: 4px; }
 
 .mt-volume-value {
   color: var(--muted);
@@ -489,13 +566,11 @@
 
 @media (max-width: 700px) {
   .multitrack-page #topbar .topnav { display: flex; }
-  #topbar .topnav a:first-child { display: none; }
+  .multitrack-page #topbar .topnav a:first-child { display: none; }
   .mt-topbar-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #mt-page { padding: calc(var(--top-h) + 16px) 10px 24px; }
   .mt-heading { align-items: stretch; flex-direction: column; gap: 12px; }
   .mt-new-button { justify-content: center; width: 100%; min-height: 42px; }
-  .mt-picker-row { align-items: stretch; flex-direction: column; gap: 6px; }
-  #mt-selector { max-width: none; min-height: 44px; }
   .mt-transport-top { align-items: stretch; flex-direction: column; }
   .mt-transport-buttons { justify-content: center; }
   .mt-control-button { width: 48px; height: 44px; }
@@ -505,10 +580,14 @@
   #mt-seek { min-height: 44px; }
   .mt-status-row { grid-template-columns: minmax(0, 1fr) minmax(105px, .7fr); }
   .mt-mixer-scroll { padding: 12px 10px; }
-  .mt-tracks { gap: 7px; padding-right: 12px; }
-  .mt-channel, .mt-master { flex-basis: 102px; min-width: 102px; }
-  .mt-master { flex-basis: 112px; min-width: 112px; }
-  .mt-fader-wrap { width: 66px; }
+}
+
+@container (max-width: 520px) {
+  .mt-transport-top { align-items: stretch; flex-direction: column; }
+  .mt-transport-buttons { justify-content: center; }
+  .mt-offline-button { justify-content: center; width: 100%; max-width: none; }
+  .mt-heading { align-items: stretch; flex-direction: column; gap: 12px; }
+  .mt-panel-heading { flex-wrap: wrap; gap: 4px 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

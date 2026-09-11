@@ -79,12 +79,12 @@ $can_upload_multitrack = ma_pravo('upload');
         </header>
 
         <div class="mt-picker-card">
-            <label for="mt-selector">Vybrat multitrack</label>
-            <div class="mt-picker-row">
-                <select id="mt-selector" class="form-control" disabled>
-                    <option value="">Načítám seznam…</option>
-                </select>
+            <div class="mt-panel-heading">
+                <h2 id="mt-library-title">Nahrávky</h2>
                 <span class="mt-picker-state" data-mt-load-state aria-live="polite" aria-busy="true">Načítám…</span>
+            </div>
+            <div id="mt-selector" class="mt-recordings" role="group" aria-labelledby="mt-library-title" aria-busy="true">
+                <p class="mt-list-empty">Načítám seznam…</p>
             </div>
         </div>
 
@@ -139,7 +139,7 @@ $can_upload_multitrack = ma_pravo('upload');
         <div id="mt-empty" class="mt-empty">
             <i class="ti ti-music" aria-hidden="true"></i>
             <strong>Vyberte multitrack</strong>
-            <span>Mixer se vytvoří podle stop uvedených v jeho JSON souboru.</span>
+            <span>Otevřete nahrávku ze seznamu a nastavte si hlasitost jednotlivých stop.</span>
         </div>
 
         <section id="mt-mixer" class="mt-mixer" aria-label="Mixážní pult" hidden>

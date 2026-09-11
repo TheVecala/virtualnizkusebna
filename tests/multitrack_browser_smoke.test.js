@@ -30,7 +30,7 @@ function wavFixture(sampleRate, durationTenths) {
 }
 
 const html = `<!doctype html><html><body>
-<select id="mt-selector" disabled></select><span data-mt-load-state></span>
+<div id="mt-selector"></div><span data-mt-load-state></span>
 <div id="mt-notice" hidden></div>
 <section id="mt-loading-panel" hidden><strong id="mt-load-summary"></strong><div id="mt-track-statuses"></div></section>
 <button id="mt-restart" disabled></button><button id="mt-backward" disabled></button>
@@ -198,9 +198,11 @@ const audio = {
 
         await page.setContent(html);
         await page.addScriptTag({ path: path.resolve(__dirname, '..', 'js', 'multitrack.js') });
-        await page.waitForFunction(() => document.querySelectorAll('#mt-selector option').length === 5);
+        await page.waitForFunction(() => document.querySelectorAll('#mt-selector .mt-recording').length === 4);
 
-        await page.selectOption('#mt-selector', 'set-a');
+        assert.match(await page.locator('[data-mt-id="set-a"] .mt-recording-meta').textContent(), /2 stopy/);
+        await page.locator('[data-mt-id="set-a"]').focus();
+        await page.keyboard.press('Enter');
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'ready');
         let state = await page.evaluate(() => window.MultitrackApp.getState());
         assert.equal(state.id, 'set-a');
@@ -253,15 +255,15 @@ const audio = {
         assert.equal(await page.evaluate(() => window.__cache.size), 3);
         assert.equal(maximumConcurrentAudioRequests, 1, 'Také offline ukládání musí stahovat sekvenčně.');
 
-        await page.selectOption('#mt-selector', 'set-b');
+        await page.click('[data-mt-id="set-b"]');
         state = await page.evaluate(() => window.MultitrackApp.getState());
         assert.equal(state.id, 'set-a', 'Před potvrzením se aktivní sada nesmí změnit.');
-        assert.equal(await page.inputValue('#mt-selector'), 'set-a');
+        assert.equal(await page.getAttribute('.mt-recording[aria-pressed="true"]', 'data-mt-id'), 'set-a');
         await page.click('#mt-switch-confirm');
         await page.waitForFunction(() => window.MultitrackApp.getState()?.id === 'set-b' && window.MultitrackApp.getState()?.phase === 'ready');
 
         failSetADetail = true;
-        await page.selectOption('#mt-selector', 'set-a');
+        await page.click('[data-mt-id="set-a"]');
         await page.click('#mt-switch-confirm');
         try {
             await page.waitForFunction(
@@ -279,14 +281,14 @@ const audio = {
         }
         assert.match(await page.locator('#mt-notice').textContent(), /offline kopie/i);
 
-        await page.selectOption('#mt-selector', 'set-c');
+        await page.click('[data-mt-id="set-c"]');
         await page.click('#mt-switch-confirm');
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'awaiting-confirmation');
         await page.click('#mt-continue-ready');
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'ready');
         assert.equal(await page.locator('.mt-channel').count(), 1);
 
-        await page.selectOption('#mt-selector', 'set-d');
+        await page.click('[data-mt-id="set-d"]');
         await page.click('#mt-switch-confirm');
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'error');
         assert.equal(await page.locator('#mt-play').isDisabled(), true);
@@ -302,9 +304,9 @@ const audio = {
             { name: 'up-two.wav', mimeType: 'audio/wav', buffer: wavFixture(44100, 10) }
         ]);
         await page.$eval('#mt-upload-form', form => form.requestSubmit());
-        await page.waitForFunction(() => Array.from(document.querySelectorAll('#mt-selector option')).some(option => option.value === 'set-e'));
+        await page.waitForSelector('[data-mt-id="set-e"]');
         assert.equal(uploadHadTrackCount, true);
-        assert.equal(await page.inputValue('#mt-selector'), 'set-d', 'Obnovení seznamu nesmí předstírat načtení nové sady.');
+        assert.equal(await page.getAttribute('.mt-recording[aria-pressed="true"]', 'data-mt-id'), 'set-d', 'Obnovení seznamu nesmí předstírat načtení nové sady.');
 
         console.log('Multitrack browser smoke test: OK');
     } finally {

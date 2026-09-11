@@ -394,18 +394,39 @@
     function renderSelector(selectedId) {
         if (!dom.selector) return;
         dom.selector.textContent = '';
-        var placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = items.size ? 'Vyber multitrack…' : 'Žádné multitracky';
-        dom.selector.appendChild(placeholder);
+        if (!items.size) dom.selector.appendChild(createElement('p', 'mt-list-empty', 'Žádné multitracky'));
         items.forEach(function(item) {
-            var option = document.createElement('option');
-            option.value = item.id;
-            option.textContent = item.name;
-            dom.selector.appendChild(option);
+            var button = createElement('button', 'mt-recording');
+            button.type = 'button';
+            button.dataset.mtId = item.id;
+            var icon = createElement('img', 'mt-recording-icon');
+            icon.src = 'meat/ikona_kazeta.png';
+            icon.alt = '';
+            var copy = createElement('span', 'mt-recording-copy');
+            copy.appendChild(createElement('span', 'mt-recording-name', item.name));
+            var details = [];
+            var count = Number(item.raw.trackCount ||
+                (item.metadata && Array.isArray(item.metadata.tracks) ? item.metadata.tracks.length : 0));
+            if (count > 0) details.push(count + (count === 1 ? ' stopa' : count < 5 ? ' stopy' : ' stop'));
+            var created = new Date(item.raw.created);
+            if (!Number.isNaN(created.getTime())) details.push(created.toLocaleDateString('cs-CZ'));
+            copy.appendChild(createElement('span', 'mt-recording-meta', details.join(' · ')));
+            button.appendChild(icon);
+            button.appendChild(copy);
+            button.appendChild(createElement('span', 'mt-recording-action', 'Otevřít'));
+            dom.selector.appendChild(button);
         });
-        dom.selector.value = selectedId && items.has(String(selectedId)) ? String(selectedId) : '';
-        dom.selector.disabled = items.size === 0;
+        updateSelectedRecording(selectedId);
+        dom.selector.setAttribute('aria-busy', 'false');
+    }
+
+    function updateSelectedRecording(selectedId) {
+        if (!dom.selector) return;
+        dom.selector.querySelectorAll('.mt-recording').forEach(function(button) {
+            var selected = button.dataset.mtId === String(selectedId);
+            button.setAttribute('aria-pressed', String(selected));
+            button.querySelector('.mt-recording-action').textContent = selected ? 'Vybráno' : 'Otevřít';
+        });
     }
 
     function refreshList(preferredId) {
@@ -413,7 +434,7 @@
             showNotice('Chybí adresa serverového seznamu multitracků.', 'error');
             return Promise.reject(new Error('MULTITRACK_CONFIG.listUrl není nastavené.'));
         }
-        if (dom.selector) dom.selector.disabled = true;
+        if (dom.selector) dom.selector.setAttribute('aria-busy', 'true');
         return requestJson(config.listUrl).then(function(payload) {
             var normalized = unwrapList(payload).map(normalizeListItem);
             items = new Map(normalized.map(function(item) { return [item.id, item]; }));
@@ -422,7 +443,10 @@
             if (!normalized.length) showNotice('Na serveru zatím není žádný multitrack.', 'info');
             return normalized;
         }).catch(function(error) {
-            if (dom.selector) dom.selector.disabled = true;
+            if (dom.selector) {
+                dom.selector.setAttribute('aria-busy', 'false');
+                if (!items.size) dom.selector.textContent = 'Seznam není dostupný.';
+            }
             showNotice('Seznam multitracků se nepodařilo načíst: ' + errorMessage(error), 'error');
             throw error;
         });
@@ -892,7 +916,6 @@
             fader.max = '100';
             fader.step = '1';
             fader.value = '100';
-            fader.setAttribute('orient', 'vertical');
             fader.setAttribute('aria-label', 'Hlasitost stopy ' + track.name);
             var value = createElement('output', 'mt-volume-value', '100 %');
             faderWrap.appendChild(fader);
@@ -1067,7 +1090,7 @@
             metadataFromCache: false
         };
         currentSet = set;
-        if (dom.selector) dom.selector.value = item.id;
+        updateSelectedRecording(item.id);
         setHidden(dom.empty, true);
         setHidden(dom.loadingPanel, false);
         setLoadState('loading');
@@ -1679,11 +1702,11 @@
             return;
         }
         if (currentSet.item.id === item.id) {
-            if (dom.selector) dom.selector.value = item.id;
+            updateSelectedRecording(item.id);
             return;
         }
         pendingSwitch = item;
-        if (dom.selector) dom.selector.value = currentSet.item.id;
+        updateSelectedRecording(currentSet.item.id);
         if (dom.switchName) dom.switchName.textContent = item.name;
         if (!showModal('#modal_multitrack_switch')) {
             if (window.confirm('Načíst „' + item.name + '“ a uvolnit současný multitrack?')) {
@@ -1809,8 +1832,10 @@
 
     function bindEvents() {
         if (dom.selector) {
-            dom.selector.addEventListener('change', function() {
-                var item = items.get(dom.selector.value);
+            dom.selector.addEventListener('click', function(event) {
+                var button = event.target.closest('.mt-recording');
+                if (!button || !dom.selector.contains(button)) return;
+                var item = items.get(button.dataset.mtId);
                 if (item) requestSetSelection(item);
             });
         }
@@ -1841,7 +1866,7 @@
         if (window.jQuery) {
             window.jQuery('#modal_multitrack_switch').on('hidden.bs.modal', function() {
                 pendingSwitch = null;
-                if (dom.selector && currentSet) dom.selector.value = currentSet.item.id;
+                if (currentSet) updateSelectedRecording(currentSet.item.id);
             });
             window.jQuery('#modal_multitrack_errors').on('hidden.bs.modal', function() {
                 pendingErrorContinue = null;
