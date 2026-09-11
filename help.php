@@ -1,3 +1,4 @@
+<?php $embedded = ($_GET['embedded'] ?? '') === '1'; ?>
 <!doctype html>
 <html lang="cs">
 <head>
@@ -7,9 +8,9 @@
   <title>Nápověda · Virtuální zkušebna</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="css/help.css?v=<?= filemtime(__DIR__ . '/css/help.css') ?>">
-  <script src="js/help.js" defer></script>
+  <script src="js/help.js?v=<?= filemtime(__DIR__ . '/js/help.js') ?>" defer></script>
 </head>
-<body>
+<body<?= $embedded ? ' class="help-embedded"' : '' ?>>
   <a class="skip-link" href="#obsah">Přeskočit na obsah</a>
   <header class="help-header">
     <a class="help-brand" href="index.php"><span>ZKUŠEBNA</span><small>NÁPOVĚDA</small></a>
@@ -36,6 +37,7 @@
     </aside>
 
     <main id="obsah" class="help-content">
+      <h1 id="help-title" class="help-panel-title">Jak používat zkušebnu</h1>
       <div id="no-results" class="no-results" hidden><i class="ti ti-mood-empty"></i><h2>Nic jsme nenašli</h2><p>Zkuste kratší nebo obecnější výraz.</p></div>
 
       <section id="zacatek" class="help-section searchable">
@@ -120,7 +122,7 @@
         </div>
       </section>
  
-	   <a href="index.php"><i class="ti ti-arrow-left"></i> Zpět do aplikace</a>
+	   <a href="index.php" data-help-close><i class="ti ti-arrow-left"></i> Zpět do aplikace</a>
     </main>
   </div>
   <footer><span>Virtuální zkušebna</span><a href="#help-title">Nahoru <i class="ti ti-arrow-up"></i></a></footer>
