@@ -70,7 +70,7 @@ ukončí jeho přihlášení; degradace vlastní role jej vrátí do aplikace.
 
 Zápisy a kontrola prvního/posledního admina jsou v transakcích se společným
 zámkem řádku `auth_settings.id = 1`. Stejný zámek musí zachovat i budoucí úpravy
-těchto tabulek. Hesla mají alespoň 8 znaků, nejvýše 72 bajtů UTF-8 kvůli limitu
+těchto tabulek. Hesla mají alespoň 3 znaky, nejvýše 72 bajtů UTF-8 kvůli limitu
 bcryptu používaného `PASSWORD_DEFAULT`. Nejsou trimována ani jinak normalizována.
 
 ## C. Přenos beta → alfa

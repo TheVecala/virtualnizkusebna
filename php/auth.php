@@ -141,9 +141,9 @@ function auth_input(array $input, string $key): string {
 function auth_validate_password(string $password, string $confirmation): void {
     // PASSWORD_DEFAULT nyní používá bcrypt, který rozlišuje jen prvních 72 bajtů.
     $length = preg_match_all('/./us', $password);
-    if ($length === false || $length < 8 || trim($password) === '' || strlen($password) > 72
+    if ($length === false || $length < 3 || trim($password) === '' || strlen($password) > 72
         || strpos($password, "\0") !== false) {
-        throw new InvalidArgumentException('Heslo musí mít alespoň 8 znaků, nejvýše 72 bajtů a nesmí být tvořené jen mezerami.');
+        throw new InvalidArgumentException('Heslo musí mít alespoň 3 znaky, nejvýše 72 bajtů a nesmí být tvořené jen mezerami.');
     }
     if ($password !== $confirmation) {
         throw new InvalidArgumentException('Hesla se neshodují.');
