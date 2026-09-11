@@ -40,7 +40,6 @@ if ($akce == "list")
         WHERE file_path='$file_path' AND cas >= 0
         ORDER BY cas ASC
     ");
-if (!$looper) {
 echo '<div class="poznamky-toolbar">
   
     <button type="button" class="icon-btn timestamp-action-btn pridat-poznamku-btn" aria-label="Přidat timestamp">
@@ -48,17 +47,16 @@ echo '<div class="poznamky-toolbar">
         <span>timestamp</span>
     </button>
 
-    <button
+    '.(!$looper ? '<button
         type="button"
         class="icon-btn timestamp-action-btn export-timestampy-btn"
         data-file="'.htmlspecialchars($file_path, ENT_QUOTES).'">
         <i class="ti ti-file-export" aria-hidden="true"></i>
         <span>Export</span>
-    </button>
+    </button>' : '').'
    
   
 </div>';
-}
 
     while($r = $res->fetch_assoc())
     {

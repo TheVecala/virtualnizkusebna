@@ -393,12 +393,28 @@ function syncDesktopNavigation() {
 
 $(syncDesktopNavigation);
 
+// Při přechodu k jinému obsahu uvolnit místo zabrané rozbaleným looperem.
+// Použít stejnou cestu jako tlačítko se šipkou, aby zůstal synchronizovaný
+// obsah, ikona i přístupnostní atributy ovládacího prvku.
+function collapseLooperForPanelNavigation() {
+  var looperBar = document.getElementById('looper-bar');
+  var looperContent = document.getElementById('looper-content');
+  if (!looperBar || !looperContent || looperBar.classList.contains('hidden') ||
+      looperContent.classList.contains('hidden')) return;
+
+  if (looperBar.classList.contains('looper-fullscreen')) {
+    looperFullscreenToggle(false);
+  }
+  if (!looperContent.classList.contains('hidden')) looperToggle();
+}
+
 function toggleDesktopPanel(panelId, btn) {
   var $panel = $('#panel-' + panelId);
   if ($panel.is(':visible')) {
     $panel.hide();
   } else {
     $panel.css('display', 'flex');
+    collapseLooperForPanelNavigation();
   }
   syncDesktopNavigation();
 }
@@ -417,6 +433,7 @@ function mobilePanel(panel, el) {
   });
 
   document.getElementById('panel-' + panel).classList.add('mob-active');
+  collapseLooperForPanelNavigation();
 }
 
 // ── Val drawer (otevírá se klikem na #topbar-val nebo #bn-skladby) ──
@@ -470,6 +487,8 @@ function tabletPick(strana, panelId, btn) {
     if (tentoFooter) tentoFooter.querySelectorAll('.bnav').forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
   }
+
+  collapseLooperForPanelNavigation();
 }
 
 function tabletNapady(link) {
@@ -482,6 +501,7 @@ function tabletNapady(link) {
   } else {
     link.classList.add('active');
     ca.setAttribute('data-napady-open', '1');
+    collapseLooperForPanelNavigation();
   }
 }
 
@@ -2112,7 +2132,7 @@ function createTimestampRegionContent(timestamp, visual)
     icon.style.color = visual.color;
     icon.style.fontWeight = '800';
 
-    text.textContent = timestamp.text + ' · ' + formatTime(timestamp.ms);
+    text.textContent = timestamp.text;
     text.style.overflow = 'hidden';
     text.style.textOverflow = 'ellipsis';
 
@@ -2348,7 +2368,7 @@ function setAudioCacheUi(isCached, status, disabled) {
     var hasRecording = !!looperCurrentFile;
 
     $control.prop('hidden', !hasRecording);
-    $('#looper-link-control, #looper-add-timestamp').prop('hidden', !hasRecording);
+    $('#looper-link-control').prop('hidden', !hasRecording);
     $('.looper-menu-recording-actions').prop('hidden', !hasRecording);
     $toggle
         .prop('disabled', !!disabled)
