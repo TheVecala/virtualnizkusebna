@@ -77,11 +77,11 @@ function admin_member_form(array $user): void {
       <div class="form-fields">
         <label for="<?= $prefix ?>-name">Jméno<input id="<?= $prefix ?>-name" name="name" maxlength="100" value="<?= auth_h($user['name']) ?>" required autocomplete="off"></label>
         <label for="<?= $prefix ?>-role">Role<select id="<?= $prefix ?>-role" name="role"><option value="muzikant" <?= $user['role'] === 'muzikant' ? 'selected' : '' ?>>muzikant</option><option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>admin</option></select></label>
-        <label for="<?= $prefix ?>-password">Nové heslo<input id="<?= $prefix ?>-password" type="password" name="password" autocomplete="new-password" <?= $isNew ? 'required' : '' ?>></label>
-        <label for="<?= $prefix ?>-confirmation">Potvrzení hesla<input id="<?= $prefix ?>-confirmation" type="password" name="password_confirmation" autocomplete="new-password" <?= $isNew ? 'required' : '' ?>></label>
+        <label for="<?= $prefix ?>-password">Nové heslo<input id="<?= $prefix ?>-password" type="password" name="password" minlength="3" autocomplete="new-password" <?= $isNew ? 'required' : '' ?>></label>
+        <label for="<?= $prefix ?>-confirmation">Potvrzení hesla<input id="<?= $prefix ?>-confirmation" type="password" name="password_confirmation" minlength="3" autocomplete="new-password" <?= $isNew ? 'required' : '' ?>></label>
       </div>
       <label class="check-label"><input type="checkbox" name="active" value="1" <?= (int) $user['active'] ? 'checked' : '' ?>> Aktivní účet</label>
-      <p class="form-hint">Heslo alespoň 8 znaků, nejvýše 72 bajtů (diakritika zabere více).<?= $isNew ? '' : ' Prázdné ponechá současné heslo. Při opětovné aktivaci zadejte heslo znovu pro kontrolu shody s jinými přístupy.' ?></p>
+      <p class="form-hint">Heslo alespoň 3 znaky, nejvýše 72 bajtů (diakritika zabere více).<?= $isNew ? '' : ' Prázdné ponechá současné heslo. Při opětovné aktivaci zadejte heslo znovu pro kontrolu shody s jinými přístupy.' ?></p>
       <button type="submit"><?= $isNew ? 'Přidat člena' : 'Uložit změny' ?></button>
     </form>
     <?php
@@ -133,10 +133,10 @@ function admin_member_form(array $user): void {
             <p class="form-hint">Heslo <?= $guest['guest_password_hash'] ? 'je nastavené.' : 'zatím není nastavené.' ?> Při zapnutí zadejte heslo a potvrzení pro kontrolu shody s členy.</p>
             <details <?= $error && ($_POST['action'] ?? '') === 'guest' ? 'open' : '' ?>><summary>Změnit / zadat heslo</summary>
               <div class="form-fields">
-                <label>Nové heslo<input type="password" name="password" autocomplete="new-password"></label>
-                <label>Potvrzení hesla<input type="password" name="password_confirmation" autocomplete="new-password"></label>
+                <label>Nové heslo<input type="password" name="password" minlength="3" autocomplete="new-password"></label>
+                <label>Potvrzení hesla<input type="password" name="password_confirmation" minlength="3" autocomplete="new-password"></label>
               </div>
-              <p class="form-hint">Heslo alespoň 8 znaků, nejvýše 72 bajtů (diakritika zabere více).</p>
+              <p class="form-hint">Heslo alespoň 3 znaky, nejvýše 72 bajtů (diakritika zabere více).</p>
             </details>
             <button type="submit">Uložit přístup hostů</button>
           </form>

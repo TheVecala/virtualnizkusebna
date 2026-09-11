@@ -167,8 +167,9 @@ try {
     check(save($admin, member('Dušan', '', 'muzikant', '1'))['status'] === 422, 'last admin cannot be demoted');
     check(save($admin, member('Dušan', '', 'admin', '1', false))['status'] === 422, 'last admin cannot be deactivated');
     check(save($admin, member('Petr', 'Admin-secret-1'))['status'] === 422, 'duplicate member password rejected');
-    check(save($admin, member('Petr', 'short'))['status'] === 422, 'short password rejected');
+    check(save($admin, member('Petr', 'ab'))['status'] === 422, 'password shorter than three characters rejected');
     check(save($admin, member('Petr', str_repeat('a', 73)))['status'] === 422, 'bcrypt truncation prevented');
+    check(save($admin, member('Minimum', 'abc'))['status'] === 303, 'three-character password accepted');
     check(save($admin, member('Petr', 'Musician-secret-1'))['status'] === 303, 'member creation');
     $musicianId = (string) $db->query("SELECT id FROM users WHERE name = 'Petr'")->fetch_row()[0];
     $musician = [];
