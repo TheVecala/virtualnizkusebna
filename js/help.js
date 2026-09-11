@@ -5,6 +5,19 @@
   var status = document.getElementById('search-status');
   var empty = document.getElementById('no-results');
   var links = Array.prototype.slice.call(document.querySelectorAll('.help-nav a'));
+  var embedded = document.body.classList.contains('help-embedded') && window.parent !== window;
+
+  function closePanel() {
+    window.parent.postMessage('zkusebna:close-help', window.location.origin);
+  }
+  if (embedded) {
+    document.querySelectorAll('[data-help-close]').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        closePanel();
+      });
+    });
+  }
 
   function normalize(value) {
     return value.toLocaleLowerCase('cs').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -22,13 +35,16 @@
     status.textContent = query ? (visible ? 'Nalezené sekce: ' + visible : 'Žádná odpovídající sekce') : '';
   }
 
-  search.addEventListener('input', filterHelp);
+  if (search) search.addEventListener('input', filterHelp);
   document.addEventListener('keydown', function (event) {
-    if (event.key === '/' && !/input|textarea/i.test(document.activeElement.tagName)) {
+    if (search && event.key === '/' && !/input|textarea/i.test(document.activeElement.tagName)) {
       event.preventDefault(); search.focus();
     }
     if (event.key === 'Escape' && document.activeElement === search) {
       search.value = ''; filterHelp(); search.blur();
+    } else if (event.key === 'Escape' && embedded) {
+      event.preventDefault();
+      closePanel();
     }
   });
 
