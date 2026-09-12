@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 
 // Kontrola single-band přihlášení
@@ -16,12 +17,12 @@ define('ROWS_DISKUSE', 10);
 
 if (empty($slozka_souboru)):
 ?>
-  <div class="prazdno">Vyberte skladbu.</div>
+  <div class="prazdno">Vyberte položku ze seznamu.</div>
 <?php
     exit;
 endif;
 
-$aktualni_diskuse = "diskuse_" . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka_souboru);
+$aktualni_diskuse = content_discussion_prefix() . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka_souboru);
 
 // Vytvořit tabulku pokud neexistuje
 $mysqli->query("CREATE TABLE IF NOT EXISTS `$aktualni_diskuse` (

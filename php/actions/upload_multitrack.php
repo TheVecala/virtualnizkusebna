@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 session_start();
 require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../inc/multitracky.php';
+require_once __DIR__ . '/../inc/multitrack_notes.php';
 
 $stagingDirectory = null;
 
@@ -29,8 +29,8 @@ try {
         throw new MultitrackException('Chybi pocet stop odesilane sady.', 400);
     }
     $expectedTrackCount = (int) $expectedTrackCountRaw;
-    if ($expectedTrackCount < 2) {
-        throw new MultitrackException('Multitrack musi obsahovat alespon dve stopy.', 400);
+    if ($expectedTrackCount < 1) {
+        throw new MultitrackException('Multitrack musi obsahovat alespon jednu stopu.', 400);
     }
 
     $uploads = multitrack_uploaded_files('tracks');
@@ -119,8 +119,8 @@ try {
 
     $storage = multitrack_storage_root(true);
     $finalDirectory = $storage . DIRECTORY_SEPARATOR . $id;
-    if (file_exists($finalDirectory) || is_link($finalDirectory)) {
-        throw new MultitrackException('Multitrack se stejnym ID uz existuje.', 409);
+    if (file_exists($finalDirectory) || is_link($finalDirectory) || is_file(multitrack_notes_root() . '/' . $id . '.json')) {
+        throw new MultitrackException('Multitrack nebo zachovany zapis se stejnym nazvem uz existuje. Pouzijte jiny nazev.', 409);
     }
 
     try {

@@ -5,7 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
-const page = fs.readFileSync(path.join(root, 'multitrack.php'), 'utf8');
+const page = ['multitrack.php', 'php/inc/multitrack_view.php', 'php/inc/multitrack_modals.php', 'php/inc/multitrack_config.php']
+    .map(file => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
 const client = fs.readFileSync(path.join(root, 'js', 'multitrack.js'), 'utf8');
 const styles = fs.readFileSync(path.join(root, 'css', 'multitrack.css'), 'utf8');
 const upload = fs.readFileSync(path.join(root, 'php', 'actions', 'upload_multitrack.php'), 'utf8');

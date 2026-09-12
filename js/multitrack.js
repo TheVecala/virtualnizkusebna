@@ -106,6 +106,7 @@
             idle: 'Vyberte multitrack',
             loading: 'Načítám…',
             ready: 'Připraveno',
+            archived: 'Zápis bez audia',
             warning: 'Čeká na potvrzení',
             error: 'Chyba'
         };
@@ -407,6 +408,7 @@
             var details = [];
             var count = Number(item.raw.trackCount ||
                 (item.metadata && Array.isArray(item.metadata.tracks) ? item.metadata.tracks.length : 0));
+            if (item.raw.audioDeleted) details.push('Audio odstraněno');
             if (count > 0) details.push(count + (count === 1 ? ' stopa' : count < 5 ? ' stopy' : ' stop'));
             var created = new Date(item.raw.created);
             if (!Number.isNaN(created.getTime())) details.push(created.toLocaleDateString('cs-CZ'));
@@ -434,7 +436,10 @@
             showNotice('Chybí adresa serverového seznamu multitracků.', 'error');
             return Promise.reject(new Error('MULTITRACK_CONFIG.listUrl není nastavené.'));
         }
-        if (dom.selector) dom.selector.setAttribute('aria-busy', 'true');
+        if (dom.selector) {
+            dom.selector.setAttribute('aria-busy', 'true');
+            dom.selector.querySelectorAll('button').forEach(function(button) { button.disabled = true; });
+        }
         return requestJson(config.listUrl).then(function(payload) {
             var normalized = unwrapList(payload).map(normalizeListItem);
             items = new Map(normalized.map(function(item) { return [item.id, item]; }));
@@ -445,6 +450,7 @@
         }).catch(function(error) {
             if (dom.selector) {
                 dom.selector.setAttribute('aria-busy', 'false');
+                dom.selector.querySelectorAll('button').forEach(function(button) { button.disabled = false; });
                 if (!items.size) dom.selector.textContent = 'Seznam není dostupný.';
             }
             showNotice('Seznam multitracků se nepodařilo načíst: ' + errorMessage(error), 'error');
@@ -682,7 +688,7 @@
     }
 
     function setTransportEnabled(enabled) {
-        [dom.restart, dom.backward, dom.play, dom.forward, dom.seek].forEach(function(element) {
+        [dom.restart, dom.backward, dom.play, dom.forward, dom.seek, dom.masterVolume].forEach(function(element) {
             if (element) element.disabled = !enabled;
         });
     }
@@ -700,6 +706,11 @@
     function clearMixer() {
         if (dom.tracks) dom.tracks.textContent = '';
         if (dom.mixer) dom.mixer.hidden = true;
+        if (dom.mixerToggle) {
+            dom.mixerToggle.hidden = true;
+            dom.mixerToggle.setAttribute('aria-expanded', 'false');
+            dom.mixerToggle.textContent = 'Rozbalit mix';
+        }
     }
 
     function stopAllSources(set) {
@@ -927,7 +938,9 @@
             dom.tracks.appendChild(channel);
             track.channel = { root: channel, solo: solo, mute: mute, fader: fader, value: value };
         });
-        setHidden(dom.mixer, false);
+        var multiple = set.tracks.length > 1;
+        setHidden(dom.mixer, dom.mixerToggle ? true : !multiple);
+        setHidden(dom.mixerToggle, !multiple);
         applyTrackGains(set);
     }
 
@@ -976,6 +989,8 @@
         setHidden(dom.empty, true);
         setHidden(dom.loadingPanel, false);
         setLoadState('ready');
+        if (typeof CustomEvent === 'function') document.dispatchEvent(new CustomEvent('multitrack:ready'));
+        setHidden(dom.loadingPanel, !partial);
         updateLoadSummary(set, partial
             ? 'Připraveno ' + set.activeTracks.length + ' / ' + set.tracks.length + ' stop · částečná sada'
             : 'Připraveno ' + set.activeTracks.length + ' / ' + set.tracks.length + ' stop');
@@ -1071,7 +1086,17 @@
         activateSet(set, false);
     }
 
+    function showArchivedSet(set) {
+        set.item.raw.audioDeleted = true;
+        set.phase = 'archived';
+        setHidden(dom.loadingPanel, true);
+        setOfflineUi(false, '', true);
+        setLoadState('archived');
+        showNotice('Audio odstraněno. Obsah a poznámky zůstávají dostupné.', 'info');
+    }
+
     function beginLoad(item) {
+        if (typeof CustomEvent === 'function' && !document.dispatchEvent(new CustomEvent('multitrack:beforeselect', { cancelable: true }))) return;
         cleanupCurrentSet();
         var token = ++loadSerial;
         loadAbortController = typeof AbortController === 'function' ? new AbortController() : null;
@@ -1090,6 +1115,8 @@
             metadataFromCache: false
         };
         currentSet = set;
+        if (dom.playingName) dom.playingName.textContent = item.name;
+        if (typeof CustomEvent === 'function') document.dispatchEvent(new CustomEvent('multitrack:selected', { detail: { id: item.id } }));
         updateSelectedRecording(item.id);
         setHidden(dom.empty, true);
         setHidden(dom.loadingPanel, false);
@@ -1098,9 +1125,18 @@
         setOfflineUi(false, 'kontroluji offline kopii…', true);
         showNotice('', 'info');
         if (dom.loadSummary) dom.loadSummary.textContent = 'Načítám metadata…';
+        if (item.raw.audioDeleted) {
+            showArchivedSet(set);
+            return;
+        }
 
         loadMetadata(item, loadAbortController ? loadAbortController.signal : undefined).then(function(result) {
             if (token !== loadSerial || set !== currentSet) throw cancelledError();
+            if (result.payload.audioDeleted) {
+                showArchivedSet(set);
+                renderSelector(set.item.id);
+                return;
+            }
             set.metadataUrl = result.url;
             set.metadataFromCache = !!result.offline;
             set.metadata = normalizeMetadata(item, result.payload, result.url);
@@ -1114,7 +1150,7 @@
             refreshOfflineState(set);
             return loadTracksSequentially(set, token);
         }).then(function() {
-            finishTrackLoading(set, token);
+            if (set.phase !== 'archived') finishTrackLoading(set, token);
         }).catch(function(error) {
             if (isCancelled(error) || token !== loadSerial || set !== currentSet) return;
             failSet(set, errorMessage(error));
@@ -1505,7 +1541,7 @@
 
     function validateUploadBasics(name, files) {
         if (!String(name || '').trim()) throw new Error('Zadejte název multitracku.');
-        if (files.length < 2) throw new Error('Vyberte alespoň dvě audio stopy.');
+        if (files.length < 1) throw new Error('Vyberte alespoň jednu audio stopu.');
         var seen = new Set();
         var formats = new Set();
         files.forEach(function(file) {
@@ -1804,6 +1840,8 @@
         dom.offlineLabel = byId('mt-offline-label');
         dom.offlineStatus = byId('mt-offline-status');
         dom.mixer = byId('mt-mixer');
+        dom.mixerToggle = byId('mt-mixer-toggle');
+        dom.playingName = byId('mt-playing-name');
         dom.tracks = byId('mt-tracks');
         dom.masterVolume = byId('mt-master-volume');
         dom.masterValue = byId('mt-master-value');
@@ -1839,6 +1877,12 @@
                 if (item) requestSetSelection(item);
             });
         }
+        if (dom.mixerToggle) dom.mixerToggle.addEventListener('click', function() {
+            var open = dom.mixer.hidden;
+            dom.mixer.hidden = !open;
+            dom.mixerToggle.setAttribute('aria-expanded', String(open));
+            dom.mixerToggle.textContent = open ? 'Sbalit mix' : 'Rozbalit mix';
+        });
         if (dom.restart) dom.restart.addEventListener('click', restartTransport);
         if (dom.backward) dom.backward.addEventListener('click', function() { seekBy(-5); });
         if (dom.play) dom.play.addEventListener('click', togglePlayback);

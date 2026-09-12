@@ -1,13 +1,14 @@
 <?php session_start();
 error_reporting(0);
 require_once 'config.php';
+require_once __DIR__ . '/php/inc/content_context.php';
 
 // Deep link poznáme už před přihlášením. Do session ukládáme pouze znovu
 // sestavený lokální query string, nikdy uživatelem dodanou návratovou URL.
 $deep_link_requested = isset($_GET['val']) || isset($_GET['nahravka']) || isset($_GET['time']);
 if ($deep_link_requested && empty($_SESSION['logged_in_single'])) {
     $deep_link_params = [];
-    foreach (['val', 'nahravka', 'time'] as $param) {
+    foreach (['val', 'nahravka', 'time', 'sekce'] as $param) {
         if (isset($_GET[$param]) && is_string($_GET[$param])) {
             $deep_link_params[$param] = $_GET[$param];
         }
@@ -46,7 +47,7 @@ if (empty($_SESSION['kapela'])) {
 // Nastavit lokální proměnné
 $kapela            = $_SESSION['kapela']            ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
-$sekce             = "uploads";
+$sekce             = content_section();
 $aktualni_text     = $_SESSION['aktualni_text']     ?? "akordy.txt";
 $aktualni_tab      = $_SESSION['aktualni_tab']      ?? "tabelatura.txt";
 $aktualni_diskuse  = $_SESSION['diskuse']           ?? "";
@@ -149,6 +150,8 @@ function nacti_nazev_valu($slozka_slozek, $slozka) {
     return $slozka;
 }
 
+$can_upload_multitrack = ma_pravo('upload');
+if (empty($_SESSION['multitrack_csrf'])) $_SESSION['multitrack_csrf'] = bin2hex(random_bytes(32));
 $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 ?>
 
@@ -181,8 +184,13 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <script src="https://unpkg.com/wavesurfer.js@7.12.11/dist/plugins/zoom.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
-<script src="js/main.js" defer></script>
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>" defer></script>
 <script src="js/help-drawer.js?v=<?= filemtime(__DIR__ . '/js/help-drawer.js') ?>" defer></script>
+<link rel="stylesheet" href="css/multitrack.css?v=<?= filemtime(__DIR__ . '/css/multitrack.css') ?>">
+<link rel="stylesheet" href="css/workspace.css?v=<?= filemtime(__DIR__ . '/css/workspace.css') ?>">
+<script src="js/multitrack.js?v=<?= filemtime(__DIR__ . '/js/multitrack.js') ?>" defer></script>
+<script src="js/multitrack-notes.js?v=<?= filemtime(__DIR__ . '/js/multitrack-notes.js') ?>" defer></script>
+<script src="js/workspace.js?v=<?= filemtime(__DIR__ . '/js/workspace.js') ?>" defer></script>
 </head>
 <body>
 
@@ -196,6 +204,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
   <span class="brand">DK</span>
   <span class="brand">/</span>
   <span id="topbar-val" onclick="toggleValDrawer()"><?php echo htmlspecialchars($nazev_valu); ?></span>
+  <button id="nav-multitrack" class="btn-vz" type="button" aria-pressed="false" aria-controls="mt-workspace">Multitracky</button>
   <nav class="topnav">
     <a href="#" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
     <a href="#" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
@@ -230,10 +239,14 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <!-- ── SIDEBAR ── -->
  <div id="sidebar">
   <div class="sidebar-label" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 4px;">
-    <span>Skladby</span>
+    <nav class="content-section-switch" aria-label="Skladby nebo zkoušky">
+      <a href="index.php?sekce=uploads" <?= $sekce === 'uploads' ? 'aria-current="page"' : '' ?>>Skladby</a>
+      <a href="index.php?sekce=zkousky" <?= $sekce === 'zkousky' ? 'aria-current="page"' : '' ?>>Zkoušky</a>
+    </nav>
     <button class="btn-vz<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nova_slozka" style="padding: 2px 6px; font-size: 10px;">+ nová</button>
   </div>
 <div id="sidebar-playlist">
+    <?php if (!$pole_slozek): ?><p class="content-empty">Zatím žádné <?= $sekce === 'zkousky' ? 'zkoušky' : 'skladby' ?>.</p><?php endif; ?>
     <?php foreach ($pole_slozek as $s):
         $nazev_s = nacti_nazev_valu($slozka_slozek, $s);
         $active  = ($s === $slozka_souboru) ? ' active' : '';
@@ -658,12 +671,17 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 </div><!-- /main -->
 
 <!-- ── MODALS ── -->
+<main id="mt-workspace" hidden>
+<?php require __DIR__ . '/php/inc/multitrack_view.php'; ?>
+</main>
+<?php require __DIR__ . '/php/inc/multitrack_modals.php'; ?>
+<?php require __DIR__ . '/php/inc/multitrack_config.php'; ?>
 <?php require "php/modals.php"; ?>
 
 <!-- ── BOTTOM NAV ── -->
 <div id="bottom-nav">
   <button class="bnav" id="bn-skladby" onclick="toggleValDrawer()">
-    <img src="meat/ikona_skladby.png" class="bi" alt="skladby">skladby
+    <img src="meat/ikona_skladby.png" class="bi" alt=""> <?= $sekce === 'zkousky' ? 'zkoušky' : 'skladby' ?>
   </button>
   <button class="bnav active" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
     <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
@@ -720,9 +738,12 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <div id="val-drawer" class="seznam-skladeb">
   
   <div class="drawer-header nodrag" style="padding: 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Seznam skladeb</span>
+      <nav class="content-section-switch" aria-label="Skladby nebo zkoušky">
+      <a href="index.php?sekce=uploads" <?= $sekce === 'uploads' ? 'aria-current="page"' : '' ?>>Skladby</a>
+      <a href="index.php?sekce=zkousky" <?= $sekce === 'zkousky' ? 'aria-current="page"' : '' ?>>Zkoušky</a>
+    </nav>
       <button class="btn-vz<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')">
-          + nová skladba
+          + <?= $sekce === 'zkousky' ? 'nová zkouška' : 'nová skladba' ?>
       </button>
   </div>
 
@@ -758,6 +779,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <!-- ── Dynamický stav z PHP (session) — musí zůstat inline, main.js je statický soubor ── -->
 <script>
 var VZ = {
+  sekce: <?= json_encode($sekce) ?>,
   aktualniVal:     <?php echo json_encode($slozka_souboru); ?>,
   aktualniNazev:   <?php echo json_encode($nazev_valu); ?>,
   deepLink:        <?php echo json_encode($deep_link, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>,

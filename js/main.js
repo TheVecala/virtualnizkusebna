@@ -1,3 +1,11 @@
+// Pin requests to this page's directory even when another tab switches sections.
+$.ajaxPrefilter(function(options) {
+    var url = new URL(options.url, window.location.href);
+    if (url.origin === window.location.origin && /\/php\/(ajax|actions)\//.test(url.pathname)) {
+        url.searchParams.set('sekce', VZ.sekce || 'uploads');
+        options.url = url.href;
+    }
+});
 /* ── main.js — Virtuální zkušebna ── */
 const NOTE_SONG   = 0;
 const NOTE_NORMAL = 1;
@@ -1172,6 +1180,7 @@ $(document).on('submit', '#form_upload', function(e) {
   }
 
   var formData = new FormData();
+  formData.append('sekce', VZ.sekce || 'uploads');
   formData.append('fileToUpload', fileInput.files[0]);
   formData.append('odeslat', document.getElementById('upload_odeslat').checked ? 'true' : '');
   formData.append('navrat', window.location.pathname);
@@ -2883,6 +2892,7 @@ function looperCreateLink() {
     if (!wavesurfer || !looperCurrentFile || !looperCurrentName) return;
     var url = new URL('index.php', window.location.href);
     url.search = '';
+    url.searchParams.set('sekce', VZ.sekce || 'uploads');
     url.searchParams.set('val', VZ.aktualniVal);
     url.searchParams.set('nahravka', looperCurrentName);
     url.searchParams.set('time', String(Math.round(wavesurfer.getCurrentTime() * 1000)));

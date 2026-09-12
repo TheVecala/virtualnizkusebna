@@ -1,4 +1,5 @@
-<?php session_start(); ?>
+<?php session_start();
+require_once __DIR__ . '/../inc/content_context.php'; ?>
 <?php
 require_once __DIR__ . "/../../config.php";
 
@@ -30,7 +31,7 @@ if (!isset($_FILES["fileToUpload"]) || $_FILES["fileToUpload"]["error"] !== UPLO
 }
 
 // Cesta cílové složky se sestavuje ze SESSION - ne z POST
-$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/";
+$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/" . content_section() . "/";
 $slozka       = $_SESSION['slozka_souboru_k_zobrazeni'];
 
 // Ochrana proti path traversal v názvu složky

@@ -1,4 +1,5 @@
-<?php session_start(); ?>
+<?php session_start();
+require_once __DIR__ . '/../inc/content_context.php'; ?>
 <?php
 require_once __DIR__ . '/../../config.php';
 
@@ -13,7 +14,7 @@ $presunout_kam   = $_POST["presunout_kam"]   ?? "";
 $adresa_pro_navrat = $_POST["navrat"]        ?? "/";
 
 // Sestavení cesty ze SESSION - nesmí přijít z POST (bezpečnost)
-$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/";
+$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/" . content_section() . "/";
 
 $start_souboru = "../../" . $presunout_odkud;
 $cil_souboru   = "../../" . $cesta_slozek . $presunout_kam . "/" . $presunout_co;

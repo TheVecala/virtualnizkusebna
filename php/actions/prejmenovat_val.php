@@ -1,4 +1,5 @@
 <?php session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 require_once __DIR__ . "/../../config.php";
 
 require __DIR__ . "/../inc/remove_accents.php";
@@ -39,7 +40,7 @@ if ($puvodni_jmeno === $nove_jmeno) {
 }
 
 // Cesta ze SESSION, ne z POST
-$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/";
+$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/" . content_section() . "/";
 
 $odkud = "../../" . $cesta_slozek . $puvodni_jmeno;
 $kam   = "../../" . $cesta_slozek . $nove_jmeno;
@@ -87,8 +88,8 @@ if (rename($odkud, $kam)) {
 
     // 1) Diskusní tabulka válu (jméno tabulky nese starý slug) — přejmenovat.
     //    @ potlačuje warning, pokud tabulka ještě nikdy nevznikla (nikdo nekomentoval).
-    $stara_tab = "diskuse_" . $kapela_db . "_" . $mysqli->real_escape_string($puvodni_jmeno);
-    $nova_tab  = "diskuse_" . $kapela_db . "_" . $mysqli->real_escape_string($nove_jmeno);
+    $stara_tab = content_discussion_prefix() . $kapela_db . "_" . $mysqli->real_escape_string($puvodni_jmeno);
+    $nova_tab  = content_discussion_prefix() . $kapela_db . "_" . $mysqli->real_escape_string($nove_jmeno);
     @$mysqli->query("RENAME TABLE `$stara_tab` TO `$nova_tab`");
 
     // 2) recording_notes (časové poznámky i popisky nahrávek) — file_path všech

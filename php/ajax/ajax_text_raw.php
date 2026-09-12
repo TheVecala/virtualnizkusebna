@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
@@ -13,7 +14,7 @@ $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";
 $slozka_souboru    = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 $aktualni_text     = $_SESSION['aktualni_text']              ?? "akordy.txt";
 
-$soubor = "../../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/texty/" . $aktualni_text;
+$soubor = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/texty/" . $aktualni_text;
 
 if (!file_exists($soubor)) {
     echo json_encode(["ok" => false, "obsah" => "", "nazev_souboru" => $aktualni_text]);

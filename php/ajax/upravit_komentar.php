@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 require_once __DIR__ . '/../../config.php';
 
@@ -31,7 +32,7 @@ if ($typ === 'napady') {
         echo json_encode(["ok" => false, "chyba" => "Není vybrána skladba"]);
         exit;
     }
-    $tabulka = "diskuse_" . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
+    $tabulka = content_discussion_prefix() . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
 } else {
     echo json_encode(["ok" => false, "chyba" => "Neznámý typ"]);
     exit;

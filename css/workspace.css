@@ -1,0 +1,74 @@
+/* Directory switch and the integrated multitrack workspace. */
+[hidden] { display: none !important; }
+.content-empty { color: var(--muted); font-size: 12px; padding: 12px 6px; }
+.content-section-switch { display: flex; gap: 4px; }
+.content-section-switch a { padding: 7px 8px; border-radius: 4px; color: var(--muted); text-decoration: none; font-size: 12px; letter-spacing: 0; text-transform: none; }
+.content-section-switch a[aria-current] { background: var(--card); color: var(--barva); }
+#sidebar .sidebar-label { padding: 6px !important; }
+#nav-multitrack { white-space: nowrap; flex-shrink: 0; }
+#nav-multitrack[aria-pressed="true"] { color: var(--barva); border-color: var(--barva); }
+.view-multitrack #sidebar,
+.view-multitrack #main,
+.view-multitrack #bottom-nav,
+.view-multitrack #bottom-nav-tab,
+.view-multitrack #val-drawer,
+.view-multitrack #topbar-val { display: none !important; }
+#mt-workspace { position: fixed; inset: var(--top-h) 0 0; overflow-y: auto; background: var(--pozadi); padding: 16px; }
+#mt-workspace .mt-shell { width: 100%; max-width: 1600px; }
+.mt-playing-name { color: var(--barva); font-size: 13px; margin: 0 0 8px; overflow-wrap: anywhere; }
+.mt-main-volume { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: var(--muted); }
+.mt-main-volume input { width: 120px; accent-color: var(--barva); }
+.mt-main-volume output { min-width: 42px; font-variant-numeric: tabular-nums; }
+.mt-transport-top { flex-wrap: wrap; }
+.mt-workspace-columns { display: grid; grid-template-columns: minmax(220px, 330px) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
+.mt-workspace-columns .mt-picker-card { width: 100%; margin: 0; }
+.mt-workspace-columns .mt-recordings { max-height: none; margin-top: 12px; }
+.mt-workspace-columns .mt-new-button { width: 100%; justify-content: center; }
+.mt-notes-panel { background: var(--tmava); border: 1px solid var(--border); padding: 16px; border-radius: 8px; min-width: 0; }
+.mt-notes-panel label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+.mt-notes-panel textarea, .mt-notes-panel input, .mt-notes-panel select { display: block; width: 100%; border: 1px solid var(--border); border-radius: 5px; padding: 8px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; }
+.mt-notes-panel textarea { resize: vertical; }
+.mt-notes-panel textarea:focus, .mt-notes-panel input:focus { outline: 1px solid var(--barva); }
+.mt-notes-panel #mt-note-time { max-width: 180px; }
+.mt-notes-panel #mt-summary { margin-bottom: 8px; }
+#mt-notes-status { margin: 8px 0; color: var(--muted); font-size: 12px; }
+#mt-notes-status.is-error { color: #ffaaaa; }
+.mt-note-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+#mt-note-form { padding: 0 12px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; }
+.mt-outline-chapter { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; }
+.mt-outline-chapter > summary { display: list-item; cursor: pointer; color: var(--barva); }
+.mt-outline-chapter > summary .mt-outline-row { display: inline-flex; width: calc(100% - 24px); vertical-align: middle; }
+.mt-outline-row { display: flex; align-items: baseline; gap: 12px; }
+.mt-note-copy { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; color: var(--text); font-size: 13px; }
+.mt-note-time { flex: 0 0 auto; background: none; border: 0; padding: 4px 0; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--barva); cursor: pointer; }
+.mt-note-time:disabled { color: var(--muted); cursor: default; }
+.mt-chapter-notes { padding-left: 24px; }
+.mt-outline-note { padding: 10px 0; }
+.mt-entry-actions { display: inline-flex; gap: 8px; margin: 4px 0; }
+.mt-entry-actions .btn-vz { font-size: 10px; color: var(--muted); }
+.mt-note-author { margin-right: 12px; color: var(--muted); font-size: 10px; }
+.mt-remove-audio { margin-top: 24px; color: var(--muted); }
+.mt-notes-panel button:disabled { opacity: .5; cursor: default; }
+#mt-mixer { margin-top: 12px; }
+@media (min-width: 768px) {
+  #mt-workspace { overflow: hidden; }
+  #mt-workspace .mt-shell { height: 100%; display: flex; flex-direction: column; }
+  #mt-workspace .mt-shell > * { flex-shrink: 0; }
+  #mt-workspace .mt-workspace-columns { flex: 1 1 auto; min-height: 0; align-items: stretch; }
+  #mt-workspace .mt-picker-card, #mt-workspace .mt-notes-panel { min-height: 0; overflow-y: auto; }
+  #mt-workspace #mt-mixer { max-height: 40vh; overflow-y: auto; }
+  #mt-workspace #mt-empty { padding: 14px; }
+  #mt-workspace #mt-loading-panel { max-height: 22vh; overflow-y: auto; }
+}
+@media (max-width: 767px) {
+  #mt-workspace { padding: 10px; }
+  .mt-workspace-columns { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .mt-workspace-columns .mt-recordings { max-height: 190px; }
+  .mt-notes-panel { padding: 12px; }
+  .mt-main-volume input { width: 95px; }
+  #topbar { gap: 7px; }
+  #topbar-val { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  #nav-multitrack { font-size: 11px; padding: 6px; margin-left: auto; }
+  .view-multitrack .topbar-mob-actions { display: none; }
+  .mt-chapter-notes { padding-left: 12px; }
+}

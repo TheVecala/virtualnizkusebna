@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
@@ -20,7 +21,7 @@ $aktualni_text = in_array($typ_z_get, ['tabelatura', 'akordy'], true)
 $akce              = $_GET['akce']                           ?? "seznam";
 $soubor_zalohy     = basename($_GET['soubor']                ?? "");
 
-$slozka_textu   = "../../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/texty/";
+$slozka_textu   = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/texty/";
 $slozka_history = $slozka_textu . "_history/";
 $nazev_bez_ext  = pathinfo($aktualni_text, PATHINFO_FILENAME);
 

@@ -1,4 +1,5 @@
 <?php session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 require_once __DIR__ . '/../../config.php';
 
@@ -35,7 +36,7 @@ if (empty($kapela) || empty($befelemepesseveze) || empty($slozka_souboru)) {
     exit;
 }
 
-$slozka_textu = "../../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/texty/";
+$slozka_textu = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/texty/";
 $soubor       = $slozka_textu . $nazev_souboru;
 
 if (!file_exists($soubor)) {

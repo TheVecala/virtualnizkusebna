@@ -293,13 +293,13 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">NOVÁ SKLADBA</h5>
+        <h5 class="modal-title"><?= $sekce === 'zkousky' ? 'NOVÁ ZKOUŠKA' : 'NOVÁ SKLADBA' ?></h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
       <form id="form_nova_slozka" action="/php/actions/vytvorit_adresar.php" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="form-group">
-            <label for="jmeno_adresare">Název nové skladby:</label>
+            <label for="jmeno_adresare"><?= $sekce === 'zkousky' ? 'Název nové zkoušky:' : 'Název nové skladby:' ?></label>
             <input type="text" class="form-control" name="jmeno_adresare" autofocus>
           </div>
           <div style="display:none">

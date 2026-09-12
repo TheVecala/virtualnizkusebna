@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 require_once __DIR__ . '/../../config.php';
 
@@ -52,7 +53,7 @@ if ($pouzit_hlavni || empty($slozka)) {
 
 } else {
     // Diskuse per-vál (zůstává beze změny)
-    $aktualni_diskuse = "diskuse_" . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
+    $aktualni_diskuse = content_discussion_prefix() . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
 
     // Vytvořit tabulku pokud neexistuje
     $mysqli->query("CREATE TABLE IF NOT EXISTS `$aktualni_diskuse` (

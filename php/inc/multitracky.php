@@ -286,7 +286,7 @@ function multitrack_array_is_list(array $value): bool
  *
  * @return array{id:string,name:string,created:string,version:int,tracks:array<int,array{file:string,name:string,order:int,url:string}>}
  */
-function multitrack_read(string $id): array
+function multitrack_read(string $id, bool $allowMissingFiles = false): array
 {
     $id = multitrack_require_id($id);
     $storage = multitrack_storage_root(false);
@@ -353,6 +353,7 @@ function multitrack_read(string $id): array
     $seenFiles = [];
     $seenOrders = [];
     $setFormat = null;
+    $availableFiles = 0;
 
     foreach ($rawTracks as $rawTrack) {
         if (!is_array($rawTrack)) {
@@ -374,9 +375,11 @@ function multitrack_read(string $id): array
         }
 
         $trackPath = $directoryReal . DIRECTORY_SEPARATOR . $file;
-        if (!is_file($trackPath) || is_link($trackPath)) {
+        if (is_link($trackPath) || (!$allowMissingFiles && empty($manifest['audioDeleted']) && !is_file($trackPath))) {
             throw new MultitrackException('Chybi soubor stopy ' . $file . '.', 422);
         }
+
+        if (is_file($trackPath)) $availableFiles++;
 
         try {
             $trackName = multitrack_clean_display_name($rawTrack['name'] ?? null, 'nazev stopy');
@@ -407,6 +410,7 @@ function multitrack_read(string $id): array
         'name' => $name,
         'created' => $created,
         'version' => MULTITRACK_VERSION,
+        'audioDeleted' => !empty($manifest['audioDeleted']) || ($allowMissingFiles && $availableFiles === 0),
         'tracks' => $tracks,
     ];
 }
@@ -432,13 +436,14 @@ function multitrack_list(): array
             continue;
         }
         try {
-            $multitrack = multitrack_read($id);
+            $multitrack = multitrack_read($id, true);
             $items[] = [
                 'id' => $multitrack['id'],
                 'name' => $multitrack['name'],
                 'created' => $multitrack['created'],
                 'version' => $multitrack['version'],
                 'trackCount' => count($multitrack['tracks']),
+                'audioDeleted' => !empty($multitrack['audioDeleted']),
             ];
         } catch (MultitrackException $exception) {
             // Neplatna nebo nedokoncena slozka se nesmi objevit v uzivatelskem seznamu.
