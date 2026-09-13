@@ -99,8 +99,19 @@
                     <p id="mt-content-status" role="status">Vyberte nahrávku ze seznamu.</p>
                     <div id="mt-content-content" data-mt-notes-content hidden>
                         <?php if (ma_pravo('comment')): ?>
-                        <button id="mt-add-chapter" class="btn-vz" type="button">+ Začátek skladby / pokusu</button>
-                        <div id="mt-chapter-editor"></div>
+                        <div class="mt-note-actions">
+                            <button id="mt-add-chapter" class="btn-vz" type="button">+ Začátek skladby / pokusu</button>
+                            <button id="mt-add-note" class="btn-vz" type="button">+ Poznámka v aktuálním čase</button>
+                        </div>
+                        <form id="mt-note-form" hidden>
+                            <label for="mt-note-kind">Typ</label>
+                            <select id="mt-note-kind"><option value="chapter">Začátek skladby / pokusu</option><option value="note">Poznámka</option></select>
+                            <label for="mt-note-time">Čas (mm:ss nebo hh:mm:ss)</label>
+                            <input id="mt-note-time" type="text" required inputmode="decimal" placeholder="12:35">
+                            <label for="mt-note-text">Text</label>
+                            <textarea id="mt-note-text" rows="2" maxlength="4000" required></textarea>
+                            <div class="mt-note-actions"><button type="submit" class="btn-vz">Uložit</button><button id="mt-note-cancel" type="button" class="btn-vz">Zrušit</button></div>
+                        </form>
                         <?php endif; ?>
                         <div id="mt-outline"></div>
                     </div>
@@ -109,7 +120,7 @@
 
             <section id="mt-panel-tabelatura" class="panel mt-notes-panel">
                 <div class="panel-header">
-                    <h2>POZNÁMKY</h2>
+                    <h2>POPIS</h2>
                     <div class="acts"><button id="mt-notes-refresh" type="button" class="btn-vz" disabled>obnovit</button></div>
                 </div>
                 <div class="panel-body">
@@ -120,21 +131,6 @@
                             <textarea id="mt-summary" rows="3" maxlength="10000" <?= ma_pravo('comment') ? '' : 'readonly' ?>></textarea>
                             <?php if (ma_pravo('comment')): ?><button type="submit" class="btn-vz">Uložit shrnutí</button><?php endif; ?>
                         </form>
-                        <?php if (ma_pravo('comment')): ?>
-                        <div class="mt-note-actions"><button id="mt-add-note" class="btn-vz" type="button">+ Poznámka v aktuálním čase</button></div>
-                        <div id="mt-note-editor">
-                <form id="mt-note-form" hidden>
-                    <label for="mt-note-kind">Typ</label>
-                    <select id="mt-note-kind"><option value="chapter">Začátek skladby / pokusu</option><option value="note">Poznámka</option></select>
-                    <label for="mt-note-time">Čas (mm:ss nebo hh:mm:ss)</label>
-                    <input id="mt-note-time" type="text" required inputmode="decimal" placeholder="12:35">
-                    <label for="mt-note-text">Text</label>
-                    <textarea id="mt-note-text" rows="2" maxlength="4000" required></textarea>
-                    <div class="mt-note-actions"><button type="submit" class="btn-vz">Uložit</button><button id="mt-note-cancel" type="button" class="btn-vz">Zrušit</button></div>
-                </form>
-                        </div>
-                        <?php endif; ?>
-                        <div id="mt-note-list"></div>
                     </div>
                 </div>
             </section>

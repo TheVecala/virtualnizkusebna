@@ -22,9 +22,10 @@ Tlačítko v horní liště otevře samostatný pohled a pozastaví běžné aud
 Návrat pozastaví multitrack a obnoví předchozí pohled. Načtený mix se zachová.
 Horní přehrávač obsahuje hlavní hlasitost; mix se rozbaluje jen u více stop.
 Upload přijímá již jednu stopu. Rozložení používá stejné panely a navigaci jako
-běžná zkušebna: Nahrávky / Obsah / Poznámky / Diskuse / Nápady. Obsah ukazuje
-začátky skladeb a pokusů, Poznámky obsahují shrnutí a časové zápisky seskupené
-podle osnovy. Z položky obsahu lze přejít přímo k její skupině poznámek.
+běžná zkušebna: Nahrávky / Obsah / Popis / Diskuse / Nápady. Obsah společně
+zobrazuje začátky skladeb a pokusů i časové poznámky seskupené pod nimi.
+Oba typy položek se přidávají přímo v Obsahu. Samostatný Popis obsahuje jen
+shrnutí poslechu a co opravit příště.
 Na počítači se panely zapínají horní lištou, na tabletu jsou dva nezávislé
 panely, na mobilu se přepínají spodním menu s ikonami. Rozložení se pro oba
 pohledy pamatuje samostatně.

@@ -62,7 +62,7 @@
             Array.from(el.childNodes).filter(function(n) { return n.nodeType === Node.TEXT_NODE; }).forEach(function(n) { n.remove(); });
             var icon = el.querySelector('img');
             if (icon) { icon.src = contents ? 'meat/ikona_text.png' : 'meat/ikona_diskuse.png'; icon.alt = ''; }
-            el.appendChild(document.createTextNode(contents ? 'obsah' : 'poznámky'));
+            el.appendChild(document.createTextNode(contents ? 'obsah' : 'popis'));
         });
         document.getElementById('topbar-val').textContent = open ? (selected ? selected.name : 'Multitracky') : VZ.aktualniNazev;
         document.getElementById('diskuse-val-label').textContent = open ? (selected ? selected.name : '') : VZ.aktualniNazev;

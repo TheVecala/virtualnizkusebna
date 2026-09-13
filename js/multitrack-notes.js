@@ -7,7 +7,6 @@
     var selectedId = '', data = null, archived = false, serial = 0, busy = false, editingId = '';
     var summary = byId('mt-summary'), form = byId('mt-note-form'), outline = byId('mt-outline');
     var refresh = byId('mt-notes-refresh'), contentRefresh = byId('mt-content-refresh');
-    var noteList = byId('mt-note-list');
     var contentBlocks = document.querySelectorAll('[data-mt-notes-content]');
 
     function message(text, error) {
@@ -45,7 +44,7 @@
         return !archived && state && state.id === selectedId && state.phase === 'ready';
     }
     function updateTimeButtons() {
-        document.querySelectorAll('#mt-outline .mt-note-time, #mt-note-list .mt-note-time').forEach(function(button) { button.disabled = !playbackReady(); });
+        outline.querySelectorAll('.mt-note-time').forEach(function(button) { button.disabled = !playbackReady(); });
     }
     function updateBusy(value) {
         busy = value;
@@ -75,7 +74,9 @@
     }
     function entryRow(entry) {
         var row = node('div', 'mt-outline-row');
-        row.appendChild(action(timeLabel(entry.time), function() {
+        row.appendChild(action(timeLabel(entry.time), function(event) {
+            event.preventDefault();
+            event.stopPropagation();
             if (playbackReady()) window.MultitrackApp.seek(entry.time);
         }, 'mt-note-time'));
         row.appendChild(node('span', 'mt-note-copy', entry.text));
@@ -94,30 +95,22 @@
         return controls;
     }
     function render() {
+        var collapsed = new Set(Array.from(outline.querySelectorAll('details:not([open])'), function(el) { return el.dataset.id; }));
         outline.textContent = '';
-        noteList.textContent = '';
-        var group = noteList, chapters = 0, notes = 0;
-        data.entries.forEach(function(entry, index) {
+        var group = outline;
+        data.entries.forEach(function(entry) {
             if (entry.kind === 'chapter') {
-                chapters++;
-                var chapter = node('div', 'mt-outline-chapter');
-                chapter.appendChild(entryRow(entry));
+                var chapter = node('details', 'mt-outline-chapter');
+                chapter.dataset.id = entry.id;
+                chapter.open = !collapsed.has(entry.id);
+                var heading = node('summary');
+                heading.appendChild(entryRow(entry));
+                chapter.appendChild(heading);
                 chapter.appendChild(entryControls(entry));
-                var count = 0;
-                for (var i = index + 1; i < data.entries.length && data.entries[i].kind !== 'chapter'; i++) count++;
-                var target = node('section', 'mt-note-group');
-                target.dataset.chapterId = entry.id;
-                target.appendChild(entryRow(entry));
                 group = node('div', 'mt-chapter-notes');
-                target.appendChild(group);
-                noteList.appendChild(target);
-                chapter.appendChild(action(count + (count === 1 ? ' poznámka' : count > 1 && count < 5 ? ' poznámky' : ' poznámek'), function() {
-                    if (window.VZWorkspace) VZWorkspace.showPanel('tabelatura');
-                    target.scrollIntoView({ block: 'nearest' });
-                }, 'btn-vz mt-chapter-link'));
+                chapter.appendChild(group);
                 outline.appendChild(chapter);
             } else {
-                notes++;
                 var item = node('div', 'mt-outline-note');
                 item.appendChild(entryRow(entry));
                 item.appendChild(node('small', 'mt-note-author', entry.author));
@@ -125,8 +118,7 @@
                 group.appendChild(item);
             }
         });
-        if (!chapters) outline.appendChild(node('p', 'mt-list-empty', 'Zatím bez obsahu. Označte začátek skladby nebo pokusu.'));
-        if (!notes) noteList.appendChild(node('p', 'mt-list-empty', 'Zatím bez časových poznámek.'));
+        if (!data.entries.length) outline.appendChild(node('p', 'mt-list-empty', 'Zatím bez obsahu a poznámek. Označte začátek první skladby nebo přidejte postřeh z poslechu.'));
         var remove = byId('mt-remove-audio');
         if (remove) remove.hidden = archived;
         updateTimeButtons();
@@ -170,9 +162,7 @@
     }
     function openEntry(entry) {
         if (!form || busy || !data) return;
-        var chapter = entry.kind === 'chapter';
-        byId(chapter ? 'mt-chapter-editor' : 'mt-note-editor').appendChild(form);
-        if (window.VZWorkspace) VZWorkspace.showPanel(chapter ? 'text' : 'tabelatura');
+        if (window.VZWorkspace) VZWorkspace.showPanel('text');
         editingId = entry.id || '';
         byId('mt-note-kind').value = entry.kind;
         byId('mt-note-time').value = timeLabel(entry.time);

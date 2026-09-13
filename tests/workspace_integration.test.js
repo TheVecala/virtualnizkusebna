@@ -152,12 +152,18 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         await page.waitForFunction(() => window.MultitrackApp.getState()?.id === 'kapela' && window.MultitrackApp.getState().phase === 'ready');
         await page.locator('#mt-mixer-toggle').click();
         assert.ok(await page.locator('#mt-tracks').isVisible());
-        await page.locator('#mt-note-list .mt-outline-note .mt-note-time').first().click();
+        await page.locator('#mt-outline .mt-outline-note .mt-note-time').first().click();
         assert.equal(Math.round(await page.evaluate(() => window.MultitrackApp.getState().position)), 12);
         assert.equal(await page.locator('#nav-text').innerText(), 'obsah');
-        assert.equal(await page.locator('#nav-tabelatura').innerText(), 'poznámky');
+        assert.equal(await page.locator('#nav-tabelatura').innerText(), 'popis');
         assert.equal(await page.locator('#nav-diskuse').innerText(), 'diskuse');
-        assert.equal(await page.locator('#mt-outline .mt-outline-note').count(), 0);
+        assert.equal(await page.locator('#mt-outline .mt-outline-chapter .mt-outline-note').count(), 1);
+        assert.equal(await page.locator('#panel-tabelatura h2').innerText(), 'POPIS');
+        assert.equal(await page.locator('#panel-tabelatura #mt-summary-form').count(), 1);
+        assert.equal(await page.locator('#panel-tabelatura #mt-note-form, #panel-tabelatura .mt-note-time').count(), 0);
+        await page.locator('#panel-text #mt-add-chapter').click();
+        assert.equal(await page.locator('#panel-text #mt-note-kind').inputValue(), 'chapter');
+        await page.locator('#mt-note-cancel').click();
         await page.locator('#mt-add-note').click();
         assert.equal(await page.locator('#mt-note-time').inputValue(), '00:12');
         await page.locator('#mt-note-text').fill('Nová připomínka z prohlížeče');
@@ -195,20 +201,21 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         await page.locator('#tab-footer-left [data-panel="text"]').click();
         await page.locator('#tab-footer-right [data-panel="tabelatura"]').click();
         assert.ok(await page.locator('#mt-outline').isVisible());
-        assert.ok(await page.locator('#mt-note-list').isVisible());
+        assert.ok(await page.locator('#mt-outline .mt-outline-note').first().isVisible());
+        assert.ok(await page.locator('#mt-summary').isVisible());
         await page.screenshot({ path: path.join(temp, 'tablet.png'), fullPage: true });
         await page.locator('#nav-napady-tab').click();
         assert.ok(await page.locator('#body-napady').isVisible());
         assert.ok(await page.locator('#mt-outline').isHidden());
         await page.setViewportSize({ width: 390, height: 844 });
-        for (const [button, panel] of [['bn-text', 'mt-outline'], ['bn-tabelatura', 'mt-note-list'], ['bn-diskuse', 'body-diskuse'], ['bn-napady', 'body-napady'], ['bn-nahravky', 'mt-selector']]) {
+        for (const [button, panel] of [['bn-text', 'mt-outline'], ['bn-tabelatura', 'mt-summary-form'], ['bn-diskuse', 'body-diskuse'], ['bn-napady', 'body-napady'], ['bn-nahravky', 'mt-selector']]) {
             await page.locator('#' + button).click();
             assert.ok(await page.locator('#' + panel).isVisible(), button + ' selects its mobile panel');
         }
         assert.ok(await page.locator('#bottom-nav').isVisible());
         assert.ok(await page.locator('#bn-skladby').isHidden());
         assert.equal(await page.locator('#bn-text').innerText(), 'obsah');
-        assert.equal(await page.locator('#bn-tabelatura').innerText(), 'poznámky');
+        assert.equal(await page.locator('#bn-tabelatura').innerText(), 'popis');
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
         await page.screenshot({ path: path.join(temp, 'mobile.png'), fullPage: true });
         assert.deepEqual(errors, []);

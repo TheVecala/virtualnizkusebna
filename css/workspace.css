@@ -77,9 +77,6 @@
   .view-multitrack #bn-nahravky { border-left: 0; margin-left: 0; }
 }
 
-.mt-chapter-link { display: block; margin: 2px 0 8px; color: var(--muted); font-size: 11px; }
-.mt-note-group { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 10px; }
-.mt-note-group > .mt-outline-row .mt-note-copy { font-weight: bold; }
 #mt-outline .mt-outline-chapter { padding: 8px 0; }
 #mt-workspace #diskuse-val-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #mt-workspace .mt-recording-name { overflow-wrap: anywhere; }
