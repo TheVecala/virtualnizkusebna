@@ -14,6 +14,8 @@ header('Content-Type: application/json; charset=utf-8');
 
 
 include __DIR__ . "/../login/connect.php";
+require_once __DIR__ . '/../inc/discussion_context.php';
+$discussion_multitrack_id = discussion_multitrack_id();
 
 $text   = htmlspecialchars(trim($_POST["text"]   ?? ""), ENT_QUOTES);
 $odkaz  = htmlspecialchars(trim($_POST["odkaz"]  ?? ""), ENT_QUOTES);
@@ -34,7 +36,7 @@ $kapela  = $_SESSION['kapela']                     ?? "";
 $slozka  = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 
 // Výběr tabulky diskuse
-if ($pouzit_hlavni || empty($slozka)) {
+if ($pouzit_hlavni || (empty($slozka) && $discussion_multitrack_id === '')) {
 
     // 2. ZMĚNA: Nápady kapely — hlavní diskuse (dynamický název)
     if (empty($kapela)) {
@@ -53,7 +55,7 @@ if ($pouzit_hlavni || empty($slozka)) {
 
 } else {
     // Diskuse per-vál (zůstává beze změny)
-    $aktualni_diskuse = content_discussion_prefix() . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
+    $aktualni_diskuse = discussion_table($mysqli, $kapela, $slozka, $discussion_multitrack_id);
 
     // Vytvořit tabulku pokud neexistuje
     $mysqli->query("CREATE TABLE IF NOT EXISTS `$aktualni_diskuse` (

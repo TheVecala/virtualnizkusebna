@@ -45,7 +45,7 @@
         <p class="lead">Zkušebna drží na jednom místě vály, nahrávky, texty, tabulatury i domluvu kapely.</p>
         <div class="steps">
           <article><span>1</span><div><h3>Vyberte vál</h3><p>Vlevo klikněte na vál. Na telefonu otevřete seznam tlačítkem <b>Skladby</b> dole.</p></div></article>
-          <article><span>2</span><div><h3>Otevřete panel</h3><p>Zvolte Nahrávky, Text, Tabelaturu, Poznámky nebo Nápady. Obsah se vždy vztahuje k právě vybranénu válu; Nápady jsou pro celou kapelu.</p></div></article>
+          <article><span>2</span><div><h3>Otevřete panel</h3><p>Zvolte Nahrávky, Text, Tabelaturu, Diskusi nebo Nápady. Obsah se vždy vztahuje k právě vybranénu válu; Nápady jsou pro celou kapelu.</p></div></article>
           <article><span>3</span><div><h3>Začněte poslouchat</h3><p>Spusťte nahrávku běžným přehrávačem, nebo ji otevřete v looperu pro detailní práci s pasážemi.</p></div></article>
         </div>
         <div class="callout"><i class="ti ti-info-circle"></i><p><b>Nevidíte některé tlačítko aktivní?</b> Dostupné akce závisejí na vaší roli. Zamčené tlačítko označuje, že danou změnu může provést člen s vyšším oprávněním, tedy Vecala.</p></div>
@@ -92,7 +92,7 @@
       <section id="spoluprace" class="help-section searchable">
         <div class="section-heading"><span class="section-icon"><i class="ti ti-users"></i></span><div><p>06</p><h2>Spolupráce</h2></div></div>
         <div class="feature-grid">
-          <article><i class="ti ti-message-circle"></i><h3>Poznámky</h3><p>Patří k aktuálnímu válu. Hodí se pro aranže, úkoly i domluvu před další zkouškou.</p></article>
+          <article><i class="ti ti-message-circle"></i><h3>Diskuse</h3><p>Patří k aktuálnímu válu. Hodí se pro aranže, úkoly i domluvu před další zkouškou.</p></article>
           <article><i class="ti ti-bulb"></i><h3>Nápady</h3><p>Jsou viditelné napříč vály celé kapele. Přidejte text a své jméno.</p></article>
           <article><i class="ti ti-link"></i><h3>Přímý odkaz</h3><p>Sdílejte konkrétní nahrávku a čas z looperu. Příjemce se po přihlášení dostane rovnou na místo.</p></article>
           <article><i class="ti ti-lock"></i><h3>Role a práva</h3><p>Úpravy, nahrávání a mazání mohou být omezené rolí. S požadavkem na změnu práv se obraťte na správce kapely.</p></article>

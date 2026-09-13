@@ -209,7 +209,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
     <a href="#" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
     <a href="#" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
     <a href="#" id="nav-tabelatura" onclick="toggleDesktopPanel('tabelatura',this);return false">tabelatura</a>
-    <a href="#" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">poznámky</a>
+    <a href="#" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">diskuse</a>
     <a href="#" id="nav-napady"                    onclick="toggleDesktopPanel('napady',this);return false">
       nápady <span class="napady-badge">DK</span>
     </a>
@@ -610,7 +610,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
     <!-- PANEL DISKUSE -->
     <div class="panel" id="panel-diskuse">
       <div class="panel-header">
-        <h2>POZNÁMKY</h2>
+        <h2>DISKUSE</h2>
         <div class="acts" id="diskuse-val-label" style="font-size:10px;color:var(--muted)">
           <?php echo htmlspecialchars($nazev_valu); ?>
         </div>

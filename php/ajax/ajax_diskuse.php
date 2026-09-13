@@ -7,6 +7,8 @@ error_reporting(0);
 if (empty($_SESSION['role'])) { echo ''; exit; }
 
 include "../login/connect.php";
+require_once __DIR__ . '/../inc/discussion_context.php';
+$discussion_multitrack_id = discussion_multitrack_id();
 
 $kapela         = $_SESSION['kapela']                     ?? "";
 $slozka_souboru = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
@@ -15,14 +17,14 @@ $mohu_editovat  = in_array($_SESSION['role'] ?? '', ['muzikant', 'admin']);
 
 define('ROWS_DISKUSE', 10);
 
-if (empty($slozka_souboru)):
+if (empty($slozka_souboru) && $discussion_multitrack_id === ''):
 ?>
   <div class="prazdno">Vyberte položku ze seznamu.</div>
 <?php
     exit;
 endif;
 
-$aktualni_diskuse = content_discussion_prefix() . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka_souboru);
+$aktualni_diskuse = discussion_table($mysqli, $kapela, $slozka_souboru, $discussion_multitrack_id);
 
 // Vytvořit tabulku pokud neexistuje
 $mysqli->query("CREATE TABLE IF NOT EXISTS `$aktualni_diskuse` (
@@ -103,7 +105,7 @@ pre { background: transparent !important; color: #e0e0e0 !important; margin: 0; 
   ?>
   <div class="dk-comment"
        data-cas="<?php echo (int)$r['cas']; ?>"
-       data-typ="diskuse"
+       data-typ="diskuse" data-multitrack-id="<?= htmlspecialchars($discussion_multitrack_id, ENT_QUOTES) ?>"
        data-text="<?php echo $text_pro_edit; ?>">
     <div class="dk-text">
       <?php
@@ -140,8 +142,8 @@ pre { background: transparent !important; color: #e0e0e0 !important; margin: 0; 
   <div class="prazdno">Zatím žádné komentáře.</div>
 <?php endif; ?>
 
-<form id="form_komentar" style="margin-top:10px;padding-top:10px;border-top:1px solid #3a3e44;">
-  <textarea id="komentar_text" rows="2" placeholder="napsat poznámku..." style="
+<form id="form_komentar" data-multitrack-id="<?= htmlspecialchars($discussion_multitrack_id, ENT_QUOTES) ?>" style="margin-top:10px;padding-top:10px;border-top:1px solid #3a3e44;">
+  <textarea id="komentar_text" rows="2" placeholder="napsat příspěvek do diskuse..." style="
     width:100%; background:#1a1d20; border:1px solid #3a3e44;
     border-radius:5px; color:#e0e0e0; font-size:12px; padding:6px 8px;
     resize:none; font-family:sans-serif; box-sizing:border-box;

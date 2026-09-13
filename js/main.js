@@ -209,19 +209,30 @@ $(function() {
   });
 });
 
+var panelLoadSerial = {};
+
 // ── AJAX načtení panelu ──
 function nacistPanel(panel, callback) {
   pbStart();
+  var serial = panelLoadSerial[panel] = (panelLoadSerial[panel] || 0) + 1;
+  if (panel === 'diskuse' && window.VZWorkspace && VZWorkspace.isMultitrack()) {
+    VZWorkspace.loadDiscussion(callback);
+    return;
+  }
+  // The original body may be detached while Multitrack occupies its slot.
+  var $body = $(window.VZWorkspace ? VZWorkspace.ordinaryBody(panel) : '#body-' + panel);
   $.get('/php/ajax/ajax_' + panel + '.php', function(html) {
+    if (serial !== panelLoadSerial[panel]) { if (callback) callback(); else pbDone(); return; }
     if (panel === 'nahravky') releaseNativeAudioObjectUrls();
-    $('#body-' + panel).html(html).css('opacity', '1').removeAttr('aria-busy');
+    $body.html(html).css('opacity', '1').removeAttr('aria-busy');
     if (panel === 'nahravky') {
       refreshNativeAudioCacheControls();
       processDeepLink();
     }
     if (callback) callback(); else pbDone();
   }).fail(function() {
-    $('#body-' + panel)
+    if (serial !== panelLoadSerial[panel]) { if (callback) callback(); else pbDone(); return; }
+    $body
       .html('<div style="color:#888;padding:12px;font-size:12px">Chyba načítání</div>')
       .css('opacity', '1').removeAttr('aria-busy');
     if (callback) callback(); else pbDone();
@@ -405,6 +416,11 @@ $(syncDesktopNavigation);
 // Použít stejnou cestu jako tlačítko se šipkou, aby zůstal synchronizovaný
 // obsah, ikona i přístupnostní atributy ovládacího prvku.
 function collapseLooperForPanelNavigation() {
+  if (window.VZWorkspace && VZWorkspace.isMultitrack()) {
+    var mixerToggle = document.getElementById('mt-mixer-toggle');
+    if (mixerToggle && mixerToggle.getAttribute('aria-expanded') === 'true') mixerToggle.click();
+    return;
+  }
   var looperBar = document.getElementById('looper-bar');
   var looperContent = document.getElementById('looper-content');
   if (!looperBar || !looperContent || looperBar.classList.contains('hidden') ||
@@ -446,6 +462,7 @@ function mobilePanel(panel, el) {
 
 // ── Val drawer (otevírá se klikem na #topbar-val nebo #bn-skladby) ──
 function toggleValDrawer() {
+  if (window.VZWorkspace && VZWorkspace.isMultitrack()) { VZWorkspace.showPanel('nahravky'); return; }
   document.getElementById('val-drawer').classList.toggle('open');
 }
 
@@ -684,6 +701,8 @@ $(document).on('submit', '#form_komentar', function(e) {
     odkaz:  $form.find('#komentar_odkaz').val()  || '',
     odkaz2: $form.find('#komentar_odkaz2').val() || '',
     name:   $form.find('#komentar_jmeno').val(),
+    multitrack_id: $form.attr('data-multitrack-id') || '',
+    csrf: (window.MULTITRACK_CONFIG || {}).csrfToken,
   }, function(data) {
     pbDone();
     finishFormAction($form, $btn);
@@ -1314,6 +1333,8 @@ $(document).on('click', '.vzk-save-btn', function() {
   pbStart();
 
   $.post('/php/ajax/upravit_komentar.php', {
+    multitrack_id: $card.attr('data-multitrack-id') || '',
+    csrf: (window.MULTITRACK_CONFIG || {}).csrfToken,
     cas:  $card.data('cas'),
     typ:  $card.data('typ'),
     text: text
@@ -1377,6 +1398,8 @@ $(document).on('click', '.vzk-del-yes-btn', function() {
   pbStart();
 
   $.post('/php/ajax/smazat_komentar.php', {
+    multitrack_id: $card.attr('data-multitrack-id') || '',
+    csrf: (window.MULTITRACK_CONFIG || {}).csrfToken,
     cas: $card.data('cas'),
     typ: $card.data('typ')
   }, function(data) {

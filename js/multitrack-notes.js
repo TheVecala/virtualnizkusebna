@@ -6,11 +6,15 @@
     if (!status || !config.notesUrl) return;
     var selectedId = '', data = null, archived = false, serial = 0, busy = false, editingId = '';
     var summary = byId('mt-summary'), form = byId('mt-note-form'), outline = byId('mt-outline');
-    var refresh = byId('mt-notes-refresh');
+    var refresh = byId('mt-notes-refresh'), contentRefresh = byId('mt-content-refresh');
+    var noteList = byId('mt-note-list');
+    var contentBlocks = document.querySelectorAll('[data-mt-notes-content]');
 
     function message(text, error) {
-        status.textContent = text;
-        status.classList.toggle('is-error', !!error);
+        [status, byId('mt-content-status')].forEach(function(el) {
+            el.textContent = text;
+            el.classList.toggle('is-error', !!error);
+        });
     }
     function timeLabel(seconds) {
         var total = Math.max(0, Math.floor(seconds));
@@ -41,12 +45,17 @@
         return !archived && state && state.id === selectedId && state.phase === 'ready';
     }
     function updateTimeButtons() {
-        outline.querySelectorAll('.mt-note-time').forEach(function(button) { button.disabled = !playbackReady(); });
+        document.querySelectorAll('#mt-outline .mt-note-time, #mt-note-list .mt-note-time').forEach(function(button) { button.disabled = !playbackReady(); });
     }
     function updateBusy(value) {
         busy = value;
-        byId('mt-notes-content').querySelectorAll('button, input, textarea, select').forEach(function(button) { button.disabled = value; });
+        contentBlocks.forEach(function(block) {
+            block.querySelectorAll('button, input, textarea, select').forEach(function(button) { button.disabled = value; });
+        });
+        var remove = byId('mt-remove-audio');
+        if (remove) remove.disabled = value || !data;
         refresh.disabled = value || !selectedId;
+        contentRefresh.disabled = value || !selectedId;
         updateTimeButtons();
     }
     function api(payload) {
@@ -64,49 +73,60 @@
             });
         });
     }
+    function entryRow(entry) {
+        var row = node('div', 'mt-outline-row');
+        row.appendChild(action(timeLabel(entry.time), function() {
+            if (playbackReady()) window.MultitrackApp.seek(entry.time);
+        }, 'mt-note-time'));
+        row.appendChild(node('span', 'mt-note-copy', entry.text));
+        return row;
+    }
+    function entryControls(entry) {
+        var controls = node('span', 'mt-entry-actions');
+        if (config.canComment) {
+            controls.appendChild(action('Upravit', function() { openEntry(entry); }));
+            controls.appendChild(action('Smazat', function() {
+                if (window.confirm(entry.kind === 'chapter' ? 'Smazat tuto položku obsahu? Poznámky zůstanou zachované.' : 'Smazat tuto poznámku?')) {
+                    save({ action: 'delete', entryId: entry.id });
+                }
+            }));
+        }
+        return controls;
+    }
     function render() {
-        var collapsed = new Set(Array.from(outline.querySelectorAll('details:not([open])')).map(function(el) { return el.dataset.id; }));
         outline.textContent = '';
-        var group = outline;
-        data.entries.forEach(function(entry) {
-            var row = node('div', 'mt-outline-row');
-            var time = action(timeLabel(entry.time), function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                if (playbackReady()) window.MultitrackApp.seek(entry.time);
-            }, 'mt-note-time');
-            row.appendChild(time);
-            row.appendChild(node('span', 'mt-note-copy', entry.text));
-            var controls = node('span', 'mt-entry-actions');
-            if (config.canComment) {
-                controls.appendChild(action('Upravit', function(event) { event.preventDefault(); openEntry(entry); }));
-                controls.appendChild(action('Smazat', function(event) {
-                    event.preventDefault();
-                    if (window.confirm(entry.kind === 'chapter' ? 'Smazat tuto položku obsahu? Poznámky zůstanou zachované.' : 'Smazat tuto poznámku?')) {
-                        save({ action: 'delete', entryId: entry.id });
-                    }
-                }));
-            }
+        noteList.textContent = '';
+        var group = noteList, chapters = 0, notes = 0;
+        data.entries.forEach(function(entry, index) {
             if (entry.kind === 'chapter') {
-                var details = node('details', 'mt-outline-chapter');
-                details.dataset.id = entry.id;
-                details.open = !collapsed.has(entry.id);
-                var heading = node('summary');
-                heading.appendChild(row);
-                details.appendChild(heading);
-                details.appendChild(controls);
+                chapters++;
+                var chapter = node('div', 'mt-outline-chapter');
+                chapter.appendChild(entryRow(entry));
+                chapter.appendChild(entryControls(entry));
+                var count = 0;
+                for (var i = index + 1; i < data.entries.length && data.entries[i].kind !== 'chapter'; i++) count++;
+                var target = node('section', 'mt-note-group');
+                target.dataset.chapterId = entry.id;
+                target.appendChild(entryRow(entry));
                 group = node('div', 'mt-chapter-notes');
-                details.appendChild(group);
-                outline.appendChild(details);
+                target.appendChild(group);
+                noteList.appendChild(target);
+                chapter.appendChild(action(count + (count === 1 ? ' poznámka' : count > 1 && count < 5 ? ' poznámky' : ' poznámek'), function() {
+                    if (window.VZWorkspace) VZWorkspace.showPanel('tabelatura');
+                    target.scrollIntoView({ block: 'nearest' });
+                }, 'btn-vz mt-chapter-link'));
+                outline.appendChild(chapter);
             } else {
+                notes++;
                 var item = node('div', 'mt-outline-note');
-                item.appendChild(row);
+                item.appendChild(entryRow(entry));
                 item.appendChild(node('small', 'mt-note-author', entry.author));
-                item.appendChild(controls);
+                item.appendChild(entryControls(entry));
                 group.appendChild(item);
             }
         });
-        if (!data.entries.length) outline.appendChild(node('p', 'mt-list-empty', 'Zatím bez obsahu a poznámek. Označte začátek první skladby nebo přidejte postřeh z poslechu.'));
+        if (!chapters) outline.appendChild(node('p', 'mt-list-empty', 'Zatím bez obsahu. Označte začátek skladby nebo pokusu.'));
+        if (!notes) noteList.appendChild(node('p', 'mt-list-empty', 'Zatím bez časových poznámek.'));
         var remove = byId('mt-remove-audio');
         if (remove) remove.hidden = archived;
         updateTimeButtons();
@@ -114,16 +134,18 @@
     function load() {
         var token = ++serial;
         message('Načítám zápis…');
-        byId('mt-notes-content').hidden = true;
+        contentBlocks.forEach(function(block) { block.hidden = true; });
+        if (byId('mt-remove-audio')) byId('mt-remove-audio').hidden = true;
         if (form) form.hidden = true;
         refresh.disabled = true;
+        contentRefresh.disabled = true;
         data = null;
         api().then(function(result) {
             if (token !== serial) return;
             data = result.notes;
             archived = result.audioDeleted;
             summary.value = data.summary;
-            byId('mt-notes-content').hidden = false;
+            contentBlocks.forEach(function(block) { block.hidden = false; });
             render();
             message(archived ? 'Audio odstraněno · zápis zachován.' : '');
         }).catch(function(error) { if (token === serial) message(error.message, true); })
@@ -148,6 +170,9 @@
     }
     function openEntry(entry) {
         if (!form || busy || !data) return;
+        var chapter = entry.kind === 'chapter';
+        byId(chapter ? 'mt-chapter-editor' : 'mt-note-editor').appendChild(form);
+        if (window.VZWorkspace) VZWorkspace.showPanel(chapter ? 'text' : 'tabelatura');
         editingId = entry.id || '';
         byId('mt-note-kind').value = entry.kind;
         byId('mt-note-time').value = timeLabel(entry.time);
@@ -175,8 +200,10 @@
         load();
     });
     document.addEventListener('multitrack:ready', updateTimeButtons);
-    refresh.addEventListener('click', function() {
-        if (!data || ((form === null || form.hidden) && summary.value === data.summary) || window.confirm('Obnovit zápis a zahodit rozepsané změny?')) load();
+    [refresh, contentRefresh].forEach(function(button) {
+        button.addEventListener('click', function() {
+            if (!data || ((form === null || form.hidden) && summary.value === data.summary) || window.confirm('Obnovit zápis a zahodit rozepsané změny?')) load();
+        });
     });
     byId('mt-summary-form').addEventListener('submit', function(event) {
         event.preventDefault();

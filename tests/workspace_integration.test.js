@@ -23,7 +23,7 @@ const config = fs.readFileSync(path.join(root, 'config.php'), 'utf8').split('// 
     .replace(/define\('DB_NAME',.*?\);/, `define('DB_NAME', '${dbName}');`);
 write('config.php', config + '\nfunction auth_is_admin() { return ($_SESSION["role"] ?? "") === "admin"; }\n');
 write('_session.php', `<?php session_start(); $_SESSION = ['logged_in_single'=>true, 'role'=>($_GET['role'] ?? 'muzikant'), 'kapela'=>'kapela', 'befelemepesseveze'=>'test', 'user_name'=>'Tester', 'multitrack_csrf'=>str_repeat('a',64)];`);
-write('_db.php', `<?php require 'config.php'; $db = new mysqli(DB_HOST, DB_USER, DB_PASS); $db->query('CREATE DATABASE ${dbName}'); $db->select_db(DB_NAME); $db->query('CREATE TABLE recording_notes (id INT AUTO_INCREMENT PRIMARY KEY, file_path VARCHAR(1000), cas BIGINT, typ TINYINT, jmeno VARCHAR(50), poznamka TEXT)');`);
+write('_db.php', `<?php require 'config.php'; $db = new mysqli(DB_HOST, DB_USER, DB_PASS); $db->query('CREATE DATABASE ${dbName} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'); $db->select_db(DB_NAME); $db->query('CREATE TABLE recording_notes (id INT AUTO_INCREMENT PRIMARY KEY, file_path VARCHAR(1000), cas BIGINT, typ TINYINT, jmeno VARCHAR(50), poznamka TEXT)');`);
 write('_drop.php', `<?php require 'config.php'; $db = new mysqli(DB_HOST, DB_USER, DB_PASS); $db->query('DROP DATABASE ${dbName}');`);
 execFileSync(php, [path.join(temp, '_db.php')], { cwd: temp, windowsHide: true });
 for (const section of ['uploads', 'zkousky']) {
@@ -114,6 +114,24 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         assert.equal(uploadResponse.status, 201, await uploadResponse.text());
         console.log('OK: notes persistence, conflict protection, CSRF, guest permissions and one-track upload');
 
+        const discussionContext = { multitrack_id: 'jedna', csrf: 'a'.repeat(64) };
+        result = await request('php/ajax/vlozit_komentar.php', { ...discussionContext, text: 'Dočasný příspěvek', name: 'Tester' });
+        assert.equal(result.json().ok, true, result.text);
+        const discussionHtml = (await request('php/ajax/ajax_diskuse.php?multitrack_id=jedna')).text;
+        const commentTime = discussionHtml.match(/data-cas="(\d+)"/)[1];
+        for (const endpoint of ['vlozit_komentar', 'upravit_komentar', 'smazat_komentar']) {
+            assert.equal((await request('php/ajax/' + endpoint + '.php', { ...discussionContext, csrf: 'bad', cas: commentTime, typ: 'diskuse', text: 'Neplatný zápis' })).status, 403);
+        }
+        assert.equal((await request('php/ajax/ajax_diskuse.php?multitrack_id=../kapela')).status, 400);
+        assert.equal((await request('php/ajax/ajax_diskuse.php?multitrack_id=neexistuje')).status, 404);
+        result = await request('php/ajax/upravit_komentar.php', { ...discussionContext, cas: commentTime, typ: 'diskuse', text: 'Upravený příspěvek' });
+        assert.equal(result.json().ok, true, result.text);
+        assert.match((await request('php/ajax/ajax_diskuse.php?multitrack_id=jedna')).text, /Upravený příspěvek/);
+        result = await request('php/ajax/smazat_komentar.php', { ...discussionContext, cas: commentTime, typ: 'diskuse' });
+        assert.equal(result.json().ok, true, result.text);
+        assert.ok(!(await request('php/ajax/ajax_diskuse.php?multitrack_id=jedna')).text.includes('Upravený příspěvek'));
+        console.log('OK: multitrack discussion create, edit, delete, CSRF and recording validation');
+
         const executablePath = [process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, chromium.executablePath(),
             'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe']
             .find(candidate => candidate && fs.existsSync(candidate));
@@ -134,8 +152,12 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         await page.waitForFunction(() => window.MultitrackApp.getState()?.id === 'kapela' && window.MultitrackApp.getState().phase === 'ready');
         await page.locator('#mt-mixer-toggle').click();
         assert.ok(await page.locator('#mt-tracks').isVisible());
-        await page.locator('#mt-outline .mt-note-time').nth(1).click();
+        await page.locator('#mt-note-list .mt-outline-note .mt-note-time').first().click();
         assert.equal(Math.round(await page.evaluate(() => window.MultitrackApp.getState().position)), 12);
+        assert.equal(await page.locator('#nav-text').innerText(), 'obsah');
+        assert.equal(await page.locator('#nav-tabelatura').innerText(), 'poznámky');
+        assert.equal(await page.locator('#nav-diskuse').innerText(), 'diskuse');
+        assert.equal(await page.locator('#mt-outline .mt-outline-note').count(), 0);
         await page.locator('#mt-add-note').click();
         assert.equal(await page.locator('#mt-note-time').inputValue(), '00:12');
         await page.locator('#mt-note-text').fill('Nová připomínka z prohlížeče');
@@ -143,13 +165,50 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         await page.getByText('Nová připomínka z prohlížeče', { exact: true }).waitFor();
         assert.ok((await page.locator('.mt-transport').boundingBox()).y >= 46, 'Transport stays above the scrolling notes');
         await page.screenshot({ path: path.join(temp, 'desktop.png'), fullPage: true });
+        await page.locator('#nav-diskuse').click();
+        await page.locator('#form_komentar[data-multitrack-id="kapela"]').waitFor();
+        await page.locator('#body-diskuse #komentar_text').fill('Diskuse pouze k multitracku');
+        await page.locator('#body-diskuse #komentar_jmeno').fill('Tester');
+        await page.locator('#body-diskuse #form_komentar button[type="submit"]').click();
+        await page.locator('#body-diskuse .dk-text').filter({ hasText: 'Diskuse pouze k multitracku' }).waitFor();
+        assert.ok(!(await request('php/ajax/ajax_diskuse.php?sekce=uploads')).text.includes('Diskuse pouze k multitracku'));
+        assert.ok(!(await request('php/ajax/ajax_diskuse.php?multitrack_id=jedna')).text.includes('Diskuse pouze k multitracku'));
+        await page.locator('#nav-napady').click();
+        await page.locator('#napady_text').fill('Společný nápad rozepsaný v multitracku');
+        await page.locator('#napady_jmeno').fill('Tester');
+        await page.evaluate(() => { window.__sharedIdeasPanel = document.getElementById('panel-napady'); });
         await page.locator('#mt-play').click();
         await page.locator('#nav-multitrack').click();
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState().playing), false);
         assert.ok(await page.locator('#sidebar').isVisible());
+        assert.equal(await page.locator('#nav-text').innerText(), 'text');
+        assert.equal(await page.locator('#nav-tabelatura').innerText(), 'tabelatura');
+        assert.equal(await page.locator('#panel-diskuse h2').innerText(), 'DISKUSE');
+        assert.ok(await page.evaluate(() => window.__sharedIdeasPanel === document.getElementById('panel-napady')));
+        assert.equal(await page.locator('#napady_text').inputValue(), 'Společný nápad rozepsaný v multitracku');
+        await page.locator('#nav-napady').click();
+        await page.locator('#form_napady button[type="submit"]').click();
+        await page.getByText('Společný nápad rozepsaný v multitracku', { exact: true }).waitFor();
         await page.locator('#nav-multitrack').click();
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState().id), 'kapela');
+        await page.setViewportSize({ width: 1000, height: 900 });
+        await page.locator('#tab-footer-left [data-panel="text"]').click();
+        await page.locator('#tab-footer-right [data-panel="tabelatura"]').click();
+        assert.ok(await page.locator('#mt-outline').isVisible());
+        assert.ok(await page.locator('#mt-note-list').isVisible());
+        await page.screenshot({ path: path.join(temp, 'tablet.png'), fullPage: true });
+        await page.locator('#nav-napady-tab').click();
+        assert.ok(await page.locator('#body-napady').isVisible());
+        assert.ok(await page.locator('#mt-outline').isHidden());
         await page.setViewportSize({ width: 390, height: 844 });
+        for (const [button, panel] of [['bn-text', 'mt-outline'], ['bn-tabelatura', 'mt-note-list'], ['bn-diskuse', 'body-diskuse'], ['bn-napady', 'body-napady'], ['bn-nahravky', 'mt-selector']]) {
+            await page.locator('#' + button).click();
+            assert.ok(await page.locator('#' + panel).isVisible(), button + ' selects its mobile panel');
+        }
+        assert.ok(await page.locator('#bottom-nav').isVisible());
+        assert.ok(await page.locator('#bn-skladby').isHidden());
+        assert.equal(await page.locator('#bn-text').innerText(), 'obsah');
+        assert.equal(await page.locator('#bn-tabelatura').innerText(), 'poznámky');
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
         await page.screenshot({ path: path.join(temp, 'mobile.png'), fullPage: true });
         assert.deepEqual(errors, []);
@@ -181,8 +240,27 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         assert.ok(await page.locator('#mt-outline .mt-note-time').first().isDisabled());
         assert.ok(await page.locator('#mt-play').isDisabled());
         assert.ok(await page.locator('#mt-remove-audio').isHidden());
+        await page.locator('#bn-tabelatura').click();
         await page.screenshot({ path: path.join(temp, 'mobile-archive.png'), fullPage: true });
+        await page.locator('#bn-diskuse').click();
+        await page.locator('#body-diskuse .dk-text').filter({ hasText: 'Diskuse pouze k multitracku' }).waitFor();
+        assert.deepEqual(errors, []);
         console.log('OK: audio deletion and external folder removal preserve the discoverable, editable archive');
+
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await request('php/ajax/zmenit_slozku_ajax.php?sekce=zkousky', { cilova_slozka: 'Spolecny' });
+        await page.goto(base + 'multitrack.php');
+        await page.waitForFunction(() => window.VZWorkspace?.isMultitrack());
+        await page.locator('#nav-multitrack').click();
+        await page.locator('#body-text').filter({ hasText: 'Nový zápis zkoušky' }).waitFor();
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await page.locator('#nav-multitrack').click();
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.locator('#nav-multitrack').click();
+        assert.ok(await page.locator('#body-nahravky').isVisible(), 'Returning after a resize activates the ordinary mobile panel');
+        assert.deepEqual(errors, []);
+        console.log('OK: legacy entry point, background loading of ordinary panels and return across breakpoints');
         console.log('Preview artifacts: ' + temp);
     } finally {
         if (browser) await browser.close();

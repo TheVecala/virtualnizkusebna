@@ -21,11 +21,24 @@ Odkazy na looper obsahují i sekci; starší odkazy bez sekce míří do skladeb
 Tlačítko v horní liště otevře samostatný pohled a pozastaví běžné audio.
 Návrat pozastaví multitrack a obnoví předchozí pohled. Načtený mix se zachová.
 Horní přehrávač obsahuje hlavní hlasitost; mix se rozbaluje jen u více stop.
-Upload přijímá již jednu stopu. Levý panel vybírá sadu, pravý obsahuje shrnutí,
-začátky skladeb či pokusů a poznámky zařazené podle jejich časů.
+Upload přijímá již jednu stopu. Rozložení používá stejné panely a navigaci jako
+běžná zkušebna: Nahrávky / Obsah / Poznámky / Diskuse / Nápady. Obsah ukazuje
+začátky skladeb a pokusů, Poznámky obsahují shrnutí a časové zápisky seskupené
+podle osnovy. Z položky obsahu lze přejít přímo k její skupině poznámek.
+Na počítači se panely zapínají horní lištou, na tabletu jsou dva nezávislé
+panely, na mobilu se přepínají spodním menu s ikonami. Rozložení se pro oba
+pohledy pamatuje samostatně.
 
-Původní `multitrack.php` používá stejné sdílené PHP části jako hlavní stránka,
-takže zůstává dostupný i samostatný vstup.
+Nápady jsou tentýž panel pro celou kapelu, včetně rozepsaného formuláře.
+Původní sekce Poznámky je přejmenovaná na Diskuse v celé zkušebně.
+Diskuse multitracku používá stejné rozhraní jako diskuse skladeb, s vlastní
+tabulkou `mt_diskuse_<hash kapely, úložiště a ID>` pro každý multitrack.
+ID je součástí každého požadavku; změna výběru nepřesměruje probíhající
+operaci k jiné nahrávce. Server ověřuje dostupnost nahrávky, oprávnění a u
+změn multitrackové diskuse také CSRF. Diskuse zůstává dostupná i v archivu.
+
+Původní `multitrack.php` přesměruje na `index.php?view=multitrack`, aby i staré
+odkazy otevřely stejné prostředí včetně všech panelů.
 
 Zápisy jsou v `user/<kapela>/<identita>/multitrack_zapisy/<id>.json`.
 Nepotřebují migraci databáze. Ukládání kontroluje přihlášení, právo `comment`,

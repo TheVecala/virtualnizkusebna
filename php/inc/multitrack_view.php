@@ -1,4 +1,4 @@
-    <!-- Shared player, library and notes for both multitrack entry points. -->
+    <!-- Player and replacement panels for the shared rehearsal-room workspace. -->
     <section id="multitrack" class="mt-shell" aria-labelledby="mt-title">
 
 
@@ -69,37 +69,60 @@
 
             </div>
         </section>
-        <div class="mt-workspace-columns">
-        <div class="mt-picker-card">
-            <div class="mt-panel-heading">
-                <h2 id="mt-library-title">Nahrávky</h2>
-                <span class="mt-picker-state" data-mt-load-state aria-live="polite" aria-busy="true">Načítám…</span>
-            </div>
-            <?php if ($can_upload_multitrack): ?>
-            <button type="button" class="btn-vz mt-new-button" data-toggle="modal" data-target="#modal_multitrack_upload">+ Vložit nahrávku</button>
-            <?php endif; ?>
-            <div id="mt-selector" class="mt-recordings" role="group" aria-labelledby="mt-library-title" aria-busy="true">
-                <p class="mt-list-empty">Načítám seznam…</p>
-            </div>
-        </div>
-
-        <section class="mt-notes-panel" aria-labelledby="mt-notes-title">
-            <div class="mt-panel-heading">
-                <h2 id="mt-notes-title">Obsah a poznámky</h2>
-                <button id="mt-notes-refresh" type="button" class="btn-vz" disabled>Obnovit zápis</button>
-            </div>
-            <p id="mt-notes-status" role="status">Vyberte nahrávku ze seznamu.</p>
-            <div id="mt-notes-content" hidden>
-                <form id="mt-summary-form">
-                    <label for="mt-summary">Shrnutí poslechu · co opravit příště</label>
-                    <textarea id="mt-summary" rows="3" maxlength="10000" <?= ma_pravo('comment') ? '' : 'readonly' ?>></textarea>
-                    <?php if (ma_pravo('comment')): ?><button type="submit" class="btn-vz">Uložit shrnutí</button><?php endif; ?>
-                </form>
-                <?php if (ma_pravo('comment')): ?>
-                <div class="mt-note-actions">
-                    <button id="mt-add-chapter" class="btn-vz" type="button">+ Začátek skladby</button>
-                    <button id="mt-add-note" class="btn-vz" type="button">+ Poznámka v aktuálním čase</button>
+        <div id="mt-panel-store" hidden>
+            <section id="mt-panel-nahravky" class="panel mt-library-panel">
+                <div class="panel-header">
+                    <h2 id="mt-library-title">NAHRÁVKY</h2>
+                    <div class="acts">
+                    <?php if ($can_upload_multitrack): ?>
+                        <button type="button" class="btn-vz" data-toggle="modal" data-target="#modal_multitrack_upload">⬆ vložit</button>
+                    <?php endif; ?>
+                    </div>
                 </div>
+                <div class="panel-body mt-picker-card">
+                    <p class="mt-picker-state" data-mt-load-state aria-live="polite" aria-busy="true">Načítám…</p>
+                    <div id="mt-selector" class="mt-recordings" role="group" aria-labelledby="mt-library-title" aria-busy="true">
+                        <p class="mt-list-empty">Načítám seznam…</p>
+                    </div>
+                    <?php if (ma_pravo('delete_file')): ?>
+                    <button id="mt-remove-audio" class="btn-vz mt-remove-audio" type="button" hidden>Odstranit audio, zachovat zápis</button>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <section id="mt-panel-text" class="panel mt-notes-panel">
+                <div class="panel-header">
+                    <h2>OBSAH</h2>
+                    <div class="acts"><button id="mt-content-refresh" type="button" class="btn-vz" disabled>obnovit</button></div>
+                </div>
+                <div class="panel-body">
+                    <p id="mt-content-status" role="status">Vyberte nahrávku ze seznamu.</p>
+                    <div id="mt-content-content" data-mt-notes-content hidden>
+                        <?php if (ma_pravo('comment')): ?>
+                        <button id="mt-add-chapter" class="btn-vz" type="button">+ Začátek skladby / pokusu</button>
+                        <div id="mt-chapter-editor"></div>
+                        <?php endif; ?>
+                        <div id="mt-outline"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="mt-panel-tabelatura" class="panel mt-notes-panel">
+                <div class="panel-header">
+                    <h2>POZNÁMKY</h2>
+                    <div class="acts"><button id="mt-notes-refresh" type="button" class="btn-vz" disabled>obnovit</button></div>
+                </div>
+                <div class="panel-body">
+                    <p id="mt-notes-status" role="status">Vyberte nahrávku ze seznamu.</p>
+                    <div id="mt-notes-content" data-mt-notes-content hidden>
+                        <form id="mt-summary-form">
+                            <label for="mt-summary">Shrnutí poslechu · co opravit příště</label>
+                            <textarea id="mt-summary" rows="3" maxlength="10000" <?= ma_pravo('comment') ? '' : 'readonly' ?>></textarea>
+                            <?php if (ma_pravo('comment')): ?><button type="submit" class="btn-vz">Uložit shrnutí</button><?php endif; ?>
+                        </form>
+                        <?php if (ma_pravo('comment')): ?>
+                        <div class="mt-note-actions"><button id="mt-add-note" class="btn-vz" type="button">+ Poznámka v aktuálním čase</button></div>
+                        <div id="mt-note-editor">
                 <form id="mt-note-form" hidden>
                     <label for="mt-note-kind">Typ</label>
                     <select id="mt-note-kind"><option value="chapter">Začátek skladby / pokusu</option><option value="note">Poznámka</option></select>
@@ -109,12 +132,11 @@
                     <textarea id="mt-note-text" rows="2" maxlength="4000" required></textarea>
                     <div class="mt-note-actions"><button type="submit" class="btn-vz">Uložit</button><button id="mt-note-cancel" type="button" class="btn-vz">Zrušit</button></div>
                 </form>
-                <?php endif; ?>
-                <div id="mt-outline"></div>
-                <?php if (ma_pravo('delete_file')): ?>
-                <button id="mt-remove-audio" class="btn-vz mt-remove-audio" type="button">Odstranit audio, zachovat zápis</button>
-                <?php endif; ?>
-            </div>
-        </section>
+                        </div>
+                        <?php endif; ?>
+                        <div id="mt-note-list"></div>
+                    </div>
+                </div>
+            </section>
         </div>
     </section>
