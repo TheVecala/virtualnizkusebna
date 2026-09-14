@@ -5,8 +5,6 @@
 .content-section-switch a { padding: 7px 8px; border-radius: 4px; color: var(--muted); text-decoration: none; font-size: 12px; letter-spacing: 0; text-transform: none; }
 .content-section-switch a[aria-current] { background: var(--card); color: var(--barva); }
 #sidebar .sidebar-label { padding: 6px !important; }
-#nav-multitrack { white-space: nowrap; flex-shrink: 0; }
-#nav-multitrack[aria-pressed="true"] { color: var(--barva); border-color: var(--barva); }
 .view-multitrack #sidebar,
 .view-multitrack #main,
 .view-multitrack #val-drawer,
@@ -64,7 +62,6 @@
 @media (max-width: 767px) {
   #topbar { gap: 6px; }
   #topbar-val { min-width: 0; max-width: 28vw; overflow: hidden; text-overflow: ellipsis; }
-  #nav-multitrack { font-size: 10px; padding: 6px; margin-left: auto; }
   #mt-workspace .mt-transport { padding: 8px 12px; }
   #mt-workspace .mt-transport-top { gap: 8px; justify-content: center; }
   #mt-workspace .mt-main-volume { font-size: 11px; gap: 5px; }

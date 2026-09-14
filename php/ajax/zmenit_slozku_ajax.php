@@ -25,6 +25,7 @@ if (!is_dir($cesta)) {
 }
 
 $_SESSION['slozka_souboru_k_zobrazeni'] = $cilova_slozka;
+$_SESSION['content_last_items'][content_section()] = $cilova_slozka;
 
 echo json_encode(["ok" => true, "val" => $cilova_slozka]);
 ?>

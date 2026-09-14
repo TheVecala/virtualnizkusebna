@@ -6,6 +6,7 @@ window.MULTITRACK_CONFIG = <?= json_encode([
     'uploadUrl' => 'php/actions/upload_multitrack.php',
     'csrfToken' => $_SESSION['multitrack_csrf'],
     'canUpload' => $can_upload_multitrack,
+    'initialId' => $multitrack_initial_id,
     'canComment' => ma_pravo('comment'),
     'notesUrl' => 'php/ajax/multitrack_notes.php',
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
