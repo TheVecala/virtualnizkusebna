@@ -32,7 +32,9 @@ function wavFixture(sampleRate, durationTenths) {
 const html = `<!doctype html><html><body>
 <div id="mt-selector"></div><span data-mt-load-state></span>
 <div id="mt-notice" hidden></div>
-<section id="mt-loading-panel" hidden><strong id="mt-load-summary"></strong><div id="mt-track-statuses"></div></section>
+<div id="modal_multitrack_loading" class="modal" hidden>
+<section id="mt-loading-panel"><strong id="mt-load-summary"></strong><div id="mt-track-statuses"></div></section>
+</div>
 <button id="mt-restart" disabled></button><button id="mt-backward" disabled></button>
 <button id="mt-play" disabled><i id="mt-play-icon"></i></button><button id="mt-forward" disabled></button>
 <input id="mt-seek" type="range" disabled><output id="mt-current-time"></output><output id="mt-total-time"></output>

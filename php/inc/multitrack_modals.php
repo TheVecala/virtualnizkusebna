@@ -36,6 +36,23 @@
 </div>
 <?php endif; ?>
 
+<div class="modal mt-loading-modal" id="modal_multitrack_loading" tabindex="-1" role="dialog"
+     aria-labelledby="mt-loading-title" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mt-loading-title">NAČÍTÁNÍ MULTITRACKU</h5>
+            </div>
+            <div class="modal-body">
+                <section id="mt-loading-panel" class="mt-loading-panel" aria-labelledby="mt-load-summary">
+                    <strong id="mt-load-summary">Připraveno 0 / 0 stop</strong>
+                    <div id="mt-track-statuses" class="mt-track-statuses"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modal_multitrack_switch" tabindex="-1" role="dialog" aria-labelledby="mt-switch-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -91,4 +108,3 @@
         </div>
     </div>
 </div>
-
