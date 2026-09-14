@@ -13,9 +13,13 @@ function content_init_context(array $request): void
         http_response_code(400);
         exit('Neplatná sekce.');
     }
-    $_SESSION['content_folders'][$previous] = $_SESSION['slozka_souboru_k_zobrazeni'] ?? '';
+    // Skladby a zkoušky mají vlastní paměť. Starý klíč ponecháváme jen jako
+    // kompatibilní zrcadlo pro existující AJAX akce.
+    $_SESSION['content_last_items'][$previous] = $_SESSION['slozka_souboru_k_zobrazeni'] ?? '';
     $_SESSION['content_section'] = $requested;
-    $_SESSION['slozka_souboru_k_zobrazeni'] = $_SESSION['content_folders'][$requested] ?? '';
+    $_SESSION['slozka_souboru_k_zobrazeni'] = $_SESSION['content_last_items'][$requested]
+        ?? $_SESSION['content_folders'][$requested]
+        ?? '';
 }
 
 function content_discussion_prefix(): string

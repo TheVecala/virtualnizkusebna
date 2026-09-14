@@ -1,11 +1,19 @@
 (function() {
     'use strict';
     var button = document.getElementById('nav-multitrack');
+    var modeButtons = document.querySelectorAll('[data-workspace-mode]');
+    var mobileMode = document.getElementById('workspace-mode-mobile');
     var workspace = document.getElementById('mt-workspace');
     if (!button || !workspace) return;
     var area = document.getElementById('content-area'), main = document.getElementById('main');
     var store = document.getElementById('mt-panel-store'), slots = ['nahravky', 'text', 'tabelatura'];
     var ordinary = {}, multitrack = {}, states = {}, active = false, selected = null, discussionSerial = 0;
+    var ordinaryMode = VZ.sekce === 'zkousky' ? 'zkousky' : 'skladby';
+    var panelModes = {
+        skladby: { text: 'text', tabelatura: 'tabelatura' },
+        zkousky: { text: 'text', tabelatura: 'tabelatura' },
+        multitrack: { text: 'obsah', tabelatura: 'popis' }
+    };
     var labelElements = document.querySelectorAll('#nav-text, #nav-tabelatura, #bn-text, #bn-tabelatura, #bottom-nav-tab [data-panel="text"], #bottom-nav-tab [data-panel="tabelatura"]');
     var originalLabels = Array.from(labelElements, function(el) { return el.innerHTML; });
     slots.forEach(function(slot) {
@@ -21,10 +29,21 @@
             nav: Array.from(document.querySelectorAll('.bnav, #nav-napady-tab'), function(el) { return el.classList.contains('active'); })
         };
     }
+    function stateKey(mode) { return 'vz-workspace-panels-' + mode; }
+    function saveState(mode) {
+        states[mode] = snapshot();
+        try { sessionStorage.setItem(stateKey(mode), JSON.stringify(states[mode])); } catch (error) { /* Volitelná UI paměť. */ }
+    }
+    function savedState(mode) {
+        if (states[mode]) return states[mode];
+        try { states[mode] = JSON.parse(sessionStorage.getItem(stateKey(mode))) || null; } catch (error) { states[mode] = null; }
+        return states[mode];
+    }
     function restore(state) {
         if (state) {
             state.panels.forEach(function(saved) {
                 var el = document.getElementById(saved.id);
+                if (!el) return;
                 if (saved.style === null) el.removeAttribute('style'); else el.setAttribute('style', saved.style);
                 el.classList.toggle('mob-active', saved.mobile);
             });
@@ -55,17 +74,37 @@
         }
         syncDesktopNavigation();
     }
-    function labels(open) {
+    function labels(mode) {
+        var definitions = panelModes[mode];
         labelElements.forEach(function(el, index) {
-            if (!open) { el.innerHTML = originalLabels[index]; return; }
+            if (mode !== 'multitrack') { el.innerHTML = originalLabels[index]; return; }
             var contents = el.id === 'nav-text' || el.id === 'bn-text' || el.dataset.panel === 'text';
             Array.from(el.childNodes).filter(function(n) { return n.nodeType === Node.TEXT_NODE; }).forEach(function(n) { n.remove(); });
             var icon = el.querySelector('img');
             if (icon) { icon.src = contents ? 'meat/ikona_text.png' : 'meat/ikona_diskuse.png'; icon.alt = ''; }
-            el.appendChild(document.createTextNode(contents ? 'obsah' : 'popis'));
+            el.appendChild(document.createTextNode(contents ? definitions.text : definitions.tabelatura));
         });
-        document.getElementById('topbar-val').textContent = open ? (selected ? selected.name : 'Multitracky') : VZ.aktualniNazev;
-        document.getElementById('diskuse-val-label').textContent = open ? (selected ? selected.name : '') : VZ.aktualniNazev;
+        document.getElementById('topbar-val').textContent = mode === 'multitrack' ? (selected ? selected.name : 'Vybrat multitrack') : VZ.aktualniNazev;
+        document.getElementById('diskuse-val-label').textContent = mode === 'multitrack' ? (selected ? selected.name : '') : VZ.aktualniNazev;
+    }
+    function syncModeNavigation(mode) {
+        modeButtons.forEach(function(control) {
+            var current = control.dataset.workspaceMode === mode;
+            if (control.tagName === 'BUTTON') control.setAttribute('aria-pressed', String(current));
+            if (current) control.setAttribute('aria-current', 'page'); else control.removeAttribute('aria-current');
+        });
+        if (mobileMode) mobileMode.value = mode;
+        document.body.dataset.workspaceMode = mode;
+    }
+    function stopOrdinaryWorkspace() {
+        document.querySelectorAll('audio').forEach(function(audio) { audio.pause(); });
+        if (typeof wavesurfer !== 'undefined' && wavesurfer) wavesurfer.pause();
+        if (typeof looperZavrit === 'function') looperZavrit();
+        else {
+            if (typeof cancelPendingLooperOpen === 'function') cancelPendingLooperOpen();
+            if (typeof looperFullscreenToggle === 'function') looperFullscreenToggle(false);
+        }
+        document.getElementById('val-drawer').classList.remove('open');
     }
     function loadDiscussion(done) {
         var token = ++discussionSerial, body = document.getElementById('body-diskuse');
@@ -79,15 +118,11 @@
     }
     function showMultitrack(open) {
         if (open === active) return;
-        states[active ? 'multitrack' : 'ordinary'] = snapshot();
+        saveState(active ? 'multitrack' : ordinaryMode);
         active = open;
         discussionSerial++;
         if (open) {
-            document.querySelectorAll('audio').forEach(function(audio) { audio.pause(); });
-            if (typeof wavesurfer !== 'undefined' && wavesurfer) wavesurfer.pause();
-            if (typeof cancelPendingLooperOpen === 'function') cancelPendingLooperOpen();
-            if (typeof looperFullscreenToggle === 'function') looperFullscreenToggle(false);
-            document.getElementById('val-drawer').classList.remove('open');
+            stopOrdinaryWorkspace();
             slots.forEach(function(slot) {
                 ordinary[slot].replaceWith(multitrack[slot]);
                 multitrack[slot].id = 'panel-' + slot;
@@ -105,10 +140,10 @@
         }
         document.body.classList.toggle('view-multitrack', open);
         workspace.hidden = !open;
-        button.setAttribute('aria-pressed', String(open));
-        button.textContent = open ? 'Zpět do zkušebny' : 'Multitracky';
-        labels(open);
-        restore(states[open ? 'multitrack' : 'ordinary']);
+        var mode = open ? 'multitrack' : ordinaryMode;
+        syncModeNavigation(mode);
+        labels(mode);
+        restore(savedState(mode));
         nacistPanel('diskuse');
     }
     function showPanel(slot) {
@@ -126,11 +161,36 @@
             return ordinary[slot] ? ordinary[slot].querySelector('#body-' + slot) : document.getElementById('body-' + slot);
         }
     };
-    button.addEventListener('click', function() { showMultitrack(!active); });
+    modeButtons.forEach(function(control) {
+        control.addEventListener('click', function(event) {
+            var target = control.dataset.workspaceMode;
+            var current = active ? 'multitrack' : ordinaryMode;
+            if (target === current) { event.preventDefault(); return; }
+            if (target === 'multitrack') { event.preventDefault(); showMultitrack(true); return; }
+            if (active && target === ordinaryMode) { event.preventDefault(); showMultitrack(false); return; }
+            if (active) { window.MultitrackApp.pause(); saveState('multitrack'); }
+            else { stopOrdinaryWorkspace(); saveState(ordinaryMode); }
+        });
+    });
+    if (mobileMode) mobileMode.addEventListener('change', function() {
+        var target = mobileMode.value;
+        var current = active ? 'multitrack' : ordinaryMode;
+        if (target === current) return;
+        if (target === 'multitrack') showMultitrack(true);
+        else if (active && target === ordinaryMode) showMultitrack(false);
+        else {
+            if (active) { window.MultitrackApp.pause(); saveState('multitrack'); }
+            else { stopOrdinaryWorkspace(); saveState(ordinaryMode); }
+            window.location.href = 'index.php?sekce=' + (target === 'zkousky' ? 'zkousky' : 'uploads');
+        }
+    });
     document.addEventListener('multitrack:selected', function() {
         var state = window.MultitrackApp.getState();
         selected = state ? { id: state.id, name: state.name } : null;
-        if (active) { labels(true); nacistPanel('diskuse'); }
+        if (selected) $.post('php/ajax/ulozit_pracovni_polozku.php', { id: selected.id });
+        if (active) { labels('multitrack'); nacistPanel('diskuse'); }
     });
+    syncModeNavigation(ordinaryMode);
+    restore(savedState(ordinaryMode));
     if (new URL(window.location.href).searchParams.get('view') === 'multitrack') showMultitrack(true);
 })();
