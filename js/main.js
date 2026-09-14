@@ -460,7 +460,7 @@ function mobilePanel(panel, el) {
   collapseLooperForPanelNavigation();
 }
 
-// ── Val drawer (otevírá se klikem na #topbar-val nebo #bn-skladby) ──
+// ── Val drawer (na mobilu se otevírá tlačítkem #bn-skladby) ──
 function toggleValDrawer() {
   if (window.VZWorkspace && VZWorkspace.isMultitrack()) { VZWorkspace.showPanel('nahravky'); return; }
   document.getElementById('val-drawer').classList.toggle('open');
@@ -468,11 +468,9 @@ function toggleValDrawer() {
 
 document.addEventListener('click', function(e) {
   var drawer   = document.getElementById('val-drawer');
-  var trigger1 = document.getElementById('topbar-val');
   var trigger2 = document.getElementById('bn-skladby');
   if (!drawer) return;
-  var naSpoustec = (trigger1 && trigger1.contains(e.target)) ||
-                   (trigger2 && trigger2.contains(e.target));
+  var naSpoustec = trigger2 && trigger2.contains(e.target);
   if (!drawer.contains(e.target) && !naSpoustec && drawer.classList.contains('open')) {
     drawer.classList.remove('open');
   }

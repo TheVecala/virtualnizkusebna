@@ -217,7 +217,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
     <option value="zkousky" <?= $sekce === 'zkousky' ? 'selected' : '' ?>>Zkoušky</option>
     <option value="multitrack">Multitracky</option>
   </select>
-  <span id="topbar-val" onclick="toggleValDrawer()"><?php echo htmlspecialchars($nazev_valu); ?></span>
+  <span id="topbar-val"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
     <a href="#" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
     <a href="#" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>

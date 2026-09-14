@@ -15,6 +15,8 @@ for (const mode of ['skladby', 'zkousky', 'multitrack']) {
     assert.match(client, new RegExp(`${mode}:`));
 }
 assert.match(page, /id="workspace-mode-mobile"/);
+assert.match(page, /<span id="topbar-val">/);
+assert.doesNotMatch(page, /id="topbar-val"[^>]+onclick=/);
 assert.match(page, />Správa offline souborů</);
 assert.doesNotMatch(page, />smazat offline soubory</i);
 assert.match(client, /if \(open === active\) return;/, 'Aktivní režim nesmí znovu přepínat workspace.');

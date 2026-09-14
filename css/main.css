@@ -37,20 +37,8 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .kapela-chip { font-size: 12px; color: var(--muted); white-space: nowrap; }
 #topbar-val {
   font-size: 12px; color: var(--text);
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 5px; padding: 2px 9px; white-space: nowrap;
-  cursor: pointer;
-  display: inline-flex; align-items: center; gap: 6px;
-  transition: background .15s;
-}
-#topbar-val:hover { background: var(--border); }
-#topbar-val::after {
-  content: '';
-  width: 0; height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--muted);
-  flex-shrink: 0;
+  padding: 2px 4px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .topnav { display: flex; gap: 2px; margin-left: auto; }
 .topbar-mob-actions { display: none; gap: 2px; margin-left: auto; }
