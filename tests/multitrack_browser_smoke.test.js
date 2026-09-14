@@ -34,6 +34,7 @@ const html = `<!doctype html><html><body>
 <div id="mt-notice" hidden></div>
 <div id="modal_multitrack_loading" class="modal" hidden>
 <section id="mt-loading-panel"><strong id="mt-load-summary"></strong><div id="mt-track-statuses"></div></section>
+<button id="mt-loading-cancel" type="button">Zrušit načítání</button>
 </div>
 <button id="mt-restart" disabled></button><button id="mt-backward" disabled></button>
 <button id="mt-play" disabled><i id="mt-play-icon"></i></button><button id="mt-forward" disabled></button>

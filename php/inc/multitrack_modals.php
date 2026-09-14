@@ -49,6 +49,9 @@
                     <div id="mt-track-statuses" class="mt-track-statuses"></div>
                 </section>
             </div>
+            <div class="modal-footer">
+                <button id="mt-loading-cancel" type="button" class="btn btn-secondary">ZRUŠIT NAČÍTÁNÍ</button>
+            </div>
         </div>
     </div>
 </div>

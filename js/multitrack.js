@@ -780,6 +780,14 @@
         setHidden(dom.empty, false);
     }
 
+    function cancelTrackLoading() {
+        if (!currentSet || currentSet.phase === 'ready') return;
+        cleanupCurrentSet();
+        updateSelectedRecording('');
+        if (dom.playingName) dom.playingName.textContent = 'Vyberte nahrávku';
+        showNotice('Načítání multitracku bylo zrušeno.', 'info');
+    }
+
     function decodeTrack(set, track, blob, token) {
         updateTrackStatus(track, 'downloaded', 100, '');
         return blob.arrayBuffer().then(function(arrayBuffer) {
@@ -1838,6 +1846,7 @@
         dom.loadingPanel = byId('mt-loading-panel');
         dom.loadSummary = byId('mt-load-summary');
         dom.trackStatuses = byId('mt-track-statuses');
+        dom.loadingCancel = byId('mt-loading-cancel');
         dom.restart = byId('mt-restart');
         dom.backward = byId('mt-backward');
         dom.play = byId('mt-play');
@@ -1912,6 +1921,7 @@
             dom.masterVolume.addEventListener('input', function() { updateMasterVolume(dom.masterVolume.value); });
         }
         if (dom.offline) dom.offline.addEventListener('click', requestOfflineChange);
+        if (dom.loadingCancel) dom.loadingCancel.addEventListener('click', cancelTrackLoading);
         if (dom.offlineConfirmSubmit) dom.offlineConfirmSubmit.addEventListener('click', executeOfflineChange);
         if (dom.switchConfirm) dom.switchConfirm.addEventListener('click', confirmSetSwitch);
         if (dom.continueReady) dom.continueReady.addEventListener('click', continueWithReadyTracks);
