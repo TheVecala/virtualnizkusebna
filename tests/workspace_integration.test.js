@@ -184,7 +184,7 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         await page.locator('#napady_jmeno').fill('Tester');
         await page.evaluate(() => { window.__sharedIdeasPanel = document.getElementById('panel-napady'); });
         await page.locator('#mt-play').click();
-        await page.locator('#nav-multitrack').click();
+        await page.locator('[data-workspace-mode="skladby"]').click();
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState().playing), false);
         assert.ok(await page.locator('#sidebar').isVisible());
         assert.equal(await page.locator('#nav-text').innerText(), 'text');
@@ -219,11 +219,10 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
         await page.screenshot({ path: path.join(temp, 'mobile.png'), fullPage: true });
         assert.deepEqual(errors, []);
-        await page.locator('#nav-multitrack').click();
+        await page.selectOption('#workspace-mode-mobile', 'skladby');
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
         await page.screenshot({ path: path.join(temp, 'mobile-songs.png'), fullPage: true });
-        await page.locator('#bn-skladby').click();
-        await page.locator('#val-drawer .content-section-switch a[href$="zkousky"]').click();
+        await page.selectOption('#workspace-mode-mobile', 'zkousky');
         await page.waitForURL('**/index.php?sekce=zkousky');
         assert.equal(await page.evaluate(() => VZ.sekce), 'zkousky');
         await page.screenshot({ path: path.join(temp, 'mobile-rehearsals.png'), fullPage: true });
@@ -240,7 +239,7 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         assert.equal((await request(noteUrl + '?id=kapela')).json().notes.entries.length, 3);
         assert.ok((await request('php/ajax/multitracky.php')).json().multitracks.some(x => x.id === 'kapela' && x.audioDeleted));
         assert.equal((await request(noteUrl, { id: 'kapela', revision: result.json().notes.revision, action: 'summary', text: 'Archivovaný závěr' }, true)).status, 200);
-        await page.locator('#nav-multitrack').click();
+        await page.selectOption('#workspace-mode-mobile', 'multitrack');
         await page.locator('[data-mt-id="kapela"]').click();
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'archived');
         await page.waitForFunction(() => document.getElementById('mt-summary').value === 'Archivovaný závěr');
@@ -258,13 +257,13 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         await request('php/ajax/zmenit_slozku_ajax.php?sekce=zkousky', { cilova_slozka: 'Spolecny' });
         await page.goto(base + 'multitrack.php');
         await page.waitForFunction(() => window.VZWorkspace?.isMultitrack());
-        await page.locator('#nav-multitrack').click();
+        await page.locator('[data-workspace-mode="zkousky"]').click();
         await page.locator('#body-text').filter({ hasText: 'Nový zápis zkoušky' }).waitFor();
         await page.setViewportSize({ width: 390, height: 844 });
         await page.setViewportSize({ width: 1440, height: 1000 });
         await page.locator('#nav-multitrack').click();
         await page.setViewportSize({ width: 390, height: 844 });
-        await page.locator('#nav-multitrack').click();
+        await page.selectOption('#workspace-mode-mobile', 'zkousky');
         assert.ok(await page.locator('#body-nahravky').isVisible(), 'Returning after a resize activates the ordinary mobile panel');
         assert.deepEqual(errors, []);
         console.log('OK: legacy entry point, background loading of ordinary panels and return across breakpoints');
