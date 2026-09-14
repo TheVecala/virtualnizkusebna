@@ -145,6 +145,17 @@
         modal.hidden = true;
     }
 
+    function setLoadingPanelVisible(visible) {
+        if (!dom.loadingPanel) return;
+        var modal = dom.loadingPanel.closest('.modal');
+        if (!modal) {
+            setHidden(dom.loadingPanel, !visible);
+            return;
+        }
+        if (visible) showModal('#' + modal.id);
+        else hideModal('#' + modal.id);
+    }
+
     function getAudioContext() {
         if (audioContext) return audioContext;
         var AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -765,7 +776,7 @@
         if (dom.totalTime) dom.totalTime.textContent = '00:00';
         setOfflineUi(false, '', true);
         setLoadState('idle');
-        setHidden(dom.loadingPanel, true);
+        setLoadingPanelVisible(false);
         setHidden(dom.empty, false);
     }
 
@@ -987,10 +998,9 @@
         if (dom.currentTime) dom.currentTime.textContent = '00:00';
         setTransportEnabled(true);
         setHidden(dom.empty, true);
-        setHidden(dom.loadingPanel, false);
         setLoadState('ready');
         if (typeof CustomEvent === 'function') document.dispatchEvent(new CustomEvent('multitrack:ready'));
-        setHidden(dom.loadingPanel, !partial);
+        setLoadingPanelVisible(false);
         updateLoadSummary(set, partial
             ? 'Připraveno ' + set.activeTracks.length + ' / ' + set.tracks.length + ' stop · částečná sada'
             : 'Připraveno ' + set.activeTracks.length + ' / ' + set.tracks.length + ' stop');
@@ -1012,6 +1022,7 @@
     }
 
     function showErrors(errors, canContinue, continuation) {
+        setLoadingPanelVisible(false);
         pendingErrorContinue = canContinue && typeof continuation === 'function' ? continuation : null;
         if (dom.errorTitle) dom.errorTitle.textContent = canContinue ? 'NĚKTERÉ STOPY SELHALY' : 'MULTITRACK NELZE SPUSTIT';
         if (dom.errorIntro) {
@@ -1089,7 +1100,7 @@
     function showArchivedSet(set) {
         set.item.raw.audioDeleted = true;
         set.phase = 'archived';
-        setHidden(dom.loadingPanel, true);
+        setLoadingPanelVisible(false);
         setOfflineUi(false, '', true);
         setLoadState('archived');
         showNotice('Audio odstraněno. Obsah a poznámky zůstávají dostupné.', 'info');
@@ -1119,7 +1130,7 @@
         if (typeof CustomEvent === 'function') document.dispatchEvent(new CustomEvent('multitrack:selected', { detail: { id: item.id } }));
         updateSelectedRecording(item.id);
         setHidden(dom.empty, true);
-        setHidden(dom.loadingPanel, false);
+        setLoadingPanelVisible(true);
         setLoadState('loading');
         setTransportEnabled(false);
         setOfflineUi(false, 'kontroluji offline kopii…', true);

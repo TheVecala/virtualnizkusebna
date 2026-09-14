@@ -67,7 +67,6 @@
 }
 
 .mt-picker-card,
-.mt-loading-panel,
 .mt-transport,
 .mt-mixer,
 .mt-empty {
@@ -167,9 +166,13 @@
 }
 
 .mt-loading-panel {
-  width: min(520px, 100%);
-  padding: 13px 16px;
-  margin-bottom: 12px;
+  width: 100%;
+}
+
+.mt-loading-panel > #mt-load-summary {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
 }
 
 .mt-loading-panel.is-complete .mt-track-statuses {
