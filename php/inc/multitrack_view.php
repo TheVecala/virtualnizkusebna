@@ -4,14 +4,6 @@
 
         <div id="mt-notice" class="mt-notice" role="status" aria-live="polite" hidden></div>
 
-        <section id="mt-loading-panel" class="mt-loading-panel" aria-labelledby="mt-load-summary" hidden>
-            <div class="mt-panel-heading">
-                <h2>Stav načítání</h2>
-                <strong id="mt-load-summary">Připraveno 0 / 0 stop</strong>
-            </div>
-            <div id="mt-track-statuses" class="mt-track-statuses"></div>
-        </section>
-
         <h1 id="mt-title" class="sr-only">Multitracky</h1>
         <div id="mt-playing-name" class="mt-playing-name">Vyberte nahrávku</div>
         <section class="mt-transport" aria-label="Společné ovládání přehrávání">
