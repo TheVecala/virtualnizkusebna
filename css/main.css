@@ -79,6 +79,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 .offline-file-context { color: var(--muted); font-size: 11px; margin-top: 2px; }
 .offline-file-size { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .offline-file-item .btn { white-space: nowrap; }
+.offline-file-actions { display: flex; gap: 6px; align-items: center; }
 .offline-files-empty, .offline-files-error { margin: 0 !important; color: var(--muted) !important; }
 .offline-files-error { color: #ff8888 !important; }
 .offline-files-footer { align-items: center; }
@@ -738,7 +739,7 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
 @media (max-width: 480px) {
   .offline-file-item { grid-template-columns: minmax(0, 1fr) auto; }
   .offline-file-size { grid-column: 1; }
-  .offline-file-item .btn { grid-column: 2; grid-row: 1 / span 2; }
+  .offline-file-actions { grid-column: 2; grid-row: 1 / span 2; flex-direction: column; align-items: stretch; }
   #looper-file-name { right: 86px; }
 }
 
