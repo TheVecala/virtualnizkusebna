@@ -435,6 +435,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
           <a class="dropdown-item download-btn"
              href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
              download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+             <?php if ($je_audio): ?>data-audio-cache-url="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"<?php endif; ?>
              title="Stáhnout"
              aria-label="Stáhnout"
              onclick="return confirm('Opravdu stáhnout soubor: <?php echo htmlspecialchars($soub, ENT_QUOTES); ?>?');">

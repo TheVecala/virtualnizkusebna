@@ -2392,6 +2392,30 @@ function getAudioCacheKey(cesta) {
     return 'audio-v1:' + new URL(cesta, window.location.href).href;
 }
 
+function saveAudioBlobAsFile(blob, fileName) {
+    if (!(blob instanceof Blob)) return;
+
+    var objectUrl = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = fileName || 'nahravka';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(function() { URL.revokeObjectURL(objectUrl); }, 1000);
+}
+
+function downloadAudioFromServer(cesta, fileName) {
+    var link = document.createElement('a');
+    link.href = cesta;
+    link.download = fileName || '';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
 function setAudioCacheUi(isCached, status, disabled) {
     var $control = $('#audio-cache-control');
     var $toggle = $('#audio-cache-toggle');
@@ -3200,8 +3224,12 @@ function refreshOfflineFilesModal() {
             if (details.context) $('<div>', { 'class': 'offline-file-context', text: details.context, title: details.context }).appendTo($info);
             $info.appendTo($item);
             $('<div>', { 'class': 'offline-file-size', text: formatOfflineFileSize(entry.blob.size) }).appendTo($item);
+            var $actions = $('<div>', { 'class': 'offline-file-actions' });
+            $('<button>', { type: 'button', 'class': 'btn btn-primary btn-sm offline-file-save', text: 'Uložit jako běžný soubor' })
+                .data('cache-key', entry.key).data('file-name', details.name).appendTo($actions);
             $('<button>', { type: 'button', 'class': 'btn btn-danger btn-sm offline-file-delete', text: 'SMAZAT' })
-                .data('cache-key', entry.key).appendTo($item);
+                .data('cache-key', entry.key).appendTo($actions);
+            $actions.appendTo($item);
             $item.appendTo($list);
         });
     }).catch(function(error) {
@@ -3283,6 +3311,39 @@ function clearOfflineCache() {
 
 $(document).on('click', '.offline-file-delete', function() {
     requestOfflineCacheKeyRemoval($(this).data('cache-key'));
+});
+
+$(document).on('click', '.offline-file-save', function() {
+    var key = $(this).data('cache-key');
+    var fileName = $(this).data('file-name');
+    var cacheStore = getAudioCacheStore();
+    if (!key || !cacheStore) return;
+
+    idbKeyval.get(key, cacheStore).then(function(blob) {
+        if (!(blob instanceof Blob)) throw new Error('Offline soubor nebyl nalezen.');
+        saveAudioBlobAsFile(blob, fileName);
+    }).catch(function(error) {
+        console.warn('[Offline audio] Offline soubor se nepodařilo uložit do zařízení.', error);
+    });
+});
+
+$(document).on('click', '.download-btn[data-audio-cache-url]', function(event) {
+    var cesta = $(this).data('audio-cache-url');
+    var fileName = this.getAttribute('download') || offlineCacheDisplayName(cesta);
+    var cacheStore = getAudioCacheStore();
+    if (!cesta || !cacheStore) return;
+
+    event.preventDefault();
+    idbKeyval.get(getAudioCacheKey(cesta), cacheStore).then(function(blob) {
+        if (blob instanceof Blob) {
+            saveAudioBlobAsFile(blob, fileName);
+            return;
+        }
+        downloadAudioFromServer(cesta, fileName);
+    }).catch(function(error) {
+        console.warn('[Offline audio] Offline kopii se nepodařilo ověřit, stahuji ze serveru.', error);
+        downloadAudioFromServer(cesta, fileName);
+    });
 });
 
 $(document).on('click', '#offline-files-clear-all', function() {
