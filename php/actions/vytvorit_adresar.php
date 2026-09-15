@@ -1,4 +1,5 @@
-<?php session_start(); ?>
+<?php session_start();
+require_once __DIR__ . '/../inc/content_context.php'; ?>
 <?php
 require_once __DIR__ . '/../../config.php';
 
@@ -13,7 +14,7 @@ $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 // Validace session
 $kapela = $_SESSION['kapela'] ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
-$sekce  = $_POST["sekce"] ?? "uploads";
+$sekce  = content_section();
 
 if (empty($kapela) || empty($befelemepesseveze)) {
     $_SESSION['vysledek'] = "chyba - nejste přihlášen";
@@ -41,6 +42,12 @@ if (empty($ocesany_jmeno)) {
 }
 
 $cil_adresare = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/";
+
+// The rehearsal root is created on the first folder creation.
+if (!is_dir($cil_adresare) && !mkdir($cil_adresare, 0755, true) && !is_dir($cil_adresare)) {
+    $_SESSION['vysledek'] = "chyba - úložiště se nepodařilo vytvořit";
+    require __DIR__ . "/../inc/navrat.php"; exit;
+}
 
 // Ověření že složka ještě neexistuje
 if (is_dir($cil_adresare . $ocesany_jmeno)) {
@@ -78,7 +85,7 @@ file_put_contents($cil_adresare . $ocesany_jmeno . "/data/nazev_valu.txt", $cely
 include __DIR__ . "/../login/connect.php";
 $kapela_db = $mysqli->real_escape_string($kapela);
 $jmeno_db  = $mysqli->real_escape_string($ocesany_jmeno);
-$adresa_diskuse_valu = "diskuse_" . $kapela_db . "_" . $jmeno_db;
+$adresa_diskuse_valu = content_discussion_prefix() . $kapela_db . "_" . $jmeno_db;
 
 $mysqli->query("CREATE TABLE IF NOT EXISTS `$adresa_diskuse_valu` (
     cas   INT(11)     NOT NULL,

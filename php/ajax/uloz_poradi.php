@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 require_once __DIR__ . '/../../config.php';
 
@@ -20,7 +21,7 @@ if (is_array($poradi)) {
     $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
 
     // Cesta do složky uploads (pozor na úroveň zanoření: jsme v /php/ajax/, takže jdeme o dvě patra výš ../../)
-    $slozka_uploads = "../../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/";
+    $slozka_uploads = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/";
     $soubor_poradi = $slozka_uploads . "poradi.json";
 
     // Uložíme přijaté pole zpět do formátu JSON a přepíšeme soubor

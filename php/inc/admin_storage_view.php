@@ -10,12 +10,12 @@
   </div>
   <?php if ($storageError): ?><p class="admin-message error" role="alert"><?= auth_h($storageError) ?></p><?php endif; ?>
   <?php if ($storage !== null): ?>
-  <p class="form-hint">Data aktuální kapely v uploads a multitrack / multitracky. Přehled slouží pouze ke čtení.</p>
+  <p class="form-hint">Data aktuální kapely: skladby, zkoušky, multitracky a jejich zápisy. Přehled slouží pouze ke čtení.</p>
   <div class="storage-cards">
     <div><span>Data zkušebny</span><strong><?= admin_storage_size($storage['bytes']) ?></strong></div>
     <div><span>Volné místo na disku</span><strong><?= admin_storage_size($diskFree) ?></strong></div>
     <div><span>Počet souborů</span><strong><?= number_format($storage['files'], 0, ',', ' ') ?></strong></div>
-    <div><span>Skladby / multitrack projekty</span><strong><?= $storage['songs'] ?> / <?= $storage['projects'] ?></strong></div>
+    <div><span>Skladby / zkoušky / multitracky</span><strong><?= $storage['songs'] ?> / <?= $storage['rehearsals'] ?? 0 ?> / <?= $storage['projects'] ?></strong></div>
   </div>
   <p class="form-hint">Poslední přepočet: <?= date('d. m. Y H:i:s', $storage['calculated_at']) ?> (čas serveru). Výsledek se uchovává 10 minut; tlačítko jej obnoví ihned. Počty skladeb a projektů odpovídají přímým podadresářům.</p>
   <?php if ($storage['errors']): ?><p class="admin-message error">Část adresářů nebo souborů se nepodařilo načíst. Zobrazené součty jsou neúplné.</p><?php endif; ?>

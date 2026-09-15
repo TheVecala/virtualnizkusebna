@@ -100,6 +100,14 @@ try {
         && strpos($html, '&lt;img') !== false, 'Tabulka escapuje názvy souborů i jejich umístění.');
     storage_check(strpos($html, '<progress') === false && strpos($html, 'nejsou dostupné') !== false,
         'Nedostupná kapacita disku nezobrazuje falešné nulové využití.');
+    $before = admin_storage_scan($root);
+    storage_fixture($band . '/zkousky/Prvni/audio.wav', str_repeat('z', 70));
+    storage_fixture($band . '/multitrack_zapisy/projekt.json', '{}');
+    $after = admin_storage_scan($root);
+    storage_check($after['bytes'] === $before['bytes'] + 72 && $after['files'] === $before['files'] + 2,
+        'Zkoušky a zachované zápisy se započítávají do celkové velikosti.');
+    storage_check($after['rehearsals'] === 1 && $after['projects'] === $before['projects'],
+        'Zkoušky mají vlastní počet; archivní JSON není nový multitrack.');
     echo "Hotovo: $passed kontrol.\n";
 } finally {
     // Mažeme jen konkrétní fixture soubory a prázdné složky vytvořené tímto testem.

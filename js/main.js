@@ -1,3 +1,11 @@
+// Pin requests to this page's directory even when another tab switches sections.
+$.ajaxPrefilter(function(options) {
+    var url = new URL(options.url, window.location.href);
+    if (url.origin === window.location.origin && /\/php\/(ajax|actions)\//.test(url.pathname)) {
+        url.searchParams.set('sekce', VZ.sekce || 'uploads');
+        options.url = url.href;
+    }
+});
 /* ── main.js — Virtuální zkušebna ── */
 const NOTE_SONG   = 0;
 const NOTE_NORMAL = 1;
@@ -201,19 +209,30 @@ $(function() {
   });
 });
 
+var panelLoadSerial = {};
+
 // ── AJAX načtení panelu ──
 function nacistPanel(panel, callback) {
   pbStart();
+  var serial = panelLoadSerial[panel] = (panelLoadSerial[panel] || 0) + 1;
+  if (panel === 'diskuse' && window.VZWorkspace && VZWorkspace.isMultitrack()) {
+    VZWorkspace.loadDiscussion(callback);
+    return;
+  }
+  // The original body may be detached while Multitrack occupies its slot.
+  var $body = $(window.VZWorkspace ? VZWorkspace.ordinaryBody(panel) : '#body-' + panel);
   $.get('/php/ajax/ajax_' + panel + '.php', function(html) {
+    if (serial !== panelLoadSerial[panel]) { if (callback) callback(); else pbDone(); return; }
     if (panel === 'nahravky') releaseNativeAudioObjectUrls();
-    $('#body-' + panel).html(html).css('opacity', '1').removeAttr('aria-busy');
+    $body.html(html).css('opacity', '1').removeAttr('aria-busy');
     if (panel === 'nahravky') {
       refreshNativeAudioCacheControls();
       processDeepLink();
     }
     if (callback) callback(); else pbDone();
   }).fail(function() {
-    $('#body-' + panel)
+    if (serial !== panelLoadSerial[panel]) { if (callback) callback(); else pbDone(); return; }
+    $body
       .html('<div style="color:#888;padding:12px;font-size:12px">Chyba načítání</div>')
       .css('opacity', '1').removeAttr('aria-busy');
     if (callback) callback(); else pbDone();
@@ -397,6 +416,11 @@ $(syncDesktopNavigation);
 // Použít stejnou cestu jako tlačítko se šipkou, aby zůstal synchronizovaný
 // obsah, ikona i přístupnostní atributy ovládacího prvku.
 function collapseLooperForPanelNavigation() {
+  if (window.VZWorkspace && VZWorkspace.isMultitrack()) {
+    var mixerToggle = document.getElementById('mt-mixer-toggle');
+    if (mixerToggle && mixerToggle.getAttribute('aria-expanded') === 'true') mixerToggle.click();
+    return;
+  }
   var looperBar = document.getElementById('looper-bar');
   var looperContent = document.getElementById('looper-content');
   if (!looperBar || !looperContent || looperBar.classList.contains('hidden') ||
@@ -436,18 +460,17 @@ function mobilePanel(panel, el) {
   collapseLooperForPanelNavigation();
 }
 
-// ── Val drawer (otevírá se klikem na #topbar-val nebo #bn-skladby) ──
+// ── Val drawer (na mobilu se otevírá tlačítkem #bn-skladby) ──
 function toggleValDrawer() {
+  if (window.VZWorkspace && VZWorkspace.isMultitrack()) { VZWorkspace.showPanel('nahravky'); return; }
   document.getElementById('val-drawer').classList.toggle('open');
 }
 
 document.addEventListener('click', function(e) {
   var drawer   = document.getElementById('val-drawer');
-  var trigger1 = document.getElementById('topbar-val');
   var trigger2 = document.getElementById('bn-skladby');
   if (!drawer) return;
-  var naSpoustec = (trigger1 && trigger1.contains(e.target)) ||
-                   (trigger2 && trigger2.contains(e.target));
+  var naSpoustec = trigger2 && trigger2.contains(e.target);
   if (!drawer.contains(e.target) && !naSpoustec && drawer.classList.contains('open')) {
     drawer.classList.remove('open');
   }
@@ -676,6 +699,8 @@ $(document).on('submit', '#form_komentar', function(e) {
     odkaz:  $form.find('#komentar_odkaz').val()  || '',
     odkaz2: $form.find('#komentar_odkaz2').val() || '',
     name:   $form.find('#komentar_jmeno').val(),
+    multitrack_id: $form.attr('data-multitrack-id') || '',
+    csrf: (window.MULTITRACK_CONFIG || {}).csrfToken,
   }, function(data) {
     pbDone();
     finishFormAction($form, $btn);
@@ -1172,6 +1197,7 @@ $(document).on('submit', '#form_upload', function(e) {
   }
 
   var formData = new FormData();
+  formData.append('sekce', VZ.sekce || 'uploads');
   formData.append('fileToUpload', fileInput.files[0]);
   formData.append('odeslat', document.getElementById('upload_odeslat').checked ? 'true' : '');
   formData.append('navrat', window.location.pathname);
@@ -1305,6 +1331,8 @@ $(document).on('click', '.vzk-save-btn', function() {
   pbStart();
 
   $.post('/php/ajax/upravit_komentar.php', {
+    multitrack_id: $card.attr('data-multitrack-id') || '',
+    csrf: (window.MULTITRACK_CONFIG || {}).csrfToken,
     cas:  $card.data('cas'),
     typ:  $card.data('typ'),
     text: text
@@ -1368,6 +1396,8 @@ $(document).on('click', '.vzk-del-yes-btn', function() {
   pbStart();
 
   $.post('/php/ajax/smazat_komentar.php', {
+    multitrack_id: $card.attr('data-multitrack-id') || '',
+    csrf: (window.MULTITRACK_CONFIG || {}).csrfToken,
     cas: $card.data('cas'),
     typ: $card.data('typ')
   }, function(data) {
@@ -2883,6 +2913,7 @@ function looperCreateLink() {
     if (!wavesurfer || !looperCurrentFile || !looperCurrentName) return;
     var url = new URL('index.php', window.location.href);
     url.search = '';
+    url.searchParams.set('sekce', VZ.sekce || 'uploads');
     url.searchParams.set('val', VZ.aktualniVal);
     url.searchParams.set('nahravka', looperCurrentName);
     url.searchParams.set('time', String(Math.round(wavesurfer.getCurrentTime() * 1000)));

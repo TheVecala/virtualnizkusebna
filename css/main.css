@@ -23,28 +23,26 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   background: var(--tmava); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; padding: 0 12px; gap: 10px; z-index: 1000;
 }
+.topbar-identity { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.workspace-modes { display: flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 6px; flex-shrink: 0; }
+.workspace-modes a, .workspace-modes button {
+  appearance: none; border: 0; border-radius: 4px; background: transparent; color: var(--muted);
+  padding: 5px 8px; font: inherit; font-size: 12px; line-height: 1.2; text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.workspace-modes a:hover, .workspace-modes button:hover { color: var(--text); background: var(--card); text-decoration: none; }
+.workspace-modes [aria-current="page"] { color: var(--barva); background: var(--card); }
+#workspace-mode-mobile { display: none; min-width: 0; max-width: 112px; padding: 5px 22px 5px 6px; border: 1px solid var(--border); border-radius: 5px; background: var(--card); color: var(--barva); font-size: 11px; }
 .brand { font-weight: bold; color: var(--barva); letter-spacing: 1px; font-size: 13px; white-space: nowrap; }
 .topbar-sep { color: var(--border); }
 .kapela-chip { font-size: 12px; color: var(--muted); white-space: nowrap; }
 #topbar-val {
   font-size: 12px; color: var(--text);
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 5px; padding: 2px 9px; white-space: nowrap;
-  cursor: pointer;
-  display: inline-flex; align-items: center; gap: 6px;
-  transition: background .15s;
-}
-#topbar-val:hover { background: var(--border); }
-#topbar-val::after {
-  content: '';
-  width: 0; height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--muted);
-  flex-shrink: 0;
+  padding: 2px 4px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .topnav { display: flex; gap: 2px; margin-left: auto; }
 .topbar-mob-actions { display: none; gap: 2px; margin-left: auto; }
+.topbar-more-menu { flex-shrink: 0; }
 .topnav a {
   color: var(--muted); text-decoration: none; font-size: 12px;
   padding: 5px 10px; border-radius: 5px; transition: all .15s; white-space: nowrap;
@@ -656,8 +654,11 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #bottom-nav-tab { display: none; }
   .topnav { display: none; }
   .topbar-mob-actions { display: flex; }
+  .workspace-modes { display: none; }
+  #workspace-mode-mobile { display: block; }
+  .topbar-identity .brand:not(:first-child) { display: none; }
   #nav-napady-tab { display: none; }
-  #topbar-val { font-size: 11px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #topbar-val { font-size: 11px; min-width: 0; max-width: 24vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #content-area { flex-direction: column; }
   .panel { display: none !important; border-right: none; border-bottom: 1px solid var(--border); }
   .panel.mob-active { display: flex !important; }
@@ -790,8 +791,6 @@ body { background: var(--pozadi); color: var(--text); font-family: sans-serif; f
   #bottom-nav { display: none; }
   #bottom-nav-tab { display: none; }
   #content-area { flex-direction: row; }
-  #topbar-val { cursor: default; pointer-events: none; }
-  #topbar-val::after { display: none; }
   #panel-text, #panel-tabelatura, #panel-nahravky { display: flex; }
   #panel-diskuse { display: none; }
 }

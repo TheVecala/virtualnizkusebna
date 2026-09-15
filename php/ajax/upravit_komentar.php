@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 require_once __DIR__ . '/../../config.php';
 
@@ -11,6 +12,8 @@ if (!ma_pravo('comment')) {
 }
 
 include "../login/connect.php";
+require_once __DIR__ . '/../inc/discussion_context.php';
+$discussion_multitrack_id = discussion_multitrack_id();
 
 $typ       = $_POST['typ']       ?? '';
 $cas       = (int)($_POST['cas'] ?? 0);
@@ -27,11 +30,11 @@ if (empty($kapela) || $cas === 0 || $novy_text === '') {
 if ($typ === 'napady') {
     $tabulka = "napady_" . $mysqli->real_escape_string($kapela);
 } elseif ($typ === 'diskuse') {
-    if (empty($slozka)) {
+    if (empty($slozka) && $discussion_multitrack_id === '') {
         echo json_encode(["ok" => false, "chyba" => "Není vybrána skladba"]);
         exit;
     }
-    $tabulka = "diskuse_" . $mysqli->real_escape_string($kapela) . "_" . $mysqli->real_escape_string($slozka);
+    $tabulka = discussion_table($mysqli, $kapela, $slozka, $discussion_multitrack_id);
 } else {
     echo json_encode(["ok" => false, "chyba" => "Neznámý typ"]);
     exit;

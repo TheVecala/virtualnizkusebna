@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 
 if (empty($_SESSION['role'])) { echo ''; exit; }
@@ -7,7 +8,7 @@ if (empty($_SESSION['role'])) { echo ''; exit; }
 $kapela            = $_SESSION['kapela']                     ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";
 $slozka_souboru    = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
-$sekce             = "uploads";
+$sekce             = content_section();
 
 $cesta_slozky = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/";
 
@@ -29,7 +30,7 @@ $popisky = [];
 $mohu_upravit_popisek = in_array($_SESSION['role'] ?? '', ['muzikant', 'admin']);
 if (!empty($soubory)) {
     include "../login/connect.php";
-    $prefix_cesty = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/";
+    $prefix_cesty = "user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/";
     $cesty_escaped = array_map(function($f) use ($mysqli, $prefix_cesty) {
         return "'" . $mysqli->real_escape_string($prefix_cesty . $f) . "'";
     }, $soubory);
@@ -321,17 +322,17 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
 </style>
 
 <?php if (empty($slozka_souboru)): ?>
-  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Vyberte skladbu ze seznamu.</div>
+  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Vyberte položku ze seznamu.</div>
 
 <?php elseif (empty($soubory)): ?>
-  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Žádné soubory v této skladbě.</div>
+  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Žádné soubory v této složce.</div>
 
 <?php else: ?>
   
   <?php 
   foreach ($soubory as $i => $soub): 
-    $cesta    = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/" . $soub;
-    $cesta_fs = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/" . $soub;
+    $cesta    = "user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/" . $soub;
+    $cesta_fs = "user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/" . $soub;
     $ext      = strtolower(pathinfo($soub, PATHINFO_EXTENSION));
     $je_audio = in_array($ext, $povolene_audio);
     $popisek  = $popisky[$cesta_fs] ?? '';

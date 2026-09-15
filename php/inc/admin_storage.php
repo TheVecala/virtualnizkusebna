@@ -113,7 +113,7 @@ function admin_storage_scan(string $bandRoot): array {
         return $node;
     };
     // Vývojová větev e3b0af64 používá multitracky, podporujeme i název multitrack.
-    foreach (['uploads', 'multitrack', 'multitracky'] as $directory) {
+    foreach (['uploads', 'zkousky', 'multitrack', 'multitracky', 'multitrack_zapisy'] as $directory) {
         $path = $bandRoot . DIRECTORY_SEPARATOR . $directory;
         if (is_link($path)) {
             $report['skipped']++;
@@ -129,7 +129,9 @@ function admin_storage_scan(string $bandRoot): array {
         $report['trees'][] = $tree;
         $report['bytes'] += $tree['bytes'];
         $report['files'] += $tree['files'];
-        $report[$directory === 'uploads' ? 'songs' : 'projects'] += count($tree['children']);
+        if ($directory === 'uploads') $report['songs'] += count($tree['children']);
+        elseif ($directory === 'zkousky') $report['rehearsals'] = count($tree['children']);
+        elseif ($directory !== 'multitrack_zapisy') $report['projects'] += count($tree['children']);
     }
     $report['calculated_at'] = time();
     return $report;

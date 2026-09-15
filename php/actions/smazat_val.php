@@ -1,4 +1,5 @@
 <?php session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 require_once __DIR__ . '/../../config.php';
 
 if (!ma_pravo('delete_val')) {
@@ -17,7 +18,7 @@ if (empty($val_ke_smazani) || strpos($val_ke_smazani, "..") !== false) {
 }
 
 // Cesta se sestavuje ze SESSION, ne z POST
-$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/uploads/";
+$cesta_slozek = "user/" . $_SESSION['kapela'] . "/" . $_SESSION['befelemepesseveze'] . "/" . content_section() . "/";
 $target_dir   = "../../" . $cesta_slozek . $val_ke_smazani;
 
 if (!is_dir($target_dir)) {
@@ -74,7 +75,7 @@ if (rmdir($target_dir)) {
     // v něm být nemohly.
     include __DIR__ . "/../login/connect.php";
     $kapela_db = $mysqli->real_escape_string($_SESSION['kapela']);
-    $tabulka   = "diskuse_" . $kapela_db . "_" . $mysqli->real_escape_string($val_ke_smazani);
+    $tabulka   = content_discussion_prefix() . $kapela_db . "_" . $mysqli->real_escape_string($val_ke_smazani);
     @$mysqli->query("DROP TABLE IF EXISTS `$tabulka`");
 
     $_SESSION['vysledek'] = "vál \"" . $val_ke_smazani . "\" byl smazán";

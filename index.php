@@ -1,13 +1,15 @@
 <?php session_start();
 error_reporting(0);
 require_once 'config.php';
+require_once __DIR__ . '/php/inc/content_context.php';
 
 // Deep link poznáme už před přihlášením. Do session ukládáme pouze znovu
 // sestavený lokální query string, nikdy uživatelem dodanou návratovou URL.
-$deep_link_requested = isset($_GET['val']) || isset($_GET['nahravka']) || isset($_GET['time']);
+$deep_link_requested = isset($_GET['val']) || isset($_GET['nahravka']) || isset($_GET['time'])
+    || (($_GET['view'] ?? '') === 'multitrack' && isset($_GET['id']));
 if ($deep_link_requested && empty($_SESSION['logged_in_single'])) {
     $deep_link_params = [];
-    foreach (['val', 'nahravka', 'time'] as $param) {
+    foreach (['val', 'nahravka', 'time', 'sekce', 'view', 'id'] as $param) {
         if (isset($_GET[$param]) && is_string($_GET[$param])) {
             $deep_link_params[$param] = $_GET[$param];
         }
@@ -46,7 +48,7 @@ if (empty($_SESSION['kapela'])) {
 // Nastavit lokální proměnné
 $kapela            = $_SESSION['kapela']            ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze'] ?? "";
-$sekce             = "uploads";
+$sekce             = content_section();
 $aktualni_text     = $_SESSION['aktualni_text']     ?? "akordy.txt";
 $aktualni_tab      = $_SESSION['aktualni_tab']      ?? "tabelatura.txt";
 $aktualni_diskuse  = $_SESSION['diskuse']           ?? "";
@@ -89,6 +91,7 @@ $soubor_poradi = $slozka_slozek . 'poradi.json';
         if (count($pole_slozek) > 0) {
             // Nastaví se automaticky první nalezená skladba
             $_SESSION['slozka_souboru_k_zobrazeni'] = $pole_slozek[0];
+            $_SESSION['content_last_items'][$sekce] = $pole_slozek[0];
         }
     }
     
@@ -107,6 +110,7 @@ $slozka_souboru = $_SESSION['slozka_souboru_k_zobrazeni'] ?? ($pole_slozek[0] ??
 if ($slozka_souboru === "slozka_smazana" || !in_array($slozka_souboru, $pole_slozek)) {
     $slozka_souboru = $pole_slozek[0] ?? "";
     $_SESSION['slozka_souboru_k_zobrazeni'] = $slozka_souboru;
+    $_SESSION['content_last_items'][$sekce] = $slozka_souboru;
 }
 
 // Validace deep linku proti skutečnému seznamu válů a nahrávek. Přesné členství
@@ -129,6 +133,7 @@ if ($deep_link_requested) {
     if ($valid_file) {
         $slozka_souboru = $deep_val;
         $_SESSION['slozka_souboru_k_zobrazeni'] = $deep_val;
+        $_SESSION['content_last_items'][$sekce] = $deep_val;
         $deep_link = [
             'valid' => true,
             'file'  => $deep_file,
@@ -149,6 +154,11 @@ function nacti_nazev_valu($slozka_slozek, $slozka) {
     return $slozka;
 }
 
+$can_upload_multitrack = ma_pravo('upload');
+if (empty($_SESSION['multitrack_csrf'])) $_SESSION['multitrack_csrf'] = bin2hex(random_bytes(32));
+$multitrack_deep_id = (($_GET['view'] ?? '') === 'multitrack' && isset($_GET['id']) && is_string($_GET['id'])
+    && preg_match('/\A[a-z0-9](?:[a-z0-9_-]{0,79})\z/', $_GET['id'])) ? $_GET['id'] : '';
+$multitrack_initial_id = $multitrack_deep_id !== '' ? $multitrack_deep_id : ($_SESSION['last_multitrack_id'] ?? '');
 $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 ?>
 
@@ -181,8 +191,13 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <script src="https://unpkg.com/wavesurfer.js@7.12.11/dist/plugins/zoom.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
-<script src="js/main.js" defer></script>
+<script src="js/main.js?v=<?= filemtime(__DIR__ . '/js/main.js') ?>" defer></script>
 <script src="js/help-drawer.js?v=<?= filemtime(__DIR__ . '/js/help-drawer.js') ?>" defer></script>
+<link rel="stylesheet" href="css/multitrack.css?v=<?= filemtime(__DIR__ . '/css/multitrack.css') ?>">
+<link rel="stylesheet" href="css/workspace.css?v=<?= filemtime(__DIR__ . '/css/workspace.css') ?>">
+<script src="js/multitrack.js?v=<?= filemtime(__DIR__ . '/js/multitrack.js') ?>" defer></script>
+<script src="js/multitrack-notes.js?v=<?= filemtime(__DIR__ . '/js/multitrack-notes.js') ?>" defer></script>
+<script src="js/workspace.js?v=<?= filemtime(__DIR__ . '/js/workspace.js') ?>" defer></script>
 </head>
 <body>
 
@@ -191,28 +206,31 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
 <!-- ── TOPBAR ── -->
 <div id="topbar">
-  <span class="brand">ZKUŠEBNA</span>
-  <span class="brand">/</span>
-  <span class="brand">DK</span>
-  <span class="brand">/</span>
-  <span id="topbar-val" onclick="toggleValDrawer()"><?php echo htmlspecialchars($nazev_valu); ?></span>
+  <div class="topbar-identity"><span class="brand">ZKUŠEBNA</span><span class="brand">/</span><span class="brand">DK</span></div>
+  <nav class="workspace-modes" aria-label="Hlavní pracovní režim">
+    <a href="index.php?sekce=uploads" data-workspace-mode="skladby" <?= $sekce === 'uploads' ? 'aria-current="page"' : '' ?>>Skladby</a>
+    <a href="index.php?sekce=zkousky" data-workspace-mode="zkousky" <?= $sekce === 'zkousky' ? 'aria-current="page"' : '' ?>>Zkoušky</a>
+    <button id="nav-multitrack" type="button" data-workspace-mode="multitrack" aria-pressed="false" aria-controls="mt-workspace">Multitracky</button>
+  </nav>
+  <select id="workspace-mode-mobile" aria-label="Hlavní pracovní režim">
+    <option value="skladby" <?= $sekce === 'uploads' ? 'selected' : '' ?>>Skladby</option>
+    <option value="zkousky" <?= $sekce === 'zkousky' ? 'selected' : '' ?>>Zkoušky</option>
+    <option value="multitrack">Multitracky</option>
+  </select>
+  <span id="topbar-val"><?php echo htmlspecialchars($nazev_valu); ?></span>
   <nav class="topnav">
     <a href="#" id="nav-nahravky"   onclick="toggleDesktopPanel('nahravky',this);return false">nahrávky</a>
     <a href="#" id="nav-text"       onclick="toggleDesktopPanel('text',this);return false">text</a>
     <a href="#" id="nav-tabelatura" onclick="toggleDesktopPanel('tabelatura',this);return false">tabelatura</a>
-    <a href="#" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">poznámky</a>
+    <a href="#" id="nav-diskuse"    onclick="toggleDesktopPanel('diskuse',this);return false">diskuse</a>
     <a href="#" id="nav-napady"                    onclick="toggleDesktopPanel('napady',this);return false">
       nápady <span class="napady-badge">DK</span>
     </a>
-    <a href="#" data-toggle="modal" data-target="#myModal" style="color:var(--muted)">about</a>
-    <a href="help.php" data-help-open aria-controls="help-drawer" aria-haspopup="dialog">nápověda</a>
-    <?php if (auth_is_admin()): ?><a href="admin.php" target="_blank" rel="noopener" title="Otevřít administraci v novém okně nebo kartě">Administrace</a><?php endif; ?>
-    <a href="#" id="audio-cache-clear" title="Spravovat lokálně uložené nahrávky">smazat offline soubory</a>
-    <a href="#" data-toggle="modal" data-target="#modal_logout" style="color:var(--muted)">odhlásit</a>
   </nav>
   <div class="topbar-mob-actions">
     <a href="#" id="nav-napady-tab" onclick="tabletNapady(this);return false">nápady <span class="napady-badge">DK</span></a>
-    <details class="topbar-more-menu">
+  </div>
+  <details class="topbar-more-menu">
       <summary aria-label="Další možnosti" title="Další možnosti">
         <span></span><span></span><span></span>
       </summary>
@@ -220,20 +238,20 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
         <a href="#" data-toggle="modal" data-target="#myModal" onclick="this.closest('details').removeAttribute('open')">about</a>
         <a href="help.php" data-help-open aria-controls="help-drawer" aria-haspopup="dialog">nápověda</a>
         <?php if (auth_is_admin()): ?><a href="admin.php" target="_blank" rel="noopener" title="Otevřít administraci v novém okně nebo kartě" onclick="this.closest('details').removeAttribute('open')">Administrace</a><?php endif; ?>
-        <a href="#" class="audio-cache-clear-mobile" title="Spravovat lokálně uložené nahrávky" onclick="this.closest('details').removeAttribute('open')">smazat offline soubory</a>
+        <a href="#" id="audio-cache-clear" title="Spravovat lokálně uložené nahrávky" onclick="this.closest('details').removeAttribute('open')">Správa offline souborů</a>
         <a href="#" data-toggle="modal" data-target="#modal_logout" onclick="this.closest('details').removeAttribute('open')">odhlásit</a>
       </div>
-    </details>
-  </div>
+  </details>
 </div>
 
 <!-- ── SIDEBAR ── -->
  <div id="sidebar">
   <div class="sidebar-label" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 4px;">
-    <span>Skladby</span>
+    <span><?= $sekce === 'zkousky' ? 'Zkoušky' : 'Skladby' ?></span>
     <button class="btn-vz<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nova_slozka" style="padding: 2px 6px; font-size: 10px;">+ nová</button>
   </div>
 <div id="sidebar-playlist">
+    <?php if (!$pole_slozek): ?><p class="content-empty">Zatím žádné <?= $sekce === 'zkousky' ? 'zkoušky' : 'skladby' ?>.</p><?php endif; ?>
     <?php foreach ($pole_slozek as $s):
         $nazev_s = nacti_nazev_valu($slozka_slozek, $s);
         $active  = ($s === $slozka_souboru) ? ' active' : '';
@@ -597,7 +615,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
     <!-- PANEL DISKUSE -->
     <div class="panel" id="panel-diskuse">
       <div class="panel-header">
-        <h2>POZNÁMKY</h2>
+        <h2>DISKUSE</h2>
         <div class="acts" id="diskuse-val-label" style="font-size:10px;color:var(--muted)">
           <?php echo htmlspecialchars($nazev_valu); ?>
         </div>
@@ -658,12 +676,17 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 </div><!-- /main -->
 
 <!-- ── MODALS ── -->
+<main id="mt-workspace" hidden>
+<?php require __DIR__ . '/php/inc/multitrack_view.php'; ?>
+</main>
+<?php require __DIR__ . '/php/inc/multitrack_modals.php'; ?>
+<?php require __DIR__ . '/php/inc/multitrack_config.php'; ?>
 <?php require "php/modals.php"; ?>
 
 <!-- ── BOTTOM NAV ── -->
 <div id="bottom-nav">
   <button class="bnav" id="bn-skladby" onclick="toggleValDrawer()">
-    <img src="meat/ikona_skladby.png" class="bi" alt="skladby">skladby
+    <img src="meat/ikona_skladby.png" class="bi" alt=""> <?= $sekce === 'zkousky' ? 'zkoušky' : 'skladby' ?>
   </button>
   <button class="bnav active" id="bn-nahravky" onclick="mobilePanel('nahravky',this)">
     <img src="meat/ikona_nahravky.png" class="bi" alt="nahrávky">nahrávky
@@ -720,9 +743,9 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <div id="val-drawer" class="seznam-skladeb">
   
   <div class="drawer-header nodrag" style="padding: 8px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Seznam skladeb</span>
+      <span class="drawer-label"><?= $sekce === 'zkousky' ? 'Zkoušky' : 'Skladby' ?></span>
       <button class="btn-vz<?= ma_pravo('create_val') ? '' : ' btn-locked' ?>" data-toggle="modal" data-target="#modal_nova_slozka" onclick="document.getElementById('val-drawer').classList.remove('open')">
-          + nová skladba
+          + <?= $sekce === 'zkousky' ? 'nová zkouška' : 'nová skladba' ?>
       </button>
   </div>
 
@@ -758,9 +781,11 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <!-- ── Dynamický stav z PHP (session) — musí zůstat inline, main.js je statický soubor ── -->
 <script>
 var VZ = {
+  sekce: <?= json_encode($sekce) ?>,
   aktualniVal:     <?php echo json_encode($slozka_souboru); ?>,
   aktualniNazev:   <?php echo json_encode($nazev_valu); ?>,
   deepLink:        <?php echo json_encode($deep_link, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>,
+  multitrackInitialId: <?php echo json_encode($multitrack_initial_id); ?>,
   aktivniMobPanel: 'nahravky',
   pravo: {
     rename_val: <?php echo json_encode(ma_pravo('rename_val')); ?>,

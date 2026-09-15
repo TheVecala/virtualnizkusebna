@@ -11,6 +11,7 @@
  */
 
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
