@@ -2816,7 +2816,7 @@ function showLooperPeaksModal(cesta, nazev, loadId) {
 
 function openRecordingInLooper(cesta, nazev, options) {
     if ($('.looper-btn').filter(function() { return $(this).data('cesta') === cesta; }).prop('disabled')) return;
-    looperOpenOptions = Object.assign({ autoplay: true, timeMs: 0, loopRange: null }, options || {});
+    looperOpenOptions = Object.assign({ autoplay: false, timeMs: 0, loopRange: null }, options || {});
 
     cancelPendingLooperOpen();
     var loadId = ++looperLoadSequence;
