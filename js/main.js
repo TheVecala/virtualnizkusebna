@@ -3176,14 +3176,27 @@ function formatOfflineFilesSummary(count, totalSize) {
     return count + ' ' + soubory + ' · ' + formatOfflineFileSize(totalSize);
 }
 
+function offlineFileCategory(pathParts) {
+    var normalizedParts = pathParts.map(function(part) { return part.toLowerCase(); });
+    if (normalizedParts.indexOf('uploads') !== -1) return 'Skladby';
+    if (normalizedParts.indexOf('zkousky') !== -1) return 'Zkoušky';
+    if (normalizedParts.some(function(part) {
+        return part === 'multitrack' || part === 'multitracky' || part === 'multitrack_zapisy';
+    })) return 'Multitrack';
+    return 'Ostatní';
+}
+
 function offlineFileDetails(key) {
     var url = new URL(key.replace(/^audio-v1:/, ''), window.location.href);
     var pathParts = url.pathname.split('/').filter(Boolean).map(function(part) {
         try { return decodeURIComponent(part); } catch (error) { return part; }
     });
+    var name = pathParts.pop();
     return {
-        name: pathParts.pop() || url.href,
-        context: pathParts.join(' / ')
+        name: name || 'Offline soubor',
+        // Interní URL obsahuje identifikátory kapely a uživatele. V rozhraní proto
+        // ukazujeme pouze typ obsahu, nikoli adresářovou strukturu na serveru.
+        context: offlineFileCategory(pathParts)
     };
 }
 
