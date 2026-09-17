@@ -168,7 +168,7 @@ function auth_admin_count(mysqli $db): int {
 }
 
 // Volat pouze uvnitř transakce po uzamčení auth_settings (platí i pro bootstrap).
-function auth_save_member(mysqli $db, array $input, array $guest, bool $firstAdmin = false): void {
+function auth_save_member(mysqli $db, array $input, array $guest, bool $firstAdmin = false): int {
     $idText = auth_input($input, 'id');
     if ($idText !== '' && (!ctype_digit($idText) || (int) $idText < 1)) {
         throw new InvalidArgumentException('Neplatný člen.');
@@ -217,6 +217,7 @@ function auth_save_member(mysqli $db, array $input, array $guest, bool $firstAdm
         $stmt->bind_param('ssis', $name, $role, $active, $hash);
     }
     $stmt->execute();
+    return $id ?: (int) $db->insert_id;
 }
 
 function auth_save_guest(mysqli $db, array $input, array $guest): void {

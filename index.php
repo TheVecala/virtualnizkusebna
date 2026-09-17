@@ -1,6 +1,10 @@
 <?php session_start();
 error_reporting(0);
 require_once 'config.php';
+if (($_GET['v'] ?? '') === '2') {
+    require __DIR__ . '/vz2.php';
+    exit;
+}
 require_once __DIR__ . '/php/inc/content_context.php';
 
 // Deep link poznáme už před přihlášením. Do session ukládáme pouze znovu
@@ -235,6 +239,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
         <span></span><span></span><span></span>
       </summary>
       <div class="topbar-more-menu-items">
+        <?php if (defined('VZ2_ENABLED') && VZ2_ENABLED): ?><a href="index.php?v=2">Zkušebna 2.0</a><?php endif; ?>
         <a href="#" data-toggle="modal" data-target="#myModal" onclick="this.closest('details').removeAttribute('open')">about</a>
         <a href="help.php" data-help-open aria-controls="help-drawer" aria-haspopup="dialog">nápověda</a>
         <?php if (auth_is_admin()): ?><a href="admin.php" target="_blank" rel="noopener" title="Otevřít administraci v novém okně nebo kartě" onclick="this.closest('details').removeAttribute('open')">Administrace</a><?php endif; ?>

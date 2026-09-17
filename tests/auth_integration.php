@@ -100,7 +100,10 @@ try {
 
     foreach (['config.php', 'index.php', 'admin.php', 'create_first_admin.php', 'php/auth.php',
         'php/loginbox4.php', 'php/login/connect.php', 'php/modals.php',
-        'php/inc/admin_storage.php', 'php/inc/admin_storage_view.php', 'js/help-drawer.js', 'css/help.css', 'css/admin.css'] as $file) {
+        'php/inc/admin_storage.php', 'php/inc/admin_storage_view.php', 'php/inc/vz2_core.php',
+        'php/inc/content_context.php', 'php/inc/multitrack_view.php', 'php/inc/multitrack_modals.php', 'php/inc/multitrack_config.php',
+        'js/help-drawer.js', 'css/help.css', 'css/admin.css'] as $file) {
+        if ($file === 'create_first_admin.php' && !is_file($root . '/' . $file) && !in_array($suite, ['all', 'bootstrap'], true)) continue;
         if (!is_dir(dirname($temp . '/' . $file))) {
             mkdir(dirname($temp . '/' . $file), 0777, true);
         }

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/php/inc/vz2_core.php';
 auth_require_admin();
 header('Cache-Control: no-store');
 require_once __DIR__ . '/php/inc/admin_storage.php';
@@ -56,10 +57,18 @@ try {
                 auth_require_admin();
             }
             $action = auth_input($_POST, 'action');
+            if (vz2_enabled()) vz2_ready(true);
             if ($action === 'member') {
-                auth_save_member($db, $_POST, $guest);
+                $memberId = auth_save_member($db, $_POST, $guest);
+                if (vz2_enabled()) {
+                    $member = vz2_one($db, 'SELECT name,role,active FROM users WHERE id=?', [$memberId]);
+                    vz2_log($db, empty($_POST['id']) ? 'user.created' : 'user.updated', 'user', $memberId, $member['name'],
+                        'Role: ' . $member['role'] . '; aktivní: ' . $member['active'] . (!empty($_POST['password']) ? '; změna hesla' : ''));
+                }
             } elseif ($action === 'guest') {
                 auth_save_guest($db, $_POST, $guest);
+                if (vz2_enabled()) vz2_log($db, 'auth.guest_changed', 'auth_settings', 1, 'Přístup hosta',
+                    'Povolen: ' . (($_POST['guest_enabled'] ?? '') === '1' ? 'ano' : 'ne') . (!empty($_POST['password']) ? '; změna hesla' : ''));
             } else {
                 throw new InvalidArgumentException('Neplatná akce.');
             }
@@ -137,6 +146,7 @@ function admin_member_form(array $user): void {
     <aside class="help-nav" aria-label="Sekce administrace"><strong>Administrace</strong><nav><a href="#uzivatele" class="active">Uživatelé</a><a href="#server">Server</a><a href="#nastaveni">Nastavení</a></nav></aside>
     <main id="obsah" class="help-content">
       <h1>Administrace</h1>
+      <?php if (vz2_enabled()): ?><p><a href="index.php?v=2">VZ2 — nahrávky, operace a deník</a></p><?php endif; ?>
       <?php if ($error): ?><p class="admin-message error" role="alert"><?= auth_h($error) ?></p><?php endif; ?>
       <?php if ($notice): ?><p class="admin-message" role="status"><?= auth_h($notice) ?></p><?php endif; ?>
       <?php if ($available): ?>
