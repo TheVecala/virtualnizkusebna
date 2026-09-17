@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Rekonstrukce | Zkušebna DK</title>
+    <style>
+        :root {
+            --pozadi: #202428;
+            --tmava: #1a1d20;
+            --card: #2a2e33;
+            --border: #3a3e44;
+            --text: #e0e0e0;
+            --muted: #888;
+            --barva: #a7ac38;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            min-height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: var(--pozadi);
+            color: var(--text);
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+
+        .topbar {
+            position: fixed;
+            inset: 0 0 auto;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            height: 46px;
+            padding: 0 12px;
+            background: var(--tmava);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            color: var(--barva);
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        main {
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            padding: 78px 20px 32px;
+        }
+
+        .maintenance-card {
+            position: relative;
+            width: min(100%, 620px);
+            padding: 46px 44px 42px;
+            overflow: hidden;
+            text-align: center;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, .3);
+        }
+
+        .maintenance-card::before {
+            position: absolute;
+            inset: 0 0 auto;
+            height: 4px;
+            content: "";
+            background: var(--barva);
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .status::before {
+            width: 8px;
+            height: 8px;
+            content: "";
+            background: var(--barva);
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(167, 172, 56, .14);
+        }
+
+        h1 {
+            max-width: 510px;
+            margin: 0 auto;
+            color: var(--text);
+            font-size: clamp(25px, 5vw, 38px);
+            line-height: 1.2;
+        }
+
+        .pitch {
+            position: relative;
+            width: 74px;
+            height: 46px;
+            margin: 30px auto 0;
+            border: 2px solid var(--barva);
+            border-radius: 4px;
+            opacity: .7;
+        }
+
+        .pitch::before {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            content: "";
+            background: var(--barva);
+            transform: translate(-50%, -50%);
+        }
+
+        .pitch::after {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            content: "";
+            border: 2px solid var(--barva);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @media (max-width: 480px) {
+            .maintenance-card {
+                padding: 38px 24px 34px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <span class="brand">ZKUŠEBNA / DK</span>
+    </header>
+    <main>
+        <section class="maintenance-card" aria-labelledby="maintenance-message">
+            <div class="status">Probíhá rekonstrukce</div>
+            <h1 id="maintenance-message">Zkušebna zrovna nevalí, protože probíhá rekonstrukce. Zatím si můžeš hodit vlastňáka.</h1>
+            <div class="pitch" aria-hidden="true"></div>
+        </section>
+    </main>
+</body>
+</html>
