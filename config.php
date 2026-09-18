@@ -6,22 +6,31 @@ define('DB_PASS', 'serepes6');
 define('DB_NAME', '18810_virtualni_zkusebna');
 
 // ── Web ──
-define('SITE_URL',  'https://zkusebna.dusanovakapela.cz');
+define('SITE_URL',  'https://zkusebna_beta.dusanovakapela.cz');
 define('MAIL_FROM', 'automat@dusanovakapela.cz');
-
-// ── Přístupová hesla ──
-define('HESLO_HOST',     'host');
-define('HESLO_MUZIKANT', 'krpole');
-define('HESLO_ADMIN',    'zmen_si_me');   // ← změň před nasazením
 
 // ── Oprávnění rolí ──
 $GLOBALS['PRAVA'] = [
     'host'     => [],
-    'muzikant' => ['edit_text', 'upload', 'comment', 'reorder', 'move_file', 'delete_file', 'create_val', 'rename_val'],
-    'admin'    => ['edit_text', 'upload', 'comment', 'reorder', 'move_file', 'delete_file', 'create_val', 'rename_val', 'delete_val'],
+    'muzikant' => ['edit_text', 'upload', 'comment', 'reorder', 'move_file', 'delete_file', 'create_val', 'rename_val', 'edit_recording_label'],
+    'admin'    => ['edit_text', 'upload', 'comment', 'reorder', 'move_file', 'delete_file', 'create_val', 'rename_val', 'delete_val', 'edit_recording_label'],
 ];
 
 function ma_pravo(string $pravo): bool {
     $prava = $GLOBALS['PRAVA'][$_SESSION['role'] ?? ''] ?? [];
     return in_array($pravo, $prava, true);
+}
+
+// Osobní účty: průběžně promítnout změnu role, deaktivaci a změnu hesla.
+// VZ2 is opt-in; never replace this environment's connection or SITE_URL.
+if (is_file(__DIR__ . '/config.vz2.php')) {
+    require_once __DIR__ . '/config.vz2.php';
+}
+// Nasadit až po SQL migraci a vytvoření prvního admina starým loginem.
+require_once __DIR__ . '/php/auth.php';
+try {
+    auth_refresh_session();
+} catch (Throwable $e) {
+    auth_forget_identity();
+    error_log('Zkušebna: nepodařilo se ověřit přihlášený účet.');
 }

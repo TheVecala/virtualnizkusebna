@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 
 if (empty($_SESSION['role'])) { echo ''; exit; }
@@ -7,7 +8,7 @@ if (empty($_SESSION['role'])) { echo ''; exit; }
 $kapela            = $_SESSION['kapela']                     ?? "";
 $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";
 $slozka_souboru    = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
-$sekce             = "uploads";
+$sekce             = content_section();
 
 $cesta_slozky = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . $sekce . "/" . $slozka_souboru . "/";
 
@@ -21,6 +22,27 @@ if (!empty($slozka_souboru) && is_dir($cesta_slozky)) {
         if (substr($f, 0, 1) === ".") continue;
         if (substr($f, -11) === '.peaks.json') continue; // WaveSurfer cache — nezobrazovat
         $soubory[] = $f;
+    }
+}
+
+// ── Popisky nahrávek (jeden dotaz pro celý vál, ne N+1) ──
+$popisky = [];
+$mohu_upravit_popisek = in_array($_SESSION['role'] ?? '', ['muzikant', 'admin']);
+if (!empty($soubory)) {
+    include "../login/connect.php";
+    $prefix_cesty = "user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/";
+    $cesty_escaped = array_map(function($f) use ($mysqli, $prefix_cesty) {
+        return "'" . $mysqli->real_escape_string($prefix_cesty . $f) . "'";
+    }, $soubory);
+    $res_popisky = $mysqli->query("
+        SELECT file_path, poznamka
+        FROM recording_notes
+        WHERE cas = -1 AND file_path IN (" . implode(',', $cesty_escaped) . ")
+    ");
+    if ($res_popisky) {
+        while ($rp = $res_popisky->fetch_assoc()) {
+            $popisky[$rp['file_path']] = $rp['poznamka'];
+        }
     }
 }
 
@@ -43,17 +65,102 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+    cursor: pointer;
+    transition: background-color .15s ease;
+    border-radius: 4px; 
 }
 
-/* Zajištění, že se dlouhý název souboru nikdy nezalomí a elegantně se zkrátí */
-.nahravka-nazev {
+.nahravka-hlavni:hover
+{
+    background: rgba(127,191,255,.10);
+}
+
+/* Obal pro popisek + název souboru (nahrazuje dřívější přímé umístění .nahravka-nazev) */
+.nahravka-popis-wrap {
   flex: 1;
   min-width: 0;
+}
+
+/* Popisek — primární, hned viditelný text (název souboru může být zavádějící) */
+.nahravka-popisek {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.popisek-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.popisek-prazdny {
+  color: #888;
+  font-weight: normal;
+  font-style: italic;
+}
+.popisek-edit-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity .15s, color .15s;
+}
+.popisek-edit-btn:hover { opacity: 1; color: var(--barva); }
+
+/* Inline editace popisku */
+.popisek-edit-wrap {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+}
+.popisek-edit-input {
+  flex: 1;
+  min-width: 0;
+  background: #1a1d20;
+  border: 1px solid #4a5060;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 13px;
+  padding: 3px 7px;
+  box-sizing: border-box;
+}
+.popisek-edit-input:focus { outline: none; border-color: var(--barva); }
+.popisek-save-btn, .popisek-cancel-btn {
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.popisek-save-btn {
+  background: #2a3a10; border: 1px solid var(--barva); color: var(--barva);
+}
+.popisek-save-btn:disabled { opacity: 0.5; cursor: default; }
+.popisek-cancel-btn {
+  background: none; border: 1px solid #555; color: #888;
+}
+.popisek-cancel-btn:hover { border-color: #888; color: #aaa; }
+
+/* Název souboru — teď jen podřádek, sekundární informace */
+.nahravka-nazev {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 14px;
-  color: #e0e0e0;
+   
+  margin-top: 2px;
 }
 
 /* Styling pro velké otočné šipkové tlačítko */
@@ -180,30 +287,76 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
   background: #341c1c;
   color: #ff5555;
 }
+
+/* Stav offline kopie v tomto prohlížeči. */
+.icon-btn.native-audio-cache-toggle[aria-pressed="true"] {
+  border-color: #<?php echo $barva; ?>;
+  background: #2a3a10;
+}
+
+@media (max-width: 440px) {
+  .vysuvna-tlacitka { gap: 4px; }
+  .icon-btn { padding: 7px 2px; }
+  .icon-btn.download-btn span,
+  .icon-btn.del span { display: none; }
+}
+
+.vysuvna-tlacitka { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, .9fr); align-items: stretch; }
+.vysuvna-tlacitka > .icon-btn span { white-space: normal; text-transform: none; font-size: 11px; letter-spacing: 0; }
+.vysuvna-tlacitka > .icon-btn .native-cache-status { font-size: 10px; font-weight: normal; color: #aaa; }
+.recording-options-toggle { width: 100%; height: 100%; }
+.recording-options-toggle span { text-transform: none; font-size: 11px; letter-spacing: 0; }
+.recording-options-menu { background: #25292e; border: 1px solid #4a5060; min-width: 210px; padding: 5px; }
+.recording-options-menu .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; color: #ddd; font-size: 13px; border-radius: 4px; }
+.recording-options-menu .dropdown-item:hover, .recording-options-menu .dropdown-item:focus { background: #343a40; color: var(--barva); }
+.recording-options-menu .del { color: #ff8888; }
+.recording-options-menu .dropdown-divider { border-color: #4a5060; }
+.poznamky-toolbar .timestamp-action-btn { flex-direction: row; padding: 6px 10px; min-height: 32px; gap: 6px; }
+.poznamky-toolbar .timestamp-action-btn span { text-transform: none; font-size: 12px; letter-spacing: 0; }
+.poznamky-toolbar .export-timestampy-btn { flex: 0 0 auto; }
+@media (max-width: 440px) {
+  .vysuvna-tlacitka > .icon-btn, .vysuvna-tlacitka .recording-options-toggle { padding: 6px 2px; gap: 3px; }
+  .vysuvna-tlacitka > .icon-btn span, .vysuvna-tlacitka .recording-options-toggle span { font-size: 10px; }
+
+}
 </style>
 
 <?php if (empty($slozka_souboru)): ?>
-  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Vyberte skladbu ze seznamu.</div>
+  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Vyberte položku ze seznamu.</div>
 
 <?php elseif (empty($soubory)): ?>
-  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Žádné soubory v této skladbě.</div>
+  <div style="color:#888; font-size:12px; padding:12px; text-align:center;">Žádné soubory v této složce.</div>
 
 <?php else: ?>
   
   <?php 
   foreach ($soubory as $i => $soub): 
-    $cesta    = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/" . $soub;
-    $cesta_fs = "user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/" . $soub;
+    $cesta    = "user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/" . $soub;
+    $cesta_fs = "user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/" . $soub;
     $ext      = strtolower(pathinfo($soub, PATHINFO_EXTENSION));
     $je_audio = in_array($ext, $povolene_audio);
+    $popisek  = $popisky[$cesta_fs] ?? '';
     
     $id_roletky = "roletka_" . $i;
   ?>
     <div class="nahravka-box">
       
       <div class="nahravka-hlavni">
+        <div class="nahravka-popis-wrap">
         <div class="nahravka-nazev" title="<?php echo htmlspecialchars($soub); ?>">
-          <?php echo $je_audio ? '<img src="meat/ikona_kazeta.png" alt="" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
+            <?php echo $je_audio ? '<img src="meat/ikona_kazeta.png" alt="" style="width: 16px; height: 16px; object-fit: contain; flex-shrink: 0;">' : '📄'; ?> <?php echo htmlspecialchars($soub); ?>
+        </div>
+		<div class="nahravka-popisek" data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
+            <?php if ($popisek !== ''): ?>
+              <span class="popisek-text"><?php echo htmlspecialchars($popisek); ?></span>
+            <?php else: ?>
+              <span class="popisek-text popisek-prazdny">bez popisku</span>
+            <?php endif; ?>
+            <?php if ($mohu_upravit_popisek): ?>
+              <button class="popisek-edit-btn" title="upravit popisek">✏</button>
+            <?php endif; ?>
+          </div>
+
         </div>
         <div>
           <button class="btn-nastaveni collapsed" 
@@ -220,12 +373,14 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
         
         <?php if ($je_audio): ?>
           <div class="vysuvna-prehravac">
-            <audio controls style="width: 100%; height: 40px;">
+            <audio controls preload="metadata" style="width: 100%; height: 40px;"
+                   data-audio-cache-url="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
+                   data-network-src="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>">
               <?php 
               $mime_typy = ['mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg', 'flac' => 'audio/flac', 'aac' => 'audio/aac'];
               $m_type = $mime_typy[$ext] ?? 'audio/mpeg';
               ?>
-              <source src="<?php echo htmlspecialchars($cesta); ?>?t=<?php echo time(); ?>" type="<?php echo $m_type; ?>">
+              <source src="<?php echo htmlspecialchars($cesta); ?>?v=<?php echo (int) @filemtime(__DIR__ . '/../../' . $cesta); ?>" type="<?php echo $m_type; ?>">
             </audio>
           </div>
         <?php endif; ?>
@@ -237,20 +392,36 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
                     data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
                     data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
                     title="Otevřít křivku nahrávky"
-                    aria-label="Looper">
+                    aria-label="Otevřít v looperu">
               <i class="ti ti-activity" aria-hidden="true"></i>
-              <span>Looper</span>
+              <span>Otevřít</span>
             </button>
             <button class="icon-btn poznamky-btn"
                     data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
                     title="Zobrazit timestampy"
-                    aria-label="Poznámky">
+                    aria-label="Otevřít poznámky" aria-expanded="false">
               <i class="ti ti-flag" aria-hidden="true"></i>
               <span>Poznámky</span>
             </button>
+            <button type="button" class="icon-btn native-audio-cache-toggle"
+                    data-cesta="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"
+                    aria-pressed="false"
+                    title="Uložit pro offline přehrávání"
+                    aria-label="Uložit pro offline přehrávání">
+              <i class="ti ti-download" aria-hidden="true"></i>
+              <span class="native-cache-label">Uložit pro offline</span>
+              <span class="native-cache-status sr-only" aria-live="polite">Do tohoto prohlížeče</span>
+            </button>
           <?php endif; ?>
 
-          <button class="icon-btn presunout-btn"
+          <div class="dropdown recording-options">
+            <button type="button" class="icon-btn recording-options-toggle" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+              <i class="ti ti-dots-vertical" aria-hidden="true"></i>
+              <span>Možnosti</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-right recording-options-menu">
+          <button type="button" class="dropdown-item presunout-btn"
                   data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
                   data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
                   data-toggle="modal" 
@@ -258,20 +429,22 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
                   title="Přesunout do jiné skladby"
                   aria-label="Přesun">
             <i class="ti ti-arrow-right" aria-hidden="true"></i>
-            <span>Přesun</span>
+            <span>Přesunout</span>
           </button>
 
-          <a class="icon-btn"
+          <a class="dropdown-item download-btn"
              href="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>" 
              download="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
+             <?php if ($je_audio): ?>data-audio-cache-url="<?php echo htmlspecialchars($cesta, ENT_QUOTES); ?>"<?php endif; ?>
              title="Stáhnout"
              aria-label="Stáhnout"
              onclick="return confirm('Opravdu stáhnout soubor: <?php echo htmlspecialchars($soub, ENT_QUOTES); ?>?');">
             <i class="ti ti-download" aria-hidden="true"></i>
-            <span>Stáhnout</span>
+            <span>Stáhnout <?php echo $je_audio ? "nahrávku" : "soubor"; ?></span>
           </a>
 
-          <button class="icon-btn del smazat-btn" 
+          <div class="dropdown-divider"></div>
+          <button type="button" class="dropdown-item del smazat-btn"
                   data-soubor="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>"
                   data-nazev="<?php echo htmlspecialchars($soub, ENT_QUOTES); ?>"
                   data-toggle="modal" 
@@ -281,6 +454,8 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
             <i class="ti ti-trash" aria-hidden="true"></i>
             <span>Smazat</span>
           </button>
+            </div>
+          </div>
 
         </div>
 		
@@ -290,12 +465,7 @@ $barva = $_SESSION['barva1'] ?? "a7ac38";
 
 			<div class="poznamky-seznam"></div>
 
-			<?php if ($je_audio): ?>
-			<button class="fbtn pridat-poznamku-btn"
-					data-cesta="<?php echo htmlspecialchars($cesta_fs, ENT_QUOTES); ?>">
-				Přidat poznámku k aktuálnímu času
-			</button>
-			<?php endif; ?>
+		 
 
         </div>
         

@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 
 if (empty($_SESSION['role'])) { echo ''; exit; }
@@ -9,10 +10,10 @@ $befelemepesseveze = $_SESSION['befelemepesseveze']          ?? "";
 $slozka_souboru    = $_SESSION['slozka_souboru_k_zobrazeni'] ?? "";
 $aktualni_tab      = $_SESSION['aktualni_tab']               ?? "tabelatura.txt"; // ← opraveno: aktualni_tab
 
-$soubor = "../../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/texty/" . $aktualni_tab;
+$soubor = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/texty/" . $aktualni_tab;
 
 // Název válu
-$nazev_soubor = "../../user/" . $kapela . "/" . $befelemepesseveze . "/uploads/" . $slozka_souboru . "/data/nazev_valu.txt";
+$nazev_soubor = "../../user/" . $kapela . "/" . $befelemepesseveze . "/" . content_section() . "/" . $slozka_souboru . "/data/nazev_valu.txt";
 $nazev_valu   = file_exists($nazev_soubor) ? trim(file_get_contents($nazev_soubor)) : $slozka_souboru;
 ?>
 <style>

@@ -11,7 +11,7 @@ $heslo_raw = $_POST["heslo"] ?? "";
 
 if (empty($login_raw) || empty($heslo_raw)) {
     $_SESSION['chyba_prihlaseni'] = "wrong_heslo";
-    require "../navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 
@@ -37,7 +37,9 @@ if ($overeni === 1) {
     $_SESSION['skin']              = "skin1";
 
     // Nastavit první dostupnou složku (vál) z uploads adresáře
-    $uploads = "../user/" . $login . "/" . $row["hashedkapela"] . "/uploads/";
+    // PŮVODNÍ VERZE (před přesunem struktury, na produkci fungovala bez problému):
+    // $uploads = "../user/" . $login . "/" . $row["hashedkapela"] . "/uploads/";
+    $uploads = "../../user/" . $login . "/" . $row["hashedkapela"] . "/uploads/";
     if (is_dir($uploads)) {
         $slozky = scandir($uploads);
         // Přeskočit . a .. a najít první složku
@@ -56,12 +58,12 @@ if ($overeni === 1) {
     // Regenerace session ID po přihlášení - ochrana proti session fixation
     session_regenerate_id(true);
 
-    require "../navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 
 } else {
     $_SESSION['chyba_prihlaseni'] = "wrong_heslo";
-    require "../navrat.php";
+    require __DIR__ . "/../inc/navrat.php";
     exit;
 }
 ?>

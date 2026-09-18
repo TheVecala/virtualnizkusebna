@@ -13,5 +13,5 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-require "../navrat.php";
+require __DIR__ . "/../inc/navrat.php";
 ?>
