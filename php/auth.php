@@ -7,6 +7,11 @@ function auth_db(): mysqli {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         require __DIR__ . '/login/connect.php';
         $mysqli->set_charset('utf8mb4');
+        if (defined('VZ2_ENABLED') && VZ2_ENABLED === true) {
+            // Hosting need not have a strict global default. Configure this connection
+            // before login/admin/content queries; keep any additional server modes.
+            $mysqli->query("SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION')");
+        }
         $db = $mysqli;
     }
     return $db;

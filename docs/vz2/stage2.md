@@ -3,6 +3,11 @@
 Datum: 17. 9. 2026. Navazuje na schválený návrh v `design.md` a pokyn pokračovat
 na commitu `cd26bd8b`. Jde o implementaci základu, nikoli o dokončení všech etap VZ2.
 
+Aktualizace 18. 9. 2026: etapa 2 je již commitnutá jako `73f8f37`.
+Uživatel doložil živý hosting a zálohy. Aktuální provozní fakta, úprava strict SQL
+a zbývající podmínky storage jsou v [hosting-verification.md](hosting-verification.md).
+Níže uvedený stav repozitáře a testovací protokol zachycují původní předání 17. 9.
+
 ## Stav repozitáře
 
 - Skutečná větev: `feature/zkusebna2.0`.
@@ -84,17 +89,25 @@ stagingu vyžaduje zálohu či konkrétní administrátorský zásah; retry nevy
 
 ## Nasazení – dosud neprovedeno
 
-1. Zálohovat sdílenou DB, konfigurace a soubory. Na hostingu ověřit skutečné PHP,
-   MariaDB, `SHOW CREATE TABLE users` a `auth_settings`, oba document roots,
-   open_basedir, oprávnění, disk a limity uploadu. Nový kód potřebuje **64bit PHP
+1. Zálohy a základní hostingové kontroly doložil uživatel 18. 9.; viz navazující
+   protokol. Nový kód potřebuje **64bit PHP
    alespoň 8.1, mysqli s get_result a iconv**, InnoDB, strict SQL a vynucené CHECK.
-   Lokálně je ověřena MariaDB 11.4.5; živá verze ani schéma hostingu doložené nejsou.
+   Lokálně je ověřena MariaDB 11.4.5; doložený hosting má MariaDB 11.4.12 a PHP 8.1.32.
+   Výchozí SQL režim hostingu není strict. `auth_db()` při zapnuté VZ2 nastavuje
+   požadované session režimy před první aplikační operací, včetně loginu a administrace.
 2. Ověřit `users.id INT UNSIGNED PRIMARY KEY` a InnoDB. Zkontrolovat, zda již neexistují
    `vz2_` tabulky. Ručně **jednou** aplikovat `migrations/002_vz2.sql` do správné DB.
    Neměnit users ani auth_settings. DDL není automatická migrace při návštěvě webu
    ani opakovatelný opravný skript; při částečném DDL selhání nejprve zjistit stav,
    nespouštět soubor naslepo znovu. `schema-draft.sql` je historický návrh, ne druhá migrace.
-3. Ručně založit vyhrazený soukromý root mimo oba weby a stará audio. Vytvořit
+   Použít stávající `18810_virtualni_zkusebna`, nikoli prázdnou `18810_VZ2`.
+   Upravený migrační soubor začíná `SET SESSION sql_mode` a výpisem databáze/režimu;
+   spouštět celý soubor na jednom spojení se zastavením při chybě. Neprovádět pouze DDL část.
+3. **Nejprve dořešit storage:** alfa a beta jsou podsložky jednoho veřejného kořene,
+   který je současně hranicí open_basedir. Původní doporučení „mimo oba weby“
+   samo o sobě neznamená soukromý adresář. Změna open_basedir pro neveřejný root,
+   nebo serverem blokovaný adresář uvnitř společného kořene, musí být samostatně
+   navržena a prakticky ověřena; viz navazující protokol. Pak teprve vytvořit
    `.vz2-storage-id` s vlastním dataset key; ověřit, že root nelze číst veřejným HTTP.
    Nastavit přístup PHP procesu, ověřit hardlinky, flock a dostatek místa.
 4. Podle `config.vz2.example.php` vytvořit soukromý ignorovaný `config.vz2.php`.
@@ -185,8 +198,8 @@ $env:AUTH_TEST_SUITE = 'lifecycle'
 & $env:PHP_BIN tests/auth_integration.php
 ```
 
-Hostingu se týká dosud neprovedená část: živé DDL/PHP, disková topologie alfy/bety,
-hardlinky a zámky, upload limity, zálohy a průchod celými uživatelskými scénáři.
+Tento testovací protokol zachycuje stav 17. 9. Následně doložená hostingová fakta
+a aktuálně zbývající kontroly shrnuje `hosting-verification.md`.
 
 ## Změněné soubory
 

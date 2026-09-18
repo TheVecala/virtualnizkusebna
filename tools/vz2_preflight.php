@@ -17,8 +17,11 @@ try {
     $db = vz2_db();
     $version = $db->server_info;
     report(stripos($version,'MariaDB') !== false, 'MariaDB: '.$version);
-    $mode = $db->query('SELECT @@sql_mode mode, @@check_constraint_checks checks')->fetch_assoc();
-    report(str_contains($mode['mode'],'STRICT_') && (int)$mode['checks']===1, 'Strict SQL and enforced CHECK constraints');
+    $mode = $db->query('SELECT @@SESSION.sql_mode mode, @@GLOBAL.sql_mode global_mode, @@SESSION.check_constraint_checks checks')->fetch_assoc();
+    $requiredModes = ['STRICT_TRANS_TABLES','ERROR_FOR_DIVISION_BY_ZERO','NO_ENGINE_SUBSTITUTION'];
+    report(!array_diff($requiredModes, explode(',', $mode['mode'])), 'Application connection SQL mode: '.$mode['mode']);
+    echo 'Server default SQL mode (informational): '.$mode['global_mode'].PHP_EOL;
+    report((int)$mode['checks']===1, 'Enforced CHECK constraints');
     $id = $db->query("SHOW COLUMNS FROM users WHERE Field='id'")->fetch_assoc();
     report($id && preg_match('/^int(?:\(\d+\))? unsigned$/i',$id['Type']) && $id['Key']==='PRI', 'users.id INT UNSIGNED PRIMARY KEY');
     $engine = $db->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users'")->fetch_assoc();

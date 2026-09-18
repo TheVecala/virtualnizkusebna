@@ -1,11 +1,16 @@
--- VZ2 / ETAPA 2 / RUCNI MIGRACE. Aplikovat jednou po preflightu a zaloze.
+-- VZ2 / ETAPA 2 / RUCNI MIGRACE. Aplikovat jednou po overeni prostredi a zaloze.
 -- Viz docs/vz2/stage2.md. Aplikace tuto migraci nikdy nespousti sama.
--- Cil pro izolovane overeni: MariaDB 11.4.5 (verze dolozena starsi dokumentaci).
--- Hosting ani jeho zive schema nebyly overeny. users.id musi byt INT UNSIGNED,
--- PRIMARY KEY, InnoDB podle migrations/001_personal_accounts.sql.
+-- Lokalni overeni: MariaDB 11.4.5. Uzivatel dolozil hosting 11.4.12 a kompatibilni users.
+-- Cil: stavajici sdilena DB 18810_virtualni_zkusebna, NIKOLI prazdna 18810_VZ2.
+-- users.id musi byt INT UNSIGNED PRIMARY KEY, InnoDB.
 -- Vsechny DATETIME jsou UTC; aplikace nastavi session time_zone = '+00:00'.
 -- Povinna pole bez DEFAULT musi dodat server. Zadny seed fiktivnich autoru.
 -- Zadny DROP, zadny zasah do users/auth_settings/stareho obsahu.
+
+-- Spustit cely soubor na JEDNOM spojeni a zastavit pri prvni chybe.
+-- SET GLOBAL neni potreba; zachovame i dalsi pripadne rezimy hostingu.
+SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION');
+SELECT DATABASE() AS migration_database, @@SESSION.sql_mode AS migration_sql_mode;
 
 CREATE TABLE vz2_collection_orders (
     kind ENUM('song','rehearsal') NOT NULL,

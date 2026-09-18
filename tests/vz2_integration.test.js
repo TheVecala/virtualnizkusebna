@@ -29,11 +29,23 @@ $db->set_charset('utf8mb4');
 $command=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
 if($command['action']==='init'){
  $db->query('CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');$db->select_db('${database}');
+ $db->query("SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE'");
  foreach(['001_personal_accounts.sql','002_vz2.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
  foreach([['Admin','admin','admin-test'],['Alice','muzikant','alice-test'],['Bob','muzikant','bob-test']] as $u){$s=$db->prepare('INSERT INTO users(name,role,password_hash) VALUES (?,?,?)');$s->execute([$u[0],$u[1],password_hash($u[2],PASSWORD_DEFAULT)]);}
  $s=$db->prepare('UPDATE auth_settings SET guest_enabled=1,guest_password_hash=? WHERE id=1');$s->execute([password_hash('guest-test',PASSWORD_DEFAULT)]);
- echo json_encode(['version'=>$db->server_info]);
+ echo json_encode(['version'=>$db->server_info,'mode'=>$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0]]);
 }elseif($command['action']==='drop'){$db->query('DROP DATABASE ${database}');echo '{}';}
+elseif($command['action']==='runtime_mode'){
+ $defaultMode=$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0];
+ require ${phpString(path.join(web, 'config.php'))};
+ $connection=auth_db();
+ $authMode=$connection->query('SELECT @@SESSION.sql_mode')->fetch_row()[0];
+ $connection->query('CREATE TEMPORARY TABLE strict_probe (v VARCHAR(1)) ENGINE=InnoDB');
+ $rejected=false;
+ try{$connection->query("INSERT INTO strict_probe VALUES ('too long')");}catch(mysqli_sql_exception $e){if($e->getCode()!==1406)throw $e;$rejected=true;}
+ require ${phpString(path.join(web, 'php/inc/vz2_core.php'))};
+ echo json_encode(['defaultMode'=>$defaultMode,'authMode'=>$authMode,'vz2Mode'=>vz2_db()->query('SELECT @@SESSION.sql_mode')->fetch_row()[0],'rejected'=>$rejected,'sameConnection'=>$connection===vz2_db()]);
+}
 else{$db->select_db('${database}');$s=$db->prepare($command['sql']);$s->execute($command['params']??[]);$r=$s->get_result();echo json_encode($r?$r->fetch_all(MYSQLI_ASSOC):['affected'=>$s->affected_rows,'id'=>$db->insert_id]);}
 `);
 function db(sql, params = []) { return JSON.parse(execFileSync(php, [path.join(temp, 'db.php')], { input: JSON.stringify({ action: 'query', sql, params }), windowsHide: true, timeout: 15000 }).toString()); }
@@ -94,6 +106,13 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         console.log('TEMP ' + temp);
         const init = dbAction('init'); created = true; console.log('MariaDB ' + init.version);
         check(db("SHOW TABLES LIKE 'vz2_%'").length === 13, 'migration creates 13 tables');
+        const requiredModes = ['STRICT_TRANS_TABLES','ERROR_FOR_DIVISION_BY_ZERO','NO_ENGINE_SUBSTITUTION'];
+        const hasRequiredModes = mode => requiredModes.every(m => mode.split(',').includes(m));
+        check(hasRequiredModes(init.mode) && init.mode.split(',').includes('NO_ZERO_DATE'), 'migration enables strict mode from a non-strict session and preserves additional modes');
+        const runtimeMode = dbAction('runtime_mode');
+        if (process.env.VZ2_TEST_EXPECT_NONSTRICT_DEFAULT === '1') check(!runtimeMode.defaultMode.includes('STRICT_'), 'test server reproduces non-strict hosting default');
+        check(hasRequiredModes(runtimeMode.authMode) && hasRequiredModes(runtimeMode.vz2Mode) && runtimeMode.sameConnection, 'login, admin and VZ2 share a configured strict connection');
+        check(runtimeMode.rejected, 'application connection rejects silent VARCHAR truncation');
         const preflight = execFileSync(php, [path.join(web, 'tools', 'vz2_preflight.php')], {windowsHide:true}).toString();
         check(preflight.includes('13 VZ2 tables') && !preflight.includes('FAIL'), 'read-only preflight succeeds against isolated configuration');
         server = spawn(php, ['-d', 'session.save_path=' + temp, '-d', 'upload_max_filesize=8M', '-d', 'post_max_size=32M', '-S', '127.0.0.1:' + port, '-t', web], { cwd: web, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
