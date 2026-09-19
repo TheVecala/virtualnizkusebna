@@ -5,6 +5,8 @@
     let data, selected = qs.get('collection_id'), kind = 'song', edit, logBefore;
     const blobs = [];
     const offlineUrls = [];
+    const timestampPanels = [];
+    let mixerNotes;
     let deepLinkSeeked = false;
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     const $ = id => document.getElementById(id);
@@ -40,7 +42,7 @@
         if (target?.kind === 'multitrack') $('mixer-panel').hidden = false;
         const playing = window.MultitrackApp?.getState();
         const playingRecording = playing && data.recordings.find(r => String(r.id) === String(playing.id));
-        if (playing && (!playingRecording || playingRecording.lifecycle !== 'active' || playingRecording.audio_state !== 'available')) window.MultitrackApp.destroy();
+        if (playing && (!playingRecording || playingRecording.lifecycle !== 'active' || !playingRecording.files.some(f => f.state === 'available'))) window.MultitrackApp.destroy();
         const current = data.collections.find(c => String(c.id) === String(selected));
         if (current) kind = current.kind;
         else selected = data.collections.find(c => c.kind === kind)?.id;
@@ -125,13 +127,41 @@
             const url = new URL('index.php', location.href); url.search = new URLSearchParams({ v: '2', recording_id: recording.id, time_ms: Math.round(audio.currentTime * 1000) });
             await navigator.clipboard.writeText(url.href); message('Odkaz zkopírován.');
         }));
+        return {
+            canPlay: () => audio.isConnected && audio.readyState >= 1 && !audio.error,
+            currentTimeMs: () => Math.round(audio.currentTime * 1000),
+            durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
+            seek: ms => { audio.currentTime = ms / 1000; },
+            playRange: async (start, end) => {
+                if (!audio.isConnected) throw new Error('Přehrávač již není otevřený.');
+                window.MultitrackApp?.pause();
+                document.querySelectorAll('#content audio').forEach(a => { if (a !== audio) a.pause(); });
+                audio.currentTime = start / 1000; await audio.play();
+            }
+        };
+    }
+    function mixerAdapter(id) {
+        const current = () => { const s = window.MultitrackApp?.getState(); return String(s?.id) === String(id) ? s : null; };
+        return {
+            canPlay: () => current()?.phase === 'ready',
+            currentTimeMs: () => Math.round((current()?.position || 0) * 1000),
+            durationMs: () => current()?.duration == null ? null : Math.round(current().duration * 1000),
+            seek: ms => { if (current()?.phase === 'ready') window.MultitrackApp.seek(ms / 1000); },
+            playRange: async (start, end) => {
+                if (current()?.phase !== 'ready' || end > Math.round(current().duration * 1000)) throw new Error('Tento úsek není v načteném audiu dostupný.');
+                document.querySelectorAll('#content audio').forEach(a => a.pause());
+                window.MultitrackApp.pause(); window.MultitrackApp.seek(start / 1000); await window.MultitrackApp.play();
+            }
+        };
     }
     function recordingCard(r, list, collection) {
         const card = node('article'); card.id = 'recording-' + r.id;
         card.append(node('h3', r.title), node('small', (r.kind === 'single' ? 'Nahrávka' : 'Vícestopá nahrávka') + ' · ' + r.author + ' · ' + (r.duration_ms == null ? 'délka nezjištěna' : time(r.duration_ms))),
             node('p', state(r.lifecycle === 'active' ? r.audio_state : r.lifecycle), 'status'));
         if (r.summary) card.append(node('p', r.summary));
-        if (r.lifecycle === 'active' && r.kind === 'single') singlePlayer(card, r.files[0], r);
+        if (r.summary_author) card.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · naposledy upravil/a ' + r.summary_editor : '')));
+        let adapter;
+        if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(card, r.files[0], r);
         if (r.lifecycle === 'active' && r.kind === 'multitrack') card.append(button('Otevřít Mixér', () => {
             $('mixer-panel').hidden = false; window.MultitrackApp.load(r.id); $('mixer-panel').scrollIntoView({ behavior: 'smooth' });
         }));
@@ -142,9 +172,7 @@
             if (r.can_edit) reorderControls(li, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
             files.append(li);
         }); card.append(files);
-        if (r.timestamps.length) {
-            const notes = node('ul'); r.timestamps.forEach(t => notes.append(node('li', time(t.time_ms) + ' · ' + t.body + ' — ' + t.author))); card.append(notes);
-        }
+        timestampPanels.push(window.Vz2Timestamps.mount(card, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
         const actions = node('div', undefined, 'toolbar');
         if (cfg.write && r.can_edit) actions.append(button('Upravit', () => openEdit(r, 'recording')));
         moveControl(actions, r, 'recording');
@@ -176,6 +204,7 @@
         }); return form;
     }
     function render() {
+        timestampPanels.splice(0).forEach(p => p.destroy());
         document.querySelectorAll('#content audio').forEach(a => a.pause()); blobs.splice(0).forEach(URL.revokeObjectURL);
         document.querySelectorAll('[data-kind]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
         const list = data.collections.filter(c => c.kind === kind); $('collections').replaceChildren();
@@ -289,6 +318,10 @@
     document.addEventListener('multitrack:ready', () => {
         const current = window.MultitrackApp.getState(), seconds = Number(qs.get('time_ms')) / 1000;
         if (!deepLinkSeeked && String(current?.id) === qs.get('recording_id') && Number.isFinite(seconds)) { window.MultitrackApp.seek(Math.max(0, seconds)); deepLinkSeeked = true; }
+    });
+    document.addEventListener('multitrack:selected', e => {
+        mixerNotes?.destroy(); window.Vz2Timestamps.stopLoop();
+        mixerNotes = window.Vz2Timestamps.mount($('mixer-timestamps'), e.detail.id, mixerAdapter(e.detail.id));
     });
     if (qs.get('view') === 'mixer') $('mixer-panel').hidden = false;
     refresh().catch(e => { message(e.message, true); $('content').replaceChildren(node('p', 'Seznam se nepodařilo načíst.')); });

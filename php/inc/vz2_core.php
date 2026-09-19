@@ -156,7 +156,10 @@ function vz2_mutate(array $in): array {
                 $summary = vz2_text($in['summary'] ?? '',10000,true);
                 $author = $r['summary_created_by'] ?? ($summary === '' ? null : vz2_actor());
                 $created = $r['summary_created_at'] ?? ($author === null ? null : gmdate('Y-m-d H:i:s'));
-                vz2_query($db,"UPDATE $table SET title=?,summary=?,summary_created_by=?,summary_created_at=?,summary_updated_by=?,summary_updated_at=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?",[$title,$author===null?null:$summary,$author,$created,$author===null?null:vz2_actor(),$author===null?null:gmdate('Y-m-d H:i:s'),vz2_actor(),$id]);
+                $changed = $summary !== ($r['summary'] ?? '');
+                $editor = $changed ? vz2_actor() : ($r['summary_updated_by'] ?? null);
+                $edited = $changed ? gmdate('Y-m-d H:i:s') : ($r['summary_updated_at'] ?? null);
+                vz2_query($db,"UPDATE $table SET title=?,summary=?,summary_created_by=?,summary_created_at=?,summary_updated_by=?,summary_updated_at=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?",[$title,$author===null?null:$summary,$author,$created,$editor,$edited,vz2_actor(),$id]);
                 vz2_log($db,$type.'.updated',$type,$id,$title,'Revize '.((int)$r['revision']+1).'; původní název: '.$r['title']);
             }
             return ['id'=>$id,'revision'=>(int)$r['revision']+1];

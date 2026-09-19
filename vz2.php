@@ -49,9 +49,10 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <div class="timeline"><output id="mt-current-time">00:00</output><input id="mt-seek" type="range" min="0" max="0" step="0.01" value="0"><output id="mt-total-time">00:00</output></div>
 <div id="mt-loading-panel" hidden><p id="mt-load-summary"></p><div id="mt-track-statuses"></div><button id="mt-loading-cancel">Zrušit načítání</button></div>
 <div id="mt-mixer" hidden><div id="mt-tracks"></div></div>
+<div id="mixer-timestamps"></div>
 </section></main>
 <dialog id="editor"><form id="edit-form"><h2>Upravit</h2><label>Název<input name="title" maxlength="200" required></label><label id="summary-label">Popisek<textarea name="summary" maxlength="10000" rows="5"></textarea></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Uložit</button><button type="button" id="edit-cancel">Zrušit</button><button type="button" id="edit-reload" hidden>Načíst aktuální verzi</button></div></form></dialog>
 <script>window.VZ2=<?=json_encode($config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_HEX_APOS)?>;
 window.MULTITRACK_CONFIG={listUrl:'php/ajax/vz2.php?action=mixer',detailUrl:'php/ajax/vz2.php?action=mixer&id={id}',canUpload:false,cacheDb:'zkusebna-vz2-cache',cacheStore:'audio',cachePrefix:window.VZ2.cachePrefix,requireFreshMetadata:true,initialId:new URLSearchParams(location.search).get('recording_id')||''};</script>
-<script src="js/vz2-cache.js"></script><script src="js/multitrack.js"></script><script src="js/vz2.js"></script>
+<script src="js/vz2-cache.js"></script><script src="js/multitrack.js"></script><script src="js/vz2-timestamps.js"></script><script src="js/vz2.js"></script>
 </body></html>

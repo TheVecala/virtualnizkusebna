@@ -592,6 +592,7 @@
                 file: file,
                 fileId: rawTrack.fileId,
                 sha256: rawTrack.sha256,
+                unavailable: rawTrack.unavailable === true,
                 name: name,
                 order: order,
                 url: url,
@@ -838,6 +839,7 @@
         set.tracks.forEach(function(track) {
             sequence = sequence.then(function() {
                 if (token !== loadSerial || set !== currentSet) throw cancelledError();
+                if (track.unavailable) { updateTrackStatus(track, 'error', null, 'Audio na serveru chybí nebo bylo odstraněno.'); return; }
                 return cachedTrackBlob(track).then(function(cachedBlob) {
                     if (token !== loadSerial || set !== currentSet) throw cancelledError();
                     if (cachedBlob) return cachedBlob;
@@ -1155,7 +1157,7 @@
             showArchivedSet(set);
             return;
         }
-        if (item.raw.audioUnavailable) {
+        if (item.raw.audioUnavailable && !item.raw.audioPartial) {
             set.phase = 'error';
             setLoadingPanelVisible(false);
             setLoadState('error');
@@ -1170,7 +1172,7 @@
                 renderSelector(set.item.id);
                 return;
             }
-            if (result.payload.audioUnavailable) throw new Error('Audio chybí nebo sada stop není úplná. Obnovte seznam.');
+            if (result.payload.audioUnavailable && !result.payload.audioPartial) throw new Error('Audio chybí nebo sada stop není úplná. Obnovte seznam.');
             set.metadataUrl = result.url;
             set.metadataFromCache = !!result.offline;
             set.metadata = normalizeMetadata(item, result.payload, result.url);

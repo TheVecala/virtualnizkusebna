@@ -139,6 +139,8 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
             check((await api('admin',{action:'collection_create',kind:'song',title:'Read only'})).status===403
                 && db('SELECT id FROM vz2_collections').length===0 && db('SELECT id FROM vz2_activity_log').length===0,
                 'read-only deployment rejects writes and diagnostics leave content/audit untouched');
+            check((await request(clients.admin,'php/ajax/vz2_timestamps.php',{action:'create',recording_id:1,timestamps_revision:1,kind:'note',time_ms:0,body:'Read only'})).status===403,
+                'timestamp endpoint obeys read-only deployment switch');
             const readOnlyConfig = fs.readFileSync(path.join(web,'config.php'),'utf8');
             const withoutEnabled = readOnlyConfig.replace("define('VZ2_ENABLED',true);",'');
             const optionalConfig = path.join(web,'config.vz2.php');
@@ -273,6 +275,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         let adminToken = adminPage.text.match(/name="csrf" value="([a-f0-9]+)"/)[1];
         let account = await request(clients.admin, 'admin.php', {action:'member',csrf:adminToken,id:'3',name:'Bob Nový',role:'muzikant',active:'1',password:'',password_confirmation:''}, {form:true});
         check(account.status===303 && db("SELECT * FROM vz2_activity_log WHERE target_type='user' AND target_id=3").length===1, 'account administration and audit commit together');
+        await require('./vz2_timestamps.integration')({ request, clients, db, good, upload, check, login });
         const marker=path.join(media,'.vz2-storage-id');fs.renameSync(marker,marker+'.held');
         check((await catalog('admin').then(()=>false,()=>true)), 'missing dataset marker stops catalog filesystem access');
         fs.renameSync(marker+'.held',marker);
@@ -293,6 +296,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         const partialMixer = (await request(clients.admin,'php/ajax/vz2.php?action=mixer&id='+partialId)).json().multitrack;
         check(partialMixer.tracks.length===2 && partialMixer.audioUnavailable===true && !partialMixer.audioDeleted, 'missing track stays in mixer identity and prevents falsely complete playback');
         fs.renameSync(path.join(media,partialFile+'.held'),path.join(media,partialFile));
+        if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });
         console.log('PASS ' + checks + ' checks; isolated HTTP URL ' + base);
         if (process.env.VZ2_TEST_KEEP === '1') {
             await upload('admin',a.id,'Zkouška — pracovní nahrávka','single',['kytara.wav'],[wav(10)]);
