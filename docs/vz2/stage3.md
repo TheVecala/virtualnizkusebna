@@ -3,7 +3,21 @@
 Stav 19. 9. 2026: implementováno a lokálně ověřeno, připraveno k nahrání na betu.
 Výchozí commit uživatele `a009d195f10706c2d26a47842f32ac07b357a61f` byl během
 práce přejmenováním zprávy nahrazen `28f3f4f91cc793cc2d2b70f6d5c07c7bf3ade0b9`;
-rozdíl jejich stromů je prázdný. Změny této etapy zatím nejsou commitnuté.
+rozdíl jejich stromů je prázdný. Uživatel následně commitnul etapu 3 jako `28d3c87a`.
+
+## Oprava otevření Mixéru po 28d3c87a
+
+Odkaz `index.php?v=2&view=mixer` odkryl Mixér pod katalogem. Jakmile se katalog
+asynchronně naplnil, odsunul Mixér mimo první obrazovku. V reprodukčním testu
+začínal panel až na y=1861 px; uživateli tak po okamžiku zdánlivě zmizel.
+
+`vz2.php` nyní nastaví viditelnost obou částí už v HTML: v pohledu Mixér je
+katalog skrytý a Mixér viditelný od začátku. Pohled Skladby a zkoušky zůstává
+beze změny. Na betě stačí nahradit **pouze `vz2.php`**; SQL ani konfigurace se nemění.
+
+Nový prohlížečový regresní test před opravou selhal na poloze panelu; po opravě
+ověřuje jeho viditelnost po načtení katalogu, otevření vícestopé nahrávky a návrat
+do katalogu. Celá integrační sada s prohlížečem: **91 PASS**, PHP lint a diff check PASS.
 
 ## Hotové funkce
 

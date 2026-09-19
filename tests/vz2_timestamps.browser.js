@@ -22,7 +22,17 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         page.on('pageerror', e => errors.push(e.message));
         page.on('dialog', d => d.accept());
         await page.route('https://cdn.jsdelivr.net/**', route => route.abort());
+        await page.goto(base + 'index.php?v=2&view=mixer&collection_id=' + c.id);
+        await page.locator('#recording-' + id).waitFor({ state: 'attached' });
+        await page.locator('#mt-selector [data-mt-id="' + mixId + '"]').waitFor();
+        const mixerBox = await page.locator('#mixer-panel').boundingBox();
+        assert(mixerBox && mixerBox.y >= 0 && mixerBox.y < 400, 'Mixer navigation must keep the panel in view after catalogue loading: ' + JSON.stringify(mixerBox));
+        assert.equal(await page.locator('.layout').isVisible(), false, 'Mixer view must not show the catalogue above it');
+        await page.locator('#mt-selector [data-mt-id="' + mixId + '"]').click();
+        await page.waitForFunction(rid => window.MultitrackApp?.getState()?.id === String(rid) && window.MultitrackApp.getState().phase === 'ready', mixId);
+        check(true, 'browser: direct Mixer navigation stays visible after asynchronous catalogue load and can open a recording');
         await page.goto(base + 'index.php?v=2&collection_id=' + c.id);
+        assert.equal(await page.locator('.layout').isVisible(), true, 'Catalogue navigation restores songs and rehearsals');
         const card = page.locator('#recording-' + id), notes = card.locator('.vz2-timestamps'), dialog = page.locator('.vz2-timestamp-editor');
         await notes.getByRole('button', { name: 'Přidat zápis', exact: true }).click();
         await dialog.locator('[name=kind]').selectOption('song_start');

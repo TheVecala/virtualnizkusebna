@@ -15,6 +15,7 @@ try{
     vz2_login();
 }catch(Vz2Error $e){http_response_code($e->status);echo '<p>'.auth_h($e->getMessage()).'</p><a href="index.php">Zpět do zkušebny</a>';return;}
 $write=defined('VZ2_WRITES_ENABLED') && VZ2_WRITES_ENABLED && !empty($_SESSION['user_id']);
+$mixerView=($_GET['view']??'')==='mixer';
 $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'canCreate'=>$write && (auth_is_admin() || ma_pravo('create_val')),
     'canUpload'=>$write && (auth_is_admin() || ma_pravo('upload')),'canReorder'=>$write && (auth_is_admin() || ma_pravo('reorder')),
     'cachePrefix'=>'vz2:'.VZ2_DATASET_KEY.':'.VZ2_ENVIRONMENT.':'];
@@ -31,14 +32,14 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <button id="show-offline">Offline soubory</button><a href="index.php">Původní zkušebna</a><span><?=auth_h($_SESSION['user_name']??'Host')?></span><button id="logout">Odhlásit</button></nav></header>
 <main><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
-<div class="layout"><aside><div class="tabs"><button data-kind="song" aria-pressed="true">Skladby</button><button data-kind="rehearsal" aria-pressed="false">Zkoušky</button></div>
+<div class="layout"<?=$mixerView?' hidden':''?>><aside><div class="tabs"><button data-kind="song" aria-pressed="true">Skladby</button><button data-kind="rehearsal" aria-pressed="false">Zkoušky</button></div>
 <div id="collections"></div>
 <?php if($config['canCreate']):?><form id="create-collection"><label>Nový název<input name="title" maxlength="200" required></label><button>Vytvořit</button></form><?php endif;?>
 </aside><section id="content"><p>Načítám…</p></section></div>
 <section id="operations" hidden><h2>Nedokončené operace</h2><div></div></section>
 <section id="activity" hidden><h2>Deník změn</h2><div></div><button id="log-more">Starší změny</button></section>
 <section id="offline-files" hidden><h2>Offline soubory tohoto prostředí</h2><p>Lokální kopie v tomto prohlížeči. Odstraněné serverové audio lze odsud stáhnout nebo uvolnit jeho místo.</p><div></div><button id="offline-clear">Odebrat všechny místní kopie</button></section>
-<section id="mixer-panel" class="mt-shell" hidden><h2>Mixér</h2>
+<section id="mixer-panel" class="mt-shell"<?=$mixerView?'':' hidden'?>><h2>Mixér</h2>
 <div id="mt-notice" role="status" hidden></div><div id="mt-selector"></div>
 <h3 id="mt-playing-name">Vyberte vícestopou nahrávku</h3><div id="mt-empty">Vyberte nahrávku ze seznamu.</div>
 <div class="toolbar"><button id="mt-restart" title="Na začátek">⏮</button><button id="mt-backward">−5 s</button>
