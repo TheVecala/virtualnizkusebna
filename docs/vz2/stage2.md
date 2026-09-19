@@ -7,6 +7,8 @@ Aktualizace 18. 9. 2026: etapa 2 je již commitnutá jako `73f8f37`.
 Uživatel doložil živý hosting a zálohy. Aktuální provozní fakta, úprava strict SQL
 a zbývající podmínky storage jsou v [hosting-verification.md](hosting-verification.md).
 Níže uvedený stav repozitáře a testovací protokol zachycují původní předání 17. 9.
+Navazující balíček pro ověření úložiště na Blueboardu a nové požadované konfigurační
+hodnoty popisuje [storage.md](storage.md); živé ověření dosud neproběhlo.
 
 ## Stav repozitáře
 
@@ -67,11 +69,11 @@ nahrávky. Stejný request key vrátí tutéž operaci; změněný obsah či sad
 `.locks/<operation-id>.lock` chrání pracovníka před dvojím spuštěním. Hash se ověří
 i při opakování již dokončených položek před finální aktivací.
 
-Technické upřesnění návrhu: konečné jméno se obsadí pomocí `link()` a následného
-`unlink()` stagingu. To zabrání přepsání existujícího cíle, které může obyčejný rename
-na některých systémech provést. **Staging i cíl musí být na témže filesystému,
-PHP musí podporovat hardlinky a flock.** Bez toho se upload zastaví jako nedokončený;
-není zde méně bezpečný fallback. V izolovaném testu na Windows/NTFS protokol prošel.
+Aktualizace po živé diagnostice: Blueboard zde nemá dostupnou funkci `link()`.
+Původní implementaci s hardlinkem nahradilo výhradní vytvoření cíle `fopen('xb')`,
+streamované kopírování a kontrola SHA-256 před odstraněním stagingu. Existující cíl
+se nepřepisuje; flock zůstává požadavkem. Podrobnosti včetně místa navíc a obnovy
+po tvrdém přerušení kopie jsou v `storage.md`.
 
 Mazání nejdřív uloží přesný seznam souborů a znepřístupní je. Po každém úspěšném
 unlinku uloží výsledek a audit; až nakonec dokončí SQL změnu. Při chybě zůstávají
@@ -109,14 +111,15 @@ stagingu vyžaduje zálohu či konkrétní administrátorský zásah; retry nevy
    nebo serverem blokovaný adresář uvnitř společného kořene, musí být samostatně
    navržena a prakticky ověřena; viz navazující protokol. Pak teprve vytvořit
    `.vz2-storage-id` s vlastním dataset key; ověřit, že root nelze číst veřejným HTTP.
-   Nastavit přístup PHP procesu, ověřit hardlinky, flock a dostatek místa.
+   Nastavit přístup PHP procesu, ověřit výhradní kopírování, flock a dostatek místa v kvótě.
 4. Podle `config.vz2.example.php` vytvořit soukromý ignorovaný `config.vz2.php`.
    Zpočátku `VZ2_ENABLED=true`, `VZ2_WRITES_ENABLED=false`, prostředí `beta` a ověřený
    root/dataset. Neměnit DB údaje, SITE_URL ani MAIL_FROM v původní konfiguraci.
-5. Spustit CLI `php tools/vz2_preflight.php` z dané instalace. Kontrola jen čte,
-   nevytváří DB ani marker. Kontroluje runtime, users, počet 13 tabulek, seed pořadí
+5. Spustit CLI `php tools/vz2_preflight.php` nebo po přihlášení administrátora
+   otevřít `/tools/vz2_preflight.php` v prohlížeči. Kontrola jen čte,
+   nevytváří DB ani marker. Kontroluje runtime, users, přesné názvy 13 tabulek, seed pořadí
    a root. Nenahrazuje revizi kompletního živého DDL, přímého HTTP přístupu ani
-   ověření obou webrootů a hardlinků. Je určena po migraci; před ní je FAIL tabulek očekávaný.
+   ověření veřejného rootu a souborového protokolu. Je určena po migraci; před ní je FAIL tabulek očekávaný.
 6. Po splnění podmínek povolit zápisy jen betě a provést scénáře z tohoto dokumentu.
    Pozor: read-only VZ2 blokuje i změny účtů v této instanci, aby nevznikaly změny bez
    auditní transakce. Druhý starý web účty stále umí měnit bez VZ2 auditu; pro úplný

@@ -69,6 +69,7 @@ function wav(seconds = 1) {
 define('DB_HOST','127.0.0.1:${dbPort}');define('DB_USER','root');define('DB_PASS',${phpString(process.env.VZ2_TEST_DB_PASS || '')});define('DB_NAME','${database}');
 define('SITE_URL','${base.slice(0, -1)}');define('MAIL_FROM','test@example.invalid');
 define('VZ2_ENABLED',true);define('VZ2_WRITES_ENABLED',true);define('VZ2_ENVIRONMENT','beta');define('VZ2_DATASET_KEY','${database}');define('VZ2_STORAGE_ROOT',${phpString(media)});
+define('VZ2_PUBLIC_ROOT',${phpString(web)});define('VZ2_STORAGE_ACCESS','private');
 $GLOBALS['PRAVA']=['host'=>[],'muzikant'=>['edit_text','upload','comment','reorder','move_file','delete_file','create_val','rename_val','edit_recording_label'],'admin'=>['edit_text','upload','comment','reorder','move_file','delete_file','create_val','rename_val','delete_val','edit_recording_label']];
 function ma_pravo(string $p):bool{return in_array($p,$GLOBALS['PRAVA'][$_SESSION['role']??'']??[],true);}
 require_once __DIR__.'/php/auth.php';auth_refresh_session();
@@ -115,10 +116,89 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         check(runtimeMode.rejected, 'application connection rejects silent VARCHAR truncation');
         const preflight = execFileSync(php, [path.join(web, 'tools', 'vz2_preflight.php')], {windowsHide:true}).toString();
         check(preflight.includes('13 VZ2 tables') && !preflight.includes('FAIL'), 'read-only preflight succeeds against isolated configuration');
-        server = spawn(php, ['-d', 'session.save_path=' + temp, '-d', 'upload_max_filesize=8M', '-d', 'post_max_size=32M', '-S', '127.0.0.1:' + port, '-t', web], { cwd: web, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+        // This fixture changes config between requests to test read-only deployment.
+        server = spawn(php, ['-d', 'opcache.enable=0', '-d', 'disable_functions=link', '-d', 'session.save_path=' + temp, '-d', 'upload_max_filesize=8M', '-d', 'post_max_size=32M', '-S', '127.0.0.1:' + port, '-t', web], { cwd: web, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
         const log = fs.createWriteStream(path.join(temp, 'http.log')); server.stdout.pipe(log); server.stderr.pipe(log);
         for (let i = 0; i < 50; i++) { try { await request(clients.anon, 'index.php?v=2'); break; } catch (_) { await new Promise(r => setTimeout(r, 100)); } }
         for (const name of ['admin', 'alice', 'bob', 'guest']) await login(name);
+        for (const who of ['anon','guest','alice']) {
+            const denied = await request(clients[who], 'tools/vz2_preflight.php');
+            check(denied.status===403 && !denied.text.includes(database) && !denied.text.includes(media), 'browser preflight denies '+who+' without diagnostic details');
+        }
+        check((await request(clients.admin,'tools/vz2_preflight.php',{})).status===405, 'browser preflight accepts only read-only GET');
+        const configBeforePreflight = fs.readFileSync(path.join(web,'config.php'),'utf8');
+        write(path.join(web,'config.php'), configBeforePreflight.replace("define('VZ2_WRITES_ENABLED',true)","define('VZ2_WRITES_ENABLED',false)"));
+        try {
+            const browserCheck = await request(clients.admin,'tools/vz2_preflight.php');
+            const report = browserCheck.json();
+            assert.equal(browserCheck.status,200,browserCheck.text);
+            assert.equal(report.details.writes_enabled,false,browserCheck.text);
+            check(browserCheck.status===200 && report.ok && report.details.database===database
+                && report.details.tables.length===13 && report.details.writes_enabled===false
+                && hasRequiredModes(report.details.session_sql_mode), 'admin browser preflight checks real strict connection and storage with writes disabled');
+            check((await api('admin',{action:'collection_create',kind:'song',title:'Read only'})).status===403
+                && db('SELECT id FROM vz2_collections').length===0 && db('SELECT id FROM vz2_activity_log').length===0,
+                'read-only deployment rejects writes and diagnostics leave content/audit untouched');
+            const readOnlyConfig = fs.readFileSync(path.join(web,'config.php'),'utf8');
+            const withoutEnabled = readOnlyConfig.replace("define('VZ2_ENABLED',true);",'');
+            const optionalConfig = path.join(web,'config.vz2.php');
+            try {
+                write(path.join(web,'config.php'),withoutEnabled);
+                const missingConfig = await request(clients.admin,'tools/vz2_preflight.php');
+                check(missingConfig.status===503 && !missingConfig.json().details.configuration.config_vz2_exists
+                    && !missingConfig.json().details.configuration.enabled_defined,
+                    'disabled preflight diagnoses an absent config without discarding details');
+                write(optionalConfig,"<?php define('VZ2_ENABLED',true);");
+                const unloadedConfig = await request(clients.admin,'tools/vz2_preflight.php');
+                check(unloadedConfig.status===503 && unloadedConfig.json().details.configuration.config_vz2_exists
+                    && !unloadedConfig.json().details.configuration.config_vz2_loaded
+                    && !unloadedConfig.json().details.configuration.enabled_defined,
+                    'preflight distinguishes an uploaded config from one loaded by the app and does not load it itself');
+                write(path.join(web,'config.php'),withoutEnabled.replace('<?php',"<?php require_once __DIR__.'/config.vz2.php';"));
+                const loadedConfig = await request(clients.admin,'tools/vz2_preflight.php');
+                check(loadedConfig.status===200 && loadedConfig.json().details.configuration.config_vz2_loaded
+                    && loadedConfig.json().details.configuration.enabled
+                    && hasRequiredModes(loadedConfig.json().details.session_sql_mode),
+                    'loading optional config before auth enables real application strict connection');
+                write(optionalConfig,"<?php define('VZ2_ENABLED',false);");
+                const falseConfig = await request(clients.admin,'tools/vz2_preflight.php');
+                check(falseConfig.status===503 && falseConfig.json().details.configuration.config_vz2_loaded
+                    && falseConfig.json().details.configuration.enabled_defined
+                    && falseConfig.json().details.configuration.enabled_type==='boolean'
+                    && !falseConfig.json().details.configuration.enabled,
+                    'preflight distinguishes a loaded config with explicitly disabled VZ2');
+            } finally {
+                write(path.join(web,'config.php'),readOnlyConfig);
+                if (fs.existsSync(optionalConfig)) fs.unlinkSync(optionalConfig);
+            }
+            db('RENAME TABLE vz2_activity_log TO vz2_unexpected_log');
+            try {
+                const wrongTables = await request(clients.admin,'tools/vz2_preflight.php');
+                check(wrongTables.status===503 && wrongTables.json().ok===false
+                    && wrongTables.json().checks.some(c=>!c.ok && c.label.includes('exact names')),
+                    'preflight rejects wrong table names even when count is still 13');
+            } finally { db('RENAME TABLE vz2_unexpected_log TO vz2_activity_log'); }
+            db("DELETE FROM vz2_collection_orders WHERE kind='rehearsal'");
+            try {
+                const noSeed = await request(clients.admin,'tools/vz2_preflight.php');
+                check(noSeed.status===503 && noSeed.json().checks.some(c=>!c.ok && c.label==='Collection order seed'), 'preflight rejects missing order seed');
+            } finally { db("INSERT INTO vz2_collection_orders(kind) VALUES ('rehearsal')"); }
+            write(path.join(media,'.vz2-storage-id'),'wrong-dataset');
+            try {
+                const badMarker = await request(clients.admin,'tools/vz2_preflight.php');
+                check(badMarker.status===503 && badMarker.json().ok===false, 'preflight rejects mismatched storage dataset');
+            } finally { write(path.join(media,'.vz2-storage-id'),database); }
+            db("UPDATE users SET role='muzikant' WHERE id=1");
+            try {
+                check((await request(clients.admin,'tools/vz2_preflight.php')).status===403, 'preflight refreshes an admin role revoked in SQL');
+            } finally { db("UPDATE users SET role='admin' WHERE id=1"); }
+        } finally { write(path.join(web,'config.php'),configBeforePreflight); }
+        const probePackage = require('../tools/vz2_storage_http_check').prepare(path.join(temp,'probe-package'));
+        fs.cpSync(path.join(probePackage,'public','_vz2_storage'),path.join(temp,'_vz2_storage'),{recursive:true});
+        check((await request(clients.anon,'tools/vz2_storage_probe.php')).status===403 && (await request(clients.guest,'tools/vz2_storage_probe.php')).status===403, 'temporary filesystem probe requires current admin identity');
+        check((await request(clients.admin,'tools/vz2_storage_probe.php',{csrf:'invalid'},{form:true})).status===422, 'temporary filesystem probe requires CSRF for scratch writes');
+        const fsProbe=await request(clients.admin,'tools/vz2_storage_probe.php',{csrf:clients.admin.csrf},{form:true});
+        check(fsProbe.status===200 && fsProbe.text.includes('Kontrola souborů prošla'), 'admin can run pre-migration filesystem checks through the browser endpoint');
         check((await api('anon')).status === 401, 'anonymous API denied');
         check((await api('guest', { action: 'collection_create', kind: 'song', title: 'Denied' })).status === 403, 'guest write denied');
         check((await api('alice', { action: 'collection_create', kind: 'song', title: 'Denied' }, { noCsrf: true })).status === 403, 'CSRF required');

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/vz2_core.php';
 require_once __DIR__.'/vz2_media.php';
+require_once __DIR__.'/vz2_file_io.php';
 
 function vz2_within(string $path,string $root): bool {
     $path=str_replace('\\','/',rtrim($path,'/\\'));$root=str_replace('\\','/',rtrim($root,'/\\'));
@@ -16,6 +17,22 @@ function vz2_root(): string {
         || trim(file_get_contents($root.'/.vz2-storage-id'))!==VZ2_DATASET_KEY) {
         throw new Vz2Error('Úložiště není dostupné nebo neodpovídá datové sadě. Operace zastavena.',503);
     }
+    if(!defined('VZ2_PUBLIC_ROOT') || !is_string(VZ2_PUBLIC_ROOT) || ($public=realpath(VZ2_PUBLIC_ROOT))===false || !is_dir($public)) {
+        throw new Vz2Error('Chybí ověřený společný veřejný kořen VZ2.',503);
+    }
+    // Being outside this installation is not the same as being outside the web root.
+    $access=defined('VZ2_STORAGE_ACCESS')?VZ2_STORAGE_ACCESS:'';
+    if($access==='private') {
+        if(vz2_within($root,$public) || vz2_within($public,$root))throw new Vz2Error('Privátní úložiště zasahuje do veřejného kořene.',503);
+    } elseif($access==='http-denied') {
+        if(!vz2_within($root,$public) || $root===$public || !defined('VZ2_STORAGE_HTTP_VERIFIED') || VZ2_STORAGE_HTTP_VERIFIED!==true) {
+            throw new Vz2Error('Úložiště ve veřejném kořeni vyžaduje ověřený zákaz přímého HTTP přístupu.',503);
+        }
+        $guard=$root.'/.htaccess';
+        if(is_link($guard) || !is_file($guard) || !is_readable($guard) || filesize($guard)>8192)throw new Vz2Error('Chybí ochranný soubor úložiště.',503);
+        $rules=array_values(array_filter(array_map('trim',file($guard)),static fn($line)=>$line!=='' && !str_starts_with($line,'#')));
+        if(count($rules)!==1 || !preg_match('/\ARequire\s+all\s+denied\z/i',$rules[0]))throw new Vz2Error('Ochranné pravidlo úložiště se změnilo. Znovu ověřte konfiguraci.',503);
+    } else throw new Vz2Error('Chybí platný režim ochrany úložiště VZ2.',503);
     return $root;
 }
 function vz2_path(string $relative,bool $createParents=false): string {
@@ -177,14 +194,9 @@ function vz2_run_operation(int $id): array {
             if($item['state']==='done' && !$upload)continue;
             $destination=vz2_path($item['relative_path'],$upload);$existed=is_file($destination);
             if($upload){
-                if(!$existed){
-                    $source=vz2_path($item['staging_path']);
-                    if(!is_file($source) || hash_file('sha256',$source)!==$item['expected_sha256'])throw new Vz2Error('Staging chybí nebo se změnil.',409);
-                    // link() claims the final name without overwriting; same filesystem required.
-                    if(!link($source,$destination))throw new Vz2Error('Cíl uploadu nelze bezpečně vytvořit.',500);
-                }
-                if(hash_file('sha256',$destination)!==$item['expected_sha256'])throw new Vz2Error('Cílový soubor koliduje s uploadem.',409);
                 $source=vz2_path($item['staging_path']);
+                try{vz2_copy_exclusive($source,$destination,$item['expected_sha256']);}
+                catch(RuntimeException $e){throw new Vz2Error($e->getMessage(),in_array($e->getCode(),[409,500],true)?$e->getCode():500);}
                 if(is_file($source) && !unlink($source))throw new Vz2Error('Nelze dokončit úklid stagingu.',500);
                 vz2_query($db,"UPDATE vz2_file_operation_items SET state='done' WHERE operation_id=? AND item_no=?",[$id,$item['item_no']]);
             }else{

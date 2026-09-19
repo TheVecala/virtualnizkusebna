@@ -5,6 +5,37 @@ v této konverzaci. Agent v této fázi neprováděl vzdálenou kontrolu ani nas
 Tento dokument aktualizuje provozní předpoklady návrhu a předání etapy 2;
 jejich původní testovací protokoly zůstávají historickým záznamem.
 
+Navazující příprava storage z commitu `0e7b92fc` je v [storage.md](storage.md).
+Uživatel následně potvrdil hosting Blueboard a nahrál sondy. Po odstranění závislosti
+na nedostupné funkci `link()` doložil úspěšnou PHP kontrolu na betě: čtení/zápis,
+výhradní kopírování a flock prošly na PHP 8.1.32. Dne 19. 9. uživatel doložil také
+úspěšnou kontrolu starší alfy: stejná cesta, dataset i všech pět sond a stejné
+výsledky souborových kontrol jako na betě.
+Agent následně zkusil vnější HTTP kontrolu na `https://dusanovakapela.cz/`;
+veřejný kontrolní soubor vrátil 404, takže ochrana storage zatím potvrzena není.
+Podrobnosti a identita sond jsou v `storage.md`. Následný snímek FTP a dokumentace
+Blueboardu objasnily mapování: hlavní doména čte `www`, storage má vlastní subdoménu.
+Přímý vnější test této subdomény: 15 HTTPS požadavků (5 sond, GET/HEAD/Range) vrátilo
+403; 15 HTTP požadavků přesměrovalo 301 na odpovídající HTTPS URL. Uživatel následně
+potvrdil, že ostatní domény a jejich subdomény mají oddělené složky a do storage
+nepřistupují. Pro doložený rozsah je kontrola úložiště uzavřena; VZ2 se zatím
+nezapnula. Uživatel po předání migrace 002 oznámil „Příkaz proběhl v pořádku“;
+následně doložil čtecí výsledek `18810_virtualni_zkusebna | 13 | 2`. Základní
+kontrola importu prošla. Agent import nespouštěl a jeho úplný výstup neviděl.
+Uživatel nahrál FTP balíček bety a po opravě načítání config.vz2.php doložil
+úspěšný webový preflight: všech 12 kontrol OK, skutečná správná DB, strict session
+navzdory nestriktnímu global defaultu, CHECK, přesné tabulky, InnoDB a chráněný root
+s odpovídajícím datasetem. VZ2_ENABLED=true, prostředí beta, zápisy zatím false.
+Agent ověřil i shodu pěti živých CSS/JS souborů a odmítnutí anonymního API.
+Uživatel následně potvrdil úspěšné vytvoření skladby, nahrání a přehrání po pokynu
+povolit zápisy pouze na betě. Uživatel potvrdil také úklid diagnostiky a testovací
+skladby podle `cleanup-live.md`; jiné soubory v tools neměl. Agent ověřil 404
+u všech čtyř odstraněných diagnostických URL. Tato fáze nasazení a základního
+ověření bety je uzavřena. Alfa zůstává původní.
+Alfa zůstává dle uživatele na commitu `6ef87325`; kvůli staršímu přihlášení má
+samostatný diagnostický adaptér. Nahrání beta diagnostiky samo o sobě nestačí
+k jejímu přímému spuštění na alfě. Postup a lokální ověření jsou v `storage.md`.
+
 ## Zálohy a stav před migrací – doložil uživatel
 
 - Sdílená DB `18810_virtualni_zkusebna` je zazálohovaná.
