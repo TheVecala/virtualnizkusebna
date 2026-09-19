@@ -223,6 +223,11 @@
             if (cfg.write && c.can_edit) actions.append(button('Přejmenovat', () => openEdit(c, 'collection')));
             if (cfg.write && cfg.admin) actions.append(button('Úplně smazat celek', () => remove(c, 'collection', true), 'danger'));
             actions.append(button('Obnovit', refresh)); content.append(actions);
+            const writing = node('div', undefined, 'toolbar content-actions');
+            writing.append(button('Text a akordy', () => window.Vz2Content.openDocument(c, 'lyrics_chords')),
+                button('Tabulatura', () => window.Vz2Content.openDocument(c, 'tablature')),
+                button('Diskuse', () => window.Vz2Content.openDiscussion({ collection_id: c.id })));
+            content.append(writing);
             const recordings = data.recordings.filter(r => String(r.collection_id) === String(c.id));
             if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));
@@ -297,6 +302,13 @@
         list.prepend(node('p', count + ' souborů · ' + (total / 1048576).toFixed(2) + ' MB'));
     }
     $('show-offline').addEventListener('click', () => showOffline().catch(e => message(e.message, true)));
+    $('show-ideas').addEventListener('click', () => window.Vz2Content.openDiscussion({ scope: 'ideas' }));
+    $('mixer-discussion').addEventListener('click', () => {
+        const id = window.MultitrackApp?.getState()?.id;
+        const recording = data?.recordings.find(r => String(r.id) === String(id));
+        if (recording) window.Vz2Content.openDiscussion({ collection_id: recording.collection_id });
+        else message('Nejdříve vyberte vícestopou nahrávku.', true);
+    });
     $('offline-clear').addEventListener('click', async () => {
         if (!confirm('Odebrat všechny offline kopie tohoto prostředí z prohlížeče?')) return;
         try {

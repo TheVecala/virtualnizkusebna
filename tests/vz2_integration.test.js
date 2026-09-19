@@ -30,7 +30,7 @@ $command=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
 if($command['action']==='init'){
  $db->query('CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');$db->select_db('${database}');
  $db->query("SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE'");
- foreach(['001_personal_accounts.sql','002_vz2.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
+ foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
  foreach([['Admin','admin','admin-test'],['Alice','muzikant','alice-test'],['Bob','muzikant','bob-test']] as $u){$s=$db->prepare('INSERT INTO users(name,role,password_hash) VALUES (?,?,?)');$s->execute([$u[0],$u[1],password_hash($u[2],PASSWORD_DEFAULT)]);}
  $s=$db->prepare('UPDATE auth_settings SET guest_enabled=1,guest_password_hash=? WHERE id=1');$s->execute([password_hash('guest-test',PASSWORD_DEFAULT)]);
  echo json_encode(['version'=>$db->server_info,'mode'=>$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0]]);
@@ -141,6 +141,8 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
                 'read-only deployment rejects writes and diagnostics leave content/audit untouched');
             check((await request(clients.admin,'php/ajax/vz2_timestamps.php',{action:'create',recording_id:1,timestamps_revision:1,kind:'note',time_ms:0,body:'Read only'})).status===403,
                 'timestamp endpoint obeys read-only deployment switch');
+            check((await request(clients.admin,'php/ajax/vz2_content.php',{action:'document_save',collection_id:1,kind:'lyrics_chords',current_revision:0,title:'Text',body:'Read only'})).status===403
+                && (await request(clients.admin,'php/ajax/vz2_content.php',{action:'post_create',thread_id:1,body:'Read only'})).status===403,'documents and discussion obey read-only deployment switch');
             const readOnlyConfig = fs.readFileSync(path.join(web,'config.php'),'utf8');
             const withoutEnabled = readOnlyConfig.replace("define('VZ2_ENABLED',true);",'');
             const optionalConfig = path.join(web,'config.vz2.php');
@@ -276,12 +278,13 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         let account = await request(clients.admin, 'admin.php', {action:'member',csrf:adminToken,id:'3',name:'Bob Nový',role:'muzikant',active:'1',password:'',password_confirmation:''}, {form:true});
         check(account.status===303 && db("SELECT * FROM vz2_activity_log WHERE target_type='user' AND target_id=3").length===1, 'account administration and audit commit together');
         await require('./vz2_timestamps.integration')({ request, clients, db, good, upload, check, login });
+        await require('./vz2_content.integration')({ request, clients, db, good, check, login });
         const marker=path.join(media,'.vz2-storage-id');fs.renameSync(marker,marker+'.held');
         check((await catalog('admin').then(()=>false,()=>true)), 'missing dataset marker stops catalog filesystem access');
         fs.renameSync(marker+'.held',marker);
         db('UPDATE users SET active=0 WHERE id=2');
         check((await api('alice')).status === 401, 'deactivation invalidates existing AJAX session');
-        // Schema checks cover the future document writer without implementing stage 4.
+        // Deletion also handles the document/current-version foreign-key cycle.
         db('INSERT INTO vz2_documents(collection_id,kind,title,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())', [b.id,'lyrics_chords','Text',3,3]);
         const documentId = db('SELECT id FROM vz2_documents')[0].id;
         db('INSERT INTO vz2_document_versions(document_id,revision,body,created_by,created_at) VALUES (?,1,?,3,UTC_TIMESTAMP())', [documentId,'Verze 1']);
@@ -297,6 +300,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         check(partialMixer.tracks.length===2 && partialMixer.audioUnavailable===true && !partialMixer.audioDeleted, 'missing track stays in mixer identity and prevents falsely complete playback');
         fs.renameSync(path.join(media,partialFile+'.held'),path.join(media,partialFile));
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });
+        if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_content.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         console.log('PASS ' + checks + ' checks; isolated HTTP URL ' + base);
         if (process.env.VZ2_TEST_KEEP === '1') {
             await upload('admin',a.id,'Zkouška — pracovní nahrávka','single',['kytara.wav'],[wav(10)]);

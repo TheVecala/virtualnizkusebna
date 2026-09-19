@@ -23,11 +23,12 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <!doctype html>
 <html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Virtuální zkušebna 2.0</title>
-<link rel="stylesheet" href="css/multitrack.css"><link rel="stylesheet" href="css/vz2.css">
+<link rel="stylesheet" href="css/multitrack.css"><link rel="stylesheet" href="css/vz2.css?v=<?=filemtime(__DIR__.'/css/vz2.css')?>">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 </head><body>
 <header><a class="brand" href="index.php?v=2">VIRTUÁLNÍ ZKUŠEBNA <small>2.0</small></a><nav>
 <a href="index.php?v=2">Skladby a zkoušky</a><a href="index.php?v=2&amp;view=mixer">Mixér</a>
+<button id="show-ideas">Nápady</button>
 <?php if(auth_is_admin()):?><a href="admin.php">Účty</a><button id="show-log">Deník</button><?php endif;?>
 <button id="show-offline">Offline soubory</button><a href="index.php">Původní zkušebna</a><span><?=auth_h($_SESSION['user_name']??'Host')?></span><button id="logout">Odhlásit</button></nav></header>
 <main><p id="message" role="status" aria-live="polite"></p>
@@ -51,9 +52,10 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <div id="mt-loading-panel" hidden><p id="mt-load-summary"></p><div id="mt-track-statuses"></div><button id="mt-loading-cancel">Zrušit načítání</button></div>
 <div id="mt-mixer" hidden><div id="mt-tracks"></div></div>
 <div id="mixer-timestamps"></div>
+<button id="mixer-discussion">Diskuse ke skladbě / zkoušce</button>
 </section></main>
 <dialog id="editor"><form id="edit-form"><h2>Upravit</h2><label>Název<input name="title" maxlength="200" required></label><label id="summary-label">Popisek<textarea name="summary" maxlength="10000" rows="5"></textarea></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Uložit</button><button type="button" id="edit-cancel">Zrušit</button><button type="button" id="edit-reload" hidden>Načíst aktuální verzi</button></div></form></dialog>
 <script>window.VZ2=<?=json_encode($config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_HEX_APOS)?>;
 window.MULTITRACK_CONFIG={listUrl:'php/ajax/vz2.php?action=mixer',detailUrl:'php/ajax/vz2.php?action=mixer&id={id}',canUpload:false,cacheDb:'zkusebna-vz2-cache',cacheStore:'audio',cachePrefix:window.VZ2.cachePrefix,requireFreshMetadata:true,initialId:new URLSearchParams(location.search).get('recording_id')||''};</script>
-<script src="js/vz2-cache.js"></script><script src="js/multitrack.js"></script><script src="js/vz2-timestamps.js"></script><script src="js/vz2.js"></script>
+<script src="js/vz2-cache.js"></script><script src="js/multitrack.js"></script><script src="js/vz2-timestamps.js"></script><script src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
 </body></html>
