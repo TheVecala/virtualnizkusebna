@@ -6,7 +6,7 @@ define('DB_PASS', 'serepes6');
 define('DB_NAME', '18810_virtualni_zkusebna');
 
 // ── Web ──
-define('SITE_URL',  'https://zkusebna.dusanovakapela.cz');
+define('SITE_URL',  'https://zkusebna_old.dusanovakapela.cz');
 define('MAIL_FROM', 'automat@dusanovakapela.cz');
 
 // ── Přístupová hesla ──
