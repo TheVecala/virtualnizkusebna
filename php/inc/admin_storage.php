@@ -2,6 +2,22 @@
 // Přehled čte pouze pevné datové adresáře aktuální kapely.
 const ADMIN_STORAGE_CACHE_TTL = 600;
 
+// VZ2 has SQL identity and a shared private root, not a legacy band directory.
+function admin_vz2_storage_report(): array {
+    vz2_ready();
+    $db = vz2_db();
+    return $db->query("SELECT
+        (SELECT COUNT(*) FROM vz2_collections WHERE kind='song') songs,
+        (SELECT COUNT(*) FROM vz2_collections WHERE kind='rehearsal') rehearsals,
+        (SELECT COUNT(*) FROM vz2_recordings) recordings,
+        (SELECT COUNT(*) FROM vz2_documents) documents,
+        (SELECT COUNT(*) FROM vz2_file_operations WHERE state<>'completed') pending,
+        (SELECT COUNT(*) FROM vz2_audio_files WHERE state='available') +
+            (SELECT COUNT(*) FROM vz2_attachments WHERE state='available') files,
+        (SELECT COALESCE(SUM(byte_size),0) FROM vz2_audio_files WHERE state='available') +
+            (SELECT COALESCE(SUM(byte_size),0) FROM vz2_attachments WHERE state='available') bytes")->fetch_assoc();
+}
+
 function admin_storage_within(string $path, string $parent): bool {
     $path = str_replace('\\', '/', $path);
     $parent = rtrim(str_replace('\\', '/', $parent), '/') . '/';

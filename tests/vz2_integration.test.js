@@ -301,6 +301,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         fs.renameSync(path.join(media,partialFile+'.held'),path.join(media,partialFile));
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_content.browser')({ base, clients, good, request, db, check, temp, upload, wav });
+        await require('./vz2_cutover.integration')({ base, clients, request, db, check, temp, web, media, php, write });
         console.log('PASS ' + checks + ' checks; isolated HTTP URL ' + base);
         if (process.env.VZ2_TEST_KEEP === '1') {
             await upload('admin',a.id,'Zkouška — pracovní nahrávka','single',['kytara.wav'],[wav(10)]);

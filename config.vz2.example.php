@@ -3,6 +3,7 @@
 // Keep that private file out of Git. These values do not enable VZ2 by themselves.
 define('VZ2_ENABLED', true);
 define('VZ2_WRITES_ENABLED', false); // Enable after preflight and a verified backup.
+define('VZ2_ONLY', false); // true: default index opens VZ2; legacy content endpoints return 410.
 define('VZ2_ENVIRONMENT', 'beta');
 define('VZ2_DATASET_KEY', 'replace-with-a-unique-dataset-key');
 // Actual common PUBLIC root, not just the beta installation directory.

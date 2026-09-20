@@ -1,7 +1,7 @@
 <?php session_start();
 error_reporting(0);
 require_once 'config.php';
-if (($_GET['v'] ?? '') === '2') {
+if (($_GET['v'] ?? '') === '2' || (defined('VZ2_ONLY') && VZ2_ONLY === true)) {
     require __DIR__ . '/vz2.php';
     exit;
 }

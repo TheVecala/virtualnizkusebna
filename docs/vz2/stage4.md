@@ -1,7 +1,8 @@
 # Etapa 4 — dokumenty, verze a diskuse
 
 20. 9. 2026. Navazuje na `01cec177d42587c5a9f69457d3d61a970f3feea4`.
-Implementace a místní ověření jsou hotové; živé nasazení ještě neproběhlo.
+Implementace a místní ověření jsou hotové. Uživatel následně potvrdil funkčnost
+na živé betě a uložil tuto etapu do `d8fd9722`.
 
 ## Funkce
 

@@ -8,12 +8,15 @@ require_once __DIR__ . '/php/inc/admin_storage.php';
 
 $storageError = '';
 $storage = null;
+$vz2Only = defined('VZ2_ONLY') && VZ2_ONLY === true;
 $storageRefresh = $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'storage_refresh';
 if ($storageRefresh) {
     try {
         auth_check_csrf($_POST);
-        $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
-        admin_storage_report($bandRoot, $_SESSION, true);
+        if (!$vz2Only) {
+            $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
+            admin_storage_report($bandRoot, $_SESSION, true);
+        }
         header('Location: admin.php#server', true, 303);
         exit;
     } catch (InvalidArgumentException $e) {
@@ -25,10 +28,15 @@ if ($storageRefresh) {
     }
 }
 try {
-    $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
-    $storage = admin_storage_report($bandRoot, $_SESSION);
+    if ($vz2Only) {
+        $storage = admin_vz2_storage_report();
+    } else {
+        $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
+        $storage = admin_storage_report($bandRoot, $_SESSION);
+    }
 } catch (Throwable $e) {
-    $storageError = 'Úložiště kapely není dostupné. Ověřte datový adresář a přístupová práva.';
+    $storageError = $vz2Only ? 'Evidenci obsahu VZ2 se nepodařilo načíst.'
+        : 'Úložiště kapely není dostupné. Ověřte datový adresář a přístupová práva.';
 }
 $diskPath = isset($bandRoot) && is_dir($bandRoot) ? $bandRoot : __DIR__;
 $diskTotal = @disk_total_space($diskPath);
@@ -86,6 +94,9 @@ try {
         header('Location: admin.php#uzivatele', true, 303);
         exit;
     }
+} catch (Vz2Error $e) {
+    $error = $e->getMessage();
+    http_response_code($e->status);
 } catch (InvalidArgumentException $e) {
     $error = $e->getMessage();
     http_response_code(422);

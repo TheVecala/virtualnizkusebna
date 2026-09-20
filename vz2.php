@@ -30,7 +30,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <a href="index.php?v=2">Skladby a zkoušky</a><a href="index.php?v=2&amp;view=mixer">Mixér</a>
 <button id="show-ideas">Nápady</button>
 <?php if(auth_is_admin()):?><a href="admin.php">Účty</a><button id="show-log">Deník</button><?php endif;?>
-<button id="show-offline">Offline soubory</button><a href="index.php">Původní zkušebna</a><span><?=auth_h($_SESSION['user_name']??'Host')?></span><button id="logout">Odhlásit</button></nav></header>
+<button id="show-offline">Offline soubory</button><?php if(!defined('VZ2_ONLY') || VZ2_ONLY!==true):?><a href="index.php">Původní zkušebna</a><?php endif;?><span><?=auth_h($_SESSION['user_name']??'Host')?></span><button id="logout">Odhlásit</button></nav></header>
 <main><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
 <div class="layout"<?=$mixerView?' hidden':''?>><aside><div class="tabs"><button data-kind="song" aria-pressed="true">Skladby</button><button data-kind="rehearsal" aria-pressed="false">Zkoušky</button></div>
