@@ -7,7 +7,10 @@ se nezavádí.** Tím je nahrazen dřívější plán soukromého webu se starý
 Původní přihlášení aplikace tím není zrušeno; bez další ochrany není subdoména
 vyhrazená pouze vlastníkovi.
 
-Pracovní název: `zkusebna-old.dusanovakapela.cz`. Dosud nebyla vytvořena.
+Uživatel potvrdil vytvoření subdomény `zkusebna_old` (s podtržítkem),
+čímž nahrazuje původní návrh `zkusebna-old`. Pro starou ukázku zvolil původní
+betu z commitu `52f6b2be35f7c2320bbc1b785df773612b367355`.
+Nahrání ani funkčnost této instalace zatím nejsou potvrzené.
 
 Časování: nejprve dokončit funkce nové bety, potom její CSS a vzhled
 v samostatném vlákně. Současná alfa zatím zůstává dostupná beze změny.
@@ -16,9 +19,11 @@ než uživatel nahradí alfu finální funkčně i vzhledově ověřenou betou.
 
 ## Příprava před nahrazením alfy
 
-1. Zachovat kód skutečné současné staré alfy a zjistit jeho provozní závislosti.
-   Historicky šlo o verzi `6ef87325`. Existující zálohy konfigurace a dat zůstávají
-   oddělené od prázdné webové ukázky.
+1. Pro ukázku použít uživatelem zvolený commit původní bety `52f6b2be`.
+   Ověřeno: používá osobní účty `users` a `auth_settings`, staré obsahové
+   tabulky (například `napady_kapela`) a lokální adresář `user`.
+   Samotné nahrání Git stromu bez úpravy konfigurace tedy nezajistí prázdnou,
+   oddělenou instalaci. Existující zálohy konfigurace a dat zůstávají oddělené.
 2. Připravit samostatnou složku a HTTPS subdoménu. Přenést pouze kód a veřejné
    statické součásti aplikace. Nekopírovat uživatelské audio, přílohy, texty,
    diskuse, historie, peaks ani uživatelské TXT/JSON soubory.
@@ -45,5 +50,6 @@ Požadavek „bez uživatelského obsahu“ se naplní přípravou čisté ukáz
 nikoli smazáním dat současné alfy. Případný pozdější úklid původních dat má
 vlastní seznam a postup v `cleanup.md`.
 
-Zatím byl upraven pouze plán. Subdoména ani prázdná instalace nebyly vytvořené;
-žádná živá data ani ochranná pravidla se neměnila.
+Subdoménu vytvořil uživatel. Agent prověřil zvolený historický commit pouze
+čtením; nepřepínal pracovní větev ani neměnil živá data nebo ochranná pravidla.
+Samostatná konfigurace, databáze s účtem pro ukázku a její nasazení zbývají.

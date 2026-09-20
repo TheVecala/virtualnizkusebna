@@ -48,7 +48,9 @@ Dosavadní integrační scénáře etap 2–5 zůstávají součástí stejného
 Testy vytvářejí vlastní DB a storage; nepoužívají živou konfiguraci.
 
 Lokální runtime: PHP 8.5.10, MariaDB 11.4.5 s nestriktním globálním režimem,
-headless Edge přes Playwright. Živé nasazení etapy 6 ještě neproběhlo.
+headless Edge přes Playwright. Uživatel následně nasadil aktualizaci na betu
+a potvrdil zobrazení Mixéru v kartě nahrávky. Další živé scénáře (přehrávání,
+zavření, přepnutí kolekce a historie prohlížeče) zatím výslovně nepotvrdil.
 
 ## Nasazení a stav repozitáře
 
@@ -60,8 +62,11 @@ Balíček a návod: `deploy/vz2-stage6/README.cs.md`, režim `stage6` v
 
 Při začátku byly necommitnuté změny postupu etapy 5, úklidu a zachování staré
 verze na old. Zůstávají zachované. Etapa 6 nezakládá CSS vlákno, nenasazuje
-alfu, nezřizuje old a nemaže data. Secure/HttpOnly přihlašovací cookie zůstává
-samostatně evidované k dořešení před finálním nasazením.
+alfu, nezřizuje old a nemaže data. Následnou úpravu Secure/HttpOnly
+přihlašovací cookie popisuje [session.md](session.md); je nasazena na betě
+a příznaky nově vydané cookie byly ověřeny přes HTTPS.
 
-Nebyl proveden commit ani push. Výsledný HEAD zůstává stejný jako výchozí;
-změny této etapy i předchozí dokumentační změny jsou v pracovním stromu.
+Agent při implementaci neprovedl commit ani push; tehdejší výsledný HEAD byl
+stejný jako výchozí. Uživatel následně změny uložil do commitu `7466cbd`
+(„etapa 6: začlenění Mixéru do společné navigace.“). Při zápisu živého ověření
+byl pracovní strom čistý; tento následný dokumentační zápis je necommitnutý.

@@ -21,7 +21,8 @@ function vz2_preflight_report(bool $ok, string $label): void {
     $checks[] = ['ok'=>$ok, 'label'=>$label];
 }
 try {
-    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    require_once __DIR__ . '/../php/inc/session.php';
+    app_session_start();
     require_once dirname(__DIR__).'/config.php';
     if (!$cli) {
         auth_refresh_session();

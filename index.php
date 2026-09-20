@@ -1,4 +1,5 @@
-<?php session_start();
+<?php require_once __DIR__ . '/php/inc/session.php';
+app_session_start();
 error_reporting(0);
 require_once 'config.php';
 if (($_GET['v'] ?? '') === '2' || (defined('VZ2_ONLY') && VZ2_ONLY === true)) {

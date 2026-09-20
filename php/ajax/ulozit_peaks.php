@@ -10,7 +10,8 @@
  *   duration — délka nahrávky v sekundách (float)
  */
 
-session_start();
+require_once __DIR__ . '/../inc/session.php';
+app_session_start();
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);

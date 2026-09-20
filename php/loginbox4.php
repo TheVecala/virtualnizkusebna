@@ -1,7 +1,6 @@
 <?php
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/inc/session.php';
+app_session_start();
 require_once __DIR__ . "/../config.php";
 
 $_SESSION['barva1']        = "a7ac38";

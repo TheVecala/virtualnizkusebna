@@ -57,8 +57,9 @@ Výstup dodaný uživatelem: `ok: true`, všech **18 kontrol úspěšných**.
   rehearsal 2; nejde o požadavek vrátit je na počáteční hodnotu 1.
 - Cookie parametry: path `/`, domain prázdná, `secure=false`, `httponly=false`.
   Tyto atributy preflight zatím pouze vypisuje, nezahrnuje je do výsledku `ok`.
-  Nastavení Secure a HttpOnly pro HTTPS provoz zůstává k dořešení před finálním
-  nasazením; ověřit skutečné Set-Cookie a funkčnost přihlášení/odhlášení.
+  Následná úprava v [session.md](session.md) byla nasazena na betu. Lokální
+  testy přihlášení/odhlášení prošly a živý anonymní HTTPS GET potvrdil
+  Set-Cookie s příznaky Secure, HttpOnly a SameSite=Lax.
 
 Uživatel potvrdil odstranění `tools/vz2_preflight.php`; následná anonymní HTTP
 kontrola dne 20. 9. 2026 ověřila stav 404. Úklid dočasné diagnostiky je hotový.

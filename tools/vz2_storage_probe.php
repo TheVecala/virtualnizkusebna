@@ -51,7 +51,8 @@ if(PHP_SAPI==='cli'){
     try{if($argc!==2)throw new RuntimeException('Usage: php tools/vz2_storage_probe.php STORAGE_ROOT');echo json_encode(vz2_probe_storage($argv[1]),JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT).PHP_EOL;}
     catch(Throwable $e){fwrite(STDERR,$e->getMessage().PHP_EOL);exit(1);}exit;
 }
-session_start();
+require_once __DIR__ . '/../php/inc/session.php';
+app_session_start();
 require_once dirname(__DIR__).'/config.php';
 auth_refresh_session();auth_require_admin();
 header('Cache-Control: no-store');header('X-Content-Type-Options: nosniff');
