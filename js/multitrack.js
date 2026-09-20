@@ -409,6 +409,7 @@
     function renderSelector(selectedId) {
         if (!dom.selector) return;
         dom.selector.textContent = '';
+        if (config.managedNavigation) return; // VZ2 selects recordings in its shared catalogue.
         if (!items.size) dom.selector.appendChild(createElement('p', 'mt-list-empty', 'Žádné multitracky'));
         items.forEach(function(item) {
             var button = createElement('button', 'mt-recording');
@@ -1977,6 +1978,7 @@
         if (dom.uploadForm && !config.canUpload) {
             Array.from(dom.uploadForm.elements).forEach(function(element) { element.disabled = true; });
         }
+        if (config.managedNavigation) { setLoadState('idle'); return; }
         refreshList().then(function(list) {
             if (!currentSet) setLoadState('idle');
             if (config.initialId && items.has(String(config.initialId))) {

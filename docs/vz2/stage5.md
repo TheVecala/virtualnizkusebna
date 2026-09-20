@@ -2,8 +2,19 @@
 
 20. 9. 2026, výchozí commit `d8fd9722d4777b0cac7a413031215076792d30bc`.
 Uživatel potvrdil funkčnost etapy 4 na betě. Upřesnil postup: nejprve plně
-funkční beta, potom jí nahradit alfu; kompatibilita se současnou alfou se neřeší.
-Živá aktualizace této etapy ani přepnutí alfy dosud nebyly potvrzené.
+funkční beta, potom úprava jejího vzhledu a teprve následně nahrazení alfy.
+Etapa 5 je uložená v commitu `4de4c3e`. Uživatel potvrdil nahrání na betu
+a zapnutí `VZ2_ONLY`. Anonymní HTTP kontrola potvrdila přihlašovací stránku
+(200), zablokovaný starý endpoint `php/ajax/ajax_history.php` (410) a ochranu
+VZ2 API bez přihlášení (401). Uživatel následně dodal úspěšný živý preflight
+`2026-09-20.5` (podrobnosti níže). Závěrečná ruční kontrola UI po aktualizaci
+a přepnutí alfy ještě nejsou potvrzené.
+
+Aktuální upřesnění uživatele: starou zkušebnu zachovat pro porovnávání na
+samostatné subdoméně, bez uživatelského obsahu a bez dodatečného hesla Apache.
+Pracovní návrh názvu je `zkusebna-old.dusanovakapela.cz`; dosud nebyla založena.
+Původní přihlášení aplikace tím není zrušeno. Příprava prázdné ukázky není
+pokynem ke smazání současných dat. Viz `docs/vz2/legacy-comparison.md`.
 
 ## Co se změnilo
 
@@ -25,6 +36,36 @@ Neověřuje hashe souborů ani všechny veřejné aliasy; dřívější živé o
 privátního úložiště platí pro nezměněné cesty a HTTP pravidla.
 
 ## Ověření
+
+### Živý preflight bety — 20. 9. 2026
+
+Výstup dodaný uživatelem: `ok: true`, všech **18 kontrol úspěšných**.
+
+- PHP 8.1.32, 64 bit; MariaDB 11.4.12-MariaDB-log.
+- DB `18810_virtualni_zkusebna`, 13 přesných VZ2 tabulek s InnoDB,
+  vynucování CHECK a diskusní body typu MEDIUMTEXT z migrace 003.
+- Aplikační spojení používá `STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION`,
+  přestože globální režim zůstává pouze `NO_ENGINE_SUBSTITUTION`.
+- Načtená konfigurace: `environment=beta`, `writes_enabled=true`, `vz2_only=true`;
+  SITE_URL odpovídá `https://zkusebna_beta.dusanovakapela.cz`.
+- Storage `/data/www/18810/dusanovakapela_cz/_vz2_storage`, známý dataset
+  `vz2-77d212fe03d7f048f909029c1023cc8ab49bbee48dcda5a4`, režim `http-denied`.
+- Všech 5 dostupných souborů je čitelných a má velikost podle SQL;
+  celkem 67 804 306 bajtů, `invalid_count=0`. Nejde o porovnání hashů obsahu.
+- Žádné nedokončené souborové operace; aktuální verze dokumentů existují,
+  aktivní správce a globální vlákno Nápady existují. Revize pořadí: song 12,
+  rehearsal 2; nejde o požadavek vrátit je na počáteční hodnotu 1.
+- Cookie parametry: path `/`, domain prázdná, `secure=false`, `httponly=false`.
+  Tyto atributy preflight zatím pouze vypisuje, nezahrnuje je do výsledku `ok`.
+  Nastavení Secure a HttpOnly pro HTTPS provoz zůstává k dořešení před finálním
+  nasazením; ověřit skutečné Set-Cookie a funkčnost přihlášení/odhlášení.
+
+Uživatel potvrdil odstranění `tools/vz2_preflight.php`; následná anonymní HTTP
+kontrola dne 20. 9. 2026 ověřila stav 404. Úklid dočasné diagnostiky je hotový.
+Původní alfa zůstává beze změny, dokončení
+funkcí bety předchází práci na CSS a pozdějšímu předání alfě.
+
+### Lokální ověření
 
 Výsledek: **167 integračních kontrol prošlo**, včetně HTTP, skutečné SQL DB,
 dvou kopií webu a browser scénářů. Prošly také testy osobních účtů (25), hostů
@@ -48,9 +89,23 @@ nenahrazuje závěrečnou kontrolu na hostingu. Kód zachovává syntaxi PHP 8.1
 
 ## Nasazení a předání
 
+Aktuální pořadí podle uživatele:
+
+1. V tomto vlákně dokončit funkce a provozní ověření nové VZ2 na betě.
+   Současná alfa zatím zůstává v provozu beze změny.
+2. V samostatném budoucím vlákně upravit CSS a grafické zobrazení bety.
+   Toto vlákno zatím nebylo založeno; vzhled se teď nepředělává.
+3. Před nahrazením alfy připravit starou verzi na `old` podle
+   `legacy-comparison.md`, bez uživatelského obsahu a bez hesla Apache.
+   Příprava může probíhat během práce na vzhledu, ale současnou alfu do
+   závěrečného předání ponechat dostupnou.
+4. Až bude beta ověřená funkčně i vzhledově a `old` připravené, uživatel
+   zkopíruje tuto finální betu na alfu. Přenést i finální CSS a další assety.
+
 Podrobný postup je v `deploy/vz2-stage5/README.cs.md`. Nevyžaduje novou migraci.
-Nejprve beta s `VZ2_ONLY=true` a povolenými zápisy, až po ověření kompletní
-kopie jejího kódu na alfu. Konfigurace kopie má odpovídat nové adrese a prostředí.
+Beta zatím běží s `VZ2_ONLY=true` a povolenými zápisy. Samotné dokončení
+funkční kontroly není pokynem k přepnutí alfy před úpravou vzhledu.
+Konfigurace budoucí kopie má odpovídat nové adrese a prostředí.
 Úložiště a DB zůstávají společné; po předání beta pouze pro čtení. Při přepnutí
 je nutné nechat doběhnout staré požadavky, nejen přepsat konstantu.
 
@@ -60,6 +115,8 @@ z ověřené bety pro pozdější nahrazení alfy. V obou režimech je preflight
 jako dočasná kontrola. Manifest obsahuje SHA-256 každého souboru; žádný režim
 nečte ani nebalí `config.php`, `config.vz2.php`, SQL, Git nebo userdata.
 Výstupní adresář musí být nový. ZIP lze vytvořit standardním Compress-Archive.
+Dosavadní balíčky etapy 5 předcházejí plánované úpravě CSS. Pro konečné
+nahrazení alfy vytvořit nový kompletní balíček z finální ověřené verze bety.
 
 Předčasně se neodstraňují staré soubory/tabulky. Samostatný úklid popisuje
 `docs/vz2/cleanup.md`; integrace navigace Mixéru zůstává etapou 6.

@@ -1,8 +1,17 @@
 # Etapa 5 — dokončení bety
 
 Výchozí stav: commit `d8fd9722`, etapa 4 ověřená uživatelem na hostingu.
-Nejprve dokončíme a ověříme betu. Teprve její hotovou verzí nahradíme alfu;
-současnou starou alfu nemusíme zachovávat funkční vedle VZ2.
+Nejprve dokončíme a ověříme funkce bety, potom v samostatném vlákně upravíme
+její CSS a vzhled. Do té doby současná alfa zůstává v provozu beze změny.
+Teprve funkčně i vzhledově hotovou betou uživatel nahradí alfu;
+původní zkušebna zůstane odděleně jako prázdná ukázka pro porovnávání.
+
+**Upřesnění:** stará verze se zachová bez uživatelského obsahu na samostatné
+subdoméně, pracovně `zkusebna-old.dusanovakapela.cz`. Dodatečné heslo Apache
+uživatel odmítl; původní přihlášení aplikace se tím nemění. Její kód se neslučuje
+s VZ2 a ukázka se nepřipojí k živému uživatelskému obsahu. Před přepsáním
+současné alfy se zachová její kód a ověří oddělená prázdná verze.
+Podrobnosti jsou v `docs/vz2/legacy-comparison.md` v repozitáři.
 
 ## Teď: aktualizace bety
 
@@ -66,12 +75,19 @@ Výsledek kontroly lze poslat do této konverzace; neposílejte `config.php`.
 
 ## Později: hotová beta nahradí alfu
 
-Tento krok následuje až po dokončené kontrole bety. Nejde o přizpůsobování
+Tento krok následuje až po dokončené funkční kontrole **a úpravě vzhledu bety
+v samostatném vlákně**, když je připravená také stará verze na `old`.
+Dosavadní ZIP etapy 5 není finální balíček po změně CSS: pro kopírování na
+alfu připravte kompletní aktuální verzi včetně upravených stylů a assetů.
+Nejde o přizpůsobování
 nového kódu staré alfě: nasadí se kompletní ověřený kód bety. Přírůstkový ZIP
 v režimu `beta` k tomu nestačí. Režim balíčku je uvedený v `manifest.json`.
 
 1. Pořiďte čerstvou zálohu společné DB, privátního úložiště a obou konfigurací
-   mimo veřejný web. Starou alfu archivujte pro případ dohledání starého obsahu.
+   mimo veřejný web. Nejdřív připravte starou verzi jako samostatnou prázdnou
+   ukázku bez kopírování uživatelských souborů a SQL obsahu. Ověřte zobrazení,
+   původní přihlášení a prázdné katalogy, teprve pak pokračujte nahrazením alfy.
+   Kvůli přípravě ukázky nemažte data současné instalace.
 2. Vyhraďte krátké servisní okno. Na betě nastavte `VZ2_WRITES_ENABLED=false`,
    nechte doběhnout již zahájené požadavky a uploady (hosting má limit 300 s).
    Zkontrolujte nedokončené operace. Případnou obnovu dokončete na betě ještě
@@ -116,3 +132,6 @@ ověřte, že druhý má zápisy vypnuté.
 
 Samotné nahrazení aplikace nemaže staré tabulky ani userdata. Úklid je oddělený
 krok až po úspěšném přechodu; konkrétní postup je v `docs/vz2/cleanup.md` v repozitáři.
+Kód a oddělené provozní závislosti prázdné staré ukázky zůstávají z úklidu
+vyloučené. Starý uživatelský obsah se do ukázky nepřenáší; jeho případné
+smazání na původním místě zůstává samostatným krokem.

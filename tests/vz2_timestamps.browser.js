@@ -24,13 +24,15 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await page.route('https://cdn.jsdelivr.net/**', route => route.abort());
         await page.goto(base + 'index.php?v=2&view=mixer&collection_id=' + c.id);
         await page.locator('#recording-' + id).waitFor({ state: 'attached' });
-        await page.locator('#mt-selector [data-mt-id="' + mixId + '"]').waitFor();
+        assert.equal(await page.locator('.layout').isVisible(), true, 'Legacy Mixer URL now opens the shared catalogue');
+        assert.equal(await page.locator('#mt-selector').isVisible(), false, 'No separate Mixer catalogue');
+        await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
+        await page.waitForFunction(() => { const box = document.getElementById('mixer-panel').getBoundingClientRect(); return box.top >= -1 && box.top < innerHeight; });
         const mixerBox = await page.locator('#mixer-panel').boundingBox();
-        assert(mixerBox && mixerBox.y >= 0 && mixerBox.y < 400, 'Mixer navigation must keep the panel in view after catalogue loading: ' + JSON.stringify(mixerBox));
-        assert.equal(await page.locator('.layout').isVisible(), false, 'Mixer view must not show the catalogue above it');
-        await page.locator('#mt-selector [data-mt-id="' + mixId + '"]').click();
+        assert(mixerBox && mixerBox.y >= -1 && mixerBox.y < 1000, 'Mixer opens inside the shared collection view: ' + JSON.stringify(mixerBox));
+        assert.equal(await page.locator('.layout').isVisible(), true, 'Collection navigation remains available with Mixer');
         await page.waitForFunction(rid => window.MultitrackApp?.getState()?.id === String(rid) && window.MultitrackApp.getState().phase === 'ready', mixId);
-        check(true, 'browser: direct Mixer navigation stays visible after asynchronous catalogue load and can open a recording');
+        check(true, 'browser: legacy Mixer URL leads to shared catalogue and embedded Mixer keeps collection navigation');
         await page.goto(base + 'index.php?v=2&collection_id=' + c.id);
         assert.equal(await page.locator('.layout').isVisible(), true, 'Catalogue navigation restores songs and rehearsals');
         const card = page.locator('#recording-' + id), notes = card.locator('.vz2-timestamps'), dialog = page.locator('.vz2-timestamp-editor');
@@ -109,7 +111,6 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         fs.renameSync(path.join(media, firstFile), path.join(media, firstFile + '.held'));
         try {
             await page.reload();
-            await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
             await page.waitForFunction(() => window.MultitrackApp?.getState()?.phase === 'ready');
             const partial = await page.evaluate(() => window.MultitrackApp.getState());
             assert.equal(partial.tracks.filter(t => t.status === 'ready').length, 1);

@@ -1,15 +1,15 @@
 'use strict';
 // Build a local FTP bundle. Never reads config.php, user data or credentials.
-// node tools/vz2_release.js <new-output-directory> [beta|full]
+// node tools/vz2_release.js <new-output-directory> [beta|full|stage6]
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
-const baseline = 'd8fd9722d4777b0cac7a413031215076792d30bc';
 const [destination, mode = 'beta'] = process.argv.slice(2);
-assert(destination && ['beta', 'full'].includes(mode), 'Use: node tools/vz2_release.js <new-directory> [beta|full]');
+const baseline = mode === 'stage6' ? '4de4c3e80e08dd238fc30142daa62941242f9534' : 'd8fd9722d4777b0cac7a413031215076792d30bc';
+assert(destination && ['beta', 'full', 'stage6'].includes(mode), 'Use: node tools/vz2_release.js <new-directory> [beta|full|stage6]');
 const out = path.resolve(destination);
 assert(!fs.existsSync(out), 'Output directory must not exist; existing files are never replaced.');
 const git = (...args) => execFileSync('git', args, { cwd: root, windowsHide: true, encoding: 'utf8' }).trim();
@@ -19,11 +19,13 @@ const tracked = git('ls-files').split(/\r?\n/).filter(runtime);
 assert(!git('ls-files', '--others', '--exclude-standard').split(/\r?\n/).some(runtime), 'Review and track new runtime files before packaging.');
 const changed = new Set(git('diff', '--name-only', baseline, '--').split(/\r?\n/));
 const names = tracked.filter(name => mode === 'full' || changed.has(name)).sort();
-assert(names.includes('index.php') && names.includes('php/auth.php'), 'Incomplete stage 5 release.');
+if (mode === 'stage6') assert.deepEqual(names, ['js/multitrack.js','js/vz2.js','vz2.php'], 'Review stage 6 runtime file set.');
+else assert(names.includes('index.php') && names.includes('php/auth.php'), 'Incomplete stage 5 release.');
 const sources = names.map(name => [name, '1_soubory/' + name]);
-sources.push(['tools/vz2_preflight.php', '2_docasna_kontrola/tools/vz2_preflight.php']);
-sources.push(['deploy/vz2-stage5/README.cs.md', 'README.cs.md']);
-sources.push(['docs/vz2/stage5.md', 'STAV.cs.md']);
+if (mode !== 'stage6') sources.push(['tools/vz2_preflight.php', '2_docasna_kontrola/tools/vz2_preflight.php']);
+const stage = mode === 'stage6' ? 'stage6' : 'stage5';
+sources.push(['deploy/vz2-' + stage + '/README.cs.md', 'README.cs.md']);
+sources.push(['docs/vz2/' + stage + '.md', 'STAV.cs.md']);
 const entries = sources.map(([source, target]) => {
     const absolute = path.join(root, source);
     assert(fs.lstatSync(absolute).isFile(), 'Source must be a regular file: ' + source);
