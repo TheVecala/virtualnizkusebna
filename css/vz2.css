@@ -85,6 +85,51 @@ dialog form { margin-top: 0; }
 #catalog-dialog #sidebar { border: 0; }
 #activity.utility-panel, #offline-files.utility-panel { position: fixed; inset: 56px 12px 12px auto; z-index: 15; width: min(660px, calc(100% - 24px)); margin: 0; overflow: auto; padding: 14px; background: var(--vz-panel); border: 1px solid var(--vz-border); border-radius: 5px; box-shadow: 0 8px 24px #0006; }
 #bottom-nav { display: none; }
+/* Compact recordings: disclosure never mounts, replaces or stops a player. */
+.recording-card { padding: 0; margin: 0 0 7px; }
+.recording-toggle { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; width: 100%; text-align: left; padding: 7px 9px; border: 0; background: transparent; }
+.recording-toggle::after { content: '›'; grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 21px; color: var(--vz-muted); }
+.recording-toggle[aria-expanded=true]::after { transform: rotate(90deg); color: var(--vz-primary); }
+.recording-toggle:hover { background: var(--vz-primary-soft); }
+.recording-toggle:focus-visible { outline-offset: -2px; }
+.recording-title { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recording-toggle small { grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.recording-status { margin: 0; padding: 0 9px 6px; font-size: 11px; color: var(--vz-muted); }
+.recording-status[data-state=missing], .recording-status[data-state=failed] { color: #ef9494; }
+.recording-status[data-state=partial], .recording-status[data-state=pending], .recording-status[data-state=deleting] { color: #e0c986; }
+.recording-card > button:not(.recording-toggle) { margin: 0 9px 7px; max-width: calc(100% - 18px); }
+.recording-body { padding: 8px; border-top: 1px solid var(--vz-border); }
+.recording-body audio { display: block; margin: 0 0 8px; }
+.recording-summary { margin: 0 0 6px; }
+.recording-body .files { margin: 6px 0; padding: 0; list-style: none; }
+.recording-body .files li { margin: 0; padding: 5px 0; border-bottom: 1px solid var(--vz-border); }
+.recording-body .files li > a { display: inline-block; max-width: 100%; }
+.actions-menu { margin: 5px 0; }
+.actions-menu > summary { width: 34px; font-size: 18px; line-height: 1; background: var(--vz-shell); }
+.actions-menu[open] > summary { color: var(--vz-primary); border-color: var(--vz-primary); }
+.action-list { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 8px; margin-top: 4px; border: 1px solid var(--vz-border); background: var(--vz-shell); border-radius: 4px; }
+.action-list > * { min-width: 0; max-width: 100%; }
+.action-list > select { width: 100%; }
+.files li .action-list button { margin: 0; }
+.upload-section { margin-top: 10px; border: 1px solid var(--vz-border); border-radius: 4px; background: var(--vz-shell); }
+.upload-section > summary { text-align: left; border: 0; color: var(--vz-primary); }
+.upload-section[open] > summary { border-bottom: 1px solid var(--vz-border); }
+.upload-section form { margin: 0; padding: 10px; }
+.upload-section form h2 { display: none; }
+dialog { padding: 14px; }
+dialog h2 { margin: 0 0 10px; font-size: 16px; }
+dialog label { margin: 8px 0; }
+dialog .toolbar { gap: 6px; }
+dialog form button:not([type]), dialog button[type=submit], .upload-section form > button { background: var(--vz-primary-soft); border-color: var(--vz-primary); color: var(--vz-primary-hover); }
+input[type=checkbox], input[type=range], progress { accent-color: var(--vz-primary); }
+.panel-body .vz2-timestamps h4 { font-size: 13px; margin: 8px 0; }
+.panel-body .vz2-timestamps li p { margin: 5px 0; }
+.panel-body .ts-filters { gap: 4px 10px; font-size: 11px; }
+.panel-body .ts-filters label { margin: 5px 0; }
+@media (max-width: 1199px) {
+    .recording-toggle { min-height: 48px; padding-block: 8px; }
+    .actions-menu > summary { min-width: 40px; display: flex; align-items: center; justify-content: center; }
+}
 @media (max-width: 1199px) {
     .layout { grid-template-columns: minmax(0, 1fr); }
     #sidebar-slot, #desktop-panels { display: none; }

@@ -23,6 +23,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         const open = () => page.locator('#recording-' + mix.id).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
         const ready = () => page.waitForFunction(id => window.MultitrackApp?.getState()?.id === String(id) && window.MultitrackApp.getState().phase === 'ready', mix.id);
         await page.goto(base + 'index.php?v=2&collection_id=' + song.id);
+        await page.locator('#recording-' + single.id + ' .recording-toggle').click();
         await page.locator('#recording-' + single.id + ' audio').waitFor();
         assert.equal(await page.locator('header a').filter({ hasText: /^Mixér$/ }).count(), 0);
         await page.evaluate(() => { window.navigationSentinel = 'same-document'; });

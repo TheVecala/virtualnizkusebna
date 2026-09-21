@@ -36,6 +36,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await page.goto(base + 'index.php?v=2&collection_id=' + c.id);
         assert.equal(await page.locator('.layout').isVisible(), true, 'Catalogue navigation restores songs and rehearsals');
         const card = page.locator('#recording-' + id), notes = card.locator('.vz2-timestamps'), dialog = page.locator('.vz2-timestamp-editor');
+        await card.locator('.recording-toggle').click();
         await notes.getByRole('button', { name: 'Přidat zápis', exact: true }).click();
         await dialog.locator('[name=kind]').selectOption('song_start');
         await dialog.locator('[name=time]').fill('00:00:01.123');
@@ -120,7 +121,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         } finally { fs.renameSync(path.join(media, firstFile + '.held'), path.join(media, firstFile)); }
         const recording = db('SELECT * FROM vz2_recordings WHERE id=?', [id])[0];
         await good('admin', { action: 'remove_audio', id, revision: recording.revision, confirm: recording.title, request_key: require('node:crypto').randomBytes(16).toString('hex') });
-        await page.reload(); await notes.getByText('Můj rozepsaný text', { exact: true }).waitFor();
+        await page.reload(); await card.locator('.recording-toggle').click(); await notes.getByText('Můj rozepsaný text', { exact: true }).waitFor();
         assert.equal(await card.locator('audio').count(), 0);
         for (const b of await notes.locator('[data-playback]').all()) assert.equal(await b.isDisabled(), true);
         assert.equal(await notes.getByRole('button', { name: 'Upravit', exact: true }).first().isEnabled(), true);
