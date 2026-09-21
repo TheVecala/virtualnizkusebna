@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../inc/session.php';
+app_session_start();
 session_unset();
 session_destroy();
 $adresa_pro_navrat = $_POST["navrat"] ?? "/";
@@ -7,11 +8,9 @@ $adresa_pro_navrat = $_POST["navrat"] ?? "/";
 // Smazat session cookie
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000,
-        $params["path"], $params["domain"],
-        $params["secure"], $params["httponly"]
-    );
+    unset($params['lifetime']);
+    setcookie(session_name(), '', ['expires' => time() - 42000] + $params);
 }
 
-require "../navrat.php";
+require __DIR__ . "/../inc/navrat.php";
 ?>
