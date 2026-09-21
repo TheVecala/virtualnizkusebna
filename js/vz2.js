@@ -76,6 +76,7 @@
         const missing = qs.has('recording_id') && !target;
         setRoute(params, true);
         render();
+        if (target) window.Vz2Layout.revealRecording();
         seekMixerLink();
         if (missing) message('Odkazovaná nahrávka již neexistuje.', true);
         if (nextMixer && String(window.MultitrackApp?.getState()?.id) !== nextMixer) {
@@ -263,8 +264,10 @@
         const list = data.collections.filter(c => c.kind === kind); $('collections').replaceChildren();
         list.forEach(c => {
             const row = node('div', undefined, 'collection');
-            const select = button(c.title, () => navigate({ collection_id: String(c.id) })); select.setAttribute('aria-pressed', String(String(selected) === String(c.id))); row.append(select);
-            reorderControls(row, list, c, { scope: 'collections', kind, revision: Number(data.orders.find(o => o.kind === kind).revision) });
+            const select = button(c.title, async () => { await navigate({ collection_id: String(c.id) }); window.Vz2Layout.closeCatalog(); }); select.title = c.title; select.setAttribute('aria-pressed', String(String(selected) === String(c.id))); row.append(select);
+            const menu = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Pořadí: ' + c.title); menu.append(summary);
+            reorderControls(menu, list, c, { scope: 'collections', kind, revision: Number(data.orders.find(o => o.kind === kind).revision) });
+            if (menu.childElementCount > 1) row.append(menu);
             $('collections').append(row);
         });
         // Keep the one live player and its event handlers while rebuilding cards.
@@ -272,18 +275,19 @@
         const content = $('content'); content.replaceChildren();
         mixerPanel.hidden = !mixerId;
         const c = data.collections.find(c => String(c.id) === String(selected));
+        $('collection-title').textContent = c?.title || 'Zatím tu nic není';
+        $('collection-title').title = c?.title || '';
+        $('catalog-picker').textContent = c?.title || 'Skladby / zkoušky';
+        $('bn-skladby').lastChild.textContent = kind === 'rehearsal' ? 'zkoušky' : 'skladby';
+        $('collection-actions').replaceChildren();
+        window.Vz2Content.mountPreviews(c);
         if (!c) content.append(node('h1', 'Zatím tu nic není'), node('p', 'Vytvořte skladbu nebo zkoušku. Audio můžete přidat později.'));
         else {
-            content.append(node('h1', c.title), node('small', 'Vytvořil/a ' + c.author));
-            const actions = node('div', undefined, 'toolbar');
+            content.append(node('small', 'Vytvořil/a ' + c.author));
+            const actions = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Možnosti skladby nebo zkoušky'); actions.append(summary);
             if (cfg.write && c.can_edit) actions.append(button('Přejmenovat', () => openEdit(c, 'collection')));
             if (cfg.write && cfg.admin) actions.append(button('Úplně smazat celek', () => remove(c, 'collection', true), 'danger'));
-            actions.append(button('Obnovit', refresh)); content.append(actions);
-            const writing = node('div', undefined, 'toolbar content-actions');
-            writing.append(button('Text a akordy', () => window.Vz2Content.openDocument(c, 'lyrics_chords')),
-                button('Tabulatura', () => window.Vz2Content.openDocument(c, 'tablature')),
-                button('Diskuse', () => window.Vz2Content.openDiscussion({ collection_id: c.id })));
-            content.append(writing);
+            actions.append(button('Obnovit', refresh)); $('collection-actions').append(actions);
             const recordings = data.recordings.filter(r => String(r.collection_id) === String(c.id));
             if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));
@@ -327,8 +331,8 @@
     });
     $('create-collection')?.addEventListener('submit', async e => {
         e.preventDefault(); const f = e.currentTarget, b = f.querySelector('button'); b.disabled = true;
-        try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); setRoute({ collection_id: String(r.id) }); f.reset(); await refresh(); }
-        catch (err) { message(err.message, true); } finally { b.disabled = false; }
+        try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); setRoute({ collection_id: String(r.id) }); f.reset(); $('create-collection-dialog').close(); window.Vz2Layout.closeCatalog(); await refresh(); }
+        catch (err) { f.querySelector('.edit-error').textContent = err.message; } finally { b.disabled = false; }
     });
     $('edit-cancel').addEventListener('click', () => $('editor').close());
     $('edit-form').addEventListener('submit', async e => {

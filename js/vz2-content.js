@@ -19,7 +19,9 @@
     }
     function close(ctx) {
         if (ctx.busy || (ctx.dirty && !confirm('Zahodit rozepsané změny?'))) return false;
-        ctx.dialog.close(); ctx.dialog.remove(); if (current === ctx) current = null; return true;
+        ctx.dialog.close(); ctx.dialog.remove(); if (current === ctx) current = null;
+        if (previewCollection) mountPreviews(previewCollection);
+        return true;
     }
     function start(title) {
         if (current && !close(current)) return null;
@@ -171,5 +173,52 @@
         });
         await load();
     }
-    window.Vz2Content = { openDocument, openDiscussion };
+    // Read-only panel views share the existing API and modal editors. Editing,
+    // conflict handling and history continue to use the code above unchanged.
+    let previewCollection, previewSerial = 0;
+    function mountPreviews(collection) {
+        previewCollection = collection;
+        const serial = ++previewSerial;
+        const live = () => serial === previewSerial;
+        const hosts = ['lyrics', 'tablature', 'discussion'].map(id => document.getElementById(id + '-content'));
+        hosts.forEach(host => host.replaceChildren(make('p', collection ? 'Načítám…' : 'Vyberte skladbu nebo zkoušku.', 'muted')));
+        if (!collection) return;
+        [['lyrics_chords', hosts[0]], ['tablature', hosts[1]]].forEach(async ([kind, host]) => {
+            const edit = button('Otevřít editor', () => openDocument(collection, kind));
+            const content = make('pre', '', 'document-preview'), status = make('p', 'Načítám…', 'muted');
+            host.replaceChildren(edit, status, content);
+            async function load() {
+                try {
+                    const result = await api({ action: 'document', collection_id: collection.id, kind });
+                    if (!live()) return;
+                    edit.textContent = result.can_edit ? 'Upravit / historie' : 'Otevřít / historie';
+                    status.textContent = result.document ? result.document.title + ' · verze ' + result.document.current_revision : 'Zatím bez dokumentu.';
+                    content.textContent = result.version?.body || '';
+                } catch (e) { if (live()) { status.textContent = e.message; status.append(button('Zkusit znovu', load)); } }
+            }
+            await load();
+        });
+        const host = hosts[2], status = make('p', 'Načítám…', 'muted'), posts = make('div', '', 'content-posts');
+        let before, loading = false;
+        const older = button('Starší příspěvky', () => loadDiscussion(before)); older.hidden = true;
+        host.replaceChildren(button('Otevřít diskusi', () => openDiscussion({ collection_id: collection.id })), status, posts, older);
+        async function loadDiscussion(cursor) {
+            if (loading) return;
+            loading = true; older.disabled = true;
+            try {
+                const result = await api({ action: 'discussion', collection_id: collection.id, ...(cursor ? { before: cursor } : {}) });
+                if (!live()) return;
+                status.textContent = !cursor && !result.posts.length ? 'Zatím žádné příspěvky.' : '';
+                result.posts.forEach(p => {
+                    const item = make('article');
+                    item.append(make('small', author(p.author, p.author_active) + ' · ' + date(p.created_at)), make('p', p.body));
+                    posts.append(item);
+                });
+                before = result.next_before; older.hidden = !before;
+            } catch (e) { if (live()) { status.textContent = e.message; status.append(button('Zkusit znovu', () => loadDiscussion(cursor))); } }
+            finally { loading = false; older.disabled = false; }
+        }
+        loadDiscussion();
+    }
+    window.Vz2Content = { openDocument, openDiscussion, mountPreviews };
 }());
