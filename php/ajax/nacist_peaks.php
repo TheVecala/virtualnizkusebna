@@ -8,7 +8,9 @@
  *   cesta  — relativní cesta k audio souboru (např. user/kapela/befele/uploads/slozka/soubor.webm)
  */
 
-session_start();
+require_once __DIR__ . '/../inc/session.php';
+app_session_start();
+require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../inc/content_context.php';
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');

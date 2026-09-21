@@ -7,6 +7,11 @@ function auth_db(): mysqli {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         require __DIR__ . '/login/connect.php';
         $mysqli->set_charset('utf8mb4');
+        if (defined('VZ2_ENABLED') && VZ2_ENABLED === true) {
+            // Hosting need not have a strict global default. Configure this connection
+            // before login/admin/content queries; keep any additional server modes.
+            $mysqli->query("SET SESSION sql_mode = CONCAT_WS(',', @@SESSION.sql_mode, 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION')");
+        }
         $db = $mysqli;
     }
     return $db;
@@ -18,6 +23,7 @@ function auth_is_admin(): bool {
 }
 
 function auth_require_admin(): void {
+    auth_refresh_session();
     if (!auth_is_admin()) {
         http_response_code(403);
         exit('Přístup je povolen pouze administrátorovi.');
@@ -40,6 +46,7 @@ function auth_settings(mysqli $db, bool $lock = false): array {
 // V endpointech načítajících config.php se zde promítne deaktivace,
 // změna role/hesla i vypnutí hosta, aniž by se přepisovaly jeho kontroly práv.
 function auth_refresh_session(): void {
+    auth_vz2_entry_guard();
     if (($_SESSION['logged_in_single'] ?? null) !== true) {
         return;
     }
@@ -168,7 +175,7 @@ function auth_admin_count(mysqli $db): int {
 }
 
 // Volat pouze uvnitř transakce po uzamčení auth_settings (platí i pro bootstrap).
-function auth_save_member(mysqli $db, array $input, array $guest, bool $firstAdmin = false): void {
+function auth_save_member(mysqli $db, array $input, array $guest, bool $firstAdmin = false): int {
     $idText = auth_input($input, 'id');
     if ($idText !== '' && (!ctype_digit($idText) || (int) $idText < 1)) {
         throw new InvalidArgumentException('Neplatný člen.');
@@ -217,6 +224,22 @@ function auth_save_member(mysqli $db, array $input, array $guest, bool $firstAdm
         $stmt->bind_param('ssis', $name, $role, $active, $hash);
     }
     $stmt->execute();
+    return $id ?: (int) $db->insert_id;
+}
+
+// Enabled only for an installation explicitly switched to the new application.
+// Existing legacy files remain on disk for rollback; direct entry cannot write them.
+function auth_vz2_entry_guard(): void {
+    if (PHP_SAPI === 'cli' || !defined('VZ2_ONLY') || VZ2_ONLY !== true) return;
+    $root = realpath(dirname(__DIR__));
+    $script = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
+    $allowed = ['index.php','vz2.php','admin.php','help.php','php/ajax/vz2.php',
+        'php/ajax/vz2_files.php','php/ajax/vz2_timestamps.php','php/ajax/vz2_content.php','tools/vz2_preflight.php'];
+    foreach ($allowed as $path) if ($script !== false && $script === realpath($root.'/'.$path)) return;
+    http_response_code(410);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    exit('{"ok":false,"error":"Tato instalace používá VZ2. Otevřete index.php."}');
 }
 
 function auth_save_guest(mysqli $db, array $input, array $guest): void {

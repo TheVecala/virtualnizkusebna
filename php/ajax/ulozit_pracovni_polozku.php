@@ -1,5 +1,7 @@
 <?php
-session_start();
+require_once __DIR__ . '/../inc/session.php';
+app_session_start();
+require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../inc/multitracky.php';
 header('Content-Type: application/json; charset=utf-8');
 

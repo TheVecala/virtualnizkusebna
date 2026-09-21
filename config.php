@@ -22,6 +22,10 @@ function ma_pravo(string $pravo): bool {
 }
 
 // Osobní účty: průběžně promítnout změnu role, deaktivaci a změnu hesla.
+// VZ2 is opt-in; never replace this environment's connection or SITE_URL.
+if (is_file(__DIR__ . '/config.vz2.php')) {
+    require_once __DIR__ . '/config.vz2.php';
+}
 // Nasadit až po SQL migraci a vytvoření prvního admina starým loginem.
 require_once __DIR__ . '/php/auth.php';
 try {

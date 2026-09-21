@@ -1,18 +1,23 @@
 <?php
-session_start();
+require_once __DIR__ . '/php/inc/session.php';
+app_session_start();
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/php/inc/vz2_core.php';
 auth_require_admin();
 header('Cache-Control: no-store');
 require_once __DIR__ . '/php/inc/admin_storage.php';
 
 $storageError = '';
 $storage = null;
+$vz2Only = defined('VZ2_ONLY') && VZ2_ONLY === true;
 $storageRefresh = $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'storage_refresh';
 if ($storageRefresh) {
     try {
         auth_check_csrf($_POST);
-        $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
-        admin_storage_report($bandRoot, $_SESSION, true);
+        if (!$vz2Only) {
+            $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
+            admin_storage_report($bandRoot, $_SESSION, true);
+        }
         header('Location: admin.php#server', true, 303);
         exit;
     } catch (InvalidArgumentException $e) {
@@ -24,10 +29,15 @@ if ($storageRefresh) {
     }
 }
 try {
-    $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
-    $storage = admin_storage_report($bandRoot, $_SESSION);
+    if ($vz2Only) {
+        $storage = admin_vz2_storage_report();
+    } else {
+        $bandRoot = admin_storage_band_root(__DIR__, $_SESSION);
+        $storage = admin_storage_report($bandRoot, $_SESSION);
+    }
 } catch (Throwable $e) {
-    $storageError = 'Úložiště kapely není dostupné. Ověřte datový adresář a přístupová práva.';
+    $storageError = $vz2Only ? 'Evidenci obsahu VZ2 se nepodařilo načíst.'
+        : 'Úložiště kapely není dostupné. Ověřte datový adresář a přístupová práva.';
 }
 $diskPath = isset($bandRoot) && is_dir($bandRoot) ? $bandRoot : __DIR__;
 $diskTotal = @disk_total_space($diskPath);
@@ -56,10 +66,18 @@ try {
                 auth_require_admin();
             }
             $action = auth_input($_POST, 'action');
+            if (vz2_enabled()) vz2_ready(true);
             if ($action === 'member') {
-                auth_save_member($db, $_POST, $guest);
+                $memberId = auth_save_member($db, $_POST, $guest);
+                if (vz2_enabled()) {
+                    $member = vz2_one($db, 'SELECT name,role,active FROM users WHERE id=?', [$memberId]);
+                    vz2_log($db, empty($_POST['id']) ? 'user.created' : 'user.updated', 'user', $memberId, $member['name'],
+                        'Role: ' . $member['role'] . '; aktivní: ' . $member['active'] . (!empty($_POST['password']) ? '; změna hesla' : ''));
+                }
             } elseif ($action === 'guest') {
                 auth_save_guest($db, $_POST, $guest);
+                if (vz2_enabled()) vz2_log($db, 'auth.guest_changed', 'auth_settings', 1, 'Přístup hosta',
+                    'Povolen: ' . (($_POST['guest_enabled'] ?? '') === '1' ? 'ano' : 'ne') . (!empty($_POST['password']) ? '; změna hesla' : ''));
             } else {
                 throw new InvalidArgumentException('Neplatná akce.');
             }
@@ -77,6 +95,9 @@ try {
         header('Location: admin.php#uzivatele', true, 303);
         exit;
     }
+} catch (Vz2Error $e) {
+    $error = $e->getMessage();
+    http_response_code($e->status);
 } catch (InvalidArgumentException $e) {
     $error = $e->getMessage();
     http_response_code(422);
@@ -137,6 +158,7 @@ function admin_member_form(array $user): void {
     <aside class="help-nav" aria-label="Sekce administrace"><strong>Administrace</strong><nav><a href="#uzivatele" class="active">Uživatelé</a><a href="#server">Server</a><a href="#nastaveni">Nastavení</a></nav></aside>
     <main id="obsah" class="help-content">
       <h1>Administrace</h1>
+      <?php if (vz2_enabled()): ?><p><a href="index.php?v=2">VZ2 — nahrávky, operace a deník</a></p><?php endif; ?>
       <?php if ($error): ?><p class="admin-message error" role="alert"><?= auth_h($error) ?></p><?php endif; ?>
       <?php if ($notice): ?><p class="admin-message" role="status"><?= auth_h($notice) ?></p><?php endif; ?>
       <?php if ($available): ?>

@@ -1,13 +1,13 @@
 (function() {
     'use strict';
 
-    var DB_NAME = 'zkusebna-audio-cache';
-    var STORE_NAME = 'audio-files';
-    var CACHE_PREFIX = 'multitrack-v1:';
+    var config = window.MULTITRACK_CONFIG || {};
+    var DB_NAME = config.cacheDb || 'zkusebna-audio-cache';
+    var STORE_NAME = config.cacheStore || 'audio-files';
+    var CACHE_PREFIX = config.cachePrefix || 'multitrack-v1:';
     var AUDIO_FORMATS = ['wav', 'flac', 'mp3'];
     var START_LEAD_SECONDS = 0.035;
 
-    var config = window.MULTITRACK_CONFIG || {};
     var dom = {};
     var cacheStore = null;
     var audioContext = null;
@@ -193,6 +193,9 @@
     }
 
     function trackCacheKey(set, track) {
+        if (config.cachePrefix && track.fileId && track.sha256) {
+            return CACHE_PREFIX + 'audio:' + track.fileId + ':' + track.sha256;
+        }
         return CACHE_PREFIX + set.cacheId + ':track:' + encodeURIComponent(track.url);
     }
 
@@ -370,7 +373,7 @@
             headers: { 'Accept': 'application/json' },
             signal: signal
         }).then(function(response) {
-            if (!response.ok) throw new Error('Server vrátil HTTP ' + response.status + '.');
+            if (!response.ok) { var error = new Error('Server vrátil HTTP ' + response.status + '.'); error.status = response.status; throw error; }
             return response.json();
         }).then(function(payload) {
             if (payload && payload.ok === false) throw new Error(payload.error || payload.chyba || 'Požadavek se nezdařil.');
@@ -406,6 +409,7 @@
     function renderSelector(selectedId) {
         if (!dom.selector) return;
         dom.selector.textContent = '';
+        if (config.managedNavigation) return; // VZ2 selects recordings in its shared catalogue.
         if (!items.size) dom.selector.appendChild(createElement('p', 'mt-list-empty', 'Žádné multitracky'));
         items.forEach(function(item) {
             var button = createElement('button', 'mt-recording');
@@ -483,7 +487,7 @@
     }
 
     function loadMetadata(item, signal) {
-        if (item.metadata) {
+        if (item.metadata && !config.requireFreshMetadata) {
             return Promise.resolve({ payload: item.metadata, url: item.metadataUrl ? metadataRequestUrl(item) : '', offline: false });
         }
         var url = metadataRequestUrl(item);
@@ -492,7 +496,7 @@
                 (payload && payload.metadata ? payload.metadata : payload);
             return { payload: metadata, url: url, offline: false };
         }).catch(function(networkError) {
-            if (isCancelled(networkError)) throw networkError;
+            if (isCancelled(networkError) || (config.requireFreshMetadata && networkError.status)) throw networkError;
             return cachedMetadataForItem(item).then(function(cachedMetadata) {
                 if (!cachedMetadata) throw networkError;
                 return { payload: cachedMetadata, url: '', offline: true };
@@ -523,7 +527,9 @@
                         file: track.file,
                         name: track.name,
                         order: Number.isInteger(track.order) ? track.order : index + 1,
-                        url: track.url
+                        url: track.url,
+                        fileId: track.fileId,
+                        sha256: track.sha256
                     };
                 })
             };
@@ -585,6 +591,9 @@
                 : new URL(encodeURIComponent(file), baseUrl).href;
             return {
                 file: file,
+                fileId: rawTrack.fileId,
+                sha256: rawTrack.sha256,
+                unavailable: rawTrack.unavailable === true,
                 name: name,
                 order: order,
                 url: url,
@@ -831,6 +840,7 @@
         set.tracks.forEach(function(track) {
             sequence = sequence.then(function() {
                 if (token !== loadSerial || set !== currentSet) throw cancelledError();
+                if (track.unavailable) { updateTrackStatus(track, 'error', null, 'Audio na serveru chybí nebo bylo odstraněno.'); return; }
                 return cachedTrackBlob(track).then(function(cachedBlob) {
                     if (token !== loadSerial || set !== currentSet) throw cancelledError();
                     if (cachedBlob) return cachedBlob;
@@ -1148,6 +1158,13 @@
             showArchivedSet(set);
             return;
         }
+        if (item.raw.audioUnavailable && !item.raw.audioPartial) {
+            set.phase = 'error';
+            setLoadingPanelVisible(false);
+            setLoadState('error');
+            showNotice('Audio neočekávaně chybí. Informace o nahrávce zůstávají dostupné.', 'error');
+            return;
+        }
 
         loadMetadata(item, loadAbortController ? loadAbortController.signal : undefined).then(function(result) {
             if (token !== loadSerial || set !== currentSet) throw cancelledError();
@@ -1156,6 +1173,7 @@
                 renderSelector(set.item.id);
                 return;
             }
+            if (result.payload.audioUnavailable && !result.payload.audioPartial) throw new Error('Audio chybí nebo sada stop není úplná. Obnovte seznam.');
             set.metadataUrl = result.url;
             set.metadataFromCache = !!result.offline;
             set.metadata = normalizeMetadata(item, result.payload, result.url);
@@ -1466,7 +1484,9 @@
                         name: track.name,
                         order: track.order,
                         url: track.url,
-                        key: track.cacheKey
+                        key: track.cacheKey,
+                        fileId: track.fileId,
+                        sha256: track.sha256
                     };
                 })
             };
@@ -1958,6 +1978,7 @@
         if (dom.uploadForm && !config.canUpload) {
             Array.from(dom.uploadForm.elements).forEach(function(element) { element.disabled = true; });
         }
+        if (config.managedNavigation) { setLoadState('idle'); return; }
         refreshList().then(function(list) {
             if (!currentSet) setLoadState('idle');
             if (config.initialId && items.has(String(config.initialId))) {
