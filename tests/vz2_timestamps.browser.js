@@ -99,7 +99,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await dialog.locator('[name=body]').fill('Společná pasáž Mixéru');
         await dialog.locator('[name=keep]').uncheck();
         await dialog.getByRole('button', { name: 'Uložit', exact: true }).click(); await dialog.waitFor({ state: 'hidden' });
-        await page.locator('#recording-' + mixId).getByText('Společná pasáž Mixéru', { exact: true }).waitFor();
+        await mixerNotes.getByText('Společná pasáž Mixéru', { exact: true }).waitFor();
         await mixerNotes.getByRole('button', { name: 'Smyčka', exact: true }).click();
         await page.waitForFunction(() => window.MultitrackApp.getState()?.playing === true);
         await page.evaluate(() => window.MultitrackApp.seek(9.95)); await page.waitForTimeout(400);

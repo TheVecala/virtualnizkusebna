@@ -28,16 +28,16 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         assert.equal(await page.locator('header a').filter({ hasText: /^Mixér$/ }).count(), 0);
         await page.evaluate(() => { window.navigationSentinel = 'same-document'; });
         await open(); await ready();
-        assert.equal(await page.locator('#recording-' + mix.id + ' #mixer-panel').count(), 1);
+        assert.equal(await page.locator('#player-body > #mixer-panel').count(), 1);
         assert.equal(await page.locator('#recording-' + mix.id + ' .vz2-timestamps').count(), 1);
         assert.equal(await page.locator('#mt-selector button').count(), 0);
         assert.equal(await page.locator('#collections').isVisible(), true);
         assert((await page.locator('#mixer-context').textContent()).includes('Navigace — skladba'));
         assert.equal(new URL(page.url()).searchParams.get('recording_id'), String(mix.id));
         assert.equal(await page.locator('#recording-' + single.id).count(), 1);
-        check(true, 'navigation: single and multitrack share one collection catalogue and Mixer opens inside it');
+        check(true, 'navigation: single and multitrack share one catalogue and Mixer opens above its panels');
         await page.evaluate(() => { window.MultitrackApp.seek(2); });
-        await page.locator('#mixer-copy-link').click();
+        await page.locator('#player-options > summary').click(); await page.locator('#mixer-copy-link').click();
         const copied = new URL(await page.evaluate(() => navigator.clipboard.readText()));
         assert.equal(copied.searchParams.get('recording_id'), String(mix.id));
         assert.equal(copied.searchParams.get('time_ms'), '2000');
@@ -47,7 +47,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         assert(Math.abs((await page.evaluate(() => window.MultitrackApp.getState())).position - 2) < 0.1);
         check(true, 'navigation: reload and copied direct time link reopen the same Mixer recording');
         await page.evaluate(() => { window.navigationSentinel = 'same-document'; window.MultitrackApp.play(); });
-        await page.locator('#mixer-close').click();
+        await page.locator('#player-close').click();
         assert.equal(await page.locator('#mixer-panel').isVisible(), false);
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         await page.goBack(); await ready();

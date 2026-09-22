@@ -85,6 +85,53 @@ dialog form { margin-top: 0; }
 #catalog-dialog #sidebar { border: 0; }
 #activity.utility-panel, #offline-files.utility-panel { position: fixed; inset: 56px 12px 12px auto; z-index: 15; width: min(660px, calc(100% - 24px)); margin: 0; overflow: auto; padding: 14px; background: var(--vz-panel); border: 1px solid var(--vz-border); border-radius: 5px; box-shadow: 0 8px 24px #0006; }
 #bottom-nav { display: none; }
+#player-shell { flex: 0 1 auto; min-width: 0; min-height: 36px; max-height: 45vh; max-height: 45dvh; display: flex; flex-direction: column; background: var(--vz-shell); border-bottom: 1px solid var(--vz-border); }
+.player-header { flex: 0 0 auto; display: flex; align-items: center; gap: 5px; min-width: 0; padding: 4px 8px; }
+#player-mode { color: var(--vz-primary); font-size: 11px; letter-spacing: .05em; }
+#player-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.player-header > button { width: 32px; flex: 0 0 32px; padding: 3px; }
+#player-play { color: var(--vz-primary); background: var(--vz-primary-soft); }
+#player-body { min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; padding: 8px; scrollbar-width: thin; }
+#player-options { margin: 0; }
+#player-options > summary { min-height: 30px; width: 32px; }
+#player-options .action-list { position: fixed; z-index: 45; right: 12px; top: 94px; width: min(300px, calc(100vw - 24px)); max-height: 65vh; overflow: auto; box-shadow: 0 5px 16px #0006; }
+#player-shell[data-mode=empty] { max-height: 38px; }
+#player-shell[data-mode=empty] .player-header > button { display: none; }
+#player-shell.player-collapsed { flex-shrink: 0; }
+#player-shell.player-fullscreen { position: fixed; inset: 0; z-index: 40; width: 100%; height: 100vh; height: 100dvh; max-height: none; border: 0; }
+.player-fullscreen #player-body { flex: 1; }
+.player-fullscreen #player-options .action-list { top: 46px; }
+#player-body #mixer-panel { border: 0; border-radius: 0; margin: 0; padding: 0; width: 100%; background: transparent; overflow: visible; }
+#mixer-panel > .toolbar:first-child { display: none; }
+#mixer-panel #mt-playing-name { display: none; }
+#mixer-context { margin: 0 0 6px; color: var(--vz-muted); font-size: 12px; }
+#player-body #mt-tracks { gap: 8px; padding-block: 4px; }
+#player-body .mt-channel { background: var(--vz-surface); border-color: var(--vz-border); border-radius: 4px; }
+#player-body .mt-channel-button { color: var(--vz-text); background: var(--vz-shell); border-color: var(--vz-border); }
+#player-body .mt-channel-button[aria-pressed=true], #player-body .mt-channel-button.is-active { background: var(--vz-primary-soft); border-color: var(--vz-primary); color: var(--vz-primary-hover); }
+#player-body #mt-play { color: var(--vz-primary-hover); border-color: var(--vz-primary); }
+#player-body .vz2-timestamps { margin-top: 10px; }
+#player-body .vz2-timestamps h4 { margin: 6px 0; font-size: 13px; }
+#player-body .vz2-timestamps li { padding: 6px; }
+#looper-status { margin: 0 0 5px; font-size: 12px; color: var(--vz-muted); }
+#looper-status:empty { display: none; }
+.looper-transport { gap: 5px; }
+.looper-transport label { display: flex; align-items: center; gap: 5px; margin: 0 0 4px; font-size: 12px; }
+.looper-transport label input { width: 95px; margin: 0; }
+#looper-wave-scroll { min-width: 0; max-width: 100%; overflow: auto hidden; margin: 6px 0; background: var(--vz-bg); border-radius: 4px; }
+#looper-wave { display: block; cursor: crosshair; }
+#looper-seek { min-width: 0; }
+@media (max-width: 767px) {
+    #player-shell { max-height: 42vh; max-height: 42dvh; }
+    .player-header { gap: 2px; padding: 3px 4px; }
+    .player-header > button { flex-basis: 40px; width: 40px; min-height: 40px; }
+    #player-mode { font-size: 10px; }
+    #player-title { font-size: 11px; }
+    #player-options > summary { min-width: 40px; min-height: 40px; }
+    #player-body .mt-channel-button { width: 40px; height: 40px; }
+    #player-body .mt-channel { flex-basis: 104px; }
+    #player-options .action-list { top: 98px; }
+}
 /* Compact recordings: disclosure never mounts, replaces or stops a player. */
 .recording-card { padding: 0; margin: 0 0 7px; }
 .recording-toggle { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; width: 100%; text-align: left; padding: 7px 9px; border: 0; background: transparent; }

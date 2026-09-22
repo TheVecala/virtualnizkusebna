@@ -50,6 +50,7 @@
         window.MultitrackApp?.destroy();
         mixerNotes?.destroy(); mixerNotes = null;
         mixerId = null; mixerPanel.hidden = true;
+        window.Vz2Player.hideMixer();
     }
     function setRoute(params, replace = false) {
         const url = new URL('index.php', location.href);
@@ -57,7 +58,13 @@
         if (url.href !== location.href) history[replace ? 'replaceState' : 'pushState'](null, '', url);
         qs = url.searchParams;
     }
-    async function navigate(params) {
+    function canNavigate(params) {
+        const target = data?.recordings.find(r => String(r.id) === String(params.recording_id));
+        const nextMode = target?.kind === 'multitrack' ? 'mixer' : target?.kind === 'single' && params.view === 'looper' ? 'looper' : 'empty';
+        return window.Vz2Player.canLeave(target?.id, nextMode);
+    }
+    async function navigate(params, force = false) {
+        if (!force && !canNavigate(params)) return;
         setRoute(params); deepLinkSeeked = false;
         message('');
         if (data) await applyRoute();
@@ -71,8 +78,12 @@
         if (!collection) collection = data.collections.find(c => c.kind === kind);
         selected = collection?.id; kind = collection?.kind || kind;
         const nextMixer = target?.kind === 'multitrack' && target.lifecycle === 'active' ? String(target.id) : null;
+        const nextLooper = target?.kind === 'single' && target.lifecycle === 'active' && target.files[0]?.url && qs.get('view') === 'looper' ? String(target.id) : null;
         if (mixerId !== nextMixer) { stopMixer(); deepLinkSeeked = false; }
+        const player = window.Vz2Player.getState();
+        if (player?.mode === 'looper' && player.id !== nextLooper) window.Vz2Player.closeLooper();
         mixerId = nextMixer;
+        if (nextMixer) window.Vz2Player.showMixer(target);
         // Recording identity determines its parent, including after a server-side move.
         const params = { kind };
         if (selected) params.collection_id = String(selected);
@@ -80,6 +91,7 @@
             params.recording_id = String(target.id);
             if (qs.has('time_ms')) params.time_ms = qs.get('time_ms');
             if (nextMixer) params.view = 'mixer';
+            if (nextLooper) params.view = 'looper';
         }
         const missing = qs.has('recording_id') && !target;
         setRoute(params, true);
@@ -87,12 +99,17 @@
         if (target) window.Vz2Layout.revealRecording();
         seekMixerLink();
         if (missing) message('Odkazovaná nahrávka již neexistuje.', true);
+        if (nextLooper) {
+            await window.Vz2Player.openLooper(target, target.files[0], Number(qs.get('time_ms') || 0) / 1000, !deepLinkSeeked);
+            if (serial !== navigationSerial) return;
+            deepLinkSeeked = true;
+        }
         if (nextMixer && String(window.MultitrackApp?.getState()?.id) !== nextMixer) {
             try {
                 await window.MultitrackApp.refreshList();
                 if (serial !== navigationSerial) return;
                 if (!window.MultitrackApp.load(nextMixer)) throw new Error('Nahrávka není dostupná. Obnovte seznam.');
-            } catch (e) { if (serial === navigationSerial) message(e.message, true); }
+            } catch (e) { if (serial === navigationSerial) { window.Vz2Player.mixerFailed(); message(e.message, true); } }
         }
     }
     async function refresh() {
@@ -233,6 +250,10 @@
         let adapter;
         if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions);
         const mixed = mixerId === String(r.id);
+        if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) card.append(button('Otevřít', async () => {
+            const seconds = body.querySelector('audio')?.currentTime || 0;
+            await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'looper', time_ms: String(Math.round(seconds * 1000)) });
+        }));
         if (r.lifecycle === 'active' && r.kind === 'multitrack' && !mixed) card.append(button('Otevřít Mixér', async () => {
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'mixer' });
             if (mixerId === String(r.id)) mixerPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -240,7 +261,6 @@
         if (mixed) {
             mixerPanel.querySelector('#mixer-context').textContent = (collection.kind === 'song' ? 'Skladba: ' : 'Zkouška: ') + collection.title;
             mixerPanel.querySelector('#mt-playing-name').textContent = r.title;
-            card.append(mixerPanel);
         }
         const files = node('ul', undefined, 'files');
         r.files.forEach(f => {
@@ -258,7 +278,7 @@
         if (cfg.write && cfg.admin) actions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
         reorderControls(actions, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
         if (actions.childElementCount) body.append(menu);
-        if (!mixed) timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
+        timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
         card.append(body); return card;
     }
     function uploadForm(collection) {
@@ -298,10 +318,8 @@
             if (menu.childElementCount > 1) row.append(menu);
             $('collections').append(row);
         });
-        // Keep the one live player and its event handlers while rebuilding cards.
-        mixerPanel.remove();
+        // Players live outside the catalogue; rebuilding cards cannot detach them.
         const content = $('content'); content.replaceChildren();
-        mixerPanel.hidden = !mixerId;
         const c = data.collections.find(c => String(c.id) === String(selected));
         $('collection-title').textContent = c?.title || 'Zatím tu nic není';
         $('collection-title').title = c?.title || '';
@@ -332,7 +350,6 @@
                 upload.append(node('summary', '+ Přidat nahrávku / přílohu'), uploadForm(c)); content.append(upload);
             }
         }
-        if (!mixerPanel.isConnected) content.append(mixerPanel);
         $('operations').hidden = !data.operations.length;
         const operations = $('operations').querySelector('div'); operations.replaceChildren();
         data.operations.forEach(op => { const row = node('p', '#' + op.id + ' · ' + op.target_title + ' · ' + op.state + ' '); if (cfg.write) row.append(button('Dokončit', async () => { await api({ action: 'retry', operation_id: Number(op.id) }); await refresh(); })); operations.append(row); });
@@ -343,7 +360,7 @@
     $('catalog-home').addEventListener('click', e => { e.preventDefault(); navigate({ kind }).catch(err => message(err.message, true)); });
     $('mixer-close').addEventListener('click', async () => {
         const previous = mixerId;
-        await navigate({ collection_id: String(selected) });
+        await navigate({ collection_id: String(selected) }, true);
         const card = $('recording-' + previous);
         card?.scrollIntoView({ block: 'nearest' }); card?.querySelector('button')?.focus({ preventScroll: true });
     });
@@ -357,7 +374,9 @@
         } catch (e) { message(e.message, true); }
     });
     window.addEventListener('popstate', () => {
-        qs = new URLSearchParams(location.search); deepLinkSeeked = false;
+        const next = new URLSearchParams(location.search);
+        if (!canNavigate(Object.fromEntries(next))) { setRoute(Object.fromEntries(qs), true); return; }
+        qs = next; deepLinkSeeked = false;
         if (data) applyRoute().catch(e => message(e.message, true));
     });
     $('create-collection')?.addEventListener('submit', async e => {
@@ -432,11 +451,12 @@
         } catch (e) { message(e.message, true); }
     });
     $('logout').addEventListener('click', async () => {
-        try { await api({ action: 'logout' }); window.MultitrackApp?.destroy(); location.href = 'index.php?v=2'; }
+        try { await api({ action: 'logout' }); window.MultitrackApp?.destroy(); window.Vz2Player.closeLooper(); location.href = 'index.php?v=2'; }
         catch (e) { message(e.message, true); }
     });
     window.addEventListener('online', async () => {
         window.MultitrackApp?.destroy();
+        window.Vz2Player.closeLooper();
         document.querySelectorAll('#content audio').forEach(a => { a.pause(); a.removeAttribute('src'); a.load(); });
         try { await refresh(); await window.MultitrackApp?.refreshList(); }
         catch (e) { $('content').replaceChildren(node('p', 'Před přehráním obnovte přihlášení a seznam.')); message(e.message, true); }
@@ -448,6 +468,7 @@
         }
     }
     document.addEventListener('multitrack:ready', seekMixerLink);
+    document.addEventListener('vz2:player-close', () => { navigate({ collection_id: String(selected) }, true).catch(e => message(e.message, true)); });
     document.addEventListener('multitrack:selected', e => {
         mixerNotes?.destroy(); window.Vz2Timestamps.stopLoop();
         mixerNotes = window.Vz2Timestamps.mount($('mixer-timestamps'), e.detail.id, mixerAdapter(e.detail.id));

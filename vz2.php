@@ -41,6 +41,21 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ nová</button><?php endif;?>
 <div id="collections"></div>
 </aside></div><div id="workspace">
+<section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
+<div class="player-header"><strong id="player-mode">PŘEHRÁVAČ</strong><span id="player-title">Vyberte nahrávku</span>
+<button id="player-play" type="button" aria-label="Přehrát" disabled>▶</button>
+<button id="player-collapse" type="button" aria-label="Sbalit přehrávač" aria-expanded="true" disabled>⌃</button>
+<button id="player-fullscreen" type="button" aria-label="Celá obrazovka" aria-pressed="false" disabled>⛶</button>
+<details id="player-options" class="actions-menu"><summary aria-label="Možnosti přehrávače">⋮</summary><div class="action-list" id="player-actions"></div></details>
+<button id="player-close" type="button" aria-label="Zavřít přehrávač" disabled>×</button></div>
+<div id="player-body" hidden>
+<section id="looper-panel" hidden aria-label="Looper"><p id="looper-status" role="status"></p>
+<div class="toolbar looper-transport"><button id="looper-restart" type="button">⏮</button><button id="looper-back" type="button">−5 s</button><button id="looper-forward" type="button">+5 s</button><button id="looper-loop" type="button" aria-pressed="false">Smyčka</button>
+<label>Hlasitost<input id="looper-volume" type="range" min="0" max="1" step="0.01" value="1"></label><label>Zoom<input id="looper-zoom" type="range" min="1" max="16" step="1" value="1"></label></div>
+<div id="looper-wave-scroll"><canvas id="looper-wave" aria-label="Průběh nahrávky; čas lze nastavit posuvníkem pod ním"></canvas></div>
+<div class="timeline"><output id="looper-time">0:00</output><input id="looper-seek" aria-label="Čas Looperu" type="range" min="0" max="0" step="0.01" value="0"><output id="looper-duration">0:00</output></div>
+<div id="looper-timestamps"></div></section>
+</div></section>
 <div id="workspace-context"><h1 id="collection-title">Načítám…</h1><div id="collection-actions" class="toolbar"></div></div>
 <div id="content-area">
 <section id="panel-recordings" class="panel" data-panel="recordings" aria-label="Nahrávky"><div class="panel-header"><h2>Nahrávky</h2></div><div class="panel-body"><section id="content"><p>Načítám…</p></section>
@@ -80,5 +95,5 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <dialog id="editor"><form id="edit-form"><h2>Upravit</h2><label>Název<input name="title" maxlength="200" required></label><label id="summary-label">Popisek<textarea name="summary" maxlength="10000" rows="5"></textarea></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Uložit</button><button type="button" id="edit-cancel">Zrušit</button><button type="button" id="edit-reload" hidden>Načíst aktuální verzi</button></div></form></dialog>
 <script>window.VZ2=<?=json_encode($config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_HEX_APOS)?>;
 window.MULTITRACK_CONFIG={listUrl:'php/ajax/vz2.php?action=mixer',detailUrl:'php/ajax/vz2.php?action=mixer&id={id}',canUpload:false,cacheDb:'zkusebna-vz2-cache',cacheStore:'audio',cachePrefix:window.VZ2.cachePrefix,requireFreshMetadata:true,managedNavigation:true};</script>
-<script src="js/vz2-cache.js"></script><script src="js/multitrack.js?v=<?=filemtime(__DIR__.'/js/multitrack.js')?>"></script><script src="js/vz2-timestamps.js"></script><script src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script src="js/vz2-layout.js?v=<?=filemtime(__DIR__.'/js/vz2-layout.js')?>"></script><script src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
+<script src="js/vz2-cache.js"></script><script src="js/multitrack.js?v=<?=filemtime(__DIR__.'/js/multitrack.js')?>"></script><script src="js/vz2-timestamps.js"></script><script src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script src="js/vz2-layout.js?v=<?=filemtime(__DIR__.'/js/vz2-layout.js')?>"></script><script src="js/vz2-player.js?v=<?=filemtime(__DIR__.'/js/vz2-player.js')?>"></script><script src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
 </body></html>
