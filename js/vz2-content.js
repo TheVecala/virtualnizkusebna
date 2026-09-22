@@ -5,7 +5,7 @@
     const button = (label, run) => { const b = make('button', label); b.type = 'button'; b.onclick = run; return b; };
     const date = value => new Date(value).toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
     const author = (name, active) => name + (Number(active) === 0 ? ' (neaktivní účet)' : '');
-    let current;
+    let current, ideas;
     async function api(query, fields) {
         const r = await fetch('php/ajax/vz2_content.php' + (fields ? '' : '?' + new URLSearchParams(query)), {
             method: fields ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
@@ -19,7 +19,9 @@
     }
     function close(ctx) {
         if (ctx.busy || (ctx.dirty && !confirm('Zahodit rozepsané změny?'))) return false;
-        ctx.dialog.close(); ctx.dialog.remove(); if (current === ctx) current = null; return true;
+        ctx.dialog.close(); ctx.dialog.remove(); if (current === ctx) current = null;
+        if (previewCollection) mountPreviews(previewCollection);
+        return true;
     }
     function start(title) {
         if (current && !close(current)) return null;
@@ -39,7 +41,19 @@
         try { await fn(); } catch (e) { if (ctx.live()) ctx.status.textContent = e.message; }
         finally { ctx.busy = false; ctx.dialog.removeAttribute('aria-busy'); controls.forEach(([n, disabled]) => n.disabled = disabled); }
     }
-    window.addEventListener('beforeunload', e => { if (current?.dirty || current?.busy) { e.preventDefault(); e.returnValue = ''; } });
+    function startIdeas() {
+        if (current && !close(current)) return null;
+        const host = document.getElementById('ideas-workspace');
+        const header = make('div', undefined, 'panel-header'), content = make('div', undefined, 'panel-body content-editor');
+        const title = make('h2', 'Nápady'); title.id = 'ideas-title'; host.setAttribute('aria-labelledby', title.id);
+        const back = button('Zpět k panelům', () => window.Vz2Layout.hideIdeas()); back.id = 'ideas-back';
+        header.append(title, back);
+        const ctx = { dialog: content, busy: false, dirty: false, status: make('p', 'Načítám…', 'error') };
+        ctx.status.setAttribute('role', 'status'); ctx.title = title; ctx.live = () => host.isConnected;
+        content.append(ctx.status); host.replaceChildren(header, content); ideas = ctx;
+        window.Vz2Layout.showIdeas(); return ctx;
+    }
+    window.addEventListener('beforeunload', e => { if (current?.dirty || current?.busy || ideas?.dirty || ideas?.busy) { e.preventDefault(); e.returnValue = ''; } });
     async function openDocument(collection, kind) {
         const ctx = start(titles[kind] + ' — ' + collection.title); if (!ctx) return;
         const query = { action: 'document', collection_id: collection.id, kind };
@@ -111,7 +125,9 @@
         await busy(ctx, async () => { assign(await api(query)); });
     }
     async function openDiscussion(scope) {
-        const ctx = start(scope.scope === 'ideas' ? 'Nápady' : 'Diskuse'); if (!ctx) return;
+        const isIdeas = scope.scope === 'ideas';
+        if (isIdeas && ideas) { window.Vz2Layout.showIdeas(); return; }
+        const ctx = isIdeas ? startIdeas() : start('Diskuse'); if (!ctx) return;
         const form = make('form'), label = make('label', 'Nový příspěvek'), body = make('textarea'); body.rows = 5; body.name = 'post_body'; body.required = true; label.append(body);
         const save = make('button', 'Odeslat'), cancel = button('Zrušit úpravu', () => reset()), compare = button('Načíst aktuální příspěvek', compareLatest), comparison = make('pre', '', 'content-preview');
         const accept = button('Použít aktuální revizi pro můj text', () => {
@@ -138,7 +154,7 @@
         async function load(before) {
             await busy(ctx, async () => {
                 const result = await api({ action: 'discussion', ...(thread ? { thread_id: thread.id } : scope), ...(before ? { before } : {}) });
-                thread = result.thread; ctx.dialog.querySelector('h2').textContent = thread.global_key === 'ideas' ? 'Nápady' : 'Diskuse — ' + thread.title;
+                thread = result.thread; (ctx.title || ctx.dialog.querySelector('h2')).textContent = thread.global_key === 'ideas' ? 'Nápady' : 'Diskuse — ' + thread.title;
                 if (ctx.status.textContent === 'Načítám…') ctx.status.textContent = '';
                 form.hidden = !result.can_create;
                 if (!before) list.replaceChildren();
@@ -171,5 +187,52 @@
         });
         await load();
     }
-    window.Vz2Content = { openDocument, openDiscussion };
+    // Read-only panel views share the existing API and modal editors. Editing,
+    // conflict handling and history continue to use the code above unchanged.
+    let previewCollection, previewSerial = 0;
+    function mountPreviews(collection) {
+        previewCollection = collection;
+        const serial = ++previewSerial;
+        const live = () => serial === previewSerial;
+        const hosts = ['lyrics', 'tablature', 'discussion'].map(id => document.getElementById(id + '-content'));
+        hosts.forEach(host => host.replaceChildren(make('p', collection ? 'Načítám…' : 'Vyberte skladbu nebo zkoušku.', 'muted')));
+        if (!collection) return;
+        [['lyrics_chords', hosts[0]], ['tablature', hosts[1]]].forEach(async ([kind, host]) => {
+            const edit = button('Otevřít editor', () => openDocument(collection, kind));
+            const content = make('pre', '', 'document-preview'), status = make('p', 'Načítám…', 'muted');
+            host.replaceChildren(edit, status, content);
+            async function load() {
+                try {
+                    const result = await api({ action: 'document', collection_id: collection.id, kind });
+                    if (!live()) return;
+                    edit.textContent = result.can_edit ? 'Upravit / historie' : 'Otevřít / historie';
+                    status.textContent = result.document ? result.document.title + ' · verze ' + result.document.current_revision : 'Zatím bez dokumentu.';
+                    content.textContent = result.version?.body || '';
+                } catch (e) { if (live()) { status.textContent = e.message; status.append(button('Zkusit znovu', load)); } }
+            }
+            await load();
+        });
+        const host = hosts[2], status = make('p', 'Načítám…', 'muted'), posts = make('div', '', 'content-posts');
+        let before, loading = false;
+        const older = button('Starší příspěvky', () => loadDiscussion(before)); older.hidden = true;
+        host.replaceChildren(button('Otevřít diskusi', () => openDiscussion({ collection_id: collection.id })), status, posts, older);
+        async function loadDiscussion(cursor) {
+            if (loading) return;
+            loading = true; older.disabled = true;
+            try {
+                const result = await api({ action: 'discussion', collection_id: collection.id, ...(cursor ? { before: cursor } : {}) });
+                if (!live()) return;
+                status.textContent = !cursor && !result.posts.length ? 'Zatím žádné příspěvky.' : '';
+                result.posts.forEach(p => {
+                    const item = make('article');
+                    item.append(make('small', author(p.author, p.author_active) + ' · ' + date(p.created_at)), make('p', p.body));
+                    posts.append(item);
+                });
+                before = result.next_before; older.hidden = !before;
+            } catch (e) { if (live()) { status.textContent = e.message; status.append(button('Zkusit znovu', () => loadDiscussion(cursor))); } }
+            finally { loading = false; older.disabled = false; }
+        }
+        loadDiscussion();
+    }
+    window.Vz2Content = { openDocument, openDiscussion, mountPreviews };
 }());
