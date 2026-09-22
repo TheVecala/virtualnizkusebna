@@ -10,6 +10,7 @@
     }
     const validId = id => ids.includes(id);
     const validSet = a => Array.isArray(a) && a.length > 0 && a.length <= 4 && a.every(validId) && new Set(a).size === a.length;
+    let ideasOpen = false;
     const state = {
         desktop: read('desktop', ids.slice(0, 3), validSet),
         tablet: read('tablet', ['recordings', 'lyrics'], a => validSet(a) && a.length === 2),
@@ -22,6 +23,11 @@
     function apply() {
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current];
         document.body.dataset.layout = current;
+        document.body.dataset.workspace = ideasOpen ? 'ideas' : 'panels';
+        $('content-area').hidden = $('workspace-context').hidden = ideasOpen;
+        $('ideas-workspace').hidden = !ideasOpen;
+        $('show-ideas').setAttribute('aria-pressed', String(ideasOpen));
+        $('bn-napady').setAttribute('aria-pressed', String(ideasOpen));
         ids.forEach(id => {
             const panel = $('panel-' + id), select = panel.querySelector('select');
             panel.hidden = !shown.includes(id);
@@ -32,9 +38,9 @@
         document.querySelectorAll('[data-desktop-panel]').forEach(b => {
             const selected = state.desktop.includes(b.dataset.desktopPanel);
             b.setAttribute('aria-pressed', String(selected));
-            b.disabled = selected && state.desktop.length === 1;
+            b.disabled = !ideasOpen && selected && state.desktop.length === 1;
         });
-        document.querySelectorAll('[data-mobile-panel]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mobilePanel === state.mobile)));
+        document.querySelectorAll('[data-mobile-panel]').forEach(b => b.setAttribute('aria-pressed', String(!ideasOpen && b.dataset.mobilePanel === state.mobile)));
         const slot = $(desktop.matches ? 'sidebar-slot' : 'catalog-dialog-slot');
         if ($('sidebar').parentElement !== slot) {
             closeCatalog(); slot.append($('sidebar'));
@@ -53,12 +59,14 @@
         $('panel-' + id).querySelector('.panel-header').append(select);
     });
     document.querySelectorAll('[data-desktop-panel]').forEach(b => b.addEventListener('click', () => {
+        if (ideasOpen) { hideIdeas(); return; }
         const id = b.dataset.desktopPanel;
         if (state.desktop.includes(id)) { if (state.desktop.length > 1) state.desktop = state.desktop.filter(x => x !== id); }
         else state.desktop.push(id);
         save('desktop'); apply();
     }));
     document.querySelectorAll('[data-mobile-panel]').forEach(b => b.addEventListener('click', () => {
+        hideIdeas(false);
         state.mobile = b.dataset.mobilePanel; save('mobile'); apply();
     }));
     $('catalog-picker').addEventListener('click', openCatalog);
@@ -81,9 +89,32 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelector('.shell-menu').open = false; });
     document.addEventListener('click', e => { if (!e.target.closest('.shell-menu')) document.querySelector('.shell-menu').open = false; });
+    const menuSelector = '.actions-menu, .collection-menu';
+    document.addEventListener('toggle', e => {
+        if (!e.target.matches(menuSelector) || !e.target.open) return;
+        document.querySelectorAll(menuSelector).forEach(menu => { if (menu !== e.target) menu.open = false; });
+    }, true);
+    document.addEventListener('click', e => {
+        document.querySelectorAll(menuSelector).forEach(menu => { if (!menu.contains(e.target)) menu.open = false; });
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || document.querySelector('dialog[open]') || document.querySelector('.player-fullscreen')) return;
+        const menu = document.querySelector('.actions-menu[open], .collection-menu[open]');
+        if (menu) { menu.open = false; menu.querySelector('summary').focus(); e.preventDefault(); }
+    });
     desktop.addEventListener('change', apply); mobile.addEventListener('change', apply);
+    function hideIdeas(focus = true) {
+        if (!ideasOpen) return;
+        ideasOpen = false; window.Vz2Player?.setIdeasMode(false); apply();
+        if (focus) $(mobile.matches ? 'bn-napady' : 'show-ideas').focus({ preventScroll: true });
+    }
     window.Vz2Layout = {
-        closeCatalog,
+        closeCatalog, hideIdeas,
+        showIdeas() {
+            if (ideasOpen) return;
+            ideasOpen = true; closeCatalog(); window.Vz2Player?.setIdeasMode(true); apply();
+            $('ideas-back').focus({ preventScroll: true });
+        },
         revealRecording() {
             const current = mode();
             if (current === 'mobile') state.mobile = 'recordings';

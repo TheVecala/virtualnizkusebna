@@ -65,6 +65,7 @@
     }
     async function navigate(params, force = false) {
         if (!force && !canNavigate(params)) return;
+        window.Vz2Layout.hideIdeas(false);
         setRoute(params); deepLinkSeeked = false;
         message('');
         if (data) await applyRoute();
@@ -376,12 +377,13 @@
     window.addEventListener('popstate', () => {
         const next = new URLSearchParams(location.search);
         if (!canNavigate(Object.fromEntries(next))) { setRoute(Object.fromEntries(qs), true); return; }
+        window.Vz2Layout.hideIdeas(false);
         qs = next; deepLinkSeeked = false;
         if (data) applyRoute().catch(e => message(e.message, true));
     });
     $('create-collection')?.addEventListener('submit', async e => {
         e.preventDefault(); const f = e.currentTarget, b = f.querySelector('button'); b.disabled = true;
-        try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); setRoute({ collection_id: String(r.id) }); f.reset(); $('create-collection-dialog').close(); window.Vz2Layout.closeCatalog(); await refresh(); }
+        try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); window.Vz2Layout.hideIdeas(false); setRoute({ collection_id: String(r.id) }); f.reset(); $('create-collection-dialog').close(); window.Vz2Layout.closeCatalog(); await refresh(); }
         catch (err) { f.querySelector('.edit-error').textContent = err.message; } finally { b.disabled = false; }
     });
     $('edit-cancel').addEventListener('click', () => $('editor').close());

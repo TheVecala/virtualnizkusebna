@@ -91,9 +91,10 @@ module.exports = async function ({ base, clients, good, request, db, check, temp
         await member.locator('article').filter({hasText:'Bobův koncept'}).getByRole('button',{name:'Smazat',exact:true}).click();
         await member.locator('article').getByText('Bobův koncept',{exact:true}).waitFor({state:'detached'});
         await member.getByRole('button',{name:'Zavřít',exact:true}).click();
-        await bob.getByRole('button',{name:'Nápady',exact:true}).click(); await member.locator('[name=post_body]').fill('Společný nápad');
-        await member.getByRole('button',{name:'Odeslat',exact:true}).click(); await member.locator('article').getByText('Společný nápad',{exact:true}).waitFor();
-        await member.getByRole('button',{name:'Zavřít',exact:true}).click();
+        const ideas = bob.locator('#ideas-workspace');
+        await bob.getByRole('button',{name:'Nápady',exact:true}).click(); await ideas.locator('[name=post_body]').fill('Společný nápad');
+        await ideas.getByRole('button',{name:'Odeslat',exact:true}).click(); await ideas.locator('article').getByText('Společný nápad',{exact:true}).waitFor();
+        await ideas.getByRole('button',{name:'Zpět k panelům',exact:true}).click();
         const guest=await pageFor('guest'), readOnly=guest.locator('.vz2-content-dialog');
         await openPanelEditor(guest, 'lyrics');
         await readOnly.locator('[name=document_body]:enabled').waitFor();
@@ -103,7 +104,7 @@ module.exports = async function ({ base, clients, good, request, db, check, temp
         await readOnly.getByRole('button',{name:'Historie verzí',exact:true}).click(); await readOnly.getByRole('button',{name:/^Verze 1 ·/}).click();
         assert.equal(await readOnly.getByRole('button',{name:'Obnovit jako novou verzi',exact:true}).isVisible(),false);
         await readOnly.getByRole('button',{name:'Zavřít',exact:true}).click(); await guest.getByRole('button',{name:'Nápady',exact:true}).click();
-        await readOnly.locator('article').getByText('Společný nápad',{exact:true}).waitFor(); assert.equal(await readOnly.locator('form').isVisible(),false);
+        await guest.locator('#ideas-workspace article').getByText('Společný nápad',{exact:true}).waitFor(); assert.equal(await guest.locator('#ideas-workspace form').isVisible(),false);
         check(true,'browser: own post deletion works; global ideas shared with guest; guest sees documents/history without write controls');
         await openPanelEditor(page, 'discussion');
         await dlg.locator('article').getByText('Adminův příspěvek',{exact:true}).waitFor();

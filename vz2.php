@@ -30,7 +30,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <button id="catalog-picker" aria-haspopup="dialog" aria-controls="catalog-dialog">Skladby / zkoušky</button>
 <nav id="desktop-panels" aria-label="Zobrazené panely">
 <button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Tabulatura</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
-</nav><button id="show-ideas">Nápady</button>
+</nav><button id="show-ideas" aria-pressed="false" aria-controls="ideas-workspace">Nápady</button>
 <details class="shell-menu"><summary aria-label="Další možnosti">⋮</summary><nav aria-label="Další možnosti">
 <a href="index.php?v=2" id="catalog-home">Skladby a zkoušky</a>
 <?php if(auth_is_admin()):?><a href="admin.php">Účty</a><button id="show-log">Deník</button><?php endif;?>
@@ -64,7 +64,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><h2>Text a akordy</h2></div><div id="lyrics-content" class="panel-body"></div></section>
 <section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Tabulatura"><div class="panel-header"><h2>Tabulatura</h2></div><div id="tablature-content" class="panel-body"></div></section>
 <section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><h2>Diskuse</h2></div><div id="discussion-content" class="panel-body"></div></section>
-</div></div></div>
+</div><section id="ideas-workspace" hidden aria-label="Nápady"></section></div></div>
 <section id="activity" class="utility-panel" hidden aria-label="Deník změn"><button type="button" data-close-utility="activity">Zavřít deník</button><h2>Deník změn</h2><div></div><button id="log-more">Starší změny</button></section>
 <section id="offline-files" class="utility-panel" hidden aria-label="Offline soubory"><button type="button" data-close-utility="offline-files">Zavřít offline soubory</button><h2>Offline soubory tohoto prostředí</h2><p>Lokální kopie v tomto prohlížeči. Odstraněné serverové audio lze odsud stáhnout nebo uvolnit jeho místo.</p><div></div><button id="offline-clear">Odebrat všechny místní kopie</button></section>
 <section id="mixer-panel" class="mt-shell" hidden aria-label="Mixér vybrané nahrávky"><div class="toolbar"><h2>Mixér</h2><button id="mixer-close" type="button">Zavřít Mixér</button><button id="mixer-copy-link" type="button">Kopírovat odkaz na čas</button></div>
@@ -88,7 +88,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <button data-mobile-panel="lyrics" aria-pressed="false"><img src="meat/ikona_text.png" alt="">text</button>
 <button data-mobile-panel="tablature" aria-pressed="false"><img src="meat/drinking2.png" alt="">taby</button>
 <button data-mobile-panel="discussion" aria-pressed="false"><img src="meat/ikona_diskuse.png" alt="">diskuse</button>
-<button id="bn-napady"><img src="meat/ikona_napady.png" alt="">nápady</button>
+<button id="bn-napady" aria-pressed="false" aria-controls="ideas-workspace"><img src="meat/ikona_napady.png" alt="">nápady</button>
 </nav>
 <dialog id="catalog-dialog" aria-label="Skladby a zkoušky"><button id="catalog-close" type="button">Zavřít výběr</button><div id="catalog-dialog-slot"></div></dialog>
 <?php if($config['canCreate']):?><dialog id="create-collection-dialog" aria-labelledby="create-collection-title"><form id="create-collection"><h2 id="create-collection-title">Nová skladba</h2><label>Nový název<input name="title" maxlength="200" required></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Vytvořit</button><button id="create-collection-cancel" type="button">Zrušit</button></div></form></dialog><?php endif;?>

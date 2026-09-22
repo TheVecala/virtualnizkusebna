@@ -121,6 +121,28 @@ dialog form { margin-top: 0; }
 #looper-wave-scroll { min-width: 0; max-width: 100%; overflow: auto hidden; margin: 6px 0; background: var(--vz-bg); border-radius: 4px; }
 #looper-wave { display: block; cursor: crosshair; }
 #looper-seek { min-width: 0; }
+/* Ideas are a workspace, with the same native editor and API as discussions. */
+#ideas-workspace { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; background: var(--vz-panel); }
+#ideas-workspace > .panel-header { justify-content: space-between; gap: 8px; }
+#ideas-workspace .panel-body { padding: 12px; }
+#ideas-workspace form { margin-top: 0; }
+#ideas-workspace textarea { width: 100%; resize: vertical; min-height: 90px; }
+#ideas-workspace .content-preview { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--vz-bg); border: 1px solid var(--vz-border); padding: 10px; max-height: 35dvh; overflow: auto; }
+#ideas-workspace .content-posts { margin-top: 10px; }
+#ideas-workspace [aria-busy=true] { cursor: progress; }
+#ideas-workspace form button:not([type]) { color: var(--vz-primary-hover); background: var(--vz-primary-soft); border-color: var(--vz-primary); }
+#player-body { --text: var(--vz-text); --muted: var(--vz-muted); --border: var(--vz-border); --card: var(--vz-surface); --tmava: var(--vz-bg); --accent: var(--vz-primary); }
+#player-body .mt-channel { font-family: inherit; }
+.utility-panel p, .log-entry { overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+    #show-ideas { display: none; }
+    #ideas-workspace .panel-body { padding: 8px; }
+    input:not([type=range]):not([type=checkbox]), textarea, select { font-size: 16px; }
+    .shell-menu nav a { display: flex; align-items: center; min-height: 40px; }
+    input[type=range] { min-height: 40px; }
+    #player-shell[data-mode=empty] { min-height: 28px; max-height: 28px; }
+    #player-shell[data-mode=empty] .player-header { padding-block: 5px; }
+}
 @media (max-width: 767px) {
     #player-shell { max-height: 42vh; max-height: 42dvh; }
     .player-header { gap: 2px; padding: 3px 4px; }
@@ -185,7 +207,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
     button, summary, select { min-height: 40px; }
 }
 @media (min-width: 768px) and (max-width: 1199px) {
-    .panel-header h2 { display: none; }
+    #content-area .panel-header h2 { display: none; }
     .panel-header select { display: block; }
     .panel-header { padding: 4px 8px; }
 }

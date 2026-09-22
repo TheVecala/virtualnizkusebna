@@ -310,6 +310,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_layout.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_recordings.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1', 'player'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_player.browser')({ base, clients, good, request, db, check, temp, upload, wav });
+        if (['1', 'ideas'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_ideas.browser')({ base, clients, good, request, check, temp, upload, wav });
         await require('./vz2_cutover.integration')({ base, clients, request, db, check, temp, web, media, php, write });
         console.log('PASS ' + checks + ' checks; isolated HTTP URL ' + base);
         if (process.env.VZ2_TEST_KEEP === '1') {
