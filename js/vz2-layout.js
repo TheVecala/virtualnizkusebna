@@ -24,7 +24,7 @@
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current];
         document.body.dataset.layout = current;
         document.body.dataset.workspace = ideasOpen ? 'ideas' : 'panels';
-        $('content-area').hidden = $('workspace-context').hidden = ideasOpen;
+        $('content-area').hidden = ideasOpen;
         $('ideas-workspace').hidden = !ideasOpen;
         $('show-ideas').setAttribute('aria-pressed', String(ideasOpen));
         $('bn-napady').setAttribute('aria-pressed', String(ideasOpen));

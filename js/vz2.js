@@ -314,7 +314,10 @@
         list.forEach(c => {
             const row = node('div', undefined, 'collection');
             const select = button(c.title, async () => { await navigate({ collection_id: String(c.id) }); window.Vz2Layout.closeCatalog(); }); select.title = c.title; select.setAttribute('aria-pressed', String(String(selected) === String(c.id))); row.append(select);
-            const menu = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Pořadí: ' + c.title); menu.append(summary);
+            const menu = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Možnosti: ' + c.title); menu.append(summary);
+            if (cfg.write && c.can_edit) menu.append(button('Přejmenovat', () => openEdit(c, 'collection')));
+            if (cfg.write && cfg.admin) menu.append(button('Úplně smazat celek', () => remove(c, 'collection', true), 'danger'));
+            menu.append(button('Obnovit', refresh));
             reorderControls(menu, list, c, { scope: 'collections', kind, revision: Number(data.orders.find(o => o.kind === kind).revision) });
             if (menu.childElementCount > 1) row.append(menu);
             $('collections').append(row);
@@ -322,19 +325,14 @@
         // Players live outside the catalogue; rebuilding cards cannot detach them.
         const content = $('content'); content.replaceChildren();
         const c = data.collections.find(c => String(c.id) === String(selected));
-        $('collection-title').textContent = c?.title || 'Zatím tu nic není';
+        $('collection-title-name').textContent = c?.title || 'Zatím tu nic není';
         $('collection-title').title = c?.title || '';
         $('catalog-picker').textContent = c?.title || 'Skladby / zkoušky';
         $('bn-skladby').lastChild.textContent = kind === 'rehearsal' ? 'zkoušky' : 'skladby';
-        $('collection-actions').replaceChildren();
         window.Vz2Content.mountPreviews(c);
         if (!c) content.append(node('h1', 'Zatím tu nic není'), node('p', 'Vytvořte skladbu nebo zkoušku. Audio můžete přidat později.'));
         else {
             content.append(node('small', 'Vytvořil/a ' + c.author));
-            const actions = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Možnosti skladby nebo zkoušky'); actions.append(summary);
-            if (cfg.write && c.can_edit) actions.append(button('Přejmenovat', () => openEdit(c, 'collection')));
-            if (cfg.write && cfg.admin) actions.append(button('Úplně smazat celek', () => remove(c, 'collection', true), 'danger'));
-            actions.append(button('Obnovit', refresh)); $('collection-actions').append(actions);
             const recordings = data.recordings.filter(r => String(r.collection_id) === String(c.id));
             if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));

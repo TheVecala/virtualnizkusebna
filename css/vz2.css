@@ -29,6 +29,8 @@ p, h3 { overflow-wrap: anywhere; }
 .toolbar, .tabs { gap: 5px; }
 #topbar { flex: 0 0 auto; min-height: 46px; padding: 6px 12px; gap: 10px; flex-wrap: nowrap; background: var(--vz-shell); border-color: var(--vz-border); z-index: 10; }
 .brand { font-size: 13px; white-space: nowrap; }
+#collection-title { min-width: 0; margin: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#collection-title > span:first-child { color: var(--vz-muted); }
 #desktop-panels { margin: 0 auto; gap: 4px; flex-wrap: nowrap; }
 #catalog-picker { display: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shell-menu { position: relative; margin-left: auto; }
@@ -52,14 +54,13 @@ summary::-webkit-details-marker { display: none; }
 #collections .collection > button:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .collection-menu > button { display: block; width: 100%; margin-top: 4px; }
 #workspace { display: flex; flex-direction: column; }
-#workspace-context { display: flex; align-items: flex-start; gap: 8px; padding: 6px 10px; background: var(--vz-shell); border-bottom: 1px solid var(--vz-border); max-height: 25%; overflow: auto; flex-shrink: 0; }
-#collection-title { flex: 1; min-width: 0; margin: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#collection-actions { max-width: 65%; }
 #content-area { display: flex; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
 .panel { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden; background: var(--vz-panel); border-right: 1px solid var(--vz-border); }
 .panel:last-child { border-right: 0; }
 .panel-header { display: flex; align-items: center; flex: 0 0 auto; min-height: 35px; padding: 6px 9px; background: var(--vz-shell); border-bottom: 1px solid var(--vz-border); }
 .panel-header h2 { font-size: 12px; margin: 0; color: var(--vz-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel-header-actions { display: flex; align-items: center; gap: 5px; margin-left: auto; padding-left: 8px; }
+.panel-header-actions button, #ideas-workspace > .panel-header button { min-height: 26px; padding: 3px 7px; font-size: 11px; white-space: nowrap; }
 .panel-header select { display: none; width: 100%; min-width: 0; }
 .panel-body { flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 10px; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--vz-border) var(--vz-panel); }
 .panel-body > :first-child { margin-top: 0; }
@@ -216,8 +217,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
     .brand { font-size: 11px; letter-spacing: 0; }
     .brand small { display: none; }
     #topbar > button { padding-inline: 6px; }
-    #workspace-context { padding: 4px 8px; }
-    #collection-title { margin: 8px 0; font-size: 14px; }
+    #collection-title { font-size: 11px; }
     .panel { border: 0; }
     .panel-body { padding: 8px; }
     #bottom-nav { display: flex; margin: 0; flex: 0 0 auto; height: calc(62px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); background: var(--vz-shell); border-top: 1px solid var(--vz-border); gap: 0; z-index: 10; }

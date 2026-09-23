@@ -46,7 +46,7 @@
         const host = document.getElementById('ideas-workspace');
         const header = make('div', undefined, 'panel-header'), content = make('div', undefined, 'panel-body content-editor');
         const title = make('h2', 'Nápady'); title.id = 'ideas-title'; host.setAttribute('aria-labelledby', title.id);
-        const back = button('Zpět k panelům', () => window.Vz2Layout.hideIdeas()); back.id = 'ideas-back';
+        const back = button('Zpět k panelům', () => window.Vz2Layout.hideIdeas()); back.id = 'ideas-back'; back.className = 'panel-header-action';
         header.append(title, back);
         const ctx = { dialog: content, busy: false, dirty: false, status: make('p', 'Načítám…', 'error') };
         ctx.status.setAttribute('role', 'status'); ctx.title = title; ctx.live = () => host.isConnected;
@@ -195,12 +195,15 @@
         const serial = ++previewSerial;
         const live = () => serial === previewSerial;
         const hosts = ['lyrics', 'tablature', 'discussion'].map(id => document.getElementById(id + '-content'));
+        const actionHosts = ['lyrics', 'tablature', 'discussion'].map(id => document.getElementById(id + '-actions'));
+        actionHosts.forEach(host => host.replaceChildren());
         hosts.forEach(host => host.replaceChildren(make('p', collection ? 'Načítám…' : 'Vyberte skladbu nebo zkoušku.', 'muted')));
         if (!collection) return;
         [['lyrics_chords', hosts[0]], ['tablature', hosts[1]]].forEach(async ([kind, host]) => {
             const edit = button('Otevřít editor', () => openDocument(collection, kind));
             const content = make('pre', '', 'document-preview'), status = make('p', 'Načítám…', 'muted');
-            host.replaceChildren(edit, status, content);
+            actionHosts[kind === 'lyrics_chords' ? 0 : 1].replaceChildren(edit);
+            host.replaceChildren(status, content);
             async function load() {
                 try {
                     const result = await api({ action: 'document', collection_id: collection.id, kind });
@@ -215,7 +218,8 @@
         const host = hosts[2], status = make('p', 'Načítám…', 'muted'), posts = make('div', '', 'content-posts');
         let before, loading = false;
         const older = button('Starší příspěvky', () => loadDiscussion(before)); older.hidden = true;
-        host.replaceChildren(button('Otevřít diskusi', () => openDiscussion({ collection_id: collection.id })), status, posts, older);
+        actionHosts[2].replaceChildren(button('Otevřít diskusi', () => openDiscussion({ collection_id: collection.id })));
+        host.replaceChildren(status, posts, older);
         async function loadDiscussion(cursor) {
             if (loading) return;
             loading = true; older.disabled = true;

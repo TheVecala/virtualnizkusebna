@@ -26,7 +26,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <link rel="stylesheet" href="css/multitrack.css"><link rel="stylesheet" href="css/vz2.css?v=<?=filemtime(__DIR__.'/css/vz2.css')?>">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 </head><body>
-<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA <small>2.0</small></a>
+<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA <small>2.0</small></a><h1 id="collection-title"><span aria-hidden="true">/DK/</span><span id="collection-title-name">Načítám…</span></h1>
 <button id="catalog-picker" aria-haspopup="dialog" aria-controls="catalog-dialog">Skladby / zkoušky</button>
 <nav id="desktop-panels" aria-label="Zobrazené panely">
 <button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Tabulatura</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
@@ -56,14 +56,13 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <div class="timeline"><output id="looper-time">0:00</output><input id="looper-seek" aria-label="Čas Looperu" type="range" min="0" max="0" step="0.01" value="0"><output id="looper-duration">0:00</output></div>
 <div id="looper-timestamps"></div></section>
 </div></section>
-<div id="workspace-context"><h1 id="collection-title">Načítám…</h1><div id="collection-actions" class="toolbar"></div></div>
 <div id="content-area">
 <section id="panel-recordings" class="panel" data-panel="recordings" aria-label="Nahrávky"><div class="panel-header"><h2>Nahrávky</h2></div><div class="panel-body"><section id="content"><p>Načítám…</p></section>
 <section id="operations" hidden><h2>Nedokončené operace</h2><div></div></section>
 </div></section>
-<section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><h2>Text a akordy</h2></div><div id="lyrics-content" class="panel-body"></div></section>
-<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Tabulatura"><div class="panel-header"><h2>Tabulatura</h2></div><div id="tablature-content" class="panel-body"></div></section>
-<section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><h2>Diskuse</h2></div><div id="discussion-content" class="panel-body"></div></section>
+<section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><h2>Text a akordy</h2><div id="lyrics-actions" class="panel-header-actions"></div></div><div id="lyrics-content" class="panel-body"></div></section>
+<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Tabulatura"><div class="panel-header"><h2>Tabulatura</h2><div id="tablature-actions" class="panel-header-actions"></div></div><div id="tablature-content" class="panel-body"></div></section>
+<section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><h2>Diskuse</h2><div id="discussion-actions" class="panel-header-actions"></div></div><div id="discussion-content" class="panel-body"></div></section>
 </div><section id="ideas-workspace" hidden aria-label="Nápady"></section></div></div>
 <section id="activity" class="utility-panel" hidden aria-label="Deník změn"><button type="button" data-close-utility="activity">Zavřít deník</button><h2>Deník změn</h2><div></div><button id="log-more">Starší změny</button></section>
 <section id="offline-files" class="utility-panel" hidden aria-label="Offline soubory"><button type="button" data-close-utility="offline-files">Zavřít offline soubory</button><h2>Offline soubory tohoto prostředí</h2><p>Lokální kopie v tomto prohlížeči. Odstraněné serverové audio lze odsud stáhnout nebo uvolnit jeho místo.</p><div></div><button id="offline-clear">Odebrat všechny místní kopie</button></section>
