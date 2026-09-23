@@ -157,11 +157,22 @@
     }
     function moveControl(parent, item, type) {
         if (!cfg.write || !item.can_move) return;
-        const select = node('select'); select.setAttribute('aria-label', 'Cílová skladba nebo zkouška');
-        data.collections.filter(c => c.lifecycle === 'active').forEach(c => {
-            const o = node('option', c.title); o.value = c.id; o.selected = String(c.id) === String(item.collection_id); select.append(o);
-        });
-        parent.append(select, button('Přesunout', () => mutate({ action: type + '_move', id: Number(item.id), revision: Number(item.revision), collection_id: Number(select.value) })));
+        const open = button('Přesunout');
+        open.setAttribute('aria-expanded', 'false');
+        open.addEventListener('click', () => {
+            const controls = node('div', undefined, 'move-controls');
+            const select = node('select'); select.setAttribute('aria-label', 'Cílová skladba nebo zkouška');
+            data.collections.filter(c => c.lifecycle === 'active').forEach(c => {
+                const o = node('option', c.title); o.value = c.id; o.selected = String(c.id) === String(item.collection_id); select.append(o);
+            });
+            const confirm = button('Potvrdit přesun', () => mutate({ action: type + '_move', id: Number(item.id), revision: Number(item.revision), collection_id: Number(select.value) }));
+            controls.append(select, confirm);
+            open.hidden = true;
+            open.setAttribute('aria-expanded', 'true');
+            parent.append(controls);
+            select.focus();
+        }, { once: true });
+        parent.append(open);
     }
     function fileLink(file) {
         if (!file.url) return node('span', file.title + ' · ' + state(file.state));

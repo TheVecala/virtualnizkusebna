@@ -67,8 +67,10 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await card(ids[0]).waitFor(); assert.equal(await expanded(), 0);
         await card(ids[0]).locator('.recording-toggle').click();
         await page.waitForFunction(({ id, position }) => Math.abs(document.querySelector('#recording-' + id + ' audio').currentTime - position) < 0.1, { id: ids[0], position });
-        await menu.getByLabel('Cílová skladba nebo zkouška').selectOption(String(target.id));
+        assert.equal(await menu.getByLabel('Cílová skladba nebo zkouška').count(), 0, 'Move destination is hidden from the action list until requested');
         await menu.getByRole('button', { name: 'Přesunout', exact: true }).click();
+        await menu.getByLabel('Cílová skladba nebo zkouška').selectOption(String(target.id));
+        await menu.getByRole('button', { name: 'Potvrdit přesun', exact: true }).click();
         await page.locator('#collection-title').getByText('Cílová zkouška', { exact: true }).waitFor();
         assert.equal(Number(db('SELECT collection_id FROM vz2_recordings WHERE id=?', [ids[0]])[0].collection_id), target.id);
         check(true, 'recordings: collapsed reload keeps deep-link time; move menu preserves recording identity and follows new parent');
