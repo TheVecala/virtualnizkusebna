@@ -1,6 +1,8 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { format, parse, endOf, tabular } = require('../js/vz2-timestamps.js');
+const { format, compactFormat, parse, endOf, tabular } = require('../js/vz2-timestamps.js');
+assert.equal(compactFormat(83123), '01:23');
+assert.equal(compactFormat(3660000), '61:00');
 const entries = [
     { id: 1, time_ms: 1000, kind: 'song_start', body: 'Začátek' },
     { id: 2, time_ms: 1000, kind: 'passage', body: 'Stejný čas' },
