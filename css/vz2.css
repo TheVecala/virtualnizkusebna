@@ -170,14 +170,6 @@ dialog form { margin-top: 0; }
 .looper-zoom-controls > button { width: 25px; height: 23px; min-height: 23px; padding: 0; background: #121518c2; border: 1px solid #ffffff4d; color: #fffd; border-radius: 4px; font-size: 17px; line-height: 20px; }
 #looper-zoom { display: none; }
 #looper-panel .timeline { margin-top: 8px; }
-#looper-timestamps .vz2-timestamps { border: 0; margin-top: 4px; padding: 0; }
-#looper-timestamps .vz2-timestamps h4 { display: none; }
-#looper-timestamps .vz2-timestamps > .toolbar { margin: 4px 0 8px; }
-#looper-timestamps .vz2-timestamps > .toolbar > button:first-child { color: #dbb6fa; background: #31243d; border: 1px solid #aa70ce; border-radius: 5px; font-size: 13px; }
-#looper-timestamps .vz2-timestamps ol { margin: 0; }
-#looper-timestamps .vz2-timestamps li { position: relative; margin: 2px 0; padding: 2px 4px 2px 20px; border: 0; background: transparent; }
-#looper-timestamps .vz2-timestamps li::before { content: ''; position: absolute; top: 50%; left: 5px; width: 5px; height: 5px; border-radius: 50%; background: #59aaf5; transform: translateY(-50%); }
-#looper-timestamps .vz2-timestamps .ts-time { color: #64b1ff; font-weight: 700; }
 @media (max-width: 760px) {
     #player-shell[data-mode=looper] .player-header { flex-wrap: wrap; gap: 4px; }
     .looper-header-controls { order: 3; width: 100%; justify-content: center; border-top: 1px solid var(--vz-border); padding-top: 4px; }
