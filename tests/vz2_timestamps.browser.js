@@ -58,6 +58,9 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await dialog.getByRole('button', { name: 'Uložit', exact: true }).click();
         await dialog.waitFor({ state: 'hidden' });
         await notes.getByText('Můj rozepsaný text', { exact: true }).waitFor();
+        assert.equal(await notes.locator('.ts-kind').count(), 0, 'type is communicated by the coloured hierarchy line, without a duplicate icon');
+        assert.equal(await notes.locator('.ts-song_start .ts-action .ti-repeat').count(), 1, 'timestamp actions use compact icons');
+        assert.equal(await notes.locator('.ts-song_start').first().evaluate(e => getComputedStyle(e).marginLeft), '0px');
         check(true, 'browser: safe text rendering and 409 preserve draft; explicit comparison/rebase saves it');
         await notes.getByRole('button', { name: 'Přidat zápis', exact: true }).click();
         await dialog.locator('[name=kind]').selectOption('song_start');
@@ -86,6 +89,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await dialog.locator('[name=keep]').check();
         await dialog.getByRole('button', { name: 'Uložit', exact: true }).click();
         await notes.getByText('Text přežije obnovení katalogu', { exact: true }).waitFor();
+        assert.equal(await notes.locator('.ts-note').evaluate(e => getComputedStyle(e).marginLeft), '24px', 'notes form the deepest level of the visual hierarchy');
         assert.equal(await dialog.isVisible(), true); assert.equal(await dialog.locator('[name=body]').inputValue(), '');
         await dialog.getByRole('button', { name: 'Zrušit', exact: true }).click();
         check(true, 'browser: draft survives catalogue refresh and repeated-add form remains open after save');
@@ -100,6 +104,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await dialog.locator('[name=keep]').uncheck();
         await dialog.getByRole('button', { name: 'Uložit', exact: true }).click(); await dialog.waitFor({ state: 'hidden' });
         await mixerNotes.getByText('Společná pasáž Mixéru', { exact: true }).waitFor();
+        assert.equal(await mixerNotes.locator('.ts-passage').evaluate(e => getComputedStyle(e).marginLeft), '12px', 'passages form the middle hierarchy level');
         await mixerNotes.getByRole('button', { name: 'Smyčka', exact: true }).click();
         await page.waitForFunction(() => window.MultitrackApp.getState()?.playing === true);
         await page.evaluate(() => window.MultitrackApp.seek(9.95)); await page.waitForTimeout(400);
