@@ -42,6 +42,9 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         check(true, 'recordings: initially collapsed, any number open, native playback and position survive collapse without opening Mixer');
         const menu = card(ids[0]).locator('.recording-body > .recording-actions');
         assert.equal(await card(ids[0]).locator('.recording-body > .actions-menu').count(), 0, 'Recording actions are shown directly without a disclosure button');
+        assert.equal(await card(ids[0]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Open action is not detached at the top of the recording card');
+        await menu.getByRole('button', { name: 'Otevřít', exact: true }).waitFor();
+        assert.deepEqual((await menu.locator(':scope > button').allTextContents()).slice(0, 2), ['Uložit offline', 'Otevřít'], 'Open action is next to offline storage');
         await menu.getByRole('button', { name: 'Uložit offline', exact: true }).click();
         await menu.getByRole('button', { name: 'Odebrat offline kopii', exact: true }).waitFor();
         await menu.getByRole('button', { name: 'Kopírovat odkaz na čas', exact: true }).click();
@@ -71,6 +74,9 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         check(true, 'recordings: collapsed reload keeps deep-link time; move menu preserves recording identity and follows new parent');
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await card(ids[1]).waitFor();
+        await card(ids[2]).locator('.recording-toggle').click();
+        await card(ids[2]).locator('.recording-body > .recording-actions').getByRole('button', { name: 'Otevřít Mixér', exact: true }).waitFor();
+        assert.equal(await card(ids[2]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Mixer action is not detached at the top of the recording card');
         await page.setViewportSize({ width: 390, height: 844 });
         await page.waitForFunction(() => document.body.dataset.layout === 'mobile');
         await page.screenshot({ path: path.join(temp, 'ui-stage2-mobile-collapsed.png') });
