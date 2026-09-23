@@ -1,7 +1,6 @@
 (function (root) {
     'use strict';
     const kinds = { song_start: '♪ Začátek skladby', passage: '↔ Pasáž', note: '● Poznámka' };
-    const kindIcons = { song_start: '♪', passage: '↔', note: '●' };
     function format(ms) {
         ms = Math.max(0, Math.round(Number(ms) || 0));
         return [Math.floor(ms / 3600000), Math.floor(ms / 60000) % 60, Math.floor(ms / 1000) % 60]
@@ -40,6 +39,12 @@
     let editor, activeEditor, loop, loopBusy = false, loopSerial = 0;
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     const button = (text, fn) => { const b = el('button', text); b.type = 'button'; b.addEventListener('click', fn); return b; };
+    const iconButton = (label, icon, fn) => {
+        const b = button('', fn), i = el('i');
+        b.className = 'ts-action'; b.title = label; b.setAttribute('aria-label', label);
+        i.className = 'ti ti-' + icon; i.setAttribute('aria-hidden', 'true'); b.append(i);
+        return b;
+    };
     async function request(id, fields) {
         const r = await fetch('php/ajax/vz2_timestamps.php' + (fields ? '' : '?recording_id=' + encodeURIComponent(id)), {
             method: fields ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
@@ -150,7 +155,6 @@
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové zápisy.'));
                 value.entries.forEach(row => {
                     const item = el('li'); item.className = 'ts-' + row.kind;
-                    const icon = el('span', kindIcons[row.kind]); icon.className = 'ts-kind'; icon.title = kinds[row.kind].replace(/^\S+\s*/, ''); icon.setAttribute('aria-label', icon.title);
                     const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
                     authors.className = 'ts-author';
@@ -158,20 +162,20 @@
                     const actions = el('div'); actions.className = 'toolbar';
                     const end = endOf(row, value.entries, value.duration_ms);
                     if (row.kind !== 'note') {
-                        const repeat = button('Smyčka', async () => {
+                        const repeat = iconButton('Smyčka', 'repeat', async () => {
                             try { api.stopLoop(); const token = loopSerial; await this.adapter.playRange(row.time_ms, end); if (token !== loopSerial || this.dead) return; loop = { panel: this, adapter: this.adapter, start: row.time_ms, end }; this.playback(); }
                             catch (e) { status.textContent = e.message; }
                         }); repeat.dataset.playback = end == null ? 'unknown' : 'loop';
                         if (end != null) repeat.dataset.endMs = end;
                         repeat.title = end == null ? 'Konec úseku není známý.' : format(row.time_ms) + ' – ' + format(end); actions.append(repeat);
                     }
-                    if (row.can_edit) actions.append(button('Upravit', () => openEditor(this, row)));
-                    if (row.can_delete) actions.append(button('Smazat', async () => {
+                    if (row.can_edit) actions.append(iconButton('Upravit', 'pencil', () => openEditor(this, row)));
+                    if (row.can_delete) actions.append(iconButton('Smazat', 'trash', async () => {
                         if (!confirm('Smazat tento časový zápis?\n' + row.body)) return;
                         try { const result = await request(id, { action: 'delete', id: row.id, revision: row.revision, timestamps_revision: value.timestamps_revision }); publish(result); status.textContent = 'Zápis odstraněn.'; }
                         catch (e) { status.textContent = e.message; }
                     }));
-                    item.append(icon, seek, text, authors, actions); list.append(item);
+                    item.append(seek, text, authors, actions); list.append(item);
                 }); this.playback();
             },
             playback() {
