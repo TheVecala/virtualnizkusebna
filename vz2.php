@@ -60,9 +60,9 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <section id="panel-recordings" class="panel" data-panel="recordings" aria-label="Nahrávky"><div class="panel-header"><h2>Nahrávky</h2></div><div class="panel-body"><section id="content"><p>Načítám…</p></section>
 <section id="operations" hidden><h2>Nedokončené operace</h2><div></div></section>
 </div></section>
-<section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><h2>Text a akordy</h2></div><div id="lyrics-content" class="panel-body"></div></section>
-<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Tabulatura"><div class="panel-header"><h2>Tabulatura</h2></div><div id="tablature-content" class="panel-body"></div></section>
-<section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><h2>Diskuse</h2></div><div id="discussion-content" class="panel-body"></div></section>
+<section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><h2>Text a akordy</h2><div id="lyrics-actions" class="panel-header-actions"></div></div><div id="lyrics-content" class="panel-body"></div></section>
+<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Tabulatura"><div class="panel-header"><h2>Tabulatura</h2><div id="tablature-actions" class="panel-header-actions"></div></div><div id="tablature-content" class="panel-body"></div></section>
+<section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><h2>Diskuse</h2><div id="discussion-actions" class="panel-header-actions"></div></div><div id="discussion-content" class="panel-body"></div></section>
 </div><section id="ideas-workspace" hidden aria-label="Nápady"></section></div></div>
 <section id="activity" class="utility-panel" hidden aria-label="Deník změn"><button type="button" data-close-utility="activity">Zavřít deník</button><h2>Deník změn</h2><div></div><button id="log-more">Starší změny</button></section>
 <section id="offline-files" class="utility-panel" hidden aria-label="Offline soubory"><button type="button" data-close-utility="offline-files">Zavřít offline soubory</button><h2>Offline soubory tohoto prostředí</h2><p>Lokální kopie v tomto prohlížeči. Odstraněné serverové audio lze odsud stáhnout nebo uvolnit jeho místo.</p><div></div><button id="offline-clear">Odebrat všechny místní kopie</button></section>

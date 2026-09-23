@@ -17,7 +17,7 @@ module.exports = async function ({ base, clients, good, request, db, check, temp
     async function openPanelEditor(page, id) {
         const toggle = page.locator('[data-desktop-panel="' + id + '"]');
         if (await toggle.getAttribute('aria-pressed') === 'false') await toggle.click();
-        await page.locator('#' + id + '-content > button').first().click();
+        await page.locator('#' + id + '-actions > button').first().click();
     }
     async function pageFor(who) {
         const context=await browser.newContext({viewport:{width:1440,height:1000}});
