@@ -1,6 +1,7 @@
 (function (root) {
     'use strict';
     const kinds = { song_start: '♪ Začátek skladby', passage: '↔ Pasáž', note: '● Poznámka' };
+    const kindIcons = { song_start: '♪', passage: '↔', note: '●' };
     function format(ms) {
         ms = Math.max(0, Math.round(Number(ms) || 0));
         return [Math.floor(ms / 3600000), Math.floor(ms / 60000) % 60, Math.floor(ms / 1000) % 60]
@@ -12,6 +13,10 @@
         const ms = ((Number(m[1] || 0) * 60 + Number(m[2])) * 60 + Number(m[3])) * 1000 + Number((m[4] || '').padEnd(3, '0'));
         if (!Number.isSafeInteger(ms) || ms > 604800000) throw new Error('Nejvyšší čas je 7 dní.');
         return ms;
+    }
+    function compactFormat(ms) {
+        const seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
+        return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
     }
     function endOf(entry, entries, duration) {
         if (entry.kind === 'note') return null;
@@ -25,7 +30,7 @@
         return entries.filter(t => selected.includes(t.kind)).map(t => format(t.time_ms) + '\t'
             + t.body.replace(/[\t\r\n]+/g, ' ')).join('\n');
     }
-    const api = { format, parse, endOf, tabular };
+    const api = { format, compactFormat, parse, endOf, tabular };
     if (typeof module !== 'undefined') module.exports = api;
     if (!root.document) return;
     root.Vz2Timestamps = api;
@@ -145,8 +150,10 @@
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové zápisy.'));
                 value.entries.forEach(row => {
                     const item = el('li'); item.className = 'ts-' + row.kind;
-                    const seek = button(format(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
+                    const icon = el('span', kindIcons[row.kind]); icon.className = 'ts-kind'; icon.title = kinds[row.kind].replace(/^\S+\s*/, ''); icon.setAttribute('aria-label', icon.title);
+                    const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
+                    authors.className = 'ts-author';
                     authors.title = 'Vytvořeno: ' + new Date(row.created_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ') + ' · upraveno: ' + new Date(row.updated_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ');
                     const actions = el('div'); actions.className = 'toolbar';
                     const end = endOf(row, value.entries, value.duration_ms);
@@ -164,7 +171,7 @@
                         try { const result = await request(id, { action: 'delete', id: row.id, revision: row.revision, timestamps_revision: value.timestamps_revision }); publish(result); status.textContent = 'Zápis odstraněn.'; }
                         catch (e) { status.textContent = e.message; }
                     }));
-                    item.append(seek, el('strong', kinds[row.kind]), text, authors, actions); list.append(item);
+                    item.append(icon, seek, text, authors, actions); list.append(item);
                 }); this.playback();
             },
             playback() {
