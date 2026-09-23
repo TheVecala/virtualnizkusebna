@@ -42,17 +42,28 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <div id="collections"></div>
 </aside></div><div id="workspace">
 <section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
-<div class="player-header"><strong id="player-mode">PŘEHRÁVAČ</strong><span id="player-title">Vyberte nahrávku</span>
+<div class="player-header"><div class="player-ident"><strong id="player-mode">PŘEHRÁVAČ</strong><span id="player-title">Vyberte nahrávku</span></div>
+<div class="looper-header-controls" role="group" aria-label="Ovládání Looperu">
+<button id="looper-restart" type="button" title="Na začátek" aria-label="Na začátek"><i class="ti ti-player-track-prev" aria-hidden="true"></i></button>
+<button id="looper-back" type="button" title="Zpět o 5 sekund" aria-label="Zpět o 5 sekund"><i class="ti ti-player-skip-back" aria-hidden="true"></i></button>
+<button id="looper-play" type="button" title="Přehrát" aria-label="Přehrát"><i class="ti ti-player-play-filled" aria-hidden="true"></i></button>
+<button id="looper-forward" type="button" title="Vpřed o 5 sekund" aria-label="Vpřed o 5 sekund"><i class="ti ti-player-skip-forward" aria-hidden="true"></i></button>
+<button id="looper-loop" type="button" title="Opakovat smyčku" aria-label="Opakovat smyčku" aria-pressed="false"><i class="ti ti-repeat" aria-hidden="true"></i></button>
+<div class="looper-volume-control"><button id="looper-mute" type="button" title="Ztlumit zvuk" aria-label="Ztlumit zvuk" aria-pressed="false"><i class="ti ti-volume" aria-hidden="true"></i></button><input id="looper-volume" aria-label="Hlasitost" type="range" min="0" max="1" step="0.01" value="1"><output id="looper-volume-value">100%</output></div>
+</div>
 <button id="player-play" type="button" aria-label="Přehrát" disabled>▶</button>
-<button id="player-collapse" type="button" aria-label="Sbalit přehrávač" aria-expanded="true" disabled>⌃</button>
+<button id="player-collapse" type="button" aria-label="Sbalit přehrávač" aria-expanded="true" disabled><i class="ti ti-chevron-up" aria-hidden="true"></i></button>
 <button id="player-fullscreen" type="button" aria-label="Celá obrazovka" aria-pressed="false" disabled>⛶</button>
 <details id="player-options" class="actions-menu"><summary aria-label="Možnosti přehrávače">⋮</summary><div class="action-list" id="player-actions"></div></details>
+<details id="looper-options"><summary aria-label="Otevřít menu Looperu" title="Další možnosti" aria-controls="looper-menu"><i class="ti ti-dots-vertical" aria-hidden="true"></i></summary><div id="looper-menu">
+<div class="looper-menu-section"><button id="looper-fullscreen" type="button"><i class="ti ti-maximize" aria-hidden="true"></i><span>Celá obrazovka</span></button></div>
+<div class="looper-menu-section"><button id="looper-offline" type="button"><i class="ti ti-download" aria-hidden="true"></i><span><span id="looper-offline-label">Uložit pro offline</span><small id="looper-offline-status">přehrávám ze sítě</small></span></button><button id="looper-copy-link" type="button"><i class="ti ti-link" aria-hidden="true"></i><span>Vytvořit odkaz na pozici</span></button><a id="looper-export"><i class="ti ti-file-export" aria-hidden="true"></i><span>Export timestampů</span></a></div>
+<div class="looper-menu-section"><button id="looper-close" class="looper-menu-danger" type="button"><i class="ti ti-x" aria-hidden="true"></i><span>Zavřít looper</span></button></div>
+</div></details>
 <button id="player-close" type="button" aria-label="Zavřít přehrávač" disabled>×</button></div>
 <div id="player-body" hidden>
 <section id="looper-panel" hidden aria-label="Looper"><p id="looper-status" role="status"></p>
-<div class="toolbar looper-transport"><button id="looper-restart" type="button">⏮</button><button id="looper-back" type="button">−5 s</button><button id="looper-forward" type="button">+5 s</button><button id="looper-loop" type="button" aria-pressed="false">Smyčka</button>
-<label>Hlasitost<input id="looper-volume" type="range" min="0" max="1" step="0.01" value="1"></label><label>Zoom<input id="looper-zoom" type="range" min="1" max="16" step="1" value="1"></label></div>
-<div id="looper-wave-scroll"><canvas id="looper-wave" aria-label="Průběh nahrávky; čas lze nastavit posuvníkem pod ním"></canvas></div>
+<div id="looper-wave-scroll"><canvas id="looper-wave" aria-label="Průběh nahrávky; kliknutím lze nastavit čas"></canvas><span id="looper-wave-name" aria-hidden="true"></span><div class="looper-zoom-controls"><button id="looper-zoom-out" type="button" title="Oddálit" aria-label="Oddálit">−</button><button id="looper-zoom-in" type="button" title="Přiblížit" aria-label="Přiblížit">+</button><input id="looper-zoom" aria-label="Přiblížení průběhu" type="range" min="1" max="16" step="1" value="1"></div></div>
 <div class="timeline"><output id="looper-time">0:00</output><input id="looper-seek" aria-label="Čas Looperu" type="range" min="0" max="0" step="0.01" value="0"><output id="looper-duration">0:00</output></div>
 <div id="looper-timestamps"></div></section>
 </div></section>

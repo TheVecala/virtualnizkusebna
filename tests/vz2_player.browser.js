@@ -33,11 +33,20 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         assert.equal(await page.locator('#mixer-panel').isVisible(), false);
         assert.equal(await page.locator('.recording-toggle[aria-expanded=true]').count(), 0);
         assert.equal(await page.locator('#looper-wave').evaluate(n => n.width > 0), true);
+        assert.equal(await page.locator('#looper-restart .ti-player-track-prev').count(), 1);
+        assert.equal(await page.locator('#looper-loop .ti-repeat').count(), 1);
+        await page.locator('#looper-mute').click();
+        assert.equal(await page.locator('#looper-audio').evaluate(a => a.muted), true);
+        await page.locator('#looper-mute').click();
+        await page.locator('#looper-zoom-in').click();
+        assert.equal(await page.locator('#looper-zoom').inputValue(), '2');
         assert(await page.locator('#looper-wave').evaluate(n => { const p = n.getContext('2d').getImageData(0, 0, n.width, n.height).data; let filled = 0; for (let i = 3; i < p.length; i += 4) if (p[i]) filled++; return filled > n.width * 2; }), 'Waveform must reflect non-silent audio');
         await page.locator('#looper-seek').evaluate(n => { n.value = 3; n.dispatchEvent(new Event('input', { bubbles: true })); });
         await page.locator('#player-collapse').click();
         assert.equal((await state()).collapsed, true); assert.equal((await state()).position, 3);
-        await page.locator('#player-fullscreen').click();
+        await page.locator('#looper-options > summary').click();
+        assert.equal(await page.locator('#looper-menu').isVisible(), true);
+        await page.locator('#looper-fullscreen').click();
         assert.equal((await state()).fullscreen, true); assert.equal((await state()).collapsed, false);
         assert.deepEqual(await page.locator('#player-shell').evaluate(n => { const r = n.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }), [0, 0, 1440, 900]);
         await page.locator('#looper-zoom').evaluate(n => { n.value = 4; n.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -45,7 +54,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         await page.keyboard.press('Escape');
         assert.equal((await state()).collapsed, true); assert.equal((await state()).position, 3);
         await page.locator('#player-collapse').click();
-        await page.locator('#player-play').click(); await page.waitForFunction(() => window.Vz2Player.getState().playing);
+        await page.locator('#looper-play').click(); await page.waitForFunction(() => window.Vz2Player.getState().playing);
         allow = false; await openMixer();
         assert.equal((await state()).mode, 'looper'); assert.equal((await state()).playing, true);
         const url = await page.locator('#looper-audio').getAttribute('src');
@@ -83,8 +92,8 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         await page.locator('#looper-audio').evaluate(a => a.currentTime = 19.99);
         await page.waitForFunction(() => document.getElementById('looper-audio').currentTime < 2);
         await page.locator('#looper-timestamps').getByRole('button', { name: 'Vypnout smyčku', exact: true }).click();
-        await page.locator('#player-play').click();
-        await page.locator('#player-options > summary').click(); await page.locator('#looper-copy-link').click();
+        await page.locator('#looper-play').click();
+        await page.locator('#looper-options > summary').click(); await page.locator('#looper-copy-link').click();
         const copied = await page.evaluate(() => navigator.clipboard.readText());
         await page.goto(copied); await ready('looper');
         assert(Math.abs((await state()).position - Number(new URL(copied).searchParams.get('time_ms')) / 1000) < .1);
@@ -94,10 +103,10 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
             assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight), 'Active Looper fits ' + width);
         }
         await page.setViewportSize({ width: 390, height: 844 });
-        await page.locator('#player-fullscreen').click();
+        await page.locator('#looper-options > summary').click(); await page.locator('#looper-fullscreen').click();
         await page.screenshot({ path: path.join(temp, 'ui-stage3-looper-mobile.png') });
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-        await page.locator('#player-close').click();
+        await page.locator('#looper-options > summary').click(); await page.locator('#looper-close').click();
         assert.equal(await state(), null); assert.equal(await page.locator('#player-body').isVisible(), false);
         check(true, 'player: shared passage loop, copied Looper deep-link time, mobile CSS fullscreen and closing to empty bar');
         // Delay the single-audio fetch, then switch; the late response must never resurrect it.
