@@ -180,8 +180,6 @@ dialog form { margin-top: 0; }
 .action-list { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 8px; margin-top: 4px; border: 1px solid var(--vz-border); background: var(--vz-shell); border-radius: 4px; }
 .action-list > * { min-width: 0; max-width: 100%; }
 .action-list > select { width: 100%; }
-.move-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px; width: 100%; }
-.move-controls > select { width: 100%; }
 .files li .action-list button { margin: 0; }
 .upload-section { margin-top: 10px; border: 1px solid var(--vz-border); border-radius: 4px; background: var(--vz-shell); }
 .upload-section > summary { text-align: left; border: 0; color: var(--vz-primary); }

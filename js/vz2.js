@@ -2,7 +2,7 @@
     'use strict';
     const cfg = window.VZ2;
     let qs = new URLSearchParams(location.search);
-    let data, selected, kind = 'song', edit, logBefore, mixerId = null;
+    let data, selected, kind = 'song', edit, move, logBefore, mixerId = null;
     let navigationSerial = 0, catalogSerial = 0;
     const blobs = [];
     const offlineUrls = [];
@@ -157,22 +157,21 @@
     }
     function moveControl(parent, item, type) {
         if (!cfg.write || !item.can_move) return;
-        const open = button('Přesunout');
-        open.setAttribute('aria-expanded', 'false');
-        open.addEventListener('click', () => {
-            const controls = node('div', undefined, 'move-controls');
-            const select = node('select'); select.setAttribute('aria-label', 'Cílová skladba nebo zkouška');
+        parent.append(button('Přesunout', () => {
+            move = { item, type };
+            const form = $('move-form'), select = form.elements.collection_id;
+            select.replaceChildren();
             data.collections.filter(c => c.lifecycle === 'active').forEach(c => {
-                const o = node('option', c.title); o.value = c.id; o.selected = String(c.id) === String(item.collection_id); select.append(o);
+                const option = node('option', c.title);
+                option.value = c.id;
+                option.selected = String(c.id) === String(item.collection_id);
+                select.append(option);
             });
-            const confirm = button('Potvrdit přesun', () => mutate({ action: type + '_move', id: Number(item.id), revision: Number(item.revision), collection_id: Number(select.value) }));
-            controls.append(select, confirm);
-            open.hidden = true;
-            open.setAttribute('aria-expanded', 'true');
-            parent.append(controls);
+            $('move-item-title').textContent = item.title;
+            form.querySelector('.edit-error').textContent = '';
+            $('move-dialog').showModal();
             select.focus();
-        }, { once: true });
-        parent.append(open);
+        }));
     }
     function fileLink(file) {
         if (!file.url) return node('span', file.title + ' · ' + state(file.state));
@@ -396,6 +395,20 @@
         catch (err) { f.querySelector('.edit-error').textContent = err.message; } finally { b.disabled = false; }
     });
     $('edit-cancel').addEventListener('click', () => $('editor').close());
+    $('move-cancel').addEventListener('click', () => $('move-dialog').close());
+    $('move-dialog').addEventListener('close', () => { move = null; });
+    $('move-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.currentTarget, submit = form.querySelector('button[type=submit]');
+        const current = move;
+        if (!current) return;
+        submit.disabled = true;
+        try {
+            await mutate({ action: current.type + '_move', id: Number(current.item.id), revision: Number(current.item.revision), collection_id: Number(form.elements.collection_id.value) });
+            $('move-dialog').close();
+        } catch (err) { form.querySelector('.edit-error').textContent = err.message; }
+        finally { submit.disabled = false; }
+    });
     $('edit-form').addEventListener('submit', async e => {
         e.preventDefault(); const f = e.currentTarget, b = f.querySelector('button'); b.disabled = true;
         const { item, type, parent } = edit;
