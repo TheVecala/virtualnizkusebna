@@ -65,7 +65,8 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.locator('#show-ideas').click(); await page.locator('[data-desktop-panel=lyrics]').click();
         assert(await page.locator('#panel-lyrics').isVisible()); assert.equal(await ideas.isVisible(), false);
-        const menu = page.locator('#collection-actions details'); await menu.locator('summary').click();
+        const menu = page.locator('#collections .collection').filter({ has: page.locator('button[aria-pressed=true]') }).locator('.collection-menu');
+        await menu.locator('summary').click();
         await page.keyboard.press('Escape'); assert.equal(await menu.getAttribute('open'), null);
         assert.equal(await page.evaluate(() => document.activeElement.tagName), 'SUMMARY');
         await menu.locator('summary').click(); await page.locator('#collection-title').click(); assert.equal(await menu.getAttribute('open'), null);
