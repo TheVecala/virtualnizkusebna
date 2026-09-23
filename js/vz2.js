@@ -247,7 +247,7 @@
         card.append(status);
         if (r.summary) body.append(node('p', r.summary, 'recording-summary'));
         if (r.summary_author) body.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · naposledy upravil/a ' + r.summary_editor : '')));
-        const { menu, actions } = actionMenu('Možnosti nahrávky: ' + r.title);
+        const actions = node('div', undefined, 'action-list recording-actions');
         let adapter;
         if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions);
         const mixed = mixerId === String(r.id);
@@ -278,7 +278,7 @@
         if (cfg.write && r.can_remove && r.audio_state !== 'deleted') actions.append(button('Odstranit audio', () => remove(r, 'recording'), 'danger'));
         if (cfg.write && cfg.admin) actions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
         reorderControls(actions, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
-        if (actions.childElementCount) body.append(menu);
+        if (actions.childElementCount) body.append(actions);
         timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
         card.append(body); return card;
     }

@@ -40,8 +40,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert(Math.abs(await audio.evaluate(a => a.currentTime) - position) < 0.1);
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         check(true, 'recordings: initially collapsed, any number open, native playback and position survive collapse without opening Mixer');
-        const menu = card(ids[0]).locator('.recording-body > .actions-menu');
-        await menu.locator('summary').click();
+        const menu = card(ids[0]).locator('.recording-body > .recording-actions');
+        assert.equal(await card(ids[0]).locator('.recording-body > .actions-menu').count(), 0, 'Recording actions are shown directly without a disclosure button');
         await menu.getByRole('button', { name: 'Uložit offline', exact: true }).click();
         await menu.getByRole('button', { name: 'Odebrat offline kopii', exact: true }).waitFor();
         await menu.getByRole('button', { name: 'Kopírovat odkaz na čas', exact: true }).click();
@@ -55,7 +55,6 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.reload();
         await card(ids[2]).waitFor(); assert.equal(await expanded(), 0);
         await card(ids[0]).locator('.recording-toggle').click();
-        await menu.locator('summary').click();
         await menu.getByRole('button', { name: 'Odebrat offline kopii', exact: true }).waitFor();
         assert((await audio.getAttribute('src')).startsWith('blob:'));
         await menu.getByRole('button', { name: 'Odebrat offline kopii', exact: true }).click();
@@ -65,7 +64,6 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await card(ids[0]).waitFor(); assert.equal(await expanded(), 0);
         await card(ids[0]).locator('.recording-toggle').click();
         await page.waitForFunction(({ id, position }) => Math.abs(document.querySelector('#recording-' + id + ' audio').currentTime - position) < 0.1, { id: ids[0], position });
-        await menu.locator('summary').click();
         await menu.getByLabel('Cílová skladba nebo zkouška').selectOption(String(target.id));
         await menu.getByRole('button', { name: 'Přesunout', exact: true }).click();
         await page.locator('#collection-title').getByText('Cílová zkouška', { exact: true }).waitFor();
@@ -78,7 +76,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.screenshot({ path: path.join(temp, 'ui-stage2-mobile-collapsed.png') });
         await card(ids[1]).locator('.recording-toggle').click();
         await page.waitForFunction(id => document.querySelector('#recording-' + id + ' audio').readyState >= 1, ids[1]);
-        assert.equal(await card(ids[1]).locator('.actions-menu').count(), 1, 'Single audio has one shared action menu');
+        assert.equal(await card(ids[1]).locator('.recording-actions').count(), 1, 'Single audio has one directly visible shared action list');
         // Chromium animates native media controls after revealing a hidden audio.
         await page.waitForTimeout(500);
         await card(ids[1]).locator('audio').click({ position: { x: 25, y: 27 } });
@@ -91,8 +89,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         const guest = await guestContext.newPage(); await guest.route('https://cdn.jsdelivr.net/**', r => r.abort());
         await guest.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await guest.locator('#recording-' + ids[1] + ' .recording-toggle').click();
-        const guestMenu = guest.locator('#recording-' + ids[1] + ' .recording-body > .actions-menu');
-        await guestMenu.locator('summary').click();
+        const guestMenu = guest.locator('#recording-' + ids[1] + ' .recording-body > .recording-actions');
         assert.equal(await guestMenu.getByRole('button', { name: 'Upravit', exact: true }).count(), 0);
         assert.equal(await guestMenu.getByRole('button', { name: /smazat|Odstranit audio|Přesunout/ }).count(), 0);
         assert.equal(await guest.locator('.upload-section').count(), 0);
