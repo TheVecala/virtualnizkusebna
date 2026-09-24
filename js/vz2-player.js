@@ -115,10 +115,31 @@
         download.href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(recording.id);
         offline.disabled = true;
         try {
-            let blob;
-            try { blob = await window.idbKeyval.get(current.cacheKey, store); } catch (_) { /* Online playback still works without IndexedDB. */ }
+            const peaksUrl = 'php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256);
+            const [offlineResult, peaksResult] = await Promise.allSettled([
+                window.idbKeyval.get(current.cacheKey, store),
+                fetch(peaksUrl, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal })
+            ]);
             if (!live()) return;
+            let blob = offlineResult.status === 'fulfilled' ? offlineResult.value : null;
             current.cached = blob instanceof Blob;
+            if (peaksResult.status === 'fulfilled' && peaksResult.value.ok) {
+                try {
+                    const data = await peaksResult.value.json();
+                    if (data.ok && Array.isArray(data.peaks) && data.peaks.length > 0 && data.peaks.length <= 4096
+                        && Number(data.duration_ms) === Number(file.duration_ms)
+                        && data.peaks.every(value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1)) {
+                        if (!live()) return;
+                        current.peaks = Float32Array.from(data.peaks);
+                        current.blob = current.cached ? blob : null;
+                        if (current.cached) { current.url = URL.createObjectURL(blob); audio.src = current.url; }
+                        else audio.src = file.url;
+                        offlineLabel(current.cached); offline.disabled = false;
+                        $('looper-status').textContent = ''; update();
+                        return;
+                    }
+                } catch (_) { /* A missing or damaged peaks file can be rebuilt. */ }
+            }
             if (!current.cached) {
                 const response = await fetch(file.url, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal });
                 if (!response.ok) throw new Error('Audio nelze načíst. Obnovte přihlášení a seznam.');
@@ -138,10 +159,22 @@
                     const samples = buffer.getChannelData(channel);
                     for (let i = 0; i < count; i++) {
                         const start = Math.floor(i * samples.length / count), end = Math.floor((i + 1) * samples.length / count);
-                        for (let j = start; j < end; j++) peaks[i] = Math.max(peaks[i], Math.abs(samples[j]));
+                        for (let j = start; j < end; j++) {
+                            const sample = Math.abs(samples[j]);
+                            if (Number.isFinite(sample)) peaks[i] = Math.max(peaks[i], Math.min(1, sample));
+                        }
                     }
                 }
                 current.peaks = peaks; $('looper-status').textContent = '';
+                fetch('php/ajax/vz2_peaks.php', {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.VZ2.csrf },
+                    body: JSON.stringify({ file_id: file.id, sha256: file.sha256, peaks: Array.from(peaks) })
+                }).then(response => {
+                    if (!response.ok && live()) $('looper-status').textContent = 'Průběh se nepodařilo uložit; příští otevření může být pomalejší.';
+                }).catch(() => {
+                    if (live()) $('looper-status').textContent = 'Průběh se nepodařilo uložit; příští otevření může být pomalejší.';
+                });
             } catch (_) { if (live()) $('looper-status').textContent = 'Průběh není dostupný; audio a časový posuvník lze dál používat.'; }
             finally { if (current.context) { const context = current.context; current.context = null; if (context.state !== 'closed') await context.close().catch(() => {}); } current.decoding = false; }
             if (live()) update();
@@ -236,10 +269,25 @@
     copy.onclick = async () => { if (!looper) return; looperMenu.open = false; try { const url = new URL('index.php', location.href); url.search = new URLSearchParams({ v: '2', recording_id: id, view: 'looper', time_ms: Math.round(looper.audio.currentTime * 1000) }); await navigator.clipboard.writeText(url.href); $('looper-status').textContent = 'Odkaz zkopírován.'; } catch (e) { error(e.message); } };
     download.onclick = () => { looperMenu.open = false; };
     offline.onclick = async () => {
-        const current = looper; if (!current?.blob) return;
+        const current = looper; if (!current) return;
         if (current.cached && !confirm('Odebrat tuto offline kopii pouze z prohlížeče?')) return;
         offline.disabled = true;
-        try { if (current.cached) await window.idbKeyval.del(current.cacheKey, store); else await window.idbKeyval.set(current.cacheKey, current.blob, store); current.cached = !current.cached; if (looper === current) offlineLabel(current.cached); }
+        try {
+            if (current.cached) await window.idbKeyval.del(current.cacheKey, store);
+            else {
+                if (!current.blob) {
+                    const response = await fetch(current.file.url, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal });
+                    if (!response.ok) throw new Error('Audio nelze uložit offline.');
+                    const blob = await response.blob();
+                    if (blob.size !== Number(current.file.byte_size)) throw new Error('Audio se nestáhlo celé.');
+                    current.blob = blob;
+                }
+                if (looper !== current) return;
+                await window.idbKeyval.set(current.cacheKey, current.blob, store);
+            }
+            current.cached = !current.cached;
+            if (looper === current) offlineLabel(current.cached);
+        }
         catch (e) { if (looper === current) error(e.message); }
         finally { if (looper === current) offline.disabled = false; }
     };

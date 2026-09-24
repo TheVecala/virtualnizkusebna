@@ -13,7 +13,9 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['clipboard-read', 'clipboard-write'] });
         const [name, value] = clients.admin.cookie.split('='); await context.addCookies([{ name, value, url: base }]);
         await context.addInitScript(() => {
-            window.audioStarts = []; window.revokedAudio = []; window.audioStops = 0;
+            window.audioStarts = []; window.revokedAudio = []; window.audioStops = 0; window.decodeCalls = 0;
+            const decode = AudioContext.prototype.decodeAudioData;
+            AudioContext.prototype.decodeAudioData = function (...args) { window.decodeCalls++; return decode.apply(this, args); };
             const start = AudioBufferSourceNode.prototype.start;
             AudioBufferSourceNode.prototype.start = function (when, offset, ...args) { window.audioStarts.push({ when, offset }); return start.call(this, when, offset, ...args); };
             const stop = AudioBufferSourceNode.prototype.stop;
@@ -30,6 +32,14 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         const state = () => page.evaluate(() => window.Vz2Player.getState());
         const ready = mode => page.waitForFunction(mode => { const s = window.Vz2Player.getState(); return s?.mode === mode && s.phase === 'ready' && !s.loading; }, mode);
         await openLooper(); await ready('looper');
+        const firstCatalog = (await request(clients.admin, 'php/ajax/vz2.php?action=catalog')).json();
+        const singleFile = firstCatalog.recordings.find(r => Number(r.id) === Number(single.id)).files[0];
+        await page.waitForFunction(async file => {
+            const response = await fetch('php/ajax/vz2_peaks.php?id=' + file.id + '&hash=' + file.sha256);
+            return response.ok;
+        }, { id: singleFile.id, sha256: singleFile.sha256 });
+        const savedPeaks = (await request(clients.admin, 'php/ajax/vz2_peaks.php?id=' + singleFile.id + '&hash=' + singleFile.sha256)).json();
+        assert(savedPeaks.ok && savedPeaks.peaks.length > 0, 'Waveform peaks are stored on the server');
         assert.equal(await page.locator('#mixer-panel').isVisible(), false);
         assert.equal(await page.locator('.recording-toggle[aria-expanded=true]').count(), 0);
         assert.equal(await page.locator('#looper-wave').evaluate(n => n.width > 0), true);
@@ -81,7 +91,15 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         assert.equal(confirmations, before + 2);
         assert((await page.evaluate(() => window.audioStops)) > stops);
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
-        const idle = confirmations; await openMixer(); await ready('mixer'); await openLooper(); await ready('looper');
+        const idle = confirmations; await openMixer(); await ready('mixer');
+        const beforeCachedLooper = await page.evaluate(() => window.decodeCalls);
+        await openLooper(); await ready('looper');
+        assert.equal(await page.evaluate(() => window.decodeCalls), beforeCachedLooper, 'Cached peaks skip audio decoding');
+        assert.match(await page.locator('#looper-audio').getAttribute('src'), /vz2_files\.php/, 'Cached peaks allow streamed audio playback');
+        await page.locator('#looper-options > summary').click();
+        await page.locator('#looper-offline').click();
+        await page.waitForFunction(() => document.getElementById('looper-offline-status').textContent.includes('uloženo'));
+        await page.locator('#looper-options > summary').click();
         assert.equal(confirmations, idle, 'Idle tools switch directly');
         check(true, 'player: shared Mixer transport preserves identical track start times, Mute/Solo and playback through collapse/fullscreen; idle switch is direct');
         const notes = await request(clients.admin, 'php/ajax/vz2_timestamps.php?recording_id=' + single.id);
