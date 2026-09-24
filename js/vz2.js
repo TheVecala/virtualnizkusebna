@@ -330,7 +330,10 @@
             const menu = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Možnosti: ' + c.title); menu.append(summary);
             const popover = node('div', undefined, 'collection-menu-popover');
             if (cfg.write && c.can_edit) popover.append(button('Přejmenovat', () => openEdit(c, 'collection')));
-            popover.append(button('Obnovit', refresh));
+            const reload = button('', refresh, 'vz2-icon-button');
+            reload.title = 'Obnovit'; reload.setAttribute('aria-label', 'Obnovit');
+            const reloadIcon = node('i', undefined, 'ti ti-refresh'); reloadIcon.setAttribute('aria-hidden', 'true');
+            reload.append(reloadIcon); popover.append(reload);
             const order = node('div', undefined, 'collection-order');
             reorderControls(order, list, c, { scope: 'collections', kind, revision: Number(data.orders.find(o => o.kind === kind).revision) });
             if (order.childElementCount) popover.append(order);

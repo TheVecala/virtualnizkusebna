@@ -281,6 +281,8 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 .panel-body .vz2-timestamps li p { margin: 0; }
 .panel-body .ts-filters { gap: 4px 10px; font-size: 11px; }
 .panel-body .ts-filters label { margin: 5px 0; }
+.vz2-icon-button, .collection-menu-popover > button.vz2-icon-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 28px; height: 28px; min-height: 28px; padding: 0; font-size: 17px; line-height: 1; vertical-align: middle; }
+.collection-menu-popover > button.vz2-icon-button { margin: 0 0 5px; text-align: center; }
 @media (max-width: 1199px) {
     .recording-toggle { min-height: 48px; padding-block: 8px; }
     .actions-menu > summary { min-width: 40px; display: flex; align-items: center; justify-content: center; }

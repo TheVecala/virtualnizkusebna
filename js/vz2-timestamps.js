@@ -137,7 +137,7 @@
         const heading = el('h4', 'Časové zápisy'), status = el('p'), toolbar = el('div'), list = el('ol'); toolbar.className = 'toolbar';
         status.setAttribute('role', 'status'); status.className = 'error';
         const add = button('Přidat zápis', () => openEditor(panel, null)); add.disabled = true;
-        const reload = button('Obnovit zápisy', () => panel.load());
+        const reload = iconButton('Obnovit zápisy', 'refresh', () => panel.load());
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
         const download = el('a', 'Export TXT'); download.href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(id);
         const filters = el('div'); filters.className = 'ts-filters';

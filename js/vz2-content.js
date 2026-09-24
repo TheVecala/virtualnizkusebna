@@ -3,6 +3,11 @@
     const titles = { lyrics_chords: 'Text a akordy', tablature: 'Tabulatura' };
     const make = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
     const button = (label, run) => { const b = make('button', label); b.type = 'button'; b.onclick = run; return b; };
+    const iconButton = (label, icon, run) => {
+        const b = button('', run), i = make('i', undefined, 'ti ti-' + icon);
+        b.className = 'vz2-icon-button'; b.title = label; b.setAttribute('aria-label', label);
+        i.setAttribute('aria-hidden', 'true'); b.append(i); return b;
+    };
     const date = value => new Date(value).toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
     const author = (name, active) => name + (Number(active) === 0 ? ' (neaktivní účet)' : '');
     let current, ideas;
@@ -66,7 +71,7 @@
         const controls = make('div', undefined, 'toolbar'); controls.append(save, compare);
         form.append(titleLabel, bodyLabel, controls);
         const history = make('section'), historyList = make('div'), preview = make('pre', '', 'content-preview'); preview.hidden = true;
-        const restore = button('Obnovit jako novou verzi', restoreVersion); restore.hidden = true;
+        const restore = iconButton('Obnovit jako novou verzi', 'restore', restoreVersion); restore.hidden = true;
         const older = button('Starší verze', () => loadHistory(ctx.before)); older.hidden = true;
         const showHistory = button('Historie verzí', () => loadHistory(null));
         history.append(showHistory, historyList, older, preview, restore); ctx.dialog.append(meta, form, comparison, history);
@@ -135,7 +140,7 @@
         });
         const actions = make('div', undefined, 'toolbar'); actions.append(save,cancel,compare);
         cancel.hidden = compare.hidden = comparison.hidden = accept.hidden = true; form.append(label,actions,comparison,accept);
-        const list = make('div', undefined, 'content-posts'), reload = button('Obnovit příspěvky', () => load()), older = button('Starší příspěvky', () => load(ctx.before)); older.hidden = true;
+        const list = make('div', undefined, 'content-posts'), reload = iconButton('Obnovit příspěvky', 'refresh', () => load()), older = button('Starší příspěvky', () => load(ctx.before)); older.hidden = true;
         ctx.dialog.append(form,reload,list,older);
         let thread, editing = null;
         body.addEventListener('input', () => ctx.dirty = true);
