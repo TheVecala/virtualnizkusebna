@@ -86,6 +86,11 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
         configure(web, betaConfig.replace('<?php', "<?php define('VZ2_ONLY',true);"), false);
         check((await request(clients.admin, 'php/ajax/vz2.php', create('Must not appear'))).status === 403, 'beta writes stop before alpha activation');
         configure(alpha, alphaConfig, true);
+        const peaksProbe = await call(admin, 'php/ajax/vz2_peaks.php', {
+            file_id: 4294967295, sha256: 'a'.repeat(64), peaks: [0.5]
+        });
+        check(peaksProbe.status === 404 && peaksProbe.json().error === 'Položka již neexistuje.',
+            'VZ2-only mode routes peaks uploads to the VZ2 endpoint instead of the legacy entry guard');
         const previousAccountLogs = db("SELECT id FROM vz2_activity_log WHERE target_type='user' AND target_id=3 AND environment='alpha'").length;
         check((await call(admin, 'admin.php', accountFields, true)).status === 303
             && db("SELECT id FROM vz2_activity_log WHERE target_type='user' AND target_id=3 AND environment='alpha'").length === previousAccountLogs + 1,
