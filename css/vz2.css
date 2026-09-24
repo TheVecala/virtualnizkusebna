@@ -280,6 +280,11 @@ dialog { padding: 14px; }
 dialog h2 { margin: 0 0 10px; font-size: 16px; }
 dialog label { margin: 8px 0; }
 dialog .toolbar { gap: 6px; }
+#logout-dialog { width: min(330px, 95vw); padding: 20px; text-align: center; }
+#logout-dialog .logout-icon { display: block; font-size: 24px; }
+#logout-dialog p { margin: 10px 0 16px; }
+#logout-dialog button { display: block; width: 100%; margin-top: 8px; }
+#logout-confirm { color: #ffaaaa; border-color: #a44; }
 dialog form button:not([type]), dialog button[type=submit], .upload-section form > button { background: var(--vz-primary-soft); border-color: var(--vz-primary); color: var(--vz-primary-hover); }
 input[type=checkbox], input[type=range], progress { accent-color: var(--vz-primary); }
 .panel-body .vz2-timestamps h4 { font-size: 13px; margin: 8px 0; }

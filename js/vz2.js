@@ -482,9 +482,17 @@
             await showOffline(); if (data) render();
         } catch (e) { message(e.message, true); }
     });
-    $('logout').addEventListener('click', async () => {
+    $('logout').addEventListener('click', () => {
+        document.querySelector('.shell-menu').open = false;
+        $('logout-error').hidden = true;
+        $('logout-dialog').showModal();
+    });
+    $('logout-cancel').addEventListener('click', () => $('logout-dialog').close());
+    $('logout-confirm').addEventListener('click', async () => {
+        const confirmButton = $('logout-confirm');
+        confirmButton.disabled = true;
         try { await api({ action: 'logout' }); window.MultitrackApp?.destroy(); window.Vz2Player.closeLooper(); location.href = 'index.php?v=2'; }
-        catch (e) { message(e.message, true); }
+        catch (e) { $('logout-error').textContent = e.message; $('logout-error').hidden = false; confirmButton.disabled = false; }
     });
     window.addEventListener('online', async () => {
         window.MultitrackApp?.destroy();
