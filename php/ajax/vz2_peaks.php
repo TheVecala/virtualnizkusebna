@@ -35,7 +35,10 @@ try{
         try{auth_check_csrf(['csrf'=>$_SERVER['HTTP_X_CSRF_TOKEN']??null]);}
         catch(InvalidArgumentException $e){throw new Vz2Error('Neplatný bezpečnostní token.',403);}
         if((int)($_SERVER['CONTENT_LENGTH']??0)>131072)throw new Vz2Error('Průběh je příliš velký.',413);
-        $raw=file_get_contents('php://input',false,null,0,131073);
+        $stream=fopen('php://input','rb');
+        if($stream===false)throw new Vz2Error('Průběh nelze přečíst.',400);
+        try{$raw=stream_get_contents($stream,131073);}
+        finally{fclose($stream);}
         if($raw===false || strlen($raw)>131072)throw new Vz2Error('Průběh je příliš velký.',413);
         $input=json_decode($raw,true,8,JSON_THROW_ON_ERROR);
         if(!is_array($input) || !vz2_peaks_values($input['peaks']??null))throw new Vz2Error('Neplatná data průběhu.',422);
