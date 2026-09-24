@@ -33,6 +33,7 @@ p, h3 { overflow-wrap: anywhere; }
 #collection-title > span:first-child { color: var(--vz-muted); }
 #desktop-panels { margin: 0 auto; gap: 4px; flex-wrap: nowrap; }
 #catalog-picker { display: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catalog-picker-icon { display: none; width: 22px; height: 22px; }
 .shell-menu { position: relative; margin-left: auto; }
 summary { cursor: pointer; list-style: none; min-width: 30px; min-height: 30px; padding: 5px 8px; text-align: center; border: 1px solid var(--vz-border); border-radius: 4px; }
 summary::-webkit-details-marker { display: none; }
@@ -284,6 +285,9 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 }
 @media (max-width: 767px) {
     #topbar { padding: 4px 6px; }
+    #catalog-picker { display: flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; padding: 0; }
+    .catalog-picker-label { display: none; }
+    .catalog-picker-icon { display: block; }
     .brand { font-size: 11px; letter-spacing: 0; }
     .brand small { display: none; }
     #topbar > button { padding-inline: 6px; }

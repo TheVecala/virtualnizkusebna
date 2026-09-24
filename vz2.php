@@ -27,7 +27,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 </head><body>
 <header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA <small>2.0</small></a><h1 id="collection-title"><span aria-hidden="true">/DK/</span><span id="collection-title-name">Načítám…</span></h1>
-<button id="catalog-picker" aria-haspopup="dialog" aria-controls="catalog-dialog">Skladby / zkoušky</button>
+<button id="catalog-picker" aria-haspopup="dialog" aria-controls="catalog-dialog" aria-label="Otevřít seznam skladeb a zkoušek" title="Skladby / zkoušky"><span class="catalog-picker-label" aria-hidden="true">Skladby / zkoušky</span><svg class="catalog-picker-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h6l2 2h10v11H3z"/><path d="M3 10h18"/></svg></button>
 <nav id="desktop-panels" aria-label="Zobrazené panely">
 <button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Tabulatura</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
 </nav><button id="show-ideas" aria-pressed="false" aria-controls="ideas-workspace">Nápady</button>
