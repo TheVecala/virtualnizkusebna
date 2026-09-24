@@ -375,7 +375,6 @@
     document.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => {
         navigate({ kind: b.dataset.kind }).catch(e => message(e.message, true));
     }));
-    $('catalog-home').addEventListener('click', e => { e.preventDefault(); navigate({ kind }).catch(err => message(err.message, true)); });
     $('mixer-close').addEventListener('click', async () => {
         const previous = mixerId;
         await navigate({ collection_id: String(selected) }, true);

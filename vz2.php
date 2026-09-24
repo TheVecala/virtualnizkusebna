@@ -31,10 +31,10 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <nav id="desktop-panels" aria-label="Zobrazené panely">
 <button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Tabulatura</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
 </nav><button id="show-ideas" aria-pressed="false" aria-controls="ideas-workspace">Nápady</button>
+<span class="topbar-account" title="Přihlášený účet: <?=auth_h($_SESSION['user_name']??'Host')?>"><?=auth_h($_SESSION['user_name']??'Host')?></span>
 <details class="shell-menu"><summary aria-label="Další možnosti">⋮</summary><nav aria-label="Další možnosti">
-<a href="index.php?v=2" id="catalog-home">Skladby a zkoušky</a>
-<?php if(auth_is_admin()):?><a href="admin.php">Účty</a><button id="show-log">Deník</button><?php endif;?>
-<button id="show-offline">Offline soubory</button><?php if(!defined('VZ2_ONLY') || VZ2_ONLY!==true):?><a href="index.php">Původní zkušebna</a><?php endif;?><span><?=auth_h($_SESSION['user_name']??'Host')?></span><button id="logout">Odhlásit</button></nav></details></header>
+<?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
+<button id="show-offline">Správa offline souborů</button><?php if(!defined('VZ2_ONLY') || VZ2_ONLY!==true):?><a href="index.php">Původní zkušebna</a><?php endif;?><button id="logout">Odhlásit</button></nav></details></header>
 <main id="app-shell"><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
 <div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header">

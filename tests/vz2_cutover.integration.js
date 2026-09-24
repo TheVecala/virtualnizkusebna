@@ -138,7 +138,7 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
                     assert.equal(await page.locator('#create-collection').count(), who === 'guest' ? 0 : 1);
                     if (who === 'admin') {
                         await page.locator('.shell-menu > summary').click();
-                        await page.getByRole('link', { name: 'Účty', exact: true }).click();
+                        await page.getByRole('link', { name: 'Správa účtů', exact: true }).click();
                         await page.getByRole('heading', { name: 'Server — obsah VZ2' }).waitFor();
                         await page.screenshot({ path: path.join(temp, 'stage5-accounts.png'), fullPage: true });
                         await page.getByRole('link', { name: '← Zpět do zkušebny', exact: true }).click();
