@@ -72,6 +72,7 @@
     $('catalog-picker').addEventListener('click', openCatalog);
     $('bn-skladby').addEventListener('click', openCatalog);
     $('catalog-close').addEventListener('click', closeCatalog);
+    $('catalog-dialog').addEventListener('cancel', e => e.preventDefault());
     $('bn-napady').addEventListener('click', () => $('show-ideas').click());
     $('create-collection-open')?.addEventListener('click', () => {
         const rehearsal = document.querySelector('[data-kind="rehearsal"]').getAttribute('aria-pressed') === 'true';
@@ -90,10 +91,44 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelector('.shell-menu').open = false; });
     document.addEventListener('click', e => { if (!e.target.closest('.shell-menu')) document.querySelector('.shell-menu').open = false; });
     const menuSelector = '.actions-menu, .collection-menu';
+    function placeCollectionMenu(menu) {
+        const popover = menu.querySelector('.collection-menu-popover');
+        if (!popover || !menu.open) return;
+        const anchor = menu.querySelector('summary').getBoundingClientRect();
+        const width = popover.getBoundingClientRect().width;
+        const viewportTop = window.visualViewport?.offsetTop || 0;
+        const viewportBottom = viewportTop + (window.visualViewport?.height || innerHeight);
+        const panel = menu.closest('dialog')?.getBoundingClientRect();
+        const upper = Math.max(viewportTop + 8, panel ? panel.top + 8 : viewportTop + 8);
+        const lower = Math.min(viewportBottom - 8, panel ? panel.bottom - 8 : viewportBottom - 8);
+        popover.style.maxHeight = Math.max(80, lower - upper) + 'px';
+        const height = popover.getBoundingClientRect().height;
+        const left = Math.max(8, Math.min(anchor.right - width, innerWidth - width - 8));
+        const below = anchor.bottom + 6;
+        const above = anchor.top - height - 6;
+        let top = Math.max(upper, Math.min(anchor.top, lower - height));
+        if (below + height <= lower) top = below;
+        else if (above >= upper) top = above;
+        popover.style.left = left + 'px';
+        popover.style.top = top + 'px';
+    }
     document.addEventListener('toggle', e => {
         if (!e.target.matches(menuSelector) || !e.target.open) return;
         document.querySelectorAll(menuSelector).forEach(menu => { if (menu !== e.target) menu.open = false; });
+        if (e.target.matches('.collection-menu')) placeCollectionMenu(e.target);
     }, true);
+    $('collections').addEventListener('scroll', () => {
+        document.querySelectorAll('.collection-menu[open]').forEach(menu => menu.open = false);
+    });
+    window.addEventListener('resize', () => {
+        document.querySelectorAll('.collection-menu[open]').forEach(placeCollectionMenu);
+    });
+    window.visualViewport?.addEventListener('resize', () => {
+        document.querySelectorAll('.collection-menu[open]').forEach(placeCollectionMenu);
+    });
+    $('catalog-dialog').addEventListener('animationend', () => {
+        document.querySelectorAll('.collection-menu[open]').forEach(placeCollectionMenu);
+    });
     document.addEventListener('click', e => {
         document.querySelectorAll(menuSelector).forEach(menu => { if (!menu.contains(e.target)) menu.open = false; });
     });

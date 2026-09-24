@@ -323,13 +323,19 @@
         const list = data.collections.filter(c => c.kind === kind); $('collections').replaceChildren();
         list.forEach(c => {
             const row = node('div', undefined, 'collection');
-            const select = button(c.title, async () => { await navigate({ collection_id: String(c.id) }); window.Vz2Layout.closeCatalog(); }); select.title = c.title; select.setAttribute('aria-pressed', String(String(selected) === String(c.id))); row.append(select);
+            const select = button('', async () => { await navigate({ collection_id: String(c.id) }); window.Vz2Layout.closeCatalog(); });
+            const icon = document.createElement('img'); icon.src = 'meat/ikona_kombo.png'; icon.alt = ''; icon.className = 'collection-icon';
+            select.append(icon, node('span', c.title, 'collection-name'));
+            select.title = c.title; select.setAttribute('aria-pressed', String(String(selected) === String(c.id))); row.append(select);
             const menu = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Možnosti: ' + c.title); menu.append(summary);
-            if (cfg.write && c.can_edit) menu.append(button('Přejmenovat', () => openEdit(c, 'collection')));
-            if (cfg.write && cfg.admin) menu.append(button('Úplně smazat celek', () => remove(c, 'collection', true), 'danger'));
-            menu.append(button('Obnovit', refresh));
-            reorderControls(menu, list, c, { scope: 'collections', kind, revision: Number(data.orders.find(o => o.kind === kind).revision) });
-            if (menu.childElementCount > 1) row.append(menu);
+            const popover = node('div', undefined, 'collection-menu-popover');
+            if (cfg.write && c.can_edit) popover.append(button('Přejmenovat', () => openEdit(c, 'collection')));
+            popover.append(button('Obnovit', refresh));
+            const order = node('div', undefined, 'collection-order');
+            reorderControls(order, list, c, { scope: 'collections', kind, revision: Number(data.orders.find(o => o.kind === kind).revision) });
+            if (order.childElementCount) popover.append(order);
+            if (cfg.write && cfg.admin) popover.append(button('Úplně smazat celek', () => remove(c, 'collection', true), 'danger'));
+            menu.append(popover); row.append(menu);
             $('collections').append(row);
         });
         // Players live outside the catalogue; rebuilding cards cannot detach them.
@@ -338,6 +344,7 @@
         $('collection-title-name').textContent = c?.title || 'Zatím tu nic není';
         $('collection-title').title = c?.title || '';
         $('bn-skladby').lastChild.textContent = kind === 'rehearsal' ? 'zkoušky' : 'skladby';
+        if ($('create-collection-open')) $('create-collection-open').textContent = kind === 'rehearsal' ? '+ Nová zkouška' : '+ Nová skladba';
         window.Vz2Content.mountPreviews(c);
         if (!c) content.append(node('h1', 'Zatím tu nic není'), node('p', 'Vytvořte skladbu nebo zkoušku. Audio můžete přidat později.'));
         else {

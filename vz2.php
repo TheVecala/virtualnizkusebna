@@ -37,8 +37,10 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <button id="show-offline">Offline soubory</button><?php if(!defined('VZ2_ONLY') || VZ2_ONLY!==true):?><a href="index.php">Původní zkušebna</a><?php endif;?><span><?=auth_h($_SESSION['user_name']??'Host')?></span><button id="logout">Odhlásit</button></nav></details></header>
 <main id="app-shell"><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
-<div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="tabs"><button data-kind="song" aria-pressed="true">Skladby</button><button data-kind="rehearsal" aria-pressed="false">Zkoušky</button></div>
-<?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ nová</button><?php endif;?>
+<div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header">
+<?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ Nová skladba</button><?php endif;?>
+<button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
+<div class="tabs" role="group" aria-label="Přepnout skladby a zkoušky"><button data-kind="song" aria-pressed="true">Skladby</button><span class="catalog-switch-icon" aria-hidden="true">⇄</span><button data-kind="rehearsal" aria-pressed="false">Zkoušky</button></div>
 <div id="collections"></div>
 </aside></div><div id="workspace">
 <section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
@@ -100,7 +102,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <button data-mobile-panel="discussion" aria-pressed="false"><img src="meat/ikona_diskuse.png" alt="">diskuse</button>
 <button id="bn-napady" aria-pressed="false" aria-controls="ideas-workspace"><img src="meat/ikona_napady.png" alt="">nápady</button>
 </nav>
-<dialog id="catalog-dialog" aria-label="Skladby a zkoušky"><button id="catalog-close" type="button">Zavřít výběr</button><div id="catalog-dialog-slot"></div></dialog>
+<dialog id="catalog-dialog" aria-label="Skladby a zkoušky"><div id="catalog-dialog-slot"></div></dialog>
 <?php if($config['canCreate']):?><dialog id="create-collection-dialog" aria-labelledby="create-collection-title"><form id="create-collection"><h2 id="create-collection-title">Nová skladba</h2><label>Nový název<input name="title" maxlength="200" required></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Vytvořit</button><button id="create-collection-cancel" type="button">Zrušit</button></div></form></dialog><?php endif;?>
 <dialog id="editor"><form id="edit-form"><h2>Upravit</h2><label>Název<input name="title" maxlength="200" required></label><label id="summary-label">Popisek<textarea name="summary" maxlength="10000" rows="5"></textarea></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Uložit</button><button type="button" id="edit-cancel">Zrušit</button><button type="button" id="edit-reload" hidden>Načíst aktuální verzi</button></div></form></dialog>
 <dialog id="move-dialog" aria-labelledby="move-title"><form id="move-form"><h2 id="move-title">Přesunout <span id="move-item-title"></span></h2><label>Cílová skladba nebo zkouška<select name="collection_id" required></select></label><p class="edit-error" role="alert"></p><div class="toolbar"><button type="submit">Potvrdit přesun</button><button type="button" id="move-cancel">Zrušit</button></div></form></dialog>
