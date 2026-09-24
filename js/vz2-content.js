@@ -30,11 +30,13 @@
     }
     function start(title) {
         if (current && !close(current)) return null;
-        const dialog = make('dialog', undefined, 'vz2-content-dialog'), header = make('div', undefined, 'toolbar');
+        const dialog = make('dialog', undefined, 'vz2-content-dialog'), header = make('div', undefined, 'dialog-header');
         const ctx = { dialog, busy: false, dirty: false, status: make('p', 'Načítám…', 'error') };
         ctx.live = () => current === ctx && dialog.open;
         ctx.status.setAttribute('role', 'status');
-        header.append(make('h2', title), button('Zavřít', () => close(ctx)));
+        const closeButton = button('×', () => close(ctx));
+        closeButton.className = 'modal-close'; closeButton.setAttribute('aria-label', 'Zavřít'); closeButton.title = 'Zavřít';
+        header.append(make('h2', title), closeButton);
         dialog.append(header, ctx.status); document.body.append(dialog); current = ctx;
         dialog.addEventListener('cancel', e => { e.preventDefault(); close(ctx); });
         dialog.showModal(); return ctx;

@@ -91,7 +91,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await notes.getByText('Text přežije obnovení katalogu', { exact: true }).waitFor();
         assert.equal(await notes.locator('.ts-note').evaluate(e => getComputedStyle(e).marginLeft), '24px', 'notes form the deepest level of the visual hierarchy');
         assert.equal(await dialog.isVisible(), true); assert.equal(await dialog.locator('[name=body]').inputValue(), '');
-        await dialog.getByRole('button', { name: 'Zrušit', exact: true }).click();
+        await dialog.getByRole('button', { name: 'Zavřít časový zápis', exact: true }).click();
         check(true, 'browser: draft survives catalogue refresh and repeated-add form remains open after save');
         const download = page.waitForEvent('download'); await notes.getByRole('link', { name: 'Export TXT' }).click();
         assert.equal((await download).suggestedFilename(), 'nahravka-' + id + '-zapisy.txt');
