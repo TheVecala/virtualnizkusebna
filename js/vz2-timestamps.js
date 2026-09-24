@@ -177,6 +177,7 @@
                     }));
                     item.append(seek, text, authors, actions); list.append(item);
                 }); this.playback();
+                if (typeof this.adapter?.timestampsChanged === 'function') this.adapter.timestampsChanged(value.entries);
             },
             playback() {
                 const duration = this.adapter?.durationMs();

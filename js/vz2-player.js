@@ -79,6 +79,7 @@
             if (old.context) old.context.close().catch(() => {});
             old.peaks = null;
         }
+        $('looper-wave-regions').replaceChildren(); $('looper-wave-markers').replaceChildren();
         if (mode === 'looper') resetShell();
     }
     function select(nextMode, recording) {
@@ -93,7 +94,7 @@
         if (mode === 'looper' && id === String(recording.id) && looper) { select('looper', recording); if (seekRequested && looper.phase === 'ready') looper.audio.currentTime = Math.max(0, Math.min(looper.audio.duration || 0, seconds)); return; }
         closeLooper();
         const audio = document.createElement('audio'); audio.id = 'looper-audio'; audio.preload = 'auto'; audio.setAttribute('playsinline', ''); audio.hidden = true;
-        const current = { audio, abort: new AbortController(), phase: 'loading', decoding: false, file, recording, peaks: null, url: null, context: null, blob: null };
+        const current = { audio, abort: new AbortController(), phase: 'loading', decoding: false, file, recording, peaks: null, url: null, context: null, blob: null, timestamps: [], markersDirty: true };
         looper = current; $('looper-panel').append(audio); select('looper', recording);
         $('looper-status').textContent = 'Načítám audio…'; $('looper-zoom').value = 1; $('looper-wave-scroll').scrollLeft = 0; offlineLabel(false);
         audio.volume = Number($('looper-volume').value);
@@ -103,6 +104,7 @@
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
             durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
             seek: ms => { if (live()) audio.currentTime = Math.max(0, Math.min(audio.duration || 0, ms / 1000)); },
+            timestampsChanged: entries => { if (live()) { current.timestamps = entries; current.markersDirty = true; if (!collapsed) draw(); } },
             playRange: async (start) => { if (!live() || current.phase !== 'ready') throw new Error('Looper není připravený.'); audio.loop = false; audio.currentTime = start / 1000; await audio.play(); }
         };
         current.notes = window.Vz2Timestamps.mount($('looper-timestamps'), recording.id, adapter);
@@ -145,11 +147,53 @@
             if (live()) update();
         } catch (e) { if (live()) { current.phase = 'error'; error(e.message); update(); } }
     }
+    function renderWaveTimestamps(current, width, durationMs) {
+        const regions = document.createDocumentFragment(), markers = document.createDocumentFragment();
+        const entries = current.timestamps || [];
+        const visuals = {
+            song_start: { icon: '♪', color: '#58c878', name: 'Začátek skladby' },
+            passage: { icon: '↔', color: '#f0a044', name: 'Pasáž' },
+            note: { icon: '●', color: '#59aaf5', name: 'Poznámka' }
+        };
+        if (durationMs > 0) entries.forEach(entry => {
+            const start = Number(entry.time_ms);
+            if (entry.kind !== 'passage' || !Number.isFinite(start) || start < 0 || start > durationMs) return;
+            const end = window.Vz2Timestamps.endOf(entry, entries, durationMs);
+            if (end == null || end <= start) return;
+            const region = document.createElement('div'); region.className = 'looper-wave-region';
+            region.style.left = (start / durationMs * width) + 'px';
+            region.style.width = (Math.min(end, durationMs) - start) / durationMs * width + 'px';
+            regions.append(region);
+        });
+        if (durationMs > 0) entries.forEach(entry => {
+            const ms = Number(entry.time_ms), visual = visuals[entry.kind];
+            if (!visual || !Number.isFinite(ms) || ms < 0 || ms > durationMs) return;
+            const x = Math.min(width - 1, ms / durationMs * width);
+            const marker = document.createElement('button'); marker.type = 'button';
+            marker.className = 'looper-wave-marker' + (x > width - 155 ? ' is-end' : '');
+            marker.dataset.timestampId = entry.id;
+            marker.style.left = x + 'px'; marker.style.setProperty('--marker-color', visual.color);
+            const description = visual.name + ': ' + entry.body + ' (' + window.Vz2Timestamps.format(ms) + ')';
+            marker.title = description; marker.setAttribute('aria-label', description);
+            const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
+            const icon = document.createElement('span'); icon.className = 'looper-wave-marker-icon'; icon.textContent = visual.icon; icon.setAttribute('aria-hidden', 'true');
+            const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
+            label.append(icon, text); marker.append(label);
+            marker.onclick = event => { event.stopPropagation(); seek(ms / 1000); };
+            markers.append(marker);
+        });
+        $('looper-wave-regions').replaceChildren(regions);
+        $('looper-wave-markers').replaceChildren(markers);
+        current.markerWidth = width; current.markerDuration = durationMs; current.markersDirty = false;
+    }
     function draw() {
         const canvas = $('looper-wave'), width = Math.max(1, Math.min(16384, $('looper-wave-scroll').clientWidth * Number($('looper-zoom').value))), height = fullscreen ? 180 : 90;
         if (!looper || !width) return;
+        $('looper-wave-track').style.width = width + 'px'; $('looper-wave-track').style.height = height + 'px';
         canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
         if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+        const durationMs = Number.isFinite(looper.audio.duration) ? looper.audio.duration * 1000 : 0;
+        if (looper.markersDirty || looper.markerWidth !== width || looper.markerDuration !== durationMs) renderWaveTimestamps(looper, width, durationMs);
         const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, width, height);
         const peaks = looper.peaks;
         const x = (looper.audio.currentTime / (looper.audio.duration || 1)) * width;
