@@ -50,6 +50,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await actions.getByRole('button', { name: 'Uložit offline', exact: true }).click();
         await actions.getByRole('button', { name: 'Odebrat offline kopii', exact: true }).waitFor();
         await menuToggle.click();
+        assert.equal(await actions.locator(':scope > button', { hasText: 'Odstranit audio' }).count(), 0, 'Remove audio is not directly visible');
+        await menu.getByRole('button', { name: 'Odstranit audio', exact: true }).waitFor();
         await menu.getByRole('button', { name: 'Kopírovat odkaz na čas', exact: true }).click();
         const link = await page.evaluate(() => navigator.clipboard.readText());
         assert.equal(new URL(link).searchParams.get('recording_id'), String(ids[0]));
