@@ -180,7 +180,7 @@
     function state(value) {
         return ({ available: 'Audio dostupné', deleted: 'Audio odstraněno', missing: 'Audio neočekávaně chybí', deleting: 'Probíhá odstranění', pending: 'Upload není dokončený', partial: 'Neúplná sada audia', uploading: 'Probíhá upload', failed: 'Operace vyžaduje dokončení' })[value] || value;
     }
-    function singlePlayer(parent, file, recording, actions) {
+    function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
         const audio = node('audio'); audio.controls = true; audio.preload = 'metadata'; audio.src = file.url; parent.append(audio);
         const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
@@ -206,7 +206,7 @@
             if (String(recording.id) === qs.get('recording_id') && Number.isFinite(seconds)) audio.currentTime = Math.min(audio.duration || 0, Math.max(0, seconds));
         };
         audio.addEventListener('loadedmetadata', seek, { once: true });
-        actions.append(button('Kopírovat odkaz na čas', async () => {
+        menuActions.append(button('Kopírovat odkaz na čas', async () => {
             const url = new URL('index.php', location.href); url.search = new URLSearchParams({ v: '2', recording_id: recording.id, time_ms: Math.round(audio.currentTime * 1000) });
             await navigator.clipboard.writeText(url.href); message('Odkaz zkopírován.');
         }));
@@ -257,11 +257,11 @@
         card.append(status);
         if (r.summary) body.append(node('p', r.summary, 'recording-summary'));
         if (r.summary_author) body.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · naposledy upravil/a ' + r.summary_editor : '')));
-        const recordingMenu = actionMenu('Možnosti nahrávky: ' + r.title);
-        recordingMenu.menu.classList.add('recording-actions');
-        const actions = recordingMenu.actions;
+        const actions = node('div', undefined, 'action-list recording-actions');
+        const recordingMenu = actionMenu('Další akce nahrávky: ' + r.title);
+        const menuActions = recordingMenu.actions;
         let adapter;
-        if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions);
+        if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions, menuActions);
         const mixed = mixerId === String(r.id);
         if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.insertBefore(button('Otevřít', async () => {
             const seconds = body.querySelector('audio')?.currentTime || 0;
@@ -278,17 +278,18 @@
         const files = node('ul', undefined, 'files');
         r.files.forEach(f => {
             const li = node('li', f.title + (f.url ? '' : ' · ' + state(f.state)));
-            if (f.url) actions.append(fileLink(f));
-            if (cfg.write && r.can_edit) actions.append(button('Název stopy', () => openEdit(f, 'track', r)));
-            if (r.can_edit && r.files.length > 1) reorderControls(actions, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
+            if (f.url) menuActions.append(fileLink(f));
+            if (cfg.write && r.can_edit) menuActions.append(button('Název stopy', () => openEdit(f, 'track', r)));
+            if (r.can_edit && r.files.length > 1) reorderControls(menuActions, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
             files.append(li);
         }); body.append(files);
-        if (cfg.write && r.can_edit) actions.append(button('Upravit', () => openEdit(r, 'recording')));
-        moveControl(actions, r, 'recording');
-        if (cfg.write && r.can_remove && r.audio_state !== 'deleted') actions.append(button('Odstranit audio', () => remove(r, 'recording'), 'danger'));
-        if (cfg.write && cfg.admin) actions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
-        reorderControls(actions, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
-        if (actions.childElementCount) body.append(recordingMenu.menu);
+        if (cfg.write && r.can_edit) menuActions.append(button('Upravit', () => openEdit(r, 'recording')));
+        moveControl(menuActions, r, 'recording');
+        if (cfg.write && r.can_remove && r.audio_state !== 'deleted') menuActions.append(button('Odstranit audio', () => remove(r, 'recording'), 'danger'));
+        if (cfg.write && cfg.admin) menuActions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
+        reorderControls(menuActions, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
+        if (menuActions.childElementCount) actions.append(recordingMenu.menu);
+        if (actions.childElementCount) body.append(actions);
         timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
         card.append(body); return card;
     }
