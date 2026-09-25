@@ -24,6 +24,15 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         const card = id => page.locator('#recording-' + id), expanded = () => page.locator('.recording-toggle[aria-expanded=true]').count();
         await card(ids[2]).waitFor();
+        const uploadDialog = page.locator('#upload-dialog');
+        await page.locator('#upload-open').click();
+        await uploadDialog.waitFor({ state: 'visible' });
+        assert.deepEqual(await uploadDialog.locator('.upload-kind span').allTextContents(), ['Běžná', 'Vícestopá', 'Příloha']);
+        assert.equal(await uploadDialog.locator('[name=kind]:checked').getAttribute('value'), 'single');
+        await uploadDialog.getByText('Vícestopá', { exact: true }).click();
+        assert.equal(await uploadDialog.locator('[name=kind]:checked').getAttribute('value'), 'multitrack');
+        await uploadDialog.getByRole('button', { name: 'Zavřít vložení' }).click();
+        check(true, 'recordings: upload action lives in the panel header and opens a modal with three compact type buttons');
         assert.equal(await expanded(), 0);
         await page.screenshot({ path: path.join(temp, 'ui-stage2-desktop-collapsed.png') });
         for (const id of ids) await card(id).locator('.recording-toggle').click();
@@ -121,7 +130,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         const guestMenu = guest.locator('#recording-actions-' + ids[1]);
         assert.equal(await guestMenu.getByRole('button', { name: 'Upravit', exact: true }).count(), 0);
         assert.equal(await guestMenu.getByRole('button', { name: /smazat|Odstranit audio|Přesunout/ }).count(), 0);
-        assert.equal(await guest.locator('.upload-section').count(), 0);
+        assert.equal(await guest.locator('#upload-open').count(), 0);
         assert.deepEqual(errors, []);
         check(true, 'recordings: mobile collapsed/expanded views fit; guest menus retain read-only permissions');
     } finally { await browser.close(); }

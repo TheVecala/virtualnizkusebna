@@ -363,10 +363,11 @@
     }
     function uploadForm(collection) {
         const form = node('form');
-        form.innerHTML = '<h2>Vložit nahrávku nebo přílohu</h2><label>Název<input name="title" maxlength="200" required></label><label>Druh<select name="kind"><option value="single">Běžná nahrávka</option><option value="multitrack">Vícestopá nahrávka</option><option value="attachment">Příloha (PDF, TXT, obrázek)</option></select></label><label>Soubory<input name="files[]" type="file" multiple required></label><progress class="upload-progress" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><button>Nahrát</button>';
+        form.innerHTML = '<div class="dialog-header"><h2 id="upload-title">Vložit nahrávku nebo přílohu</h2><button class="modal-close" type="button" aria-label="Zavřít vložení" title="Zavřít">×</button></div><label>Název<input name="title" maxlength="200" required></label><fieldset class="upload-kind"><legend>Druh</legend><label><input type="radio" name="kind" value="single" checked><span>Běžná</span></label><label><input type="radio" name="kind" value="multitrack"><span>Vícestopá</span></label><label><input type="radio" name="kind" value="attachment"><span>Příloha</span></label></fieldset><label>Soubory<input name="files[]" type="file" multiple required></label><progress class="upload-progress" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát</button></div>';
+        form.querySelector('.modal-close').addEventListener('click', () => $('upload-dialog').close());
         const requestKey = key();
         form.addEventListener('submit', async e => {
-            e.preventDefault(); const submit = form.querySelector('button'); submit.disabled = true;
+            e.preventDefault(); const submit = form.querySelector('button[type=submit]'); submit.disabled = true;
             const progress = form.querySelector('progress'); progress.hidden = false;
             const fields = new FormData(form); fields.append('action', 'upload'); fields.append('collection_id', collection.id);
             fields.append('request_key', requestKey); fields.append('csrf', cfg.csrf); fields.append('file_count', form.querySelector('[type=file]').files.length);
@@ -378,7 +379,7 @@
                     xhr.onload = () => { try { const r = JSON.parse(xhr.responseText); if (xhr.status < 200 || xhr.status >= 300 || !r.ok) throw new Error(r.error || 'Upload selhal.'); resolve(r); } catch (err) { reject(err); } };
                     xhr.send(fields);
                 });
-                message('Upload byl dokončen.'); await refresh(); await window.MultitrackApp.refreshList();
+                $('upload-dialog').close(); message('Upload byl dokončen.'); await refresh(); await window.MultitrackApp.refreshList();
             } catch (err) { form.querySelector('.upload-error').textContent = err.message; message(err.message, true); }
             finally { submit.disabled = false; }
         }); return form;
@@ -414,6 +415,12 @@
         // Players live outside the catalogue; rebuilding cards cannot detach them.
         const content = $('content'); content.replaceChildren();
         const c = data.collections.find(c => String(c.id) === String(selected));
+        const uploadOpen = $('upload-open'), uploadDialog = $('upload-dialog');
+        if (uploadOpen) uploadOpen.hidden = !c || c.lifecycle !== 'active';
+        if (uploadDialog) {
+            if (uploadDialog.open) uploadDialog.close();
+            uploadDialog.replaceChildren(...(c && c.lifecycle === 'active' ? [uploadForm(c)] : []));
+        }
         $('collection-title-name').textContent = c?.title || 'Zatím tu nic není';
         $('collection-title').title = c?.title || '';
         $('bn-skladby').lastChild.textContent = kind === 'rehearsal' ? 'zkoušky' : 'skladby';
@@ -433,10 +440,6 @@
                 if (cfg.write && a.can_remove && a.state !== 'deleted') actions.append(button('Odstranit soubor', () => remove(a, 'attachment'), 'danger'));
                 if (actions.childElementCount) card.append(menu); content.append(card);
             });
-            if (cfg.canUpload && c.lifecycle === 'active') {
-                const upload = node('details', undefined, 'upload-section');
-                upload.append(node('summary', '+ Přidat nahrávku / přílohu'), uploadForm(c)); content.append(upload);
-            }
         }
         $('operations').hidden = !data.operations.length;
         const operations = $('operations').querySelector('div'); operations.replaceChildren();
@@ -445,6 +448,11 @@
     document.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => {
         navigate({ kind: b.dataset.kind }).catch(e => message(e.message, true));
     }));
+    if ($('upload-open')) $('upload-open').addEventListener('click', () => {
+        const dialog = $('upload-dialog');
+        if (!dialog.querySelector('form')) return;
+        dialog.showModal(); dialog.querySelector('[name=title]').focus();
+    });
     $('mixer-close').addEventListener('click', async () => {
         const previous = mixerId;
         await navigate({ collection_id: String(selected) }, true);
