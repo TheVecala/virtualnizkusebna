@@ -133,8 +133,13 @@
     }
     window.addEventListener('beforeunload', e => { if (editor?.open) { e.preventDefault(); e.returnValue = ''; } });
     api.mount = function (container, id, adapter) {
-        const shell = el('section'); shell.className = 'vz2-timestamps';
-        const heading = el('h4', 'Časové zápisy'), status = el('p'), toolbar = el('div'), list = el('ol'); toolbar.className = 'toolbar';
+        const shell = el('details'); shell.className = 'vz2-timestamps';
+        const summary = el('summary'), heading = el('span', 'Časové zápisy'), chevron = el('i');
+        summary.className = 'ts-summary'; heading.className = 'ts-heading';
+        chevron.className = 'ti ti-chevron-right'; chevron.setAttribute('aria-hidden', 'true');
+        summary.append(heading, chevron);
+        const content = el('div'), status = el('p'), toolbar = el('div'), list = el('ol');
+        content.className = 'ts-content'; toolbar.className = 'toolbar';
         status.setAttribute('role', 'status'); status.className = 'error';
         const add = button('Přidat zápis', () => openEditor(panel, null)); add.disabled = true;
         const reload = iconButton('Obnovit zápisy', 'refresh', () => panel.load());
@@ -146,7 +151,7 @@
             try { await navigator.clipboard.writeText(tabular(panel.list.entries, [...filters.querySelectorAll('input:checked')].map(i => i.value))); status.textContent = 'Tabulka zkopírována.'; }
             catch (e) { status.textContent = 'Kopírování se nezdařilo. Použijte export TXT.'; }
         }); copy.disabled = true;
-        toolbar.append(add, reload, stop, download); shell.append(heading, toolbar, status, list, filters, copy); container.append(shell);
+        toolbar.append(add, reload, stop, download); content.append(toolbar, status, list, filters, copy); shell.append(summary, content); container.append(shell);
         const panel = { id, adapter, list: null, dead: false, error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
