@@ -4,6 +4,9 @@ Tato složka je součástí stejného Git repozitáře jako web, ale její obsah
 nenahrává do kořene webu. Soubory mimo `_pomocne/` tvoří zdrojový strom webu,
 s výjimkou metadat Gitu a lokálně ignorovaných souborů.
 
+Nové pomocné soubory ukládejte také sem. Do kořene repozitáře a webových
+podsložek přidávejte jen soubory potřebné pro běh stránek.
+
 - `docs/` — návrhy, záznamy ověření a postupy.
 - `deploy/` — návody a podklady pro ruční nasazení.
 - `migrations/` — SQL změny databáze, které se provádějí samostatně.
