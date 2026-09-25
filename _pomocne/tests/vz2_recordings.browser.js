@@ -40,9 +40,12 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert(Math.abs(await audio.evaluate(a => a.currentTime) - position) < 0.1);
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         check(true, 'recordings: initially collapsed, any number open, native playback and position survive collapse without opening Mixer');
-        const menu = card(ids[0]).locator('.recording-body > .recording-actions');
-        assert.equal(await card(ids[0]).locator('.recording-body > .actions-menu').count(), 0, 'Recording actions are shown directly without a disclosure button');
+        const menu = card(ids[0]).locator('.recording-body > .recording-actions .action-list');
+        const menuToggle = card(ids[0]).locator('.recording-body > .recording-actions > summary');
+        assert.equal(await card(ids[0]).locator('.recording-body > .actions-menu').count(), 1, 'Recording actions share one disclosure button');
+        assert.equal(await card(ids[0]).locator('.recording-body > .files a').count(), 0, 'Download is no longer displayed above the action menu');
         assert.equal(await card(ids[0]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Open action is not detached at the top of the recording card');
+        await menuToggle.click();
         await menu.getByRole('button', { name: 'Otevřít', exact: true }).waitFor();
         assert.deepEqual((await menu.locator(':scope > button').allTextContents()).slice(0, 2), ['Uložit offline', 'Otevřít'], 'Open action is next to offline storage');
         await menu.getByRole('button', { name: 'Uložit offline', exact: true }).click();
@@ -79,14 +82,15 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await card(ids[1]).waitFor();
         await card(ids[2]).locator('.recording-toggle').click();
-        await card(ids[2]).locator('.recording-body > .recording-actions').getByRole('button', { name: 'Otevřít Mixér', exact: true }).waitFor();
+        await card(ids[2]).locator('.recording-body > .recording-actions > summary').click();
+        await card(ids[2]).locator('.recording-body > .recording-actions .action-list').getByRole('button', { name: 'Otevřít Mixér', exact: true }).waitFor();
         assert.equal(await card(ids[2]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Mixer action is not detached at the top of the recording card');
         await page.setViewportSize({ width: 390, height: 844 });
         await page.waitForFunction(() => document.body.dataset.layout === 'mobile');
         await page.screenshot({ path: path.join(temp, 'ui-stage2-mobile-collapsed.png') });
         await card(ids[1]).locator('.recording-toggle').click();
         await page.waitForFunction(id => document.querySelector('#recording-' + id + ' audio').readyState >= 1, ids[1]);
-        assert.equal(await card(ids[1]).locator('.recording-actions').count(), 1, 'Single audio has one directly visible shared action list');
+        assert.equal(await card(ids[1]).locator('.recording-actions').count(), 1, 'Single audio has one shared action menu');
         // Chromium animates native media controls after revealing a hidden audio.
         await page.waitForTimeout(500);
         await card(ids[1]).locator('audio').click({ position: { x: 25, y: 27 } });
@@ -99,7 +103,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         const guest = await guestContext.newPage(); await guest.route('https://cdn.jsdelivr.net/**', r => r.abort());
         await guest.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await guest.locator('#recording-' + ids[1] + ' .recording-toggle').click();
-        const guestMenu = guest.locator('#recording-' + ids[1] + ' .recording-body > .recording-actions');
+        const guestMenu = guest.locator('#recording-' + ids[1] + ' .recording-body > .recording-actions .action-list');
         assert.equal(await guestMenu.getByRole('button', { name: 'Upravit', exact: true }).count(), 0);
         assert.equal(await guestMenu.getByRole('button', { name: /smazat|Odstranit audio|Přesunout/ }).count(), 0);
         assert.equal(await guest.locator('.upload-section').count(), 0);
