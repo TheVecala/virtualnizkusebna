@@ -263,7 +263,7 @@ dialog form { margin-top: 0; }
 .recording-summary { margin: 0 0 6px; }
 .recording-body .files { margin: 6px 0; padding: 0; list-style: none; }
 .recording-body .files li { margin: 0; padding: 5px 0; border-bottom: 1px solid var(--vz-border); }
-.recording-body .files li > a { display: inline-block; max-width: 100%; }
+.recording-body .files li { overflow-wrap: anywhere; }
 .actions-menu { margin: 5px 0; }
 .actions-menu > summary { width: 34px; font-size: 18px; line-height: 1; background: var(--vz-shell); }
 .actions-menu[open] > summary { color: var(--vz-primary); border-color: var(--vz-primary); }
