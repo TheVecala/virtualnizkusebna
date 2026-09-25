@@ -62,7 +62,28 @@
             }
         });
         dialog.addEventListener('click', e => {
-            if (e.target.closest('.recording-action-buttons > button, .recording-action-buttons > a')) dialog.close();
+            if (!e.target.closest('.recording-action-buttons > button, .recording-action-buttons > a')) return;
+            dialog.close();
+            // Editors are separate modal dialogs. Once an editor is closed, return
+            // to this recording's actions (using the freshly rendered dialog when
+            // saving the edit refreshed the catalog).
+            queueMicrotask(() => {
+                const child = Array.from(document.querySelectorAll('dialog[open]')).find(candidate => candidate !== dialog);
+                if (!child) return;
+                const restore = () => {
+                    // The conflict reload flow closes and immediately reopens the
+                    // same editor, so wait for its final close in that case.
+                    if (child.open) { child.addEventListener('close', restore, { once: true }); return; }
+                    queueMicrotask(() => {
+                        if (document.querySelector('dialog[open]')) return;
+                        const current = $('recording-actions-' + recording.id);
+                        if (!current?.isConnected || current.open) return;
+                        current.showModal();
+                        current.querySelector('.modal-close')?.focus();
+                    });
+                };
+                child.addEventListener('close', restore, { once: true });
+            });
         }, true);
         const toggle = button('Další', () => { dialog.showModal(); close.focus(); });
         toggle.setAttribute('aria-haspopup', 'dialog'); toggle.setAttribute('aria-controls', dialog.id);
