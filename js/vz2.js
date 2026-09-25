@@ -26,11 +26,52 @@
         return b;
     }
     function message(text, error = false) { $('message').textContent = text; $('message').className = error ? 'error' : ''; }
-    function actionMenu(label) {
-        const menu = node('details', undefined, 'actions-menu');
-        const toggle = node('summary', '⋮'); toggle.setAttribute('aria-label', label); toggle.title = label;
-        const actions = node('div', undefined, 'action-list'); menu.append(toggle, actions);
-        return { menu, actions };
+    function recordingActionsDialog(recording) {
+        const dialog = node('dialog', undefined, 'recording-actions-dialog');
+        dialog.id = 'recording-actions-' + recording.id;
+        const titleId = 'recording-actions-title-' + recording.id;
+        dialog.setAttribute('aria-labelledby', titleId);
+        const header = node('div', undefined, 'dialog-header');
+        const heading = node('div');
+        const title = node('h2', 'Akce nahrávky'); title.id = titleId;
+        heading.append(title, node('p', recording.title, 'recording-actions-context'));
+        const close = button('×', () => dialog.close(), 'modal-close');
+        close.setAttribute('aria-label', 'Zavřít akce nahrávky'); close.title = 'Zavřít';
+        header.append(heading, close);
+        const options = node('div', undefined, 'recording-action-options');
+        const section = (cls, icon, name, description) => {
+            const card = node('section', undefined, 'recording-action-card ' + cls);
+            const cardHeading = node('div', undefined, 'recording-action-heading');
+            const symbol = node('i', undefined, 'ti ti-' + icon); symbol.setAttribute('aria-hidden', 'true');
+            const copy = node('div'); copy.append(node('h3', name), node('p', description));
+            const actions = node('div', undefined, 'recording-action-buttons');
+            cardHeading.append(symbol, copy); card.append(cardHeading, actions);
+            return { card, actions };
+        };
+        const file = section('recording-action-files', 'file-download', 'Soubor', 'Stažení a sdílení nahrávky.');
+        const edit = section('recording-action-edit', 'edit', 'Úpravy', 'Změna údajů, umístění a pořadí.');
+        const danger = section('recording-action-danger', 'alert-triangle', 'Odstranění', 'Nevratné nebo destruktivní operace.');
+        const footer = node('div', undefined, 'recording-action-footer');
+        footer.append(button('Zavřít', () => dialog.close()));
+        dialog.append(header, options, footer);
+        dialog.addEventListener('click', e => {
+            if (e.target === dialog) {
+                const box = dialog.getBoundingClientRect();
+                if (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom) dialog.close();
+            }
+        });
+        dialog.addEventListener('click', e => {
+            if (e.target.closest('.recording-action-buttons > button, .recording-action-buttons > a')) dialog.close();
+        }, true);
+        const toggle = button('Další', () => { dialog.showModal(); close.focus(); });
+        toggle.setAttribute('aria-haspopup', 'dialog'); toggle.setAttribute('aria-controls', dialog.id);
+        return {
+            dialog, toggle, fileActions: file.actions, editActions: edit.actions, dangerActions: danger.actions,
+            finish() {
+                [file, edit, danger].forEach(group => { if (group.actions.childElementCount) options.append(group.card); });
+                document.body.append(dialog);
+            }
+        };
     }
     async function api(fields, action = 'catalog') {
         const response = await fetch('php/ajax/vz2.php' + (fields ? '' : '?action=' + action), {
@@ -258,10 +299,12 @@
         if (r.summary) body.append(node('p', r.summary, 'recording-summary'));
         if (r.summary_author) body.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · naposledy upravil/a ' + r.summary_editor : '')));
         const actions = node('div', undefined, 'action-list recording-actions');
-        const recordingMenu = actionMenu('Další akce nahrávky: ' + r.title);
-        const menuActions = recordingMenu.actions;
+        const recordingMenu = recordingActionsDialog(r);
+        const fileActions = recordingMenu.fileActions;
+        const editActions = recordingMenu.editActions;
+        const dangerActions = recordingMenu.dangerActions;
         let adapter;
-        if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions, menuActions);
+        if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions, fileActions);
         const mixed = mixerId === String(r.id);
         if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.insertBefore(button('Otevřít', async () => {
             const seconds = body.querySelector('audio')?.currentTime || 0;
@@ -278,17 +321,19 @@
         const files = node('ul', undefined, 'files');
         r.files.forEach(f => {
             const li = node('li', f.title + (f.url ? '' : ' · ' + state(f.state)));
-            if (f.url) menuActions.append(fileLink(f));
-            if (cfg.write && r.can_edit) menuActions.append(button('Název stopy', () => openEdit(f, 'track', r)));
-            if (r.can_edit && r.files.length > 1) reorderControls(menuActions, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
+            if (f.url) fileActions.append(fileLink(f));
+            if (cfg.write && r.can_edit) editActions.append(button('Název stopy', () => openEdit(f, 'track', r)));
+            if (r.can_edit && r.files.length > 1) reorderControls(editActions, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
             files.append(li);
         }); body.append(files);
-        if (cfg.write && r.can_edit) menuActions.append(button('Upravit', () => openEdit(r, 'recording')));
-        moveControl(menuActions, r, 'recording');
-        if (cfg.write && r.can_remove && r.audio_state !== 'deleted') menuActions.append(button('Odstranit audio', () => remove(r, 'recording'), 'danger'));
-        if (cfg.write && cfg.admin) menuActions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
-        reorderControls(menuActions, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
-        if (menuActions.childElementCount) actions.append(recordingMenu.menu);
+        if (cfg.write && r.can_edit) editActions.append(button('Upravit', () => openEdit(r, 'recording')));
+        moveControl(editActions, r, 'recording');
+        if (cfg.write && r.can_remove && r.audio_state !== 'deleted') dangerActions.append(button('Odstranit audio', () => remove(r, 'recording'), 'danger'));
+        if (cfg.write && cfg.admin) dangerActions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
+        reorderControls(editActions, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
+        if (fileActions.childElementCount || editActions.childElementCount || dangerActions.childElementCount) {
+            recordingMenu.finish(); actions.append(recordingMenu.toggle);
+        }
         if (actions.childElementCount) body.append(actions);
         timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
         card.append(body); return card;
@@ -319,6 +364,7 @@
         const liveIds = new Set(data.recordings.map(r => String(r.id)));
         for (const id of expandedRecordings) if (!liveIds.has(id)) expandedRecordings.delete(id);
         timestampPanels.splice(0).forEach(p => p.destroy());
+        document.querySelectorAll('.recording-actions-dialog').forEach(dialog => dialog.remove());
         document.querySelectorAll('#content audio').forEach(a => a.pause()); blobs.splice(0).forEach(URL.revokeObjectURL);
         document.querySelectorAll('[data-kind]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
         const list = data.collections.filter(c => c.kind === kind); $('collections').replaceChildren();
