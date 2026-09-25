@@ -330,3 +330,24 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
     #bottom-nav img { width: 27px; height: 27px; object-fit: contain; }
     #activity.utility-panel, #offline-files.utility-panel { bottom: calc(72px + env(safe-area-inset-bottom)); }
 }
+.vz2-timestamp-export { width: min(620px, 95vw); padding: 16px; }
+.ts-export-options { display: grid; gap: 12px; }
+.ts-export-card { padding: 14px; background: var(--vz-surface, #22272b); border: 1px solid var(--vz-border, #30363b); border-left: 3px solid #a66ad8; border-radius: 6px; }
+.ts-export-card.ts-export-text { border-left-color: var(--vz-primary, #a7ac38); }
+.ts-export-heading { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.ts-export-heading > i { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 6px; background: #33223f; color: #d39cff; font-size: 19px; }
+.ts-export-text .ts-export-heading > i { background: var(--vz-primary-soft, #272b14); color: var(--vz-primary, #a7ac38); }
+.ts-export-heading h3 { margin: 1px 0 3px; }
+.ts-export-heading p { margin: 0; color: var(--vz-muted, #8d9396); font-size: 12px; }
+.vz2-timestamp-export .ts-filters { margin: 0 0 14px 44px; padding: 0; border: 0; }
+.vz2-timestamp-export .ts-filters label { margin: 0; }
+.ts-export-copy, .ts-export-download { display: inline-flex; align-items: center; gap: 6px; margin-left: 44px; }
+.ts-export-download { min-height: 30px; padding: 5px 8px; border: 1px solid var(--vz-border, #30363b); border-radius: 4px; color: var(--vz-text, #e2e4e1); background: var(--vz-surface, #22272b); text-decoration: none; }
+.ts-export-download:hover { border-color: var(--vz-primary-hover, #c0c64b); }
+.ts-export-status { min-height: 20px; margin: 8px 0 0; }
+.ts-export-footer { display: flex; justify-content: flex-end; padding-top: 8px; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+@media (max-width: 520px) {
+    .vz2-timestamp-export .ts-filters { flex-direction: column; gap: 6px; }
+    .ts-export-copy, .ts-export-download, .vz2-timestamp-export .ts-filters { margin-left: 0; }
+}
