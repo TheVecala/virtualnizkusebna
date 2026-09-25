@@ -53,6 +53,9 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await actionsDialog.waitFor({ state: 'visible' });
         assert.equal(await actionsDialog.getByRole('heading', { name: 'Akce nahrávky', exact: true }).count(), 1);
         assert.equal(await actionsDialog.getByText('První záběr', { exact: true }).count(), 1);
+        assert.equal(await actionsDialog.getByText('one.wav', { exact: true }).count(), 1, 'File name is displayed as the file section description');
+        assert.deepEqual(await actionsDialog.getByRole('link', { name: 'Stáhnout soubor one.wav', exact: true }).allTextContents(), ['Stáhnout']);
+        assert.equal(await actionsDialog.locator('.recording-action-files').getByRole('button', { name: 'Přejmenovat soubor', exact: true }).count(), 1);
         assert.equal(await actions.locator(':scope > button', { hasText: 'Odstranit audio' }).count(), 0, 'Remove audio is not directly visible');
         await actionsDialog.getByRole('button', { name: 'Odstranit audio', exact: true }).waitFor();
         assert.equal(await actions.locator(':scope > button', { hasText: 'Úplně smazat' }).count(), 0, 'Full deletion is not directly visible');
@@ -92,6 +95,9 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await card(ids[1]).waitFor();
         await card(ids[2]).locator('.recording-toggle').click();
         await card(ids[2]).locator('.recording-body > .recording-actions').getByRole('button', { name: 'Otevřít Mixér', exact: true }).waitFor();
+        await card(ids[2]).locator('.recording-actions').getByRole('button', { name: 'Další', exact: true }).click();
+        assert.equal(await page.locator('#recording-actions-' + ids[2]).getByRole('button', { name: 'Úplně smazat', exact: true }).count(), 1, 'Admin can fully delete a multitrack recording');
+        await page.locator('#recording-actions-' + ids[2]).getByRole('button', { name: 'Zavřít', exact: true }).click();
         assert.equal(await card(ids[2]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Mixer action is not detached at the top of the recording card');
         await page.setViewportSize({ width: 390, height: 844 });
         await page.waitForFunction(() => document.body.dataset.layout === 'mobile');

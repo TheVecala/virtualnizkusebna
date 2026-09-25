@@ -344,7 +344,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 .ts-export-status { min-height: 20px; margin: 8px 0 0; }
 .ts-export-footer { display: flex; justify-content: flex-end; padding-top: 8px; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
-.recording-actions-dialog { width: min(620px, 95vw); padding: 16px; }
+.recording-actions-dialog { width: min(620px, 95vw); max-height: min(92vh, 92dvh); padding: 16px; overflow-y: auto; }
 .recording-actions-dialog .dialog-header > div { min-width: 0; }
 .recording-actions-dialog .dialog-header h2 { margin: 0; }
 .recording-actions-context { margin: 3px 0 0; overflow: hidden; color: var(--vz-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
@@ -365,6 +365,5 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 @media (max-width: 520px) {
     .vz2-timestamp-export .ts-filters { flex-direction: column; gap: 6px; }
     .ts-export-copy, .ts-export-download, .vz2-timestamp-export .ts-filters { margin-left: 0; }
-    .recording-action-buttons { flex-direction: column; margin-left: 0; }
-    .recording-action-buttons > * { width: 100%; justify-content: center; }
+    .recording-action-buttons { margin-left: 0; }
 }

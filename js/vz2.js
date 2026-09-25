@@ -48,7 +48,8 @@
             cardHeading.append(symbol, copy); card.append(cardHeading, actions);
             return { card, actions };
         };
-        const file = section('recording-action-files', 'file-download', 'Soubor', 'Stažení a sdílení nahrávky.');
+        const fileNames = recording.files.map(file => file.title).join(', ');
+        const file = section('recording-action-files', 'file-download', 'Soubor', fileNames || 'Soubor není dostupný.');
         const edit = section('recording-action-edit', 'edit', 'Úpravy', 'Změna údajů, umístění a pořadí.');
         const danger = section('recording-action-danger', 'alert-triangle', 'Odstranění', 'Nevratné nebo destruktivní operace.');
         const footer = node('div', undefined, 'recording-action-footer');
@@ -216,7 +217,8 @@
     }
     function fileLink(file) {
         if (!file.url) return node('span', file.title + ' · ' + state(file.state));
-        const a = node('a', 'Stáhnout: ' + file.title); a.href = file.url + '&download=1'; return a;
+        const a = node('a', 'Stáhnout'); a.href = file.url + '&download=1';
+        a.setAttribute('aria-label', 'Stáhnout soubor ' + file.title); return a;
     }
     function state(value) {
         return ({ available: 'Audio dostupné', deleted: 'Audio odstraněno', missing: 'Audio neočekávaně chybí', deleting: 'Probíhá odstranění', pending: 'Upload není dokončený', partial: 'Neúplná sada audia', uploading: 'Probíhá upload', failed: 'Operace vyžaduje dokončení' })[value] || value;
@@ -322,7 +324,7 @@
         r.files.forEach(f => {
             const li = node('li', f.title + (f.url ? '' : ' · ' + state(f.state)));
             if (f.url) fileActions.append(fileLink(f));
-            if (cfg.write && r.can_edit) editActions.append(button('Název stopy', () => openEdit(f, 'track', r)));
+            if (cfg.write && r.can_edit) fileActions.append(button('Přejmenovat soubor', () => openEdit(f, 'track', r)));
             if (r.can_edit && r.files.length > 1) reorderControls(editActions, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
             files.append(li);
         }); body.append(files);
