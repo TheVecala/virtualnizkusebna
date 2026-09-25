@@ -29,13 +29,14 @@ p, h3 { overflow-wrap: anywhere; }
 .toolbar, .tabs { gap: 5px; }
 #topbar { position: relative; flex: 0 0 auto; min-height: 46px; padding: 6px 12px; gap: 10px; flex-wrap: nowrap; background: var(--vz-shell); border-color: var(--vz-border); z-index: 35; }
 .brand { font-size: 13px; white-space: nowrap; }
-#collection-title { min-width: 0; margin: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#collection-title > span:first-child { color: var(--vz-muted); }
+#collection-title { display: flex; align-items: center; flex: 0 1 auto; min-width: 0; margin: 0; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.collection-path-prefix { flex: 0 0 auto; margin-right: .4em; color: var(--vz-text); }
 #desktop-panels { margin: 0 auto; gap: 4px; flex-wrap: nowrap; }
-#catalog-picker { display: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.catalog-picker-icon { display: none; width: 22px; height: 22px; }
-.topbar-account { flex: 0 1 auto; min-width: 0; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vz-muted); }
-.shell-menu { position: relative; margin-left: auto; }
+#catalog-picker { display: block; min-width: 0; min-height: 30px; padding: 2px 0; overflow: hidden; border: 0; background: none; color: inherit; font: inherit; text-align: left; white-space: nowrap; }
+#collection-title-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#catalog-picker:hover #collection-title-name { color: var(--vz-primary-hover); text-decoration: underline; text-underline-offset: 3px; }
+.topbar-account { flex: 0 1 auto; min-width: 0; max-width: 180px; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vz-muted); }
+.shell-menu { position: relative; flex: 0 0 auto; margin-left: 0; }
 summary { cursor: pointer; list-style: none; min-width: 30px; min-height: 30px; padding: 5px 8px; text-align: center; border: 1px solid var(--vz-border); border-radius: 4px; }
 summary::-webkit-details-marker { display: none; }
 .shell-menu > summary { display: flex; width: 34px; height: 32px; flex-direction: column; align-items: stretch; justify-content: center; gap: 4px; padding: 6px 7px; }
@@ -256,7 +257,8 @@ dialog form { margin-top: 0; }
 .recording-toggle:focus-visible { outline-offset: -2px; }
 .recording-title { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recording-toggle small { grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
-.recording-status { margin: 0; padding: 0 9px 6px; font-size: 11px; color: var(--vz-muted); }
+.recording-status { margin: 0; padding: 0 9px 6px; font-size: 11px; color: var(--vz-muted); overflow-wrap: anywhere; }
+.recording-deleted { color: #d88d8d; }
 .recording-status[data-state=missing], .recording-status[data-state=failed] { color: #ef9494; }
 .recording-status[data-state=partial], .recording-status[data-state=pending], .recording-status[data-state=deleting] { color: #e0c986; }
 .recording-card > button:not(.recording-toggle) { margin: 0 9px 7px; max-width: calc(100% - 18px); }
@@ -303,7 +305,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 @media (max-width: 1199px) {
     .layout { grid-template-columns: minmax(0, 1fr); }
     #sidebar-slot, #desktop-panels { display: none; }
-    #catalog-picker { display: block; flex: 1; }
+    #collection-title { flex: 1 1 auto; }
     #topbar { gap: 6px; }
     button, summary, select { min-height: 40px; }
 }
@@ -318,9 +320,6 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
     #catalog-dialog #collections { max-height: calc(100dvh - 248px - env(safe-area-inset-bottom)); }
     #topbar { padding: 4px 6px; }
     .topbar-account { max-width: 24vw; font-size: 11px; }
-    #catalog-picker { display: flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; padding: 0; }
-    .catalog-picker-label { display: none; }
-    .catalog-picker-icon { display: block; }
     .brand { font-size: 11px; letter-spacing: 0; }
     .brand small { display: none; }
     #topbar > button { padding-inline: 6px; }

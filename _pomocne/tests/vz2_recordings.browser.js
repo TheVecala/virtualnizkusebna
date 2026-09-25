@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { chromium } = require('playwright');
 
 module.exports = async ({ base, clients, good, request, upload, wav, db, check, temp }) => {
@@ -24,6 +25,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         const card = id => page.locator('#recording-' + id), expanded = () => page.locator('.recording-toggle[aria-expanded=true]').count();
         await card(ids[2]).waitFor();
+        assert.equal(await card(ids[0]).locator('.recording-status').textContent(), 'one.wav');
+        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'two.wav');
         const uploadDialog = page.locator('#upload-dialog');
         await page.locator('#upload-open').click();
         await uploadDialog.waitFor({ state: 'visible' });
@@ -54,6 +57,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         const menuToggle = actions.getByRole('button', { name: 'Další', exact: true });
         assert.equal(await menuToggle.count(), 1, 'Selected recording actions share one dialog button');
         assert.equal(await card(ids[0]).locator('.recording-body > .files a').count(), 0, 'Download is no longer displayed above the action menu');
+        assert.equal(await card(ids[0]).locator('.recording-body > .files').count(), 0, 'Single file name is shown above the player only');
+        assert.deepEqual(await card(ids[2]).locator('.recording-body > .files li').allTextContents(), ['guitar.wav', 'bass.wav']);
         assert.equal(await card(ids[0]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Open action is not detached at the top of the recording card');
         assert.deepEqual((await actions.locator(':scope > button').allTextContents()).slice(0, 2), ['Uložit offline', 'Otevřít'], 'Offline and open actions remain directly visible');
         await actions.getByRole('button', { name: 'Uložit offline', exact: true }).click();
@@ -131,6 +136,11 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.equal(await guestMenu.getByRole('button', { name: 'Upravit', exact: true }).count(), 0);
         assert.equal(await guestMenu.getByRole('button', { name: /smazat|Odstranit audio|Přesunout/ }).count(), 0);
         assert.equal(await guest.locator('#upload-open').count(), 0);
+        await good('admin', { action: 'remove_audio', id: ids[1], revision: Number(db('SELECT revision FROM vz2_recordings WHERE id=?', [ids[1]])[0].revision), confirm: 'Druhý záběr', request_key: crypto.randomBytes(16).toString('hex') });
+        await page.reload();
+        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'two.wav - odstraněno');
+        assert.equal(await card(ids[1]).locator('.recording-deleted').count(), 1);
+        assert.equal(await card(ids[1]).locator('.recording-body > .files').count(), 0);
         assert.deepEqual(errors, []);
         check(true, 'recordings: mobile collapsed/expanded views fit; guest menus retain read-only permissions');
     } finally { await browser.close(); }

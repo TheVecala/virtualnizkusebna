@@ -6,7 +6,10 @@ require_once __DIR__.'/vz2_timestamps.php';
 function vz2_file_public(array $f,string $type):array {
     $available=$f['state']==='available' && is_file(vz2_path($f['relative_path']));
     $status=$f['state']==='available' && !$available?'missing':$f['state'];
-    return ['id'=>(int)$f['id'],'title'=>$f['title'],'original_name'=>$f['original_name'],
+    $format=$type==='audio'?($f['format']??pathinfo($f['original_name'],PATHINFO_EXTENSION)):'';
+    $displayName=$type==='audio'?$f['title']:($f['original_name']?:$f['title']);
+    if($format!=='' && !str_ends_with(strtolower($displayName),'.'.strtolower($format)))$displayName.='.'.$format;
+    return ['id'=>(int)$f['id'],'title'=>$f['title'],'display_name'=>$displayName,'original_name'=>$f['original_name'],
         'format'=>$f['format']??pathinfo($f['relative_path'],PATHINFO_EXTENSION),'byte_size'=>(int)$f['byte_size'],
         'sha256'=>$f['sha256'],'duration_ms'=>isset($f['duration_ms'])?(int)$f['duration_ms']:null,
         'sort_order'=>(int)($f['sort_order']??0),'state'=>$status,'deleted_at'=>$f['deleted_at'],
@@ -44,7 +47,7 @@ function vz2_mixer(?int $id=null):array {
     foreach($catalog['recordings'] as $r){
         if($r['kind']!=='multitrack' || $r['lifecycle']!=='active' || ($id!==null && (int)$r['id']!==$id))continue;
         $tracks=[];
-        foreach($r['files'] as $f)$tracks[]=['file'=>'a'.$f['id'].'.'.$f['format'],'name'=>$f['title'],'order'=>$f['sort_order'],
+        foreach($r['files'] as $f)$tracks[]=['file'=>'a'.$f['id'].'.'.$f['format'],'name'=>$f['display_name'],'order'=>$f['sort_order'],
             'url'=>rtrim(SITE_URL,'/').'/php/ajax/vz2_files.php?type=audio&id='.$f['id'].'&hash='.$f['sha256'],
             'fileId'=>$f['id'],'sha256'=>$f['sha256'],'unavailable'=>$f['state']!=='available'];
         $items[]=['id'=>(string)$r['id'],'name'=>$r['title'],'version'=>1,'created'=>str_replace(' ','T',$r['created_at']).'Z',

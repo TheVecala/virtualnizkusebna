@@ -18,9 +18,16 @@
     };
     function save(mode) { try { localStorage.setItem(prefix + mode, JSON.stringify(state[mode])); } catch (_) { /* Private mode / full storage: keep the in-memory choice. */ } }
     function mode() { return desktop.matches ? 'desktop' : mobile.matches ? 'mobile' : 'tablet'; }
-    function closeCatalog() { if ($('catalog-dialog').open) $('catalog-dialog').close(); }
-    function openCatalog() { if (!desktop.matches && !$('catalog-dialog').open) $('catalog-dialog').showModal(); }
+    let catalogOpenedOnDesktop = false;
+    function closeCatalog() { catalogOpenedOnDesktop = false; if ($('catalog-dialog').open) $('catalog-dialog').close(); }
+    function openCatalog() {
+        if ($('catalog-dialog').open) return;
+        catalogOpenedOnDesktop = desktop.matches;
+        if (desktop.matches) $('catalog-dialog-slot').append($('sidebar'));
+        $('catalog-dialog').showModal();
+    }
     function apply() {
+        if (desktop.matches && $('catalog-dialog').open && !catalogOpenedOnDesktop) closeCatalog();
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current];
         document.body.dataset.layout = current;
         document.body.dataset.workspace = ideasOpen ? 'ideas' : 'panels';
@@ -41,7 +48,7 @@
             b.disabled = !ideasOpen && selected && state.desktop.length === 1;
         });
         document.querySelectorAll('[data-mobile-panel]').forEach(b => b.setAttribute('aria-pressed', String(!ideasOpen && b.dataset.mobilePanel === state.mobile)));
-        const slot = $(desktop.matches ? 'sidebar-slot' : 'catalog-dialog-slot');
+        const slot = $(desktop.matches && !$('catalog-dialog').open ? 'sidebar-slot' : 'catalog-dialog-slot');
         if ($('sidebar').parentElement !== slot) {
             closeCatalog(); slot.append($('sidebar'));
         }
@@ -73,6 +80,7 @@
     $('bn-skladby').addEventListener('click', openCatalog);
     $('catalog-close').addEventListener('click', closeCatalog);
     $('catalog-dialog').addEventListener('cancel', e => e.preventDefault());
+    $('catalog-dialog').addEventListener('close', apply);
     $('bn-napady').addEventListener('click', () => $('show-ideas').click());
     $('create-collection-open')?.addEventListener('click', () => {
         const rehearsal = document.querySelector('[data-kind="rehearsal"]').getAttribute('aria-pressed') === 'true';
