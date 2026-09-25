@@ -9,6 +9,7 @@ if ($path === false) throw new RuntimeException('Nelze vytvořit testovací soub
 
 function checkMp3(string $path, string $bytes, bool $valid): void {
     file_put_contents($path, $bytes);
+    clearstatcache(true, $path);
     try {
         $duration = vz2_duration($path, 'mp3');
         if (!$valid || $duration < 100) throw new RuntimeException('Neočekávaně přijaté MP3.');
@@ -28,8 +29,11 @@ try {
     checkMp3($path, $audio, true);
     checkMp3($path, $id3v2 . str_repeat("\0", 8) . $audio . str_repeat("\0", 9) . $ape . $ape . $id3v1, true);
     checkMp3($path, 'ID3' . "\x04\x00\x00\x00\x04\x00\x00" . str_repeat("\0", 65536) . "\0" . $audio, true);
-    checkMp3($path, $audio . 'not audio', false);
-    checkMp3($path, substr($audio, 0, -10), false);
+    // Extra bytes after recognized audio do not invalidate the whole recording.
+    checkMp3($path, $audio . 'not audio', true);
+    // A recoverable incomplete final frame is accepted, as by an audio player.
+    checkMp3($path, substr($audio, 0, -10), true);
+    checkMp3($path, substr($audio, 0, 3), false);
     checkMp3($path, str_repeat("\0", 100), false);
     echo "MP3 duration checks passed\n";
 } finally {

@@ -135,6 +135,9 @@ vypnout nebo přesměrovat. Podrobný přechod a rollback jsou v `design.md`, od
 
 ## Formáty a hranice této etapy
 
+Aktualizace 2026-09-25: omezení MP3/WAV popsaná níže byla rozšířena
+[opravou čtení formátů](audio-formats.md). Limity velikosti, délky a sad zůstávají.
+
 Server čte délky bez shellu/ffmpegu: RIFF WAV PCM/float, FLAC STREAMINFO, MP3 Layer III
 po rámcích, AAC ADTS a Ogg Vorbis/Opus jedné logické streamové řady. Mixér přijímá
 WAV/FLAC/MP3 stejného formátu v celé sadě. Free-format MP3, APE tagy, řetězený Ogg,

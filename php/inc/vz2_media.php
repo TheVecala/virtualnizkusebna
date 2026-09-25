@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/vz2_audio_metadata.php';
 
 // Metadata only; no shell execution, client duration, or dependency on peaks cache.
 function vz2_duration(string $path, string $format): int {
@@ -8,81 +9,13 @@ function vz2_duration(string $path, string $format): int {
     $size = filesize($path); $seconds = 0.0;
     try {
         $head = fread($h,64);
-        if ($format === 'wav' && substr($head,0,4)==='RIFF' && substr($head,8,4)==='WAVE') {
-            fseek($h,12); $rate=0; $bytes=0;
-            while (ftell($h)+8 <= $size) {
-                $chunk=fread($h,8); $length=unpack('V',substr($chunk,4,4))[1]; $next=ftell($h)+$length+($length%2);
-                if ($next>$size+1) throw new Vz2Error('Neúplný WAV.',422);
-                if (substr($chunk,0,4)==='fmt ') {
-                    if($length<16)throw new Vz2Error('Neplatná hlavička WAV.',422);
-                    $fmt=fread($h,min($length,40));
-                    if (strlen($fmt)<16 || !in_array(unpack('v',substr($fmt,0,2))[1],[1,3,65534],true)) throw new Vz2Error('WAV musí být PCM nebo float.',422);
-                    $rate=unpack('V',substr($fmt,8,4))[1];
-                } elseif (substr($chunk,0,4)==='data') $bytes+=$length;
-                fseek($h,$next);
-            }
-            if ($rate>0) $seconds=$bytes/$rate;
+        if ($format==='mp3' || $format==='wav') {
+            $seconds=vz2_mp3_wav_seconds($path,$format);
         } elseif ($format==='flac' && strlen($head)>=42 && substr($head,0,4)==='fLaC' && (ord($head[4])&127)===0) {
             $info=substr($head,8,34);
             $rate=(ord($info[10])<<12)|(ord($info[11])<<4)|(ord($info[12])>>4);
             $samples=((ord($info[13])&15)*4294967296)+unpack('N',substr($info,14,4))[1];
             if ($rate>0) $seconds=$samples/$rate;
-        } elseif ($format==='mp3') {
-            $pos=0;
-            if(substr($head,0,3)==='ID3') {
-                if(strlen($head)<10)throw new Vz2Error('Neúplná hlavička MP3.',422);
-                $pos=10+((ord($head[6])&127)<<21)+((ord($head[7])&127)<<14)+((ord($head[8])&127)<<7)+(ord($head[9])&127);
-                if(ord($head[5])&16)$pos+=10;
-            }
-            if($pos>$size)throw new Vz2Error('Neúplná hlavička MP3.',422);
-            // ID3v1 and APEv2 are metadata after the audio, not MPEG frames.
-            $audioEnd=$size;
-            do {
-                $previousEnd=$audioEnd;
-                if($audioEnd>=128) {
-                    fseek($h,$audioEnd-128);
-                    if(fread($h,3)==='TAG')$audioEnd-=128;
-                }
-                if($audioEnd>=32) {
-                    fseek($h,$audioEnd-32);
-                    $ape=fread($h,32);
-                    if(substr($ape,0,8)==='APETAGEX' && in_array(unpack('V',substr($ape,8,4))[1],[1000,2000],true)) {
-                        $apeSize=unpack('V',substr($ape,12,4))[1];
-                        if($apeSize<32 || $apeSize>$audioEnd-$pos)throw new Vz2Error('Neplatná MP3 metadata.',422);
-                        $audioEnd-=$apeSize;
-                        if($audioEnd>=32) {
-                            fseek($h,$audioEnd-32);
-                            if(fread($h,8)==='APETAGEX')$audioEnd-=32;
-                        }
-                    }
-                }
-            } while($audioEnd!==$previousEnd);
-            // Encoders sometimes leave zero padding outside the ID3 tag.
-            $paddingStart=$pos;
-            while($pos<$audioEnd && $pos-$paddingStart<65536) {
-                fseek($h,$pos);
-                if(fread($h,1)!=="\0")break;
-                $pos++;
-            }
-            $frames=0;
-            while($pos+4<=$audioEnd) {
-                fseek($h,$pos); $b=fread($h,4);
-                $v=(ord($b[1])>>3)&3; $layer=(ord($b[1])>>1)&3; $bi=ord($b[2])>>4; $si=(ord($b[2])>>2)&3;
-                if(ord($b[0])!==255 || (ord($b[1])&224)!==224 || $v===1 || $layer!==1 || $bi===0 || $bi===15 || $si===3)break;
-                $rates=$v===3?[0,32,40,48,56,64,80,96,112,128,160,192,224,256,320]:[0,8,16,24,32,40,48,56,64,80,96,112,128,144,160];
-                $sample=[44100,48000,32000][$si]/($v===3?1:($v===2?2:4));
-                $length=(int)floor(($v===3?144:72)*$rates[$bi]*1000/$sample)+((ord($b[2])>>1)&1);
-                if($pos+$length>$audioEnd)throw new Vz2Error('Neúplný MP3 rámec.',422);
-                $seconds+=($v===3?1152:576)/$sample; $pos+=$length; $frames++;
-            }
-            // Only zero padding may follow the last complete frame.
-            while($pos<$audioEnd) {
-                fseek($h,$pos);
-                $padding=fread($h,min(8192,$audioEnd-$pos));
-                if($padding==='' || strspn($padding,"\0")!==strlen($padding))throw new Vz2Error('Neplatný nebo nepodporovaný MP3 rámec.',422);
-                $pos+=strlen($padding);
-            }
-            if(!$frames)$seconds=0;
         } elseif ($format==='aac') {
             $pos=0; $rates=[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350];
             while($pos+7<=$size) {
