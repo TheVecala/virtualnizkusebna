@@ -286,7 +286,7 @@
         if (cfg.write && r.can_edit) menuActions.append(button('Upravit', () => openEdit(r, 'recording')));
         moveControl(menuActions, r, 'recording');
         if (cfg.write && r.can_remove && r.audio_state !== 'deleted') menuActions.append(button('Odstranit audio', () => remove(r, 'recording'), 'danger'));
-        if (cfg.write && cfg.admin) actions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
+        if (cfg.write && cfg.admin) menuActions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
         reorderControls(menuActions, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
         if (menuActions.childElementCount) actions.append(recordingMenu.menu);
         if (actions.childElementCount) body.append(actions);
