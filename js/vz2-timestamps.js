@@ -36,7 +36,7 @@
     const panels = new Set();
     let preferences = { kind: 'note', keep: false };
     try { const saved = JSON.parse(localStorage.getItem(root.VZ2.cachePrefix + 'timestamp-preferences')); if (saved && kinds[saved.kind]) preferences = { kind: saved.kind, keep: saved.keep === true }; } catch (_) { /* optional preference */ }
-    let editor, activeEditor, loop, loopBusy = false, loopSerial = 0;
+    let editor, exportDialog, activeEditor, activeExportPanel, loop, loopBusy = false, loopSerial = 0;
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     const button = (text, fn) => { const b = el('button', text); b.type = 'button'; b.addEventListener('click', fn); return b; };
     const iconButton = (label, icon, fn) => {
@@ -131,6 +131,42 @@
         f.elements.return.disabled = !panel.adapter?.canPlay();
         editor.showModal(); f.elements.body.focus();
     }
+    function ensureExportDialog() {
+        if (exportDialog) return;
+        exportDialog = el('dialog'); exportDialog.className = 'vz2-timestamp-export';
+        exportDialog.setAttribute('aria-labelledby', 'vz2-timestamp-export-title');
+        exportDialog.innerHTML = '<div class="dialog-header"><h2 id="vz2-timestamp-export-title">Export timestampů</h2><button type="button" class="ts-export-close modal-close" aria-label="Zavřít export" title="Zavřít">×</button></div><div class="ts-export-options"><section class="ts-export-card ts-export-table"><div class="ts-export-heading"><i class="ti ti-table" aria-hidden="true"></i><div><h3>Export do tabulky</h3><p>Vyberte typy timestampů, které chcete zkopírovat.</p></div></div><fieldset class="ts-filters"><legend class="visually-hidden">Typy timestampů pro tabulku</legend></fieldset><button type="button" class="ts-export-copy"><i class="ti ti-copy" aria-hidden="true"></i> Kopírovat do schránky</button></section><section class="ts-export-card ts-export-text"><div class="ts-export-heading"><i class="ti ti-file-text" aria-hidden="true"></i><div><h3>Stažení textového souboru</h3><p>Stáhne všechny timestampy jako soubor TXT.</p></div></div><a class="ts-export-download" href=""><i class="ti ti-download" aria-hidden="true"></i> Stáhnout TXT</a></section></div><p class="ts-export-status error" role="alert"></p><div class="ts-export-footer"><button type="button" class="ts-export-close">Zavřít</button></div>';
+        const filters = exportDialog.querySelector('.ts-filters');
+        Object.entries(kinds).forEach(([value, text]) => {
+            const label = el('label'), input = el('input');
+            input.type = 'checkbox'; input.value = value;
+            label.append(input, document.createTextNode(text)); filters.append(label);
+        });
+        const copy = exportDialog.querySelector('.ts-export-copy');
+        filters.addEventListener('change', () => { copy.disabled = !filters.querySelector('input:checked'); });
+        copy.addEventListener('click', async () => {
+            const status = exportDialog.querySelector('.ts-export-status');
+            try {
+                await navigator.clipboard.writeText(tabular(activeExportPanel.list.entries, [...filters.querySelectorAll('input:checked')].map(i => i.value)));
+                exportDialog.close(); activeExportPanel.error('Tabulka zkopírována.');
+            } catch (e) { status.textContent = 'Kopírování se nezdařilo. Použijte export TXT.'; }
+        });
+        exportDialog.querySelectorAll('.ts-export-close').forEach(close => close.addEventListener('click', () => exportDialog.close()));
+        exportDialog.querySelector('.ts-export-download').addEventListener('click', () => exportDialog.close());
+        exportDialog.addEventListener('click', e => {
+            const box = exportDialog.getBoundingClientRect();
+            if (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom) exportDialog.close();
+        });
+        document.body.append(exportDialog);
+    }
+    function openExport(panel) {
+        ensureExportDialog(); activeExportPanel = panel;
+        exportDialog.querySelectorAll('.ts-filters input').forEach(input => { input.checked = input.value !== 'note'; });
+        exportDialog.querySelector('.ts-export-copy').disabled = false;
+        exportDialog.querySelector('.ts-export-status').textContent = '';
+        exportDialog.querySelector('.ts-export-download').href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(panel.id);
+        exportDialog.showModal(); exportDialog.querySelector('.ts-export-copy').focus();
+    }
     window.addEventListener('beforeunload', e => { if (editor?.open) { e.preventDefault(); e.returnValue = ''; } });
     api.mount = function (container, id, adapter) {
         const shell = el('details'); shell.className = 'vz2-timestamps';
@@ -144,18 +180,12 @@
         const add = button('Přidat zápis', () => openEditor(panel, null)); add.disabled = true;
         const reload = iconButton('Obnovit zápisy', 'refresh', () => panel.load());
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
-        const download = el('a', 'Export TXT'); download.href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(id);
-        const filters = el('div'); filters.className = 'ts-filters';
-        Object.entries(kinds).forEach(([value, text]) => { const label = el('label'), input = el('input'); input.type = 'checkbox'; input.value = value; input.checked = value !== 'note'; label.append(input, document.createTextNode(text)); filters.append(label); });
-        const copy = button('Kopírovat tabulku', async () => {
-            try { await navigator.clipboard.writeText(tabular(panel.list.entries, [...filters.querySelectorAll('input:checked')].map(i => i.value))); status.textContent = 'Tabulka zkopírována.'; }
-            catch (e) { status.textContent = 'Kopírování se nezdařilo. Použijte export TXT.'; }
-        }); copy.disabled = true;
-        toolbar.append(add, reload, stop, download); content.append(toolbar, status, list, filters, copy); shell.append(summary, content); container.append(shell);
+        const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
+        toolbar.append(add, reload, stop, exportButton); content.append(toolbar, status, list); shell.append(summary, content); container.append(shell);
         const panel = { id, adapter, list: null, dead: false, error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
-                this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = false; copy.disabled = false;
+                this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = false; exportButton.disabled = false;
                 if (loop?.panel === this) api.stopLoop();
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové zápisy.'));
                 value.entries.forEach(row => {
