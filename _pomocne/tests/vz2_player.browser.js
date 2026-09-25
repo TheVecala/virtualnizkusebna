@@ -104,6 +104,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         check(true, 'player: shared Mixer transport preserves identical track start times, Mute/Solo and playback through collapse/fullscreen; idle switch is direct');
         const notes = await request(clients.admin, 'php/ajax/vz2_timestamps.php?recording_id=' + single.id);
         assert.equal((await request(clients.admin, 'php/ajax/vz2_timestamps.php', { action: 'create', recording_id: single.id, timestamps_revision: notes.json().timestamps_revision, kind: 'passage', time_ms: 1000, body: 'Pasáž pro Looper' })).status, 201);
+        await page.locator('#looper-timestamps .ts-summary').click();
         await page.locator('#looper-timestamps').getByRole('button', { name: 'Obnovit zápisy', exact: true }).click();
         const marker = page.locator('.looper-wave-marker[data-timestamp-id]');
         await marker.waitFor({ state: 'visible' });

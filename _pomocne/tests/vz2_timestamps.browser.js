@@ -37,6 +37,10 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await page.locator('.layout').isVisible(), true, 'Catalogue navigation restores songs and rehearsals');
         const card = page.locator('#recording-' + id), notes = card.locator('.vz2-timestamps'), dialog = page.locator('.vz2-timestamp-editor');
         await card.locator('.recording-toggle').click();
+        assert.equal(await notes.getAttribute('open'), null, 'timestamp section is collapsed by default');
+        assert.equal(await notes.locator('.ts-content').isVisible(), false, 'only the timestamp heading row remains visible while collapsed');
+        await notes.locator('.ts-summary').click();
+        assert.equal(await notes.locator('.ts-content').isVisible(), true, 'chevron heading expands timestamp controls and entries');
         await notes.getByRole('button', { name: 'Přidat zápis', exact: true }).click();
         await dialog.locator('[name=kind]').selectOption('song_start');
         await dialog.locator('[name=time]').fill('00:00:01.123');
@@ -98,6 +102,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
         await page.waitForFunction(rid => window.MultitrackApp?.getState()?.id === String(rid) && window.MultitrackApp.getState().phase === 'ready', mixId);
         const mixerNotes = page.locator('#mixer-timestamps');
+        await mixerNotes.locator('.ts-summary').click();
         await mixerNotes.getByRole('button', { name: 'Přidat zápis', exact: true }).click();
         await dialog.locator('[name=time]').fill('00:00:01.000'); await dialog.locator('[name=kind]').selectOption('passage');
         await dialog.locator('[name=body]').fill('Společná pasáž Mixéru');
