@@ -32,7 +32,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Tabulatura</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
 </nav><button id="show-ideas" aria-pressed="false" aria-controls="ideas-workspace">Nápady</button>
 <span class="topbar-account" title="Přihlášený účet: <?=auth_h($_SESSION['user_name']??'Host')?>"><?=auth_h($_SESSION['user_name']??'Host')?></span>
-<details class="shell-menu"><summary aria-label="Další možnosti">⋮</summary><nav aria-label="Další možnosti">
+<details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
 <button id="show-offline">Správa offline souborů</button><?php if(!defined('VZ2_ONLY') || VZ2_ONLY!==true):?><a href="index.php">Původní zkušebna</a><?php endif;?><button id="logout">Odhlásit</button></nav></details></header>
 <main id="app-shell"><p id="message" role="status" aria-live="polite"></p>
