@@ -100,7 +100,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         await guest.goto(base + 'index.php?v=2&recording_id=' + mix.id);
         await guest.waitForFunction(() => window.MultitrackApp?.getState()?.phase === 'ready');
         assert.equal(await guest.locator('#create-collection').count(), 0);
-        assert.equal(await guest.locator('#mixer-timestamps').getByRole('button', { name: 'Přidat zápis', exact: true }).count(), 0);
+        assert.equal(await guest.locator('#mixer-timestamps').getByRole('button', { name: 'Přidat značku', exact: true }).count(), 0);
         check(true, 'navigation: guest may open shared Mixer; mobile layout fits without introducing write controls');
         const row = db('SELECT title,revision FROM vz2_recordings WHERE id=?', [mix.id])[0];
         await good('admin', { action: 'remove_audio', id: mix.id, revision: row.revision, confirm: row.title, request_key: crypto.randomBytes(16).toString('hex') });

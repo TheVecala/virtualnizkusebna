@@ -118,6 +118,11 @@ dialog form { margin-top: 0; }
 .player-header > button { width: 32px; flex: 0 0 32px; padding: 3px; }
 #player-play { color: var(--vz-primary); background: var(--vz-primary-soft); }
 #player-body { min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; padding: 8px; scrollbar-width: thin; }
+#player-shell[data-mode=looper] #player-body { display: flex; flex-direction: column; overflow: hidden; }
+#looper-panel { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; min-width: 0; }
+#looper-panel > :not(#looper-timestamps) { flex: 0 0 auto; }
+#looper-timestamps { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.looper-timestamp-actions { display: none; }
 #player-options { margin: 0; }
 #player-options > summary { min-height: 30px; width: 32px; }
 #player-options .action-list { position: fixed; z-index: 45; right: 12px; top: 94px; width: min(300px, calc(100vw - 24px)); max-height: 65vh; overflow: auto; box-shadow: 0 5px 16px #0006; }
@@ -342,6 +347,14 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 #player-help-dialog { width: min(420px, calc(100vw - 24px)); }
 @media (max-width: 767px) {
     #topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; gap: 0 8px; padding: 8px 10px; }
+    #player-shell[data-mode=looper] { max-height: none; flex-shrink: 0; }
+    .looper-timestamp-actions { display: flex; gap: 5px; margin-top: 8px; }
+    .looper-timestamp-actions > button { min-height: 32px; padding: 4px 6px; font-size: 11px; }
+    .looper-timestamp-actions > button:first-child { flex: 1; }
+    #looper-timestamps { display: none; position: fixed; z-index: 35; inset: var(--ts-drawer-top, 50%) 8px 0; padding: 8px 10px; background: var(--vz-panel); border: 1px solid var(--vz-player-border); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 20px #0006; }
+    #looper-timestamps.ts-drawer-open { display: block; animation: timestamp-drawer-rise .18s ease-out; }
+    #looper-timestamps .vz2-timestamps { margin: 0; border: 0; }
+    #looper-timestamps .ts-summary, #looper-timestamps .ts-desktop-action { display: none; }
     #topbar .brand { grid-column: 1; grid-row: 1; color: var(--vz-muted); font-size: 10px; font-weight: 500; letter-spacing: .04em; }
     #collection-title { grid-column: 1; grid-row: 2; width: 100%; font-size: 14px; line-height: 1.35; }
     .collection-path-prefix { color: var(--vz-muted); font-weight: 400; }
@@ -381,6 +394,8 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
     .recording-status { padding: 0 10px 9px; font-size: 11px; }
     #player-shell.player-fullscreen { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
 }
+@keyframes timestamp-drawer-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #looper-timestamps.ts-drawer-open { animation: none; } }
 @media (max-width: 360px) {
     .looper-volume-control { flex-basis: 100%; justify-content: center; }
 }
