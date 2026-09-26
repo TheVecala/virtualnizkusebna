@@ -48,6 +48,25 @@
     }
     function layout() {
         shell.dataset.mode = mode; shell.classList.toggle('player-collapsed', collapsed);
+        for (const name of ['looper-restart', 'looper-back', 'looper-play', 'looper-forward', 'looper-loop']) {
+            const control = $(name);
+            if (mode === 'empty') {
+                // Keep help reachable by mouse and keyboard; playback is blocked below.
+                control.disabled = false;
+                control.setAttribute('aria-disabled', 'true');
+                control.setAttribute('aria-haspopup', 'dialog');
+                control.setAttribute('aria-controls', 'player-help-dialog');
+            } else {
+                control.removeAttribute('aria-disabled');
+                control.removeAttribute('aria-haspopup');
+                control.removeAttribute('aria-controls');
+            }
+        }
+        if (mode === 'empty') {
+            $('looper-play').firstElementChild.className = 'ti ti-player-play-filled';
+            $('looper-play').setAttribute('aria-label', 'Přehrát'); $('looper-play').title = 'Přehrát';
+            $('looper-loop').setAttribute('aria-pressed', 'false');
+        }
         body.hidden = mode === 'empty' || collapsed;
         $('looper-panel').hidden = mode !== 'looper'; mixer.hidden = mode !== 'mixer';
         $('player-mode').textContent = mode === 'mixer' ? 'Mixér' : mode === 'looper' ? 'Looper' : 'Přehrávač';
@@ -263,6 +282,12 @@
         }
         ctx.strokeStyle = '#e2e4e1'; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
     }
+    shell.addEventListener('click', e => {
+        if (mode !== 'empty' || !e.target.closest('.looper-header-controls > button')) return;
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (!$('player-help-dialog').open) $('player-help-dialog').showModal();
+    }, true);
+    $('player-help-close').onclick = () => $('player-help-dialog').close();
     $('player-collapse').onclick = () => { collapsed = !collapsed; layout(); };
     $('player-fullscreen').onclick = () => {
         if (fullscreen) exitFullscreen();
