@@ -50,7 +50,7 @@
         shell.dataset.mode = mode; shell.classList.toggle('player-collapsed', collapsed);
         body.hidden = mode === 'empty' || collapsed;
         $('looper-panel').hidden = mode !== 'looper'; mixer.hidden = mode !== 'mixer';
-        $('player-mode').textContent = mode === 'mixer' ? 'MIXÉR' : mode === 'looper' ? 'LOOPER' : 'PŘEHRÁVAČ';
+        $('player-mode').textContent = mode === 'mixer' ? 'Mixér' : mode === 'looper' ? 'Looper' : 'Přehrávač';
         for (const name of ['player-collapse', 'player-fullscreen', 'player-close']) $(name).disabled = mode === 'empty';
         $('player-collapse').disabled = mode === 'empty' || !!fullscreen;
         $('player-collapse').setAttribute('aria-expanded', String(!collapsed));

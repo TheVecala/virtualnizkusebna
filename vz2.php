@@ -43,7 +43,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <div id="collections"></div>
 </aside></div><div id="workspace">
 <section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
-<div class="player-header"><div class="player-ident"><strong id="player-mode">PŘEHRÁVAČ</strong><span id="player-title">Vyberte nahrávku</span></div>
+<div class="player-header"><div class="player-ident"><i class="player-emblem ti ti-wave-sine" aria-hidden="true"></i><strong id="player-mode">Přehrávač</strong><span id="player-title">Vyberte nahrávku</span></div>
 <div class="looper-header-controls" role="group" aria-label="Ovládání Looperu">
 <button id="looper-restart" type="button" title="Na začátek" aria-label="Na začátek"><i class="ti ti-player-track-prev" aria-hidden="true"></i></button>
 <button id="looper-back" type="button" title="Zpět o 5 sekund" aria-label="Zpět o 5 sekund"><i class="ti ti-player-skip-back" aria-hidden="true"></i></button>

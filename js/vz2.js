@@ -436,7 +436,7 @@
         window.Vz2Content.mountPreviews(c);
         if (!c) content.append(node('h1', 'Zatím tu nic není'), node('p', 'Vytvořte skladbu nebo zkoušku. Audio můžete přidat později.'));
         else {
-            content.append(node('small', 'Vytvořil/a ' + c.author));
+            content.append(node('small', (c.kind === 'rehearsal' ? 'Autor zkoušky: ' : 'Autor skladby: ') + c.author, 'collection-attribution'));
             const recordings = data.recordings.filter(r => String(r.collection_id) === String(c.id));
             if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));
