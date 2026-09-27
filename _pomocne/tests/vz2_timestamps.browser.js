@@ -26,6 +26,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await page.locator('#recording-' + id).waitFor({ state: 'attached' });
         assert.equal(await page.locator('.layout').isVisible(), true, 'Legacy Mixer URL now opens the shared catalogue');
         assert.equal(await page.locator('#mt-selector').isVisible(), false, 'No separate Mixer catalogue');
+        await page.locator('#recording-' + mixId + ' .recording-toggle').click();
         await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
         await page.waitForFunction(() => { const box = document.getElementById('mixer-panel').getBoundingClientRect(); return box.top >= -1 && box.top < innerHeight; });
         const mixerBox = await page.locator('#mixer-panel').boundingBox();
@@ -82,7 +83,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await card.locator('audio').evaluate(a => a.pause());
         await notes.getByRole('button', { name: 'Export', exact: true }).click();
         const exportDialog = page.locator('.vz2-timestamp-export');
-        await exportDialog.getByRole('heading', { name: 'Export timestampů', exact: true }).waitFor();
+        await exportDialog.getByRole('heading', { name: 'Export časových značek', exact: true }).waitFor();
         assert.equal(await notes.getByRole('link', { name: 'Export TXT' }).count(), 0);
         assert.equal(await notes.getByRole('button', { name: 'Kopírovat tabulku', exact: true }).count(), 0);
         assert.equal(await exportDialog.getByRole('checkbox').count(), 3);
@@ -105,14 +106,17 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await dialog.locator('[name=body]').inputValue(), 'Text přežije obnovení katalogu');
         await dialog.locator('[name=keep]').check();
         await dialog.getByRole('button', { name: 'Uložit', exact: true }).click();
-        await notes.getByText('Text přežije obnovení katalogu', { exact: true }).waitFor();
+        await notes.getByText('Text přežije obnovení katalogu', { exact: true }).waitFor({ state: 'attached' });
         assert.equal(await notes.locator('.ts-note').evaluate(e => getComputedStyle(e).marginLeft), '24px', 'notes form the deepest level of the visual hierarchy');
         assert.equal(await dialog.isVisible(), true); assert.equal(await dialog.locator('[name=body]').inputValue(), '');
-        await dialog.getByRole('button', { name: 'Zavřít časový zápis', exact: true }).click();
+        await dialog.getByRole('button', { name: 'Zavřít časovou značku', exact: true }).click();
+        if (!await notes.locator('.ts-content').isVisible()) await notes.locator('.ts-summary').click();
+        await notes.getByText('Text přežije obnovení katalogu', { exact: true }).waitFor();
         check(true, 'browser: draft survives catalogue refresh and repeated-add form remains open after save');
         await notes.getByRole('button', { name: 'Export', exact: true }).click();
         const download = page.waitForEvent('download'); await exportDialog.getByRole('link', { name: 'Stáhnout TXT', exact: true }).click();
         assert.equal((await download).suggestedFilename(), 'nahravka-' + id + '-zapisy.txt');
+        await page.locator('#recording-' + mixId + ' .recording-toggle').click();
         await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
         await page.waitForFunction(rid => window.MultitrackApp?.getState()?.id === String(rid) && window.MultitrackApp.getState().phase === 'ready', mixId);
         const mixerNotes = page.locator('#mixer-timestamps');
@@ -145,7 +149,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         } finally { fs.renameSync(path.join(media, firstFile + '.held'), path.join(media, firstFile)); }
         const recording = db('SELECT * FROM vz2_recordings WHERE id=?', [id])[0];
         await good('admin', { action: 'remove_audio', id, revision: recording.revision, confirm: recording.title, request_key: require('node:crypto').randomBytes(16).toString('hex') });
-        await page.reload(); await card.locator('.recording-toggle').click(); await notes.getByText('Můj rozepsaný text', { exact: true }).waitFor();
+        await page.reload(); await card.locator('.recording-toggle').click(); await notes.locator('.ts-summary').click(); await notes.getByText('Můj rozepsaný text', { exact: true }).waitFor();
         assert.equal(await card.locator('audio').count(), 0);
         for (const b of await notes.locator('[data-playback]').all()) assert.equal(await b.isDisabled(), true);
         assert.equal(await notes.getByRole('button', { name: 'Upravit', exact: true }).first().isEnabled(), true);

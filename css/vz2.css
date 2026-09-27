@@ -91,6 +91,33 @@ article { margin: 8px 0; }
 .files li { min-width: 0; }
 .toolbar > * { min-width: 0; }
 .document-preview { font: 13px/1.6 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+.song-map { min-width: 0; }
+.song-map-section { margin: 0 0 14px; }
+.song-map-section h3 { margin: 5px 0; font-size: 14px; }
+.song-map-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 9px repeat(4, minmax(0, 1fr)); gap: 3px; margin: 4px 0; max-width: 520px; }
+.song-map-row > :nth-child(n+5) { grid-column: auto; }
+.song-map-row > :nth-child(5) { grid-column: 6; }
+.song-map-bar { position: relative; min-width: 0; padding: 3px 0; min-height: 32px; font-size: clamp(12px, 2vw, 19px); line-height: 1.2; border-color: transparent; background: transparent; }
+.song-map-bar.has-detail::after { content: ''; position: absolute; right: 3px; bottom: 2px; width: 3px; height: 3px; border-radius: 50%; background: var(--vz-primary); }
+.song-map-modes { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.song-map-modes button { font-size: 11px; padding: 6px; }
+.song-map-palette { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 5px 0 8px; max-width: 520px; }
+.song-map-palette button { min-width: 0; padding: 8px 1px; font-size: clamp(9px, 1vw, 12px); min-height: 40px; }
+.song-map-palette button[data-type="?"] { font-size: 20px; }
+.song-map-tools, .song-map-quick-sections, .song-map-selected-tools { gap: 4px; margin: 8px 0; }
+.song-map-quick-sections button, .song-map-tools button, .song-map-selected-tools button { padding: 6px; font-size: 12px; }
+.song-map-secondary { margin: 3px 0 10px; opacity: .8; }
+.song-map-section-header { margin-top: 10px; }
+.song-map-section-header .toolbar { gap: 3px; }
+.song-map-section-header .toolbar button { font-size: 11px; padding: 4px 6px; }
+.song-map-number { display: block; font-size: 10px; margin-top: 3px; }
+.song-map[data-mode="edit"] .song-map-bar { border-color: var(--vz-border); min-height: 44px; }
+.song-map-save-state { font-size: 11px; color: var(--vz-muted); }
+.song-map-pending { color: var(--vz-primary); font-size: 13px; margin: 7px 0; }
+.song-map-notice { font-size: 12px; overflow-wrap: anywhere; }
+.song-map-dialog { width: min(720px, 96vw); }
+.song-map-detail textarea { font: 13px/1.6 ui-monospace, Consolas, monospace; white-space: pre; tab-size: 4; resize: vertical; }
+.song-map-history-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
 .panel-body input:not([type=checkbox]), .panel-body textarea, .panel-body select { min-width: 0; max-width: 100%; }
 .panel-body audio { min-width: 0; width: 100%; }
 .panel-body .vz2-timestamps { margin-top: 10px; }

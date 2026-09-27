@@ -121,13 +121,15 @@
         if (url.href !== location.href) history[replace ? 'replaceState' : 'pushState'](null, '', url);
         qs = url.searchParams;
     }
-    function canNavigate(params) {
+    async function canNavigate(params, force = false) {
         const target = data?.recordings.find(r => String(r.id) === String(params.recording_id));
         const nextMode = target?.kind === 'multitrack' ? 'mixer' : target?.kind === 'single' && params.view === 'looper' ? 'looper' : 'empty';
-        return window.Vz2Player.canLeave(target?.id, nextMode);
+        const collectionId = target?.collection_id || params.collection_id || data?.collections.find(c => c.kind === (params.kind === 'rehearsal' ? 'rehearsal' : 'song'))?.id;
+        if (!force && !window.Vz2Player.canLeave(target?.id, nextMode)) return false;
+        return window.Vz2SongMap.canLeave(collectionId);
     }
     async function navigate(params, force = false) {
-        if (!force && !canNavigate(params)) return;
+        if (!await canNavigate(params, force)) return;
         window.Vz2Layout.hideIdeas(false);
         setRoute(params); deepLinkSeeked = false;
         message('');
@@ -179,6 +181,11 @@
     async function refresh() {
         const serial = ++catalogSerial, latest = await api();
         if (serial !== catalogSerial) return;
+        const routeRecording = latest.recordings.find(r => String(r.id) === qs.get('recording_id'));
+        const routeCollectionId = routeRecording?.collection_id || qs.get('collection_id');
+        const routeCollection = latest.collections.find(c => String(c.id) === String(routeCollectionId))
+            || latest.collections.find(c => c.kind === (qs.get('kind') === 'rehearsal' ? 'rehearsal' : 'song'));
+        if (!await window.Vz2SongMap.canLeave(routeCollection?.id) || serial !== catalogSerial) return;
         data = latest;
         const playing = window.MultitrackApp?.getState();
         const playingRecording = playing && data.recordings.find(r => String(r.id) === String(playing.id));
@@ -477,15 +484,16 @@
             await navigator.clipboard.writeText(url.href); message('Odkaz zkopírován.');
         } catch (e) { message(e.message, true); }
     });
-    window.addEventListener('popstate', () => {
+    window.addEventListener('popstate', async () => {
         const next = new URLSearchParams(location.search);
-        if (!canNavigate(Object.fromEntries(next))) { setRoute(Object.fromEntries(qs), true); return; }
+        if (!await canNavigate(Object.fromEntries(next))) { setRoute(Object.fromEntries(qs), true); return; }
         window.Vz2Layout.hideIdeas(false);
         qs = next; deepLinkSeeked = false;
         if (data) applyRoute().catch(e => message(e.message, true));
     });
     $('create-collection')?.addEventListener('submit', async e => {
         e.preventDefault(); const f = e.currentTarget, b = f.querySelector('button'); b.disabled = true;
+        if (!await window.Vz2SongMap.canLeave()) { b.disabled = false; return; }
         try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); window.Vz2Layout.hideIdeas(false); setRoute({ collection_id: String(r.id) }); f.reset(); $('create-collection-dialog').close(); window.Vz2Layout.closeCatalog(); await refresh(); }
         catch (err) { f.querySelector('.edit-error').textContent = err.message; } finally { b.disabled = false; }
     });
@@ -577,6 +585,7 @@
     $('logout-cancel').addEventListener('click', () => $('logout-dialog').close());
     $('logout-confirm').addEventListener('click', async () => {
         const confirmButton = $('logout-confirm');
+        if (!await window.Vz2SongMap.canLeave()) return;
         confirmButton.disabled = true;
         try { await api({ action: 'logout' }); window.MultitrackApp?.destroy(); window.Vz2Player.closeLooper(); location.href = 'index.php?v=2'; }
         catch (e) { $('logout-error').textContent = e.message; $('logout-error').hidden = false; confirmButton.disabled = false; }

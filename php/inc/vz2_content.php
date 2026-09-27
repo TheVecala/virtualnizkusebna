@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/vz2_core.php';
+require_once __DIR__.'/vz2_song_map.php';
 
 function vz2_content_right(string $right, ?int $owner = null): bool {
     return defined('VZ2_WRITES_ENABLED') && VZ2_WRITES_ENABLED === true
@@ -8,7 +9,7 @@ function vz2_content_right(string $right, ?int $owner = null): bool {
         && (auth_is_admin() || (ma_pravo($right) && ($owner === null || $owner === vz2_actor())));
 }
 function vz2_document_kind($kind): string {
-    if (!in_array($kind, ['lyrics_chords','tablature'], true)) throw new Vz2Error('Neplatný druh dokumentu.');
+    if (!in_array($kind, ['lyrics_chords','tablature','song_map'], true)) throw new Vz2Error('Neplatný druh dokumentu.');
     return $kind;
 }
 function vz2_content_dates(array $row): array {
@@ -20,8 +21,9 @@ function vz2_document_body($body): string {
     return $body; // Preserve indentation, chords, tablature and trailing newlines.
 }
 function vz2_document_read(mysqli $db, array $in): array {
-    $collection = vz2_one($db, 'SELECT id,title,lifecycle FROM vz2_collections WHERE id=?', [vz2_id($in['collection_id'] ?? null)]);
+    $collection = vz2_one($db, 'SELECT id,title,kind,lifecycle FROM vz2_collections WHERE id=?', [vz2_id($in['collection_id'] ?? null)]);
     $kind = vz2_document_kind($in['kind'] ?? null);
+    if ($kind === 'song_map') vz2_song_map_collection($collection);
     $rows = vz2_rows($db, 'SELECT d.*,a.name author,a.active author_active,e.name editor,e.active editor_active FROM vz2_documents d JOIN users a ON a.id=d.created_by JOIN users e ON e.id=d.updated_by WHERE d.collection_id=? AND d.kind=?', [$collection['id'],$kind]);
     $result = ['collection_id'=>(int)$collection['id'], 'collection_title'=>$collection['title'], 'kind'=>$kind, 'can_edit'=>$collection['lifecycle']==='active' && vz2_content_right('edit_text'), 'document'=>null];
     if (!$rows) {
@@ -49,10 +51,11 @@ function vz2_document_write(array $in): array {
         vz2_permission('edit_text');
         $collection = vz2_collection($db, vz2_id($in['collection_id'] ?? null)); vz2_active($collection); vz2_idle($db,'collection',(int)$collection['id']);
         $kind = vz2_document_kind($in['kind'] ?? null);
+        if ($kind === 'song_map') vz2_song_map_collection($collection);
         $rows = vz2_rows($db, 'SELECT * FROM vz2_documents WHERE collection_id=? AND kind=? FOR UPDATE', [$collection['id'],$kind]);
         $doc = $rows[0] ?? null;
         $expected = $in['current_revision'] ?? null;
-        if (!is_int($expected) || $expected < 0 || $expected > 4294967295) throw new Vz2Error('Chybí platná revize dokumentu.');
+        if (!is_int($expected) || $expected < 0 || $expected >= 4294967295) throw new Vz2Error('Chybí platná revize dokumentu.');
         if (($doc ? (int)$doc['current_revision'] : 0) !== $expected) throw new Vz2Error('Dokument mezitím někdo změnil. Rozepsaný text ponechte a načtěte aktuální verzi k porovnání.',409);
         if ($doc && vz2_id($in['document_id'] ?? null) !== (int)$doc['id']) throw new Vz2Error('Dokument nepatří do vybraného celku.',404);
         if (!$doc && ($in['document_id'] ?? null) !== null) throw new Vz2Error('Dokument již neexistuje.',404);
@@ -63,9 +66,10 @@ function vz2_document_write(array $in): array {
             $body = vz2_one($db,'SELECT body FROM vz2_document_versions WHERE document_id=? AND revision=?',[$doc['id'],$source])['body'];
             $title = $doc['title'];
         } else {
-            $body = vz2_document_body($in['body'] ?? null);
-            $title = vz2_text($in['title'] ?? null);
+            $body = $kind === 'song_map' ? vz2_song_map_body($in['body'] ?? null) : vz2_document_body($in['body'] ?? null);
+            $title = $kind === 'song_map' ? 'Mapa skladby' : vz2_text($in['title'] ?? null);
         }
+        if ($restore && $kind === 'song_map') $body = vz2_song_map_body($body);
         if (!$doc) {
             vz2_query($db, 'INSERT INTO vz2_documents(collection_id,kind,title,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())', [$collection['id'],$kind,$title,vz2_actor(),vz2_actor()]);
             $id = (int)$db->insert_id;

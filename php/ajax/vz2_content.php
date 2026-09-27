@@ -31,4 +31,4 @@ try {
     echo json_encode(['ok'=>true]+$result,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
 } catch (Vz2Error $e) { http_response_code($e->status); echo json_encode(['ok'=>false,'error'=>$e->getMessage()],JSON_UNESCAPED_UNICODE); }
 catch (JsonException $e) { http_response_code(400); echo '{"ok":false,"error":"Neplatný JSON."}'; }
-catch (Throwable $e) { error_log('VZ2 content failed: '.get_class($e)); http_response_code(500); echo '{"ok":false,"error":"Obsah se nepodařilo zpracovat. Ověřte také migraci 003."}'; }
+catch (Throwable $e) { error_log('VZ2 content failed: '.get_class($e)); http_response_code(500); echo '{"ok":false,"error":"Obsah se nepodařilo zpracovat. Ověřte také migrace 003 a 004."}'; }

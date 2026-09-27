@@ -27,8 +27,14 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         let allow = true, confirmations = 0;
         page.on('dialog', d => { confirmations++; return allow ? d.accept() : d.dismiss(); });
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
-        const openLooper = () => page.locator('#recording-' + single.id).getByRole('button', { name: 'Otevřít', exact: true }).click();
-        const openMixer = () => page.locator('#recording-' + mix.id).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
+        const openRecording = async (id, name) => {
+            const card = page.locator('#recording-' + id), toggle = card.locator('.recording-toggle');
+            if (await toggle.getAttribute('aria-expanded') === 'false') await toggle.click();
+            await card.getByRole('button', { name, exact: true }).click();
+            if (await toggle.getAttribute('aria-expanded') === 'true') await toggle.click();
+        };
+        const openLooper = () => openRecording(single.id, 'Otevřít');
+        const openMixer = () => openRecording(mix.id, 'Otevřít Mixér');
         const state = () => page.evaluate(() => window.Vz2Player.getState());
         const ready = mode => page.waitForFunction(mode => { const s = window.Vz2Player.getState(); return s?.mode === mode && s.phase === 'ready' && !s.loading; }, mode);
         await openLooper(); await ready('looper');
@@ -105,7 +111,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         const notes = await request(clients.admin, 'php/ajax/vz2_timestamps.php?recording_id=' + single.id);
         assert.equal((await request(clients.admin, 'php/ajax/vz2_timestamps.php', { action: 'create', recording_id: single.id, timestamps_revision: notes.json().timestamps_revision, kind: 'passage', time_ms: 1000, body: 'Pasáž pro Looper' })).status, 201);
         await page.locator('#looper-timestamps .ts-summary').click();
-        await page.locator('#looper-timestamps').getByRole('button', { name: 'Obnovit zápisy', exact: true }).click();
+        await page.locator('#looper-timestamps').getByRole('button', { name: 'Obnovit značky', exact: true }).click();
         const marker = page.locator('.looper-wave-marker[data-timestamp-id]');
         await marker.waitFor({ state: 'visible' });
         assert.equal(await marker.locator('.looper-wave-marker-text').textContent(), 'Pasáž pro Looper');
@@ -143,9 +149,17 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         let reached, release; const waiting = new Promise(r => reached = r), held = new Promise(r => release = r);
         const catalog = (await request(clients.admin, 'php/ajax/vz2.php?action=catalog')).json();
         const fileId = catalog.recordings.find(r => Number(r.id) === Number(single.id)).files[0].id;
+        // The earlier offline test cached this audio; this scenario specifically needs a network fetch.
+        await page.evaluate(async file => {
+            const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+            await window.idbKeyval.del(window.VZ2.cachePrefix + 'audio:' + file.id + ':' + file.sha256, store);
+        }, catalog.recordings.find(r => Number(r.id) === Number(single.id)).files[0]);
         const matcher = url => url.pathname.endsWith('vz2_files.php') && url.searchParams.get('type') === 'audio' && url.searchParams.get('id') === String(fileId);
         await page.route(matcher, async route => { reached(); await held; await route.abort(); });
-        await openLooper(); await waiting;
+        await openLooper();
+        let waitTimer;
+        try { await Promise.race([waiting, new Promise((_, reject) => { waitTimer = setTimeout(() => reject(new Error('Expected uncached Looper network fetch')), 10000); })]); }
+        finally { clearTimeout(waitTimer); }
         assert.equal((await state()).loading, true);
         await openMixer(); release(); await ready('mixer');
         assert.equal(await page.locator('#looper-audio').count(), 0);

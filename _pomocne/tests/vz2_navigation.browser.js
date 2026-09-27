@@ -20,7 +20,11 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         const page = await context.newPage(), errors = [];
         page.on('pageerror', e => errors.push(e.message)); page.on('dialog', d => d.accept());
         await page.route('https://cdn.jsdelivr.net/**', r => r.abort());
-        const open = () => page.locator('#recording-' + mix.id).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
+        const open = async () => {
+            const card = page.locator('#recording-' + mix.id);
+            if (await card.locator('.recording-toggle').getAttribute('aria-expanded') === 'false') await card.locator('.recording-toggle').click();
+            await card.getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
+        };
         const ready = () => page.waitForFunction(id => window.MultitrackApp?.getState()?.id === String(id) && window.MultitrackApp.getState().phase === 'ready', mix.id);
         await page.goto(base + 'index.php?v=2&collection_id=' + song.id);
         await page.locator('#recording-' + single.id + ' .recording-toggle').click();
@@ -58,11 +62,11 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         check(true, 'navigation: close stops playback; browser Back/Forward restores route without reloading page');
         await open(); await ready();
         await page.locator('[data-kind=rehearsal]').click();
-        await page.getByRole('heading', { name: 'Navigace — zkouška', exact: true }).waitFor();
+        await page.locator('#collection-title-name').getByText('Navigace — zkouška', { exact: true }).waitFor();
         assert.equal(await page.locator('#mixer-panel').isVisible(), false);
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         await page.reload();
-        await page.getByRole('heading', { name: 'Navigace — zkouška', exact: true }).waitFor();
+        await page.locator('#collection-title-name').getByText('Navigace — zkouška', { exact: true }).waitFor();
         await page.getByText('Tento celek zatím nemá žádné nahrávky.', { exact: true }).waitFor();
         check(true, 'navigation: switching to an empty rehearsal stops Mixer and retains rehearsal on reload');
         // A late list response may not load hidden audio after the user leaves.

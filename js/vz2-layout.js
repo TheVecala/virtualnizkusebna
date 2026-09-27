@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     const $ = id => document.getElementById(id);
-    const names = { recordings: 'Nahrávky', lyrics: 'Text a akordy', tablature: 'Tabulatura', discussion: 'Diskuse' };
+    const names = { recordings: 'Nahrávky', lyrics: 'Text a akordy', tablature: 'Mapa skladby', discussion: 'Diskuse' };
     const ids = Object.keys(names), prefix = window.VZ2.cachePrefix + 'layout:';
     const desktop = matchMedia('(min-width: 1200px)'), mobile = matchMedia('(max-width: 767px)');
     function read(key, fallback, valid) {
@@ -56,23 +56,26 @@
     ids.forEach(id => {
         const select = document.createElement('select');
         for (const [value, label] of Object.entries(names)) { const o = document.createElement('option'); o.value = value; o.textContent = label; select.append(o); }
-        select.addEventListener('change', () => {
+        select.addEventListener('change', async () => {
             const slot = state.tablet.indexOf(id), other = 1 - slot, next = select.value;
             if (slot < 0) return;
+            if (id === 'tablature' && next !== id && state.tablet[other] !== next && !await window.Vz2SongMap.canLeave()) { select.value = id; return; }
             if (state.tablet[other] === next) state.tablet[other] = id;
             state.tablet[slot] = next; save('tablet'); apply();
             $('panel-' + next).querySelector('select').focus({ preventScroll: true });
         });
         $('panel-' + id).querySelector('.panel-header').append(select);
     });
-    document.querySelectorAll('[data-desktop-panel]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('[data-desktop-panel]').forEach(b => b.addEventListener('click', async () => {
         if (ideasOpen) { hideIdeas(); return; }
         const id = b.dataset.desktopPanel;
+        if (id === 'tablature' && state.desktop.includes(id) && state.desktop.length > 1 && !await window.Vz2SongMap.canLeave()) return;
         if (state.desktop.includes(id)) { if (state.desktop.length > 1) state.desktop = state.desktop.filter(x => x !== id); }
         else state.desktop.push(id);
         save('desktop'); apply();
     }));
-    document.querySelectorAll('[data-mobile-panel]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('[data-mobile-panel]').forEach(b => b.addEventListener('click', async () => {
+        if (state.mobile === 'tablature' && b.dataset.mobilePanel !== 'tablature' && !await window.Vz2SongMap.canLeave()) return;
         hideIdeas(false);
         state.mobile = b.dataset.mobilePanel; save('mobile'); apply();
     }));

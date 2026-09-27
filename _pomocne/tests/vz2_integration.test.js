@@ -31,7 +31,7 @@ $command=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
 if($command['action']==='init'){
  $db->query('CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');$db->select_db('${database}');
  $db->query("SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE'");
- foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
+ foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
  foreach([['Admin','admin','admin-test'],['Alice','muzikant','alice-test'],['Bob','muzikant','bob-test']] as $u){$s=$db->prepare('INSERT INTO users(name,role,password_hash) VALUES (?,?,?)');$s->execute([$u[0],$u[1],password_hash($u[2],PASSWORD_DEFAULT)]);}
  $s=$db->prepare('UPDATE auth_settings SET guest_enabled=1,guest_password_hash=? WHERE id=1');$s->execute([password_hash('guest-test',PASSWORD_DEFAULT)]);
  echo json_encode(['version'=>$db->server_info,'mode'=>$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0]]);
@@ -285,6 +285,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         check(account.status===303 && db("SELECT * FROM vz2_activity_log WHERE target_type='user' AND target_id=3").length===1, 'account administration and audit commit together');
         await require('./vz2_timestamps.integration')({ request, clients, db, good, upload, check, login });
         await require('./vz2_content.integration')({ request, clients, db, good, check, login });
+        await require('./vz2_song_map.integration')({ request, clients, db, good, check });
         const marker=path.join(media,'.vz2-storage-id');fs.renameSync(marker,marker+'.held');
         check((await catalog('admin').then(()=>false,()=>true)), 'missing dataset marker stops catalog filesystem access');
         fs.renameSync(marker+'.held',marker);
@@ -292,7 +293,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         check((await api('alice')).status === 401, 'deactivation invalidates existing AJAX session');
         // Deletion also handles the document/current-version foreign-key cycle.
         db('INSERT INTO vz2_documents(collection_id,kind,title,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())', [b.id,'lyrics_chords','Text',3,3]);
-        const documentId = db('SELECT id FROM vz2_documents')[0].id;
+        const documentId = db("SELECT id FROM vz2_documents WHERE collection_id=? AND kind='lyrics_chords'",[b.id])[0].id;
         db('INSERT INTO vz2_document_versions(document_id,revision,body,created_by,created_at) VALUES (?,1,?,3,UTC_TIMESTAMP())', [documentId,'Verze 1']);
         db('UPDATE vz2_documents SET current_revision=1 WHERE id=?', [documentId]);
         c = (await catalog('admin')).collections.find(x => Number(x.id) === b.id);
@@ -307,6 +308,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         fs.renameSync(path.join(media,partialFile+'.held'),path.join(media,partialFile));
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_content.browser')({ base, clients, good, request, db, check, temp, upload, wav });
+        if (['1','songmap'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_song_map.browser')({ base, clients, good, request, db, check, temp });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_navigation.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_layout.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_recordings.browser')({ base, clients, good, request, db, check, temp, upload, wav });

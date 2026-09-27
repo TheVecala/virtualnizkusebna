@@ -18,9 +18,11 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         page.on('pageerror', e => errors.push(e.message)); page.on('dialog', d => d.accept());
         await page.route('https://cdn.jsdelivr.net/**', r => r.abort());
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
+        await page.locator('#recording-' + single.id + ' .recording-toggle').click();
         await page.locator('#recording-' + single.id).getByRole('button', { name: 'Otevřít', exact: true }).click();
+        await page.locator('#recording-' + single.id + ' .recording-toggle').click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
-        await page.locator('#player-play').click();
+        await page.locator('#looper-play').click();
         const prefs = () => page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([k]) => k.includes('layout:'))));
         const before = await prefs();
         await page.locator('#show-ideas').click();
@@ -34,13 +36,13 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await page.locator('#ideas-back').click();
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().collapsed), false);
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
-        await page.locator('#player-play').click();
+        await page.locator('#looper-play').click();
         await page.locator('#show-ideas').click(); assert.equal(await draft.inputValue(), 'Koncept přežije návrat i změnu šířky');
         assert.deepEqual(await prefs(), before);
         check(true, 'ideas: full workspace preserves draft and panel preferences; playing Looper collapses and restores without interruption');
         for (const width of [360, 390, 767, 768, 1024, 1199, 1200, 1280, 1440, 1920]) {
             await page.setViewportSize({ width, height: 800 });
-            const geometry = await ideas.evaluate(n => ({ x: n.getBoundingClientRect().x, width: n.clientWidth, workspace: n.parentElement.clientWidth, pageWidth: document.documentElement.scrollWidth, pageHeight: document.documentElement.scrollHeight, scroll: n.querySelector('.panel-body').scrollHeight > n.querySelector('.panel-body').clientHeight }));
+            const geometry = await ideas.evaluate(n => ({ x: n.getBoundingClientRect().x, width: n.getBoundingClientRect().width + parseFloat(getComputedStyle(n).marginLeft) + parseFloat(getComputedStyle(n).marginRight), workspace: n.parentElement.clientWidth, pageWidth: document.documentElement.scrollWidth, pageHeight: document.documentElement.scrollHeight, scroll: n.querySelector('.panel-body').scrollHeight > n.querySelector('.panel-body').clientHeight }));
             assert.equal(geometry.width, geometry.workspace); assert(geometry.pageWidth <= width + 1); assert(geometry.pageHeight <= 801); assert(geometry.scroll);
             assert.equal(await page.locator('#content-area').isVisible(), false);
         }
@@ -70,6 +72,7 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await page.keyboard.press('Escape'); assert.equal(await menu.getAttribute('open'), null);
         assert.equal(await page.evaluate(() => document.activeElement.tagName), 'SUMMARY');
         await menu.locator('summary').click(); await page.locator('#collection-title').click(); assert.equal(await menu.getAttribute('open'), null);
+        await page.locator('#catalog-close').click();
         assert.deepEqual(errors, []);
         check(true, 'ideas: tablet pair and desktop panels restore; menus close with Escape/outside click; no JavaScript errors');
         await page.locator('#show-ideas').click();

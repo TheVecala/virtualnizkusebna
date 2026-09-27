@@ -146,6 +146,7 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
                     await page.screenshot({ path: path.join(temp, 'stage5-' + who + '.png'), fullPage: true });
                     await page.locator('.shell-menu > summary').click();
                     await page.getByRole('button', { name: 'Odhlásit', exact: true }).click();
+                    await page.locator('#logout-confirm').click();
                     await page.locator('[name=heslo]').waitFor();
                     const response = await page.request.get(base + 'php/ajax/vz2.php');
                     assert.equal(response.status(), 401);
