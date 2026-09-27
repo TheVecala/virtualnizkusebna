@@ -64,7 +64,7 @@
     async function openDocument(collection, kind) {
         const ctx = start(titles[kind] + ' — ' + collection.title); if (!ctx) return;
         const query = { action: 'document', collection_id: collection.id, kind };
-        const meta = make('p', '', 'muted'), form = make('form'), titleLabel = make('label', 'Název dokumentu'), title = make('input');
+        const meta = make('p', '', 'vz2-attribution'), form = make('form'), titleLabel = make('label', 'Název dokumentu'), title = make('input');
         title.required = true; title.maxLength = 200; title.name = 'document_title'; titleLabel.append(title);
         const bodyLabel = make('label', 'Obsah'), body = make('textarea'); body.name = 'document_body'; body.rows = 14; body.spellcheck = false; body.required = true; bodyLabel.append(body);
         const save = make('button', 'Uložit novou verzi'), compare = button('Načíst aktuální verzi k porovnání', compareLatest);
@@ -115,10 +115,14 @@
             await busy(ctx, async () => {
                 const result = await api({ ...query, action: 'history', ...(before ? { before } : {}) });
                 if (!before) historyList.replaceChildren();
-                result.versions.forEach(v => historyList.append(button('Verze ' + v.revision + ' · ' + author(v.author,v.author_active) + ' · ' + date(v.created_at), () => busy(ctx, async () => {
-                    const old = await api({ ...query, revision: v.revision }); viewed = Number(v.revision);
-                    preview.hidden = false; preview.textContent = 'Verze ' + viewed + '\n\n' + old.version.body; restore.hidden = !state.can_edit;
-                }))));
+                result.versions.forEach(v => {
+                    const entry = button('Verze ' + v.revision, () => busy(ctx, async () => {
+                        const old = await api({ ...query, revision: v.revision }); viewed = Number(v.revision);
+                        preview.hidden = false; preview.textContent = 'Verze ' + viewed + '\n\n' + old.version.body; restore.hidden = !state.can_edit;
+                    }));
+                    entry.append(make('small', author(v.author,v.author_active) + ' · ' + date(v.created_at), 'vz2-attribution'));
+                    historyList.append(entry);
+                });
                 ctx.before = result.next_before; older.hidden = !ctx.before;
             });
         }
@@ -168,7 +172,7 @@
                 if (!before && !result.posts.length) list.append(make('p','Zatím žádné příspěvky.'));
                 result.posts.forEach(p => {
                     const item = make('article'); item.dataset.postId = p.id;
-                    item.append(make('small', author(p.author,p.author_active) + ' · ' + date(p.created_at) + (p.revision>1 ? ' · upravil/a ' + author(p.editor,p.editor_active) + ' · ' + date(p.updated_at) : '')), make('p',p.body));
+                    item.append(make('p',p.body), postAttribution(p));
                     const controls = make('div',undefined,'toolbar');
                     if (p.can_edit) controls.append(button('Upravit', () => {
                         if (!reset()) return; editing = p; body.value = p.body; save.textContent = 'Uložit úpravu'; label.firstChild.textContent = 'Upravit příspěvek'; cancel.hidden = false; body.focus();
@@ -197,6 +201,10 @@
     // Read-only panel views share the existing API and modal editors. Editing,
     // conflict handling and history continue to use the code above unchanged.
     let previewCollection, previewSerial = 0;
+    function postAttribution(post) {
+        return make('small', author(post.author, post.author_active) + ' · ' + date(post.created_at)
+            + (post.revision > 1 ? ' · upravil/a ' + author(post.editor, post.editor_active) + ' · ' + date(post.updated_at) : ''), 'vz2-attribution');
+    }
     function mountPreviews(collection) {
         previewCollection = collection;
         const serial = ++previewSerial;
@@ -236,7 +244,7 @@
                 status.textContent = !cursor && !result.posts.length ? 'Zatím žádné příspěvky.' : '';
                 result.posts.forEach(p => {
                     const item = make('article');
-                    item.append(make('small', author(p.author, p.author_active) + ' · ' + date(p.created_at)), make('p', p.body));
+                    item.append(make('p', p.body), postAttribution(p));
                     posts.append(item);
                 });
                 before = result.next_before; older.hidden = !before;

@@ -223,7 +223,7 @@
                     const item = el('li'); item.className = 'ts-' + row.kind;
                     const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
-                    authors.className = 'ts-author';
+                    authors.className = 'ts-author vz2-attribution';
                     authors.title = 'Vytvořeno: ' + new Date(row.created_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ') + ' · upraveno: ' + new Date(row.updated_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ');
                     const actions = el('div'); actions.className = 'toolbar';
                     const end = endOf(row, value.entries, value.duration_ms);

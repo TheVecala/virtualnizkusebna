@@ -305,7 +305,7 @@
         const card = node('article', undefined, 'recording-card'); card.id = 'recording-' + r.id;
         const body = node('div', undefined, 'recording-body'); body.id = 'recording-body-' + r.id;
         const title = node('span', r.title, 'recording-title'); title.title = r.title;
-        const meta = node('small', (r.kind === 'single' ? 'Audio' : 'Vícestopá') + ' · ' + r.author + ' · ' + (r.duration_ms == null ? 'délka nezjištěna' : time(r.duration_ms)));
+        const meta = node('small', (r.kind === 'single' ? 'Audio' : 'Vícestopá') + ' · ' + (r.duration_ms == null ? 'délka nezjištěna' : time(r.duration_ms)));
         const toggle = node('button', undefined, 'recording-toggle'); toggle.type = 'button';
         toggle.append(title, meta); toggle.setAttribute('aria-controls', body.id);
         const id = String(r.id);
@@ -326,8 +326,9 @@
         } else status.textContent = state(audioState);
         status.dataset.state = audioState;
         card.append(status);
+        body.append(node('small', 'Vložil/a ' + r.author, 'vz2-attribution'));
         if (r.summary) body.append(node('p', r.summary, 'recording-summary'));
-        if (r.summary_author) body.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · naposledy upravil/a ' + r.summary_editor : '')));
+        if (r.summary_author) body.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · upravil/a ' + r.summary_editor : ''), 'vz2-attribution'));
         const actions = node('div', undefined, 'action-list recording-actions');
         const recordingMenu = recordingActionsDialog(r);
         const fileActions = recordingMenu.fileActions;
@@ -436,12 +437,12 @@
         window.Vz2Content.mountPreviews(c);
         if (!c) content.append(node('h1', 'Zatím tu nic není'), node('p', 'Vytvořte skladbu nebo zkoušku. Audio můžete přidat později.'));
         else {
-            content.append(node('small', (c.kind === 'rehearsal' ? 'Autor zkoušky: ' : 'Autor skladby: ') + c.author, 'collection-attribution'));
+            content.append(node('small', 'Vytvořil/a ' + c.author, 'collection-attribution vz2-attribution'));
             const recordings = data.recordings.filter(r => String(r.collection_id) === String(c.id));
             if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));
             data.attachments.filter(a => String(a.collection_id) === String(c.id)).forEach(a => {
-                const card = node('article'); card.append(node('h3', a.title), node('small', 'Příloha · ' + a.author), node('p', a.summary || ''), fileLink(a));
+                const card = node('article'); card.append(node('h3', a.title), node('p', a.summary || ''), fileLink(a), node('small', 'Vložil/a ' + a.author, 'vz2-attribution'));
                 const { menu, actions } = actionMenu('Možnosti přílohy: ' + a.title);
                 if (cfg.write && a.can_edit) actions.append(button('Upravit', () => openEdit(a, 'attachment')));
                 moveControl(actions, a, 'attachment');
@@ -523,7 +524,7 @@
         if (reset) { logBefore = null; $('activity').querySelector('.log-entries').replaceChildren(); }
         const r = await api(null, 'log' + (logBefore ? '&before=' + encodeURIComponent(logBefore) : ''));
         $('activity').hidden = false;
-        r.entries.forEach(e => { const row = node('div', undefined, 'log-entry'); row.append(node('strong', e.target_title + ' · ' + e.action), node('div', e.actor_name + ' · ' + new Date(e.occurred_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ') + ' · ' + e.environment), node('small', e.detail)); $('activity').querySelector('.log-entries').append(row); });
+        r.entries.forEach(e => { const row = node('div', undefined, 'log-entry'); row.append(node('strong', e.target_title + ' · ' + e.action), node('div', e.actor_name + ' · ' + new Date(e.occurred_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ') + ' · ' + e.environment, 'vz2-attribution'), node('small', e.detail)); $('activity').querySelector('.log-entries').append(row); });
         logBefore = r.entries.at(-1)?.id; $('log-more').hidden = r.entries.length < 50;
     }
     $('show-log')?.addEventListener('click', () => loadLog(true).catch(e => message(e.message, true)));
