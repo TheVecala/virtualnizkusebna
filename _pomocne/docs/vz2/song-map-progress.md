@@ -52,7 +52,9 @@ stávajících dokumentech kind=song_map. Mapa nahrazuje slot Tabulatura, čtyř
 - Kontrola větve/HEAD beze změny; žádný commit ani DB změna.
 - Rozšířen js/vz2-song-map.js: nativní Detail, prostý text, pracovní uložení bez verze,
   výběr více cílů pro kopírování a potvrzení přepisu neprázdných Detailů.
-- Změny zdroje po kopírování neovlivňují cíle. MAPA a poslech otevírají čtecí Detail.
+- Změny zdroje po kopírování neovlivňují cíle. Zápis poslechem otevírá čtecí Detail.
+  V režimu MAPA lze Detail přímo upravit s právem edit_text; historickou verzi
+  vytvoří až následné Uložit mapu. Náhled historie a host zůstávají jen pro čtení.
 - Rozepsaný Detail má vlastní ochranu před zahozením; text se vykresluje jako text.
 - Modelový test ověřuje nezávislost Detailů i sekcí; browser ověření navazuje.
 

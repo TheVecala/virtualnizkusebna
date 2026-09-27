@@ -111,6 +111,9 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         assert.equal(await history.locator('.song-map-history-row').count(), 2);
         await history.locator('.song-map-history-row').nth(1).getByRole('button', { name: 'Zobrazit', exact: true }).click();
         const version = dialog(page, 'Verze 1'); await version.waitFor(); assert.equal(await version.locator('.song-map-row').first().locator('.song-map-bar').count(), 8);
+        await version.locator('.song-map-bar').first().click();
+        assert(await dialog(page, 'Detail taktu').locator('textarea').getAttribute('readonly') !== null);
+        await dialog(page, 'Detail taktu').getByRole('button', { name: 'Zavřít', exact: true }).click();
         await version.getByRole('button', { name: 'Obnovit tuto verzi', exact: true }).click();
         await dialog(page, 'Obnovit Mapu').getByRole('button', { name: 'Obnovit tuto verzi', exact: true }).click();
         await host.getByText('Mapa uložena · verze 3', { exact: true }).waitFor(); assert.equal((await getMap()).json().version.body, saved.version.body);
@@ -134,6 +137,14 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
             assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
             await page.screenshot({ path: path.join(temp, 'song-map-' + width + '.png') });
         }
+        await bars(page).first().click();
+        const mapDetail = dialog(page, 'Detail taktu');
+        await mapDetail.locator('textarea').fill('Detail upravený přímo v MAPĚ');
+        await mapDetail.getByRole('button', { name: 'Uložit detail', exact: true }).click();
+        assert.equal(await page.locator('#tablature-actions .song-map-save-state').textContent(), 'Neuloženo');
+        assert.equal(await host.locator('.song-map-palette').count(), 0);
+        await save(page, 5);
+        assert.equal(JSON.parse((await getMap()).json().version.body).sections[0].bars[0].detail, 'Detail upravený přímo v MAPĚ');
         await mode(page, 'UPRAVIT'); await bars(page).first().click(); await type(page, 'HI-HAT');
         await page.locator('[data-mobile-panel=lyrics]').click();
         await dialog(page, 'Neuložené změny').getByRole('button', { name: 'Zůstat', exact: true }).click();

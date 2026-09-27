@@ -254,7 +254,7 @@
     }
     function detail(ctx, bar) {
         const dialog = modal('Detail taktu'); dialog.classList.add('song-map-detail');
-        const editable = ctx.mode === 'edit' && ctx.response.can_edit;
+        const editable = (ctx.mode === 'edit' || ctx.mode === 'map') && ctx.response.can_edit && !ctx.preview;
         const text = make('textarea'); text.value = bar.detail; text.rows = 10; text.spellcheck = false; text.readOnly = !editable; text.name = 'bar_detail';
         ctx.detailDialog = dialog;
         text.addEventListener('input', () => { ctx.detailDirty = editable && text.value !== bar.detail; });
@@ -274,7 +274,9 @@
             ctx.copy = { source: bar.id, targets: new Set() }; dialog.close(); render(ctx);
         }));
         actions.append(button(editable ? 'Zrušit' : 'Zavřít', close));
-        dialog.append(field, error, actions); dialog.addEventListener('cancel', e => { e.preventDefault(); close(); }); dialog.showModal();
+        dialog.append(field);
+        if (editable) dialog.append(make('p', 'Uložit detail změní rozpracovanou Mapu. Trvale jej uloží až Uložit mapu.', 'muted'));
+        dialog.append(error, actions); dialog.addEventListener('cancel', e => { e.preventDefault(); close(); }); dialog.showModal();
     }
     async function mount(collection) {
         if (current?.collection.id === collection?.id) return;
