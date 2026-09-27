@@ -85,7 +85,7 @@
             <section id="mt-panel-text" class="panel mt-notes-panel">
                 <div class="panel-header">
                     <h2>OBSAH</h2>
-                    <div class="acts"><button id="mt-content-refresh" type="button" class="btn-vz" disabled>obnovit</button></div>
+                    <div class="acts"><button id="mt-content-refresh" type="button" class="btn-vz mt-refresh-button" aria-label="Obnovit obsah" title="Obnovit obsah" disabled><i class="ti ti-refresh" aria-hidden="true"></i></button></div>
                 </div>
                 <div class="panel-body">
                     <p id="mt-content-status" role="status">Vyberte nahrávku ze seznamu.</p>
@@ -113,7 +113,7 @@
             <section id="mt-panel-tabelatura" class="panel mt-notes-panel">
                 <div class="panel-header">
                     <h2>POPIS</h2>
-                    <div class="acts"><button id="mt-notes-refresh" type="button" class="btn-vz" disabled>obnovit</button></div>
+                    <div class="acts"><button id="mt-notes-refresh" type="button" class="btn-vz mt-refresh-button" aria-label="Obnovit popis" title="Obnovit popis" disabled><i class="ti ti-refresh" aria-hidden="true"></i></button></div>
                 </div>
                 <div class="panel-body">
                     <p id="mt-notes-status" role="status">Vyberte nahrávku ze seznamu.</p>

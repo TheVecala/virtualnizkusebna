@@ -18,13 +18,20 @@
     };
     function save(mode) { try { localStorage.setItem(prefix + mode, JSON.stringify(state[mode])); } catch (_) { /* Private mode / full storage: keep the in-memory choice. */ } }
     function mode() { return desktop.matches ? 'desktop' : mobile.matches ? 'mobile' : 'tablet'; }
-    function closeCatalog() { if ($('catalog-dialog').open) $('catalog-dialog').close(); }
-    function openCatalog() { if (!desktop.matches && !$('catalog-dialog').open) $('catalog-dialog').showModal(); }
+    let catalogOpenedOnDesktop = false;
+    function closeCatalog() { catalogOpenedOnDesktop = false; if ($('catalog-dialog').open) $('catalog-dialog').close(); }
+    function openCatalog() {
+        if ($('catalog-dialog').open) return;
+        catalogOpenedOnDesktop = desktop.matches;
+        if (desktop.matches) $('catalog-dialog-slot').append($('sidebar'));
+        $('catalog-dialog').showModal();
+    }
     function apply() {
+        if (desktop.matches && $('catalog-dialog').open && !catalogOpenedOnDesktop) closeCatalog();
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current];
         document.body.dataset.layout = current;
         document.body.dataset.workspace = ideasOpen ? 'ideas' : 'panels';
-        $('content-area').hidden = $('workspace-context').hidden = ideasOpen;
+        $('content-area').hidden = ideasOpen;
         $('ideas-workspace').hidden = !ideasOpen;
         $('show-ideas').setAttribute('aria-pressed', String(ideasOpen));
         $('bn-napady').setAttribute('aria-pressed', String(ideasOpen));
@@ -41,7 +48,7 @@
             b.disabled = !ideasOpen && selected && state.desktop.length === 1;
         });
         document.querySelectorAll('[data-mobile-panel]').forEach(b => b.setAttribute('aria-pressed', String(!ideasOpen && b.dataset.mobilePanel === state.mobile)));
-        const slot = $(desktop.matches ? 'sidebar-slot' : 'catalog-dialog-slot');
+        const slot = $(desktop.matches && !$('catalog-dialog').open ? 'sidebar-slot' : 'catalog-dialog-slot');
         if ($('sidebar').parentElement !== slot) {
             closeCatalog(); slot.append($('sidebar'));
         }
@@ -72,6 +79,8 @@
     $('catalog-picker').addEventListener('click', openCatalog);
     $('bn-skladby').addEventListener('click', openCatalog);
     $('catalog-close').addEventListener('click', closeCatalog);
+    $('catalog-dialog').addEventListener('cancel', e => e.preventDefault());
+    $('catalog-dialog').addEventListener('close', apply);
     $('bn-napady').addEventListener('click', () => $('show-ideas').click());
     $('create-collection-open')?.addEventListener('click', () => {
         const rehearsal = document.querySelector('[data-kind="rehearsal"]').getAttribute('aria-pressed') === 'true';
@@ -90,10 +99,44 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelector('.shell-menu').open = false; });
     document.addEventListener('click', e => { if (!e.target.closest('.shell-menu')) document.querySelector('.shell-menu').open = false; });
     const menuSelector = '.actions-menu, .collection-menu';
+    function placeCollectionMenu(menu) {
+        const popover = menu.querySelector('.collection-menu-popover');
+        if (!popover || !menu.open) return;
+        const anchor = menu.querySelector('summary').getBoundingClientRect();
+        const width = popover.getBoundingClientRect().width;
+        const viewportTop = window.visualViewport?.offsetTop || 0;
+        const viewportBottom = viewportTop + (window.visualViewport?.height || innerHeight);
+        const panel = menu.closest('dialog')?.getBoundingClientRect();
+        const upper = Math.max(viewportTop + 8, panel ? panel.top + 8 : viewportTop + 8);
+        const lower = Math.min(viewportBottom - 8, panel ? panel.bottom - 8 : viewportBottom - 8);
+        popover.style.maxHeight = Math.max(80, lower - upper) + 'px';
+        const height = popover.getBoundingClientRect().height;
+        const left = Math.max(8, Math.min(anchor.right - width, innerWidth - width - 8));
+        const below = anchor.bottom + 6;
+        const above = anchor.top - height - 6;
+        let top = Math.max(upper, Math.min(anchor.top, lower - height));
+        if (below + height <= lower) top = below;
+        else if (above >= upper) top = above;
+        popover.style.left = left + 'px';
+        popover.style.top = top + 'px';
+    }
     document.addEventListener('toggle', e => {
         if (!e.target.matches(menuSelector) || !e.target.open) return;
         document.querySelectorAll(menuSelector).forEach(menu => { if (menu !== e.target) menu.open = false; });
+        if (e.target.matches('.collection-menu')) placeCollectionMenu(e.target);
     }, true);
+    $('collections').addEventListener('scroll', () => {
+        document.querySelectorAll('.collection-menu[open]').forEach(menu => menu.open = false);
+    });
+    window.addEventListener('resize', () => {
+        document.querySelectorAll('.collection-menu[open]').forEach(placeCollectionMenu);
+    });
+    window.visualViewport?.addEventListener('resize', () => {
+        document.querySelectorAll('.collection-menu[open]').forEach(placeCollectionMenu);
+    });
+    $('catalog-dialog').addEventListener('animationend', () => {
+        document.querySelectorAll('.collection-menu[open]').forEach(placeCollectionMenu);
+    });
     document.addEventListener('click', e => {
         document.querySelectorAll(menuSelector).forEach(menu => { if (!menu.contains(e.target)) menu.open = false; });
     });

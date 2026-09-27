@@ -3,6 +3,11 @@
     const titles = { lyrics_chords: 'Text a akordy', tablature: 'Tabulatura' };
     const make = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
     const button = (label, run) => { const b = make('button', label); b.type = 'button'; b.onclick = run; return b; };
+    const iconButton = (label, icon, run) => {
+        const b = button('', run), i = make('i', undefined, 'ti ti-' + icon);
+        b.className = 'vz2-icon-button'; b.title = label; b.setAttribute('aria-label', label);
+        i.setAttribute('aria-hidden', 'true'); b.append(i); return b;
+    };
     const date = value => new Date(value).toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
     const author = (name, active) => name + (Number(active) === 0 ? ' (neaktivní účet)' : '');
     let current, ideas;
@@ -25,11 +30,13 @@
     }
     function start(title) {
         if (current && !close(current)) return null;
-        const dialog = make('dialog', undefined, 'vz2-content-dialog'), header = make('div', undefined, 'toolbar');
+        const dialog = make('dialog', undefined, 'vz2-content-dialog'), header = make('div', undefined, 'dialog-header');
         const ctx = { dialog, busy: false, dirty: false, status: make('p', 'Načítám…', 'error') };
         ctx.live = () => current === ctx && dialog.open;
         ctx.status.setAttribute('role', 'status');
-        header.append(make('h2', title), button('Zavřít', () => close(ctx)));
+        const closeButton = button('×', () => close(ctx));
+        closeButton.className = 'modal-close'; closeButton.setAttribute('aria-label', 'Zavřít'); closeButton.title = 'Zavřít';
+        header.append(make('h2', title), closeButton);
         dialog.append(header, ctx.status); document.body.append(dialog); current = ctx;
         dialog.addEventListener('cancel', e => { e.preventDefault(); close(ctx); });
         dialog.showModal(); return ctx;
@@ -46,7 +53,7 @@
         const host = document.getElementById('ideas-workspace');
         const header = make('div', undefined, 'panel-header'), content = make('div', undefined, 'panel-body content-editor');
         const title = make('h2', 'Nápady'); title.id = 'ideas-title'; host.setAttribute('aria-labelledby', title.id);
-        const back = button('Zpět k panelům', () => window.Vz2Layout.hideIdeas()); back.id = 'ideas-back';
+        const back = button('Zpět k panelům', () => window.Vz2Layout.hideIdeas()); back.id = 'ideas-back'; back.className = 'panel-header-action';
         header.append(title, back);
         const ctx = { dialog: content, busy: false, dirty: false, status: make('p', 'Načítám…', 'error') };
         ctx.status.setAttribute('role', 'status'); ctx.title = title; ctx.live = () => host.isConnected;
@@ -57,7 +64,7 @@
     async function openDocument(collection, kind) {
         const ctx = start(titles[kind] + ' — ' + collection.title); if (!ctx) return;
         const query = { action: 'document', collection_id: collection.id, kind };
-        const meta = make('p', '', 'muted'), form = make('form'), titleLabel = make('label', 'Název dokumentu'), title = make('input');
+        const meta = make('p', '', 'vz2-attribution'), form = make('form'), titleLabel = make('label', 'Název dokumentu'), title = make('input');
         title.required = true; title.maxLength = 200; title.name = 'document_title'; titleLabel.append(title);
         const bodyLabel = make('label', 'Obsah'), body = make('textarea'); body.name = 'document_body'; body.rows = 14; body.spellcheck = false; body.required = true; bodyLabel.append(body);
         const save = make('button', 'Uložit novou verzi'), compare = button('Načíst aktuální verzi k porovnání', compareLatest);
@@ -66,7 +73,7 @@
         const controls = make('div', undefined, 'toolbar'); controls.append(save, compare);
         form.append(titleLabel, bodyLabel, controls);
         const history = make('section'), historyList = make('div'), preview = make('pre', '', 'content-preview'); preview.hidden = true;
-        const restore = button('Obnovit jako novou verzi', restoreVersion); restore.hidden = true;
+        const restore = iconButton('Obnovit jako novou verzi', 'restore', restoreVersion); restore.hidden = true;
         const older = button('Starší verze', () => loadHistory(ctx.before)); older.hidden = true;
         const showHistory = button('Historie verzí', () => loadHistory(null));
         history.append(showHistory, historyList, older, preview, restore); ctx.dialog.append(meta, form, comparison, history);
@@ -108,10 +115,14 @@
             await busy(ctx, async () => {
                 const result = await api({ ...query, action: 'history', ...(before ? { before } : {}) });
                 if (!before) historyList.replaceChildren();
-                result.versions.forEach(v => historyList.append(button('Verze ' + v.revision + ' · ' + author(v.author,v.author_active) + ' · ' + date(v.created_at), () => busy(ctx, async () => {
-                    const old = await api({ ...query, revision: v.revision }); viewed = Number(v.revision);
-                    preview.hidden = false; preview.textContent = 'Verze ' + viewed + '\n\n' + old.version.body; restore.hidden = !state.can_edit;
-                }))));
+                result.versions.forEach(v => {
+                    const entry = button('Verze ' + v.revision, () => busy(ctx, async () => {
+                        const old = await api({ ...query, revision: v.revision }); viewed = Number(v.revision);
+                        preview.hidden = false; preview.textContent = 'Verze ' + viewed + '\n\n' + old.version.body; restore.hidden = !state.can_edit;
+                    }));
+                    entry.append(make('small', author(v.author,v.author_active) + ' · ' + date(v.created_at), 'vz2-attribution'));
+                    historyList.append(entry);
+                });
                 ctx.before = result.next_before; older.hidden = !ctx.before;
             });
         }
@@ -135,7 +146,7 @@
         });
         const actions = make('div', undefined, 'toolbar'); actions.append(save,cancel,compare);
         cancel.hidden = compare.hidden = comparison.hidden = accept.hidden = true; form.append(label,actions,comparison,accept);
-        const list = make('div', undefined, 'content-posts'), reload = button('Obnovit příspěvky', () => load()), older = button('Starší příspěvky', () => load(ctx.before)); older.hidden = true;
+        const list = make('div', undefined, 'content-posts'), reload = iconButton('Obnovit příspěvky', 'refresh', () => load()), older = button('Starší příspěvky', () => load(ctx.before)); older.hidden = true;
         ctx.dialog.append(form,reload,list,older);
         let thread, editing = null;
         body.addEventListener('input', () => ctx.dirty = true);
@@ -161,7 +172,7 @@
                 if (!before && !result.posts.length) list.append(make('p','Zatím žádné příspěvky.'));
                 result.posts.forEach(p => {
                     const item = make('article'); item.dataset.postId = p.id;
-                    item.append(make('small', author(p.author,p.author_active) + ' · ' + date(p.created_at) + (p.revision>1 ? ' · upravil/a ' + author(p.editor,p.editor_active) + ' · ' + date(p.updated_at) : '')), make('p',p.body));
+                    item.append(make('p',p.body), postAttribution(p));
                     const controls = make('div',undefined,'toolbar');
                     if (p.can_edit) controls.append(button('Upravit', () => {
                         if (!reset()) return; editing = p; body.value = p.body; save.textContent = 'Uložit úpravu'; label.firstChild.textContent = 'Upravit příspěvek'; cancel.hidden = false; body.focus();
@@ -190,17 +201,24 @@
     // Read-only panel views share the existing API and modal editors. Editing,
     // conflict handling and history continue to use the code above unchanged.
     let previewCollection, previewSerial = 0;
+    function postAttribution(post) {
+        return make('small', author(post.author, post.author_active) + ' · ' + date(post.created_at)
+            + (post.revision > 1 ? ' · upravil/a ' + author(post.editor, post.editor_active) + ' · ' + date(post.updated_at) : ''), 'vz2-attribution');
+    }
     function mountPreviews(collection) {
         previewCollection = collection;
         const serial = ++previewSerial;
         const live = () => serial === previewSerial;
         const hosts = ['lyrics', 'tablature', 'discussion'].map(id => document.getElementById(id + '-content'));
+        const actionHosts = ['lyrics', 'tablature', 'discussion'].map(id => document.getElementById(id + '-actions'));
+        actionHosts.forEach(host => host.replaceChildren());
         hosts.forEach(host => host.replaceChildren(make('p', collection ? 'Načítám…' : 'Vyberte skladbu nebo zkoušku.', 'muted')));
         if (!collection) return;
         [['lyrics_chords', hosts[0]], ['tablature', hosts[1]]].forEach(async ([kind, host]) => {
             const edit = button('Otevřít editor', () => openDocument(collection, kind));
             const content = make('pre', '', 'document-preview'), status = make('p', 'Načítám…', 'muted');
-            host.replaceChildren(edit, status, content);
+            actionHosts[kind === 'lyrics_chords' ? 0 : 1].replaceChildren(edit);
+            host.replaceChildren(status, content);
             async function load() {
                 try {
                     const result = await api({ action: 'document', collection_id: collection.id, kind });
@@ -215,7 +233,8 @@
         const host = hosts[2], status = make('p', 'Načítám…', 'muted'), posts = make('div', '', 'content-posts');
         let before, loading = false;
         const older = button('Starší příspěvky', () => loadDiscussion(before)); older.hidden = true;
-        host.replaceChildren(button('Otevřít diskusi', () => openDiscussion({ collection_id: collection.id })), status, posts, older);
+        actionHosts[2].replaceChildren(button('Otevřít diskusi', () => openDiscussion({ collection_id: collection.id })));
+        host.replaceChildren(status, posts, older);
         async function loadDiscussion(cursor) {
             if (loading) return;
             loading = true; older.disabled = true;
@@ -225,7 +244,7 @@
                 status.textContent = !cursor && !result.posts.length ? 'Zatím žádné příspěvky.' : '';
                 result.posts.forEach(p => {
                     const item = make('article');
-                    item.append(make('small', author(p.author, p.author_active) + ' · ' + date(p.created_at)), make('p', p.body));
+                    item.append(make('p', p.body), postAttribution(p));
                     posts.append(item);
                 });
                 before = result.next_before; older.hidden = !before;

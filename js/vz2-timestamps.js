@@ -13,6 +13,10 @@
         if (!Number.isSafeInteger(ms) || ms > 604800000) throw new Error('Nejvyšší čas je 7 dní.');
         return ms;
     }
+    function compactFormat(ms) {
+        const seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
+        return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+    }
     function endOf(entry, entries, duration) {
         if (entry.kind === 'note') return null;
         const next = entries.filter(t => Number(t.time_ms) > Number(entry.time_ms)
@@ -25,16 +29,22 @@
         return entries.filter(t => selected.includes(t.kind)).map(t => format(t.time_ms) + '\t'
             + t.body.replace(/[\t\r\n]+/g, ' ')).join('\n');
     }
-    const api = { format, parse, endOf, tabular };
+    const api = { format, compactFormat, parse, endOf, tabular };
     if (typeof module !== 'undefined') module.exports = api;
     if (!root.document) return;
     root.Vz2Timestamps = api;
     const panels = new Set();
     let preferences = { kind: 'note', keep: false };
     try { const saved = JSON.parse(localStorage.getItem(root.VZ2.cachePrefix + 'timestamp-preferences')); if (saved && kinds[saved.kind]) preferences = { kind: saved.kind, keep: saved.keep === true }; } catch (_) { /* optional preference */ }
-    let editor, activeEditor, loop, loopBusy = false, loopSerial = 0;
+    let editor, exportDialog, activeEditor, activeExportPanel, loop, loopBusy = false, loopSerial = 0;
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     const button = (text, fn) => { const b = el('button', text); b.type = 'button'; b.addEventListener('click', fn); return b; };
+    const iconButton = (label, icon, fn) => {
+        const b = button('', fn), i = el('i');
+        b.className = 'ts-action'; b.title = label; b.setAttribute('aria-label', label);
+        i.className = 'ti ti-' + icon; i.setAttribute('aria-hidden', 'true'); b.append(i);
+        return b;
+    };
     async function request(id, fields) {
         const r = await fetch('php/ajax/vz2_timestamps.php' + (fields ? '' : '?recording_id=' + encodeURIComponent(id)), {
             method: fields ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
@@ -43,7 +53,7 @@
         });
         let result;
         try { result = await r.json(); } catch (_) { throw new Error('Odpověď nelze načíst. Ověřte připojení a přihlášení.'); }
-        if (!r.ok || !result.ok) { const e = new Error(result.error || 'Zápisy nelze načíst.'); e.status = r.status; throw e; }
+        if (!r.ok || !result.ok) { const e = new Error(result.error || 'Značky nelze načíst.'); e.status = r.status; throw e; }
         return result;
     }
     function publish(list) { panels.forEach(p => { if (Number(p.id) === list.recording_id) p.update(list); }); }
@@ -63,7 +73,7 @@
     function ensureEditor() {
         if (editor) return;
         editor = el('dialog'); editor.className = 'vz2-timestamp-editor';
-        editor.innerHTML = '<form><h2>Časový zápis</h2><p class="ts-context"></p><label>Typ<select name="kind"></select></label><label>Čas (hh:mm:ss.mmm)<input name="time" required></label><label>Text<textarea name="body" rows="5" required></textarea></label><label class="ts-keep"><input type="checkbox" name="keep"> Nechat otevřené pro další zápis</label><p role="alert" class="error"></p><pre class="ts-current" hidden></pre><div class="toolbar"><button type="submit">Uložit</button><button type="submit" name="return" value="yes">Uložit a vrátit na čas</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button><button type="button" class="ts-close">Zrušit</button></div></form>';
+        editor.innerHTML = '<form><div class="dialog-header"><h2>Časová značka</h2><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><p class="ts-context"></p><label>Typ<select name="kind"></select></label><label>Čas (hh:mm:ss.mmm)<input name="time" required></label><label>Text<textarea name="body" rows="5" required></textarea></label><label class="ts-keep"><input type="checkbox" name="keep"> Nechat otevřené pro další značku</label><p role="alert" class="error"></p><pre class="ts-current" hidden></pre><div class="toolbar"><button type="submit">Uložit</button><button type="submit" name="return" value="yes">Uložit a vrátit na čas</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
         const form = editor.querySelector('form');
         editor.addEventListener('cancel', e => { if (activeEditor?.busy) e.preventDefault(); });
         Object.entries(kinds).forEach(([value, text]) => { const o = el('option', text); o.value = value; form.elements.kind.append(o); });
@@ -74,9 +84,9 @@
                 const latest = await request(context.panel.id); publish(latest);
                 const current = context.row && latest.entries.find(t => t.id === context.row.id);
                 const compare = editor.querySelector('.ts-current'); compare.hidden = false;
-                compare.textContent = current ? 'Aktuální zápis: ' + format(current.time_ms) + ' · ' + kinds[current.kind] + '\n' + current.body + '\nUpravil/a: ' + current.editor : context.row ? 'Zápis byl mezitím odstraněn.' : 'Aktuální seznam byl načten. Rozepsaný text zůstává ve formuláři.';
+                compare.textContent = current ? 'Aktuální značka: ' + format(current.time_ms) + ' · ' + kinds[current.kind] + '\n' + current.body + '\nUpravil/a: ' + current.editor : context.row ? 'Značka byla mezitím odstraněna.' : 'Aktuální seznam byl načten. Rozepsaný text zůstává ve formuláři.';
                 if (context.row && !current) return;
-                if (!confirm('Aktuální zápisy jsou načtené. Použít jejich revizi pro další uložení vašeho rozepsaného textu?')) return;
+                if (!confirm('Aktuální značky jsou načtené. Použít jejich revizi pro další uložení vašeho rozepsaného textu?')) return;
                 context.revision = latest.timestamps_revision; context.row = current || null;
                 editor.querySelector('.error').textContent = 'Revize je aktuální. Zkontrolujte text a stiskněte Uložit.';
                 editor.querySelector('.ts-rebase').hidden = true;
@@ -121,51 +131,119 @@
         f.elements.return.disabled = !panel.adapter?.canPlay();
         editor.showModal(); f.elements.body.focus();
     }
+    function ensureExportDialog() {
+        if (exportDialog) return;
+        exportDialog = el('dialog'); exportDialog.className = 'vz2-timestamp-export';
+        exportDialog.setAttribute('aria-labelledby', 'vz2-timestamp-export-title');
+        exportDialog.innerHTML = '<div class="dialog-header"><h2 id="vz2-timestamp-export-title">Export časových značek</h2><button type="button" class="ts-export-close modal-close" aria-label="Zavřít export" title="Zavřít">×</button></div><div class="ts-export-options"><section class="ts-export-card ts-export-table"><div class="ts-export-heading"><i class="ti ti-table" aria-hidden="true"></i><div><h3>Export do tabulky</h3><p>Vyberte typy časových značek, které chcete zkopírovat.</p></div></div><fieldset class="ts-filters"><legend class="visually-hidden">Typy časových značek pro tabulku</legend></fieldset><button type="button" class="ts-export-copy"><i class="ti ti-copy" aria-hidden="true"></i> Kopírovat do schránky</button></section><section class="ts-export-card ts-export-text"><div class="ts-export-heading"><i class="ti ti-file-text" aria-hidden="true"></i><div><h3>Stažení textového souboru</h3><p>Stáhne všechny časové značky jako soubor TXT.</p></div></div><a class="ts-export-download" href=""><i class="ti ti-download" aria-hidden="true"></i> Stáhnout TXT</a></section></div><p class="ts-export-status error" role="alert"></p><div class="ts-export-footer"><button type="button" class="ts-export-close">Zavřít</button></div>';
+        const filters = exportDialog.querySelector('.ts-filters');
+        Object.entries(kinds).forEach(([value, text]) => {
+            const label = el('label'), input = el('input');
+            input.type = 'checkbox'; input.value = value;
+            label.append(input, document.createTextNode(text)); filters.append(label);
+        });
+        const copy = exportDialog.querySelector('.ts-export-copy');
+        filters.addEventListener('change', () => { copy.disabled = !filters.querySelector('input:checked'); });
+        copy.addEventListener('click', async () => {
+            const status = exportDialog.querySelector('.ts-export-status');
+            try {
+                await navigator.clipboard.writeText(tabular(activeExportPanel.list.entries, [...filters.querySelectorAll('input:checked')].map(i => i.value)));
+                exportDialog.close(); activeExportPanel.error('Tabulka zkopírována.');
+            } catch (e) { status.textContent = 'Kopírování se nezdařilo. Použijte export TXT.'; }
+        });
+        exportDialog.querySelectorAll('.ts-export-close').forEach(close => close.addEventListener('click', () => exportDialog.close()));
+        exportDialog.querySelector('.ts-export-download').addEventListener('click', () => exportDialog.close());
+        exportDialog.addEventListener('click', e => {
+            const box = exportDialog.getBoundingClientRect();
+            if (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom) exportDialog.close();
+        });
+        document.body.append(exportDialog);
+    }
+    function openExport(panel) {
+        ensureExportDialog(); activeExportPanel = panel;
+        exportDialog.querySelectorAll('.ts-filters input').forEach(input => { input.checked = input.value !== 'note'; });
+        exportDialog.querySelector('.ts-export-copy').disabled = false;
+        exportDialog.querySelector('.ts-export-status').textContent = '';
+        exportDialog.querySelector('.ts-export-download').href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(panel.id);
+        exportDialog.showModal(); exportDialog.querySelector('.ts-export-copy').focus();
+    }
     window.addEventListener('beforeunload', e => { if (editor?.open) { e.preventDefault(); e.returnValue = ''; } });
     api.mount = function (container, id, adapter) {
-        const shell = el('section'); shell.className = 'vz2-timestamps';
-        const heading = el('h4', 'Časové zápisy'), status = el('p'), toolbar = el('div'), list = el('ol'); toolbar.className = 'toolbar';
+        const shell = el('details'); shell.className = 'vz2-timestamps';
+        const summary = el('summary'), heading = el('span', 'Časové značky'), chevron = el('i');
+        summary.className = 'ts-summary'; heading.className = 'ts-heading';
+        chevron.className = 'ti ti-chevron-right'; chevron.setAttribute('aria-hidden', 'true');
+        summary.append(heading, chevron);
+        const content = el('div'), status = el('p'), toolbar = el('div'), list = el('ol');
+        content.className = 'ts-content'; toolbar.className = 'toolbar';
         status.setAttribute('role', 'status'); status.className = 'error';
-        const add = button('Přidat zápis', () => openEditor(panel, null)); add.disabled = true;
-        const reload = button('Obnovit zápisy', () => panel.load());
+        const add = button('Přidat značku', () => openEditor(panel, null)); add.disabled = true;
+        const reload = iconButton('Obnovit značky', 'refresh', () => panel.load());
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
-        const download = el('a', 'Export TXT'); download.href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(id);
-        const filters = el('div'); filters.className = 'ts-filters';
-        Object.entries(kinds).forEach(([value, text]) => { const label = el('label'), input = el('input'); input.type = 'checkbox'; input.value = value; input.checked = value !== 'note'; label.append(input, document.createTextNode(text)); filters.append(label); });
-        const copy = button('Kopírovat tabulku', async () => {
-            try { await navigator.clipboard.writeText(tabular(panel.list.entries, [...filters.querySelectorAll('input:checked')].map(i => i.value))); status.textContent = 'Tabulka zkopírována.'; }
-            catch (e) { status.textContent = 'Kopírování se nezdařilo. Použijte export TXT.'; }
-        }); copy.disabled = true;
-        toolbar.append(add, reload, stop, download); shell.append(heading, toolbar, status, list, filters, copy); container.append(shell);
+        const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
+        toolbar.append(add, reload, stop, exportButton); content.append(toolbar, status, list); shell.append(summary, content); container.append(shell);
+        let mobileActions, mobileAdd, mobileExport, mobileToggle, resizeObserver, mobileMedia;
+        const positionDrawer = () => {
+            if (mobileActions && mobileMedia.matches) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
+        };
+        const toggleDrawer = open => {
+            container.classList.toggle('ts-drawer-open', open);
+            mobileToggle.textContent = (open ? 'Zavřít' : 'Otevřít') + ' časové značky';
+            mobileToggle.setAttribute('aria-expanded', String(open));
+            if (open) { shell.open = true; positionDrawer(); }
+        };
+        const onDrawerKey = e => {
+            if (e.key === 'Escape' && container.classList.contains('ts-drawer-open') && !editor?.open && !exportDialog?.open) {
+                toggleDrawer(false); mobileToggle.focus();
+            }
+        };
+        const onMobileChange = () => { toggleDrawer(false); positionDrawer(); };
+        if (container.id === 'looper-timestamps') {
+            mobileMedia = matchMedia('(max-width: 767px)');
+            mobileActions = el('div'); mobileActions.className = 'looper-timestamp-actions';
+            mobileToggle = button('Otevřít časové značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
+            mobileToggle.setAttribute('aria-expanded', 'false'); mobileToggle.setAttribute('aria-controls', container.id);
+            mobileAdd = button('Přidat značku', () => openEditor(panel, null)); mobileAdd.disabled = true;
+            mobileExport = button('Export', () => openExport(panel)); mobileExport.disabled = true;
+            add.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
+            mobileActions.append(mobileToggle, mobileAdd, mobileExport); container.before(mobileActions);
+            resizeObserver = new ResizeObserver(positionDrawer);
+            resizeObserver.observe(document.getElementById('player-shell')); resizeObserver.observe(mobileActions);
+            mobileMedia.addEventListener('change', onMobileChange);
+            window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
+        }
         const panel = { id, adapter, list: null, dead: false, error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
-                this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = false; copy.disabled = false;
+                this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = false; exportButton.disabled = false;
+                if (mobileActions) { mobileAdd.hidden = !value.can_create; mobileAdd.disabled = false; mobileExport.disabled = false; }
                 if (loop?.panel === this) api.stopLoop();
-                if (!value.entries.length) list.append(el('li', 'Zatím žádné časové zápisy.'));
+                if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));
                 value.entries.forEach(row => {
                     const item = el('li'); item.className = 'ts-' + row.kind;
-                    const seek = button(format(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
+                    const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
+                    authors.className = 'ts-author vz2-attribution';
                     authors.title = 'Vytvořeno: ' + new Date(row.created_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ') + ' · upraveno: ' + new Date(row.updated_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ');
                     const actions = el('div'); actions.className = 'toolbar';
                     const end = endOf(row, value.entries, value.duration_ms);
                     if (row.kind !== 'note') {
-                        const repeat = button('Smyčka', async () => {
+                        const repeat = iconButton('Smyčka', 'repeat', async () => {
                             try { api.stopLoop(); const token = loopSerial; await this.adapter.playRange(row.time_ms, end); if (token !== loopSerial || this.dead) return; loop = { panel: this, adapter: this.adapter, start: row.time_ms, end }; this.playback(); }
                             catch (e) { status.textContent = e.message; }
                         }); repeat.dataset.playback = end == null ? 'unknown' : 'loop';
                         if (end != null) repeat.dataset.endMs = end;
                         repeat.title = end == null ? 'Konec úseku není známý.' : format(row.time_ms) + ' – ' + format(end); actions.append(repeat);
                     }
-                    if (row.can_edit) actions.append(button('Upravit', () => openEditor(this, row)));
-                    if (row.can_delete) actions.append(button('Smazat', async () => {
-                        if (!confirm('Smazat tento časový zápis?\n' + row.body)) return;
-                        try { const result = await request(id, { action: 'delete', id: row.id, revision: row.revision, timestamps_revision: value.timestamps_revision }); publish(result); status.textContent = 'Zápis odstraněn.'; }
+                    if (row.can_edit) actions.append(iconButton('Upravit', 'pencil', () => openEditor(this, row)));
+                    if (row.can_delete) actions.append(iconButton('Smazat', 'trash', async () => {
+                        if (!confirm('Smazat tuto časovou značku?\n' + row.body)) return;
+                        try { const result = await request(id, { action: 'delete', id: row.id, revision: row.revision, timestamps_revision: value.timestamps_revision }); publish(result); status.textContent = 'Značka odstraněna.'; }
                         catch (e) { status.textContent = e.message; }
                     }));
-                    item.append(seek, el('strong', kinds[row.kind]), text, authors, actions); list.append(item);
+                    item.append(seek, text, authors, actions); list.append(item);
                 }); this.playback();
+                if (typeof this.adapter?.timestampsChanged === 'function') this.adapter.timestampsChanged(value.entries);
             },
             playback() {
                 const duration = this.adapter?.durationMs();
@@ -174,7 +252,12 @@
                 stop.hidden = loop?.panel !== this;
             },
             async load() { reload.disabled = true; try { const value = await request(id); if (!this.dead) { publish(value); status.textContent = ''; } } catch (e) { status.textContent = e.message; } finally { reload.disabled = false; } },
-            destroy() { this.dead = true; panels.delete(this); if (loop?.panel === this) api.stopLoop(); shell.remove(); }
+            destroy() {
+                this.dead = true; panels.delete(this); if (loop?.panel === this) api.stopLoop(); shell.remove();
+                resizeObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
+                window.removeEventListener('resize', positionDrawer); document.removeEventListener('keydown', onDrawerKey);
+                mobileActions?.remove(); container.classList.remove('ts-drawer-open'); container.style.removeProperty('--ts-drawer-top');
+            }
         };
         panels.add(panel); panel.load(); return panel;
     };
