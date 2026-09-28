@@ -99,6 +99,7 @@ article { margin: 8px 0; }
 .song-map-selected-tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; max-width: 520px; margin: 0; }
 .song-map-selected-label { grid-column: 1 / -1; color: var(--vz-muted); }
 .song-map-selected-tools button { min-height: 34px; }
+.song-map-selected-tools button:last-child { border-color: var(--vz-primary); color: var(--vz-primary-hover); font-weight: 700; }
 @keyframes song-map-footer-rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .song-map-footer-enter { animation: song-map-footer-rise .18s ease-out; }
 @media (prefers-reduced-motion: reduce) { .song-map-footer-enter { animation: none; } }
@@ -109,21 +110,26 @@ article { margin: 8px 0; }
 .song-map-row > :nth-child(n+5) { grid-column: auto; }
 .song-map-row > :nth-child(5) { grid-column: 6; }
 .song-map-bar { position: relative; min-width: 0; padding: 3px 0; min-height: 32px; font-size: clamp(12px, 2vw, 19px); line-height: 1.2; border-color: transparent; background: transparent; }
+.song-map-tail-action { min-width: 0; min-height: 56px; padding: 3px 1px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 10px; line-height: 1.15; border-color: var(--vz-border); background: var(--vz-surface); }
+.song-map-tail-action small { color: inherit; font-size: 10px; }
 .song-map-bar.has-detail::after { content: ''; position: absolute; right: 3px; bottom: 2px; width: 3px; height: 3px; border-radius: 50%; background: var(--vz-primary); }
 .song-map-mode-row { display: flex; align-items: flex-start; gap: 5px; margin-bottom: 8px; }
 .song-map-modes { display: flex; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; gap: 4px; }
 .song-map-modes button { font-size: 11px; padding: 6px; }
 .song-map-undo { flex: 0 0 auto; margin-left: auto; font-size: 11px; padding: 6px; white-space: nowrap; }
-.song-map-add-bar { display: flex; flex-direction: column; align-items: flex-start; padding: 7px 10px; background: var(--vz-primary); border-color: var(--vz-primary); color: var(--vz-bg); font-weight: 700; }
+.song-map-add-bar { background: var(--vz-primary); border-color: var(--vz-primary); color: var(--vz-bg); font-weight: 700; }
 .song-map-add-bar:hover { background: var(--vz-primary-hover); border-color: var(--vz-primary-hover); }
-.song-map-add-bar small { color: inherit; font-size: 11px; font-weight: 500; }
-.song-map-edit-switch { flex: 0 0 auto; padding: 7px 10px; border-bottom: 1px solid var(--vz-border); background: var(--vz-shell); }
-.song-map-edit-switch button { padding: 6px; font-size: 12px; }
+.song-map-add-section { color: var(--vz-primary-hover); border-color: var(--vz-primary); }
 .song-map-palette-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; }
 .song-map-palette { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 5px 0 8px; max-width: 520px; }
-.song-map-palette button { min-width: 0; padding: 8px 1px; font-size: clamp(9px, 1vw, 12px); min-height: 40px; }
-.song-map-palette button[data-type="?"] { font-size: 20px; }
-.song-map-palette button:disabled { opacity: .45; }
+.song-map-palette button { min-width: 0; }
+.song-map-palette-edit button { min-height: 30px; padding: 3px 1px; font-size: 10px; }
+.song-map-palette-edit button[data-type="?"] { font-size: 16px; }
+.song-map-palette-listen { gap: 6px; margin-bottom: 10px; }
+.song-map-palette-listen button { min-height: 58px; padding: 5px 1px; border-radius: 10px; font-size: clamp(10px, 2.8vw, 13px); font-weight: 700; line-height: 1.15; box-shadow: inset 0 -4px 0 #0003, 0 2px 4px #0003; }
+.song-map-palette-listen button[data-type="HH+CRASH"], .song-map-palette-listen button[data-type="RD+CRASH"] { font-size: 9px; letter-spacing: -.2px; }
+.song-map-palette-listen button:active { transform: translateY(2px); box-shadow: inset 0 -2px 0 #0003; }
+.song-map-palette-listen button[data-type="?"] { font-size: 21px; }
 .song-map-tools, .song-map-quick-sections, .song-map-selected-tools { gap: 4px; margin: 8px 0; }
 .song-map-quick-sections button, .song-map-tools button, .song-map-selected-tools button { padding: 6px; font-size: 12px; }
 .song-map-section-header { margin-top: 10px; }

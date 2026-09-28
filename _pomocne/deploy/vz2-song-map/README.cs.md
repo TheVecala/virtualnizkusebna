@@ -9,9 +9,10 @@ prostá tabulatura a její historie zůstávají v DB; neprovádí se automatick
 Pokud je už Mapa V1 na betě nasazená, pro tuto úpravu stačí nahrát současně
 `css/vz2.css`, `js/vz2-song-map-model.js` a `js/vz2-song-map.js` do původních cest.
 Databázová migrace se neopakuje. Po nahrání ověřit vytvoření první série taktů
-bez výběru sekce, přepínání „Vybrat takt“ / „Změnit typ taktu“, použití druhu
-teprve kliknutím do Mapy, Zpět vpravo vedle režimů, nabídku akcí až po výběru
-taktu, tlačítka pro přidání pod paletou, přepínač úprav přímo nad Mapou,
+bez výběru sekce, akci „Změnit“ v nabídce vybraného taktu, zobrazení kompaktní
+palety druhů a použití druhu teprve kliknutím do Mapy. Ověřit „Hotovo“ pro návrat
+k výběru, větší pady v režimu Zápis poslechem na mobilu, Zpět vpravo vedle režimů,
+nabídku akcí až po výběru taktu, tlačítka pro přidání na konci taktů v Mapě,
 zobrazení typu na tlačítku Přidat takt a nezávislé posouvání Mapy.
 
 ## Pořadí nasazení
