@@ -4,7 +4,8 @@ const { Draft, types } = require('../../js/vz2-song-map-model');
 const hh = types.find(t => t.name === 'HI-HAT'), ride = types.find(t => t.name === 'RIDE');
 const draft = new Draft();
 draft.create(); assert(draft.dirty); assert.equal(draft.sections.length, 0);
-assert.equal(draft.append(hh), false, 'first section requires explicit choice');
+const noSection = new Draft(); noSection.create(); assert(noSection.append(hh));
+assert.equal(noSection.sections[0].name, 'Bez sekce'); noSection.undo(); assert.equal(noSection.sections.length, 0);
 draft.queue('Sloka'); draft.queue('Refrén'); assert.equal(draft.sections.length, 0);
 draft.append(hh); assert.equal(draft.sections[0].name, 'Refrén 1');
 const firstSection = draft.sections[0].id, firstBar = draft.selected;
@@ -28,4 +29,4 @@ draft.removeSection(secondSection); assert.equal(draft.sections.length, 1); draf
 const snapshot = JSON.stringify(draft.map); draft.reset(draft.map); assert(!draft.dirty); assert.equal(JSON.stringify(draft.map), snapshot);
 const single = new Draft(); single.create(); single.queue('Outro'); single.append(hh); single.removeBar(); assert.equal(single.sections.length, 0); single.undo(); assert.equal(single.sections.length, 1);
 assert.equal(new Set(types.map(t => t.name)).size, 14);
-console.log('PASS map model: pending section, insert boundaries, delete/Undo, stable IDs, independent copies, semantic edits, reorder and clean state');
+console.log('PASS map model: optional first section, pending section, insert boundaries, delete/Undo, stable IDs, independent copies, semantic edits, reorder and clean state');

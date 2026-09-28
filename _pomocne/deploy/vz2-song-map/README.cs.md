@@ -4,6 +4,15 @@ Mapa nahrazuje panel Tabulatura, zachovává čtyři obsahová tlačítka a nast
 rozložení. Jedna Mapa patří celé skladbě, všem jejím nahrávkám společně. Současná
 prostá tabulatura a její historie zůstávají v DB; neprovádí se automatický převod.
 
+## Pozdější úprava rozhraní
+
+Pokud je už Mapa V1 na betě nasazená, pro tuto úpravu stačí nahrát současně
+`css/vz2.css`, `js/vz2-song-map-model.js` a `js/vz2-song-map.js` do původních cest.
+Databázová migrace se neopakuje. Po nahrání ověřit vytvoření první série taktů
+bez výběru sekce, přepínání „Vybrat takt“ / „Změnit typ taktu“, použití druhu
+teprve kliknutím do Mapy, polohu sekcí a Zpět při zápisu poslechem a nezávislé
+posouvání Mapy.
+
 ## Pořadí nasazení
 
 1. Ověřit aktuální živou DB a zálohu: jde o současnou společnou DB VZ2, nikoli
@@ -32,8 +41,8 @@ prostá tabulatura a její historie zůstávají v DB; neprovádí se automatick
    administrační čtecí kontrolu podle stávajícího postupu nasazení, ne kopírovat
    celou složku `_pomocne/` do webu. Ověřuje i ENUM z migrace 004. Po kontrole
    dočasnou diagnostiku odstranit stejným postupem jako při předchozích nasazeních.
-6. Ověřit na betě osobní účet s edit_text a hosta: nová skladba bez Mapy, zvolení
-   první sekce, poslech, Undo, uložení, reload, Detail, historie a mobilní rastr.
+6. Ověřit na betě osobní účet s edit_text a hosta: nová skladba bez Mapy, první
+   takt bez povinné sekce, poslech, Undo, uložení, reload, Detail, historie a mobilní rastr.
    Zkontrolovat i Text, Diskusi, Looper a Mixér. Bez změny konfigurace účtů/storage.
 
 Migrace nebyla tímto vývojem spuštěna na živém hostingu. Testovací DB byla privátní

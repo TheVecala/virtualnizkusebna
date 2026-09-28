@@ -67,42 +67,55 @@
     }
     function render(ctx) {
         const draft = ctx.draft, map = draft.map;
+        const previousScroll = ctx.host.querySelector('.song-map-scroll')?.scrollTop || 0;
         ctx.host.replaceChildren(); ctx.actions.replaceChildren();
-        if (ctx.notice) { const notice = make('p', ctx.notice, 'song-map-notice'); notice.setAttribute('role', 'status'); ctx.host.append(notice); }
+        const controls = make('div', undefined, 'song-map-controls');
+        const footer = make('div', undefined, 'song-map-footer');
+        if (ctx.notice) { const notice = make('p', ctx.notice, 'song-map-notice'); notice.setAttribute('role', 'status'); controls.append(notice); }
         if (!map) {
+            if (ctx.notice) ctx.host.append(controls);
             ctx.host.append(make('p', 'Tato skladba zatím nemá mapu.', 'muted'));
-            if (ctx.response?.can_edit) ctx.host.append(button('Vytvořit mapu', () => { draft.create(); ctx.mode = 'edit'; render(ctx); sectionName(ctx); }));
+            if (ctx.response?.can_edit) ctx.host.append(button('Vytvořit mapu', () => { draft.create(); ctx.mode = 'edit'; ctx.editAction = 'select'; render(ctx); }));
             return;
         }
         const modes = make('div', undefined, 'song-map-modes'); modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', 'Režim Mapy');
         [['map','MAPA'],['edit','UPRAVIT'],['listen','ZÁPIS POSLECHEM']].forEach(([mode, title]) => {
             if (mode !== 'map' && !ctx.response.can_edit) return;
-            const control = button(title, () => { ctx.mode = mode; ctx.tool = null; ctx.copy = null; render(ctx); });
+            const control = button(title, () => { ctx.mode = mode; ctx.tool = null; ctx.copy = null; ctx.editAction = 'select'; render(ctx); });
             control.setAttribute('aria-pressed', String(ctx.mode === mode)); modes.append(control);
         });
-        ctx.host.append(modes);
+        controls.append(modes);
         ctx.actions.append(make('span', draft.dirty ? 'Neuloženo' : 'Uloženo', 'song-map-save-state'));
         if (!ctx.preview) {
             if (ctx.response.can_edit) { const save = button('Uložit mapu', () => saveMap(ctx)); save.disabled = !draft.dirty || ctx.busy; ctx.actions.append(save); }
             if (ctx.response.document) ctx.actions.append(button('Historie mapy', () => history(ctx)));
-            if (ctx.conflict) ctx.host.append(button('Porovnat aktuální verzi', () => compare(ctx)));
+            if (ctx.conflict) controls.append(button('Porovnat aktuální verzi', () => compare(ctx)));
         }
         if (ctx.mode !== 'map') {
-            const undo = button('↶ Zpět', () => { draft.undo(); ctx.copy = null; render(ctx); }); undo.disabled = !draft.history.length; ctx.host.append(undo);
+            const undo = button('↶ Zpět', () => { draft.undo(); ctx.copy = null; ctx.scrollToEnd = ctx.mode === 'listen'; render(ctx); }); undo.disabled = !draft.history.length; footer.append(undo);
             if (ctx.mode === 'edit') {
                 const tools = make('div', undefined, 'toolbar song-map-tools');
-                tools.append(button('Vybrat takt', () => { ctx.tool = null; render(ctx); }), button('Nová sekce', () => sectionName(ctx)));
-                ctx.host.append(tools);
+                [['select', 'Vybrat takt'], ['paint', 'Změnit typ taktu']].forEach(([action, title]) => {
+                    const control = button(title, () => { ctx.editAction = action; render(ctx); });
+                    control.setAttribute('aria-pressed', String((ctx.editAction || 'select') === action)); tools.append(control);
+                });
+                tools.setAttribute('role', 'group'); tools.setAttribute('aria-label', 'Způsob práce s taktem');
+                controls.append(tools);
             }
-            if (!ctx.copy) palette(ctx);
-            if (draft.pending) ctx.host.append(make('p', 'Další takt začne: ' + draft.pending, 'song-map-pending'));
-            if (!draft.sections.length && !draft.pending) ctx.host.append(button('Zvolit první sekci', () => sectionName(ctx)));
+            if (ctx.mode === 'edit') {
+                const tools = make('div', undefined, 'toolbar song-map-tools');
+                tools.append(button('+ Takt', () => { draft.append((ctx.editAction === 'paint' && ctx.tool) || types.find(type => type.special === 'unknown')); ctx.scrollToEnd = true; render(ctx); }),
+                    button('Nová sekce', () => sectionName(ctx)));
+                controls.append(tools);
+            }
+            if (!ctx.copy) palette(ctx, controls);
         }
         if (ctx.copy) {
             const tools = make('div', undefined, 'toolbar');
             tools.append(make('span', 'Vyberte cílové takty (' + ctx.copy.targets.size + ')'), button('Použít detail na vybrané takty', () => applyCopy(ctx)), button('Ukončit kopírování', () => { ctx.copy = null; render(ctx); }));
-            ctx.host.append(tools);
+            controls.append(tools);
         }
+        const scroll = make('div', undefined, 'song-map-scroll');
         const view = make('div', undefined, 'song-map'); view.dataset.mode = ctx.mode;
         let number = 0;
         map.sections.forEach((section, sectionIndex) => {
@@ -124,7 +137,7 @@
                     const cell = button('', () => {
                         if (ctx.mode === 'map' || ctx.mode === 'listen') return detail(ctx, bar);
                         if (ctx.copy) { if (bar.id !== ctx.copy.source) { const targets = ctx.copy.targets; if (targets.has(bar.id)) targets.delete(bar.id); else targets.add(bar.id); } }
-                        else { draft.selected = bar.id; if (ctx.tool) draft.setType(ctx.tool); }
+                        else { draft.selected = bar.id; if (ctx.editAction === 'paint' && ctx.tool) draft.setType(ctx.tool); }
                         render(ctx);
                     }, 'song-map-bar');
                     cell.append(make('span', symbol(bar)));
@@ -137,34 +150,40 @@
             }
             view.append(block);
         });
-        ctx.host.append(view);
-        if (ctx.mode === 'edit' && draft.find() && !ctx.copy) selectedTools(ctx);
+        scroll.append(view);
+        if (ctx.mode === 'edit' && draft.find() && !ctx.copy) selectedTools(ctx, footer);
+        ctx.host.append(controls, scroll);
+        if (footer.childElementCount) ctx.host.append(footer);
+        scroll.scrollTop = ctx.scrollToEnd ? scroll.scrollHeight : previousScroll;
+        ctx.scrollToEnd = false;
         [...ctx.host.querySelectorAll('button'), ...ctx.actions.querySelectorAll('button')].forEach(control => { if (ctx.busy) control.disabled = true; });
     }
-    function palette(ctx) {
+    function palette(ctx, host) {
         const palette = make('div', undefined, 'song-map-palette'); palette.setAttribute('aria-label', 'Takty');
-        const other = make('div', undefined, 'toolbar song-map-secondary');
-        types.forEach((type, index) => {
-            const control = button(type.name, () => {
-                if (ctx.mode === 'listen' || ctx.draft.pending) {
-                    if (!ctx.draft.append(type)) ctx.notice = 'Nejprve zvolte první sekci.';
-                } else { ctx.tool = type; ctx.draft.setType(type); }
-                render(ctx);
-            });
-            control.dataset.type = type.name;
-            if (type.special === 'unknown') control.title = 'Neurčený takt – takt jsem slyšel, ale nestihl jsem určit jeho obsah.';
-            control.setAttribute('aria-pressed', String(ctx.tool === type));
-            if (index >= 12) other.append(control); else palette.append(control);
-        });
-        ctx.host.append(make('strong', 'TAKTY'), palette);
         if (ctx.mode === 'listen') {
             const sections = make('div', undefined, 'toolbar song-map-quick-sections');
             ['Intro','Sloka','Refrén','Bridge','Sólo','Outro','Jiná'].forEach(name => sections.append(button(name, () => {
                 if (name === 'Jiná') sectionName(ctx); else { ctx.draft.queue(name); render(ctx); }
             })));
-            ctx.host.append(make('strong', 'SEKCE'), sections);
+            host.append(make('strong', 'SEKCE'), sections);
         }
-        ctx.host.append(make('small', 'DALŠÍ'), other);
+        const heading = make('div', undefined, 'song-map-palette-heading');
+        heading.append(make('strong', 'TAKTY'));
+        if (ctx.draft.pending) heading.append(make('span', 'Další takt začne: ' + ctx.draft.pending, 'song-map-pending'));
+        host.append(heading);
+        types.forEach(type => {
+            const control = button(type.name, () => {
+                if (ctx.mode === 'listen') { ctx.draft.append(type); ctx.scrollToEnd = true; }
+                else ctx.tool = type;
+                render(ctx);
+            });
+            control.dataset.type = type.name;
+            if (type.special === 'unknown') control.title = 'Neurčený takt – takt jsem slyšel, ale nestihl jsem určit jeho obsah.';
+            control.setAttribute('aria-pressed', String(ctx.mode === 'edit' && ctx.tool === type));
+            control.disabled = ctx.mode === 'edit' && ctx.editAction !== 'paint';
+            palette.append(control);
+        });
+        host.append(palette);
     }
     function fields(ctx, action) {
         return { action, kind: 'song_map', collection_id: Number(ctx.collection.id), document_id: ctx.response.document?.id ?? null, current_revision: ctx.response.document?.current_revision ?? 0 };
@@ -234,15 +253,23 @@
         }
         load();
     }
-    function selectedTools(ctx) {
+    function selectedTools(ctx, host) {
         const tools = make('div', undefined, 'toolbar song-map-selected-tools');
         const found = ctx.draft.find();
+        const number = ctx.draft.sections.slice(0, ctx.draft.sections.indexOf(found.section)).reduce((sum, section) => sum + section.bars.length, 0) + found.index + 1;
         const before = button('← Posunout takt', () => { ctx.draft.moveBar(-1); render(ctx); }); before.disabled = found.index === 0;
         const after = button('Posunout takt →', () => { ctx.draft.moveBar(1); render(ctx); }); after.disabled = found.index === found.section.bars.length - 1;
-        tools.append(button('Vložit před', () => { ctx.draft.insert(false); ctx.tool = null; render(ctx); }), button('Vložit za', () => { ctx.draft.insert(true); ctx.tool = null; render(ctx); }),
-            button('Odstranit takt', () => { ctx.draft.removeBar(); render(ctx); }), before, after,
-            button('Detail taktu', () => detail(ctx, found.bar)), button('Kopírovat detail', () => { ctx.copy = { source: found.bar.id, targets: new Set() }; ctx.tool = null; render(ctx); }));
-        ctx.host.append(tools);
+        const more = make('details', undefined, 'song-map-more');
+        more.append(make('summary', 'Další akce'));
+        const extra = make('div', undefined, 'toolbar song-map-more-actions');
+        extra.append(button('Odstranit takt', () => { ctx.draft.removeBar(); render(ctx); }), before, after,
+            button('Kopírovat detail', () => { ctx.copy = { source: found.bar.id, targets: new Set() }; ctx.tool = null; render(ctx); }));
+        more.append(extra);
+        tools.append(make('span', 'Vybraný takt ' + number),
+            button('Vložit před', () => { ctx.draft.insert(false); ctx.tool = null; render(ctx); }),
+            button('Vložit za', () => { ctx.draft.insert(true); ctx.tool = null; render(ctx); }),
+            button('Detail taktu', () => detail(ctx, found.bar)), more);
+        host.append(tools);
     }
     async function applyCopy(ctx) {
         if (!ctx.copy?.targets.size) return;
@@ -284,7 +311,7 @@
         const host = document.getElementById('tablature-content'), actions = document.getElementById('tablature-actions');
         current = null; host.replaceChildren(); actions.replaceChildren();
         if (!collection || collection.kind !== 'song') { host.append(make('p', collection ? 'Mapa skladby je dostupná u skladeb.' : 'Vyberte skladbu.', 'muted')); return; }
-        const ctx = { collection, host, actions, draft: new Draft(), response: null, mode: 'map', tool: null, copy: null, notice: '', busy: false }; current = ctx;
+        const ctx = { collection, host, actions, draft: new Draft(), response: null, mode: 'map', editAction: 'select', tool: null, copy: null, notice: '', busy: false }; current = ctx;
         host.append(make('p', 'Načítám mapu…', 'muted'));
         try {
             ctx.response = await api({ action: 'document', collection_id: collection.id, kind: 'song_map' });

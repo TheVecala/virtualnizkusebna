@@ -43,12 +43,13 @@
         }
         queue(name) { this.pending = this.nextName(name); }
         append(type) {
-            if (!this.map || (!this.pending && !this.sections.length)) return false;
+            if (!this.map) return false;
             // Undo the first bar of a pending section returns to the previous section.
             const pending = this.pending; this.pending = null;
             this.change(() => {
                 let section = this.sections[this.sections.length - 1];
                 if (pending) { section = { id: id(), name: pending, bars: [] }; this.sections.push(section); }
+                else if (!section) { section = { id: id(), name: 'Bez sekce', bars: [] }; this.sections.push(section); }
                 const bar = { id: id(), ...semantic(type), detail: '' }; section.bars.push(bar); this.selected = bar.id;
             });
             return true;
