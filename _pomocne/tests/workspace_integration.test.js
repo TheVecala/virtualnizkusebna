@@ -141,6 +141,16 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
         await page.goto(base + 'index.php?sekce=uploads');
+        async function checkFullscreen(panelId) {
+            const panel = page.locator(panelId), control = panel.locator('.panel-section-fullscreen-button');
+            await control.click();
+            const bounds = await panel.boundingBox();
+            assert(bounds && Math.abs(bounds.x) < 1 && Math.abs(bounds.y) < 1 && Math.abs(bounds.width - 1440) < 1 && Math.abs(bounds.height - 1000) < 1);
+            assert.equal(await page.evaluate(id => document.querySelector(id).contains(document.elementFromPoint(10, 10)), panelId), true);
+            await page.keyboard.press('Escape');
+            assert.equal(await control.getAttribute('aria-pressed'), 'false');
+        }
+        await checkFullscreen('#panel-nahravky');
         await page.locator('#nav-multitrack').click();
         await page.locator('[data-mt-id="jedna"]').click();
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'ready');
@@ -152,6 +162,7 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         await page.waitForFunction(() => window.MultitrackApp.getState()?.id === 'kapela' && window.MultitrackApp.getState().phase === 'ready');
         await page.locator('#mt-mixer-toggle').click();
         assert.ok(await page.locator('#mt-tracks').isVisible());
+        await checkFullscreen('#mt-mixer');
         await page.locator('#mt-outline .mt-outline-note .mt-note-time').first().click();
         assert.equal(Math.round(await page.evaluate(() => window.MultitrackApp.getState().position)), 12);
         assert.equal(await page.locator('#nav-text').innerText(), 'obsah');
@@ -161,6 +172,7 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         assert.equal(await page.locator('#panel-tabelatura h2').innerText(), 'POPIS');
         assert.equal(await page.locator('#panel-tabelatura #mt-summary-form').count(), 1);
         assert.equal(await page.locator('#panel-tabelatura #mt-note-form, #panel-tabelatura .mt-note-time').count(), 0);
+        await checkFullscreen('#panel-text');
         await page.locator('#panel-text #mt-add-chapter').click();
         assert.equal(await page.locator('#panel-text #mt-note-kind').inputValue(), 'chapter');
         await page.locator('#mt-note-cancel').click();
@@ -180,6 +192,7 @@ for (const [id, count] of [['jedna', 1], ['kapela', 3]]) {
         assert.ok(!(await request('php/ajax/ajax_diskuse.php?sekce=uploads')).text.includes('Diskuse pouze k multitracku'));
         assert.ok(!(await request('php/ajax/ajax_diskuse.php?multitrack_id=jedna')).text.includes('Diskuse pouze k multitracku'));
         await page.locator('#nav-napady').click();
+        await checkFullscreen('#panel-napady');
         await page.locator('#napady_text').fill('Společný nápad rozepsaný v multitracku');
         await page.locator('#napady_jmeno').fill('Tester');
         await page.evaluate(() => { window.__sharedIdeasPanel = document.getElementById('panel-napady'); });

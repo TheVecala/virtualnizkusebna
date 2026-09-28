@@ -56,6 +56,7 @@
         </div>
 
         <section id="mt-mixer" class="mt-mixer" aria-label="Mixážní pult" hidden>
+            <div class="panel-header"><h2>Mixér</h2></div>
             <div class="mt-mixer-scroll">
                 <div id="mt-tracks" class="mt-tracks"></div>
 

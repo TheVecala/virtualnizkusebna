@@ -374,6 +374,13 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 #content-area { padding: 0 8px 8px; gap: 8px; }
 #content-area > .panel, #ideas-workspace { border: 1px solid var(--vz-content-border); border-radius: 12px; }
 #ideas-workspace { margin: 0 8px 8px; overflow: hidden; }
+#content-area > .panel.panel-fullscreen, #ideas-workspace.panel-fullscreen { position: fixed; inset: 0; z-index: 40; flex: none; width: 100%; height: 100vh; height: 100dvh; min-height: 0; margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+.panel-fullscreen-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px; width: 28px; min-height: 28px; margin-left: auto; padding: 0; font-size: 17px; line-height: 1; }
+.panel-header-actions { min-width: 0; overflow-x: auto; }
+#ideas-workspace > .panel-header .panel-fullscreen-button { min-height: 28px; padding: 0; }
+.panel-header-actions + .panel-fullscreen-button { margin-left: 5px; }
+@media (max-width: 1199px) { .panel-fullscreen-button { flex-basis: 40px; width: 40px; min-height: 40px; } #ideas-workspace > .panel-header .panel-fullscreen-button { min-height: 40px; } }
+@media (min-width: 768px) and (max-width: 1199px) { .panel-header select { flex: 1 1 auto; width: auto; } }
 #player-shell.player-fullscreen { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
 #player-shell.player-fullscreen .player-header { border-radius: 0; }
 /* Mobile hierarchy: identity, player status, then the recording content. */

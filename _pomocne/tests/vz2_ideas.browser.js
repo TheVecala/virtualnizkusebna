@@ -33,6 +33,12 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().collapsed), true);
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
         const draft = ideas.locator('[name=post_body]'); await draft.fill('Koncept přežije návrat i změnu šířky');
+        await ideas.locator('.panel-fullscreen-button').click();
+        const fullscreen = await ideas.boundingBox();
+        assert(fullscreen && Math.abs(fullscreen.x) < 1 && Math.abs(fullscreen.y) < 1 && Math.abs(fullscreen.width - 1440) < 1 && Math.abs(fullscreen.height - 900) < 1);
+        await page.keyboard.press('Escape');
+        assert.equal(await ideas.locator('.panel-fullscreen-button').getAttribute('aria-pressed'), 'false');
+        assert.equal(await draft.inputValue(), 'Koncept přežije návrat i změnu šířky');
         await page.locator('#ideas-back').click();
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().collapsed), false);
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);

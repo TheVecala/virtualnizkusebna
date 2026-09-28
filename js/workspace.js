@@ -8,6 +8,52 @@
     var area = document.getElementById('content-area'), main = document.getElementById('main');
     var store = document.getElementById('mt-panel-store'), slots = ['nahravky', 'text', 'tabelatura'];
     var ordinary = {}, multitrack = {}, states = {}, active = false, selected = null, discussionSerial = 0;
+    var fullscreenPanel = null;
+    function setPanelFullscreen(panel) {
+        if (fullscreenPanel === panel) panel = null;
+        if (fullscreenPanel) {
+            fullscreenPanel.classList.remove('section-fullscreen');
+            updateFullscreenButton(fullscreenPanel, false);
+        }
+        fullscreenPanel = panel;
+        document.body.classList.toggle('section-fullscreen-active', !!panel);
+        if (panel) {
+            panel.classList.add('section-fullscreen');
+            updateFullscreenButton(panel, true);
+        }
+    }
+    function updateFullscreenButton(panel, active) {
+        var control = panel.querySelector('.panel-section-fullscreen-button');
+        var label = active ? 'Ukončit celou obrazovku' : 'Celá obrazovka';
+        control.setAttribute('aria-label', label + ': ' + panel.querySelector('.panel-header h2').textContent.trim());
+        control.setAttribute('aria-pressed', String(active));
+        control.title = label;
+        control.firstElementChild.className = active ? 'ti ti-minimize' : 'ti ti-maximize';
+    }
+    document.querySelectorAll('#content-area > .panel, #mt-panel-store > .panel, #mt-mixer').forEach(function(panel) {
+        var header = panel.querySelector('.panel-header');
+        if (!header) return;
+        var control = document.createElement('button'), icon = document.createElement('i');
+        control.type = 'button'; control.className = 'panel-section-fullscreen-button';
+        icon.className = 'ti ti-maximize'; icon.setAttribute('aria-hidden', 'true');
+        control.appendChild(icon); header.appendChild(control);
+        control.addEventListener('click', function() { setPanelFullscreen(panel); });
+        updateFullscreenButton(panel, false);
+    });
+    document.addEventListener('keydown', function(event) {
+        if (!fullscreenPanel || document.querySelector('.modal.show, dialog[open]')) return;
+        if (event.key === 'Escape' && !event.defaultPrevented && !event.target.closest('.popisek-edit-input')) {
+            var control = fullscreenPanel.querySelector('.panel-section-fullscreen-button');
+            setPanelFullscreen(fullscreenPanel); control.focus(); event.preventDefault();
+        }
+        if (event.key === 'Tab') {
+            var controls = Array.from(fullscreenPanel.querySelectorAll('button, input, select, textarea, a[href], summary, [tabindex]'))
+                .filter(function(control) { return !control.disabled && control.tabIndex >= 0 && control.getClientRects().length; });
+            var first = controls[0], last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) { if (last) last.focus(); event.preventDefault(); }
+            else if (!event.shiftKey && document.activeElement === last) { if (first) first.focus(); event.preventDefault(); }
+        }
+    });
     var ordinaryMode = VZ.sekce === 'zkousky' ? 'zkousky' : 'skladby';
     var panelModes = {
         skladby: { text: 'text', tabelatura: 'tabelatura' },
@@ -118,6 +164,7 @@
     }
     function showMultitrack(open) {
         if (open === active) return;
+        if (fullscreenPanel) setPanelFullscreen(fullscreenPanel);
         saveState(active ? 'multitrack' : ordinaryMode);
         active = open;
         discussionSerial++;

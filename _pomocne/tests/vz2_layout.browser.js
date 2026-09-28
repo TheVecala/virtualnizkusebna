@@ -31,6 +31,19 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         assert.deepEqual(await visible(), ['recordings', 'lyrics', 'tablature']);
         await toggle('discussion').click();
         assert.deepEqual(await visible(), ['recordings', 'lyrics', 'tablature', 'discussion']);
+        for (const id of ['recordings', 'lyrics', 'tablature', 'discussion']) {
+            const panel = page.locator('#panel-' + id), control = panel.locator('.panel-fullscreen-button');
+            if (id === 'lyrics') await panel.locator('.panel-body').evaluate(n => n.scrollTop = 200);
+            const scroll = await panel.locator('.panel-body').evaluate(n => n.scrollTop);
+            await control.click();
+            assert.equal(await control.getAttribute('aria-pressed'), 'true');
+            const rect = await panel.boundingBox();
+            assert(rect && Math.abs(rect.x) < 1 && Math.abs(rect.y) < 1 && Math.abs(rect.width - 1440) < 1 && Math.abs(rect.height - 900) < 1, id + ' fills the viewport');
+            await page.keyboard.press('Escape');
+            assert.equal(await control.getAttribute('aria-pressed'), 'false');
+            assert.equal(await panel.locator('.panel-body').evaluate(n => n.scrollTop), scroll);
+        }
+        check(true, 'layout: every desktop section fills the viewport and restores its scroll position');
         for (const width of [360, 390, 767, 768, 1024, 1199, 1200, 1280, 1440, 1920]) {
             await resize(width, 800);
             assert.equal((await visible()).length, width < 768 ? 1 : width < 1200 ? 2 : 4);
@@ -43,6 +56,14 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
             assert(geometry.panels.every(p => p.bottom <= 801), 'Panels remain in viewport at ' + width);
             assert(Math.max(...geometry.panels.map(p => p.width)) - Math.min(...geometry.panels.map(p => p.width)) < 2, 'Equal panel widths');
             assert.equal(geometry.nav !== 'none', width < 768);
+            if (width === 390) {
+                const panel = page.locator('#content-area > .panel:visible');
+                await panel.locator('.panel-fullscreen-button').click();
+                const fullscreen = await panel.boundingBox();
+                assert(fullscreen && Math.abs(fullscreen.x) < 1 && Math.abs(fullscreen.y) < 1 && Math.abs(fullscreen.width - width) < 1 && Math.abs(fullscreen.height - 800) < 1);
+                await panel.locator('.panel-fullscreen-button').click();
+                assert.equal(await panel.locator('.panel-fullscreen-button').getAttribute('aria-pressed'), 'false');
+            }
             await page.screenshot({ path: path.join(temp, 'ui-stage1-' + width + '.png') });
         }
         check(true, 'layout: all 10 requested widths, exact panel counts, equal widths, no document overflow');

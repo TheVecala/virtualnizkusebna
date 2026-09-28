@@ -10,7 +10,41 @@
     }
     const validId = id => ids.includes(id);
     const validSet = a => Array.isArray(a) && a.length > 0 && a.length <= 4 && a.every(validId) && new Set(a).size === a.length;
-    let ideasOpen = false;
+    let ideasOpen = false, fullscreenPanel = null;
+    function setPanelFullscreen(panel) {
+        if (fullscreenPanel === panel) panel = null;
+        if (fullscreenPanel) {
+            fullscreenPanel.classList.remove('panel-fullscreen');
+            updateFullscreenButton(fullscreenPanel, false);
+        }
+        fullscreenPanel = panel;
+        if (panel) {
+            document.querySelectorAll('#player-options[open], #looper-options[open], .shell-menu[open], .actions-menu[open], .collection-menu[open]').forEach(menu => menu.open = false);
+            panel.classList.add('panel-fullscreen');
+            updateFullscreenButton(panel, true);
+        }
+    }
+    function updateFullscreenButton(panel, active) {
+        const control = panel.querySelector('.panel-fullscreen-button');
+        if (!control) return;
+        const label = active ? 'Ukončit celou obrazovku' : 'Celá obrazovka';
+        control.setAttribute('aria-label', label + ': ' + panel.getAttribute('aria-label'));
+        control.setAttribute('aria-pressed', String(active));
+        control.title = label;
+        control.firstElementChild.className = active ? 'ti ti-minimize' : 'ti ti-maximize';
+    }
+    function addFullscreenButton(panel) {
+        const header = panel.querySelector(':scope > .panel-header');
+        if (!header || header.querySelector('.panel-fullscreen-button')) return;
+        const control = document.createElement('button');
+        control.type = 'button'; control.className = 'panel-fullscreen-button';
+        const icon = document.createElement('i'); icon.className = 'ti ti-maximize'; icon.setAttribute('aria-hidden', 'true');
+        control.append(icon);
+        control.addEventListener('click', () => setPanelFullscreen(panel));
+        if (panel.id === 'ideas-workspace') header.insertBefore(control, $('ideas-back'));
+        else header.append(control);
+        updateFullscreenButton(panel, false);
+    }
     const state = {
         desktop: read('desktop', ids.slice(0, 3), validSet),
         tablet: read('tablet', ['recordings', 'lyrics'], a => validSet(a) && a.length === 2),
@@ -29,6 +63,7 @@
     function apply() {
         if (desktop.matches && $('catalog-dialog').open && !catalogOpenedOnDesktop) closeCatalog();
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current];
+        if (fullscreenPanel && (ideasOpen ? fullscreenPanel.id !== 'ideas-workspace' : fullscreenPanel.id === 'ideas-workspace' || !shown.includes(fullscreenPanel.dataset.panel))) setPanelFullscreen(fullscreenPanel);
         document.body.dataset.layout = current;
         document.body.dataset.workspace = ideasOpen ? 'ideas' : 'panels';
         $('content-area').hidden = ideasOpen;
@@ -54,6 +89,7 @@
         }
     }
     ids.forEach(id => {
+        addFullscreenButton($('panel-' + id));
         const select = document.createElement('select');
         for (const [value, label] of Object.entries(names)) { const o = document.createElement('option'); o.value = value; o.textContent = label; select.append(o); }
         select.addEventListener('change', async () => {
@@ -64,7 +100,8 @@
             state.tablet[slot] = next; save('tablet'); apply();
             $('panel-' + next).querySelector('select').focus({ preventScroll: true });
         });
-        $('panel-' + id).querySelector('.panel-header').append(select);
+        const header = $('panel-' + id).querySelector('.panel-header');
+        header.insertBefore(select, header.querySelector('.panel-header-actions') || header.querySelector('.panel-fullscreen-button'));
     });
     document.querySelectorAll('[data-desktop-panel]').forEach(b => b.addEventListener('click', async () => {
         if (ideasOpen) { hideIdeas(); return; }
@@ -148,9 +185,23 @@
         const menu = document.querySelector('.actions-menu[open], .collection-menu[open]');
         if (menu) { menu.open = false; menu.querySelector('summary').focus(); e.preventDefault(); }
     });
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || e.defaultPrevented || !fullscreenPanel || document.querySelector('dialog[open]')) return;
+        const control = fullscreenPanel.querySelector('.panel-fullscreen-button');
+        setPanelFullscreen(fullscreenPanel); control.focus({ preventScroll: true }); e.preventDefault();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Tab' || !fullscreenPanel || document.querySelector('dialog[open]')) return;
+        const controls = [...fullscreenPanel.querySelectorAll('button, input, select, textarea, a[href], summary, [tabindex]')]
+            .filter(control => !control.disabled && control.tabIndex >= 0 && control.getClientRects().length);
+        const first = controls[0], last = controls.at(-1);
+        if (e.shiftKey && document.activeElement === first) { last?.focus(); e.preventDefault(); }
+        else if (!e.shiftKey && document.activeElement === last) { first?.focus(); e.preventDefault(); }
+    });
     desktop.addEventListener('change', apply); mobile.addEventListener('change', apply);
     function hideIdeas(focus = true) {
         if (!ideasOpen) return;
+        if (fullscreenPanel?.id === 'ideas-workspace') setPanelFullscreen(fullscreenPanel);
         ideasOpen = false; window.Vz2Player?.setIdeasMode(false); apply();
         if (focus) $(mobile.matches ? 'bn-napady' : 'show-ideas').focus({ preventScroll: true });
     }
@@ -158,7 +209,7 @@
         closeCatalog, hideIdeas,
         showIdeas() {
             if (ideasOpen) return;
-            ideasOpen = true; closeCatalog(); window.Vz2Player?.setIdeasMode(true); apply();
+            ideasOpen = true; addFullscreenButton($('ideas-workspace')); closeCatalog(); window.Vz2Player?.setIdeasMode(true); apply();
             $('ideas-back').focus({ preventScroll: true });
         },
         revealRecording() {
