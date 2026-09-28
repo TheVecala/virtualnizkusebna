@@ -37,6 +37,8 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         assert.equal((await getMap()).json().document, null);
         await host.getByRole('button', { name: 'Vytvořit mapu', exact: true }).click();
         assert.equal(await host.locator('.song-map-section').count(), 0);
+        assert.equal(await host.locator('.song-map-controls .song-map-palette + .song-map-tools .song-map-add-bar').count(), 1);
+        assert.equal(await host.locator('.song-map-edit-switch + .song-map-scroll').count(), 1);
         assert.equal(await host.locator('.song-map-add-bar small').textContent(), 'Neurčený (?)');
         await host.getByRole('button', { name: 'Změnit typ taktu', exact: true }).click(); await type(page, 'HH+F1');
         assert.equal(await host.locator('.song-map-add-bar small').textContent(), 'HH+F1');

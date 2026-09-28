@@ -11,7 +11,8 @@ Pokud je už Mapa V1 na betě nasazená, pro tuto úpravu stačí nahrát souča
 Databázová migrace se neopakuje. Po nahrání ověřit vytvoření první série taktů
 bez výběru sekce, přepínání „Vybrat takt“ / „Změnit typ taktu“, použití druhu
 teprve kliknutím do Mapy, Zpět vpravo vedle režimů, nabídku akcí až po výběru
-taktu, zobrazení typu na tlačítku Přidat takt a nezávislé posouvání Mapy.
+taktu, tlačítka pro přidání pod paletou, přepínač úprav přímo nad Mapou,
+zobrazení typu na tlačítku Přidat takt a nezávislé posouvání Mapy.
 
 ## Pořadí nasazení
 

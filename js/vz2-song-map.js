@@ -97,15 +97,16 @@
             if (ctx.response.document) ctx.actions.append(button('Historie mapy', () => history(ctx)));
             if (ctx.conflict) controls.append(button('Porovnat aktuální verzi', () => compare(ctx)));
         }
+        let editSwitch = null;
         if (ctx.mode !== 'map') {
+            if (!ctx.copy) palette(ctx, controls);
             if (ctx.mode === 'edit') {
-                const tools = make('div', undefined, 'toolbar song-map-tools');
+                editSwitch = make('div', undefined, 'toolbar song-map-edit-switch');
                 [['select', 'Vybrat takt'], ['paint', 'Změnit typ taktu']].forEach(([action, title]) => {
                     const control = button(title, () => { ctx.editAction = action; ctx.selectionOpen = false; render(ctx); });
-                    control.setAttribute('aria-pressed', String((ctx.editAction || 'select') === action)); tools.append(control);
+                    control.setAttribute('aria-pressed', String((ctx.editAction || 'select') === action)); editSwitch.append(control);
                 });
-                tools.setAttribute('role', 'group'); tools.setAttribute('aria-label', 'Způsob práce s taktem');
-                controls.append(tools);
+                editSwitch.setAttribute('role', 'group'); editSwitch.setAttribute('aria-label', 'Způsob práce s taktem');
             }
             if (ctx.mode === 'edit') {
                 const tools = make('div', undefined, 'toolbar song-map-tools');
@@ -117,7 +118,6 @@
                 tools.append(add, button('Nová sekce', () => sectionName(ctx)));
                 controls.append(tools);
             }
-            if (!ctx.copy) palette(ctx, controls);
         }
         if (ctx.copy) {
             const tools = make('div', undefined, 'toolbar');
@@ -161,7 +161,9 @@
         });
         scroll.append(view);
         if (ctx.mode === 'edit' && ctx.selectionOpen && draft.find() && !ctx.copy) selectedTools(ctx, footer);
-        ctx.host.append(controls, scroll);
+        ctx.host.append(controls);
+        if (editSwitch) ctx.host.append(editSwitch);
+        ctx.host.append(scroll);
         if (footer.childElementCount) { if (ctx.animateSelection) footer.classList.add('song-map-footer-enter'); ctx.host.append(footer); }
         ctx.animateSelection = false;
         scroll.scrollTop = ctx.scrollToEnd ? scroll.scrollHeight : previousScroll;
