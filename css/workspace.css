@@ -1,5 +1,18 @@
 /* Directory switch and the integrated multitrack workspace. */
 [hidden] { display: none !important; }
+#content-area > .panel.section-fullscreen { position: fixed; inset: 0; z-index: 1100; display: flex !important; flex: none; width: 100%; height: 100vh; height: 100dvh; min-width: 0; min-height: 0; border: 0; background: var(--pozadi); }
+#mt-workspace #mt-mixer.section-fullscreen { position: fixed; inset: 0; z-index: 1100; display: flex !important; flex-direction: column; width: 100%; height: 100vh; height: 100dvh; max-height: none !important; margin: 0; border: 0; border-radius: 0; background: var(--tmava); }
+#mt-mixer.section-fullscreen .mt-mixer-scroll { flex: 1; min-height: 0; overflow: auto; }
+body.section-fullscreen-active #mt-workspace { z-index: 1100; }
+body.section-fullscreen-active .modal-backdrop { z-index: 1190; }
+body.section-fullscreen-active .modal { z-index: 1200; }
+.panel-header .panel-section-fullscreen-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; margin-left: auto; padding: 0; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 5px; font-size: 18px; cursor: pointer; }
+.panel-header h2, .panel-header .acts { min-width: 0; }
+.panel-header h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-header .acts { overflow-x: auto; }
+.panel-header .acts + .panel-section-fullscreen-button { margin-left: 0; }
+.panel-header .panel-section-fullscreen-button:hover { color: var(--barva); border-color: var(--barva); }
+@media (max-width: 1199px) { .panel-header .panel-section-fullscreen-button { flex-basis: 40px; width: 40px; height: 40px; } }
 .content-empty { color: var(--muted); font-size: 12px; padding: 12px 6px; }
 .content-section-switch { display: flex; gap: 4px; }
 .content-section-switch a { padding: 7px 8px; border-radius: 4px; color: var(--muted); text-decoration: none; font-size: 12px; letter-spacing: 0; text-transform: none; }

@@ -37,7 +37,7 @@ try {
     // optional file here: that would hide a broken application bootstrap.
     $optionalConfig = $appRoot.'/config.vz2.php';
     $optionalRealPath = realpath($optionalConfig);
-    $details['preflight_version'] = '2026-09-20.5';
+    $details['preflight_version'] = '2026-09-27.1';
     $details['configuration'] = [
         'app_root'=>$appRoot,
         'config_vz2_exists'=>is_file($optionalConfig),
@@ -79,6 +79,8 @@ try {
     vz2_preflight_report(count($tables)===13 && !array_filter($tables, static fn($table) => $table['ENGINE'] !== 'InnoDB'), 'All VZ2 tables use InnoDB');
     $postBody = $db->query("SHOW COLUMNS FROM vz2_discussion_posts WHERE Field='body'")->fetch_assoc();
     vz2_preflight_report($postBody && strtolower($postBody['Type'])==='mediumtext', 'Discussion MEDIUMTEXT (migration 003)');
+    $documentKind = $db->query("SHOW COLUMNS FROM vz2_documents WHERE Field='kind'")->fetch_assoc();
+    vz2_preflight_report($documentKind && $documentKind['Type'] === "enum('lyrics_chords','tablature','song_map')", 'Document song_map kind (migration 004)');
     $ideas = vz2_rows($db,"SELECT id FROM vz2_discussion_threads WHERE global_key='ideas'");
     vz2_preflight_report(count($ideas)===1, 'Global ideas thread');
     $pending = vz2_rows($db,"SELECT id,state FROM vz2_file_operations WHERE state<>'completed'");

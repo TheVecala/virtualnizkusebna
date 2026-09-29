@@ -28,7 +28,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 </head><body>
 <header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA <small>2.0</small></a><h1 id="collection-title"><span class="collection-path-prefix" aria-hidden="true">/ DK /</span><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" title="Vybrat skladbu nebo zkoušku"><span id="collection-title-name">Načítám…</span></button></h1>
 <nav id="desktop-panels" aria-label="Zobrazené panely">
-<button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Tabulatura</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
+<button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Mapa</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
 </nav><button id="show-ideas" aria-pressed="false" aria-controls="ideas-workspace">Nápady</button>
 <span class="topbar-account" title="Přihlášený účet: <?=auth_h($_SESSION['user_name']??'Host')?>"><?=auth_h($_SESSION['user_name']??'Host')?></span>
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
@@ -73,7 +73,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <section id="operations" hidden><h2>Nedokončené operace</h2><div></div></section>
 </div></section>
 <section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><h2>Text a akordy</h2><div id="lyrics-actions" class="panel-header-actions"></div></div><div id="lyrics-content" class="panel-body"></div></section>
-<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Tabulatura"><div class="panel-header"><h2>Tabulatura</h2><div id="tablature-actions" class="panel-header-actions"></div></div><div id="tablature-content" class="panel-body"></div></section>
+<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Mapa skladby"><div class="panel-header"><h2>Mapa skladby</h2><div id="tablature-actions" class="panel-header-actions"></div></div><div id="tablature-content" class="panel-body"></div></section>
 <section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><h2>Diskuse</h2><div id="discussion-actions" class="panel-header-actions"></div></div><div id="discussion-content" class="panel-body"></div></section>
 </div><section id="ideas-workspace" hidden aria-label="Nápady"></section></div></div>
 <section id="activity" class="utility-panel" hidden aria-label="Deník změn"><div class="dialog-header"><h2>Deník změn</h2><button class="modal-close" type="button" data-close-utility="activity" aria-label="Zavřít deník" title="Zavřít deník">×</button></div><div class="log-entries"></div><button id="log-more">Starší změny</button></section>
@@ -97,7 +97,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <button id="bn-skladby" aria-haspopup="dialog"><img src="meat/ikona_skladby.png" alt="">skladby</button>
 <button data-mobile-panel="recordings" aria-pressed="true"><img src="meat/ikona_nahravky.png" alt="">nahrávky</button>
 <button data-mobile-panel="lyrics" aria-pressed="false"><img src="meat/ikona_text.png" alt="">text</button>
-<button data-mobile-panel="tablature" aria-pressed="false"><img src="meat/drinking2.png" alt="">taby</button>
+<button data-mobile-panel="tablature" aria-pressed="false"><img src="meat/drinking2.png" alt="">mapa</button>
 <button data-mobile-panel="discussion" aria-pressed="false"><img src="meat/ikona_diskuse.png" alt="">diskuse</button>
 <button id="bn-napady" aria-pressed="false" aria-controls="ideas-workspace"><img src="meat/ikona_napady.png" alt="">nápady</button>
 </nav>
@@ -110,5 +110,5 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <dialog id="player-help-dialog" aria-labelledby="player-help-title"><div class="dialog-header"><h2 id="player-help-title">Nápověda přehrávače</h2><button id="player-help-close" class="modal-close" type="button" aria-label="Zavřít nápovědu">×</button></div><p>Nejprve vyberte nahrávku ze seznamu a otevřete ji v Looperu nebo Mixéru.</p><p class="muted">Podrobnou nápovědu doplníme později.</p></dialog>
 <script>window.VZ2=<?=json_encode($config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_HEX_APOS)?>;
 window.MULTITRACK_CONFIG={listUrl:'php/ajax/vz2.php?action=mixer',detailUrl:'php/ajax/vz2.php?action=mixer&id={id}',canUpload:false,cacheDb:'zkusebna-vz2-cache',cacheStore:'audio',cachePrefix:window.VZ2.cachePrefix,requireFreshMetadata:true,managedNavigation:true};</script>
-<script src="js/vz2-cache.js"></script><script src="js/multitrack.js?v=<?=filemtime(__DIR__.'/js/multitrack.js')?>"></script><script src="js/vz2-timestamps.js"></script><script src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script src="js/vz2-layout.js?v=<?=filemtime(__DIR__.'/js/vz2-layout.js')?>"></script><script src="js/vz2-player.js?v=<?=filemtime(__DIR__.'/js/vz2-player.js')?>"></script><script src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
+<script src="js/vz2-cache.js"></script><script src="js/multitrack.js?v=<?=filemtime(__DIR__.'/js/multitrack.js')?>"></script><script src="js/vz2-timestamps.js"></script><script src="js/vz2-song-map-model.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map-model.js')?>"></script><script src="js/vz2-song-map.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map.js')?>"></script><script src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script src="js/vz2-layout.js?v=<?=filemtime(__DIR__.'/js/vz2-layout.js')?>"></script><script src="js/vz2-player.js?v=<?=filemtime(__DIR__.'/js/vz2-player.js')?>"></script><script src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
 </body></html>
