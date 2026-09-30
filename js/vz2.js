@@ -407,7 +407,7 @@
         document.querySelectorAll('.recording-actions-dialog').forEach(dialog => dialog.remove());
         document.querySelectorAll('#content audio').forEach(a => a.pause()); blobs.splice(0).forEach(URL.revokeObjectURL);
         document.querySelectorAll('[data-kind]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
-        const list = data.collections.filter(c => c.kind === kind); $('collections').replaceChildren();
+        const list = data.collections.filter(c => c.kind === kind && c.lifecycle === 'active'); $('collections').replaceChildren();
         list.forEach(c => {
             const row = node('div', undefined, 'collection');
             const select = button('', async () => { await navigate({ collection_id: String(c.id) }); window.Vz2Layout.closeCatalog(); });
