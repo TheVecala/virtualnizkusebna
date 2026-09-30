@@ -8,16 +8,18 @@ const entries = [
     { id: 2, time_ms: 1000, kind: 'passage', body: 'Stejný čas' },
     { id: 3, time_ms: 1100, kind: 'note', body: 'Nevymezuje úsek' },
     { id: 4, time_ms: 2000, kind: 'passage', body: 'Pasáž\nse dvěma řádky\ta tabulátorem' },
-    { id: 5, time_ms: 3000, kind: 'song_start', body: 'Další skladba' }
+    { id: 5, time_ms: 3000, kind: 'song_start', body: 'Další skladba' },
+    { id: 6, time_ms: 2500, kind: 'song_end', paired_timestamp_id: 1, body: 'Přesný konec' }
 ];
-assert.equal(endOf(entries[0], entries, 4000), 3000);
+assert.equal(endOf(entries[0], entries, 4000), 2500);
 assert.equal(endOf(entries[1], entries, 4000), 2000);
 assert.equal(endOf(entries[2], entries, 4000), null);
 assert.equal(endOf(entries[3], entries, 4000), 3000);
-assert.equal(endOf(entries[4], entries, 4000), 4000);
+assert.equal(endOf(entries[4], entries, 4000), null);
 assert.equal(endOf(entries[4], entries, null), null);
 assert.equal(endOf(entries[4], entries, 3000), null);
 assert.equal(endOf(entries[1], [...entries].reverse(), 4000), 2000);
+assert.equal(endOf(entries[5], entries, 4000), null);
 for (const ms of [0, 1, 999, 1000, 60001, 3600999, 604800000]) assert.equal(parse(format(ms)), ms);
 assert.equal(parse('01:02.3'), 62300);
 assert.equal(parse('01:02,03'), 62030);

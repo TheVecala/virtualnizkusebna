@@ -137,6 +137,24 @@ function vz2_remove(array $in): array {
     $key=vz2_key($in['request_key']??null);$action=$in['action']??'';$id=vz2_id($in['id']??null);
     $map=['remove_audio'=>'recording','remove_attachment'=>'attachment','delete_recording'=>'recording','delete_collection'=>'collection'];
     if(!isset($map[$action]))throw new Vz2Error('Neplatná operace.');$type=$map[$action];
+    // A song already used by history is retired from the main catalogue instead
+    // of destroying its stable identity. Recordings and files are untouched.
+    if($action==='delete_collection'){
+        $archive=vz2_write(function(mysqli $db)use($id,$in):bool{
+            $c=vz2_collection($db,$id);
+            if($c['kind']!=='song')return false;
+            $count=(int)vz2_one($db,'SELECT COUNT(*) n FROM vz2_rehearsal_plays WHERE song_collection_id=?',[$id])['n'];
+            if(!$count)return false;
+            if(!auth_is_admin())throw new Vz2Error('Archivaci skladby smí provést jen admin.',403);
+            vz2_revision($c,$in['revision']??null);
+            if(($in['confirm']??null)!==$c['title'])throw new Vz2Error('Potvrďte název mazané položky.');
+            vz2_query($db,"UPDATE vz2_collections SET lifecycle='archived',revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?",[vz2_actor(),$id]);
+            vz2_query($db,"UPDATE vz2_collection_orders SET revision=revision+1 WHERE kind='song'");
+            vz2_log($db,'collection.archived','collection',$id,$c['title'],'Skladba zůstává v historii; zahrání: '.$count);
+            return true;
+        });
+        if($archive)return ['id'=>$id,'archived'=>true,'completed'=>true];
+    }
     if($old=vz2_existing_operation($key)){
         if($old['action']!==$action || (int)$old['target_id']!==$id)throw new Vz2Error('Klíč patří jiné operaci.',409);
         return vz2_run_operation((int)$old['id']);
