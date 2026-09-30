@@ -9,9 +9,25 @@ ALTER TABLE vz2_collections MODIFY lifecycle ENUM('active','archived','deleting'
 ALTER TABLE vz2_timestamps
     MODIFY kind ENUM('song_start','song_end','passage','note') NOT NULL DEFAULT 'note',
     ADD COLUMN IF NOT EXISTS paired_timestamp_id INT UNSIGNED NULL AFTER body,
-    ADD UNIQUE KEY IF NOT EXISTS uq_vz2_timestamp_pair (paired_timestamp_id),
-    ADD CONSTRAINT IF NOT EXISTS fk_vz2_timestamp_pair FOREIGN KEY (paired_timestamp_id)
-        REFERENCES vz2_timestamps (id) ON DELETE RESTRICT ON UPDATE RESTRICT;
+    ADD UNIQUE KEY IF NOT EXISTS uq_vz2_timestamp_pair (paired_timestamp_id);
+
+-- MariaDB podporuje IF NOT EXISTS pro sloupce a indexy, ale nikoli v pozici
+-- podminenou variantu ADD CONSTRAINT. Cizi klic proto pridame pres
+-- information_schema; funguje to i po castecne provedenem prvnim pokusu.
+SET @vz2_add_timestamp_pair_fk = IF(
+    EXISTS (
+        SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'vz2_timestamps'
+          AND CONSTRAINT_NAME = 'fk_vz2_timestamp_pair'
+          AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+    ),
+    'SELECT 1 AS fk_vz2_timestamp_pair_already_exists',
+    'ALTER TABLE vz2_timestamps ADD CONSTRAINT fk_vz2_timestamp_pair FOREIGN KEY (paired_timestamp_id) REFERENCES vz2_timestamps (id) ON DELETE RESTRICT ON UPDATE RESTRICT'
+);
+PREPARE vz2_stmt FROM @vz2_add_timestamp_pair_fk;
+EXECUTE vz2_stmt;
+DEALLOCATE PREPARE vz2_stmt;
 
 CREATE TABLE IF NOT EXISTS vz2_rehearsal_plays (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,

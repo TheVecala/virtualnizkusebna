@@ -17,7 +17,9 @@ záznamu nemůže proběhnout tiše.
    vz2_collections`, `vz2_timestamps`, `vz2_recordings` a `users`.
 4. Na betě ručně spustit `_pomocne/migrations/005_vz2_rehearsal_history.sql`.
    Aplikace migraci nikdy nespouští. Opakované spuštění nemá mazat ani převádět
-   data.
+   data. Pokud předchozí verze skončila na syntaxi cizího klíče chybou 1064,
+   spusťte opravený soubor znovu celý: sloupec a index používají `IF NOT EXISTS`
+   a cizí klíč se přidá podmíněně podle `information_schema`.
 5. Ověřit přidání začátku/konce, export úseků, dvě zahrání v jedné buňce,
    připojení výstřižku, stavy `deleted` a `missing` a archivaci skladby.
 6. Teprve po beta smoke testu nasadit stejné PHP/JS/CSS do alfy. Protože beta a

@@ -12,6 +12,9 @@ for (const fk of ['fk_vz2_play_rehearsal','fk_vz2_play_song','fk_vz2_play_source
 assert.match(sql, /UNIQUE KEY uq_vz2_play_interval/);
 assert.match(sql, /UNIQUE KEY uq_vz2_play_clip/);
 assert.match(sql, /ENUM\('song_start','song_end','passage','note'\)/);
+assert.doesNotMatch(sql, /ADD CONSTRAINT IF NOT EXISTS/);
+assert.match(sql, /information_schema\.TABLE_CONSTRAINTS/);
+assert.match(sql, /PREPARE vz2_stmt[\s\S]*EXECUTE vz2_stmt[\s\S]*DEALLOCATE PREPARE vz2_stmt/);
 assert.match(php, /start_timestamp_id/);
 assert.match(php, /end_timestamp_id/);
 assert.match(php, /kind'\]!==\s*'song_start'/);
