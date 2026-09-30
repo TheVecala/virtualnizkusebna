@@ -6,6 +6,7 @@ const sql = read('_pomocne/migrations/005_vz2_rehearsal_history.sql');
 const php = read('php/inc/vz2_history.php');
 const ui = read('js/vz2-history.js');
 const page = read('vz2.php');
+const auth = read('php/auth.php');
 for (const fk of ['fk_vz2_play_rehearsal','fk_vz2_play_song','fk_vz2_play_source','fk_vz2_play_start','fk_vz2_play_end','fk_vz2_play_clip']) {
     assert.match(sql, new RegExp('CONSTRAINT '+fk+'[\\s\\S]*?ON DELETE RESTRICT'));
 }
@@ -25,4 +26,5 @@ assert.match(ui, /history-orientation/);
 assert.match(ui, /if\(!confirm\('Odebrat pouze historické zahrání\?/);
 assert.match(page, /id="history-workspace"/);
 assert.doesNotMatch(page, /data-desktop-panel="history"/);
+assert.match(auth, /php\/ajax\/vz2_history\.php/, 'VZ2_ONLY must allow the history endpoint');
 console.log('PASS rehearsal history schema, interval semantics and standalone matrix contract');
