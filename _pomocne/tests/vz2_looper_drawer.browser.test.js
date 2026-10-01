@@ -53,8 +53,14 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 await editor.locator('input[name=time]').fill('00:12');
                 await editor.getByRole('button', { name: 'Aktualizovat čas', exact: true }).click();
                 assert.equal(await editor.locator('input[name=time]').inputValue(), '00:03');
-                assert.equal(await editor.getByRole('radio').count(), 4);
-                for (const kind of ['Začátek', 'Konec', 'Pasáž', 'Poznámka']) assert(await editor.getByRole('radio', { name: kind, exact: true }).isVisible());
+                assert.equal(await editor.getByRole('radio').count(), 0);
+                for (const kind of ['Začátek', 'Konec', 'Pasáž', 'Poznámka']) assert(await editor.getByRole('button', { name: kind, exact: true }).isVisible());
+                assert.equal(await editor.getByRole('button', { name: 'Zrušit', exact: true }).count(), 0);
+                assert(await editor.getByRole('checkbox', { name: 'Ponechat otevřené', exact: true }).isVisible());
+                assert(await editor.getByRole('checkbox', { name: 'Vrátit na čas', exact: true }).isVisible());
+                assert.equal(await editor.locator('[name=body]').evaluate(e => e.tagName), 'INPUT');
+                assert(await editor.locator('[name=paired_timestamp_id]').isVisible());
+                assert.notEqual(await editor.evaluate(e => getComputedStyle(e).borderColor), 'rgb(96, 107, 114)');
                 assert.equal(await notes.isVisible(), false);
                 await page.locator('.ts-close').click();
                 await actions.getByRole('button', { name: 'Export', exact: true }).click();
