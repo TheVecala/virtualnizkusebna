@@ -7,15 +7,35 @@
             .map(n => String(n).padStart(2, '0')).join(':') + '.' + String(ms % 1000).padStart(3, '0');
     }
     function parse(text) {
-        const m = /^(?:(\d+):)?(\d{1,2}):(\d{2})(?:[.,](\d{1,3}))?$/.exec(text.trim());
-        if (!m || Number(m[2]) > 59 || Number(m[3]) > 59) throw new Error('Čas zadejte jako hh:mm:ss.mmm nebo mm:ss.mmm.');
-        const ms = ((Number(m[1] || 0) * 60 + Number(m[2])) * 60 + Number(m[3])) * 1000 + Number((m[4] || '').padEnd(3, '0'));
+        const m = /^(?:(\d+):)?(\d+):(\d{2})(?:[.,](\d{1,3}))?$/.exec(text.trim());
+        const hasHours = !!m?.[1];
+        if (!m || Number(m[3]) > 59 || (hasHours && Number(m[2]) > 59)) throw new Error('Čas zadejte jako mm:ss nebo hh:mm:ss.');
+        const minutes = Number(m[2]) + (hasHours ? Number(m[1]) * 60 : 0);
+        const ms = (minutes * 60 + Number(m[3])) * 1000 + Number((m[4] || '').padEnd(3, '0'));
         if (!Number.isSafeInteger(ms) || ms > 604800000) throw new Error('Nejvyšší čas je 7 dní.');
         return ms;
     }
     function compactFormat(ms) {
         const seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
         return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+    }
+    function adjust(text, delta) {
+        return format(parse(text) + Number(delta));
+    }
+    function timestampBody(kind, body) {
+        body = body.trim();
+        if (body) return body;
+        if (kind === 'song_start') return 'začátek';
+        if (kind === 'song_end') return 'konec';
+        throw new Error('U pasáže a poznámky vyplňte text.');
+    }
+    function songIntervalFor(entry, entries) {
+        const time = Number(entry.time_ms);
+        return entries.filter(end => end.kind === 'song_end' && end.paired_timestamp_id).map(end => {
+            const start = entries.find(candidate => candidate.kind === 'song_start' && Number(candidate.id) === Number(end.paired_timestamp_id));
+            return start && Number(end.time_ms) >= Number(start.time_ms) ? { start, end } : null;
+        }).filter(interval => interval && time >= Number(interval.start.time_ms) && time <= Number(interval.end.time_ms))
+            .sort((a, b) => (Number(a.end.time_ms) - Number(a.start.time_ms)) - (Number(b.end.time_ms) - Number(b.start.time_ms)))[0] || null;
     }
     function endOf(entry, entries, duration) {
         if (entry.kind === 'note') return null;
@@ -34,7 +54,7 @@
         return entries.filter(t => selected.includes(t.kind)).map(t => format(t.time_ms) + '\t'
             + t.body.replace(/[\t\r\n]+/g, ' ')).join('\n');
     }
-    const api = { format, compactFormat, parse, endOf, tabular };
+    const api = { format, compactFormat, parse, adjust, timestampBody, songIntervalFor, endOf, tabular };
     if (typeof module !== 'undefined') module.exports = api;
     if (!root.document) return;
     root.Vz2Timestamps = api;
@@ -78,12 +98,18 @@
     function ensureEditor() {
         if (editor) return;
         editor = el('dialog'); editor.className = 'vz2-timestamp-editor';
-        editor.innerHTML = '<form><div class="dialog-header"><h2>Časová značka</h2><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><p class="ts-context"></p><label>Typ<select name="kind"></select></label><label>Čas (hh:mm:ss.mmm)<input name="time" required></label><label class="ts-pair" hidden>Propojený začátek<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><label>Text<textarea name="body" rows="5" required></textarea></label><label class="ts-keep"><input type="checkbox" name="keep"> Nechat otevřené pro další značku</label><p role="alert" class="error"></p><pre class="ts-current" hidden></pre><div class="toolbar"><button type="submit">Uložit</button><button type="submit" name="return" value="yes">Uložit a vrátit na čas</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
+        editor.innerHTML = '<form><div class="ts-editor-top"><p class="ts-context"></p><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><div class="ts-editor-body"><div class="ts-time-row"><input name="time" required inputmode="numeric" aria-label="Čas ve formátu minuty a sekundy"><button type="button" class="ts-time-current">Aktualizovat</button><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+</button></div><label class="ts-body"><span class="visually-hidden">Text</span><input name="body" aria-label="Text časové značky" placeholder="Text"></label><label class="ts-pair">Propojený začátek pro konec skladby<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><div class="ts-editor-options"><label class="ts-keep"><input type="checkbox" name="keep"> Ponechat otevřené</label><label class="ts-return"><input type="checkbox" name="return_position"> Vrátit na čas</label></div><p role="alert" class="error"></p><pre class="ts-current" hidden></pre></div><div class="ts-editor-footer"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
         const form = editor.querySelector('form');
         editor.addEventListener('cancel', e => { if (activeEditor?.busy) e.preventDefault(); });
-        Object.entries(kinds).forEach(([value, text]) => { const o = el('option', text); o.value = value; form.elements.kind.append(o); });
-        form.elements.kind.addEventListener('change', () => { editor.querySelector('.ts-pair').hidden = form.elements.kind.value !== 'song_end'; });
-        editor.querySelector('.ts-close').onclick = () => editor.close();
+        editor.querySelectorAll('.ts-close').forEach(close => { close.onclick = () => editor.close(); });
+        editor.querySelector('.ts-time-current').onclick = () => {
+            const ms = activeEditor?.panel.adapter?.currentTimeMs();
+            if (Number.isFinite(ms)) form.elements.time.value = compactFormat(ms);
+        };
+        editor.querySelectorAll('.ts-time-adjust').forEach(control => { control.onclick = () => {
+            try { form.elements.time.value = compactFormat(parse(form.elements.time.value) + Number(control.dataset.delta)); }
+            catch (e) { editor.querySelector('.error').textContent = e.message; }
+        }; });
         editor.querySelector('.ts-rebase').onclick = async () => {
             const context = activeEditor;
             try {
@@ -94,7 +120,7 @@
                 if (context.row && !current) return;
                 if (!confirm('Aktuální značky jsou načtené. Použít jejich revizi pro další uložení vašeho rozepsaného textu?')) return;
                 context.revision = latest.timestamps_revision; context.row = current || null;
-                editor.querySelector('.error').textContent = 'Revize je aktuální. Zkontrolujte text a stiskněte Uložit.';
+                editor.querySelector('.error').textContent = 'Revize je aktuální. Zkontrolujte text a zvolte typ značky.';
                 editor.querySelector('.ts-rebase').hidden = true;
             } catch (e) { editor.querySelector('.error').textContent = e.message; }
         };
@@ -105,7 +131,8 @@
             try {
                 const ms = parse(form.elements.time.value);
                 const fields = { action: context.row ? 'update' : 'create', timestamps_revision: context.revision,
-                    kind: form.elements.kind.value, time_ms: ms, body: form.elements.body.value };
+                    kind: e.submitter.value, time_ms: ms,
+                    body: timestampBody(e.submitter.value, form.elements.body.value) };
                 if (fields.kind === 'song_end') fields.paired_timestamp_id = form.elements.paired_timestamp_id.value ? Number(form.elements.paired_timestamp_id.value) : null;
                 if (context.row) { fields.id = context.row.id; fields.revision = context.row.revision; }
                 const result = await request(context.panel.id, fields); publish(result);
@@ -115,13 +142,13 @@
                 }
                 context.revision = result.timestamps_revision;
                 // Only rewind after successful commit, and only the original recording.
-                if (e.submitter?.name === 'return' && context.panel.adapter?.canPlay()) context.panel.adapter.seek(ms);
+                if (form.elements.return_position.checked && context.panel.adapter?.canPlay()) context.panel.adapter.seek(ms);
                 editor.querySelector('.error').textContent = '';
                 if (form.elements.keep.checked && !context.row) {
-                    form.elements.body.value = ''; form.elements.time.value = format(context.panel.adapter?.currentTimeMs() ?? ms); form.elements.body.focus();
+                    form.elements.body.value = ''; form.elements.time.value = compactFormat(context.panel.adapter?.currentTimeMs() ?? ms); form.elements.body.focus();
                 } else editor.close();
             } catch (err) { editor.querySelector('.error').textContent = err.message; editor.querySelector('.ts-rebase').hidden = err.status !== 409; }
-            finally { context.busy = false; controls.forEach(b => b.disabled = false); form.elements.return.disabled = !context.panel.adapter?.canPlay(); }
+            finally { context.busy = false; controls.forEach(b => b.disabled = false); form.elements.return_position.disabled = !context.panel.adapter?.canPlay(); }
         });
         document.body.append(editor);
     }
@@ -129,18 +156,19 @@
         ensureEditor();
         activeEditor = { panel, row, revision: panel.list.timestamps_revision };
         const f = editor.querySelector('form');
-        f.elements.kind.value = row?.kind || preferences.kind; f.elements.time.value = format(row?.time_ms ?? panel.adapter?.currentTimeMs() ?? 0);
+        f.elements.time.value = compactFormat(row?.time_ms ?? panel.adapter?.currentTimeMs() ?? 0);
         f.elements.body.value = row?.body || ''; f.elements.keep.checked = !row && preferences.keep;
         const pair = f.elements.paired_timestamp_id; pair.replaceChildren(new Option('Bez propojení', ''));
         const used = new Set(panel.list.entries.filter(t => t.kind === 'song_end' && t.id !== row?.id && t.paired_timestamp_id).map(t => Number(t.paired_timestamp_id)));
         panel.list.entries.filter(t => t.kind === 'song_start' && !used.has(Number(t.id))).forEach(t => pair.add(new Option(format(t.time_ms) + ' · ' + t.body, String(t.id))));
         pair.value = row?.paired_timestamp_id ? String(row.paired_timestamp_id) : '';
-        editor.querySelector('.ts-pair').hidden = f.elements.kind.value !== 'song_end';
         editor.querySelector('.ts-keep').hidden = !!row;
         editor.querySelector('.ts-context').textContent = panel.list.title;
         editor.querySelector('.error').textContent = ''; editor.querySelector('.ts-current').hidden = true;
         editor.querySelector('.ts-rebase').hidden = true;
-        f.elements.return.disabled = !panel.adapter?.canPlay();
+        editor.querySelector('.ts-time-current').disabled = !panel.adapter?.canPlay();
+        f.elements.return_position.checked = false;
+        f.elements.return_position.disabled = !panel.adapter?.canPlay();
         editor.showModal(); f.elements.body.focus();
     }
     function ensureExportDialog() {
@@ -235,6 +263,13 @@
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));
                 value.entries.forEach(row => {
                     const item = el('li'); item.className = 'ts-' + row.kind;
+                    const songInterval = songIntervalFor(row, value.entries);
+                    if (songInterval) {
+                        item.classList.add('ts-song-linked'); item.dataset.songStartId = songInterval.start.id;
+                        if (Number(row.id) === Number(songInterval.start.id)) item.classList.add('ts-song-linked-start');
+                        else if (Number(row.id) === Number(songInterval.end.id)) item.classList.add('ts-song-linked-end');
+                        else item.classList.add('ts-song-linked-inside');
+                    }
                     const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
                     authors.className = 'ts-author vz2-attribution';
@@ -255,8 +290,8 @@
                         try { const result = await request(id, { action: 'delete', id: row.id, revision: row.revision, timestamps_revision: value.timestamps_revision }); publish(result); status.textContent = 'Značka odstraněna.'; }
                         catch (e) { status.textContent = e.message; }
                     }));
-                    if (row.kind === 'song_start') text.append(' ', el('small', end == null ? '— neúplný úsek' : '— úsek do ' + format(end)));
-                    if (row.kind === 'song_end') text.append(' ', el('small', row.paired_timestamp_id ? '— propojený konec' : '— konec bez začátku'));
+                    if (row.kind === 'song_start' && end == null) text.append(' ', el('small', '— neúplný úsek'));
+                    if (row.kind === 'song_end' && !row.paired_timestamp_id) text.append(' ', el('small', '— konec bez začátku'));
                     item.append(seek, text, authors, actions); list.append(item);
                 }); this.playback();
                 if (typeof this.adapter?.timestampsChanged === 'function') this.adapter.timestampsChanged(value.entries);
