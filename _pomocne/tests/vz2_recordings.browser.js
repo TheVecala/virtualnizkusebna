@@ -25,8 +25,10 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         const card = id => page.locator('#recording-' + id), expanded = () => page.locator('.recording-toggle[aria-expanded=true]').count();
         await card(ids[2]).waitFor();
-        assert.equal(await card(ids[0]).locator('.recording-status').textContent(), 'one.wav');
-        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'two.wav');
+        assert.equal(await card(ids[0]).locator('.recording-title').textContent(), 'one.wav');
+        assert.equal(await card(ids[1]).locator('.recording-title').textContent(), 'two.wav');
+        assert.equal(await card(ids[0]).locator('.recording-status').textContent(), 'První záběr');
+        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'Druhý záběr');
         const uploadDialog = page.locator('#upload-dialog');
         await page.locator('#upload-open').click();
         await uploadDialog.waitFor({ state: 'visible' });
@@ -138,7 +140,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.equal(await guest.locator('#upload-open').count(), 0);
         await good('admin', { action: 'remove_audio', id: ids[1], revision: Number(db('SELECT revision FROM vz2_recordings WHERE id=?', [ids[1]])[0].revision), confirm: 'Druhý záběr', request_key: crypto.randomBytes(16).toString('hex') });
         await page.reload();
-        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'two.wav - odstraněno');
+        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'Druhý záběr - odstraněno');
         assert.equal(await card(ids[1]).locator('.recording-deleted').count(), 1);
         assert.equal(await card(ids[1]).locator('.recording-body > .files').count(), 0);
         assert.deepEqual(errors, []);

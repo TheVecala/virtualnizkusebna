@@ -152,7 +152,7 @@ function vz2_mutate(array $in): array {
                 vz2_query($db,'UPDATE vz2_recordings SET revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[vz2_actor(),$id]);
                 vz2_log($db,'audio.renamed','audio',(int)$file['id'],$title,'Nahrávka #'.$id.'; původně '.$file['title']);
             } else {
-                $title = vz2_text($in['title'] ?? null);
+                $title = vz2_text($in['title'] ?? '',200,true);
                 $summary = vz2_text($in['summary'] ?? '',10000,true);
                 $author = $r['summary_created_by'] ?? ($summary === '' ? null : vz2_actor());
                 $created = $r['summary_created_at'] ?? ($author === null ? null : gmdate('Y-m-d H:i:s'));

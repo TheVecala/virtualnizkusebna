@@ -34,7 +34,7 @@
         const header = node('div', undefined, 'dialog-header');
         const heading = node('div');
         const title = node('h2', 'Akce nahrávky'); title.id = titleId;
-        heading.append(title, node('p', recording.title, 'recording-actions-context'));
+        heading.append(title, node('p', recordingName(recording), 'recording-actions-context'));
         const close = button('×', () => dialog.close(), 'modal-close');
         close.setAttribute('aria-label', 'Zavřít akce nahrávky'); close.title = 'Zavřít';
         header.append(heading, close);
@@ -48,7 +48,7 @@
             cardHeading.append(symbol, copy); card.append(cardHeading, actions);
             return { card, actions };
         };
-        const fileNames = recording.files.map(file => file.display_name || file.title).join(', ');
+        const fileNames = recording.files.map(fileName).join(', ');
         const file = section('recording-action-files', 'file-download', 'Soubor', fileNames || 'Soubor není dostupný.');
         const edit = section('recording-action-edit', 'edit', 'Úpravy', 'Změna údajů, umístění a pořadí.');
         const danger = section('recording-action-danger', 'alert-triangle', 'Odstranění', 'Nevratné nebo destruktivní operace.');
@@ -108,6 +108,13 @@
     }
     function key() { return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); }
     function time(ms) { const s = Math.floor(Number(ms) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+    function fileName(file) { return file?.display_name || file?.original_name || file?.title || ''; }
+    function recordingName(recording) {
+        const names = recording.files.map(fileName).filter(Boolean);
+        if (recording.kind === 'single') return names[0] || recording.title || 'Nahrávka';
+        if (!names.length) return recording.title || 'Vícestopá nahrávka';
+        return names.length === 1 ? names[0] : names[0] + ' +' + (names.length - 1);
+    }
     function stopMixer() {
         window.Vz2Timestamps.stopLoop();
         window.MultitrackApp?.destroy();
@@ -210,13 +217,16 @@
     function openEdit(item, type, parent = null) {
         edit = { item, type, parent };
         const f = $('edit-form'); f.elements.title.value = item.title; f.elements.summary.value = item.summary || '';
+        f.elements.title.required = type === 'collection' || type === 'track';
+        f.elements.title.closest('label').firstChild.nodeValue = type === 'recording' || type === 'attachment' ? 'Krátký popisek (nepovinný)' : 'Název';
         $('summary-label').hidden = type === 'collection' || type === 'track';
         f.querySelector('.edit-error').textContent = ''; $('edit-reload').hidden = true;
         $('editor').showModal();
     }
     async function remove(item, type, full = false) {
         const text = full ? 'Úplně odstranit položku a všechny její informace?' : 'Odstranit soubory a zachovat informace?';
-        const confirmation = prompt(text + '\nPro potvrzení napište název:\n' + item.title);
+        const confirmationName = item.title || (type === 'recording' ? recordingName(item) : fileName(item));
+        const confirmation = prompt(text + '\nPro potvrzení napište název:\n' + confirmationName);
         if (confirmation === null) return;
         await api({ action: full ? 'delete_' + type : type === 'recording' ? 'remove_audio' : 'remove_attachment',
             id: Number(item.id), revision: Number(item.revision), confirm: confirmation, request_key: key() });
@@ -244,9 +254,9 @@
         }));
     }
     function fileLink(file) {
-        if (!file.url) return node('span', (file.display_name || file.title) + ' · ' + state(file.state));
+        if (!file.url) return node('span', fileName(file) + ' · ' + state(file.state));
         const a = node('a', 'Stáhnout'); a.href = file.url + '&download=1';
-        a.setAttribute('aria-label', 'Stáhnout soubor ' + (file.display_name || file.title)); return a;
+        a.setAttribute('aria-label', 'Stáhnout soubor ' + fileName(file)); return a;
     }
     function state(value) {
         return ({ available: 'Audio dostupné', deleted: 'Audio odstraněno', missing: 'Audio neočekávaně chybí', deleting: 'Probíhá odstranění', pending: 'Upload není dokončený', partial: 'Neúplná sada audia', uploading: 'Probíhá upload', failed: 'Operace vyžaduje dokončení' })[value] || value;
@@ -311,7 +321,9 @@
     function recordingCard(r, list, collection) {
         const card = node('article', undefined, 'recording-card'); card.id = 'recording-' + r.id;
         const body = node('div', undefined, 'recording-body'); body.id = 'recording-body-' + r.id;
-        const title = node('span', r.title, 'recording-title'); title.title = r.title;
+        const primaryName = recordingName(r);
+        const title = node('span', primaryName, 'recording-title');
+        title.title = r.files.map(fileName).filter(Boolean).join(', ') || primaryName;
         const meta = node('small', (r.kind === 'single' ? 'Audio' : 'Vícestopá') + ' · ' + (r.duration_ms == null ? 'délka nezjištěna' : time(r.duration_ms)));
         const toggle = node('button', undefined, 'recording-toggle'); toggle.type = 'button';
         toggle.append(title, meta); toggle.setAttribute('aria-controls', body.id);
@@ -326,13 +338,13 @@
         const audioState = r.lifecycle === 'active' ? r.audio_state : r.lifecycle;
         const singleFile = r.kind === 'single' ? r.files[0] : null;
         const status = node('p', undefined, 'recording-status');
+        if (r.title) status.append(node('span', r.title));
         if (singleFile && r.lifecycle === 'active') {
-            status.append(node('span', singleFile.display_name || singleFile.title));
             if (audioState === 'deleted') status.append(node('span', ' - odstraněno', 'recording-deleted'));
             else if (audioState !== 'available') status.append(node('span', ' · ' + state(audioState)));
-        } else status.textContent = state(audioState);
+        } else if (audioState !== 'available') status.append(node('span', (r.title ? ' · ' : '') + state(audioState)));
         status.dataset.state = audioState;
-        card.append(status);
+        if (status.textContent) card.append(status);
         body.append(node('small', 'Vložil/a ' + r.author, 'vz2-attribution'));
         if (r.summary) body.append(node('p', r.summary, 'recording-summary'));
         if (r.summary_author) body.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · upravil/a ' + r.summary_editor : ''), 'vz2-attribution'));
@@ -354,7 +366,7 @@
         }));
         if (mixed) {
             mixerPanel.querySelector('#mixer-context').textContent = (collection.kind === 'song' ? 'Skladba: ' : 'Zkouška: ') + collection.title;
-            mixerPanel.querySelector('#mt-playing-name').textContent = r.title;
+            mixerPanel.querySelector('#mt-playing-name').textContent = primaryName;
         }
         const files = node('ul', undefined, 'files');
         r.files.forEach(f => {
@@ -379,7 +391,7 @@
     }
     function uploadForm(collection) {
         const form = node('form');
-        form.innerHTML = '<div class="dialog-header"><h2 id="upload-title">Vložit nahrávku nebo přílohu</h2><button class="modal-close" type="button" aria-label="Zavřít vložení" title="Zavřít">×</button></div><label>Název<input name="title" maxlength="200" required></label><fieldset class="upload-kind"><legend>Druh</legend><label><input type="radio" name="kind" value="single" checked><span>Běžná</span></label><label><input type="radio" name="kind" value="multitrack"><span>Vícestopá</span></label><label><input type="radio" name="kind" value="attachment"><span>Příloha</span></label></fieldset><label>Soubory<input name="files[]" type="file" multiple required></label><progress class="upload-progress" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát</button></div>';
+        form.innerHTML = '<div class="dialog-header"><h2 id="upload-title">Vložit nahrávku nebo přílohu</h2><button class="modal-close" type="button" aria-label="Zavřít vložení" title="Zavřít">×</button></div><label>Krátký popisek (nepovinný)<input name="title" maxlength="200"></label><fieldset class="upload-kind"><legend>Druh</legend><label><input type="radio" name="kind" value="single" checked><span>Běžná</span></label><label><input type="radio" name="kind" value="multitrack"><span>Vícestopá</span></label><label><input type="radio" name="kind" value="attachment"><span>Příloha</span></label></fieldset><label>Soubory<input name="files[]" type="file" multiple required></label><progress class="upload-progress" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát</button></div>';
         form.querySelector('.modal-close').addEventListener('click', () => $('upload-dialog').close());
         const requestKey = key();
         form.addEventListener('submit', async e => {
@@ -449,7 +461,10 @@
             if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));
             data.attachments.filter(a => String(a.collection_id) === String(c.id)).forEach(a => {
-                const card = node('article'); card.append(node('h3', a.title), node('p', a.summary || ''), fileLink(a), node('small', 'Vložil/a ' + a.author, 'vz2-attribution'));
+                const card = node('article'); card.append(node('h3', fileName(a)));
+                if (a.title) card.append(node('p', a.title));
+                if (a.summary) card.append(node('p', a.summary));
+                card.append(fileLink(a), node('small', 'Vložil/a ' + a.author, 'vz2-attribution'));
                 const { menu, actions } = actionMenu('Možnosti přílohy: ' + a.title);
                 if (cfg.write && a.can_edit) actions.append(button('Upravit', () => openEdit(a, 'attachment')));
                 moveControl(actions, a, 'attachment');

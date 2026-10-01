@@ -80,7 +80,7 @@ function vz2_timestamp_write(array $in): array {
             $timestampId = (int)$row['id'];
             if ($action === 'delete') {
                 $history = vz2_rows($db, 'SELECT id FROM vz2_rehearsal_plays WHERE start_timestamp_id=? OR end_timestamp_id=?', [$timestampId,$timestampId]);
-                if ($history) throw new Vz2Error('Značka je součástí historie. Nejprve odeberte příslušné zahrání.',409);
+                if ($history) throw new Vz2Error('Značka je součástí historie. Nejprve odeberte příslušný pokus.',409);
                 vz2_query($db, 'UPDATE vz2_timestamps SET paired_timestamp_id=NULL,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE paired_timestamp_id=?', [vz2_actor(),$timestampId]);
                 vz2_query($db, 'DELETE FROM vz2_timestamps WHERE id=?', [$timestampId]);
             } else vz2_query($db, 'UPDATE vz2_timestamps SET kind=?,time_ms=?,body=?,paired_timestamp_id=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?', [$kind,$time,$body,$kind === 'song_end' ? $pair : null,vz2_actor(),$timestampId]);

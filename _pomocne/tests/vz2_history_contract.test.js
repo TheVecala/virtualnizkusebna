@@ -23,7 +23,7 @@ assert.match(php, /kind'\]!==\s*'song_end'/);
 assert.match(php, /t\['time_ms'\] >= \$p\['start_ms'\] && \$t\['time_ms'\] < \$p\['end_ms'\]/);
 assert.match(ui, /history-audio-filter/);
 assert.match(ui, /history-orientation/);
-assert.match(ui, /if\(!confirm\('Odebrat pouze historické zahrání\?/);
+assert.match(ui, /if\(!confirm\('Odebrat pouze historický pokus\?/);
 assert.match(page, /id="history-workspace"/);
 assert.doesNotMatch(page, /data-desktop-panel="history"/);
 assert.match(auth, /php\/ajax\/vz2_history\.php/, 'VZ2_ONLY must allow the history endpoint');
