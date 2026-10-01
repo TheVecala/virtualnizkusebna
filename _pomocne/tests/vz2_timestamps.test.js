@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { format, compactFormat, parse, adjust, timestampBody, endOf, tabular } = require('../../js/vz2-timestamps.js');
+const { format, compactFormat, parse, adjust, timestampBody, songIntervalFor, endOf, tabular } = require('../../js/vz2-timestamps.js');
 assert.equal(compactFormat(83123), '01:23');
 assert.equal(compactFormat(3660000), '61:00');
 const entries = [
@@ -20,6 +20,10 @@ assert.equal(endOf(entries[4], entries, null), null);
 assert.equal(endOf(entries[4], entries, 3000), null);
 assert.equal(endOf(entries[1], [...entries].reverse(), 4000), 2000);
 assert.equal(endOf(entries[5], entries, 4000), null);
+assert.equal(songIntervalFor(entries[0], entries).end.id, 6);
+assert.equal(songIntervalFor(entries[2], entries).start.id, 1);
+assert.equal(songIntervalFor(entries[3], entries).end.id, 6);
+assert.equal(songIntervalFor(entries[4], entries), null);
 for (const ms of [0, 1, 999, 1000, 60001, 3600999, 604800000]) assert.equal(parse(format(ms)), ms);
 assert.equal(parse('01:02.3'), 62300);
 assert.equal(parse('01:02,03'), 62030);

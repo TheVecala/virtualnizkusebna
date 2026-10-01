@@ -29,6 +29,14 @@
         if (kind === 'song_end') return 'konec';
         throw new Error('U pasáže a poznámky vyplňte text.');
     }
+    function songIntervalFor(entry, entries) {
+        const time = Number(entry.time_ms);
+        return entries.filter(end => end.kind === 'song_end' && end.paired_timestamp_id).map(end => {
+            const start = entries.find(candidate => candidate.kind === 'song_start' && Number(candidate.id) === Number(end.paired_timestamp_id));
+            return start && Number(end.time_ms) >= Number(start.time_ms) ? { start, end } : null;
+        }).filter(interval => interval && time >= Number(interval.start.time_ms) && time <= Number(interval.end.time_ms))
+            .sort((a, b) => (Number(a.end.time_ms) - Number(a.start.time_ms)) - (Number(b.end.time_ms) - Number(b.start.time_ms)))[0] || null;
+    }
     function endOf(entry, entries, duration) {
         if (entry.kind === 'note') return null;
         if (entry.kind === 'song_start') {
@@ -46,7 +54,7 @@
         return entries.filter(t => selected.includes(t.kind)).map(t => format(t.time_ms) + '\t'
             + t.body.replace(/[\t\r\n]+/g, ' ')).join('\n');
     }
-    const api = { format, compactFormat, parse, adjust, timestampBody, endOf, tabular };
+    const api = { format, compactFormat, parse, adjust, timestampBody, songIntervalFor, endOf, tabular };
     if (typeof module !== 'undefined') module.exports = api;
     if (!root.document) return;
     root.Vz2Timestamps = api;
@@ -255,6 +263,13 @@
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));
                 value.entries.forEach(row => {
                     const item = el('li'); item.className = 'ts-' + row.kind;
+                    const songInterval = songIntervalFor(row, value.entries);
+                    if (songInterval) {
+                        item.classList.add('ts-song-linked'); item.dataset.songStartId = songInterval.start.id;
+                        if (Number(row.id) === Number(songInterval.start.id)) item.classList.add('ts-song-linked-start');
+                        else if (Number(row.id) === Number(songInterval.end.id)) item.classList.add('ts-song-linked-end');
+                        else item.classList.add('ts-song-linked-inside');
+                    }
                     const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
                     authors.className = 'ts-author vz2-attribution';
@@ -275,8 +290,8 @@
                         try { const result = await request(id, { action: 'delete', id: row.id, revision: row.revision, timestamps_revision: value.timestamps_revision }); publish(result); status.textContent = 'Značka odstraněna.'; }
                         catch (e) { status.textContent = e.message; }
                     }));
-                    if (row.kind === 'song_start') text.append(' ', el('small', end == null ? '— neúplný úsek' : '— úsek do ' + format(end)));
-                    if (row.kind === 'song_end') text.append(' ', el('small', row.paired_timestamp_id ? '— propojený konec' : '— konec bez začátku'));
+                    if (row.kind === 'song_start' && end == null) text.append(' ', el('small', '— neúplný úsek'));
+                    if (row.kind === 'song_end' && !row.paired_timestamp_id) text.append(' ', el('small', '— konec bez začátku'));
                     item.append(seek, text, authors, actions); list.append(item);
                 }); this.playback();
                 if (typeof this.adapter?.timestampsChanged === 'function') this.adapter.timestampsChanged(value.entries);

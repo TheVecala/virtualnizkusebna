@@ -69,9 +69,15 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
         await dialog.locator('[name=time]').fill('00:00:02.000');
         await dialog.locator('[name=body]').fill('Konec úseku');
+        await dialog.locator('[name=paired_timestamp_id]').selectOption(String(existing.id));
         await dialog.getByRole('checkbox', { name: 'Vrátit na čas', exact: true }).check();
-        await dialog.getByRole('button', { name: 'Začátek', exact: true }).click();
+        await dialog.getByRole('button', { name: 'Konec', exact: true }).click();
         await dialog.waitFor({ state: 'hidden' });
+        assert.equal(await notes.locator('.ts-song-linked').count(), 2);
+        assert.equal(await notes.locator('.ts-song-linked-start').getAttribute('data-song-start-id'), String(existing.id));
+        assert.equal(await notes.locator('.ts-song-linked-end').getAttribute('data-song-start-id'), String(existing.id));
+        assert.equal((await notes.textContent()).includes('úsek do'), false);
+        assert.equal((await notes.textContent()).includes('propojený konec'), false);
         assert(Math.abs(await card.locator('audio').evaluate(a => a.currentTime) - 2) < 0.05);
         await notes.getByRole('button', { name: 'Smyčka', exact: true }).first().click();
         await notes.getByRole('button', { name: 'Vypnout smyčku', exact: true }).waitFor();
