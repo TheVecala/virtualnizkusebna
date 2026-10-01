@@ -12,12 +12,12 @@ try {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     if ($method === 'GET') {
         $action = $_GET['action'] ?? 'list';
-        if (!in_array($action, ['list','export'], true)) throw new Vz2Error('Neznámé čtení.');
+        if (!in_array($action, ['list','export','song_intervals'], true)) throw new Vz2Error('Neznámé čtení.');
         $result = vz2_timestamp_read(vz2_id($_GET['recording_id'] ?? null));
-        if ($action === 'export') {
+        if ($action === 'export' || $action === 'song_intervals') {
             header('Content-Type: text/plain; charset=utf-8');
-            header('Content-Disposition: attachment; filename="nahravka-'.$result['recording_id'].'-zapisy.txt"');
-            echo vz2_timestamp_export($result); exit;
+            header('Content-Disposition: attachment; filename="nahravka-'.$result['recording_id'].($action==='song_intervals'?'-useky':'-zapisy').'.txt"');
+            echo $action==='song_intervals'?vz2_song_intervals_export($result):vz2_timestamp_export($result); exit;
         }
     } elseif ($method === 'POST') {
         $in = json_decode(file_get_contents('php://input'), true, 32, JSON_THROW_ON_ERROR);

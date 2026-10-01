@@ -235,7 +235,7 @@ function auth_vz2_entry_guard(): void {
     $script = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
     $allowed = ['index.php','vz2.php','admin.php','help.php','php/ajax/vz2.php',
         'php/ajax/vz2_files.php','php/ajax/vz2_timestamps.php','php/ajax/vz2_content.php',
-        'php/ajax/vz2_peaks.php','tools/vz2_preflight.php'];
+        'php/ajax/vz2_peaks.php','php/ajax/vz2_history.php','tools/vz2_preflight.php'];
     foreach ($allowed as $path) if ($script !== false && $script === realpath($root.'/'.$path)) return;
     http_response_code(410);
     header('Content-Type: application/json; charset=utf-8');
