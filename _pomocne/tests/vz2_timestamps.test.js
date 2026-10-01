@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { format, compactFormat, parse, adjust, endOf, tabular } = require('../../js/vz2-timestamps.js');
+const { format, compactFormat, parse, adjust, timestampBody, endOf, tabular } = require('../../js/vz2-timestamps.js');
 assert.equal(compactFormat(83123), '01:23');
 assert.equal(compactFormat(3660000), '61:00');
 const entries = [
@@ -23,8 +23,12 @@ assert.equal(endOf(entries[5], entries, 4000), null);
 for (const ms of [0, 1, 999, 1000, 60001, 3600999, 604800000]) assert.equal(parse(format(ms)), ms);
 assert.equal(parse('01:02.3'), 62300);
 assert.equal(parse('01:02,03'), 62030);
+assert.equal(parse('61:02'), 3662000);
 assert.equal(adjust('00:00:03.000', 1000), '00:00:04.000');
 assert.equal(adjust('00:00:00.500', -1000), '00:00:00.000');
+assert.equal(timestampBody('song_start', '  '), 'začátek');
+assert.equal(timestampBody('song_end', ''), 'konec');
+assert.throws(() => timestampBody('note', ''), /vyplňte text/);
 for (const text of ['-1', 'NaN', '00:60', '01:99:00', '169:00:00', '00:01.0001']) assert.throws(() => parse(text));
 assert.equal(tabular(entries, ['passage']), '00:00:01.000\tStejný čas\n00:00:02.000\tPasáž se dvěma řádky a tabulátorem');
 assert.equal(tabular(entries, []), '');
