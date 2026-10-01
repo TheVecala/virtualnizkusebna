@@ -43,7 +43,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await notes.locator('.ts-summary').click();
         assert.equal(await notes.locator('.ts-content').isVisible(), true, 'chevron heading expands timestamp controls and entries');
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
-        await dialog.locator('[name=kind]').selectOption('song_start');
+        await dialog.locator('[name=kind][value=song_start]').check();
         await dialog.locator('[name=time]').fill('00:00:01.123');
         await dialog.locator('[name=body]').fill('<img src=x onerror=alert(1)> Začátek');
         await dialog.getByRole('button', { name: 'Uložit', exact: true }).click();
@@ -68,7 +68,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await notes.locator('.ts-song_start').first().evaluate(e => getComputedStyle(e).marginLeft), '0px');
         check(true, 'browser: safe text rendering and 409 preserve draft; explicit comparison/rebase saves it');
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
-        await dialog.locator('[name=kind]').selectOption('song_start');
+        await dialog.locator('[name=kind][value=song_start]').check();
         await dialog.locator('[name=time]').fill('00:00:02.000');
         await dialog.locator('[name=body]').fill('Konec úseku');
         await dialog.getByRole('button', { name: 'Uložit a vrátit na čas', exact: true }).click();
@@ -99,7 +99,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert((await page.evaluate(() => navigator.clipboard.readText())).includes('00:00:01.123\tMůj rozepsaný text'));
         check(true, 'browser: rewind, native audio loop and filtered clipboard table work');
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
-        await dialog.locator('[name=kind]').selectOption('note'); await dialog.locator('[name=time]').fill('00:00:01.500');
+        await dialog.locator('[name=kind][value=note]').check(); await dialog.locator('[name=time]').fill('00:00:01.500');
         await dialog.locator('[name=body]').fill('Text přežije obnovení katalogu');
         await page.evaluate(() => window.dispatchEvent(new Event('online')));
         await notes.getByText('Můj rozepsaný text', { exact: true }).waitFor();
@@ -122,7 +122,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         const mixerNotes = page.locator('#mixer-timestamps');
         await mixerNotes.locator('.ts-summary').click();
         await mixerNotes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
-        await dialog.locator('[name=time]').fill('00:00:01.000'); await dialog.locator('[name=kind]').selectOption('passage');
+        await dialog.locator('[name=time]').fill('00:00:01.000'); await dialog.locator('[name=kind][value=passage]').check();
         await dialog.locator('[name=body]').fill('Společná pasáž Mixéru');
         await dialog.locator('[name=keep]').uncheck();
         await dialog.getByRole('button', { name: 'Uložit', exact: true }).click(); await dialog.waitFor({ state: 'hidden' });

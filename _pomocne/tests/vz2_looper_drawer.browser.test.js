@@ -44,7 +44,17 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 }
                 await actions.getByRole('button', { name: 'Přidat značku', exact: true }).click();
                 assert(await page.locator('.vz2-timestamp-editor').isVisible());
-                assert.equal(await page.locator('.vz2-timestamp-editor input[name=time]').inputValue(), '00:00:03.000');
+                assert.equal(await page.locator('.vz2-timestamp-editor input[name=time]').inputValue(), '00:03');
+                const editor = page.locator('.vz2-timestamp-editor');
+                await editor.getByRole('button', { name: 'Přičíst jednu sekundu', exact: true }).click();
+                assert.equal(await editor.locator('input[name=time]').inputValue(), '00:04');
+                await editor.getByRole('button', { name: 'Odečíst jednu sekundu', exact: true }).click();
+                assert.equal(await editor.locator('input[name=time]').inputValue(), '00:03');
+                await editor.locator('input[name=time]').fill('00:12');
+                await editor.getByRole('button', { name: 'Aktualizovat čas', exact: true }).click();
+                assert.equal(await editor.locator('input[name=time]').inputValue(), '00:03');
+                assert.equal(await editor.getByRole('radio').count(), 4);
+                for (const kind of ['Začátek', 'Konec', 'Pasáž', 'Poznámka']) assert(await editor.getByRole('radio', { name: kind, exact: true }).isVisible());
                 assert.equal(await notes.isVisible(), false);
                 await page.locator('.ts-close').click();
                 await actions.getByRole('button', { name: 'Export', exact: true }).click();
