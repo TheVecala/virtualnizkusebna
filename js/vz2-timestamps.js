@@ -17,6 +17,9 @@
         const seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
         return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
     }
+    function adjust(text, delta) {
+        return format(parse(text) + Number(delta));
+    }
     function endOf(entry, entries, duration) {
         if (entry.kind === 'note') return null;
         if (entry.kind === 'song_start') {
@@ -34,7 +37,7 @@
         return entries.filter(t => selected.includes(t.kind)).map(t => format(t.time_ms) + '\t'
             + t.body.replace(/[\t\r\n]+/g, ' ')).join('\n');
     }
-    const api = { format, compactFormat, parse, endOf, tabular };
+    const api = { format, compactFormat, parse, adjust, endOf, tabular };
     if (typeof module !== 'undefined') module.exports = api;
     if (!root.document) return;
     root.Vz2Timestamps = api;
@@ -78,12 +81,24 @@
     function ensureEditor() {
         if (editor) return;
         editor = el('dialog'); editor.className = 'vz2-timestamp-editor';
-        editor.innerHTML = '<form><div class="dialog-header"><h2>Časová značka</h2><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><p class="ts-context"></p><label>Typ<select name="kind"></select></label><label>Čas (hh:mm:ss.mmm)<input name="time" required></label><label class="ts-pair" hidden>Propojený začátek<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><label>Text<textarea name="body" rows="5" required></textarea></label><label class="ts-keep"><input type="checkbox" name="keep"> Nechat otevřené pro další značku</label><p role="alert" class="error"></p><pre class="ts-current" hidden></pre><div class="toolbar"><button type="submit">Uložit</button><button type="submit" name="return" value="yes">Uložit a vrátit na čas</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
+        editor.innerHTML = '<form><div class="dialog-header"><div><h2>Časová značka</h2><p class="ts-context"></p></div><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><div class="ts-editor-body"><div class="ts-time-row"><label>Čas (hh:mm:ss.mmm)<input name="time" required inputmode="decimal"></label><div class="ts-time-controls"><button type="button" class="ts-time-current">Aktualizovat čas</button><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−1 s</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+1 s</button></div></div><fieldset class="ts-kind-options"><legend>Druh timestampu</legend></fieldset><label class="ts-pair" hidden>Propojený začátek<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><label>Text<textarea name="body" rows="5" required></textarea></label><label class="ts-keep"><input type="checkbox" name="keep"> Po uložení ponechat otevřené</label><p role="alert" class="error"></p><pre class="ts-current" hidden></pre></div><div class="ts-editor-footer"><button type="button" class="ts-close">Zrušit</button><button type="submit">Uložit</button><button type="submit" name="return" value="yes">Uložit a vrátit na čas</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
         const form = editor.querySelector('form');
         editor.addEventListener('cancel', e => { if (activeEditor?.busy) e.preventDefault(); });
-        Object.entries(kinds).forEach(([value, text]) => { const o = el('option', text); o.value = value; form.elements.kind.append(o); });
-        form.elements.kind.addEventListener('change', () => { editor.querySelector('.ts-pair').hidden = form.elements.kind.value !== 'song_end'; });
-        editor.querySelector('.ts-close').onclick = () => editor.close();
+        const kindOptions = editor.querySelector('.ts-kind-options');
+        Object.entries(kinds).forEach(([value, text]) => {
+            const label = el('label'), input = el('input'); input.type = 'radio'; input.name = 'kind'; input.value = value;
+            label.append(input, document.createTextNode(' ' + text)); kindOptions.append(label);
+        });
+        kindOptions.addEventListener('change', () => { editor.querySelector('.ts-pair').hidden = form.elements.kind.value !== 'song_end'; });
+        editor.querySelectorAll('.ts-close').forEach(close => { close.onclick = () => editor.close(); });
+        editor.querySelector('.ts-time-current').onclick = () => {
+            const ms = activeEditor?.panel.adapter?.currentTimeMs();
+            if (Number.isFinite(ms)) form.elements.time.value = format(ms);
+        };
+        editor.querySelectorAll('.ts-time-adjust').forEach(control => { control.onclick = () => {
+            try { form.elements.time.value = adjust(form.elements.time.value, control.dataset.delta); }
+            catch (e) { editor.querySelector('.error').textContent = e.message; }
+        }; });
         editor.querySelector('.ts-rebase').onclick = async () => {
             const context = activeEditor;
             try {
@@ -140,6 +155,7 @@
         editor.querySelector('.ts-context').textContent = panel.list.title;
         editor.querySelector('.error').textContent = ''; editor.querySelector('.ts-current').hidden = true;
         editor.querySelector('.ts-rebase').hidden = true;
+        editor.querySelector('.ts-time-current').disabled = !panel.adapter?.canPlay();
         f.elements.return.disabled = !panel.adapter?.canPlay();
         editor.showModal(); f.elements.body.focus();
     }
