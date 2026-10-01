@@ -69,7 +69,7 @@ function vz2_existing_operation(string $key): ?array {
 function vz2_upload(array $in,array $files): array {
     vz2_ready(true);vz2_login();vz2_permission('upload');
     $key=vz2_key($in['request_key']??null);$collection=vz2_id($in['collection_id']??null);
-    $kind=$in['kind']??'';$attachment=$kind==='attachment';$title=vz2_text($in['title']??null);
+    $kind=$in['kind']??'';$attachment=$kind==='attachment';$title=vz2_text($in['title']??'',200,true);
     if(!in_array($kind,['single','multitrack','attachment'],true))throw new Vz2Error('Neplatný druh nahrávky.');
     $upload=$files['files']??null;
     if(!$upload || !is_array($upload['name']??null))throw new Vz2Error('Vyberte soubory.');
@@ -85,8 +85,9 @@ function vz2_upload(array $in,array $files): array {
         $prepared[]=$meta+['tmp'=>$upload['tmp_name'][$i],'original_name'=>$name,'title'=>vz2_text(pathinfo($name,PATHINFO_FILENAME))];
     }
     if($kind==='multitrack' && count(array_unique($formats))!==1)throw new Vz2Error('Všechny stopy musí mít stejný formát.',422);
+    $uploadLabel=$title!==''?$title:$prepared[0]['original_name'];
     if($old=vz2_existing_operation($key)){
-        if($old['action']!==($attachment?'upload_attachment':'upload_recording') || $old['target_title']!==$title)throw new Vz2Error('Klíč patří jiné operaci.',409);
+        if($old['action']!==($attachment?'upload_attachment':'upload_recording') || $old['target_title']!==$uploadLabel)throw new Vz2Error('Klíč patří jiné operaci.',409);
         $table=$attachment?'vz2_attachments':'vz2_recordings';
         $target=vz2_one(vz2_db(),"SELECT * FROM $table WHERE id=?",[$old['target_id']]);
         if((int)$target['collection_id']!==$collection || (!$attachment && $target['kind']!==$kind))throw new Vz2Error('Klíč patří jinému uploadu.',409);
@@ -103,23 +104,25 @@ function vz2_upload(array $in,array $files): array {
         $file['staging_path']='.staging/'.$key.'/'.$i.'.'.$file['format'];
         if(!move_uploaded_file($file['tmp'],vz2_path($file['staging_path'])))throw new Vz2Error('Upload nelze uložit do stagingu.',500);
     }unset($file);
-    $operation=vz2_write(function(mysqli $db) use($collection,$kind,$attachment,$title,$key,$prepared): int {
+    $operation=vz2_write(function(mysqli $db) use($collection,$kind,$attachment,$title,$uploadLabel,$key,$prepared): int {
         vz2_permission('upload');$c=vz2_collection($db,$collection);vz2_active($c);
         $base=($c['kind']==='song'?'skladby':'zkousky').'/'.$c['id'].'-'.$c['storage_slug'];$actor=vz2_actor();
+        // The user-entered recording title is an optional short description. Use
+        // the actual filename for internal labels and paths when it is omitted.
         if($attachment){
             $f=$prepared[0];
             vz2_query($db,'INSERT INTO vz2_attachments (collection_id,title,original_name,relative_path,mime_type,byte_size,sha256,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())',[$collection,$title,$f['original_name'],'pending/'.$key,$f['mime_type'],$f['byte_size'],$f['sha256'],$actor,$actor]);
             $id=(int)$db->insert_id;
-            $path=$base.'/prilohy/p'.$id.'-'.vz2_slug($title).'.'.$f['format'];
+            $path=$base.'/prilohy/p'.$id.'-'.vz2_slug($uploadLabel).'.'.$f['format'];
             vz2_query($db,'UPDATE vz2_attachments SET relative_path=? WHERE id=?',[$path,$id]);
-            $op=vz2_operation($db,$key,'upload_attachment','attachment',$id,$title);
+            $op=vz2_operation($db,$key,'upload_attachment','attachment',$id,$uploadLabel);
             vz2_query($db,"INSERT INTO vz2_file_operation_items(operation_id,item_no,file_type,file_id,relative_path,staging_path,expected_sha256) VALUES (?,0,'attachment',?,?,?,?)",[$op,$id,$path,$f['staging_path'],$f['sha256']]);
         }else{
             $order=(int)vz2_one($db,'SELECT COALESCE(MAX(sort_order),-1)+1 n FROM vz2_recordings WHERE collection_id=?',[$collection])['n'];
             vz2_query($db,'INSERT INTO vz2_recordings(collection_id,kind,title,storage_dir,sort_order,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())',[$collection,$kind,$title,'pending/'.$key,$order,$actor,$actor]);
-            $id=(int)$db->insert_id;$dir=$base.'/r'.$id.'-'.vz2_slug($title);
+            $id=(int)$db->insert_id;$dir=$base.'/r'.$id.'-'.vz2_slug($uploadLabel);
             vz2_query($db,'UPDATE vz2_recordings SET storage_dir=? WHERE id=?',[$dir,$id]);
-            $op=vz2_operation($db,$key,'upload_recording','recording',$id,$title);
+            $op=vz2_operation($db,$key,'upload_recording','recording',$id,$uploadLabel);
             foreach($prepared as $i=>$f){
                 vz2_query($db,'INSERT INTO vz2_audio_files(recording_id,title,original_name,relative_path,format,mime_type,byte_size,sha256,duration_ms,sort_order,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())',[$id,$f['title'],$f['original_name'],'pending/'.$key.'/'.$i,$f['format'],$f['mime_type'],$f['byte_size'],$f['sha256'],$f['duration_ms'],$i,$actor,$actor]);
                 $fileId=(int)$db->insert_id;$path=$dir.'/a'.$fileId.'-'.vz2_slug($f['title']).'.'.$f['format'];
@@ -150,7 +153,7 @@ function vz2_remove(array $in): array {
             if(($in['confirm']??null)!==$c['title'])throw new Vz2Error('Potvrďte název mazané položky.');
             vz2_query($db,"UPDATE vz2_collections SET lifecycle='archived',revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?",[vz2_actor(),$id]);
             vz2_query($db,"UPDATE vz2_collection_orders SET revision=revision+1 WHERE kind='song'");
-            vz2_log($db,'collection.archived','collection',$id,$c['title'],'Skladba zůstává v historii; zahrání: '.$count);
+            vz2_log($db,'collection.archived','collection',$id,$c['title'],'Skladba zůstává v historii; pokusy: '.$count);
             return true;
         });
         if($archive)return ['id'=>$id,'archived'=>true,'completed'=>true];
@@ -166,7 +169,10 @@ function vz2_remove(array $in): array {
         $full=str_starts_with($action,'delete_');
         if($full){if(!auth_is_admin())throw new Vz2Error('Úplné smazání smí provést jen admin.',403);}
         else vz2_permission('delete_file',(int)$r['created_by']);
-        if(($in['confirm']??null)!==$r['title'])throw new Vz2Error('Potvrďte název mazané položky.');
+        $confirmTitle=$r['title'];
+        if($confirmTitle==='' && $type==='recording')$confirmTitle=vz2_one($db,'SELECT original_name FROM vz2_audio_files WHERE recording_id=? ORDER BY sort_order,id LIMIT 1',[$id])['original_name'];
+        if($confirmTitle==='' && $type==='attachment')$confirmTitle=$r['original_name'];
+        if(($in['confirm']??null)!==$confirmTitle)throw new Vz2Error('Potvrďte název mazané položky.');
         if($type==='collection'){
             $recordings=vz2_rows($db,'SELECT * FROM vz2_recordings WHERE collection_id=? FOR UPDATE',[$id]);
             $attachments=vz2_rows($db,'SELECT * FROM vz2_attachments WHERE collection_id=? FOR UPDATE',[$id]);
