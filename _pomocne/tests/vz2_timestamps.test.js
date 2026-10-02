@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { format, compactFormat, parse, adjust, timestampBody, songIntervalFor, endOf, tabular } = require('../../js/vz2-timestamps.js');
+const { format, compactFormat, parse, adjust, timestampBody, songIntervalFor, endOf, tabular, mp3spltLabels } = require('../../js/vz2-timestamps.js');
 assert.equal(compactFormat(83123), '01:23');
 assert.equal(compactFormat(3660000), '61:00');
 const entries = [
@@ -36,4 +36,21 @@ assert.throws(() => timestampBody('note', ''), /vyplňte text/);
 for (const text of ['-1', 'NaN', '00:60', '01:99:00', '169:00:00', '00:01.0001']) assert.throws(() => parse(text));
 assert.equal(tabular(entries, ['passage']), '00:00:01.000\tStejný čas\n00:00:02.000\tPasáž se dvěma řádky a tabulátorem');
 assert.equal(tabular(entries, []), '');
-console.log('PASS timestamp interval boundaries, exact ms round trips and filtered table export');
+const labels = mp3spltLabels([
+    { id: 9, time_ms: 135000, kind: 'song_end', paired_timestamp_id: 8, body: 'nepoužitý konec' },
+    { id: 3, time_ms: 728000, kind: 'song_start', body: 'War Pigs: refrén / pokus?' },
+    { id: 4, time_ms: 801500, kind: 'song_end', paired_timestamp_id: 3, body: 'jiný název' },
+    { id: 8, time_ms: 120000, kind: 'song_start', body: 'Česká píseň' },
+    { id: 10, time_ms: 5025000, kind: 'song_start', body: '' },
+    { id: 11, time_ms: 5030123, kind: 'song_end', paired_timestamp_id: 10, body: '' },
+    { id: 12, time_ms: 9000000, kind: 'song_start', body: 'bez konce' },
+    { id: 13, time_ms: 9100000, kind: 'song_end', paired_timestamp_id: null, body: 'bez začátku' },
+    { id: 14, time_ms: 125000, kind: 'note', body: 'ignorovat' }
+], 'zkouska_2026-09-30.mp3');
+assert.equal(labels.filename, 'zkouska_2026-09-30.txt');
+assert.equal(labels.incomplete, 2);
+assert.equal(labels.text, '120.000\t135.000\tČeská píseň\n728.000\t801.500\tWar Pigs- refrén - pokus-\n5025.000\t5030.123\tzkouska_2026-09-30_01-23-45');
+assert.deepEqual(mp3spltLabels([{ id: 1, time_ms: 0, kind: 'song_start', body: 'Jeden' }, { id: 2, time_ms: 1, kind: 'song_end', paired_timestamp_id: 1 }], 'a.mp3'), { filename: 'a.txt', incomplete: 0, text: '0.000\t0.001\tJeden' });
+assert.equal(mp3spltLabels([], 'prázdná.mp3').text, '');
+assert.deepEqual(mp3spltLabels([{ id: 1, time_ms: 1000, kind: 'song_start', body: 'Bez konce' }], 'a.mp3'), { filename: 'a.txt', incomplete: 1, text: '' });
+console.log('PASS timestamp intervals, exact milliseconds, table export and mp3splt Audacity Labels export');

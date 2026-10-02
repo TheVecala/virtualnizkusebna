@@ -95,6 +95,13 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await exportDialog.getByRole('checkbox', { name: /Začátek skladby/ }).isChecked(), true);
         assert.equal(await exportDialog.getByRole('checkbox', { name: /Pasáž/ }).isChecked(), true);
         assert.equal(await exportDialog.getByRole('checkbox', { name: /Poznámka/ }).isChecked(), false);
+        assert.equal(await exportDialog.locator('.ts-export-mp3splt input[type=checkbox]').count(), 0);
+        const labelsDownload = page.waitForEvent('download');
+        await exportDialog.getByRole('button', { name: 'Stáhnout pro mp3splt', exact: true }).click();
+        const labelsFile = await labelsDownload;
+        assert.equal(labelsFile.suggestedFilename(), 'audio.txt');
+        assert.equal(fs.readFileSync(await labelsFile.path(), 'utf8'), '1.123\t2.000\tMůj rozepsaný text');
+        await notes.getByRole('button', { name: 'Export', exact: true }).click();
         await exportDialog.getByRole('checkbox', { name: /Začátek skladby/ }).uncheck();
         await exportDialog.getByRole('checkbox', { name: /Pasáž/ }).uncheck();
         assert.equal(await exportDialog.getByRole('button', { name: 'Kopírovat do schránky', exact: true }).isDisabled(), true);
