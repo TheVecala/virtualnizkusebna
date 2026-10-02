@@ -9,7 +9,8 @@ module.exports = async function ({ request, clients, db, good, upload, check, lo
     const write = (who, fields, options) => request(clients[who], endpoint, { recording_id: id, ...fields }, options);
     const create = { action: 'create', timestamps_revision: 1, kind: 'song_start', time_ms: 0, body: 'Úvod' };
     let result = await read(); assert.equal(result.status, 200, result.text);
-    check(result.json().timestamps_revision === 1 && result.json().can_create && !result.json().entries.length, 'timestamps start with an empty versioned list');
+    check(result.json().timestamps_revision === 1 && result.json().source_filename === 'take.wav'
+        && result.json().can_create && !result.json().entries.length, 'timestamps start with source filename and an empty versioned list');
     check((await read('anon')).status === 401 && (await read('guest')).status === 200 && !(await read('guest')).json().can_create, 'timestamp list requires login; guest may read');
     check((await write('guest', create)).status === 403 && (await write('alice', create, { noCsrf: true })).status === 403, 'timestamp writes enforce member identity and CSRF');
     for (const time_ms of [-1, 0.1, true, null, '100', 1001, 604800001]) assert.equal((await write('alice', { ...create, time_ms })).status, 400);

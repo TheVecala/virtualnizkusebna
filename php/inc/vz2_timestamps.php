@@ -22,7 +22,9 @@ function vz2_timestamp_entries(mysqli $db, array $recording): array {
 // Caller holds either a consistent read snapshot or the recording write lock.
 function vz2_timestamp_list(mysqli $db, int $id): array {
     $r = vz2_one($db, 'SELECT id,title,summary,duration_ms,timestamps_revision,lifecycle FROM vz2_recordings WHERE id=?', [$id]);
+    $audio = vz2_rows($db, 'SELECT original_name FROM vz2_audio_files WHERE recording_id=? ORDER BY sort_order,id LIMIT 1', [$id]);
     return ['recording_id'=>$id, 'title'=>$r['title'], 'summary'=>$r['summary'],
+        'source_filename'=>$audio ? $audio[0]['original_name'] : null,
         'duration_ms'=>$r['duration_ms'] === null ? null : (int)$r['duration_ms'],
         'timestamps_revision'=>(int)$r['timestamps_revision'], 'can_create'=>$r['lifecycle'] === 'active' && vz2_timestamp_right(), 'entries'=>vz2_timestamp_entries($db, $r)];
 }

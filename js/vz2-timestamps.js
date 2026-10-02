@@ -54,7 +54,36 @@
         return entries.filter(t => selected.includes(t.kind)).map(t => format(t.time_ms) + '\t'
             + t.body.replace(/[\t\r\n]+/g, ' ')).join('\n');
     }
-    const api = { format, compactFormat, parse, adjust, timestampBody, songIntervalFor, endOf, tabular };
+    function filenameBase(filename) {
+        const name = String(filename || '').split(/[\\/]/).pop() || 'nahravka';
+        return name.replace(/\.[^.]*$/, '') || 'nahravka';
+    }
+    function safeClipName(name) {
+        return String(name || '').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+    }
+    function mp3spltLabels(entries, sourceFilename) {
+        const byId = new Map(entries.map(entry => [Number(entry.id), entry]));
+        const pairedStarts = new Set();
+        let incomplete = 0;
+        const clips = [];
+        entries.forEach(end => {
+            if (end.kind !== 'song_end') return;
+            const start = end.paired_timestamp_id == null ? null : byId.get(Number(end.paired_timestamp_id));
+            if (!start || start.kind !== 'song_start' || Number(end.time_ms) <= Number(start.time_ms)) { incomplete++; return; }
+            pairedStarts.add(Number(start.id));
+            const seconds = Math.floor(Math.max(0, Number(start.time_ms) || 0) / 1000);
+            const fallback = filenameBase(sourceFilename) + '_' + [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
+                .map(value => String(value).padStart(2, '0')).join('-');
+            clips.push({ start: Number(start.time_ms), end: Number(end.time_ms), name: safeClipName(start.body) || safeClipName(fallback) });
+        });
+        entries.forEach(start => { if (start.kind === 'song_start' && !pairedStarts.has(Number(start.id))) incomplete++; });
+        clips.sort((a, b) => a.start - b.start);
+        return {
+            filename: filenameBase(sourceFilename) + '.txt', incomplete,
+            text: clips.map(clip => (clip.start / 1000).toFixed(3) + '\t' + (clip.end / 1000).toFixed(3) + '\t' + clip.name).join('\n')
+        };
+    }
+    const api = { format, compactFormat, parse, adjust, timestampBody, songIntervalFor, endOf, tabular, filenameBase, safeClipName, mp3spltLabels };
     if (typeof module !== 'undefined') module.exports = api;
     if (!root.document) return;
     root.Vz2Timestamps = api;
@@ -175,7 +204,7 @@
         if (exportDialog) return;
         exportDialog = el('dialog'); exportDialog.className = 'vz2-timestamp-export';
         exportDialog.setAttribute('aria-labelledby', 'vz2-timestamp-export-title');
-        exportDialog.innerHTML = '<div class="dialog-header"><h2 id="vz2-timestamp-export-title">Export časových značek</h2><button type="button" class="ts-export-close modal-close" aria-label="Zavřít export" title="Zavřít">×</button></div><div class="ts-export-options"><section class="ts-export-card ts-export-table"><div class="ts-export-heading"><i class="ti ti-table" aria-hidden="true"></i><div><h3>Export do tabulky</h3><p>Vyberte typy časových značek, které chcete zkopírovat.</p></div></div><fieldset class="ts-filters"><legend class="visually-hidden">Typy časových značek pro tabulku</legend></fieldset><button type="button" class="ts-export-copy"><i class="ti ti-copy" aria-hidden="true"></i> Kopírovat do schránky</button></section><section class="ts-export-card ts-export-text"><div class="ts-export-heading"><i class="ti ti-file-text" aria-hidden="true"></i><div><h3>Stažení TXT</h3><p>Obecný export zachovává všechny značky. Export úseků odděluje kompletní a neúplné dvojice.</p></div></div><a class="ts-export-download" href=""><i class="ti ti-download" aria-hidden="true"></i> Všechny značky</a><a class="ts-interval-download" href=""><i class="ti ti-cut" aria-hidden="true"></i> Úseky skladeb pro střih</a></section></div><p class="ts-export-status error" role="alert"></p><div class="ts-export-footer"><button type="button" class="ts-export-close">Zavřít</button></div>';
+        exportDialog.innerHTML = '<div class="dialog-header"><h2 id="vz2-timestamp-export-title">Export časových značek</h2><button type="button" class="ts-export-close modal-close" aria-label="Zavřít export" title="Zavřít">×</button></div><div class="ts-export-options"><section class="ts-export-card ts-export-table"><div class="ts-export-heading"><i class="ti ti-table" aria-hidden="true"></i><div><h3>Export do tabulky</h3><p>Vyberte typy časových značek, které chcete zkopírovat.</p></div></div><fieldset class="ts-filters"><legend class="visually-hidden">Typy časových značek pro tabulku</legend></fieldset><button type="button" class="ts-export-copy"><i class="ti ti-copy" aria-hidden="true"></i> Kopírovat do schránky</button></section><section class="ts-export-card ts-export-text"><div class="ts-export-heading"><i class="ti ti-file-text" aria-hidden="true"></i><div><h3>Stažení TXT</h3><p>Stáhne všechny časové značky včetně souhrnu nahrávky.</p></div></div><a class="ts-export-download" href=""><i class="ti ti-download" aria-hidden="true"></i> Stáhnout TXT</a></section><section class="ts-export-card ts-export-mp3splt"><div class="ts-export-heading"><i class="ti ti-cut" aria-hidden="true"></i><div><h3>Export pro mp3splt</h3><p>Stáhne kompletní dvojice začátek–konec jako Audacity Labels.</p></div></div><button type="button" class="ts-export-mp3splt-download"><i class="ti ti-download" aria-hidden="true"></i> Stáhnout pro mp3splt</button></section></div><p class="ts-export-status error" role="alert"></p><div class="ts-export-footer"><button type="button" class="ts-export-close">Zavřít</button></div>';
         const filters = exportDialog.querySelector('.ts-filters');
         Object.entries(kinds).forEach(([value, text]) => {
             const label = el('label'), input = el('input');
@@ -193,7 +222,16 @@
         });
         exportDialog.querySelectorAll('.ts-export-close').forEach(close => close.addEventListener('click', () => exportDialog.close()));
         exportDialog.querySelector('.ts-export-download').addEventListener('click', () => exportDialog.close());
-        exportDialog.querySelector('.ts-interval-download').addEventListener('click', () => exportDialog.close());
+        exportDialog.querySelector('.ts-export-mp3splt-download').addEventListener('click', () => {
+            const status = exportDialog.querySelector('.ts-export-status');
+            const result = mp3spltLabels(activeExportPanel.list.entries, activeExportPanel.list.source_filename);
+            if (!result.text) { status.textContent = 'Nejsou žádné kompletní výstřižky k exportu.'; return; }
+            const url = URL.createObjectURL(new Blob([result.text], { type: 'text/plain;charset=utf-8' }));
+            const download = el('a'); download.href = url; download.download = result.filename;
+            document.body.append(download); download.click(); download.remove(); setTimeout(() => URL.revokeObjectURL(url), 0);
+            if (result.incomplete) status.textContent = 'Některé výstřižky nebylo možné exportovat, protože nemají kompletní začátek a konec.';
+            else exportDialog.close();
+        });
         exportDialog.addEventListener('click', e => {
             const box = exportDialog.getBoundingClientRect();
             if (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom) exportDialog.close();
@@ -206,7 +244,6 @@
         exportDialog.querySelector('.ts-export-copy').disabled = false;
         exportDialog.querySelector('.ts-export-status').textContent = '';
         exportDialog.querySelector('.ts-export-download').href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(panel.id);
-        exportDialog.querySelector('.ts-interval-download').href = 'php/ajax/vz2_timestamps.php?action=song_intervals&recording_id=' + encodeURIComponent(panel.id);
         exportDialog.showModal(); exportDialog.querySelector('.ts-export-copy').focus();
     }
     window.addEventListener('beforeunload', e => { if (editor?.open) { e.preventDefault(); e.returnValue = ''; } });
