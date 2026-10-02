@@ -260,7 +260,7 @@
         const reload = iconButton('Obnovit značky', 'refresh', () => panel.load());
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
         const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
-        toolbar.append(add, reload, stop, exportButton); content.append(toolbar, status, list); shell.append(summary, content); container.append(shell);
+        toolbar.append(add, reload, stop, exportButton); content.append(status, list, toolbar); shell.append(summary, content); container.append(shell);
         let mobileActions, mobileAdd, mobileExport, mobileToggle, resizeObserver, mobileMedia;
         const positionDrawer = () => {
             if (mobileActions && mobileMedia.matches) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');

@@ -313,19 +313,23 @@ dialog form { margin-top: 0; }
 }
 /* Compact recordings: disclosure never mounts, replaces or stops a player. */
 .recording-card { padding: 0; margin: 0 0 7px; }
-.recording-toggle { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; width: 100%; text-align: left; padding: 7px 9px; border: 0; background: transparent; }
-.recording-toggle::after { content: '›'; grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 21px; color: var(--vz-muted); }
+.recording-toggle { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 7px 9px; border: 0; background: transparent; }
+.recording-toggle::after { content: '›'; grid-column: 3; align-self: center; font-size: 21px; color: var(--vz-muted); }
 .recording-toggle[aria-expanded=true]::after { transform: rotate(90deg); color: var(--vz-primary); }
 .recording-toggle:hover { background: var(--vz-primary-soft); }
 .recording-toggle:focus-visible { outline-offset: -2px; }
 .recording-title { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recording-toggle small { grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.recording-toggle small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.recording-duration { grid-column: 2; font-variant-numeric: tabular-nums; }
 .recording-status { margin: 0; padding: 0 9px 6px; font-size: 11px; color: var(--vz-muted); overflow-wrap: anywhere; }
 .recording-deleted { color: #d88d8d; }
 .recording-status[data-state=missing], .recording-status[data-state=failed] { color: #ef9494; }
 .recording-status[data-state=partial], .recording-status[data-state=pending], .recording-status[data-state=deleting] { color: #e0c986; }
 .recording-card > button:not(.recording-toggle) { margin: 0 9px 7px; max-width: calc(100% - 18px); }
 .recording-body { padding: 8px; border-top: 1px solid var(--vz-border); }
+.recording-description { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.recording-description .recording-status { flex: 1 1 auto; padding: 0; }
+.recording-description .vz2-attribution { flex: 0 0 auto; }
 .recording-body audio { display: block; margin: 0 0 8px; }
 .recording-summary { margin: 0 0 6px; }
 .recording-body .files { margin: 6px 0; padding: 0; list-style: none; }
