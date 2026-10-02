@@ -263,7 +263,7 @@
     }
     function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
-        const audio = node('audio'); audio.controls = true; audio.preload = 'metadata'; audio.src = file.url; parent.append(audio);
+        const audio = node('audio'); audio.controls = true; audio.preload = 'metadata'; audio.src = file.url;
         const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
         const cache = button('Uložit offline', async () => {
             const current = await idbKeyval.get(cacheKey, store);
@@ -292,6 +292,7 @@
             await navigator.clipboard.writeText(url.href); message('Odkaz zkopírován.');
         }));
         return {
+            audio,
             canPlay: () => audio.isConnected && audio.readyState >= 1 && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
             durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
@@ -324,7 +325,7 @@
         const primaryName = recordingName(r);
         const title = node('span', primaryName, 'recording-title');
         title.title = r.files.map(fileName).filter(Boolean).join(', ') || primaryName;
-        const meta = node('small', (r.kind === 'single' ? 'Audio' : 'Vícestopá') + ' · ' + (r.duration_ms == null ? 'délka nezjištěna' : time(r.duration_ms)));
+        const meta = node('small', r.duration_ms == null ? 'délka nezjištěna' : time(r.duration_ms), 'recording-duration');
         const toggle = node('button', undefined, 'recording-toggle'); toggle.type = 'button';
         toggle.append(title, meta); toggle.setAttribute('aria-controls', body.id);
         const id = String(r.id);
@@ -344,8 +345,10 @@
             else if (audioState !== 'available') status.append(node('span', ' · ' + state(audioState)));
         } else if (audioState !== 'available') status.append(node('span', (r.title ? ' · ' : '') + state(audioState)));
         status.dataset.state = audioState;
-        if (status.textContent) card.append(status);
-        body.append(node('small', 'Vložil/a ' + r.author, 'vz2-attribution'));
+        const description = node('div', undefined, 'recording-description');
+        if (status.textContent) description.append(status);
+        description.append(node('small', 'Vložil ' + r.author, 'vz2-attribution'));
+        body.append(description);
         if (r.summary) body.append(node('p', r.summary, 'recording-summary'));
         if (r.summary_author) body.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · upravil/a ' + r.summary_editor : ''), 'vz2-attribution'));
         const actions = node('div', undefined, 'action-list recording-actions');
@@ -386,6 +389,7 @@
             recordingMenu.finish(); actions.append(recordingMenu.toggle);
         }
         if (actions.childElementCount) body.append(actions);
+        if (adapter?.audio) body.append(adapter.audio);
         timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
         card.append(body); return card;
     }
