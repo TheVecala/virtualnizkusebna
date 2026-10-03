@@ -172,7 +172,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Virtuální zkušebna</title>
+<title>Zkušebna DK!</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
       xintegrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
@@ -211,7 +211,7 @@ $nazev_valu = nacti_nazev_valu($slozka_slozek, $slozka_souboru);
 
 <!-- ── TOPBAR ── -->
 <div id="topbar">
-  <div class="topbar-identity"><span class="brand">ZKUŠEBNA</span><span class="brand">/</span><span class="brand">DK</span></div>
+  <div class="topbar-identity"><span class="brand">ZKUŠEBNA DK!</span></div>
   <nav class="workspace-modes" aria-label="Hlavní pracovní režim">
     <a href="index.php?sekce=uploads" data-workspace-mode="skladby" <?= $sekce === 'uploads' ? 'aria-current="page"' : '' ?>>Skladby</a>
     <a href="index.php?sekce=zkousky" data-workspace-mode="zkousky" <?= $sekce === 'zkousky' ? 'aria-current="page"' : '' ?>>Zkoušky</a>

@@ -172,6 +172,8 @@
         if (target) window.Vz2Layout.revealRecording();
         seekMixerLink();
         if (missing) message('Odkazovaná nahrávka již neexistuje.', true);
+        // The catalogue and layout are usable; deep-linked audio loads in its own player.
+        window.Vz2Boot?.ready();
         if (nextLooper) {
             await window.Vz2Player.openLooper(target, target.files[0], Number(qs.get('time_ms') || 0) / 1000, !deepLinkSeeked);
             if (serial !== navigationSerial) return;
@@ -628,7 +630,7 @@
         mixerNotes?.destroy(); window.Vz2Timestamps.stopLoop();
         mixerNotes = window.Vz2Timestamps.mount($('mixer-timestamps'), e.detail.id, mixerAdapter(e.detail.id));
     });
-    const initialise = () => refresh().catch(e => { stopMixer(); message(e.message, true); $('content').replaceChildren(node('p', 'Seznam se nepodařilo načíst.')); });
+    const initialise = () => refresh().catch(e => { window.Vz2Boot?.fail(); stopMixer(); message(e.message, true); $('content').replaceChildren(node('p', 'Seznam se nepodařilo načíst.')); });
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialise, { once: true });
     else initialise();
 }());
