@@ -21,11 +21,104 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
     'cachePrefix'=>'vz2:'.VZ2_DATASET_KEY.':'.VZ2_ENVIRONMENT.':'];
 ?>
 <!doctype html>
-<html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="cs" class="vz2-booting"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Virtuální zkušebna 2.0</title>
-<link rel="stylesheet" href="css/multitrack.css"><link rel="stylesheet" href="css/vz2.css?v=<?=filemtime(__DIR__.'/css/vz2.css')?>">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<!-- Critical startup UI stays inline: it must paint before external CSS and JS arrive. -->
+<style>
+html.vz2-booting { background: #111416; }
+html.vz2-booting body { margin: 0; overflow: hidden; }
+html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
+#vz2-boot { position: fixed; inset: 0; z-index: 100000; box-sizing: border-box; padding: max(28px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: #111416; color: #e9ebe6; font: 14px/1.6 system-ui, sans-serif; overflow: auto; transition: opacity .16s ease; }
+#vz2-boot [hidden] { display: none !important; }
+#vz2-boot-inner { display: flex; flex-direction: column; width: min(100%, 420px); height: 100%; min-height: 360px; max-height: 720px; margin: auto; }
+#vz2-boot-brand { display: flex; align-items: center; gap: 10px; color: #a2a8aa; font-size: 11px; font-weight: 650; letter-spacing: .12em; }
+#vz2-boot-brand b { color: #b5bb51; font-size: 13px; letter-spacing: .03em; }
+#vz2-boot-brand span { border-left: 1px solid #42484b; padding-left: 10px; }
+#vz2-boot-center { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 30px 0; text-align: center; }
+#vz2-boot-title { margin: 0; color: #e9ebe6; font: 700 clamp(36px, 10vw, 54px)/1.12 system-ui, sans-serif; letter-spacing: -.045em; }
+#vz2-boot-title span { color: #b5bb51; }
+#vz2-boot-subtitle { margin: 20px 0 0; color: #a2a8aa; font: 14px/1.7 system-ui, sans-serif; }
+#vz2-boot-wave { display: flex; align-items: center; gap: 6px; height: 52px; margin-bottom: 29px; }
+#vz2-boot-wave span { width: 5px; height: 12px; border-radius: 4px; background: #b5bb51; animation: vz2-boot-pulse 1.8s ease-in-out infinite; animation-delay: -.6s; }
+#vz2-boot-wave span:nth-child(2), #vz2-boot-wave span:nth-child(6) { height: 24px; animation-delay: -.4s; }
+#vz2-boot-wave span:nth-child(3), #vz2-boot-wave span:nth-child(5) { height: 38px; animation-delay: -.2s; }
+#vz2-boot-wave span:nth-child(4) { height: 50px; animation-delay: 0s; }
+#vz2-boot-footer { min-height: 44px; text-align: center; }
+#vz2-boot-status { margin: 0; color: #a2a8aa; font: 12px/1.65 system-ui, sans-serif; }
+#vz2-boot-retry { margin-top: 14px; min-height: 44px; padding: 8px 18px; border: 1px solid #b5bb51; border-radius: 5px; background: #272b14; color: #e9ebe6; font: 14px/1.5 system-ui, sans-serif; cursor: pointer; }
+#vz2-boot-retry:focus-visible { outline: 2px solid #b5bb51; outline-offset: 4px; }
+#vz2-boot.is-leaving { opacity: 0; pointer-events: none; }
+#vz2-boot.is-failed #vz2-boot-wave span { animation: none; opacity: .5; }
+@keyframes vz2-boot-pulse { 0%, 100% { transform: scaleY(.55); opacity: .6; } 50% { transform: scaleY(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #vz2-boot { transition: none; } #vz2-boot-wave span { animation: none; } }
+</style>
+<script>
+(function () {
+    'use strict';
+    let ready = false, failed = false, finished = false, revealing = false, delayed = false, retry = false;
+    const $ = id => document.getElementById(id);
+    function status() {
+        if (finished || !$('vz2-boot')) return;
+        $('vz2-boot').classList.toggle('is-failed', failed);
+        $('vz2-boot-status').textContent = failed ? 'Zkušebnu se nepodařilo načíst. Zkus to prosím znovu.'
+            : delayed ? 'Chvíli to trvá. Stále načítáme…' : 'Načítáme skladby a nahrávky…';
+        $('vz2-boot-retry').hidden = !retry;
+    }
+    const slowTimer = setTimeout(() => { delayed = true; status(); }, 8000);
+    // A stalled connection remains recoverable and may still finish on its own.
+    const retryTimer = setTimeout(() => { retry = true; status(); }, 30000);
+    function fail() {
+        if (finished) return;
+        failed = retry = true;
+        clearTimeout(slowTimer); clearTimeout(retryTimer); status();
+    }
+    function reveal() {
+        if (!ready || failed || finished || revealing) return;
+        if ([...document.querySelectorAll('link[data-vz2-style]')].some(link => !link.dataset.loaded)) return;
+        revealing = true;
+        // Let styles and the responsive layout settle before exposing the app.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            revealing = false;
+            if (failed || finished) return;
+            finished = true;
+            clearTimeout(slowTimer); clearTimeout(retryTimer);
+            document.documentElement.classList.remove('vz2-booting');
+            $('app-shell').removeAttribute('aria-busy');
+            const splash = $('vz2-boot'), hadFocus = splash.contains(document.activeElement);
+            splash.setAttribute('aria-hidden', 'true'); splash.inert = true;
+            splash.classList.add('is-leaving');
+            if (hadFocus) $('catalog-picker').focus({ preventScroll: true });
+            setTimeout(() => splash.remove(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180);
+            document.removeEventListener('load', loaded, true);
+            window.removeEventListener('error', startupError, true);
+            window.removeEventListener('unhandledrejection', fail);
+        }));
+    }
+    function loaded(event) {
+        const link = event.target;
+        if (!link.matches?.('link[data-vz2-style], link[data-vz2-icons]')) return;
+        link.media = 'all'; link.dataset.loaded = 'true'; reveal();
+    }
+    function startupError(event) {
+        if (event.target.matches?.('link[data-vz2-style], script[src]') || event.message) fail();
+    }
+    document.addEventListener('load', loaded, true);
+    window.addEventListener('error', startupError, true);
+    window.addEventListener('unhandledrejection', fail);
+    document.addEventListener('DOMContentLoaded', status, { once: true });
+    window.Vz2Boot = { ready() { ready = true; reveal(); }, fail };
+}());
+</script>
+<link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/multitrack.css"><link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/vz2.css?v=<?=filemtime(__DIR__.'/css/vz2.css')?>">
+<link rel="stylesheet" data-vz2-icons media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 </head><body>
+<section id="vz2-boot" aria-label="Načítání zkušebny"><div id="vz2-boot-inner">
+<div id="vz2-boot-brand"><b>DK</b><span>VIRTUÁLNÍ ZKUŠEBNA</span></div>
+<div id="vz2-boot-center"><div id="vz2-boot-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+<h1 id="vz2-boot-title">Dušanova<br><span>zkušebna</span></h1><p id="vz2-boot-subtitle">Už to najíždí.....</p></div>
+<div id="vz2-boot-footer"><p id="vz2-boot-status" role="status" aria-live="polite">Načítáme skladby a nahrávky…</p><button id="vz2-boot-retry" type="button" hidden onclick="location.reload()">Zkusit znovu</button>
+<noscript><style>#vz2-boot-status { display: none; } #vz2-boot-wave span { animation: none; }</style><p id="vz2-boot-noscript">Pro otevření zkušebny povol JavaScript v prohlížeči a obnov stránku.</p></noscript>
+</div></div></section>
 <header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA <small>2.0</small></a><h1 id="collection-title"><span class="collection-path-prefix" aria-hidden="true">/ DK /</span><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" title="Vybrat skladbu nebo zkoušku"><span id="collection-title-name">Načítám…</span></button></h1>
 <nav id="desktop-panels" aria-label="Zobrazené panely">
 <button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Mapa</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
@@ -34,7 +127,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
 <button id="show-offline">Správa offline souborů</button><?php if(!defined('VZ2_ONLY') || VZ2_ONLY!==true):?><a href="index.php">Původní zkušebna</a><?php endif;?><button id="logout">Odhlásit</button></nav></details></header>
-<main id="app-shell"><p id="message" role="status" aria-live="polite"></p>
+<main id="app-shell" aria-busy="true"><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
 <div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header">
 <?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ Nová skladba</button><?php endif;?>
@@ -110,5 +203,5 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <dialog id="player-help-dialog" aria-labelledby="player-help-title"><div class="dialog-header"><h2 id="player-help-title">Nápověda přehrávače</h2><button id="player-help-close" class="modal-close" type="button" aria-label="Zavřít nápovědu">×</button></div><p>Nejprve vyberte nahrávku ze seznamu a otevřete ji v Looperu nebo Mixéru.</p><p class="muted">Podrobnou nápovědu doplníme později.</p></dialog>
 <script>window.VZ2=<?=json_encode($config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_HEX_APOS)?>;
 window.MULTITRACK_CONFIG={listUrl:'php/ajax/vz2.php?action=mixer',detailUrl:'php/ajax/vz2.php?action=mixer&id={id}',canUpload:false,cacheDb:'zkusebna-vz2-cache',cacheStore:'audio',cachePrefix:window.VZ2.cachePrefix,requireFreshMetadata:true,managedNavigation:true};</script>
-<script src="js/vz2-cache.js"></script><script src="js/multitrack.js?v=<?=filemtime(__DIR__.'/js/multitrack.js')?>"></script><script src="js/vz2-timestamps.js"></script><script src="js/vz2-song-map-model.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map-model.js')?>"></script><script src="js/vz2-song-map.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map.js')?>"></script><script src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script src="js/vz2-layout.js?v=<?=filemtime(__DIR__.'/js/vz2-layout.js')?>"></script><script src="js/vz2-player.js?v=<?=filemtime(__DIR__.'/js/vz2-player.js')?>"></script><script src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
+<script defer src="js/vz2-cache.js"></script><script defer src="js/multitrack.js?v=<?=filemtime(__DIR__.'/js/multitrack.js')?>"></script><script defer src="js/vz2-timestamps.js"></script><script defer src="js/vz2-song-map-model.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map-model.js')?>"></script><script defer src="js/vz2-song-map.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map.js')?>"></script><script defer src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script defer src="js/vz2-layout.js?v=<?=filemtime(__DIR__.'/js/vz2-layout.js')?>"></script><script defer src="js/vz2-player.js?v=<?=filemtime(__DIR__.'/js/vz2-player.js')?>"></script><script defer src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
 </body></html>
