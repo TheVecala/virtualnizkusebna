@@ -1,5 +1,11 @@
 # Oddělený úklid po přechodu na VZ2
 
+**Aktualizace 3. 10. 2026:** stará verze je podle uživatele dostupná na
+samostatné subdoméně. Nyní se připravuje odstranění jejího kódu z nové alfy;
+přesný rozsah uvádí `legacy-retirement-2026-10-03.md`. Níže uvedené čekání
+na oddělení staré verze je historické. Pravidla pro případný úklid uživatelských
+dat a sdílených zdrojů zůstávají samostatná; nová inventura se jich netýká.
+
 Stav 20. 9. 2026: úklid se nespouští. Uživatel nepožaduje převod starého obsahu
 a starou alfu nahradí hotová beta. To samo neurčuje seznam položek ke smazání.
 Nahrazení alfy počká na dokončení funkcí bety i následné úpravy CSS v samostatném
