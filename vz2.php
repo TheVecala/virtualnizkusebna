@@ -22,7 +22,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 ?>
 <!doctype html>
 <html lang="cs" class="vz2-booting"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zkušebna DK!</title>
+<title>Virtuální zkušebna 2.0</title>
 <!-- Critical startup UI stays inline: it must paint before external CSS and JS arrive. -->
 <style>
 html.vz2-booting { background: #111416; }
@@ -115,18 +115,17 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <section id="vz2-boot" aria-label="Načítání zkušebny"><div id="vz2-boot-inner">
 <div id="vz2-boot-brand"><b>DK</b><span>VIRTUÁLNÍ ZKUŠEBNA</span></div>
 <div id="vz2-boot-center"><div id="vz2-boot-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-<h1 id="vz2-boot-title">Zkušebna<br><span>DK!</span></h1><p id="vz2-boot-subtitle">Už to najíždí.....</p></div>
+<h1 id="vz2-boot-title">Dušanova<br><span>zkušebna</span></h1><p id="vz2-boot-subtitle">Už to najíždí.....</p></div>
 <div id="vz2-boot-footer"><p id="vz2-boot-status" role="status" aria-live="polite">Načítáme skladby a nahrávky…</p><button id="vz2-boot-retry" type="button" hidden onclick="location.reload()">Zkusit znovu</button>
 <noscript><style>#vz2-boot-status { display: none; } #vz2-boot-wave span { animation: none; }</style><p id="vz2-boot-noscript">Pro otevření zkušebny povol JavaScript v prohlížeči a obnov stránku.</p></noscript>
 </div></div></section>
-<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA DK!</a><h1 id="collection-title"><span class="collection-path-prefix" aria-hidden="true">/</span><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" title="Vybrat skladbu nebo zkoušku"><span id="collection-title-name">Načítám…</span></button></h1>
+<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA <small>2.0</small></a><h1 id="collection-title"><span class="collection-path-prefix" aria-hidden="true">/ DK /</span><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" title="Vybrat skladbu nebo zkoušku"><span id="collection-title-name">Načítám…</span></button></h1>
 <nav id="desktop-panels" aria-label="Zobrazené panely">
 <button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Mapa</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
 </nav><button id="show-ideas" aria-pressed="false" aria-controls="ideas-workspace">Nápady</button>
 <span class="topbar-account" title="Přihlášený účet: <?=auth_h($_SESSION['user_name']??'Host')?>"><?=auth_h($_SESSION['user_name']??'Host')?></span>
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
-<button id="show-history" type="button">Historie zkoušení</button>
 <button id="show-offline">Správa offline souborů</button><?php if(!defined('VZ2_ONLY') || VZ2_ONLY!==true):?><a href="index.php">Původní zkušebna</a><?php endif;?><button id="logout">Odhlásit</button></nav></details></header>
 <main id="app-shell" aria-busy="true"><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
@@ -187,9 +186,6 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div id="mixer-timestamps"></div>
 <button id="mixer-discussion">Diskuse ke skladbě / zkoušce</button>
 </section></main>
-<section id="history-workspace" hidden aria-labelledby="history-title"><header class="history-header"><div class="history-heading"><span class="history-emblem" aria-hidden="true"><i class="ti ti-calendar-stats"></i></span><div><h2 id="history-title">Historie zkoušení</h2><p>Skladby napříč jednotlivými zkouškami</p></div></div><button id="history-close" class="modal-close" type="button" aria-label="Zavřít historii zkoušení" title="Zavřít">×</button></header><div class="history-toolbar"><label class="history-song-control"><span>Skladba</span><select id="history-song-filter"><option value="">Všechny skladby</option></select></label><label class="history-check"><input id="history-audio-filter" type="checkbox"><span>Jen s dostupným audiem</span></label><button id="history-orientation" type="button" aria-pressed="false"><i class="ti ti-switch-horizontal" aria-hidden="true"></i><span>Prohodit osy</span></button></div><p id="history-status" role="status" aria-live="polite"></p><div id="history-matrix" tabindex="0" aria-label="Matice historie zkoušení"></div></section>
-<dialog id="history-add" aria-labelledby="history-add-title"><form><div class="dialog-header"><h2 id="history-add-title">Přidat pokus</h2><button type="button" class="modal-close" data-history-close>×</button></div><p class="history-context"></p><fieldset><legend>Existující podklad k zařazení</legend><div class="history-candidates"></div></fieldset><p class="error" role="alert"></p><div class="toolbar"><button type="submit">Přidat</button><button type="button" data-history-close>Zrušit</button></div></form></dialog>
-<dialog id="history-detail" aria-labelledby="history-detail-title"><div class="dialog-header"><h2 id="history-detail-title">Pokus</h2><button type="button" class="modal-close" data-history-close>×</button></div><div class="history-detail-body"></div></dialog>
 <nav id="bottom-nav" aria-label="Mobilní navigace">
 <button id="bn-skladby" aria-haspopup="dialog"><img src="meat/ikona_skladby.png" alt="">skladby</button>
 <button data-mobile-panel="recordings" aria-pressed="true"><img src="meat/ikona_nahravky.png" alt="">nahrávky</button>
