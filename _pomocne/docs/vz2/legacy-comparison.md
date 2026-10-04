@@ -1,5 +1,11 @@
 # Prázdná stará zkušebna pro porovnávání
 
+**Aktualizace 3. 10. 2026:** uživatel potvrzuje, že stará verze je již dostupná
+na samostatné subdoméně `zkusebna_old`, a požaduje odstranit původní kód
+z aktuální alfy. Inventura je v `legacy-retirement-2026-10-03.md`.
+Následující stav přípravy z 20. 9. je historický; nasazení staré subdomény
+nebylo při nové inventuře samostatně technicky ověřováno.
+
 Aktuální požadavek uživatele z 20. 9. 2026: dokončit novou betu, tou nahradit
 alfu a zachovat starou verzi na samostatné subdoméně pro porovnávání.
 **Ve staré ukázce nebude žádný uživatelský obsah. Dodatečné heslo Apache

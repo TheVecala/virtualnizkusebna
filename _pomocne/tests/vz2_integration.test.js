@@ -16,9 +16,17 @@ const web = path.join(temp, 'web');
 const media = path.join(temp, 'media');
 const database = 'vz2_test_' + crypto.randomBytes(6).toString('hex');
 fs.mkdirSync(web); fs.mkdirSync(media);
+// PHP's development server otherwise sends a missing root-level .php URL to index.php.
+// Model the deployed document root: real files execute, missing paths are 404.
+const router = path.join(temp, 'router.php');
+fs.writeFileSync(router, `<?php
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+if ($path === '/' || is_file($_SERVER['DOCUMENT_ROOT'] . $path)) return false;
+http_response_code(404); echo 'Not found';
+`);
 const write = (name, value) => { fs.mkdirSync(path.dirname(name), { recursive: true }); fs.writeFileSync(name, value); };
 const phpString = value => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
-for (const dir of ['php', 'js', 'css', 'data', 'fonts', 'meat']) fs.cpSync(path.join(root, dir), path.join(web, dir), { recursive: true });
+for (const dir of ['php', 'js', 'css', 'meat']) fs.cpSync(path.join(root, dir), path.join(web, dir), { recursive: true });
 for (const dir of ['migrations', 'tools']) fs.cpSync(path.join(root, '_pomocne', dir), path.join(web, dir), { recursive: true });
 for (const file of ['index.php', 'vz2.php', 'admin.php', 'help.php']) fs.copyFileSync(path.join(root, file), path.join(web, file));
 write(path.join(media, '.vz2-storage-id'), database);
@@ -31,7 +39,7 @@ $command=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
 if($command['action']==='init'){
  $db->query('CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');$db->select_db('${database}');
  $db->query("SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE'");
- foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
+ foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
  foreach([['Admin','admin','admin-test'],['Alice','muzikant','alice-test'],['Bob','muzikant','bob-test']] as $u){$s=$db->prepare('INSERT INTO users(name,role,password_hash) VALUES (?,?,?)');$s->execute([$u[0],$u[1],password_hash($u[2],PASSWORD_DEFAULT)]);}
  $s=$db->prepare('UPDATE auth_settings SET guest_enabled=1,guest_password_hash=? WHERE id=1');$s->execute([password_hash('guest-test',PASSWORD_DEFAULT)]);
  echo json_encode(['version'=>$db->server_info,'mode'=>$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0]]);
@@ -77,12 +85,12 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
 `);
     const clients = Object.fromEntries(['admin', 'alice', 'bob', 'guest', 'anon'].map(n => [n, {}]));
     async function request(client, url, fields, options = {}) {
-        const headers = { Cookie: client.cookie || '', ...(options.headers || {}) };
+        const headers = { Connection: 'close', Cookie: client.cookie || '', ...(options.headers || {}) };
         let body;
         if (fields instanceof FormData) body = fields;
         else if (fields) { body = options.form ? new URLSearchParams(fields).toString() : JSON.stringify(fields); headers['Content-Type'] = options.form ? 'application/x-www-form-urlencoded' : 'application/json'; }
         if (fields && !options.noCsrf) headers['X-CSRF-Token'] = client.csrf || '';
-        const r = await fetch(base + url, { method: fields ? 'POST' : 'GET', body, headers, redirect: 'manual', signal: AbortSignal.timeout(15000) });
+        const r = await fetch(base + url, { method: fields ? 'POST' : 'GET', body, headers, redirect: 'manual', signal: AbortSignal.timeout(Number(process.env.VZ2_TEST_HTTP_TIMEOUT_MS || 15000)) });
         if (r.headers.get('set-cookie')) client.cookie = r.headers.get('set-cookie').split(';')[0];
         const buffer = Buffer.from(await r.arrayBuffer()), text = buffer.toString();
         return { status: r.status, text, buffer, headers: r.headers, json: () => JSON.parse(text) };
@@ -109,7 +117,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
     try {
         console.log('TEMP ' + temp);
         const init = dbAction('init'); created = true; console.log('MariaDB ' + init.version);
-        check(db("SHOW TABLES LIKE 'vz2_%'").length === 13, 'migration creates 13 tables');
+        check(db("SHOW TABLES LIKE 'vz2_%'").length === 14, 'migration creates 14 tables');
         const requiredModes = ['STRICT_TRANS_TABLES','ERROR_FOR_DIVISION_BY_ZERO','NO_ENGINE_SUBSTITUTION'];
         const hasRequiredModes = mode => requiredModes.every(m => mode.split(',').includes(m));
         check(hasRequiredModes(init.mode) && init.mode.split(',').includes('NO_ZERO_DATE'), 'migration enables strict mode from a non-strict session and preserves additional modes');
@@ -118,12 +126,23 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         check(hasRequiredModes(runtimeMode.authMode) && hasRequiredModes(runtimeMode.vz2Mode) && runtimeMode.sameConnection, 'login, admin and VZ2 share a configured strict connection');
         check(runtimeMode.rejected, 'application connection rejects silent VARCHAR truncation');
         const preflight = execFileSync(php, [path.join(web, 'tools', 'vz2_preflight.php')], {windowsHide:true}).toString();
-        check(preflight.includes('13 VZ2 tables') && !preflight.includes('FAIL'), 'read-only preflight succeeds against isolated configuration');
+        check(preflight.includes('14 VZ2 tables') && !preflight.includes('FAIL'), 'read-only preflight succeeds against isolated configuration');
         // This fixture changes config between requests to test read-only deployment.
-        server = spawn(php, ['-d', 'opcache.enable=0', '-d', 'disable_functions=link', '-d', 'session.save_path=' + temp, '-d', 'upload_max_filesize=8M', '-d', 'post_max_size=32M', '-S', '127.0.0.1:' + port, '-t', web], { cwd: web, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-        const log = fs.createWriteStream(path.join(temp, 'http.log')); server.stdout.pipe(log); server.stderr.pipe(log);
+        // Direct output avoids filling a pipe while synchronous fixture queries block Node.
+        const log = fs.openSync(path.join(temp, 'http.log'), 'a');
+        try {
+            server = spawn(php, ['-d', 'opcache.enable=0', '-d', 'disable_functions=link', '-d', 'session.save_path=' + temp, '-d', 'upload_max_filesize=8M', '-d', 'post_max_size=32M', '-S', '127.0.0.1:' + port, '-t', web, router], { cwd: web, windowsHide: true, stdio: ['ignore', log, log] });
+        } finally { fs.closeSync(log); }
         for (let i = 0; i < 50; i++) { try { await request(clients.anon, 'index.php?v=2'); break; } catch (_) { await new Promise(r => setTimeout(r, 100)); } }
         for (const name of ['admin', 'alice', 'bob', 'guest']) await login(name);
+        if (process.env.VZ2_TEST_SUITE === 'cleanup' || process.env.VZ2_TEST_BROWSER === 'cleanup') {
+            const collection = await good('admin', { action: 'collection_create', kind: 'song', title: 'Retirement fixture' });
+            const recording = await upload('admin', collection.id, 'Retained audio');
+            assert.equal(recording.status, 201, recording.text);
+            await require('./vz2_cutover.integration')({ base, clients, request, db, check, temp, web, media, php, write });
+            console.log('PASS retirement integration: ' + checks + ' checks');
+            return;
+        }
         for (const who of ['anon','guest','alice']) {
             const denied = await request(clients[who], 'tools/vz2_preflight.php');
             check(denied.status===403 && !denied.text.includes(database) && !denied.text.includes(media), 'browser preflight denies '+who+' without diagnostic details');
@@ -137,7 +156,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
             assert.equal(browserCheck.status,200,browserCheck.text);
             assert.equal(report.details.writes_enabled,false,browserCheck.text);
             check(browserCheck.status===200 && report.ok && report.details.database===database
-                && report.details.tables.length===13 && report.details.writes_enabled===false
+                && report.details.tables.length===14 && report.details.writes_enabled===false
                 && hasRequiredModes(report.details.session_sql_mode), 'admin browser preflight checks real strict connection and storage with writes disabled');
             check((await api('admin',{action:'collection_create',kind:'song',title:'Read only'})).status===403
                 && db('SELECT id FROM vz2_collections').length===0 && db('SELECT id FROM vz2_activity_log').length===0,
@@ -183,7 +202,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
                 const wrongTables = await request(clients.admin,'tools/vz2_preflight.php');
                 check(wrongTables.status===503 && wrongTables.json().ok===false
                     && wrongTables.json().checks.some(c=>!c.ok && c.label.includes('exact names')),
-                    'preflight rejects wrong table names even when count is still 13');
+                    'preflight rejects wrong table names even when count is still 14');
             } finally { db('RENAME TABLE vz2_unexpected_log TO vz2_activity_log'); }
             db("DELETE FROM vz2_collection_orders WHERE kind='rehearsal'");
             try {

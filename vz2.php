@@ -22,7 +22,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 ?>
 <!doctype html>
 <html lang="cs" class="vz2-booting"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Virtuální zkušebna 2.0</title>
+<title>Zkušebna DK!</title>
 <!-- Critical startup UI stays inline: it must paint before external CSS and JS arrive. -->
 <style>
 html.vz2-booting { background: #111416; }
@@ -126,7 +126,8 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <span class="topbar-account" title="Přihlášený účet: <?=auth_h($_SESSION['user_name']??'Host')?>"><?=auth_h($_SESSION['user_name']??'Host')?></span>
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
-<button id="show-offline">Správa offline souborů</button><?php if(!defined('VZ2_ONLY') || VZ2_ONLY!==true):?><a href="index.php">Původní zkušebna</a><?php endif;?><button id="logout">Odhlásit</button></nav></details></header>
+<a href="help.php">Nápověda</a><button id="show-history" type="button">Historie zkoušení</button>
+<button id="show-offline">Správa offline souborů</button><button id="logout">Odhlásit</button></nav></details></header>
 <main id="app-shell" aria-busy="true"><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
 <div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header">
@@ -173,7 +174,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <section id="offline-files" class="utility-panel" hidden aria-label="Offline soubory"><div class="dialog-header"><h2>Offline soubory tohoto prostředí</h2><button class="modal-close" type="button" data-close-utility="offline-files" aria-label="Zavřít offline soubory" title="Zavřít offline soubory">×</button></div><p>Lokální kopie v tomto prohlížeči. Odstraněné serverové audio lze odsud stáhnout nebo uvolnit jeho místo.</p><div class="offline-files-list"></div><button id="offline-clear">Odebrat všechny místní kopie</button></section>
 <section id="mixer-panel" class="mt-shell" hidden aria-label="Mixér vybrané nahrávky"><div class="dialog-header"><div class="toolbar"><h2>Mixér</h2><button id="mixer-copy-link" type="button">Kopírovat odkaz na čas</button></div><button id="mixer-close" class="modal-close" type="button" aria-label="Zavřít Mixér" title="Zavřít Mixér">×</button></div>
 <p id="mixer-context"></p>
-<div id="mt-notice" role="status" hidden></div><div id="mt-selector" hidden></div>
+<div id="mt-notice" role="status" hidden></div>
 <h3 id="mt-playing-name">Vyberte vícestopou nahrávku</h3><div id="mt-empty">Vyberte nahrávku ze seznamu.</div>
 <div class="toolbar"><button id="mt-restart" title="Na začátek">⏮</button><button id="mt-backward">−5 s</button>
 <button id="mt-play" aria-label="Přehrát"><span id="mt-play-icon"></span> Přehrát / pauza</button><button id="mt-forward">+5 s</button>
@@ -202,6 +203,6 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <dialog id="logout-dialog" aria-labelledby="logout-title"><span class="logout-icon" aria-hidden="true">🎸</span><p id="logout-title">Opravdu chceš opustit zkušebnu?</p><p id="logout-error" class="edit-error" role="alert" hidden></p><button id="logout-confirm" type="button">zpět do reálného světa</button><button id="logout-cancel" type="button">zůstat ve zkušebně</button></dialog>
 <dialog id="player-help-dialog" aria-labelledby="player-help-title"><div class="dialog-header"><h2 id="player-help-title">Nápověda přehrávače</h2><button id="player-help-close" class="modal-close" type="button" aria-label="Zavřít nápovědu">×</button></div><p>Nejprve vyberte nahrávku ze seznamu a otevřete ji v Looperu nebo Mixéru.</p><p class="muted">Podrobnou nápovědu doplníme později.</p></dialog>
 <script>window.VZ2=<?=json_encode($config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_HEX_APOS)?>;
-window.MULTITRACK_CONFIG={listUrl:'php/ajax/vz2.php?action=mixer',detailUrl:'php/ajax/vz2.php?action=mixer&id={id}',canUpload:false,cacheDb:'zkusebna-vz2-cache',cacheStore:'audio',cachePrefix:window.VZ2.cachePrefix,requireFreshMetadata:true,managedNavigation:true};</script>
+window.MULTITRACK_CONFIG={listUrl:'php/ajax/vz2.php?action=mixer',detailUrl:'php/ajax/vz2.php?action=mixer&id={id}',cacheDb:'zkusebna-vz2-cache',cacheStore:'audio',cachePrefix:window.VZ2.cachePrefix,requireFreshMetadata:true};</script>
 <script defer src="js/vz2-cache.js"></script><script defer src="js/multitrack.js?v=<?=filemtime(__DIR__.'/js/multitrack.js')?>"></script><script defer src="js/vz2-timestamps.js"></script><script defer src="js/vz2-song-map-model.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map-model.js')?>"></script><script defer src="js/vz2-song-map.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map.js')?>"></script><script defer src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script defer src="js/vz2-layout.js?v=<?=filemtime(__DIR__.'/js/vz2-layout.js')?>"></script><script defer src="js/vz2-player.js?v=<?=filemtime(__DIR__.'/js/vz2-player.js')?>"></script><script defer src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
 </body></html>

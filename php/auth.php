@@ -1,5 +1,5 @@
 <?php
-// Malé společné funkce pro login, administraci a dočasný bootstrap.
+// Malé společné funkce pro login a administraci.
 // Volající nejprve načte config.php. Žádná automatická inicializace databáze.
 function auth_db(): mysqli {
     static $db = null;
@@ -174,20 +174,20 @@ function auth_admin_count(mysqli $db): int {
     return (int) $db->query("SELECT COUNT(*) FROM users WHERE role = 'admin' AND active = 1")->fetch_row()[0];
 }
 
-// Volat pouze uvnitř transakce po uzamčení auth_settings (platí i pro bootstrap).
-function auth_save_member(mysqli $db, array $input, array $guest, bool $firstAdmin = false): int {
+// Volat pouze uvnitř transakce po uzamčení auth_settings.
+function auth_save_member(mysqli $db, array $input, array $guest): int {
     $idText = auth_input($input, 'id');
     if ($idText !== '' && (!ctype_digit($idText) || (int) $idText < 1)) {
         throw new InvalidArgumentException('Neplatný člen.');
     }
-    $id = $firstAdmin ? 0 : (int) $idText;
+    $id = (int) $idText;
     $name = trim(auth_input($input, 'name'));
     $nameLength = preg_match_all('/./us', $name);
     if ($name === '' || $nameLength === false || $nameLength > 100) {
         throw new InvalidArgumentException('Jméno musí obsahovat 1 až 100 znaků.');
     }
-    $role = $firstAdmin ? 'admin' : auth_input($input, 'role');
-    $active = $firstAdmin || auth_input($input, 'active') === '1' ? 1 : 0;
+    $role = auth_input($input, 'role');
+    $active = auth_input($input, 'active') === '1' ? 1 : 0;
     if (!in_array($role, ['admin', 'muzikant'], true)) {
         throw new InvalidArgumentException('Neplatná role.');
     }
@@ -227,15 +227,15 @@ function auth_save_member(mysqli $db, array $input, array $guest, bool $firstAdm
     return $id ?: (int) $db->insert_id;
 }
 
-// Enabled only for an installation explicitly switched to the new application.
-// Existing legacy files remain on disk for rollback; direct entry cannot write them.
+// Only the reviewed application entry points may execute through this configuration.
 function auth_vz2_entry_guard(): void {
-    if (PHP_SAPI === 'cli' || !defined('VZ2_ONLY') || VZ2_ONLY !== true) return;
+    if (PHP_SAPI === 'cli') return;
     $root = realpath(dirname(__DIR__));
     $script = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
     $allowed = ['index.php','vz2.php','admin.php','help.php','php/ajax/vz2.php',
         'php/ajax/vz2_files.php','php/ajax/vz2_timestamps.php','php/ajax/vz2_content.php',
-        'php/ajax/vz2_peaks.php','php/ajax/vz2_history.php','tools/vz2_preflight.php'];
+        'php/ajax/vz2_peaks.php','php/ajax/vz2_history.php','tools/vz2_preflight.php',
+        'tools/vz2_storage_probe.php'];
     foreach ($allowed as $path) if ($script !== false && $script === realpath($root.'/'.$path)) return;
     http_response_code(410);
     header('Content-Type: application/json; charset=utf-8');

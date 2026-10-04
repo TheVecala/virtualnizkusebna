@@ -70,13 +70,13 @@ try {
     vz2_preflight_report($engine && $engine['ENGINE']==='InnoDB', 'users InnoDB');
     $expected = ['vz2_collection_orders','vz2_collections','vz2_recordings','vz2_audio_files',
         'vz2_timestamps','vz2_discussion_threads','vz2_discussion_posts','vz2_documents',
-        'vz2_document_versions','vz2_attachments','vz2_file_operations','vz2_file_operation_items','vz2_activity_log'];
+        'vz2_document_versions','vz2_attachments','vz2_file_operations','vz2_file_operation_items','vz2_activity_log','vz2_rehearsal_plays'];
     $tables = vz2_rows($db,"SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND LEFT(TABLE_NAME,4)='vz2_'");
     $names = array_column($tables, 'TABLE_NAME');
     sort($names); sort($expected);
     $details['tables'] = $names;
-    vz2_preflight_report($names === $expected, '13 VZ2 tables (migration 002), exact names');
-    vz2_preflight_report(count($tables)===13 && !array_filter($tables, static fn($table) => $table['ENGINE'] !== 'InnoDB'), 'All VZ2 tables use InnoDB');
+    vz2_preflight_report($names === $expected, '14 VZ2 tables (migrations 002–005), exact names');
+    vz2_preflight_report(count($tables)===count($expected) && !array_filter($tables, static fn($table) => $table['ENGINE'] !== 'InnoDB'), 'All VZ2 tables use InnoDB');
     $postBody = $db->query("SHOW COLUMNS FROM vz2_discussion_posts WHERE Field='body'")->fetch_assoc();
     vz2_preflight_report($postBody && strtolower($postBody['Type'])==='mediumtext', 'Discussion MEDIUMTEXT (migration 003)');
     $documentKind = $db->query("SHOW COLUMNS FROM vz2_documents WHERE Field='kind'")->fetch_assoc();
