@@ -2,9 +2,9 @@
     'use strict';
 
     var config = window.MULTITRACK_CONFIG || {};
-    var DB_NAME = config.cacheDb || 'zkusebna-audio-cache';
-    var STORE_NAME = config.cacheStore || 'audio-files';
-    var CACHE_PREFIX = config.cachePrefix || 'multitrack-v1:';
+    var DB_NAME = config.cacheDb || 'zkusebna-vz2-cache';
+    var STORE_NAME = config.cacheStore || 'audio';
+    var CACHE_PREFIX = config.cachePrefix || 'vz2:';
     var AUDIO_FORMATS = ['wav', 'flac', 'mp3'];
     var START_LEAD_SECONDS = 0.035;
 
@@ -19,11 +19,6 @@
     var activeDownloads = new Map();
     var loadAbortController = null;
     var animationFrame = null;
-    var pendingSwitch = null;
-    var pendingErrorContinue = null;
-    var pendingOfflineAction = null;
-    var uploadXhr = null;
-    var uploadSerial = 0;
     var scrubbing = false;
     var resumeAfterScrub = false;
 
@@ -120,40 +115,8 @@
         if (dom.loadingPanel) dom.loadingPanel.classList.toggle('is-complete', state === 'ready');
     }
 
-    function showModal(selector) {
-        if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
-            window.jQuery(selector).modal('show');
-            return true;
-        }
-        var modal = document.querySelector(selector);
-        if (!modal) return false;
-        modal.hidden = false;
-        modal.classList.add('show');
-        modal.style.display = 'block';
-        return true;
-    }
-
-    function hideModal(selector) {
-        if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
-            window.jQuery(selector).modal('hide');
-            return;
-        }
-        var modal = document.querySelector(selector);
-        if (!modal) return;
-        modal.classList.remove('show');
-        modal.style.display = 'none';
-        modal.hidden = true;
-    }
-
     function setLoadingPanelVisible(visible) {
-        if (!dom.loadingPanel) return;
-        var modal = dom.loadingPanel.closest('.modal');
-        if (!modal) {
-            setHidden(dom.loadingPanel, !visible);
-            return;
-        }
-        if (visible) showModal('#' + modal.id);
-        else hideModal('#' + modal.id);
+        setHidden(dom.loadingPanel, !visible);
     }
 
     function getAudioContext() {
@@ -406,68 +369,13 @@
         };
     }
 
-    function renderSelector(selectedId) {
-        if (!dom.selector) return;
-        dom.selector.textContent = '';
-        if (config.managedNavigation) return; // VZ2 selects recordings in its shared catalogue.
-        if (!items.size) dom.selector.appendChild(createElement('p', 'mt-list-empty', 'Žádné multitracky'));
-        items.forEach(function(item) {
-            var button = createElement('button', 'mt-recording');
-            button.type = 'button';
-            button.dataset.mtId = item.id;
-            var icon = createElement('img', 'mt-recording-icon');
-            icon.src = 'meat/ikona_kazeta.png';
-            icon.alt = '';
-            var copy = createElement('span', 'mt-recording-copy');
-            copy.appendChild(createElement('span', 'mt-recording-name', item.name));
-            var details = [];
-            var count = Number(item.raw.trackCount ||
-                (item.metadata && Array.isArray(item.metadata.tracks) ? item.metadata.tracks.length : 0));
-            if (item.raw.audioDeleted) details.push('Audio odstraněno');
-            if (count > 0) details.push(count + (count === 1 ? ' stopa' : count < 5 ? ' stopy' : ' stop'));
-            var created = new Date(item.raw.created);
-            if (!Number.isNaN(created.getTime())) details.push(created.toLocaleDateString('cs-CZ'));
-            copy.appendChild(createElement('span', 'mt-recording-meta', details.join(' · ')));
-            button.appendChild(icon);
-            button.appendChild(copy);
-            button.appendChild(createElement('span', 'mt-recording-action', 'Otevřít'));
-            dom.selector.appendChild(button);
-        });
-        updateSelectedRecording(selectedId);
-        dom.selector.setAttribute('aria-busy', 'false');
-    }
-
-    function updateSelectedRecording(selectedId) {
-        if (!dom.selector) return;
-        dom.selector.querySelectorAll('.mt-recording').forEach(function(button) {
-            var selected = button.dataset.mtId === String(selectedId);
-            button.setAttribute('aria-pressed', String(selected));
-            button.querySelector('.mt-recording-action').textContent = selected ? 'Vybráno' : 'Otevřít';
-        });
-    }
-
-    function refreshList(preferredId) {
-        if (!config.listUrl) {
-            showNotice('Chybí adresa serverového seznamu multitracků.', 'error');
-            return Promise.reject(new Error('MULTITRACK_CONFIG.listUrl není nastavené.'));
-        }
-        if (dom.selector) {
-            dom.selector.setAttribute('aria-busy', 'true');
-            dom.selector.querySelectorAll('button').forEach(function(button) { button.disabled = true; });
-        }
+    function refreshList() {
+        if (!config.listUrl) return Promise.reject(new Error('MULTITRACK_CONFIG.listUrl není nastavené.'));
         return requestJson(config.listUrl).then(function(payload) {
             var normalized = unwrapList(payload).map(normalizeListItem);
             items = new Map(normalized.map(function(item) { return [item.id, item]; }));
-            var selected = preferredId || (currentSet && currentSet.item.id) || config.initialId || '';
-            renderSelector(selected);
-            if (!normalized.length) showNotice('Na serveru zatím není žádný multitrack.', 'info');
             return normalized;
         }).catch(function(error) {
-            if (dom.selector) {
-                dom.selector.setAttribute('aria-busy', 'false');
-                dom.selector.querySelectorAll('button').forEach(function(button) { button.disabled = false; });
-                if (!items.size) dom.selector.textContent = 'Seznam není dostupný.';
-            }
             showNotice('Seznam multitracků se nepodařilo načíst: ' + errorMessage(error), 'error');
             throw error;
         });
@@ -792,7 +700,6 @@
     function cancelTrackLoading() {
         if (!currentSet || currentSet.phase === 'ready') return;
         cleanupCurrentSet();
-        updateSelectedRecording('');
         if (dom.playingName) dom.playingName.textContent = 'Vyberte nahrávku';
         showNotice('Načítání multitracku bylo zrušeno.', 'info');
     }
@@ -1041,38 +948,8 @@
 
     function showErrors(errors, canContinue, continuation) {
         setLoadingPanelVisible(false);
-        pendingErrorContinue = canContinue && typeof continuation === 'function' ? continuation : null;
-        if (dom.errorTitle) dom.errorTitle.textContent = canContinue ? 'NĚKTERÉ STOPY SELHALY' : 'MULTITRACK NELZE SPUSTIT';
-        if (dom.errorIntro) {
-            dom.errorIntro.textContent = canContinue
-                ? 'Tyto stopy se nepodařilo stáhnout nebo dekódovat:'
-                : 'Multitrack nelze spustit:';
-        }
-        if (dom.errorQuestion) dom.errorQuestion.hidden = !canContinue;
-        if (dom.errorClose) dom.errorClose.textContent = canContinue ? 'NEPOKRAČOVAT' : 'ZAVŘÍT';
-        if (dom.errorList) {
-            dom.errorList.textContent = '';
-            errors.forEach(function(item) {
-                var row = createElement('li', 'mt-error-item');
-                var name = createElement('strong', 'mt-error-track', item.name || 'Multitrack');
-                var detail = createElement('span', 'mt-error-message', item.message || 'Neznámá chyba.');
-                row.appendChild(name);
-                row.appendChild(document.createTextNode(' — '));
-                row.appendChild(detail);
-                dom.errorList.appendChild(row);
-            });
-        }
-        if (dom.continueReady) {
-            dom.continueReady.hidden = !pendingErrorContinue;
-            dom.continueReady.disabled = !pendingErrorContinue;
-        }
-        if (!showModal('#modal_multitrack_errors')) {
-            if (pendingErrorContinue && window.confirm('Některé stopy selhaly. Pokračovat se zbývajícími?')) {
-                var callback = pendingErrorContinue;
-                pendingErrorContinue = null;
-                callback();
-            }
-        }
+        showNotice(errors.map(function(item) { return (item.name || 'Multitrack') + ': ' + item.message; }).join(' · '), 'error');
+        if (canContinue && typeof continuation === 'function' && window.confirm('Některé stopy selhaly. Pokračovat se zbývajícími?')) continuation();
     }
 
     function failSet(set, message) {
@@ -1146,7 +1023,6 @@
         currentSet = set;
         if (dom.playingName) dom.playingName.textContent = item.name;
         if (typeof CustomEvent === 'function') document.dispatchEvent(new CustomEvent('multitrack:selected', { detail: { id: item.id } }));
-        updateSelectedRecording(item.id);
         setHidden(dom.empty, true);
         setLoadingPanelVisible(true);
         setLoadState('loading');
@@ -1538,275 +1414,18 @@
         var set = currentSet;
         if (!set || !getCacheStore() || dom.offline.disabled) return;
         var remove = dom.offline.getAttribute('aria-pressed') === 'true';
-        pendingOfflineAction = { set: set, remove: remove };
-        if (dom.offlineConfirmTitle) {
-            dom.offlineConfirmTitle.textContent = remove ? 'ODEBRAT OFFLINE KOPII?' : 'ULOŽIT PRO OFFLINE POSLECH?';
+        var message = remove
+            ? 'Odstranit kompletní offline kopii „' + set.metadata.name + '“ z tohoto prohlížeče? Soubory na serveru zůstanou beze změny.'
+            : 'Uložit všech ' + set.tracks.length + ' zdrojových stop multitracku „' + set.metadata.name + '“ do tohoto prohlížeče?';
+        if (window.confirm(message)) {
+            if (remove) removeSetOffline(set);
+            else saveSetOffline(set);
         }
-        if (dom.offlineConfirmMessage) {
-            dom.offlineConfirmMessage.textContent = remove
-                ? 'Odstranit kompletní offline kopii „' + set.metadata.name + '“ z tohoto prohlížeče? Soubory na serveru zůstanou beze změny.'
-                : 'Uložit všech ' + set.tracks.length + ' zdrojových stop multitracku „' + set.metadata.name + '“ do tohoto prohlížeče?';
-        }
-        if (dom.offlineConfirmSubmit) {
-            dom.offlineConfirmSubmit.textContent = remove ? 'ODEBRAT' : 'ULOŽIT';
-            dom.offlineConfirmSubmit.classList.toggle('btn-danger', remove);
-            dom.offlineConfirmSubmit.classList.toggle('btn-primary', !remove);
-        }
-        if (!showModal('#modal_multitrack_offline')) {
-            var confirmed = window.confirm(dom.offlineConfirmMessage ? dom.offlineConfirmMessage.textContent : 'Potvrdit offline operaci?');
-            if (confirmed) executeOfflineChange();
-            else pendingOfflineAction = null;
-        }
-    }
-
-    function executeOfflineChange() {
-        var pending = pendingOfflineAction;
-        pendingOfflineAction = null;
-        if (!pending || pending.set !== currentSet) return;
-        hideModal('#modal_multitrack_offline');
-        if (pending.remove) removeSetOffline(pending.set);
-        else saveSetOffline(pending.set);
-    }
-
-    function selectedUploadFiles() {
-        return dom.uploadFiles ? Array.from(dom.uploadFiles.files || []) : [];
-    }
-
-    function sortFiles(files) {
-        return files.slice().sort(function(a, b) {
-            return a.name.localeCompare(b.name, 'cs-CZ', { sensitivity: 'base', numeric: true });
-        });
-    }
-
-    function validateUploadBasics(name, files) {
-        if (!String(name || '').trim()) throw new Error('Zadejte název multitracku.');
-        if (files.length < 1) throw new Error('Vyberte alespoň jednu audio stopu.');
-        var seen = new Set();
-        var formats = new Set();
-        files.forEach(function(file) {
-            var extension = extensionOf(file.name);
-            if (AUDIO_FORMATS.indexOf(extension) === -1) {
-                throw new Error('Soubor „' + file.name + '“ není WAV, FLAC ani MP3.');
-            }
-            formats.add(extension);
-            var normalizedName = file.name.toLocaleLowerCase('cs-CZ');
-            if (seen.has(normalizedName)) throw new Error('Soubor „' + file.name + '“ je vybraný vícekrát.');
-            seen.add(normalizedName);
-        });
-        if (formats.size !== 1) throw new Error('Všechny stopy jedné sady musí mít stejný formát.');
-    }
-
-    function readUploadSampleRate(file) {
-        var prefixSize = Math.min(file.size, 2 * 1024 * 1024);
-        return file.slice(0, prefixSize).arrayBuffer().then(function(prefix) {
-            var rate = detectSourceSampleRate(prefix, file.name);
-            if (rate || extensionOf(file.name) !== 'mp3') return rate;
-
-            // Velký ID3 tag (typicky obal alba) může ležet před prvním MPEG framem.
-            // Pro kontrolu není nutné držet v paměti celý zdrojový soubor.
-            var bytes = new Uint8Array(prefix);
-            var audioOffset = id3PayloadLength(bytes);
-            if (audioOffset < prefix.byteLength || audioOffset >= file.size) return null;
-            return file.slice(audioOffset, Math.min(file.size, audioOffset + 2 * 1024 * 1024))
-                .arrayBuffer()
-                .then(function(audioPrefix) {
-                    return detectMp3SampleRate(audioPrefix);
-                });
-        });
-    }
-
-    function validateUploadSampleRates(files) {
-        var rates = [];
-        var sequence = Promise.resolve();
-        files.forEach(function(file, index) {
-            sequence = sequence.then(function() {
-                if (dom.uploadProgressText) {
-                    dom.uploadProgressText.textContent = 'Kontroluji stopu ' + (index + 1) + ' / ' + files.length + '…';
-                }
-                return readUploadSampleRate(file).then(function(rate) {
-                    if (!(rate > 0)) throw new Error('U souboru „' + file.name + '“ nelze určit sample rate.');
-                    rates.push({ file: file.name, rate: rate });
-                });
-            });
-        });
-        return sequence.then(function() {
-            var uniqueRates = Array.from(new Set(rates.map(function(item) { return item.rate; })));
-            if (uniqueRates.length > 1) {
-                throw new Error('Stopy mají rozdílný sample rate: ' + rates.map(function(item) {
-                    return item.file + ' (' + item.rate + ' Hz)';
-                }).join(', ') + '.');
-            }
-            return uniqueRates[0];
-        });
-    }
-
-    function renderUploadSelection() {
-        if (!dom.uploadSelection) return;
-        var files = sortFiles(selectedUploadFiles());
-        dom.uploadSelection.textContent = '';
-        if (!files.length) return;
-        var summary = createElement('div', 'mt-upload-selection-summary', files.length + ' ' +
-            (files.length === 1 ? 'stopa' : (files.length < 5 ? 'stopy' : 'stop')) + ':');
-        var list = createElement('ul', 'mt-upload-file-list');
-        files.forEach(function(file) {
-            list.appendChild(createElement('li', '', file.name));
-        });
-        dom.uploadSelection.appendChild(summary);
-        dom.uploadSelection.appendChild(list);
-    }
-
-    function setUploadResult(message, error) {
-        if (!dom.uploadResult) return;
-        dom.uploadResult.textContent = message || '';
-        dom.uploadResult.hidden = !message;
-        dom.uploadResult.classList.toggle('is-error', !!error);
-        dom.uploadResult.classList.toggle('is-success', !!message && !error);
-    }
-
-    function setUploadBusy(busy) {
-        if (dom.uploadSubmit) dom.uploadSubmit.disabled = !!busy;
-        if (dom.uploadName) dom.uploadName.disabled = !!busy;
-        if (dom.uploadFiles) dom.uploadFiles.disabled = !!busy;
-        setHidden(dom.uploadProgressWrap, !busy);
-    }
-
-    function sendUpload(name, files) {
-        if (!config.uploadUrl) return Promise.reject(new Error('Chybí adresa upload endpointu.'));
-        var formData = new FormData();
-        formData.append('name', name);
-        formData.append('track_count', String(files.length));
-        if (config.csrfToken) {
-            formData.append('csrf', config.csrfToken);
-            // Kompatibilita s případným starším endpointem.
-            formData.append('csrf_token', config.csrfToken);
-        }
-        files.forEach(function(file) { formData.append('tracks[]', file, file.name); });
-
-        return new Promise(function(resolve, reject) {
-            var xhr = new XMLHttpRequest();
-            uploadXhr = xhr;
-            xhr.open('POST', config.uploadUrl, true);
-            xhr.responseType = 'json';
-            xhr.setRequestHeader('Accept', 'application/json');
-            if (config.csrfToken) xhr.setRequestHeader('X-CSRF-Token', config.csrfToken);
-            xhr.upload.onprogress = function(event) {
-                if (!event.lengthComputable || !(event.total > 0)) {
-                    if (dom.uploadProgressText) dom.uploadProgressText.textContent = 'Nahrávám…';
-                    return;
-                }
-                var percent = clamp(Math.round(event.loaded / event.total * 100), 0, 100);
-                if (dom.uploadProgressBar) dom.uploadProgressBar.style.width = percent + '%';
-                if (dom.uploadProgressText) dom.uploadProgressText.textContent = percent + ' %';
-            };
-            xhr.onload = function() {
-                uploadXhr = null;
-                var payload = xhr.response;
-                if (!payload && xhr.responseText) {
-                    try { payload = JSON.parse(xhr.responseText); } catch (error) { payload = null; }
-                }
-                if (xhr.status >= 200 && xhr.status < 300 && payload && payload.ok !== false) {
-                    resolve(payload);
-                    return;
-                }
-                reject(new Error((payload && (payload.error || payload.chyba)) || 'Upload selhal (HTTP ' + xhr.status + ').'));
-            };
-            xhr.onerror = function() {
-                uploadXhr = null;
-                reject(new Error('Chyba spojení při uploadu.'));
-            };
-            xhr.onabort = function() {
-                uploadXhr = null;
-                reject(cancelledError());
-            };
-            xhr.send(formData);
-        });
-    }
-
-    function submitUpload(event) {
-        event.preventDefault();
-        if (!config.canUpload) {
-            setUploadResult('Pro upload nemáte oprávnění.', true);
-            return;
-        }
-        var name = dom.uploadName ? dom.uploadName.value.trim() : '';
-        var files = sortFiles(selectedUploadFiles());
-        var token = ++uploadSerial;
-        setUploadResult('', false);
-        if (dom.uploadProgressBar) dom.uploadProgressBar.style.width = '0';
-        try {
-            validateUploadBasics(name, files);
-        } catch (error) {
-            setUploadResult(errorMessage(error), true);
-            return;
-        }
-        setUploadBusy(true);
-        if (dom.uploadProgressText) dom.uploadProgressText.textContent = 'Kontroluji soubory…';
-        validateUploadSampleRates(files).then(function() {
-            if (token !== uploadSerial) throw cancelledError();
-            if (dom.uploadProgressText) dom.uploadProgressText.textContent = 'Nahrávám…';
-            return sendUpload(name, files);
-        }).then(function(payload) {
-            if (token !== uploadSerial) throw cancelledError();
-            if (dom.uploadProgressBar) dom.uploadProgressBar.style.width = '100%';
-            if (dom.uploadProgressText) dom.uploadProgressText.textContent = '100 %';
-            setUploadResult('Multitrack byl úspěšně vložen.', false);
-            var created = payload.multitrack || payload.item || {};
-            var selected = currentSet ? currentSet.item.id : '';
-            return refreshList(selected).then(function() {
-                showNotice('Nový multitrack „' + (created.name || name) + '“ je v seznamu.', 'success');
-                if (dom.uploadForm) dom.uploadForm.reset();
-                renderUploadSelection();
-                hideModal('#modal_multitrack_upload');
-            }, function(error) {
-                showNotice(
-                    'Multitrack byl uložen, ale seznam se nepodařilo obnovit: ' + errorMessage(error),
-                    'warning'
-                );
-            });
-        }).catch(function(error) {
-            if (!isCancelled(error) && token === uploadSerial) setUploadResult(errorMessage(error), true);
-        }).finally(function() {
-            if (token === uploadSerial) setUploadBusy(false);
-        });
     }
 
     function requestSetSelection(item) {
-        if (!item) return;
-        if (!currentSet) {
-            beginLoad(item);
-            return;
-        }
-        if (currentSet.item.id === item.id) {
-            updateSelectedRecording(item.id);
-            return;
-        }
-        pendingSwitch = item;
-        updateSelectedRecording(currentSet.item.id);
-        if (dom.switchName) dom.switchName.textContent = item.name;
-        if (!showModal('#modal_multitrack_switch')) {
-            if (window.confirm('Načíst „' + item.name + '“ a uvolnit současný multitrack?')) {
-                confirmSetSwitch();
-            } else {
-                pendingSwitch = null;
-            }
-        }
-    }
-
-    function confirmSetSwitch() {
-        var item = pendingSwitch;
-        pendingSwitch = null;
-        if (!item) return;
-        hideModal('#modal_multitrack_switch');
-        // Teprve potvrzením se zastaví transport a uvolní staré AudioBuffery.
-        beginLoad(item);
-    }
-
-    function continueWithReadyTracks() {
-        var callback = pendingErrorContinue;
-        pendingErrorContinue = null;
-        if (!callback) return;
-        hideModal('#modal_multitrack_errors');
-        callback();
+        if (!item || (currentSet && currentSet.item.id === item.id)) return;
+        if (!currentSet || window.confirm('Načíst „' + item.name + '“ a uvolnit současný multitrack?')) beginLoad(item);
     }
 
     function trackForControl(control) {
@@ -1861,7 +1480,6 @@
     }
 
     function cacheDom() {
-        dom.selector = byId('mt-selector');
         dom.notice = byId('mt-notice');
         dom.loadingPanel = byId('mt-loading-panel');
         dom.loadSummary = byId('mt-load-summary');
@@ -1886,37 +1504,9 @@
         dom.masterVolume = byId('mt-master-volume');
         dom.masterValue = byId('mt-master-value');
         dom.empty = byId('mt-empty');
-        dom.switchName = byId('mt-switch-name');
-        dom.switchConfirm = byId('mt-switch-confirm');
-        dom.errorTitle = byId('mt-errors-title');
-        dom.errorIntro = byId('mt-error-intro');
-        dom.errorList = byId('mt-error-list');
-        dom.errorQuestion = byId('mt-error-question');
-        dom.errorClose = byId('mt-error-close');
-        dom.continueReady = byId('mt-continue-ready');
-        dom.offlineConfirmTitle = byId('mt-offline-confirm-title');
-        dom.offlineConfirmMessage = byId('mt-offline-confirm-message');
-        dom.offlineConfirmSubmit = byId('mt-offline-confirm-submit');
-        dom.uploadForm = byId('mt-upload-form');
-        dom.uploadName = byId('mt-upload-name');
-        dom.uploadFiles = byId('mt-upload-files');
-        dom.uploadSelection = byId('mt-upload-selection');
-        dom.uploadProgressWrap = byId('mt-upload-progress-wrap');
-        dom.uploadProgressBar = byId('mt-upload-progress-bar');
-        dom.uploadProgressText = byId('mt-upload-progress-text');
-        dom.uploadResult = byId('mt-upload-result');
-        dom.uploadSubmit = byId('mt-upload-submit');
     }
 
     function bindEvents() {
-        if (dom.selector) {
-            dom.selector.addEventListener('click', function(event) {
-                var button = event.target.closest('.mt-recording');
-                if (!button || !dom.selector.contains(button)) return;
-                var item = items.get(button.dataset.mtId);
-                if (item) requestSetSelection(item);
-            });
-        }
         if (dom.mixerToggle) dom.mixerToggle.addEventListener('click', function() {
             var open = dom.mixer.hidden;
             dom.mixer.hidden = !open;
@@ -1942,53 +1532,16 @@
         }
         if (dom.offline) dom.offline.addEventListener('click', requestOfflineChange);
         if (dom.loadingCancel) dom.loadingCancel.addEventListener('click', cancelTrackLoading);
-        if (dom.offlineConfirmSubmit) dom.offlineConfirmSubmit.addEventListener('click', executeOfflineChange);
-        if (dom.switchConfirm) dom.switchConfirm.addEventListener('click', confirmSetSwitch);
-        if (dom.continueReady) dom.continueReady.addEventListener('click', continueWithReadyTracks);
-        if (dom.uploadFiles) dom.uploadFiles.addEventListener('change', renderUploadSelection);
-        if (dom.uploadForm) dom.uploadForm.addEventListener('submit', submitUpload);
-
-        if (window.jQuery) {
-            window.jQuery('#modal_multitrack_switch').on('hidden.bs.modal', function() {
-                pendingSwitch = null;
-                if (currentSet) updateSelectedRecording(currentSet.item.id);
-            });
-            window.jQuery('#modal_multitrack_errors').on('hidden.bs.modal', function() {
-                pendingErrorContinue = null;
-            });
-            window.jQuery('#modal_multitrack_offline').on('hidden.bs.modal', function() {
-                pendingOfflineAction = null;
-            });
-            window.jQuery('#modal_multitrack_upload').on('hidden.bs.modal', function() {
-                uploadSerial += 1;
-                if (uploadXhr) uploadXhr.abort();
-                setUploadBusy(false);
-            });
-        }
         window.addEventListener('pagehide', cleanupCurrentSet);
     }
 
     function initialise() {
         cacheDom();
-        if (!dom.selector) return;
+        if (!dom.mixer) return;
         bindEvents();
         setTransportEnabled(false);
         setOfflineUi(false, getCacheStore() ? '' : 'offline úložiště není dostupné', true);
-        setLoadState('loading');
-        if (dom.uploadForm && !config.canUpload) {
-            Array.from(dom.uploadForm.elements).forEach(function(element) { element.disabled = true; });
-        }
-        if (config.managedNavigation) { setLoadState('idle'); return; }
-        refreshList().then(function(list) {
-            if (!currentSet) setLoadState('idle');
-            if (config.initialId && items.has(String(config.initialId))) {
-                requestSetSelection(items.get(String(config.initialId)));
-            } else if (!list.length) {
-                setLoadState('idle');
-            }
-        }).catch(function() {
-            setLoadState('error');
-        });
+        setLoadState('idle');
     }
 
     window.MultitrackApp = {

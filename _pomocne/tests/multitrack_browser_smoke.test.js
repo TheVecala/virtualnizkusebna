@@ -30,32 +30,23 @@ function wavFixture(sampleRate, durationTenths) {
 }
 
 const html = `<!doctype html><html><body>
-<div id="mt-selector"></div><span data-mt-load-state></span>
+<span data-mt-load-state></span>
 <div id="mt-notice" hidden></div>
-<div id="modal_multitrack_loading" class="modal" hidden>
 <section id="mt-loading-panel"><strong id="mt-load-summary"></strong><div id="mt-track-statuses"></div></section>
 <button id="mt-loading-cancel" type="button">Zrušit načítání</button>
-</div>
 <button id="mt-restart" disabled></button><button id="mt-backward" disabled></button>
 <button id="mt-play" disabled><i id="mt-play-icon"></i></button><button id="mt-forward" disabled></button>
 <input id="mt-seek" type="range" disabled><output id="mt-current-time"></output><output id="mt-total-time"></output>
 <button id="mt-offline" disabled><i id="mt-offline-icon"></i><span id="mt-offline-label"></span><small id="mt-offline-status"></small></button>
 <div id="mt-empty"></div><section id="mt-mixer" hidden><div id="mt-tracks"></div>
 <input id="mt-master-volume" type="range"><output id="mt-master-value"></output></section>
-<div id="modal_multitrack_switch" hidden><strong id="mt-switch-name"></strong><button id="mt-switch-confirm"></button></div>
-<div id="modal_multitrack_errors" hidden><ul id="mt-error-list"></ul><button id="mt-continue-ready"></button></div>
-<div id="modal_multitrack_offline" hidden><h2 id="mt-offline-confirm-title"></h2><p id="mt-offline-confirm-message"></p><button id="mt-offline-confirm-submit"></button></div>
-<div id="modal_multitrack_upload" hidden><form id="mt-upload-form"><input id="mt-upload-name"><input id="mt-upload-files" type="file" multiple>
-<div id="mt-upload-selection"></div><div id="mt-upload-progress-wrap" hidden><div id="mt-upload-progress-bar"></div><span id="mt-upload-progress-text"></span></div>
-<div id="mt-upload-result" hidden></div><button id="mt-upload-submit" type="submit"></button></form></div>
 <script>
 window.MULTITRACK_CONFIG = {
   listUrl: 'https://multitrack.test/api/list',
   detailUrl: 'https://multitrack.test/api/list?id={id}',
-  uploadUrl: 'https://multitrack.test/api/upload',
-  csrfToken: 'test-token',
-  canUpload: true
+  cachePrefix: 'vz2:test:beta:'
 };
+window.confirm = () => true;
 window.__starts = [];
 window.__sources = [];
 window.__gains = [];
@@ -147,7 +138,6 @@ const audio = {
     const list = Object.values(sets).map(set => ({ id: set.id, name: set.name, created: set.created, version: 1, trackCount: 2 }));
     let activeAudioRequests = 0;
     let maximumConcurrentAudioRequests = 0;
-    let uploadHadTrackCount = false;
     let failSetADetail = false;
 
     try {
@@ -164,16 +154,6 @@ const audio = {
                     status: 200,
                     contentType: 'application/json',
                     body: JSON.stringify(id ? { ok: true, multitrack: sets[id] } : { ok: true, multitracks: list })
-                });
-                return;
-            }
-            if (url.pathname === '/api/upload') {
-                uploadHadTrackCount = /name="track_count"\r?\n\r?\n2/.test(request.postData() || '');
-                if (!list.some(item => item.id === 'set-e')) list.push({ id: 'set-e', name: 'Set E', version: 1, trackCount: 2 });
-                await route.fulfill({
-                    status: 201,
-                    contentType: 'application/json',
-                    body: JSON.stringify({ ok: true, multitrack: { id: 'set-e', name: 'Set E' } })
                 });
                 return;
             }
@@ -201,11 +181,7 @@ const audio = {
 
         await page.setContent(html);
         await page.addScriptTag({ path: path.resolve(__dirname, '..', '..', 'js', 'multitrack.js') });
-        await page.waitForFunction(() => document.querySelectorAll('#mt-selector .mt-recording').length === 4);
-
-        assert.match(await page.locator('[data-mt-id="set-a"] .mt-recording-meta').textContent(), /2 stopy/);
-        await page.locator('[data-mt-id="set-a"]').focus();
-        await page.keyboard.press('Enter');
+        await page.evaluate(async () => { await window.MultitrackApp.refreshList(); window.MultitrackApp.load('set-a'); });
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'ready');
         let state = await page.evaluate(() => window.MultitrackApp.getState());
         assert.equal(state.id, 'set-a');
@@ -253,21 +229,17 @@ const audio = {
         assert.equal(await page.evaluate(() => window.__gains[0].gain.value), 0.5);
 
         await page.click('#mt-offline');
-        await page.click('#mt-offline-confirm-submit');
         await page.waitForFunction(() => document.getElementById('mt-offline').getAttribute('aria-pressed') === 'true');
         assert.equal(await page.evaluate(() => window.__cache.size), 3);
         assert.equal(maximumConcurrentAudioRequests, 1, 'Také offline ukládání musí stahovat sekvenčně.');
 
-        await page.click('[data-mt-id="set-b"]');
-        state = await page.evaluate(() => window.MultitrackApp.getState());
-        assert.equal(state.id, 'set-a', 'Před potvrzením se aktivní sada nesmí změnit.');
-        assert.equal(await page.getAttribute('.mt-recording[aria-pressed="true"]', 'data-mt-id'), 'set-a');
-        await page.click('#mt-switch-confirm');
+        await page.evaluate(() => { window.confirm = () => false; window.MultitrackApp.load('set-b'); });
+        assert.equal((await page.evaluate(() => window.MultitrackApp.getState())).id, 'set-a', 'Cancel preserves current audio.');
+        await page.evaluate(() => { window.confirm = () => true; window.MultitrackApp.load('set-b'); });
         await page.waitForFunction(() => window.MultitrackApp.getState()?.id === 'set-b' && window.MultitrackApp.getState()?.phase === 'ready');
 
         failSetADetail = true;
-        await page.click('[data-mt-id="set-a"]');
-        await page.click('#mt-switch-confirm');
+        await page.evaluate(() => window.MultitrackApp.load('set-a'));
         try {
             await page.waitForFunction(
                 () => window.MultitrackApp.getState()?.id === 'set-a' && window.MultitrackApp.getState()?.phase === 'ready',
@@ -284,32 +256,14 @@ const audio = {
         }
         assert.match(await page.locator('#mt-notice').textContent(), /offline kopie/i);
 
-        await page.click('[data-mt-id="set-c"]');
-        await page.click('#mt-switch-confirm');
-        await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'awaiting-confirmation');
-        await page.click('#mt-continue-ready');
+        await page.evaluate(() => window.MultitrackApp.load('set-c'));
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'ready');
         assert.equal(await page.locator('.mt-channel').count(), 1);
 
-        await page.click('[data-mt-id="set-d"]');
-        await page.click('#mt-switch-confirm');
+        await page.evaluate(() => window.MultitrackApp.load('set-d'));
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'error');
         assert.equal(await page.locator('#mt-play').isDisabled(), true);
         assert.match(await page.locator('#mt-notice').textContent(), /sample rate/i);
-
-        await page.$eval('#modal_multitrack_upload', modal => {
-            modal.hidden = false;
-            modal.style.display = 'block';
-        });
-        await page.fill('#mt-upload-name', 'Set E');
-        await page.setInputFiles('#mt-upload-files', [
-            { name: 'up-one.wav', mimeType: 'audio/wav', buffer: wavFixture(44100, 10) },
-            { name: 'up-two.wav', mimeType: 'audio/wav', buffer: wavFixture(44100, 10) }
-        ]);
-        await page.$eval('#mt-upload-form', form => form.requestSubmit());
-        await page.waitForSelector('[data-mt-id="set-e"]');
-        assert.equal(uploadHadTrackCount, true);
-        assert.equal(await page.getAttribute('.mt-recording[aria-pressed="true"]', 'data-mt-id'), 'set-d', 'Obnovení seznamu nesmí předstírat načtení nové sady.');
 
         console.log('Multitrack browser smoke test: OK');
     } finally {

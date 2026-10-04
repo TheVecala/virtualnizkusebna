@@ -3,10 +3,6 @@ require_once __DIR__ . '/inc/session.php';
 app_session_start();
 require_once __DIR__ . "/../config.php";
 
-$_SESSION['barva1']        = "a7ac38";
-$_SESSION['barva2']        = "yellow";
-$_SESSION['barva_pozadi']  = "202428"; 
-
 // Zpracování odeslaného formuláře; jediným údajem zůstává heslo.
 $login_unavailable = false;
 if (isset($_POST['submit_single'])) {

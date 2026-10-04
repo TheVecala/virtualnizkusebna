@@ -16,23 +16,26 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
     const betaConfig = fs.readFileSync(path.join(web, 'config.php'), 'utf8');
     const alphaConfig = betaConfig.replace(base.slice(0, -1), alphaBase.slice(0, -1))
         .replace("define('VZ2_ENVIRONMENT','beta')", "define('VZ2_ENVIRONMENT','alpha')")
-        .replace('<?php', "<?php define('VZ2_ONLY',true);");
+        .replace('<?php', "<?php define('VZ2_ONLY',false);");
     const configure = (dir, config, writable) => write(path.join(dir, 'config.php'), config.replace(
         "define('VZ2_WRITES_ENABLED',true)", "define('VZ2_WRITES_ENABLED'," + writable + ')'));
     configure(alpha, alphaConfig, false);
     const sessions = path.join(temp, 'alpha-sessions'); fs.mkdirSync(sessions);
     // Test fixture simulates an old password-only session; never part of deployment.
     write(path.join(alpha, 'old-session.php'), "<?php session_start(); $_SESSION=['logged_in_single'=>true,'role'=>'admin'];");
-    const server = spawn(php, ['-d', 'opcache.enable=0', '-d', 'disable_functions=link', '-d', 'session.save_path=' + sessions,
-        '-S', '127.0.0.1:' + port, '-t', alpha], { cwd: alpha, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-    const log = fs.createWriteStream(path.join(temp, 'alpha-http.log')); server.stdout.pipe(log); server.stderr.pipe(log);
+    const log = fs.openSync(path.join(temp, 'alpha-http.log'), 'a');
+    let server;
+    try {
+        server = spawn(php, ['-d', 'opcache.enable=0', '-d', 'disable_functions=link', '-d', 'session.save_path=' + sessions,
+            '-S', '127.0.0.1:' + port, '-t', alpha, path.join(temp, 'router.php')], { cwd: alpha, windowsHide: true, stdio: ['ignore', log, log] });
+    } finally { fs.closeSync(log); }
     const admin = {};
     async function call(client, url, fields, form = false) {
-        const headers = { Cookie: client.cookie || '', 'X-CSRF-Token': client.csrf || '' };
+        const headers = { Connection: 'close', Cookie: client.cookie || '', 'X-CSRF-Token': client.csrf || '' };
         if (fields) headers['Content-Type'] = form ? 'application/x-www-form-urlencoded' : 'application/json';
         const r = await fetch(alphaBase + url, { method: fields ? 'POST' : 'GET', headers, redirect: 'manual',
             body: fields ? (form ? new URLSearchParams(fields).toString() : JSON.stringify(fields)) : undefined,
-            signal: AbortSignal.timeout(15000) });
+            signal: AbortSignal.timeout(Number(process.env.VZ2_TEST_HTTP_TIMEOUT_MS || 15000)) });
         if (r.headers.get('set-cookie')) client.cookie = r.headers.get('set-cookie').split(';')[0];
         const buffer = Buffer.from(await r.arrayBuffer()), text = buffer.toString();
         return { status: r.status, text, buffer, json: () => JSON.parse(text) };
@@ -100,12 +103,11 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
         check(db("SELECT id FROM vz2_activity_log WHERE target_type='collection' AND target_id=? AND environment='alpha'", [id]).length === 1
             && (await request(clients.admin, 'php/ajax/vz2.php')).json().collections.some(c => Number(c.id) === id),
             'alpha writes shared data with alpha audit; read-only beta sees it immediately');
-        const legacyEndpoints = ['php/ajax', 'php/actions'].flatMap(dir => fs.readdirSync(path.join(alpha, dir))
-            .filter(name => name.endsWith('.php') && !name.startsWith('vz2'))
-            .map(name => dir + '/' + name));
+        const legacyEndpoints = fs.readFileSync(path.join(__dirname, '../deploy/vz1-retirement/removed-files.txt'), 'utf8')
+            .trim().split(/\r?\n/).filter(name => name.endsWith('.php'));
         for (const endpoint of legacyEndpoints) {
-            check((await call(admin, endpoint, {})).status === 410 && (await request(clients.admin, endpoint, {})).status === 410,
-                'VZ2-only blocks legacy writes on both sites: ' + endpoint);
+            check((await call(admin, endpoint, {})).status === 404 && (await request(clients.admin, endpoint, {})).status === 404,
+                'retired endpoint is absent on both sites: ' + endpoint);
         }
         db("UPDATE users SET role='muzikant' WHERE id=1");
         try { check((await call(admin, 'admin.php')).status === 403 && (await call(admin, 'tools/vz2_preflight.php')).status === 403,
@@ -119,7 +121,7 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
         check(rollback.status === 200 && db("SELECT title FROM vz2_collections WHERE id=?", [id])[0].title === 'Continued on beta'
             && db("SELECT id FROM vz2_activity_log WHERE target_type='collection' AND target_id=? AND environment='beta'", [id]).length === 1,
             'rollback beta edits alpha-created data and keeps both audit environments');
-        if (process.env.VZ2_TEST_BROWSER === '1') {
+        if (['1', 'cleanup'].includes(process.env.VZ2_TEST_BROWSER)) {
             const { chromium } = require('playwright');
             const executablePath = [process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, chromium.executablePath(),
                 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(p => p && fs.existsSync(p));
@@ -129,11 +131,27 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
                 for (const who of ['admin', 'bob', 'guest']) {
                     const context = await browser.newContext({ viewport: { width: who === 'guest' ? 390 : 1360, height: 900 } });
                     const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
+                    page.setDefaultNavigationTimeout(15000);
+                    page.setDefaultTimeout(15000);
+                    // Keep parallel static asset requests off PHP's single-threaded dev server.
+                    // HTML, login, API calls and audio still use the real HTTP application.
+                    await page.route(base + '**', async route => {
+                        const pathname = new URL(route.request().url()).pathname.slice(1);
+                        if (/^(css|js|meat)\//.test(pathname) && !pathname.split('/').includes('..')) {
+                            const asset = path.join(web, pathname);
+                            if (fs.existsSync(asset)) return route.fulfill({ path: asset });
+                        }
+                        return route.continue();
+                    });
                     await page.route('https://**', r => r.abort());
                     await page.goto(base);
                     await page.locator('[name=heslo]').fill(who + '-test');
                     await page.locator('[name=submit_single]').click();
                     await page.locator('#collections button').first().waitFor({ state: 'attached' });
+                    await page.waitForLoadState('networkidle');
+                    await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'), null, {timeout:10000}).catch(async e => {
+                        console.error('Startup diagnostic', who, errors, await page.locator('#vz2-boot-status').textContent()); throw e;
+                    });
                     assert.equal(await page.getByText('Původní zkušebna', { exact: true }).count(), 0);
                     assert.equal(await page.locator('#create-collection').count(), who === 'guest' ? 0 : 1);
                     if (who === 'admin') {
@@ -142,12 +160,17 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
                         await page.getByRole('heading', { name: 'Server — obsah VZ2' }).waitFor();
                         await page.screenshot({ path: path.join(temp, 'stage5-accounts.png'), fullPage: true });
                         await page.getByRole('link', { name: '← Zpět do zkušebny', exact: true }).click();
+                        await page.locator('.layout').waitFor({ state: 'visible' });
+                        await page.waitForLoadState('networkidle');
                     }
                     await page.screenshot({ path: path.join(temp, 'stage5-' + who + '.png'), fullPage: true });
                     await page.locator('.shell-menu > summary').click();
                     await page.getByRole('button', { name: 'Odhlásit', exact: true }).click();
                     await page.locator('#logout-confirm').click();
-                    await page.locator('[name=heslo]').waitFor();
+                    await page.locator('[name=heslo]').waitFor().catch(async e => {
+                        console.error('Logout diagnostic', who, errors, await page.locator('dialog[open]').allTextContents());
+                        throw e;
+                    });
                     const response = await page.request.get(base + 'php/ajax/vz2.php');
                     assert.equal(response.status(), 401);
                     check(true, 'browser: VZ2-only root login, role controls and logout for ' + who);
