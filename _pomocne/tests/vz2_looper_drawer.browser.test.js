@@ -117,6 +117,13 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 assert.equal(await actions.locator('button').first().getAttribute('aria-expanded'), 'true');
                 const bounds = await notes.boundingBox(), row = await actions.boundingBox();
                 assert(bounds.y >= row.y + row.height && bounds.height > 100);
+                await actions.getByRole('button', { name: 'Přidat značku', exact: true }).click();
+                assert.equal(await notes.isVisible(), false, 'opening the form closes the timestamp drawer');
+                assert.equal(await actions.locator('button').first().getAttribute('aria-expanded'), 'false');
+                assert(await editor.isVisible());
+                await editor.getByRole('button', { name: 'Zavřít časovou značku' }).click();
+                await actions.waitFor({ state: 'visible' });
+                await actions.getByRole('button', { name: 'Otevřít časové značky', exact: true }).click();
                 if (process.env.LOOPER_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.LOOPER_SCREENSHOT_DIR, `looper-drawer-${width}.png`) });
                 const scroll = await notes.evaluate(n => { n.scrollTop = n.scrollHeight; return n.scrollTop; }); assert(scroll > 0);
                 assert.deepEqual(await page.locator('#looper-wave').boundingBox(), before);

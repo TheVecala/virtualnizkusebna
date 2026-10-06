@@ -257,6 +257,7 @@
         f.elements.return_position.disabled = !panel.adapter?.canPlay();
         editor.classList.toggle('ts-inline', !!inline);
         if (inline) {
+            panel.closeDrawer?.();
             editor.tabIndex = -1;
             editor.setAttribute('autofocus', '');
             panel.inlineHost.after(editor);
@@ -397,7 +398,8 @@
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, inlineHost: mobileActions || shell, list: null, dead: false, quickBusy: false, quickButtons: [quickUp, quickDown, mobileQuickUp, mobileQuickDown].filter(Boolean), error: text => { status.textContent = text; },
+        const panel = { id, adapter, inlineHost: mobileActions || shell, closeDrawer: mobileActions ? () => toggleDrawer(false) : null,
+            list: null, dead: false, quickBusy: false, quickButtons: [quickUp, quickDown, mobileQuickUp, mobileQuickDown].filter(Boolean), error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
                 this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = !value.can_create; exportButton.disabled = false;
