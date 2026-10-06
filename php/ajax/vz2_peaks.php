@@ -48,7 +48,7 @@ try{
     $db=vz2_db();
     $file=vz2_one($db,"SELECT f.id,f.sha256,f.duration_ms,f.state,f.relative_path,f.recording_id,r.kind,r.lifecycle recording_state,c.lifecycle collection_state FROM vz2_audio_files f JOIN vz2_recordings r ON r.id=f.recording_id JOIN vz2_collections c ON c.id=r.collection_id WHERE f.id=?",[$id]);
     if($file['sha256']!==$hash)throw new Vz2Error('Verze audia se změnila.',409);
-    if($file['kind']!=='single' || $file['state']!=='available' || $file['recording_state']!=='active' || $file['collection_state']!=='active' || (int)$file['duration_ms']<=0)throw new Vz2Error('Audio není dostupné.',410);
+    if(!in_array($file['kind'],['single','multitrack'],true) || $file['state']!=='available' || $file['recording_state']!=='active' || $file['collection_state']!=='active' || (int)$file['duration_ms']<=0)throw new Vz2Error('Audio není dostupné.',410);
     if(!is_file(vz2_path($file['relative_path'])))throw new Vz2Error('Audio neočekávaně chybí.',404);
     $relative='.cache/peaks/'.$id.'-'.$hash.'-v1.json';
     if($method==='GET'){

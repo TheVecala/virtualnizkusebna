@@ -379,27 +379,114 @@
         timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
         card.append(body); return card;
     }
+    async function createUploadPeaks(recordingId, originals, report) {
+        const catalog = await api();
+        const recording = catalog.recordings.find(r => Number(r.id) === Number(recordingId));
+        if (!recording || recording.files.length !== originals.length) throw new Error('Nelze dohledat stopy nahrávky.');
+        const Context = window.AudioContext || window.webkitAudioContext;
+        if (!Context) throw new Error('Tento prohlížeč neumí vytvořit křivku audia.');
+        const context = new Context();
+        const failures = [];
+        try {
+            for (let index = 0; index < originals.length; index++) {
+                const file = recording.files[index], original = originals[index];
+                const label = `Stopa ${index + 1}/${originals.length}: ${original.name}`;
+                try {
+                    report('Dekóduji audio… ' + label);
+                    const buffer = await context.decodeAudioData(await original.arrayBuffer());
+                    const count = Math.min(4096, buffer.length), peaks = new Float32Array(count);
+                    let yielded = performance.now();
+                    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                        const samples = buffer.getChannelData(channel);
+                        for (let i = 0; i < count; i++) {
+                            const start = Math.floor(i * samples.length / count), end = Math.floor((i + 1) * samples.length / count);
+                            for (let j = start; j < end; j++) {
+                                const sample = Math.abs(samples[j]);
+                                if (Number.isFinite(sample)) peaks[i] = Math.max(peaks[i], Math.min(1, sample));
+                            }
+                            if (performance.now() - yielded > 16 || i === count - 1) {
+                                report('Vytvářím křivku… ' + label, (channel * count + i + 1) / (buffer.numberOfChannels * count) * 100);
+                                await new Promise(resolve => setTimeout(resolve, 0));
+                                yielded = performance.now();
+                            }
+                        }
+                    }
+                    report('Ukládám křivku do JSON… ' + label);
+                    const response = await fetch('php/ajax/vz2_peaks.php', {
+                        method: 'POST', credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': cfg.csrf },
+                        body: JSON.stringify({ file_id: file.id, sha256: file.sha256, peaks: Array.from(peaks) })
+                    });
+                    const result = await response.json();
+                    if (!response.ok || !result.ok) throw new Error(result.error || 'Křivku nelze uložit.');
+                } catch (error) { failures.push(original.name + ': ' + error.message); }
+            }
+        } finally { await context.close().catch(() => {}); }
+        if (failures.length) throw new Error(failures.join('\n'));
+    }
     function uploadForm(collection) {
         const form = node('form');
-        form.innerHTML = '<div class="dialog-header"><h2 id="upload-title">Vložit nahrávku nebo přílohu</h2><button class="modal-close" type="button" aria-label="Zavřít vložení" title="Zavřít">×</button></div><label>Název<input name="title" maxlength="200" required></label><fieldset class="upload-kind"><legend>Druh</legend><label><input type="radio" name="kind" value="single" checked><span>Běžná</span></label><label><input type="radio" name="kind" value="multitrack"><span>Vícestopá</span></label><label><input type="radio" name="kind" value="attachment"><span>Příloha</span></label></fieldset><label>Soubory<input name="files[]" type="file" multiple required></label><progress class="upload-progress" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát</button></div>';
-        form.querySelector('.modal-close').addEventListener('click', () => $('upload-dialog').close());
+        form.innerHTML = '<div class="dialog-header"><h2 id="upload-title">Vložit nahrávku nebo přílohu</h2><button class="modal-close" type="button" aria-label="Zavřít vložení" title="Zavřít">×</button></div><label>Název<input name="title" maxlength="200" required></label><fieldset class="upload-kind"><legend>Druh</legend><label><input type="radio" name="kind" value="single" checked><span>Běžná</span></label><label><input type="radio" name="kind" value="multitrack"><span>Vícestopá</span></label><label><input type="radio" name="kind" value="attachment"><span>Příloha</span></label></fieldset><label>Soubory<input name="files[]" type="file" multiple required></label><label class="upload-peaks-option"><input type="checkbox" name="create_peaks"><span>Po nahrání vytvořit křivku a uložit do JSON</span></label><p class="upload-status" role="status" aria-live="polite"></p><progress class="upload-progress" aria-label="Průběh nahrávání a tvorby křivky" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát</button></div>';
+        let busy = false, uploaded = false;
+        const dialog = $('upload-dialog'), close = form.querySelector('.modal-close');
+        close.addEventListener('click', () => dialog.close());
+        dialog.oncancel = e => { if (busy) e.preventDefault(); };
+        dialog.onclose = () => {
+            if (uploaded && form.querySelector('.upload-error').textContent) refresh().catch(error => message(error.message, true));
+        };
+        const option = form.querySelector('.upload-peaks-option'), checkbox = option.querySelector('input');
+        form.addEventListener('change', () => {
+            const attachment = form.elements.kind.value === 'attachment';
+            option.hidden = attachment; checkbox.disabled = attachment;
+        });
         const requestKey = key();
         form.addEventListener('submit', async e => {
-            e.preventDefault(); const submit = form.querySelector('button[type=submit]'); submit.disabled = true;
-            const progress = form.querySelector('progress'); progress.hidden = false;
-            const fields = new FormData(form); fields.append('action', 'upload'); fields.append('collection_id', collection.id);
-            fields.append('request_key', requestKey); fields.append('csrf', cfg.csrf); fields.append('file_count', form.querySelector('[type=file]').files.length);
+            e.preventDefault(); if (busy || uploaded) return;
+            const submit = form.querySelector('button[type=submit]');
+            const originals = Array.from(form.querySelector('[type=file]').files);
+            const generate = checkbox.checked && form.elements.kind.value !== 'attachment';
+            const fields = new FormData(form); fields.delete('create_peaks');
+            fields.append('action', 'upload'); fields.append('collection_id', collection.id);
+            fields.append('request_key', requestKey); fields.append('csrf', cfg.csrf); fields.append('file_count', originals.length);
+            const progress = form.querySelector('progress'), status = form.querySelector('.upload-status');
+            const report = (text, value) => {
+                progress.hidden = false; status.textContent = text;
+                if (value === undefined) progress.removeAttribute('value'); else progress.value = value;
+            };
+            busy = true; close.disabled = true;
+            const controls = [...form.querySelectorAll('input, button')];
+            const disabled = controls.map(control => control.disabled);
+            controls.forEach(control => { control.disabled = true; });
+            form.querySelector('.upload-error').textContent = '';
+            report('Nahrávám soubory…', 0);
             try {
-                await new Promise((resolve, reject) => {
+                const result = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest(); xhr.open('POST', 'php/ajax/vz2.php'); xhr.setRequestHeader('X-CSRF-Token', cfg.csrf);
-                    xhr.upload.onprogress = e => { if (e.lengthComputable) progress.value = e.loaded / e.total * 100; };
+                    xhr.upload.onprogress = e => report('Nahrávám soubory…', e.lengthComputable ? e.loaded / e.total * 100 : undefined);
+                    xhr.upload.onload = () => report('Dokončuji uložení nahrávky…');
                     xhr.onerror = () => reject(new Error('Spojení selhalo. Zkontrolujte nedokončené operace před dalším uploadem.'));
                     xhr.onload = () => { try { const r = JSON.parse(xhr.responseText); if (xhr.status < 200 || xhr.status >= 300 || !r.ok) throw new Error(r.error || 'Upload selhal.'); resolve(r); } catch (err) { reject(err); } };
                     xhr.send(fields);
                 });
-                $('upload-dialog').close(); message('Upload byl dokončen.'); await refresh(); await window.MultitrackApp.refreshList();
-            } catch (err) { form.querySelector('.upload-error').textContent = err.message; message(err.message, true); }
-            finally { submit.disabled = false; }
+                uploaded = true;
+                if (generate) {
+                    report('Připravuji tvorbu křivky…');
+                    await createUploadPeaks(result.id, originals, report);
+                }
+                report(generate ? 'Nahrávka i křivka jsou uložené.' : 'Nahrávka je uložená.', 100);
+                dialog.close(); message(generate ? 'Nahrávka byla nahrána a křivka uložena do JSON.' : 'Upload byl dokončen.');
+                await refresh(); await window.MultitrackApp.refreshList();
+            } catch (err) {
+                progress.hidden = true;
+                const text = uploaded ? 'Nahrávka je uložená. Následující krok se nepodařilo dokončit: ' + err.message : err.message;
+                status.textContent = uploaded ? 'Upload byl dokončen.' : '';
+                form.querySelector('.upload-error').textContent = text; message(text, true);
+                if (uploaded) submit.textContent = 'Nahrávka je uložená';
+            } finally {
+                busy = false;
+                controls.forEach((control, index) => { control.disabled = disabled[index]; });
+                close.disabled = false; submit.disabled = uploaded;
+            }
         }); return form;
     }
     function render() {
