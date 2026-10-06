@@ -44,6 +44,9 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await notes.locator('.ts-summary').click();
         assert.equal(await notes.locator('.ts-content').isVisible(), true, 'chevron heading expands timestamp controls and entries');
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
+        assert.equal(await dialog.locator('.ts-mode').textContent(), 'Přidat značku');
+        assert.equal(await dialog.getByRole('button', { name: 'Aktualizovat', exact: true }).isVisible(), true);
+        assert.equal(await dialog.locator('.ts-original-kind').count(), 0);
         await dialog.locator('[name=time]').fill('00:00:01.123');
         await dialog.locator('[name=body]').fill('<img src=x onerror=alert(1)> Začátek');
         await dialog.getByRole('button', { name: 'Začátek', exact: true }).click();
@@ -51,6 +54,14 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await notes.locator('.ts-song_start p').filter({ hasText: '<img src=x onerror=alert(1)> Začátek' }).waitFor();
         assert.equal(await notes.locator('img').count(), 0);
         await notes.getByRole('button', { name: 'Upravit', exact: true }).click();
+        assert.equal(await dialog.locator('.ts-mode').textContent(), 'Upravit značku');
+        assert.equal(await dialog.getByRole('button', { name: 'Aktualizovat', exact: true }).isVisible(), false);
+        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:00:01.123');
+        assert.equal(await dialog.locator('.ts-original-kind').getAttribute('value'), 'song_start');
+        await dialog.getByRole('button', { name: 'Přičíst jednu sekundu', exact: true }).click();
+        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:00:02.123');
+        await dialog.getByRole('button', { name: 'Odečíst jednu sekundu', exact: true }).click();
+        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:00:01.123');
         await dialog.locator('[name=body]').fill('Můj rozepsaný text');
         const latest = (await request(clients.admin, endpoint + '?recording_id=' + id)).json();
         const existing = latest.entries[0];
