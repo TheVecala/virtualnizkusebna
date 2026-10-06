@@ -270,16 +270,20 @@
                 if (!confirm('Odebrat offline kopii pouze z tohoto prohlížeče?')) return;
                 await idbKeyval.del(cacheKey, store); cache.textContent = 'Uložit offline';
             } else {
-                const r = await fetch(file.url, { cache: 'no-store' });
-                if (!r.ok) throw new Error('Audio už není dostupné. Obnovte seznam.');
-                const blob = await r.blob();
-                if (blob.size !== file.byte_size) throw new Error('Audio se nestáhlo celé.');
-                await idbKeyval.set(cacheKey, blob, store); cache.textContent = 'Odebrat offline kopii';
+                cache.textContent = 'Stahuji offline…';
+                try {
+                    const blob = await window.Vz2Offline.download(file.url, file.byte_size, percent => {
+                        cache.textContent = percent === null ? 'Stahuji offline…' : 'Stahuji offline ' + percent + ' %';
+                    });
+                    cache.textContent = 'Ukládám offline…';
+                    await idbKeyval.set(cacheKey, blob, store);
+                    cache.textContent = 'Odebrat offline kopii';
+                } catch (error) { cache.textContent = 'Uložit offline'; throw error; }
             }
         });
         actions.append(cache);
         idbKeyval.get(cacheKey, store).then(blob => {
-            if (blob instanceof Blob && audio.isConnected) { const url = URL.createObjectURL(blob); blobs.push(url); audio.src = url; cache.textContent = 'Odebrat offline kopii'; }
+            if (blob instanceof Blob && audio.isConnected && !cache.disabled) { const url = URL.createObjectURL(blob); blobs.push(url); audio.src = url; cache.textContent = 'Odebrat offline kopii'; }
         }).catch(() => { cache.textContent = 'Offline úložiště není dostupné'; cache.disabled = true; });
         const seek = () => {
             const seconds = Number(qs.get('time_ms') || 0) / 1000;
