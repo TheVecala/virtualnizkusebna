@@ -42,6 +42,21 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.screenshot({ path: path.join(temp, 'ui-stage2-desktop-collapsed.png') });
         for (const id of ids) await card(id).locator('.recording-toggle').click();
         assert.equal(await expanded(), 3);
+        const restored = await card(ids[0]).evaluate(card => {
+            const body = card.querySelector('.recording-body');
+            const description = body.querySelector('.recording-description');
+            const children = [...body.children];
+            return {
+                duration: card.querySelector('.recording-duration').textContent,
+                directStatus: !!card.querySelector(':scope > .recording-status'),
+                description: description.querySelector('.recording-status').textContent,
+                author: description.querySelector('.vz2-attribution').textContent,
+                actionsBeforeAudio: children.indexOf(body.querySelector('.recording-actions')) < children.indexOf(body.querySelector('audio'))
+            };
+        });
+        assert.deepEqual(restored, { duration: '0:10', directStatus: false, description: 'První záběr', author: 'Vložil Admin', actionsBeforeAudio: true });
+        check(true, 'recordings: restored duration-only header, shared description/author row and actions before audio');
+
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         const audio = card(ids[0]).locator('audio');
         await audio.evaluate(async a => { if (a.readyState < 1) await new Promise(r => a.addEventListener('loadedmetadata', r, { once: true })); a.currentTime = 2; await a.play(); });
