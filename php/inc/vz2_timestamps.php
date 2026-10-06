@@ -65,10 +65,10 @@ function vz2_timestamp_write(array $in): array {
                     if ((int)$start['recording_id'] !== $id || $start['kind'] !== 'song_start' || (int)$start['time_ms'] >= $time) throw new Vz2Error('Začátek musí být ve stejné nahrávce a před koncem.');
                     $used = vz2_rows($db, 'SELECT id FROM vz2_timestamps WHERE paired_timestamp_id=? AND id<>?', [$pair, $row['id'] ?? 0]);
                     if ($used) throw new Vz2Error('Tento začátek už má jiný konec.', 409);
-                } elseif ($action === 'create') {
+                } elseif ($action === 'create' && !array_key_exists('paired_timestamp_id', $in)) {
                     $candidates = vz2_rows($db, "SELECT s.id FROM vz2_timestamps s LEFT JOIN vz2_timestamps e ON e.paired_timestamp_id=s.id WHERE s.recording_id=? AND s.kind='song_start' AND s.time_ms<? AND e.id IS NULL ORDER BY s.time_ms DESC,s.id DESC", [$id,$time]);
                     if (count($candidates) === 1) $pair = (int)$candidates[0]['id'];
-                } elseif ($row['kind'] === 'song_end') $pair = $row['paired_timestamp_id'] === null ? null : (int)$row['paired_timestamp_id'];
+                } elseif ($action === 'update' && $row['kind'] === 'song_end' && !array_key_exists('paired_timestamp_id', $in)) $pair = $row['paired_timestamp_id'] === null ? null : (int)$row['paired_timestamp_id'];
             }
             if ($action === 'update' && $kind === 'song_start') {
                 $linked = vz2_rows($db, 'SELECT id,time_ms FROM vz2_timestamps WHERE paired_timestamp_id=? FOR UPDATE', [(int)$row['id']]);

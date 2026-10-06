@@ -260,6 +260,7 @@ function vz2_delete_rows(mysqli $db,array $op):void {
     $id=(int)$op['target_id'];$collection=$op['target_type']==='collection';
     $recordings=$collection?vz2_rows($db,'SELECT * FROM vz2_recordings WHERE collection_id=?',[$id]):[vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$id])];
     foreach($recordings as $r){
+        vz2_query($db,'UPDATE vz2_timestamps SET paired_timestamp_id=NULL WHERE recording_id=? AND paired_timestamp_id IS NOT NULL',[$r['id']]);
         vz2_query($db,'DELETE FROM vz2_timestamps WHERE recording_id=?',[$r['id']]);
         vz2_query($db,'DELETE FROM vz2_audio_files WHERE recording_id=?',[$r['id']]);
         vz2_query($db,'DELETE FROM vz2_recordings WHERE id=?',[$r['id']]);

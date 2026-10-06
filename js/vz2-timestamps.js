@@ -25,8 +25,8 @@
     function timestampBody(kind, body) {
         body = body.trim();
         if (body) return body;
-        if (kind === 'song_start') return 'začátek';
-        if (kind === 'song_end') return 'konec';
+        if (kind === 'song_start') return '↑';
+        if (kind === 'song_end') return '↓';
         throw new Error('U pasáže a poznámky vyplňte text.');
     }
     function songIntervalFor(entry, entries) {
@@ -90,7 +90,7 @@
     const panels = new Set();
     let preferences = { kind: 'note', keep: false };
     try { const saved = JSON.parse(localStorage.getItem(root.VZ2.cachePrefix + 'timestamp-preferences')); if (saved && kinds[saved.kind]) preferences = { kind: saved.kind, keep: saved.keep === true }; } catch (_) { /* optional preference */ }
-    let editor, exportDialog, activeEditor, activeExportPanel, loop, loopBusy = false, loopSerial = 0;
+    let editor, pairDialog, exportDialog, activeEditor, activePair, activeExportPanel, loop, loopBusy = false, loopSerial = 0;
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     const button = (text, fn) => { const b = el('button', text); b.type = 'button'; b.addEventListener('click', fn); return b; };
     const iconButton = (label, icon, fn) => {
@@ -124,10 +124,55 @@
             finally { loopBusy = false; }
         }
     }, 25);
+    async function saveEditor(context, fields) {
+        if (context.busy) return;
+        const form = editor.querySelector('form');
+        context.busy = true;
+        const controls = [...form.querySelectorAll('button')]; controls.forEach(b => b.disabled = true);
+        try {
+            if (context.row) { fields.id = context.row.id; fields.revision = context.row.revision; }
+            const result = await request(context.panel.id, fields); publish(result);
+            if (!context.row) {
+                preferences = { kind: fields.kind, keep: form.elements.keep.checked };
+                try { localStorage.setItem(root.VZ2.cachePrefix + 'timestamp-preferences', JSON.stringify(preferences)); } catch (_) { /* optional preference */ }
+            }
+            context.revision = result.timestamps_revision;
+            if (form.elements.return_position.checked && context.panel.adapter?.canPlay()) context.panel.adapter.seek(fields.time_ms);
+            editor.querySelector('.error').textContent = '';
+            if (form.elements.keep.checked && !context.row) {
+                form.elements.body.value = '';
+                form.elements.time.value = compactFormat(context.panel.adapter?.currentTimeMs() ?? fields.time_ms);
+                form.elements.body.focus();
+            } else editor.close();
+        } catch (err) { editor.querySelector('.error').textContent = err.message; editor.querySelector('.ts-rebase').hidden = err.status !== 409; }
+        finally { context.busy = false; controls.forEach(b => b.disabled = false); form.elements.return_position.disabled = !context.panel.adapter?.canPlay(); }
+    }
+    function openPairDialog(context, fields) {
+        if (!pairDialog) {
+            pairDialog = el('dialog'); pairDialog.className = 'vz2-timestamp-pair';
+            pairDialog.innerHTML = '<form><h2>Propojit konec se začátkem</h2><label>Začátek skladby<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><div class="toolbar"><button type="button" class="ts-pair-back">Zpět</button><button type="submit">Uložit konec</button></div></form>';
+            pairDialog.querySelector('.ts-pair-back').onclick = () => { pairDialog.close(); editor.querySelector('[name=body]').focus(); };
+            pairDialog.querySelector('form').addEventListener('submit', e => {
+                e.preventDefault();
+                const choice = pairDialog.querySelector('select').value;
+                const draft = activePair;
+                pairDialog.close();
+                saveEditor(draft.context, { ...draft.fields, paired_timestamp_id: choice ? Number(choice) : null });
+            });
+            document.body.append(pairDialog);
+        }
+        activePair = { context, fields };
+        const select = pairDialog.querySelector('select'); select.replaceChildren(new Option('Bez propojení', ''));
+        const used = new Set(context.panel.list.entries.filter(t => t.kind === 'song_end' && t.id !== context.row?.id && t.paired_timestamp_id).map(t => Number(t.paired_timestamp_id)));
+        const starts = context.panel.list.entries.filter(t => t.kind === 'song_start' && Number(t.time_ms) < fields.time_ms && !used.has(Number(t.id)));
+        starts.forEach(t => select.add(new Option(format(t.time_ms) + ' · ' + t.body, String(t.id))));
+        select.value = context.row?.paired_timestamp_id ? String(context.row.paired_timestamp_id) : starts.length === 1 ? String(starts[0].id) : '';
+        pairDialog.showModal(); select.focus();
+    }
     function ensureEditor() {
         if (editor) return;
         editor = el('dialog'); editor.className = 'vz2-timestamp-editor';
-        editor.innerHTML = '<form><div class="ts-editor-top"><p class="ts-context"></p><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><div class="ts-editor-body"><div class="ts-time-row"><input name="time" required inputmode="numeric" aria-label="Čas ve formátu minuty a sekundy"><button type="button" class="ts-time-current">Aktualizovat</button><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+</button></div><label class="ts-body"><span class="visually-hidden">Text</span><input name="body" aria-label="Text časové značky" placeholder="Text"></label><label class="ts-pair">Propojený začátek pro konec skladby<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><div class="ts-editor-options"><label class="ts-keep"><input type="checkbox" name="keep"> Ponechat otevřené</label><label class="ts-return"><input type="checkbox" name="return_position"> Vrátit na čas</label></div><p role="alert" class="error"></p><pre class="ts-current" hidden></pre></div><div class="ts-editor-footer"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
+        editor.innerHTML = '<form><div class="ts-editor-top"><p class="ts-context"></p><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><div class="ts-editor-body"><label class="ts-body"><span class="visually-hidden">Text</span><input name="body" aria-label="Text časové značky" placeholder="Text"></label><div class="ts-time-row"><input name="time" required inputmode="numeric" aria-label="Čas ve formátu minuty a sekundy"><button type="button" class="ts-time-current">Aktualizovat</button><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+</button></div><div class="ts-editor-options"><label class="ts-keep"><input type="checkbox" name="keep"> Ponechat otevřené</label><label class="ts-return"><input type="checkbox" name="return_position"> Vrátit na čas</label></div><p role="alert" class="error"></p><pre class="ts-current" hidden></pre></div><div class="ts-editor-footer"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
         const form = editor.querySelector('form');
         editor.addEventListener('cancel', e => { if (activeEditor?.busy) e.preventDefault(); });
         editor.querySelectorAll('.ts-close').forEach(close => { close.onclick = () => editor.close(); });
@@ -155,29 +200,14 @@
         };
         form.addEventListener('submit', async e => {
             e.preventDefault(); const context = activeEditor;
-            context.busy = true;
-            const controls = [...form.querySelectorAll('button')]; controls.forEach(b => b.disabled = true);
             try {
                 const ms = parse(form.elements.time.value);
                 const fields = { action: context.row ? 'update' : 'create', timestamps_revision: context.revision,
                     kind: e.submitter.value, time_ms: ms,
                     body: timestampBody(e.submitter.value, form.elements.body.value) };
-                if (fields.kind === 'song_end') fields.paired_timestamp_id = form.elements.paired_timestamp_id.value ? Number(form.elements.paired_timestamp_id.value) : null;
-                if (context.row) { fields.id = context.row.id; fields.revision = context.row.revision; }
-                const result = await request(context.panel.id, fields); publish(result);
-                if (!context.row) {
-                    preferences = { kind: fields.kind, keep: form.elements.keep.checked };
-                    try { localStorage.setItem(root.VZ2.cachePrefix + 'timestamp-preferences', JSON.stringify(preferences)); } catch (_) { /* optional preference */ }
-                }
-                context.revision = result.timestamps_revision;
-                // Only rewind after successful commit, and only the original recording.
-                if (form.elements.return_position.checked && context.panel.adapter?.canPlay()) context.panel.adapter.seek(ms);
-                editor.querySelector('.error').textContent = '';
-                if (form.elements.keep.checked && !context.row) {
-                    form.elements.body.value = ''; form.elements.time.value = compactFormat(context.panel.adapter?.currentTimeMs() ?? ms); form.elements.body.focus();
-                } else editor.close();
-            } catch (err) { editor.querySelector('.error').textContent = err.message; editor.querySelector('.ts-rebase').hidden = err.status !== 409; }
-            finally { context.busy = false; controls.forEach(b => b.disabled = false); form.elements.return_position.disabled = !context.panel.adapter?.canPlay(); }
+                if (fields.kind === 'song_end') openPairDialog(context, fields);
+                else await saveEditor(context, fields);
+            } catch (err) { editor.querySelector('.error').textContent = err.message; }
         });
         document.body.append(editor);
     }
@@ -185,12 +215,8 @@
         ensureEditor();
         activeEditor = { panel, row, revision: panel.list.timestamps_revision };
         const f = editor.querySelector('form');
-        f.elements.time.value = compactFormat(row?.time_ms ?? panel.adapter?.currentTimeMs() ?? 0);
+        f.elements.time.value = row ? format(row.time_ms) : compactFormat(panel.adapter?.currentTimeMs() ?? 0);
         f.elements.body.value = row?.body || ''; f.elements.keep.checked = !row && preferences.keep;
-        const pair = f.elements.paired_timestamp_id; pair.replaceChildren(new Option('Bez propojení', ''));
-        const used = new Set(panel.list.entries.filter(t => t.kind === 'song_end' && t.id !== row?.id && t.paired_timestamp_id).map(t => Number(t.paired_timestamp_id)));
-        panel.list.entries.filter(t => t.kind === 'song_start' && !used.has(Number(t.id))).forEach(t => pair.add(new Option(format(t.time_ms) + ' · ' + t.body, String(t.id))));
-        pair.value = row?.paired_timestamp_id ? String(row.paired_timestamp_id) : '';
         editor.querySelector('.ts-keep').hidden = !!row;
         editor.querySelector('.ts-context').textContent = panel.list.title;
         editor.querySelector('.error').textContent = ''; editor.querySelector('.ts-current').hidden = true;
@@ -199,6 +225,19 @@
         f.elements.return_position.checked = false;
         f.elements.return_position.disabled = !panel.adapter?.canPlay();
         editor.showModal(); f.elements.body.focus();
+    }
+    async function quickNote(panel, symbol) {
+        if (panel.quickBusy || panel.dead || !panel.list?.can_create) return;
+        panel.quickBusy = true;
+        panel.quickButtons.forEach(control => control.disabled = true);
+        try {
+            const current = panel.adapter?.currentTimeMs();
+            const time = Number.isFinite(current) ? Math.round(current) : 0;
+            const result = await request(panel.id, { action: 'create', timestamps_revision: panel.list.timestamps_revision,
+                kind: 'note', time_ms: time, body: symbol });
+            publish(result); panel.error('');
+        } catch (err) { panel.error(err.message); }
+        finally { panel.quickBusy = false; panel.quickButtons.forEach(control => { control.disabled = !panel.list?.can_create; }); }
     }
     function ensureExportDialog() {
         if (exportDialog) return;
@@ -257,11 +296,16 @@
         content.className = 'ts-content'; toolbar.className = 'toolbar';
         status.setAttribute('role', 'status'); status.className = 'error';
         const add = button('Přidat značku', () => openEditor(panel, null)); add.disabled = true;
+        const quickUp = button('👍', () => quickNote(panel, '👍'));
+        const quickDown = button('👎', () => quickNote(panel, '👎'));
+        for (const [control, label] of [[quickUp, 'Přidat poznámku: palec nahoru'], [quickDown, 'Přidat poznámku: palec dolů']]) {
+            control.className = 'ts-quick-note'; control.title = label; control.setAttribute('aria-label', label); control.disabled = true;
+        }
         const reload = iconButton('Obnovit značky', 'refresh', () => panel.load());
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
         const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
-        toolbar.append(add, reload, stop, exportButton); content.append(status, list, toolbar); shell.append(summary, content); container.append(shell);
-        let mobileActions, mobileAdd, mobileExport, mobileToggle, resizeObserver, mobileMedia;
+        toolbar.append(add, quickUp, quickDown, reload, stop, exportButton); content.append(status, list, toolbar); shell.append(summary, content); container.append(shell);
+        let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport, mobileToggle, resizeObserver, mobileMedia;
         const positionDrawer = () => {
             if (mobileActions && mobileMedia.matches) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
         };
@@ -283,19 +327,28 @@
             mobileToggle = button('Otevřít časové značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
             mobileToggle.setAttribute('aria-expanded', 'false'); mobileToggle.setAttribute('aria-controls', container.id);
             mobileAdd = button('Přidat značku', () => openEditor(panel, null)); mobileAdd.disabled = true;
+            mobileQuickUp = button('👍', () => quickNote(panel, '👍'));
+            mobileQuickDown = button('👎', () => quickNote(panel, '👎'));
+            for (const [control, label] of [[mobileQuickUp, 'Přidat poznámku: palec nahoru'], [mobileQuickDown, 'Přidat poznámku: palec dolů']]) {
+                control.className = 'ts-quick-note'; control.title = label; control.setAttribute('aria-label', label); control.disabled = true;
+            }
             mobileExport = button('Export', () => openExport(panel)); mobileExport.disabled = true;
-            add.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
-            mobileActions.append(mobileToggle, mobileAdd, mobileExport); container.before(mobileActions);
+            add.classList.add('ts-desktop-action'); quickUp.classList.add('ts-desktop-action'); quickDown.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
+            mobileActions.append(mobileToggle, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport); container.before(mobileActions);
             resizeObserver = new ResizeObserver(positionDrawer);
             resizeObserver.observe(document.getElementById('player-shell')); resizeObserver.observe(mobileActions);
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, list: null, dead: false, error: text => { status.textContent = text; },
+        const panel = { id, adapter, list: null, dead: false, quickBusy: false, quickButtons: [quickUp, quickDown, mobileQuickUp, mobileQuickDown].filter(Boolean), error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
-                this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = false; exportButton.disabled = false;
-                if (mobileActions) { mobileAdd.hidden = !value.can_create; mobileAdd.disabled = false; mobileExport.disabled = false; }
+                this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = !value.can_create; exportButton.disabled = false;
+                for (const control of [quickUp, quickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
+                if (mobileActions) {
+                    mobileAdd.hidden = !value.can_create; mobileAdd.disabled = !value.can_create; mobileExport.disabled = false;
+                    for (const control of [mobileQuickUp, mobileQuickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
+                }
                 if (loop?.panel === this) api.stopLoop();
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));
                 value.entries.forEach(row => {

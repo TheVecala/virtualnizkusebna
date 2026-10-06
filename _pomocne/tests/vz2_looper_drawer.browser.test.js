@@ -39,6 +39,8 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
             const notes = page.locator('#looper-timestamps');
             if (width <= 767) {
                 assert(await actions.isVisible()); assert.equal(await notes.isVisible(), false);
+                assert(await actions.getByRole('button', { name: 'Přidat poznámku: palec nahoru' }).isVisible());
+                assert(await actions.getByRole('button', { name: 'Přidat poznámku: palec dolů' }).isVisible());
                 for (const button of await actions.locator('button').all()) {
                     const box = await button.boundingBox(); assert(box.x >= 0 && box.x + box.width <= width && box.y + box.height < 844);
                 }
@@ -51,7 +53,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 await editor.getByRole('button', { name: 'Odečíst jednu sekundu', exact: true }).click();
                 assert.equal(await editor.locator('input[name=time]').inputValue(), '00:03');
                 await editor.locator('input[name=time]').fill('00:12');
-                await editor.getByRole('button', { name: 'Aktualizovat čas', exact: true }).click();
+                await editor.getByRole('button', { name: 'Aktualizovat', exact: true }).click();
                 assert.equal(await editor.locator('input[name=time]').inputValue(), '00:03');
                 assert.equal(await editor.getByRole('radio').count(), 0);
                 for (const kind of ['Začátek', 'Konec', 'Pasáž', 'Poznámka']) assert(await editor.getByRole('button', { name: kind, exact: true }).isVisible());
@@ -59,7 +61,8 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 assert(await editor.getByRole('checkbox', { name: 'Ponechat otevřené', exact: true }).isVisible());
                 assert(await editor.getByRole('checkbox', { name: 'Vrátit na čas', exact: true }).isVisible());
                 assert.equal(await editor.locator('[name=body]').evaluate(e => e.tagName), 'INPUT');
-                assert(await editor.locator('[name=paired_timestamp_id]').isVisible());
+                assert.equal(await editor.locator('[name=paired_timestamp_id]').count(), 0);
+                assert(await editor.locator('[name=body]').evaluate(input => input.compareDocumentPosition(input.closest('.ts-editor-body').querySelector('[name=time]')) & Node.DOCUMENT_POSITION_FOLLOWING));
                 assert.notEqual(await editor.evaluate(e => getComputedStyle(e).borderColor), 'rgb(96, 107, 114)');
                 assert.equal(await notes.isVisible(), false);
                 await page.locator('.ts-close').click();
