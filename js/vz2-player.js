@@ -320,19 +320,19 @@
             if (current.cached) await window.idbKeyval.del(current.cacheKey, store);
             else {
                 if (!current.blob) {
-                    const response = await fetch(current.file.url, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal });
-                    if (!response.ok) throw new Error('Audio nelze uložit offline.');
-                    const blob = await response.blob();
-                    if (blob.size !== Number(current.file.byte_size)) throw new Error('Audio se nestáhlo celé.');
-                    current.blob = blob;
+                    $('looper-offline-status').textContent = 'stahuji audio…';
+                    current.blob = await window.Vz2Offline.download(current.file.url, current.file.byte_size, percent => {
+                        if (looper === current) $('looper-offline-status').textContent = percent === null ? 'stahuji audio…' : 'stahuji audio ' + percent + ' %';
+                    }, current.abort.signal);
                 }
                 if (looper !== current) return;
+                $('looper-offline-status').textContent = 'ukládám do zařízení…';
                 await window.idbKeyval.set(current.cacheKey, current.blob, store);
             }
             current.cached = !current.cached;
             if (looper === current) offlineLabel(current.cached);
         }
-        catch (e) { if (looper === current) error(e.message); }
+        catch (e) { if (looper === current) { offlineLabel(current.cached); error(e.message); } }
         finally { if (looper === current) offline.disabled = false; }
     };
     document.addEventListener('multitrack:selected', () => { mixerPending = false; });

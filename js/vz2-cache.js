@@ -29,4 +29,30 @@
         keys: s => run(s, 'readonly', o => o.getAllKeys()),
         clear: s => run(s, 'readwrite', o => o.clear())
     };
+    window.Vz2Offline = {
+        download(url, expectedSize, onProgress, signal) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                const abort = () => xhr.abort();
+                const cleanup = () => signal?.removeEventListener('abort', abort);
+                xhr.open('GET', url);
+                xhr.responseType = 'blob';
+                xhr.onprogress = event => {
+                    const total = Number(expectedSize) > 0 ? Number(expectedSize) : (event.lengthComputable ? event.total : 0);
+                    onProgress(total > 0 ? Math.min(99, Math.round(event.loaded / total * 100)) : null);
+                };
+                xhr.onload = () => {
+                    cleanup();
+                    if (xhr.status < 200 || xhr.status >= 300) return reject(new Error('Audio už není dostupné. Obnovte seznam.'));
+                    if (!(xhr.response instanceof Blob) || xhr.response.size !== Number(expectedSize)) return reject(new Error('Audio se nestáhlo celé.'));
+                    resolve(xhr.response);
+                };
+                xhr.onerror = () => { cleanup(); reject(new Error('Stažení audia selhalo.')); };
+                xhr.onabort = () => { cleanup(); reject(new DOMException('Stažení bylo přerušeno.', 'AbortError')); };
+                signal?.addEventListener('abort', abort, { once: true });
+                if (signal?.aborted) { cleanup(); reject(new DOMException('Stažení bylo přerušeno.', 'AbortError')); }
+                else xhr.send();
+            });
+        }
+    };
 }());

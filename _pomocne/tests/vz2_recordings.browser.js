@@ -78,8 +78,35 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.deepEqual(await card(ids[2]).locator('.recording-body > .files li').allTextContents(), ['guitar.wav', 'bass.wav']);
         assert.equal(await card(ids[0]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Open action is not detached at the top of the recording card');
         assert.deepEqual((await actions.locator(':scope > button').allTextContents()).slice(0, 2), ['Uložit offline', 'Otevřít'], 'Offline and open actions remain directly visible');
+        let finishDownload;
+        const heldDownload = new Promise(resolve => { finishDownload = resolve; });
+        await page.route('**/php/ajax/vz2_files.php?**', async route => {
+            if (route.request().resourceType() === 'xhr') await heldDownload;
+            await route.continue();
+        });
         await actions.getByRole('button', { name: 'Uložit offline', exact: true }).click();
+        await actions.getByRole('button', { name: 'Stahuji offline…', exact: true }).waitFor();
+        finishDownload();
         await actions.getByRole('button', { name: 'Odebrat offline kopii', exact: true }).waitFor();
+        await page.unroute('**/php/ajax/vz2_files.php?**');
+        const transfer = await page.evaluate(async () => {
+            const Original = window.XMLHttpRequest, updates = [];
+            class Transfer {
+                open() { this.status = 200; }
+                send() {
+                    this.onprogress({ loaded: 2, lengthComputable: false });
+                    this.response = new Blob(['1234']);
+                    this.onload();
+                }
+            }
+            window.XMLHttpRequest = Transfer;
+            try {
+                const blob = await window.Vz2Offline.download('/fixture', 4, percent => updates.push(percent));
+                return { size: blob.size, updates };
+            } finally { window.XMLHttpRequest = Original; }
+        });
+        assert.deepEqual(transfer, { size: 4, updates: [50] }, 'Offline progress uses the known file size when the response has no computable length');
+        check(true, 'recordings: offline button shows download state and reports bytes transferred');
         await menuToggle.click();
         await actionsDialog.waitFor({ state: 'visible' });
         assert.equal(await actionsDialog.getByRole('heading', { name: 'Akce nahrávky', exact: true }).count(), 1);
