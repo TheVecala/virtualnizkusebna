@@ -17,8 +17,8 @@
     .vz2-timestamp-editor.ts-inline[open] { position: relative; inset: auto; display: block; width: 100%; max-width: none; margin: 8px 0 0; box-shadow: none; }
     .vz2-timestamp-editor.ts-inline form { max-height: none; }
     .vz2-timestamp-editor.ts-keyboard-open form { max-height: var(--ts-inline-height, 100dvh); }
-    .vz2-timestamp-editor.ts-keyboard-open .ts-editor-body { overflow-y: auto; }
-    .vz2-timestamp-editor.ts-keyboard-open .ts-editor-footer { position: fixed; z-index: 50; left: 8px; right: 8px; bottom: var(--ts-keyboard-bottom, 0px); box-shadow: 0 -5px 20px #0009; }
+    .vz2-timestamp-editor.ts-keyboard-open .ts-editor-body { min-height: 0; overflow-y: auto; }
+    .vz2-timestamp-editor.ts-keyboard-open .ts-editor-top, .vz2-timestamp-editor.ts-keyboard-open .ts-editor-footer { flex-shrink: 0; }
     #player-shell.ts-creating .looper-timestamp-actions { display: none; }
     #player-shell.ts-creating.player-fullscreen #player-body, #player-shell.ts-creating.player-fullscreen #looper-panel { overflow-y: auto; }
 }

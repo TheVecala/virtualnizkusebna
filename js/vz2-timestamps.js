@@ -176,7 +176,7 @@
         editor.addEventListener('close', () => {
             editor.closest('#player-shell')?.classList.remove('ts-creating');
             editor.classList.remove('ts-keyboard-open');
-            editor.style.removeProperty('--ts-keyboard-bottom'); editor.style.removeProperty('--ts-inline-height');
+            editor.style.removeProperty('--ts-inline-height');
         });
         editor.addEventListener('focusin', positionInlineEditor);
         window.visualViewport?.addEventListener('resize', positionInlineEditor);
@@ -227,7 +227,6 @@
         const covered = Math.max(0, innerHeight - visibleBottom);
         const typing = editor.contains(document.activeElement) && document.activeElement.matches('input[name=body],input[name=time]');
         editor.classList.toggle('ts-keyboard-open', covered > 120 || typing);
-        editor.style.setProperty('--ts-keyboard-bottom', covered + 'px');
         editor.style.setProperty('--ts-inline-height', Math.max(100, visibleBottom - editor.getBoundingClientRect().top - 8) + 'px');
     }
     function openEditor(panel, row) {

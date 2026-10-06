@@ -25,7 +25,11 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
             await page.setContent(`<style>${fs.readFileSync(path.join(root, 'css/vz2.css'), 'utf8')}</style>${markup}<div>Obsah aplikace</div>`);
             await page.evaluate(value => {
                 window.VZ2 = { cachePrefix: 'test-', csrf: 'test' };
-                window.fetch = async () => ({ ok: true, json: async () => structuredClone(value) });
+                window.timestampWrites = [];
+                window.fetch = async (_url, options) => {
+                    if (options?.body) window.timestampWrites.push(JSON.parse(options.body));
+                    return { ok: true, json: async () => structuredClone(value) };
+                };
                 const wave = document.getElementById('looper-wave'); wave.height = 90; wave.style.height = '90px';
                 document.getElementById('looper-wave-track').style.height = '90px';
             }, data);
@@ -84,9 +88,16 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                     document.querySelector('.vz2-timestamp-editor input[name=body]').dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
                 });
                 const footer = await editor.locator('.ts-editor-footer').boundingBox();
+                const editorBox = await editor.boundingBox();
                 assert(footer.y + footer.height <= 844 - 300 + 1, 'save buttons stay above the simulated mobile keyboard');
+                assert(footer.y >= editorBox.y && footer.y + footer.height <= editorBox.y + editorBox.height + 1,
+                    'save buttons stay inside the form');
                 assert((await editor.locator('[name=body]').boundingBox()).y < footer.y, 'text field remains above the save buttons');
                 assert((await page.locator('#looper-wave').boundingBox()).y < footer.y, 'waveform remains visible');
+                await editor.locator('[name=body]').fill('Poznámka s klávesnicí');
+                await editor.getByRole('button', { name: 'Poznámka', exact: true }).click();
+                assert.equal(await page.evaluate(() => window.timestampWrites.at(-1)?.body), 'Poznámka s klávesnicí');
+                assert(await editor.isVisible(), 'form stays usable after saving with the keyboard visible');
                 await page.evaluate(() => {
                     Object.defineProperty(window, 'visualViewport', { configurable: true, value: window.testVisualViewport });
                     document.querySelector('.vz2-timestamp-editor').focus();
