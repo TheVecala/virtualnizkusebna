@@ -88,8 +88,6 @@
     if (!root.document) return;
     root.Vz2Timestamps = api;
     const panels = new Set();
-    let preferences = { kind: 'note', keep: false };
-    try { const saved = JSON.parse(localStorage.getItem(root.VZ2.cachePrefix + 'timestamp-preferences')); if (saved && kinds[saved.kind]) preferences = { kind: saved.kind, keep: saved.keep === true }; } catch (_) { /* optional preference */ }
     let editor, pairDialog, exportDialog, activeEditor, activePair, activeExportPanel, loop, loopBusy = false, loopSerial = 0;
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     const button = (text, fn) => { const b = el('button', text); b.type = 'button'; b.addEventListener('click', fn); return b; };
@@ -125,24 +123,19 @@
         }
     }, 25);
     async function saveEditor(context, fields) {
-        if (context.busy) return;
+        if (context.busy || context.panel.quickBusy) return;
         const form = editor.querySelector('form');
         context.busy = true;
         const controls = [...form.querySelectorAll('button')]; controls.forEach(b => b.disabled = true);
         try {
             if (context.row) { fields.id = context.row.id; fields.revision = context.row.revision; }
             const result = await request(context.panel.id, fields); publish(result);
-            if (!context.row) {
-                preferences = { kind: fields.kind, keep: form.elements.keep.checked };
-                try { localStorage.setItem(root.VZ2.cachePrefix + 'timestamp-preferences', JSON.stringify(preferences)); } catch (_) { /* optional preference */ }
-            }
             context.revision = result.timestamps_revision;
             if (form.elements.return_position.checked && context.panel.adapter?.canPlay()) context.panel.adapter.seek(fields.time_ms);
             editor.querySelector('.error').textContent = '';
-            if (form.elements.keep.checked && !context.row) {
+            if (editor.classList.contains('ts-inline') && !context.row) {
                 form.elements.body.value = '';
                 form.elements.time.value = compactFormat(context.panel.adapter?.currentTimeMs() ?? fields.time_ms);
-                form.elements.body.focus();
             } else editor.close();
         } catch (err) { editor.querySelector('.error').textContent = err.message; editor.querySelector('.ts-rebase').hidden = err.status !== 409; }
         finally { context.busy = false; controls.forEach(b => b.disabled = false); form.elements.return_position.disabled = !context.panel.adapter?.canPlay(); }
@@ -151,7 +144,7 @@
         if (!pairDialog) {
             pairDialog = el('dialog'); pairDialog.className = 'vz2-timestamp-pair';
             pairDialog.innerHTML = '<form><h2>Propojit konec se začátkem</h2><label>Začátek skladby<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><div class="toolbar"><button type="button" class="ts-pair-back">Zpět</button><button type="submit">Uložit konec</button></div></form>';
-            pairDialog.querySelector('.ts-pair-back').onclick = () => { pairDialog.close(); editor.querySelector('[name=body]').focus(); };
+            pairDialog.querySelector('.ts-pair-back').onclick = () => { pairDialog.close(); if (!editor.classList.contains('ts-inline')) editor.querySelector('[name=body]').focus(); };
             pairDialog.querySelector('form').addEventListener('submit', e => {
                 e.preventDefault();
                 const choice = pairDialog.querySelector('select').value;
@@ -172,9 +165,22 @@
     function ensureEditor() {
         if (editor) return;
         editor = el('dialog'); editor.className = 'vz2-timestamp-editor';
-        editor.innerHTML = '<form><div class="ts-editor-top"><p class="ts-mode"></p><p class="ts-context"></p><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><div class="ts-editor-body"><label class="ts-body"><span class="visually-hidden">Text</span><input name="body" aria-label="Text časové značky" placeholder="Text"></label><div class="ts-time-row"><input name="time" required inputmode="numeric" aria-label="Čas ve formátu minuty a sekundy"><button type="button" class="ts-time-current">Aktualizovat</button><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+</button></div><div class="ts-editor-options"><label class="ts-keep"><input type="checkbox" name="keep"> Ponechat otevřené</label><label class="ts-return"><input type="checkbox" name="return_position"> Vrátit na čas</label></div><p role="alert" class="error"></p><pre class="ts-current" hidden></pre></div><div class="ts-editor-footer"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
+        editor.innerHTML = '<form autocomplete="off"><div class="ts-editor-top"><p class="ts-mode"></p><p class="ts-context"></p><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><div class="ts-editor-body"><label class="ts-body"><span class="visually-hidden">Text</span><input type="text" name="body" aria-label="Text časové značky" placeholder="Text" autocomplete="off" autocapitalize="sentences" spellcheck="true"></label><div class="ts-time-row"><input type="text" name="time" required inputmode="numeric" aria-label="Čas ve formátu minuty a sekundy" autocomplete="off" spellcheck="false"><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+</button><button type="button" class="ts-time-current" title="Převzít čas z přehrávače">Zachytit čas</button></div><div class="ts-editor-options"><label class="ts-return"><input type="checkbox" name="return_position"> Vrátit na čas</label><div class="ts-quick-notes"><button type="button" class="ts-quick-note" data-symbol="👍" aria-label="Přidat poznámku: palec nahoru" title="Přidat poznámku: palec nahoru">👍</button><button type="button" class="ts-quick-note" data-symbol="👎" aria-label="Přidat poznámku: palec dolů" title="Přidat poznámku: palec dolů">👎</button></div></div><p role="alert" class="error"></p><pre class="ts-current" hidden></pre></div><div class="ts-editor-footer"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
         const form = editor.querySelector('form');
         editor.addEventListener('cancel', e => { if (activeEditor?.busy) e.preventDefault(); });
+        editor.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && editor.classList.contains('ts-inline') && !activeEditor?.busy && !activeEditor?.panel.quickBusy && !pairDialog?.open) {
+                e.preventDefault(); editor.close();
+            }
+        });
+        editor.addEventListener('close', () => {
+            editor.closest('#player-shell')?.classList.remove('ts-creating');
+            editor.classList.remove('ts-keyboard-open');
+            editor.style.removeProperty('--ts-keyboard-bottom'); editor.style.removeProperty('--ts-inline-height');
+        });
+        editor.addEventListener('focusin', positionInlineEditor);
+        window.visualViewport?.addEventListener('resize', positionInlineEditor);
+        window.visualViewport?.addEventListener('scroll', positionInlineEditor);
         editor.querySelectorAll('.ts-close').forEach(close => { close.onclick = () => editor.close(); });
         editor.querySelector('.ts-time-current').onclick = () => {
             const ms = activeEditor?.panel.adapter?.currentTimeMs();
@@ -184,6 +190,9 @@
             try { form.elements.time.value = adjust(form.elements.time.value, control.dataset.delta); }
             catch (e) { editor.querySelector('.error').textContent = e.message; }
         }; });
+        editor.querySelectorAll('.ts-quick-note').forEach(control => {
+            control.onclick = () => quickNote(activeEditor.panel, control.dataset.symbol, true);
+        });
         editor.querySelector('.ts-rebase').onclick = async () => {
             const context = activeEditor;
             try {
@@ -211,18 +220,34 @@
         });
         document.body.append(editor);
     }
+    function positionInlineEditor() {
+        if (!editor?.open || !editor.classList.contains('ts-inline')) return;
+        const viewport = window.visualViewport;
+        const visibleBottom = (viewport?.offsetTop || 0) + (viewport?.height || innerHeight);
+        const covered = Math.max(0, innerHeight - visibleBottom);
+        const typing = editor.contains(document.activeElement) && document.activeElement.matches('input[name=body],input[name=time]');
+        editor.classList.toggle('ts-keyboard-open', covered > 120 || typing);
+        editor.style.setProperty('--ts-keyboard-bottom', covered + 'px');
+        editor.style.setProperty('--ts-inline-height', Math.max(100, visibleBottom - editor.getBoundingClientRect().top - 8) + 'px');
+    }
     function openEditor(panel, row) {
         ensureEditor();
+        if (editor.open) {
+            if (activeEditor?.busy || activeEditor?.panel.quickBusy || !confirm('Zahodit rozepsanou časovou značku?')) return;
+            editor.closest('#player-shell')?.classList.remove('ts-creating');
+            editor.close();
+        }
+        const inline = !row && matchMedia('(max-width: 767px)').matches && panel.inlineHost;
         activeEditor = { panel, row, revision: panel.list.timestamps_revision };
         const f = editor.querySelector('form');
         f.elements.time.value = row ? format(row.time_ms) : compactFormat(panel.adapter?.currentTimeMs() ?? 0);
-        f.elements.body.value = row?.body || ''; f.elements.keep.checked = !row && preferences.keep;
+        f.elements.body.value = row?.body || '';
         editor.classList.toggle('ts-edit-mode', !!row);
         editor.querySelector('.ts-mode').textContent = row ? 'Upravit značku' : 'Přidat značku';
         editor.querySelectorAll('.ts-editor-footer button[name=kind]').forEach(control => {
             control.classList.toggle('ts-original-kind', !!row && control.value === row.kind);
         });
-        editor.querySelector('.ts-keep').hidden = !!row;
+        editor.querySelector('.ts-quick-notes').hidden = !!row;
         editor.querySelector('.ts-context').textContent = panel.list.title;
         editor.querySelector('.error').textContent = ''; editor.querySelector('.ts-current').hidden = true;
         editor.querySelector('.ts-rebase').hidden = true;
@@ -230,20 +255,46 @@
         editor.querySelector('.ts-time-current').disabled = !!row || !panel.adapter?.canPlay();
         f.elements.return_position.checked = false;
         f.elements.return_position.disabled = !panel.adapter?.canPlay();
-        editor.showModal(); f.elements.body.focus();
+        editor.classList.toggle('ts-inline', !!inline);
+        if (inline) {
+            editor.tabIndex = -1;
+            editor.setAttribute('autofocus', '');
+            panel.inlineHost.after(editor);
+            editor.closest('#player-shell')?.classList.add('ts-creating');
+            editor.show(); editor.focus({ preventScroll: true });
+            positionInlineEditor();
+        } else {
+            editor.removeAttribute('autofocus');
+            document.body.append(editor);
+            editor.showModal(); f.elements.body.focus();
+        }
     }
-    async function quickNote(panel, symbol) {
-        if (panel.quickBusy || panel.dead || !panel.list?.can_create) return;
+    async function quickNote(panel, symbol, fromEditor = false) {
+        if (panel.quickBusy || (activeEditor?.panel === panel && activeEditor.busy) || panel.dead || !panel.list?.can_create) return;
         panel.quickBusy = true;
-        panel.quickButtons.forEach(control => control.disabled = true);
+        const controls = fromEditor ? [...editor.querySelectorAll('form button')] : panel.quickButtons;
+        controls.forEach(control => control.disabled = true);
         try {
             const current = panel.adapter?.currentTimeMs();
             const time = Number.isFinite(current) ? Math.round(current) : 0;
             const result = await request(panel.id, { action: 'create', timestamps_revision: panel.list.timestamps_revision,
                 kind: 'note', time_ms: time, body: symbol });
-            publish(result); panel.error('');
-        } catch (err) { panel.error(err.message); }
-        finally { panel.quickBusy = false; panel.quickButtons.forEach(control => { control.disabled = !panel.list?.can_create; }); }
+            publish(result);
+            if (activeEditor?.panel === panel && editor?.open) activeEditor.revision = result.timestamps_revision;
+            if (fromEditor) editor.querySelector('.error').textContent = '';
+            panel.error('');
+        } catch (err) {
+            if (fromEditor) editor.querySelector('.error').textContent = err.message;
+            else panel.error(err.message);
+        }
+        finally {
+            panel.quickBusy = false;
+            controls.forEach(control => control.disabled = fromEditor ? false : !panel.list?.can_create);
+            if (fromEditor) {
+                editor.querySelector('.ts-time-current').disabled = !panel.adapter?.canPlay();
+                editor.querySelector('.ts-return input').disabled = !panel.adapter?.canPlay();
+            }
+        }
     }
     function ensureExportDialog() {
         if (exportDialog) return;
@@ -346,7 +397,7 @@
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, list: null, dead: false, quickBusy: false, quickButtons: [quickUp, quickDown, mobileQuickUp, mobileQuickDown].filter(Boolean), error: text => { status.textContent = text; },
+        const panel = { id, adapter, inlineHost: mobileActions || shell, list: null, dead: false, quickBusy: false, quickButtons: [quickUp, quickDown, mobileQuickUp, mobileQuickDown].filter(Boolean), error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
                 this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = !value.can_create; exportButton.disabled = false;
@@ -401,11 +452,21 @@
             async load() { reload.disabled = true; try { const value = await request(id); if (!this.dead) { publish(value); status.textContent = ''; } } catch (e) { status.textContent = e.message; } finally { reload.disabled = false; } },
             destroy() {
                 this.dead = true; panels.delete(this); if (loop?.panel === this) api.stopLoop(); shell.remove();
+                if (activeEditor?.panel === this && editor?.open && editor.classList.contains('ts-inline')) {
+                    editor.closest('#player-shell')?.classList.remove('ts-creating');
+                    document.body.append(editor);
+                }
                 resizeObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
                 window.removeEventListener('resize', positionDrawer); document.removeEventListener('keydown', onDrawerKey);
                 mobileActions?.remove(); container.classList.remove('ts-drawer-open'); container.style.removeProperty('--ts-drawer-top');
             }
         };
+        if (activeEditor?.panel?.dead && activeEditor.panel.id === id && editor?.open && editor.classList.contains('ts-inline')) {
+            activeEditor.panel = panel;
+            panel.inlineHost.after(editor);
+            editor.closest('#player-shell')?.classList.add('ts-creating');
+            positionInlineEditor();
+        }
         panels.add(panel); panel.load(); return panel;
     };
     setInterval(() => panels.forEach(p => p.playback()), 500);
