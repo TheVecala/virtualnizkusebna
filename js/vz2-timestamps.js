@@ -92,6 +92,22 @@
     try { const saved = JSON.parse(localStorage.getItem(root.VZ2.cachePrefix + 'timestamp-preferences')); if (saved && kinds[saved.kind]) preferences = { kind: saved.kind, keep: saved.keep === true }; } catch (_) { /* optional preference */ }
     let editor, pairDialog, exportDialog, activeEditor, activePair, activeExportPanel, loop, loopBusy = false, loopSerial = 0;
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
+    const boundaryIcon = kind => {
+        const label = kind === 'song_start' ? 'Začátek skladby' : 'Konec skladby';
+        const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        icon.classList.add('ts-boundary-icon');
+        icon.setAttribute('viewBox', '0 0 24 24');
+        icon.setAttribute('role', 'img');
+        icon.setAttribute('aria-label', label);
+        const title = document.createElementNS(icon.namespaceURI, 'title');
+        title.textContent = label;
+        const path = document.createElementNS(icon.namespaceURI, 'path');
+        path.setAttribute('d', kind === 'song_start'
+            ? 'M4 4H20 M12 4V20 M6 14L12 20L18 14'
+            : 'M4 20H20 M12 20V4 M6 10L12 4L18 10');
+        icon.append(title, path);
+        return icon;
+    };
     const button = (text, fn) => { const b = el('button', text); b.type = 'button'; b.addEventListener('click', fn); return b; };
     const iconButton = (label, icon, fn) => {
         const b = button('', fn), i = el('i');
@@ -368,6 +384,9 @@
                     }
                     const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
+                    if ((row.kind === 'song_start' && row.body.trim() === '↑') || (row.kind === 'song_end' && row.body.trim() === '↓')) {
+                        text.replaceChildren(boundaryIcon(row.kind));
+                    }
                     authors.className = 'ts-author vz2-attribution';
                     authors.title = 'Vytvořeno: ' + new Date(row.created_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ') + ' · upraveno: ' + new Date(row.updated_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ');
                     const actions = el('div'); actions.className = 'toolbar';
