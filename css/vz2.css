@@ -543,3 +543,6 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 @media(max-width:767px){.history-header{min-height:54px;padding:7px 9px}.history-heading p{display:none}.history-emblem{flex-basis:34px;width:34px;height:34px}.history-toolbar{align-items:stretch;flex-wrap:wrap;padding:7px 9px}.history-song-control{flex:1 1 100%}.history-song-control select{flex:1;width:auto}.history-check{margin-left:0!important;margin-right:auto!important;padding-left:0}.history-toolbar button{min-height:34px}#history-matrix{margin:7px}.history-table th,.history-table td{min-width:120px;height:42px}.history-table tr>th:first-child{min-width:130px}.history-play{max-width:100px}}
 
 .vz2-timestamps .ts-boundary-icon{display:inline-block;width:28px;height:28px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+.vz2-timestamp-editor .ts-context{min-width:0;overflow-wrap:anywhere;color:var(--vz-text)}
+.vz2-timestamp-editor .ts-context-caption{display:block;color:var(--vz-muted);font-size:11px}

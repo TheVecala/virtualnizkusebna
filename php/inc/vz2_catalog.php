@@ -7,7 +7,7 @@ function vz2_file_public(array $f,string $type):array {
     $available=$f['state']==='available' && is_file(vz2_path($f['relative_path']));
     $status=$f['state']==='available' && !$available?'missing':$f['state'];
     $format=$type==='audio'?($f['format']??pathinfo($f['original_name'],PATHINFO_EXTENSION)):'';
-    $displayName=$type==='audio'?$f['title']:($f['original_name']?:$f['title']);
+    $displayName=$f['original_name']?:$f['title'];
     if($format!=='' && !str_ends_with(strtolower($displayName),'.'.strtolower($format)))$displayName.='.'.$format;
     return ['id'=>(int)$f['id'],'title'=>$f['title'],'display_name'=>$displayName,'original_name'=>$f['original_name'],
         'format'=>$f['format']??pathinfo($f['relative_path'],PATHINFO_EXTENSION),'byte_size'=>(int)$f['byte_size'],
@@ -15,6 +15,10 @@ function vz2_file_public(array $f,string $type):array {
         'sort_order'=>(int)($f['sort_order']??0),'state'=>$status,'deleted_at'=>$f['deleted_at'],
         'deleted_by'=>$f['deleted_by']===null?null:(int)$f['deleted_by'],
         'url'=>$available?'php/ajax/vz2_files.php?type='.$type.'&id='.$f['id'].'&hash='.$f['sha256']:null];
+}
+function vz2_recording_display_name(array $recording):string {
+    $names=array_values(array_filter(array_map(fn($f)=>$f['original_name']?:($f['display_name']??$f['title']),$recording['files']??[])));
+    return $names?implode(', ',$names):($recording['title']?:'Nahrávka');
 }
 function vz2_catalog():array {
     $db=vz2_db();vz2_root();
@@ -50,7 +54,7 @@ function vz2_mixer(?int $id=null):array {
         foreach($r['files'] as $f)$tracks[]=['file'=>'a'.$f['id'].'.'.$f['format'],'name'=>$f['display_name'],'order'=>$f['sort_order'],
             'url'=>rtrim(SITE_URL,'/').'/php/ajax/vz2_files.php?type=audio&id='.$f['id'].'&hash='.$f['sha256'],
             'fileId'=>$f['id'],'sha256'=>$f['sha256'],'unavailable'=>$f['state']!=='available'];
-        $items[]=['id'=>(string)$r['id'],'name'=>$r['title'],'version'=>1,'created'=>str_replace(' ','T',$r['created_at']).'Z',
+        $items[]=['id'=>(string)$r['id'],'name'=>vz2_recording_display_name($r),'version'=>1,'created'=>str_replace(' ','T',$r['created_at']).'Z',
             'audioDeleted'=>$r['audio_state']==='deleted','audioUnavailable'=>$r['audio_state']!=='available',
             'audioPartial'=>$r['audio_state']==='partial' && in_array('available',array_column($r['files'],'state'),true),'tracks'=>$tracks,
             'metadataUrl'=>'php/ajax/vz2.php?action=mixer&id='.$r['id']];

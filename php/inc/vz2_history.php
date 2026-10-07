@@ -34,10 +34,10 @@ function vz2_history_data(mysqli $db): array {
         $c=$collections[(int)$r['collection_id']]??null;if(!$c || $c['kind']!=='rehearsal')continue;
         $byId=[];foreach($r['timestamps'] as $t)$byId[$t['id']]=$t;
         foreach($r['timestamps'] as $end)if($end['kind']==='song_end' && $end['paired_timestamp_id'] && isset($byId[$end['paired_timestamp_id']]) && !in_array($end['paired_timestamp_id'],$usedStarts,true)){
-            $start=$byId[$end['paired_timestamp_id']];$intervals[]=['recording_id'=>(int)$r['id'],'recording_title'=>$r['title'],'rehearsal_collection_id'=>(int)$r['collection_id'],'start_timestamp_id'=>$start['id'],'end_timestamp_id'=>$end['id'],'start_ms'=>$start['time_ms'],'end_ms'=>$end['time_ms']];
+            $start=$byId[$end['paired_timestamp_id']];$intervals[]=['recording_id'=>(int)$r['id'],'recording_title'=>vz2_recording_display_name($r),'rehearsal_collection_id'=>(int)$r['collection_id'],'start_timestamp_id'=>$start['id'],'end_timestamp_id'=>$end['id'],'start_ms'=>$start['time_ms'],'end_ms'=>$end['time_ms']];
         }
     }
-    $clips=[];foreach($catalog['recordings'] as $r){$c=$collections[(int)$r['collection_id']]??null;if($c && $c['kind']==='song' && !in_array((int)$r['id'],$usedClips,true))$clips[]=['id'=>(int)$r['id'],'collection_id'=>(int)$r['collection_id'],'title'=>$r['title'],'audio_state'=>$r['audio_state']];}
+    $clips=[];foreach($catalog['recordings'] as $r){$c=$collections[(int)$r['collection_id']]??null;if($c && $c['kind']==='song' && !in_array((int)$r['id'],$usedClips,true))$clips[]=['id'=>(int)$r['id'],'collection_id'=>(int)$r['collection_id'],'title'=>vz2_recording_display_name($r),'audio_state'=>$r['audio_state']];}
     $historicSongs=array_map('intval',array_column($plays,'song_collection_id'));
     return ['songs'=>array_values(array_filter($catalog['collections'],fn($c)=>$c['kind']==='song' && ($c['lifecycle']==='active' || in_array((int)$c['id'],$historicSongs,true)))),
         'rehearsals'=>array_values(array_filter($catalog['collections'],fn($c)=>$c['kind']==='rehearsal' && $c['lifecycle']==='active')),

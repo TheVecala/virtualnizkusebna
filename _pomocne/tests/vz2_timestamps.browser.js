@@ -56,6 +56,8 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await notes.locator('img').count(), 0);
         await notes.getByRole('button', { name: 'Upravit', exact: true }).click();
         assert.equal(await dialog.locator('.ts-mode').textContent(), 'Upravit značku');
+        assert.equal(await dialog.locator('.ts-context > span').textContent(), 'audio.wav');
+        assert.equal(await dialog.locator('.ts-context-caption').textContent(), 'Běžná nahrávka — zápisy');
         assert.equal(await dialog.getByRole('button', { name: 'Zachytit čas', exact: true }).isVisible(), false);
         assert.equal(await dialog.locator('[name=time]').inputValue(), '00:00:01.123');
         assert.equal(await dialog.locator('.ts-original-kind').getAttribute('value'), 'song_start');
@@ -164,13 +166,13 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
         await dialog.locator('[name=time]').fill('00:00:03.000');
         await dialog.getByRole('button', { name: 'Začátek', exact: true }).click();
-        await notes.locator('.ts-song_start p').filter({ hasText: '↑' }).waitFor();
+        await notes.locator('.ts-song_start .ts-boundary-icon[aria-label="Začátek skladby"]').waitFor();
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
         await dialog.locator('[name=time]').fill('00:00:04.000');
         await dialog.getByRole('button', { name: 'Konec', exact: true }).click();
         await pairDialog.locator('[name=paired_timestamp_id]').selectOption('');
         await pairDialog.getByRole('button', { name: 'Uložit konec', exact: true }).click();
-        await notes.locator('.ts-song_end p').filter({ hasText: '↓' }).waitFor();
+        await notes.locator('.ts-song_end .ts-boundary-icon[aria-label="Konec skladby"]').waitFor();
         assert.equal(db("SELECT paired_timestamp_id FROM vz2_timestamps WHERE recording_id=? AND body='↓'", [id])[0].paired_timestamp_id, null);
         check(true, 'browser: blank start/end become arrows and an explicit unpaired end stays unpaired');
         await notes.getByRole('button', { name: 'Export', exact: true }).click();

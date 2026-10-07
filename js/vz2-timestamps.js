@@ -263,7 +263,11 @@
             control.classList.toggle('ts-original-kind', !!row && control.value === row.kind);
         });
         editor.querySelector('.ts-quick-notes').hidden = !!row;
-        editor.querySelector('.ts-context').textContent = panel.list.title;
+        const context = editor.querySelector('.ts-context');
+        context.replaceChildren(el('span', panel.list.source_filename || panel.list.title));
+        if (panel.list.title && panel.list.source_filename) {
+            const caption = el('small', panel.list.title); caption.className = 'ts-context-caption'; context.append(caption);
+        }
         editor.querySelector('.error').textContent = ''; editor.querySelector('.ts-current').hidden = true;
         editor.querySelector('.ts-rebase').hidden = true;
         editor.querySelector('.ts-time-current').hidden = !!row;

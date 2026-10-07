@@ -34,7 +34,8 @@
         const header = node('div', undefined, 'dialog-header');
         const heading = node('div');
         const title = node('h2', 'Akce nahrávky'); title.id = titleId;
-        heading.append(title, node('p', recording.title, 'recording-actions-context'));
+        heading.append(title, node('p', recordingName(recording), 'recording-actions-context'));
+        if (recording.title) heading.append(node('small', recording.title, 'vz2-attribution'));
         const close = button('×', () => dialog.close(), 'modal-close');
         close.setAttribute('aria-label', 'Zavřít akce nahrávky'); close.title = 'Zavřít';
         header.append(heading, close);
@@ -48,7 +49,7 @@
             cardHeading.append(symbol, copy); card.append(cardHeading, actions);
             return { card, actions };
         };
-        const fileNames = recording.files.map(file => file.display_name || file.title).join(', ');
+        const fileNames = recording.files.map(fileName).join(', ');
         const file = section('recording-action-files', 'file-download', 'Soubor', fileNames || 'Soubor není dostupný.');
         const edit = section('recording-action-edit', 'edit', 'Úpravy', 'Změna údajů, umístění a pořadí.');
         const danger = section('recording-action-danger', 'alert-triangle', 'Odstranění', 'Nevratné nebo destruktivní operace.');
@@ -108,7 +109,7 @@
     }
     function key() { return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); }
     function time(ms) { const s = Math.floor(Number(ms) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
-    function fileName(file) { return file?.display_name || file?.original_name || file?.title || ''; }
+    function fileName(file) { return file?.original_name || file?.display_name || file?.title || ''; }
     function recordingName(recording) {
         const names = recording.files.map(fileName).filter(Boolean);
         if (recording.kind === 'single') return names[0] || recording.title || 'Nahrávka';
@@ -225,7 +226,8 @@
     }
     async function remove(item, type, full = false) {
         const text = full ? 'Úplně odstranit položku a všechny její informace?' : 'Odstranit soubory a zachovat informace?';
-        const confirmation = prompt(text + '\nPro potvrzení napište název:\n' + item.title);
+        const name = type === 'recording' ? recordingName(item) : fileName(item);
+        const confirmation = prompt(text + '\n' + name + (item.title ? '\nPro potvrzení napište popisek:\n' + item.title : '\nPro potvrzení napište název souboru:\n' + (item.files?.[0]?.original_name || name)));
         if (confirmation === null) return;
         await api({ action: full ? 'delete_' + type : type === 'recording' ? 'remove_audio' : 'remove_attachment',
             id: Number(item.id), revision: Number(item.revision), confirm: confirmation, request_key: key() });
@@ -246,16 +248,16 @@
                 option.selected = String(c.id) === String(item.collection_id);
                 select.append(option);
             });
-            $('move-item-title').textContent = item.title;
+            $('move-item-title').textContent = type === 'recording' ? recordingName(item) : fileName(item);
             form.querySelector('.edit-error').textContent = '';
             $('move-dialog').showModal();
             select.focus();
         }));
     }
     function fileLink(file) {
-        if (!file.url) return node('span', (file.display_name || file.title) + ' · ' + state(file.state));
+        if (!file.url) return node('span', fileName(file) + ' · ' + state(file.state));
         const a = node('a', 'Stáhnout'); a.href = file.url + '&download=1';
-        a.setAttribute('aria-label', 'Stáhnout soubor ' + (file.display_name || file.title)); return a;
+        a.setAttribute('aria-label', 'Stáhnout soubor ' + fileName(file)); return a;
     }
     function state(value) {
         return ({ available: 'Audio dostupné', deleted: 'Audio odstraněno', missing: 'Audio neočekávaně chybí', deleting: 'Probíhá odstranění', pending: 'Upload není dokončený', partial: 'Neúplná sada audia', uploading: 'Probíhá upload', failed: 'Operace vyžaduje dokončení' })[value] || value;
@@ -376,9 +378,10 @@
         }
         const files = node('ul', undefined, 'files');
         r.files.forEach(f => {
-            const li = node('li', (f.display_name || f.title) + (f.url ? '' : ' · ' + state(f.state)));
+            const li = node('li', fileName(f) + (f.url ? '' : ' · ' + state(f.state)));
+            if (f.title) li.append(node('small', ' · ' + f.title, 'vz2-attribution'));
             if (f.url) fileActions.append(fileLink(f));
-            if (cfg.write && r.can_edit) fileActions.append(button('Přejmenovat soubor', () => openEdit(f, 'track', r)));
+            if (cfg.write && r.can_edit) fileActions.append(button('Upravit popisek souboru', () => openEdit(f, 'track', r)));
             if (r.can_edit && r.files.length > 1) reorderControls(editActions, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
             if (r.kind !== 'single') files.append(li);
         });
@@ -555,8 +558,8 @@
             if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));
             data.attachments.filter(a => String(a.collection_id) === String(c.id)).forEach(a => {
-                const card = node('article'); card.append(node('h3', a.title), node('p', a.summary || ''), fileLink(a), node('small', 'Vložil/a ' + a.author, 'vz2-attribution'));
-                const { menu, actions } = actionMenu('Možnosti přílohy: ' + a.title);
+                const card = node('article'); card.append(node('h3', fileName(a)), node('small', a.title, 'vz2-attribution'), node('p', a.summary || ''), fileLink(a), node('small', 'Vložil/a ' + a.author, 'vz2-attribution'));
+                const { menu, actions } = actionMenu('Možnosti přílohy: ' + fileName(a));
                 if (cfg.write && a.can_edit) actions.append(button('Upravit', () => openEdit(a, 'attachment')));
                 moveControl(actions, a, 'attachment');
                 if (cfg.write && a.can_remove && a.state !== 'deleted') actions.append(button('Odstranit soubor', () => remove(a, 'attachment'), 'danger'));
@@ -657,7 +660,7 @@
             const file = data?.recordings.flatMap(r => r.files).find(f => String(f.id) === id);
             const extension = ({'audio/wav':'wav','audio/mpeg':'mp3','audio/flac':'flac','audio/ogg':'ogg','audio/aac':'aac'})[blob.type] || 'bin';
             const name = file?.original_name || ('audio-' + id + '.' + extension);
-            const row = node('p', (file?.title || 'Soubor #' + id) + ' · ' + (blob.size / 1048576).toFixed(2) + ' MB ', 'toolbar');
+            const row = node('p', (fileName(file) || 'Soubor #' + id) + ' · ' + (blob.size / 1048576).toFixed(2) + ' MB ', 'toolbar');
             const link = node('a', 'Stáhnout kopii'), url = URL.createObjectURL(blob); offlineUrls.push(url);
             link.href = url; link.download = name; row.append(link, button('Odebrat kopii', async () => {
                 if (!confirm('Odebrat tuto kopii pouze z prohlížeče?')) return;

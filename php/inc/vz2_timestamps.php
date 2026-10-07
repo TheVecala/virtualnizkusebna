@@ -98,7 +98,7 @@ function vz2_timestamp_time(int $ms): string {
     return sprintf('%02d:%02d:%02d.%03d', intdiv($ms,3600000), intdiv($ms,60000)%60, intdiv($ms,1000)%60, $ms%1000);
 }
 function vz2_timestamp_export(array $list): string {
-    $text = 'Nahrávka #'.$list['recording_id'].' — '.$list['title']."\nExport: ".gmdate('Y-m-d\TH:i:s\Z')."\n\nSouhrn:\n".($list['summary'] ?? '')."\n\nČasové zápisy:\n";
+    $text = 'Nahrávka #'.$list['recording_id'].' — '.(($list['source_filename'] ?? null) ?: $list['title'])."\nExport: ".gmdate('Y-m-d\TH:i:s\Z').($list['title']!==''?"\nPopisek: ".$list['title']:'')."\n\nSouhrn:\n".($list['summary'] ?? '')."\n\nČasové zápisy:\n";
     $kinds = ['song_start'=>'Začátek skladby','song_end'=>'Konec skladby','passage'=>'Pasáž','note'=>'Poznámka'];
     foreach ($list['entries'] as $row) $text .= vz2_timestamp_time($row['time_ms']).' ('.$row['time_ms'].' ms) · '.$kinds[$row['kind']].' · '.$row['author'].' [#'.$row['created_by']."]\n".$row['body']."\n\n";
     return $text;

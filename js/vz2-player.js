@@ -109,7 +109,8 @@
     function select(nextMode, recording) {
         if (mode !== nextMode || id !== String(recording.id)) { exitFullscreen(); collapsed = false; $('player-options').open = false; looperMenu.open = false; }
         mode = nextMode; id = String(recording.id);
-        const title = nextMode === 'looper' ? (looper?.file?.display_name || looper?.file?.title || recording.title) : recording.title;
+        const names = (recording.files || []).map(file => file.original_name || file.display_name || file.title).filter(Boolean);
+        const title = nextMode === 'looper' ? (looper?.file?.original_name || looper?.file?.display_name || looper?.file?.title || recording.title) : (names.join(', ') || recording.title);
         $('player-title').textContent = title; $('player-title').title = title;
         $('looper-wave-name').textContent = nextMode === 'looper' ? title : '';
         layout();
