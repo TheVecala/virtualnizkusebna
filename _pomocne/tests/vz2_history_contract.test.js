@@ -24,7 +24,10 @@ assert.match(php, /t\['time_ms'\] >= \$p\['start_ms'\] && \$t\['time_ms'\] < \$p
 assert.match(ui, /history-audio-filter/);
 assert.match(ui, /history-orientation/);
 assert.match(ui, /if\(!confirm\('Odebrat pouze historický pokus\?/);
-assert.match(page, /id="history-workspace"/);
+for (const id of ['show-history', 'history-workspace', 'history-matrix', 'history-add', 'history-detail']) {
+    assert.match(page, new RegExp('id="' + id + '"'), 'history UI must be present: ' + id);
+}
+assert.match(page, /<script\b[^>]*\bsrc="js\/vz2-history\.js(?:\?|"|')/, 'history controller must actually load');
 assert.doesNotMatch(page, /data-desktop-panel="history"/);
 assert.match(auth, /php\/ajax\/vz2_history\.php/, 'VZ2_ONLY must allow the history endpoint');
 console.log('PASS rehearsal history schema, interval semantics and standalone matrix contract');
