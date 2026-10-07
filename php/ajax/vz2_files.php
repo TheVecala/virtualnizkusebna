@@ -8,10 +8,12 @@ try{
     vz2_ready();vz2_login();
     if(!in_array($_SERVER['REQUEST_METHOD']??'GET',['GET','HEAD'],true)){header('Allow: GET, HEAD');throw new Vz2Error('Nepodporovaná metoda.',405);}
     $type=$_GET['type']??'';$id=vz2_id($_GET['id']??null);
-    if($type==='audio')$f=vz2_one(vz2_db(),"SELECT f.*,r.lifecycle recording_state,c.lifecycle collection_state FROM vz2_audio_files f JOIN vz2_recordings r ON r.id=f.recording_id JOIN vz2_collections c ON c.id=r.collection_id WHERE f.id=?",[$id]);
+    if($type==='audio')$f=vz2_one(vz2_db(),"SELECT f.*,r.lifecycle recording_state,c.lifecycle collection_state,c.kind collection_kind FROM vz2_audio_files f JOIN vz2_recordings r ON r.id=f.recording_id JOIN vz2_collections c ON c.id=r.collection_id WHERE f.id=?",[$id]);
     elseif($type==='attachment')$f=vz2_one(vz2_db(),"SELECT f.*,c.lifecycle collection_state FROM vz2_attachments f JOIN vz2_collections c ON c.id=f.collection_id WHERE f.id=?",[$id]);
     else throw new Vz2Error('Neplatný typ souboru.');
-    if($f['state']!=='available' || ($f['recording_state']??'active')!=='active' || $f['collection_state']!=='active')throw new Vz2Error('Soubor již není dostupný.',410);
+    // Archived songs retain their recordings for rehearsal history playback.
+    $readableCollection=$f['collection_state']==='active' || ($type==='audio' && $f['collection_state']==='archived' && $f['collection_kind']==='song');
+    if($f['state']!=='available' || ($f['recording_state']??'active')!=='active' || !$readableCollection)throw new Vz2Error('Soubor již není dostupný.',410);
     if(isset($_GET['hash']) && $_GET['hash']!==$f['sha256'])throw new Vz2Error('Verze souboru se změnila.',409);
     $path=vz2_path($f['relative_path']);if(!is_file($path))throw new Vz2Error('Audio neočekávaně chybí.',404);
     $size=filesize($path);$start=0;$end=$size-1;$range=$_SERVER['HTTP_RANGE']??'';

@@ -135,6 +135,11 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         } finally { fs.closeSync(log); }
         for (let i = 0; i < 50; i++) { try { await request(clients.anon, 'index.php?v=2'); break; } catch (_) { await new Promise(r => setTimeout(r, 100)); } }
         for (const name of ['admin', 'alice', 'bob', 'guest']) await login(name);
+        if (process.env.VZ2_TEST_SUITE === 'history') {
+            await require('./vz2_history.integration')({ base, clients, request, good, upload, wav, db, check, browser: process.env.VZ2_TEST_BROWSER === 'history' });
+            console.log('PASS history integration: ' + checks + ' checks');
+            return;
+        }
         if (process.env.VZ2_TEST_SUITE === 'cleanup' || process.env.VZ2_TEST_BROWSER === 'cleanup') {
             const collection = await good('admin', { action: 'collection_create', kind: 'song', title: 'Retirement fixture' });
             const recording = await upload('admin', collection.id, 'Retained audio');
@@ -303,6 +308,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         let account = await request(clients.admin, 'admin.php', {action:'member',csrf:adminToken,id:'3',name:'Bob Nový',role:'muzikant',active:'1',password:'',password_confirmation:''}, {form:true});
         check(account.status===303 && db("SELECT * FROM vz2_activity_log WHERE target_type='user' AND target_id=3").length===1, 'account administration and audit commit together');
         await require('./vz2_timestamps.integration')({ request, clients, db, good, upload, check, login });
+        await require('./vz2_history.integration')({ base, clients, request, good, upload, wav, db, check, browser: ['1', 'history'].includes(process.env.VZ2_TEST_BROWSER) });
         await require('./vz2_content.integration')({ request, clients, db, good, check, login });
         await require('./vz2_song_map.integration')({ request, clients, db, good, check });
         const marker=path.join(media,'.vz2-storage-id');fs.renameSync(marker,marker+'.held');
