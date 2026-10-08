@@ -193,6 +193,7 @@
             editor.closest('#player-shell')?.classList.remove('ts-creating');
             editor.classList.remove('ts-keyboard-open');
             editor.style.removeProperty('--ts-inline-height');
+            if (!editor.open && activeEditor?.restoreDrawer && !activeEditor.panel.dead) activeEditor.panel.openDrawer?.();
         });
         editor.addEventListener('focusin', positionInlineEditor);
         window.visualViewport?.addEventListener('resize', positionInlineEditor);
@@ -247,13 +248,15 @@
     }
     function openEditor(panel, row) {
         ensureEditor();
+        const restoreDrawer = editor.open && activeEditor?.panel === panel && activeEditor.restoreDrawer;
         if (editor.open) {
             if (activeEditor?.busy || activeEditor?.panel.quickBusy || !confirm('Zahodit rozepsanou časovou značku?')) return;
             editor.closest('#player-shell')?.classList.remove('ts-creating');
             editor.close();
         }
         const inline = !row && matchMedia('(max-width: 767px)').matches && panel.inlineHost;
-        activeEditor = { panel, row, revision: panel.list.timestamps_revision };
+        activeEditor = { panel, row, revision: panel.list.timestamps_revision,
+            restoreDrawer: !!inline && (restoreDrawer || panel.drawerOpen?.()) };
         const f = editor.querySelector('form');
         f.elements.time.value = row ? format(row.time_ms) : compactFormat(panel.adapter?.currentTimeMs() ?? 0);
         f.elements.body.value = row?.body || '';
@@ -417,7 +420,10 @@
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, inlineHost: mobileActions || shell, closeDrawer: mobileActions ? () => toggleDrawer(false) : null,
+        const panel = { id, adapter, inlineHost: mobileActions || shell,
+            drawerOpen: mobileActions ? () => container.classList.contains('ts-drawer-open') : null,
+            closeDrawer: mobileActions ? () => toggleDrawer(false) : null,
+            openDrawer: mobileActions ? () => toggleDrawer(true) : null,
             list: null, dead: false, quickBusy: false, quickButtons: [quickUp, quickDown, mobileQuickUp, mobileQuickDown].filter(Boolean), error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
