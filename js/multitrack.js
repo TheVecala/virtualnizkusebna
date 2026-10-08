@@ -434,6 +434,7 @@
                     return {
                         file: track.file,
                         name: track.name,
+                        originalName: track.originalName,
                         order: Number.isInteger(track.order) ? track.order : index + 1,
                         url: track.url,
                         fileId: track.fileId,
@@ -503,6 +504,7 @@
                 sha256: rawTrack.sha256,
                 unavailable: rawTrack.unavailable === true,
                 name: name,
+                originalName: rawTrack.originalName,
                 order: order,
                 url: url,
                 format: extensionOf(file),
@@ -1319,7 +1321,9 @@
                         });
                     }).then(function(blob) {
                         if (token !== offlineSerial || set !== currentSet) throw cancelledError();
-                        return window.idbKeyval.set(track.cacheKey, blob, store).then(function() {
+                        var originalName = track.originalName || track.name;
+                        var saved = originalName ? new File([blob], originalName, { type: blob.type }) : blob;
+                        return window.idbKeyval.set(track.cacheKey, saved, store).then(function() {
                             storedKeys.push(track.cacheKey);
                         });
                     }).catch(function(error) {
@@ -1358,6 +1362,7 @@
                     return {
                         file: track.file,
                         name: track.name,
+                        originalName: track.originalName,
                         order: track.order,
                         url: track.url,
                         key: track.cacheKey,

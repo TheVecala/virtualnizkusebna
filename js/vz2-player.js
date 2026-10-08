@@ -328,7 +328,9 @@
                 }
                 if (looper !== current) return;
                 $('looper-offline-status').textContent = 'ukládám do zařízení…';
-                await window.idbKeyval.set(current.cacheKey, current.blob, store);
+                const saved = current.file.original_name
+                    ? new File([current.blob], current.file.original_name, { type: current.blob.type }) : current.blob;
+                await window.idbKeyval.set(current.cacheKey, saved, store);
             }
             current.cached = !current.cached;
             if (looper === current) offlineLabel(current.cached);

@@ -51,7 +51,7 @@ function vz2_mixer(?int $id=null):array {
     foreach($catalog['recordings'] as $r){
         if($r['kind']!=='multitrack' || $r['lifecycle']!=='active' || ($id!==null && (int)$r['id']!==$id))continue;
         $tracks=[];
-        foreach($r['files'] as $f)$tracks[]=['file'=>'a'.$f['id'].'.'.$f['format'],'name'=>$f['display_name'],'order'=>$f['sort_order'],
+        foreach($r['files'] as $f)$tracks[]=['file'=>'a'.$f['id'].'.'.$f['format'],'name'=>$f['display_name'],'originalName'=>$f['original_name'],'order'=>$f['sort_order'],
             'url'=>rtrim(SITE_URL,'/').'/php/ajax/vz2_files.php?type=audio&id='.$f['id'].'&hash='.$f['sha256'],
             'fileId'=>$f['id'],'sha256'=>$f['sha256'],'unavailable'=>$f['state']!=='available'];
         $items[]=['id'=>(string)$r['id'],'name'=>vz2_recording_display_name($r),'version'=>1,'created'=>str_replace(' ','T',$r['created_at']).'Z',

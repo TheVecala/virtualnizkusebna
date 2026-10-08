@@ -6,6 +6,7 @@
     let navigationSerial = 0, catalogSerial = 0;
     const blobs = [];
     const offlineUrls = [];
+    let offlineViewSerial = 0;
     const timestampPanels = [];
     // Disclosure state lives only in this document; a reload always starts collapsed.
     const expandedRecordings = new Set();
@@ -281,7 +282,7 @@
                         cache.textContent = percent === null ? 'Stahuji offline…' : 'Stahuji offline ' + percent + ' %';
                     });
                     cache.textContent = 'Ukládám offline…';
-                    await idbKeyval.set(cacheKey, blob, store);
+                    await idbKeyval.set(cacheKey, file.original_name ? new File([blob], file.original_name, { type: blob.type }) : blob, store);
                     cache.textContent = 'Odebrat offline kopii';
                 } catch (error) { cache.textContent = 'Uložit offline'; throw error; }
             }
@@ -670,28 +671,64 @@
     $('show-log')?.addEventListener('click', () => loadLog(true).catch(e => message(e.message, true)));
     $('log-more').addEventListener('click', () => loadLog(false).catch(e => message(e.message, true)));
     async function showOffline() {
+        const serial = ++offlineViewSerial;
         offlineUrls.splice(0).forEach(URL.revokeObjectURL);
         const panel = $('offline-files'), list = panel.querySelector('.offline-files-list');
-        panel.hidden = false; list.replaceChildren();
+        panel.hidden = false; list.replaceChildren(node('p', 'Načítám offline soubory…', 'offline-summary'));
         const keys = (await idbKeyval.keys(store)).filter(k => typeof k === 'string' && k.startsWith(cfg.cachePrefix));
+        if (serial !== offlineViewSerial) return;
         let total = 0, count = 0;
+        const summary = node('p', undefined, 'offline-summary'); list.append(summary);
         for (const k of keys) {
             if (!k.startsWith(cfg.cachePrefix + 'audio:')) continue;
             const blob = await idbKeyval.get(k, store); if (!(blob instanceof Blob)) continue;
+            if (serial !== offlineViewSerial) return;
             total += blob.size; count++;
-            const id = k.slice((cfg.cachePrefix + 'audio:').length).split(':')[0];
-            const file = data?.recordings.flatMap(r => r.files).find(f => String(f.id) === id);
+            summary.textContent = count + ' ' + (count === 1 ? 'soubor' : count < 5 ? 'soubory' : 'souborů') + ' · ' + (total / 1048576).toFixed(2) + ' MB';
+            const [id, expectedHash] = k.slice((cfg.cachePrefix + 'audio:').length).split(':');
+            const file = data?.recordings.flatMap(r => r.files).find(f => String(f.id) === id && f.sha256 === expectedHash);
             const extension = ({'audio/wav':'wav','audio/mpeg':'mp3','audio/flac':'flac','audio/ogg':'ogg','audio/aac':'aac'})[blob.type] || 'bin';
-            const name = file?.original_name || ('audio-' + id + '.' + extension);
-            const row = node('p', (fileName(file) || 'Soubor #' + id) + ' · ' + (blob.size / 1048576).toFixed(2) + ' MB ', 'toolbar');
-            const link = node('a', 'Stáhnout kopii'), url = URL.createObjectURL(blob); offlineUrls.push(url);
-            link.href = url; link.download = name; row.append(link, button('Odebrat kopii', async () => {
+            const originalName = file?.original_name || (blob instanceof File ? blob.name : '');
+            const fallbackName = 'audio-' + id + '.' + extension;
+            const row = node('article', undefined, 'offline-file');
+            const details = node('div', undefined, 'offline-file-details');
+            details.append(node('strong', originalName || fileName(file) || 'Soubor #' + id),
+                node('small', (blob.size / 1048576).toFixed(2) + ' MB', 'vz2-attribution'));
+            const status = node('small', 'Ověřuji shodu souboru…', 'offline-file-status'); details.append(status);
+            const actions = node('div', undefined, 'offline-file-actions');
+            const link = node('a', 'Stáhnout'), url = URL.createObjectURL(blob); offlineUrls.push(url);
+            link.setAttribute('aria-label', 'Stáhnout ' + (originalName || fileName(file) || 'soubor #' + id));
+            link.href = url; link.download = fallbackName; link.setAttribute('aria-disabled', 'true');
+            link.addEventListener('click', e => { if (link.getAttribute('aria-disabled') === 'true') e.preventDefault(); });
+            const removeCopy = button('Odebrat', async () => {
                 if (!confirm('Odebrat tuto kopii pouze z prohlížeče?')) return;
                 window.MultitrackApp?.destroy();
                 await idbKeyval.del(k, store); await showOffline(); if (data) render();
-            })); list.append(row);
+            }, 'danger');
+            removeCopy.setAttribute('aria-label', 'Odebrat ' + (originalName || fileName(file) || 'soubor #' + id));
+            actions.append(link, removeCopy);
+            row.append(details, actions); list.append(row);
+            try {
+                if (!/^[a-f0-9]{64}$/i.test(expectedHash) || !crypto.subtle) throw new Error('Kontrolní součet není dostupný.');
+                const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+                if (serial !== offlineViewSerial) return;
+                const actualHash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+                if (actualHash === expectedHash.toLowerCase()) {
+                    link.download = originalName || fallbackName;
+                    status.textContent = originalName ? 'Ověřeno · původní název' : 'Ověřeno · původní název není dostupný';
+                } else {
+                    status.textContent = 'Kopie se liší od původního souboru · náhradní název';
+                    status.classList.add('error');
+                }
+            } catch (error) {
+                if (serial !== offlineViewSerial) return;
+                status.textContent = 'Shodu nelze ověřit · náhradní název';
+                status.classList.add('error');
+            }
+            link.removeAttribute('aria-disabled');
         }
-        list.prepend(node('p', count + ' souborů · ' + (total / 1048576).toFixed(2) + ' MB'));
+        if (!count) summary.textContent = 'Žádné uložené soubory.';
+        $('offline-clear').disabled = !count;
     }
     $('show-offline').addEventListener('click', () => showOffline().catch(e => message(e.message, true)));
     $('show-ideas').addEventListener('click', () => window.Vz2Content.openDiscussion({ scope: 'ideas' }));
