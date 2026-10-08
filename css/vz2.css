@@ -185,7 +185,7 @@ dialog form { margin-top: 0; }
 #offline-files .dialog-header { align-items: center; margin: 0; }
 #offline-files .dialog-header h2 { color: var(--vz-text); font-size: 16px; }
 .offline-intro { margin: 0; color: var(--vz-muted); font-size: 12px; }
-.offline-files-list { display: grid; gap: 8px; min-height: 0; }
+.offline-files-list { display: grid; flex: 0 0 auto; gap: 8px; }
 .offline-summary { margin: 0 0 2px; color: var(--vz-primary-hover); font-size: 12px; font-weight: 650; }
 .offline-file { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--vz-border); border-left: 3px solid var(--vz-primary); border-radius: 6px; background: var(--vz-surface); }
 .offline-file-details { display: grid; gap: 3px; min-width: 0; }
@@ -197,7 +197,7 @@ dialog form { margin-top: 0; }
 .offline-file-actions > a:hover, .offline-file-actions > button:hover { border-color: var(--vz-primary-hover); }
 .offline-file-actions > a[aria-disabled=true] { opacity: .5; cursor: wait; }
 .offline-file-actions > button.danger { color: #ef9494; }
-.offline-footer { display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--vz-border); }
+.offline-footer { display: flex; flex: 0 0 auto; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--vz-border); }
 .offline-footer > button { min-height: 34px; }
 @media (max-width: 520px) { .offline-file { align-items: stretch; flex-direction: column; } .offline-file-actions > * { flex: 1; } }
 .dialog-header { display: flex; align-items: flex-start; gap: 10px; min-width: 0; margin-bottom: 10px; }
