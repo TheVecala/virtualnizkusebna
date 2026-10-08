@@ -4,6 +4,7 @@
     const button = (label, run, cls) => { const b = make('button', label, cls); b.type = 'button'; b.addEventListener('click', run); return b; };
     let current, serial = 0;
     const { Draft, types } = window.Vz2SongMapModel;
+    const Detail = window.Vz2BarDetail;
     const live = ctx => current === ctx;
     function modal(title) {
         const dialog = make('dialog', undefined, 'vz2-content-dialog song-map-dialog');
@@ -67,6 +68,7 @@
     }
     function render(ctx) {
         const draft = ctx.draft, map = draft.map;
+        const savedDetails = new Map((ctx.response?.version ? JSON.parse(ctx.response.version.body).sections : []).flatMap(section => section.bars.map(bar => [bar.id, bar.detail])));
         const previousScroll = ctx.host.querySelector('.song-map-scroll')?.scrollTop || 0;
         ctx.host.replaceChildren(); ctx.actions.replaceChildren();
         const controls = make('div', undefined, 'song-map-controls');
@@ -132,7 +134,7 @@
                     cell.dataset.barId = bar.id; cell.dataset.base = bar.base || '';
                     cell.setAttribute('aria-label', 'Takt ' + (++number) + ': ' + label(bar)); cell.title = label(bar);
                     if (ctx.mode === 'edit') { cell.append(make('small', String(number), 'song-map-number')); cell.setAttribute('aria-pressed', String((ctx.selectionOpen && draft.selected === bar.id) || ctx.copy?.targets.has(bar.id))); }
-                    if (bar.detail) cell.classList.add('has-detail'); row.append(cell);
+                    if (Detail.hasDetail(savedDetails.get(bar.id))) cell.classList.add('has-detail'); row.append(cell);
                 });
                 block.append(row);
             }
@@ -286,31 +288,115 @@
         if (!live(ctx)) return;
         ctx.draft.copyDetail(copy.source, [...copy.targets]); ctx.copy = null; render(ctx);
     }
+    function unsavedChoice(message, title = 'Neuložený detail') {
+        return new Promise(resolve => {
+            const dialog = modal(title), actions = make('div', undefined, 'toolbar');
+            const finish = value => { dialog.close(); resolve(value); };
+            const stay = button('Zůstat', () => finish('stay'));
+            actions.append(stay, button('Zahodit změny', () => finish('discard')), button('Uložit', () => finish('save')));
+            dialog.append(make('p', message), actions);
+            dialog.addEventListener('cancel', e => { e.preventDefault(); finish('stay'); });
+            dialog.showModal(); stay.focus();
+        });
+    }
     function detail(ctx, bar) {
+        if (ctx.detailDialog?.open) return;
         const dialog = modal('Detail taktu'); dialog.classList.add('song-map-detail');
         const editable = (ctx.mode === 'edit' || ctx.mode === 'map') && ctx.response.can_edit && !ctx.preview;
-        const text = make('textarea'); text.value = bar.detail; text.rows = 10; text.spellcheck = false; text.readOnly = !editable; text.name = 'bar_detail';
-        ctx.detailDialog = dialog;
-        text.addEventListener('input', () => { ctx.detailDirty = editable && text.value !== bar.detail; });
-        dialog.addEventListener('close', () => { ctx.detailDirty = false; if (ctx.detailDialog === dialog) ctx.detailDialog = null; });
-        const field = make('label', 'Tabelatura / poznámka'); field.append(text);
-        const error = make('p', '', 'error'); error.setAttribute('role', 'alert');
-        const actions = make('div', undefined, 'toolbar');
-        const close = async () => {
-            if (editable && text.value !== bar.detail && !await ask('Zahodit rozepsaný Detail taktu?', 'Neuložený detail', 'Zahodit změny', 'Zůstat')) return;
-            dialog.close();
+        const savedText = () => {
+            const savedMap = ctx.response.version ? JSON.parse(ctx.response.version.body) : null;
+            return Detail.normalize(savedMap?.sections.flatMap(section => section.bars).find(item => item.id === bar.id)?.detail);
         };
-        if (editable) actions.append(button('Uložit detail', () => {
-            if (new TextEncoder().encode(text.value).length > 65536) { error.textContent = 'Detail může mít nejvýše 64 KiB.'; return; }
-            ctx.draft.setDetail(bar.id, text.value); dialog.close(); render(ctx);
-        }), button('Kopírovat detail', async () => {
-            if (text.value !== bar.detail) { error.textContent = 'Nejprve uložte rozepsaný detail do pracovní Mapy.'; return; }
+        const text = make('textarea'); text.value = Detail.normalize(bar.detail); text.rows = 10; text.spellcheck = false; text.readOnly = !editable; text.name = 'bar_detail';
+        text.wrap = 'off'; text.autocomplete = 'off'; text.setAttribute('autocorrect', 'off'); text.setAttribute('autocapitalize', 'off');
+        const status = make('span', '', 'muted'); status.setAttribute('role', 'status');
+        const changed = () => { ctx.detailDirty = editable && text.value !== savedText(); status.textContent = ctx.detailDirty ? 'Neuloženo' : 'Uloženo'; };
+        const editor = Detail.attach(text, changed);
+        ctx.detailDialog = dialog; changed();
+        let saving = false, closing = false;
+        const field = make('label', 'Tabulatura / poznámka'); field.append(text);
+        const error = make('p', '', 'error'); error.setAttribute('role', 'alert');
+        const tools = make('div', undefined, 'toolbar song-map-detail-tools');
+        if (editable) {
+            const meter = make('select'); meter.setAttribute('aria-label', 'Metrum pro předvyplnění');
+            Detail.meters.forEach(value => { const option = make('option', value); option.value = value; meter.append(option); });
+            meter.value = Detail.meterPreference.get();
+            meter.addEventListener('change', () => Detail.meterPreference.set(meter.value));
+            const label = make('label', 'Metrum pro předvyplnění'); label.append(meter);
+            tools.append(label, button('Předvyplnit', async () => {
+                editor.flush();
+                if (text.value !== '' && !await ask('Předvyplnění nahradí celý aktuální text detailu. Chcete pokračovat?', 'Předvyplnit detail', 'Nahradit')) return;
+                if (!dialog.open || saving) return;
+                editor.replace(Detail.template(meter.value));
+            }));
+        }
+        let fontSize = 16;
+        const smaller = button('−', () => resize(-2)), bigger = button('+', () => resize(2));
+        smaller.setAttribute('aria-label', 'Zmenšit písmo'); bigger.setAttribute('aria-label', 'Zvětšit písmo');
+        // Mouse/touch controls must not collapse the editor selection or move its caret.
+        [smaller, bigger].forEach(control => control.addEventListener('mousedown', event => event.preventDefault()));
+        function resize(delta) { fontSize = Math.max(12, Math.min(28, fontSize + delta)); text.style.fontSize = fontSize + 'px'; smaller.disabled = fontSize === 12; bigger.disabled = fontSize === 28; }
+        const fontControls = make('span', undefined, 'song-map-detail-font');
+        fontControls.setAttribute('role', 'group'); fontControls.setAttribute('aria-label', 'Velikost písma');
+        fontControls.append(smaller, bigger); tools.append(fontControls); resize(0);
+        if (editable) tools.append(make('span', 'Přepis', 'muted'), button('Zpět', () => { editor.undo(); text.focus(); }), button('Znovu', () => { editor.redo(); text.focus(); }));
+        tools.append(status);
+        const actions = make('div', undefined, 'toolbar');
+        const save = async () => {
+            if (!editable || saving || ctx.busy || !live(ctx)) return false;
+            editor.flush(); changed();
+            if (new TextEncoder().encode(text.value).length > 65536) { error.textContent = 'Detail může mít nejvýše 64 KiB.'; return false; }
+            if (!ctx.detailDirty && !ctx.draft.dirty) { dialog.close(); return true; }
+            // Save through the existing versioned map endpoint. Do not change the draft or
+            // the saved indicator until the server accepts the revision.
+            const snapshot = JSON.parse(JSON.stringify(ctx.draft.map));
+            const target = snapshot.sections.flatMap(section => section.bars).find(item => item.id === bar.id);
+            if (!target) { error.textContent = 'Takt již není v rozpracované mapě.'; return false; }
+            target.detail = text.value;
+            saving = true; text.readOnly = true; error.textContent = '';
+            const controls = [...dialog.querySelectorAll('button, select')], disabled = controls.map(control => control.disabled);
+            controls.forEach(control => { control.disabled = true; });
+            const selected = ctx.draft.selected, selectionOpen = ctx.selectionOpen;
+            const ok = await write(ctx, { ...fields(ctx, 'document_save'), body: JSON.stringify(snapshot) });
+            saving = false; text.readOnly = !editable;
+            controls.forEach((control, index) => { control.disabled = disabled[index]; });
+            if (ok) {
+                ctx.detailDirty = false; ctx.draft.selected = selected; ctx.selectionOpen = selectionOpen;
+                dialog.close(); render(ctx);
+            } else {
+                error.textContent = ctx.notice || 'Uložení selhalo. Zkuste Uložit detail znovu.';
+                if (ctx.conflict) error.append(button('Porovnat aktuální verzi', () => compare(ctx)));
+                changed();
+            }
+            return ok;
+        };
+        ctx.detailSave = save;
+        ctx.detailFlush = () => { editor.flush(); changed(); };
+        const discard = () => {
+            // Copied details can already be in the working map. Discard only this text.
+            if (editable && Detail.normalize(ctx.draft.find(bar.id)?.bar.detail) !== savedText()) ctx.draft.setDetail(bar.id, savedText());
+            dialog.close(); if (live(ctx)) render(ctx);
+        };
+        const close = async () => {
+            if (saving || closing) return;
+            editor.flush(); changed(); closing = true;
+            try {
+                if (!ctx.detailDirty) { dialog.close(); return; }
+                const choice = await unsavedChoice('Detail obsahuje neuložené změny. Uložit, zahodit, nebo pokračovat v editaci?');
+                if (choice === 'save') await save();
+                else if (choice === 'discard') discard();
+            } finally { closing = false; }
+        };
+        if (editable) actions.append(button('Uložit detail', save), button('Kopírovat detail', () => {
+            if (ctx.detailDirty) { error.textContent = 'Nejprve uložte rozepsaný detail.'; return; }
             ctx.copy = { source: bar.id, targets: new Set() }; dialog.close(); render(ctx);
         }));
         actions.append(button(editable ? 'Zrušit' : 'Zavřít', close));
-        dialog.append(field);
-        if (editable) dialog.append(make('p', 'Uložit detail změní rozpracovanou Mapu. Trvale jej uloží až Uložit mapu.', 'muted'));
-        dialog.append(error, actions); dialog.addEventListener('cancel', e => { e.preventDefault(); close(); }); dialog.showModal();
+        dialog.append(tools, field);
+        if (editable) dialog.append(make('p', 'Uložit detail uloží novou verzi celé mapy včetně jejích rozpracovaných změn. Metrum výše slouží jen pro příští předvyplnění.', 'muted'));
+        dialog.append(error, actions);
+        dialog.addEventListener('close', () => { editor.destroy(); if (ctx.detailDialog === dialog) { ctx.detailDirty = false; ctx.detailDialog = null; ctx.detailSave = null; ctx.detailFlush = null; } });
+        dialog.addEventListener('cancel', e => { e.preventDefault(); close(); }); dialog.showModal();
     }
     async function mount(collection) {
         if (current?.collection.id === collection?.id) return;
@@ -331,11 +417,15 @@
         const ctx = current;
         if (!ctx || (nextCollectionId !== undefined && String(nextCollectionId) === String(ctx.collection.id))) return true;
         if (ctx.busy) return false;
-        if (!ctx.draft.dirty && !ctx.detailDirty) return true;
+        ctx.detailFlush?.();
+        if (!ctx.draft.dirty && !ctx.detailDirty) { ctx.detailDialog?.close(); return true; }
         if (leaving) return false;
-        leaving = ask('Mapa obsahuje neuložené změny. Chcete je zahodit?', 'Neuložené změny', 'Zahodit změny', 'Zůstat');
-        let discard; try { discard = await leaving; } finally { leaving = null; }
-        if (!discard) return false;
+        leaving = ctx.detailDirty
+            ? unsavedChoice('Detail obsahuje neuložené změny. Uložení uloží i rozpracovanou mapu.', 'Neuložené změny')
+            : ask('Mapa obsahuje neuložené změny. Chcete je zahodit?', 'Neuložené změny', 'Zahodit změny', 'Zůstat').then(discard => discard ? 'discard' : 'stay');
+        let choice; try { choice = await leaving; } finally { leaving = null; }
+        if (choice === 'stay') return false;
+        if (choice === 'save') return ctx.detailSave ? ctx.detailSave() : false;
         if (live(ctx)) { ctx.detailDialog?.close(); ctx.draft.reset(ctx.response.version ? JSON.parse(ctx.response.version.body) : null); ctx.mode = 'map'; ctx.copy = null; ctx.selectionOpen = false; ctx.notice = ''; render(ctx); }
         return true;
     }

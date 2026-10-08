@@ -135,6 +135,13 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         } finally { fs.closeSync(log); }
         for (let i = 0; i < 50; i++) { try { await request(clients.anon, 'index.php?v=2'); break; } catch (_) { await new Promise(r => setTimeout(r, 100)); } }
         for (const name of ['admin', 'alice', 'bob', 'guest']) await login(name);
+        if (process.env.VZ2_TEST_SUITE === 'songmap') {
+            await require('./vz2_song_map.integration')({ request, clients, db, good, check });
+            await require('./vz2_song_map.browser')({ base, clients, good, request, db, check, temp });
+            await require('./vz2_bar_detail.browser')({ base, clients, good, request, db, check, temp });
+            console.log('PASS song map/detail integration: ' + checks + ' checks');
+            return;
+        }
         if (process.env.VZ2_TEST_SUITE === 'history') {
             await require('./vz2_history.integration')({ base, clients, request, good, upload, wav, db, check, browser: process.env.VZ2_TEST_BROWSER === 'history' });
             console.log('PASS history integration: ' + checks + ' checks');

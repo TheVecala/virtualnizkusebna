@@ -161,7 +161,12 @@ article { margin: 8px 0; }
 .song-map-pending { color: var(--vz-primary); font-size: 12px; }
 .song-map-notice { font-size: 12px; overflow-wrap: anywhere; }
 .song-map-dialog { width: min(720px, 96vw); }
-.song-map-detail textarea { font: 13px/1.6 ui-monospace, Consolas, monospace; white-space: pre; tab-size: 4; resize: vertical; }
+.song-map-detail textarea { box-sizing: border-box; width: 100%; min-width: 0; font: 16px/1.6 ui-monospace, Consolas, monospace; font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; white-space: pre; overflow: auto; tab-size: 4; resize: vertical; }
+.song-map-detail-tools { align-items: end; flex-wrap: wrap; }
+.song-map-detail-tools label { display: grid; gap: 4px; font-size: 12px; }
+.song-map-detail-tools button, .song-map-detail-tools select { min-height: 44px; min-width: 44px; }
+.song-map-detail-tools .muted { align-self: center; }
+.song-map-detail-font { display: inline-flex; gap: 6px; }
 .song-map-history-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
 .panel-body input:not([type=checkbox]), .panel-body textarea, .panel-body select { min-width: 0; max-width: 100%; }
 .panel-body audio { min-width: 0; width: 100%; }
