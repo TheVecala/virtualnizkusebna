@@ -26,6 +26,12 @@
         return b;
     }
     function message(text, error = false) { $('message').textContent = text; $('message').className = error ? 'error' : ''; }
+    function actionMenu(label) {
+        const menu = node('details', undefined, 'actions-menu');
+        const toggle = node('summary', '⋮'); toggle.setAttribute('aria-label', label); toggle.title = label;
+        const actions = node('div', undefined, 'action-list'); menu.append(toggle, actions);
+        return { menu, actions };
+    }
     function recordingActionsDialog(recording) {
         const dialog = node('dialog', undefined, 'recording-actions-dialog');
         dialog.id = 'recording-actions-' + recording.id;
@@ -132,7 +138,7 @@
     async function canNavigate(params, force = false) {
         const target = data?.recordings.find(r => String(r.id) === String(params.recording_id));
         const nextMode = target?.kind === 'multitrack' ? 'mixer' : target?.kind === 'single' && params.view === 'looper' ? 'looper' : 'empty';
-        const collectionId = target?.collection_id || params.collection_id || data?.collections.find(c => c.kind === (params.kind === 'rehearsal' ? 'rehearsal' : 'song'))?.id;
+        const collectionId = target?.collection_id || params.collection_id || data?.collections.find(c => c.kind === (params.kind === 'rehearsal' ? 'rehearsal' : 'song') && c.lifecycle === 'active')?.id;
         if (!force && !window.Vz2Player.canLeave(target?.id, nextMode)) return false;
         return window.Vz2SongMap.canLeave(collectionId);
     }
@@ -149,7 +155,7 @@
         kind = qs.get('kind') === 'rehearsal' ? 'rehearsal' : 'song';
         selected = target?.collection_id || qs.get('collection_id');
         let collection = data.collections.find(c => String(c.id) === String(selected));
-        if (!collection) collection = data.collections.find(c => c.kind === kind);
+        if (!collection) collection = data.collections.find(c => c.kind === kind && c.lifecycle === 'active');
         selected = collection?.id; kind = collection?.kind || kind;
         const nextMixer = target?.kind === 'multitrack' && target.lifecycle === 'active' ? String(target.id) : null;
         const nextLooper = target?.kind === 'single' && target.lifecycle === 'active' && target.files[0]?.url && qs.get('view') === 'looper' ? String(target.id) : null;
@@ -194,7 +200,7 @@
         const routeRecording = latest.recordings.find(r => String(r.id) === qs.get('recording_id'));
         const routeCollectionId = routeRecording?.collection_id || qs.get('collection_id');
         const routeCollection = latest.collections.find(c => String(c.id) === String(routeCollectionId))
-            || latest.collections.find(c => c.kind === (qs.get('kind') === 'rehearsal' ? 'rehearsal' : 'song'));
+            || latest.collections.find(c => c.kind === (qs.get('kind') === 'rehearsal' ? 'rehearsal' : 'song') && c.lifecycle === 'active');
         if (!await window.Vz2SongMap.canLeave(routeCollection?.id) || serial !== catalogSerial) return;
         data = latest;
         const playing = window.MultitrackApp?.getState();
@@ -220,6 +226,8 @@
     function openEdit(item, type, parent = null) {
         edit = { item, type, parent };
         const f = $('edit-form'); f.elements.title.value = item.title; f.elements.summary.value = item.summary || '';
+        f.elements.title.required = type === 'collection' || type === 'track';
+        f.elements.title.closest('label').firstChild.nodeValue = type === 'recording' || type === 'attachment' ? 'Krátký popisek (nepovinný)' : 'Název';
         $('summary-label').hidden = type === 'collection' || type === 'track';
         f.querySelector('.edit-error').textContent = ''; $('edit-reload').hidden = true;
         $('editor').showModal();
@@ -446,7 +454,7 @@
     }
     function uploadForm(collection) {
         const form = node('form');
-        form.innerHTML = '<div class="dialog-header"><h2 id="upload-title">Vložit nahrávku nebo přílohu</h2><button class="modal-close" type="button" aria-label="Zavřít vložení" title="Zavřít">×</button></div><label>Název<input name="title" maxlength="200" required></label><fieldset class="upload-kind"><legend>Druh</legend><label><input type="radio" name="kind" value="single" checked><span>Běžná</span></label><label><input type="radio" name="kind" value="multitrack"><span>Vícestopá</span></label><label><input type="radio" name="kind" value="attachment"><span>Příloha</span></label></fieldset><label>Soubory<input name="files[]" type="file" multiple required></label><label class="upload-peaks-option"><input type="checkbox" name="create_peaks"><span>Po nahrání vytvořit křivku a uložit do JSON</span></label><p class="upload-status" role="status" aria-live="polite"></p><progress class="upload-progress" aria-label="Průběh nahrávání a tvorby křivky" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát</button></div>';
+        form.innerHTML = '<div class="dialog-header"><h2 id="upload-title">Vložit nahrávku nebo přílohu</h2><button class="modal-close" type="button" aria-label="Zavřít vložení" title="Zavřít">×</button></div><label>Krátký popisek (nepovinný)<input name="title" maxlength="200"></label><fieldset class="upload-kind"><legend>Druh</legend><label><input type="radio" name="kind" value="single" checked><span>Běžná</span></label><label><input type="radio" name="kind" value="multitrack"><span>Vícestopá</span></label><label><input type="radio" name="kind" value="attachment"><span>Příloha</span></label></fieldset><label>Soubory<input name="files[]" type="file" multiple required></label><label class="upload-peaks-option"><input type="checkbox" name="create_peaks"><span>Po nahrání vytvořit křivku a uložit do JSON</span></label><p class="upload-status" role="status" aria-live="polite"></p><progress class="upload-progress" aria-label="Průběh nahrávání a tvorby křivky" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát</button></div>';
         let busy = false, uploaded = false;
         const dialog = $('upload-dialog'), close = form.querySelector('.modal-close');
         close.addEventListener('click', () => dialog.close());
@@ -516,7 +524,7 @@
         document.querySelectorAll('.recording-actions-dialog').forEach(dialog => dialog.remove());
         document.querySelectorAll('#content audio').forEach(a => a.pause()); blobs.splice(0).forEach(URL.revokeObjectURL);
         document.querySelectorAll('[data-kind]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
-        const list = data.collections.filter(c => c.kind === kind); $('collections').replaceChildren();
+        const list = data.collections.filter(c => c.kind === kind && c.lifecycle === 'active'); $('collections').replaceChildren();
         list.forEach(c => {
             const row = node('div', undefined, 'collection');
             const select = button('', async () => { await navigate({ collection_id: String(c.id) }); window.Vz2Layout.closeCatalog(); });

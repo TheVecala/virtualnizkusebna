@@ -175,7 +175,7 @@ function vz2_reorder(mysqli $db, array $in): array {
         if (!in_array($kind,['song','rehearsal'],true)) throw new Vz2Error('Neplatný seznam.');
         $parent = vz2_one($db,'SELECT * FROM vz2_collection_orders WHERE kind=?',[$kind]);
         vz2_revision($parent,$in['revision'] ?? null);
-        $rows = vz2_rows($db,'SELECT id FROM vz2_collections WHERE kind=?',[$kind]);
+        $rows = vz2_rows($db,"SELECT id FROM vz2_collections WHERE kind=? AND lifecycle='active'",[$kind]);
         $table='vz2_collections'; $title=$kind; $id= $kind==='song'?1:2;
     } elseif ($scope === 'recordings') {
         $id=vz2_id($in['collection_id']??null); $parent=vz2_collection($db,$id); vz2_active($parent);

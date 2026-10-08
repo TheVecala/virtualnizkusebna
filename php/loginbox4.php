@@ -33,7 +33,7 @@ $login_error = $login_unavailable ? 'Přihlášení nyní není dostupné. Zkust
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#111416">
-    <title>Přihlášení · Zkušebna DK!</title>
+    <title>Zkušebna DK!</title>
     <style>
         :root { color-scheme: dark; background: #111416; color: #e9ebe6; font: 14px/1.6 system-ui, sans-serif; }
         * { box-sizing: border-box; }
@@ -67,7 +67,7 @@ $login_error = $login_unavailable ? 'Přihlášení nyní není dostupné. Zkust
     <div class="login-brand"><b>DK</b><span>VIRTUÁLNÍ ZKUŠEBNA</span></div>
     <section id="formular_prihlaseni" class="login-content" aria-labelledby="login-title">
         <div class="login-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-        <h1 id="login-title">Dušanova<br><span>zkušebna</span></h1>
+        <h1 id="login-title">Zkušebna<br><span>DK!</span></h1>
         <p class="login-subtitle">Vstup pro kapelu</p>
         <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>" method="post">
             <label for="login-password">Heslo</label>

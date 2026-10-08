@@ -115,11 +115,11 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <section id="vz2-boot" aria-label="Načítání zkušebny"><div id="vz2-boot-inner">
 <div id="vz2-boot-brand"><b>DK</b><span>VIRTUÁLNÍ ZKUŠEBNA</span></div>
 <div id="vz2-boot-center"><div id="vz2-boot-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-<h1 id="vz2-boot-title">Dušanova<br><span>zkušebna</span></h1><p id="vz2-boot-subtitle">Už to najíždí.....</p></div>
+<h1 id="vz2-boot-title">Zkušebna<br><span>DK!</span></h1><p id="vz2-boot-subtitle">Už to najíždí.....</p></div>
 <div id="vz2-boot-footer"><p id="vz2-boot-status" role="status" aria-live="polite">Načítáme skladby a nahrávky…</p><button id="vz2-boot-retry" type="button" hidden onclick="location.reload()">Zkusit znovu</button>
 <noscript><style>#vz2-boot-status { display: none; } #vz2-boot-wave span { animation: none; }</style><p id="vz2-boot-noscript">Pro otevření zkušebny povol JavaScript v prohlížeči a obnov stránku.</p></noscript>
 </div></div></section>
-<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA <small>2.0</small></a><h1 id="collection-title"><span class="collection-path-prefix" aria-hidden="true">/ DK /</span><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" title="Vybrat skladbu nebo zkoušku"><span id="collection-title-name">Načítám…</span></button></h1>
+<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA DK!</a><h1 id="collection-title"><span class="collection-path-prefix" aria-hidden="true">/</span><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" title="Vybrat skladbu nebo zkoušku"><span id="collection-title-name">Načítám…</span></button></h1>
 <nav id="desktop-panels" aria-label="Zobrazené panely">
 <button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Mapa</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
 </nav><button id="show-ideas" aria-pressed="false" aria-controls="ideas-workspace">Nápady</button>
