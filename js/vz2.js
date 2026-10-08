@@ -7,8 +7,9 @@
     const blobs = [];
     const offlineUrls = [];
     const timestampPanels = [];
-    // UI state lives only in this document; a reload always starts collapsed.
+    // Disclosure state lives only in this document; a reload always starts collapsed.
     const expandedRecordings = new Set();
+    const expandedAttachments = new Set();
     let mixerNotes;
     let deepLinkSeeked = false;
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
@@ -26,12 +27,6 @@
         return b;
     }
     function message(text, error = false) { $('message').textContent = text; $('message').className = error ? 'error' : ''; }
-    function actionMenu(label) {
-        const menu = node('details', undefined, 'actions-menu');
-        const toggle = node('summary', '⋮'); toggle.setAttribute('aria-label', label); toggle.title = label;
-        const actions = node('div', undefined, 'action-list'); menu.append(toggle, actions);
-        return { menu, actions };
-    }
     function recordingActionsDialog(recording) {
         const dialog = node('dialog', undefined, 'recording-actions-dialog');
         dialog.id = 'recording-actions-' + recording.id;
@@ -520,6 +515,8 @@
     function render() {
         const liveIds = new Set(data.recordings.map(r => String(r.id)));
         for (const id of expandedRecordings) if (!liveIds.has(id)) expandedRecordings.delete(id);
+        const liveAttachmentIds = new Set(data.attachments.map(a => String(a.id)));
+        for (const id of expandedAttachments) if (!liveAttachmentIds.has(id)) expandedAttachments.delete(id);
         timestampPanels.splice(0).forEach(p => p.destroy());
         document.querySelectorAll('.recording-actions-dialog').forEach(dialog => dialog.remove());
         document.querySelectorAll('#content audio').forEach(a => a.pause()); blobs.splice(0).forEach(URL.revokeObjectURL);
@@ -566,12 +563,30 @@
             if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));
             data.attachments.filter(a => String(a.collection_id) === String(c.id)).forEach(a => {
-                const card = node('article'); card.append(node('h3', fileName(a)), node('small', a.title, 'vz2-attribution'), node('p', a.summary || ''), fileLink(a), node('small', 'Vložil/a ' + a.author, 'vz2-attribution'));
-                const { menu, actions } = actionMenu('Možnosti přílohy: ' + fileName(a));
+                const card = node('article', undefined, 'recording-card attachment-card');
+                const body = node('div', undefined, 'recording-body'); body.id = 'attachment-body-' + a.id;
+                const toggle = node('button', undefined, 'recording-toggle'); toggle.type = 'button';
+                toggle.append(node('span', fileName(a), 'recording-title'), node('small', 'Příloha', 'recording-duration'));
+                toggle.setAttribute('aria-controls', body.id);
+                const id = String(a.id);
+                function setExpanded(open) {
+                    body.hidden = !open; toggle.setAttribute('aria-expanded', String(open));
+                    if (open) expandedAttachments.add(id); else expandedAttachments.delete(id);
+                }
+                setExpanded(expandedAttachments.has(id));
+                toggle.addEventListener('click', () => setExpanded(body.hidden));
+                card.append(toggle);
+                if (a.title) body.append(node('p', a.title, 'recording-status'));
+                if (a.summary) body.append(node('p', a.summary, 'recording-summary'));
+                if (!a.url) body.append(fileLink(a));
+                body.append(node('small', 'Vložil/a ' + a.author, 'vz2-attribution'));
+                const actions = node('div', undefined, 'action-list attachment-actions');
+                if (a.url) actions.append(fileLink(a));
                 if (cfg.write && a.can_edit) actions.append(button('Upravit', () => openEdit(a, 'attachment')));
                 moveControl(actions, a, 'attachment');
                 if (cfg.write && a.can_remove && a.state !== 'deleted') actions.append(button('Odstranit soubor', () => remove(a, 'attachment'), 'danger'));
-                if (actions.childElementCount) card.append(menu); content.append(card);
+                if (actions.childElementCount) body.append(actions);
+                card.append(body); content.append(card);
             });
         }
         $('operations').hidden = !data.operations.length;

@@ -356,6 +356,9 @@ dialog form { margin-top: 0; }
 .action-list { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 8px; margin-top: 4px; border: 1px solid var(--vz-border); background: var(--vz-shell); border-radius: 4px; }
 .action-list > * { min-width: 0; max-width: 100%; }
 .action-list > select { width: 100%; }
+.attachment-card .recording-status { padding: 0; }
+.attachment-actions > a { display: inline-flex; align-items: center; min-height: 40px; padding: 8px; border: 1px solid #646d72; border-radius: 4px; background: #323a40; color: #eee; text-decoration: none; }
+.attachment-actions > a:hover { border-color: #c7cb72; }
 .files li .action-list button { margin: 0; }
 #upload-dialog { width: min(520px, 95vw); padding: 16px; }
 #upload-dialog form { margin: 0; }
