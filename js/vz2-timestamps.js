@@ -458,9 +458,9 @@
                     }
                     const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
-                    if ((row.kind === 'song_start' && row.body.trim() === '↑') || (row.kind === 'song_end' && row.body.trim() === '↓')) {
-                        text.replaceChildren(boundaryIcon(row.kind));
-                    }
+                    const boundary = row.kind === 'song_start' || row.kind === 'song_end' ? boundaryIcon(row.kind) : null;
+                    // Older empty boundaries store an arrow as their body; show the type icon once.
+                    if (boundary && row.body.trim() === (row.kind === 'song_start' ? '↑' : '↓')) text.textContent = '';
                     authors.className = 'ts-author vz2-attribution';
                     authors.title = 'Vytvořeno: ' + new Date(row.created_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ') + ' · upraveno: ' + new Date(row.updated_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ');
                     const actions = el('div'); actions.className = 'toolbar';
@@ -481,7 +481,9 @@
                     }));
                     if (row.kind === 'song_start' && end == null) text.append(' ', el('small', '— neúplný úsek'));
                     if (row.kind === 'song_end' && !row.paired_timestamp_id) text.append(' ', el('small', '— konec bez začátku'));
-                    item.append(seek, text, authors, actions); list.append(item);
+                    item.append(seek);
+                    if (boundary) item.append(boundary);
+                    item.append(text, authors, actions); list.append(item);
                 }); this.playback();
                 if (typeof this.adapter?.timestampsChanged === 'function') this.adapter.timestampsChanged(value.entries);
             },
