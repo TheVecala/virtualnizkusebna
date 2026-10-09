@@ -59,12 +59,12 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await dialog.locator('.ts-context > span').textContent(), 'audio.wav');
         assert.equal(await dialog.locator('.ts-context-caption').textContent(), 'Běžná nahrávka — zápisy');
         assert.equal(await dialog.getByRole('button', { name: 'Zachytit čas', exact: true }).isVisible(), false);
-        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:00:01.123');
+        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:01');
         assert.equal(await dialog.locator('.ts-original-kind').getAttribute('value'), 'song_start');
         await dialog.getByRole('button', { name: 'Přičíst jednu sekundu', exact: true }).click();
-        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:00:02.123');
+        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:02');
         await dialog.getByRole('button', { name: 'Odečíst jednu sekundu', exact: true }).click();
-        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:00:01.123');
+        assert.equal(await dialog.locator('[name=time]').inputValue(), '00:01');
         await dialog.locator('[name=body]').fill('Můj rozepsaný text');
         const latest = (await request(clients.admin, endpoint + '?recording_id=' + id)).json();
         const existing = latest.entries[0];
@@ -77,6 +77,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await dialog.getByRole('button', { name: 'Začátek', exact: true }).click();
         await dialog.waitFor({ state: 'hidden' });
         await notes.locator('.ts-song_start p').filter({ hasText: 'Můj rozepsaný text' }).waitFor();
+        assert.equal(db('SELECT time_ms FROM vz2_timestamps WHERE recording_id=? AND body=?', [id, 'Můj rozepsaný text'])[0].time_ms, 1123, 'editing text and +/- one second preserve hidden milliseconds');
         assert.equal(await notes.locator('.ts-kind').count(), 0, 'type is communicated by the coloured hierarchy line, without a duplicate icon');
         assert.equal(await notes.locator('.ts-song_start .ts-action .ti-repeat').count(), 1, 'timestamp actions use compact icons');
         assert.equal(await notes.locator('.ts-song_start').first().evaluate(e => getComputedStyle(e).marginLeft), '0px');
@@ -148,7 +149,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await exportDialog.getByRole('checkbox', { name: /Začátek skladby/ }).check();
         await exportDialog.getByRole('button', { name: 'Kopírovat do schránky', exact: true }).click();
         await notes.getByText('Tabulka zkopírována.', { exact: true }).waitFor();
-        assert((await page.evaluate(() => navigator.clipboard.readText())).includes('00:00:01.123\tMůj rozepsaný text'));
+        assert((await page.evaluate(() => navigator.clipboard.readText())).includes('00:01\tMůj rozepsaný text'));
         check(true, 'browser: rewind, native audio loop and filtered clipboard table work');
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
         await dialog.locator('[name=time]').fill('00:00:01.500');

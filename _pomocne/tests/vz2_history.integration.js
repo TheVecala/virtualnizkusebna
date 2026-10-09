@@ -64,7 +64,7 @@ module.exports = async function ({ base, clients, request, good, upload, wav, db
     const exportResponse = await request(clients.admin, 'php/ajax/vz2_timestamps.php?recording_id=' + source + '&action=song_intervals');
     assert.equal(exportResponse.status, 200);
     assert(exportResponse.text.includes('Historie – skladba'));
-    assert(exportResponse.text.includes('00:00:01.000'));
+    assert(exportResponse.text.includes('00:01'));
     // The timestamp list retains both the marked passage and the named history link.
     assert(list.entries.some(t => t.kind === 'passage' && t.body === 'Označená pasáž'));
     check(true, 'history: source, linked start/end, notes and clip resolve to real audio; used boundary cannot be deleted');

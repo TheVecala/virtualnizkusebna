@@ -47,27 +47,9 @@
 
     function formatTime(seconds) {
         var total = Math.max(0, Math.floor(finiteNumber(seconds, 0)));
-        var hours = Math.floor(total / 3600);
-        var minutes = Math.floor((total % 3600) / 60);
+        var minutes = Math.floor(total / 60);
         var secs = total % 60;
-        if (hours > 0) {
-            return String(hours).padStart(2, '0') + ':' +
-                String(minutes).padStart(2, '0') + ':' +
-                String(secs).padStart(2, '0');
-        }
         return String(minutes).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-    }
-
-    function formatPreciseTime(seconds) {
-        var totalMilliseconds = Math.max(0, Math.round(finiteNumber(seconds, 0) * 1000));
-        var milliseconds = totalMilliseconds % 1000;
-        var totalSeconds = Math.floor(totalMilliseconds / 1000);
-        var hours = Math.floor(totalSeconds / 3600);
-        var minutes = Math.floor((totalSeconds % 3600) / 60);
-        var secs = totalSeconds % 60;
-        var prefix = hours > 0 ? String(hours).padStart(2, '0') + ':' : '';
-        return prefix + String(minutes).padStart(2, '0') + ':' +
-            String(secs).padStart(2, '0') + '.' + String(milliseconds).padStart(3, '0');
     }
 
     function errorMessage(error) {
@@ -802,7 +784,7 @@
         var minimum = Math.min.apply(Math, durations);
         var maximum = Math.max.apply(Math, durations);
         return 'Upozornění: délky stop nejsou stejné (' +
-            formatPreciseTime(minimum) + '–' + formatPreciseTime(maximum) + ').';
+            formatTime(minimum) + '–' + formatTime(maximum) + ').';
     }
 
     function createElement(tag, className, text) {

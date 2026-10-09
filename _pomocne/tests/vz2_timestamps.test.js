@@ -24,17 +24,20 @@ assert.equal(songIntervalFor(entries[0], entries).end.id, 6);
 assert.equal(songIntervalFor(entries[2], entries).start.id, 1);
 assert.equal(songIntervalFor(entries[3], entries).end.id, 6);
 assert.equal(songIntervalFor(entries[4], entries), null);
-for (const ms of [0, 1, 999, 1000, 60001, 3600999, 604800000]) assert.equal(parse(format(ms)), ms);
+for (const ms of [0, 1, 999, 1000, 60001, 3600999, 604800000]) assert.equal(parse(format(ms)), Math.floor(ms / 1000) * 1000);
+assert.equal(format(59999), '00:59');
+assert.equal(format(3600999), '60:00');
+assert.equal(format(604800000), '10080:00');
 assert.equal(parse('01:02.3'), 62300);
 assert.equal(parse('01:02,03'), 62030);
 assert.equal(parse('61:02'), 3662000);
-assert.equal(adjust('00:00:03.000', 1000), '00:00:04.000');
-assert.equal(adjust('00:00:00.500', -1000), '00:00:00.000');
+assert.equal(adjust('00:00:03.000', 1000), '00:04');
+assert.equal(adjust('00:00:00.500', -1000), '00:00');
 assert.equal(timestampBody('song_start', '  '), '↑');
 assert.equal(timestampBody('song_end', ''), '↓');
 assert.throws(() => timestampBody('note', ''), /vyplňte text/);
 for (const text of ['-1', 'NaN', '00:60', '01:99:00', '169:00:00', '00:01.0001']) assert.throws(() => parse(text));
-assert.equal(tabular(entries, ['passage']), '00:00:01.000\tStejný čas\n00:00:02.000\tPasáž se dvěma řádky a tabulátorem');
+assert.equal(tabular(entries, ['passage']), '00:01\tStejný čas\n00:02\tPasáž se dvěma řádky a tabulátorem');
 assert.equal(tabular(entries, []), '');
 const labels = mp3spltLabels([
     { id: 9, time_ms: 135000, kind: 'song_end', paired_timestamp_id: 8, body: 'nepoužitý konec' },

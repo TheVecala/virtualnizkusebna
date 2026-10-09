@@ -17,7 +17,7 @@
         if (mode === 'mixer') { const s = window.MultitrackApp.getState(); return { ...s, mode, id, loading: mixerPending || ['metadata', 'loading', 'awaiting-confirmation'].includes(s?.phase), collapsed, fullscreen: !!fullscreen }; }
         return null;
     }
-    function clock(value) { if (!Number.isFinite(value)) return '0:00'; return Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2, '0'); }
+    function clock(value) { return window.Vz2Timestamps.format(Number.isFinite(value) ? value * 1000 : 0); }
     function validPeaks(data, file) {
         return data && Array.isArray(data.peaks) && data.peaks.length > 0 && data.peaks.length <= 4096
             && Number(data.duration_ms) === Number(file.duration_ms)

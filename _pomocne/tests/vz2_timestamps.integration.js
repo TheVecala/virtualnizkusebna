@@ -65,9 +65,9 @@ module.exports = async function ({ request, clients, db, good, upload, check, lo
     assert.equal(result.status, 201, result.text); list = result.json();
     check(list.duration_ms === 1000 && list.entries.length === 4, 'removed audio preserves list, length and ability to add timestamp at recording end');
     result = await request(clients.guest, endpoint + '?action=export&recording_id=' + id);
-    check(result.status === 200 && result.headers.get('content-type').includes('text/plain') && result.text.includes('00:00:00.123 (123 ms)')
+    check(result.status === 200 && result.headers.get('content-type').includes('text/plain') && result.text.includes('00:00 ·') && !result.text.includes('(123 ms)')
         && result.text.includes('Bob Nový') && result.text.includes('Souhrn upravil admin') && !result.headers.has('x-fake')
-        && result.headers.get('content-disposition') === 'attachment; filename="nahravka-' + id + '-zapisy.txt"', 'UTF-8 export without audio includes identity, summary, milliseconds and author with safe filename');
+        && result.headers.get('content-disposition') === 'attachment; filename="nahravka-' + id + '-zapisy.txt"', 'UTF-8 export without audio includes identity, summary, mm:ss positions and author with safe filename');
     db('UPDATE users SET active=0 WHERE id=3');
     check((await write('bob', { ...create, timestamps_revision: list.timestamps_revision })).status === 401
         && (await read('admin')).json().entries.some(t => t.created_by === 3), 'deactivated author cannot write, existing authorship remains readable');

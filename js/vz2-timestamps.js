@@ -2,14 +2,12 @@
     'use strict';
     const kinds = { song_start: '♪ Začátek skladby', song_end: '■ Konec skladby', passage: '↔ Pasáž', note: '● Poznámka' };
     function format(ms) {
-        ms = Math.max(0, Math.round(Number(ms) || 0));
-        return [Math.floor(ms / 3600000), Math.floor(ms / 60000) % 60, Math.floor(ms / 1000) % 60]
-            .map(n => String(n).padStart(2, '0')).join(':') + '.' + String(ms % 1000).padStart(3, '0');
+        return compactFormat(ms);
     }
     function parse(text) {
         const m = /^(?:(\d+):)?(\d+):(\d{2})(?:[.,](\d{1,3}))?$/.exec(text.trim());
         const hasHours = !!m?.[1];
-        if (!m || Number(m[3]) > 59 || (hasHours && Number(m[2]) > 59)) throw new Error('Čas zadejte jako mm:ss nebo hh:mm:ss.');
+        if (!m || Number(m[3]) > 59 || (hasHours && Number(m[2]) > 59)) throw new Error('Čas zadejte jako mm:ss.');
         const minutes = Number(m[2]) + (hasHours ? Number(m[1]) * 60 : 0);
         const ms = (minutes * 60 + Number(m[3])) * 1000 + Number((m[4] || '').padEnd(3, '0'));
         if (!Number.isSafeInteger(ms) || ms > 604800000) throw new Error('Nejvyšší čas je 7 dní.');
@@ -151,10 +149,20 @@
             editor.querySelector('.error').textContent = '';
             if (editor.classList.contains('ts-inline') && !context.row) {
                 form.elements.body.value = '';
-                form.elements.time.value = compactFormat(context.panel.adapter?.currentTimeMs() ?? fields.time_ms);
+                setEditorTime(context.panel.adapter?.currentTimeMs() ?? fields.time_ms);
             } else editor.close();
         } catch (err) { editor.querySelector('.error').textContent = err.message; editor.querySelector('.ts-rebase').hidden = err.status !== 409; }
         finally { context.busy = false; controls.forEach(b => b.disabled = false); form.elements.return_position.disabled = !context.panel.adapter?.canPlay(); }
+    }
+    // Keep the exact position separately from the editable mm:ss display.
+    function setEditorTime(ms) {
+        activeEditor.timeMs = Math.max(0, Math.round(Number(ms) || 0));
+        activeEditor.timeText = format(activeEditor.timeMs);
+        editor.querySelector('form').elements.time.value = activeEditor.timeText;
+    }
+    function editorTimeMs() {
+        const text = editor.querySelector('form').elements.time.value;
+        return text === activeEditor.timeText ? activeEditor.timeMs : parse(text);
     }
     function openPairDialog(context, fields) {
         if (!pairDialog) {
@@ -183,6 +191,10 @@
         editor = el('dialog'); editor.className = 'vz2-timestamp-editor';
         editor.innerHTML = '<form autocomplete="off"><div class="ts-editor-top"><p class="ts-mode"></p><p class="ts-context"></p><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><div class="ts-editor-body"><label class="ts-body"><span class="visually-hidden">Text</span><input type="text" name="body" aria-label="Text časové značky" placeholder="Text" autocomplete="off" autocapitalize="sentences" spellcheck="true"></label><div class="ts-time-row"><input type="text" name="time" required inputmode="numeric" aria-label="Čas ve formátu minuty a sekundy" autocomplete="off" spellcheck="false"><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+</button><button type="button" class="ts-time-current" title="Převzít čas z přehrávače">Zachytit čas</button></div><div class="ts-editor-options"><label class="ts-return"><input type="checkbox" name="return_position"> Vrátit na čas</label><div class="ts-quick-notes"><button type="button" class="ts-quick-note" data-symbol="👍" aria-label="Přidat poznámku: palec nahoru" title="Přidat poznámku: palec nahoru">👍</button><button type="button" class="ts-quick-note" data-symbol="👎" aria-label="Přidat poznámku: palec dolů" title="Přidat poznámku: palec dolů">👎</button></div></div><p role="alert" class="error"></p><pre class="ts-current" hidden></pre></div><div class="ts-editor-footer"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
         const form = editor.querySelector('form');
+        form.elements.time.addEventListener('change', () => {
+            try { setEditorTime(editorTimeMs()); }
+            catch (e) { editor.querySelector('.error').textContent = e.message; }
+        });
         editor.addEventListener('cancel', e => { if (activeEditor?.busy) e.preventDefault(); });
         editor.addEventListener('keydown', e => {
             if (e.key === 'Escape' && editor.classList.contains('ts-inline') && !activeEditor?.busy && !activeEditor?.panel.quickBusy && !pairDialog?.open) {
@@ -201,10 +213,10 @@
         editor.querySelectorAll('.ts-close').forEach(close => { close.onclick = () => editor.close(); });
         editor.querySelector('.ts-time-current').onclick = () => {
             const ms = activeEditor?.panel.adapter?.currentTimeMs();
-            if (Number.isFinite(ms)) form.elements.time.value = compactFormat(ms);
+            if (Number.isFinite(ms)) setEditorTime(ms);
         };
         editor.querySelectorAll('.ts-time-adjust').forEach(control => { control.onclick = () => {
-            try { form.elements.time.value = adjust(form.elements.time.value, control.dataset.delta); }
+            try { setEditorTime(editorTimeMs() + Number(control.dataset.delta)); }
             catch (e) { editor.querySelector('.error').textContent = e.message; }
         }; });
         editor.querySelectorAll('.ts-quick-note').forEach(control => {
@@ -227,7 +239,7 @@
         form.addEventListener('submit', async e => {
             e.preventDefault(); const context = activeEditor;
             try {
-                const ms = parse(form.elements.time.value);
+                const ms = editorTimeMs();
                 const fields = { action: context.row ? 'update' : 'create', timestamps_revision: context.revision,
                     kind: e.submitter.value, time_ms: ms,
                     body: timestampBody(e.submitter.value, form.elements.body.value) };
@@ -258,7 +270,7 @@
         activeEditor = { panel, row, revision: panel.list.timestamps_revision,
             restoreDrawer: !!inline && (restoreDrawer || panel.drawerOpen?.()) };
         const f = editor.querySelector('form');
-        f.elements.time.value = row ? format(row.time_ms) : compactFormat(panel.adapter?.currentTimeMs() ?? 0);
+        setEditorTime(row ? row.time_ms : panel.adapter?.currentTimeMs() ?? 0);
         f.elements.body.value = row?.body || '';
         editor.classList.toggle('ts-edit-mode', !!row);
         editor.querySelector('.ts-mode').textContent = row ? 'Upravit značku' : 'Přidat značku';

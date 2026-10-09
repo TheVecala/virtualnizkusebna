@@ -110,7 +110,7 @@
         return result;
     }
     function key() { return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); }
-    function time(ms) { const s = Math.floor(Number(ms) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+    function time(ms) { return window.Vz2Timestamps.format(ms); }
     function fileName(file) { return file?.original_name || file?.display_name || file?.title || ''; }
     function recordingName(recording) {
         const names = recording.files.map(fileName).filter(Boolean);
