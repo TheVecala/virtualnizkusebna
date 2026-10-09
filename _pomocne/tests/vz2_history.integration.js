@@ -47,6 +47,7 @@ module.exports = async function ({ base, clients, request, good, upload, wav, db
     data = await save(create);
     let play = data.plays.find(p => p.source_recording_id === source);
     assert.deepEqual([play.start_ms, play.end_ms], [1000, 4000]);
+    assert.equal(play.start_body, 'Začátek pokusu');
     assert.deepEqual(play.notes.map(n => n.body), ['Poznámka na začátku', 'Poznámka uvnitř']);
     assert(!data.unassigned_intervals.some(i => i.start_timestamp_id === start.id));
     data = await save({ ...create, action: 'update', id: play.id, revision: play.revision, clip_recording_id: clip });

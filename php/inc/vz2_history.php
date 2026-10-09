@@ -12,7 +12,7 @@ function vz2_history_data(mysqli $db): array {
     $collections=[]; foreach($catalog['collections'] as $c)$collections[(int)$c['id']]=$c;
     $recordings=[]; foreach($catalog['recordings'] as $r)$recordings[(int)$r['id']]=$r;
     $plays=vz2_rows($db,"SELECT p.*,COALESCE(s.title,p.song_title_snapshot) song_title,COALESCE(h.title,p.rehearsal_title_snapshot) rehearsal_title,
-        sr.title source_title,cr.title clip_title,st.time_ms start_ms,et.time_ms end_ms
+        sr.title source_title,cr.title clip_title,st.time_ms start_ms,st.body start_body,et.time_ms end_ms
         FROM vz2_rehearsal_plays p
         LEFT JOIN vz2_collections s ON s.id=p.song_collection_id LEFT JOIN vz2_collections h ON h.id=p.rehearsal_collection_id
         LEFT JOIN vz2_recordings sr ON sr.id=p.source_recording_id LEFT JOIN vz2_recordings cr ON cr.id=p.clip_recording_id

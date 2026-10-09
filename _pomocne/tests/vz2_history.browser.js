@@ -18,19 +18,37 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await page.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ contentType: 'text/css', body: '' }));
         await page.goto(base + 'index.php?v=2&collection_id=' + rehearsal.id);
         await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'));
-        const history = page.locator('#history-workspace'), add = page.locator('#history-add'), detail = page.locator('#history-detail');
+        const history = page.locator('#history-workspace'), add = page.locator('#history-add'), detail = page.locator('#history-detail'), list = page.locator('#history-list');
         async function openHistory() {
             const menu = page.locator('.shell-menu');
             if ((await menu.getAttribute('open')) === null) await menu.locator('summary').click();
             await page.locator('#show-history').click();
             await history.locator('.history-table').waitFor();
         }
-        const cell = () => history.locator('tbody tr').filter({ has: page.locator('th', { hasText: 'Historie – zkouška' }) }).locator('td').filter({ has: page.getByRole('button', { name: 'Zařadit existující úsek nebo výstřižek: Historie – skladba × Historie – zkouška', exact: true }) });
+        const cell = () => history.locator('td[data-song-id="'+song.id+'"][data-rehearsal-id="'+rehearsal.id+'"]');
+        async function openList() {
+            if (!await list.isVisible()) await cell().locator('.history-count').click();
+            await list.waitFor();
+            assert.equal(await page.locator('dialog[open]').count(), 1);
+        }
+        async function closeList() {
+            if (await list.isVisible()) await list.locator('[data-history-close]').click();
+        }
+        async function openAttempt(name) {
+            await openList();
+            assert(await list.evaluate(n=>n.scrollWidth<=n.clientWidth+1), 'compact list fits viewport');
+            await list.locator('.history-list-row').filter({ hasText: name }).click();
+            await detail.waitFor();
+            assert.equal(await list.isVisible(), false);
+            assert.equal(await page.locator('dialog[open]').count(), 1);
+        }
         async function addCandidate(value) {
-            await cell().locator('.history-add').click();
+            await openList();
+            await page.locator('#history-list-add').click();
             await add.locator('input[value="' + value + '"]').check();
             await add.getByRole('button', { name: 'Přidat', exact: true }).click();
             await add.waitFor({ state: 'hidden' });
+            await list.waitFor();
         }
         await page.evaluate(async rid => {
             const catalog = await (await fetch('php/ajax/vz2.php?action=catalog')).json();
@@ -63,8 +81,9 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await page.locator('#looper-fullscreen').count(), 0);
         check(true, 'browser history: workspace retains sidebar and playing Looper; shared header fullscreen restores on Escape');
         await addCandidate('i:' + source + ':' + start.id + ':' + end.id);
-        await cell().locator('.history-play').click();
+        await openAttempt('Začátek pokusu');
         await detail.waitFor();
+        assert.equal(await detail.locator('.history-start h3').textContent(), 'Začátek pokusu');
         assert.equal(await detail.locator('audio').count(), 1);
         const sourceAudio = detail.locator('audio');
         await sourceAudio.evaluate(a => a.load());
@@ -79,19 +98,26 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await detail.locator('select').selectOption(String(clip));
         await detail.getByRole('button', { name: 'Uložit výstřižek', exact: true }).click();
         await detail.waitFor({ state: 'hidden' });
-        await cell().getByRole('button', { name: 'Výstřižek: vystrizek.wav', exact: true }).click();
+        await openAttempt('vystrizek.wav');
         assert.equal(await detail.locator('audio').count(), 2);
-        await detail.locator('[data-history-close]').click();
+        await page.locator('#history-detail-back').click();
+        await list.waitFor();
+        assert.equal(await list.locator('.history-list-row').count(), 1);
         await addCandidate('c:' + directClip);
-        assert.equal(await cell().locator('.history-play').count(), 2);
-        check(true, 'browser history: menu opens matrix; interval assignment seeks original audio and connects clip; two attempts share a cell');
+        assert.equal(await list.locator('.history-list-row').count(), 2);
+        assert.equal(await list.locator('audio').count(), 0, 'audio controls only appear in the selected attempt detail');
+        await closeList();
+        assert.equal(await cell().locator('.history-count').textContent(), '2');
+        assert.equal(await cell().locator('button').count(), 1, 'matrix cell has one count regardless of attempt count');
+        assert.equal(await history.locator('.history-list-row, .history-add').count(), 0);
+        check(true, 'browser history: menu opens matrix; interval assignment seeks original audio and connects clip; two attempts share a single count and open via a compact list');
         await page.locator('#history-song-filter').selectOption(String(song.id));
         assert.equal(await history.locator('thead th').count(), 2);
         await page.locator('#history-orientation').click();
         assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
         assert.equal(await history.locator('tbody tr').count(), 1);
         await page.locator('#history-audio-filter').check();
-        assert.equal(await history.locator('.history-play').count(), 2);
+        assert.equal(await cell().locator('.history-count').textContent(), '2');
         await page.locator('[data-workspace-target="panels"]').click();
         assert.equal(await page.locator('#song-workspace').isVisible(), true);
         assert.equal(await page.evaluate(() => window.songPanelBeforeHistory === document.getElementById('content-area')), true);
@@ -106,15 +132,20 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert(await page.locator('#history-close').isVisible());
         const bounds = await history.boundingBox();
         assert(bounds.x >= 0 && bounds.width <= 390, 'matrix stays within mobile viewport');
-        await history.getByRole('button', { name: 'Výstřižek: samostatny-pokus.wav', exact: true }).click();
+        await openAttempt('samostatny-pokus.wav');
         assert.equal(await detail.locator('audio').count(), 1);
+        assert.equal(await detail.locator('.history-start').count(), 0, 'standalone clip has no start timestamp');
         await detail.getByText('Úpravy', { exact: true }).click();
         await detail.getByRole('button', { name: 'Odebrat pokus', exact: true }).click();
         await detail.waitFor({ state: 'hidden' });
-        assert.equal(await history.locator('.history-play').count(), 1);
+        await list.waitFor();
+        assert.equal(await list.locator('.history-list-row').count(), 1);
+        await closeList();
+        assert.equal(await cell().locator('.history-count').textContent(), '1');
         // Restore the second attempt through the same UI, with the default orientation.
         await page.locator('#history-orientation').click();
         await addCandidate('c:' + directClip);
+        await closeList();
         assert.deepEqual(errors, []);
         check(true, 'browser history: song/audio filters, axis swap, mobile detail, safe removal and return to catalogue work');
         const guest = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -128,8 +159,15 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await guestPage.locator('#show-history').click();
         await guestPage.locator('#history-matrix .history-table').waitFor();
         assert.equal(await guestPage.locator('#history-matrix .history-add').count(), 0);
-        await guestPage.getByRole('button', { name: 'Výstřižek: vystrizek.wav', exact: true }).click();
+        const guestCell = guestPage.locator('td[data-song-id="'+song.id+'"][data-rehearsal-id="'+rehearsal.id+'"]');
+        assert.equal(await guestCell.locator('button').count(), 1);
+        assert.equal(await guestCell.locator('.history-count').textContent(), '2');
+        await guestCell.locator('.history-count').click();
+        assert.equal(await guestPage.locator('#history-list .history-list-row').count(), 2);
+        assert.equal(await guestPage.locator('#history-list-add').isVisible(), false);
+        await guestPage.locator('#history-list .history-list-row').filter({ hasText: 'vystrizek.wav' }).click();
         assert.equal(await guestPage.locator('#history-detail audio').count(), 2);
+        assert.equal(await guestPage.locator('#history-detail .history-start h3').textContent(), 'Začátek pokusu');
         assert.equal(await guestPage.locator('#history-detail select').count(), 0);
         check(true, 'browser history: guest can browse and listen but has no edit controls');
     } finally { await browser.close(); }
