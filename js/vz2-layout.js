@@ -22,7 +22,7 @@
         }
         fullscreenPanel = panel;
         if (panel) {
-            document.querySelectorAll('#player-options[open], #looper-options[open], .shell-menu[open], .actions-menu[open], .collection-menu[open]').forEach(menu => menu.open = false);
+            document.querySelectorAll('#player-options[open], #looper-options[open], #history-options[open], .shell-menu[open], .actions-menu[open], .collection-menu[open]').forEach(menu => menu.open = false);
             panel.classList.add('panel-fullscreen');
             updateFullscreenButton(panel, true);
             fullscreenHandlers.get(panel)?.enter?.();
@@ -152,7 +152,7 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelector('.shell-menu').open = false; });
     document.addEventListener('click', e => { if (!e.target.closest('.shell-menu')) document.querySelector('.shell-menu').open = false; });
-    const menuSelector = '.actions-menu, .collection-menu';
+    const menuSelector = '.actions-menu, .collection-menu, #history-options';
     function placeCollectionMenu(menu) {
         const popover = menu.querySelector('.collection-menu-popover');
         if (!popover || !menu.open) return;
@@ -196,7 +196,7 @@
     });
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape' || document.querySelector('dialog[open]') || document.querySelector('.player-fullscreen')) return;
-        const menu = document.querySelector('.actions-menu[open], .collection-menu[open]');
+        const menu = document.querySelector('.actions-menu[open], .collection-menu[open], #history-options[open]');
         if (menu) { menu.open = false; menu.querySelector('summary').focus(); e.preventDefault(); }
     });
     document.addEventListener('keydown', e => {

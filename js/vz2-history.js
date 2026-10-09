@@ -58,6 +58,30 @@ function renderList(){
  $('history-list-add').hidden=!data.can_edit;
 }
 function openList(song,rehearsal){listCell={song,rehearsal};renderList();if(!$('history-list').open)$('history-list').showModal();}
+function renderUnassigned(){
+ const content=$('history-unassigned-content');content.replaceChildren();
+ const sections=[
+  {heading:'Úseky',items:data.unassigned_intervals,empty:'Žádné nezařazené úseky.',row:i=>[i.recording_title,'Zkouška: '+i.rehearsal_title+' · '+clock(i.start_ms)+'–'+clock(i.end_ms),i.start_body]},
+  {heading:'Výstřižky',items:data.unassigned_clips,empty:'Žádné nezařazené výstřižky.',row:c=>[c.title,'Skladba: '+c.collection_title+(c.audio_state==='available'?'':' · Audio není dostupné')]}
+ ];
+ sections.forEach(({heading,items,empty,row})=>{
+  const section=n('section',undefined,'history-unassigned-section'),title=n('h3',heading+' ('+items.length+')');section.append(title);
+  if(!items.length)section.append(n('p',empty,'history-list-empty'));
+  else{
+   const list=n('ul',undefined,'history-unassigned-items');
+   items.forEach(item=>{const [name,context,note]=row(item),li=n('li');li.append(n('strong',name),n('small',context));if(note?.trim())li.append(n('p',note,'history-candidate-note'));list.append(li);});
+   section.append(list);
+  }
+  content.append(section);
+ });
+}
+$('history-unassigned-open').onclick=async()=>{
+ $('history-options').open=false;
+ const dialog=$('history-unassigned'),content=$('history-unassigned-content');
+ if(data)renderUnassigned();else content.replaceChildren(n('p','Načítám nezařazené položky…'));
+ dialog.showModal();
+ if(!data)try{data=await request();render();if(dialog.open)renderUnassigned();}catch(error){if(dialog.open)content.replaceChildren(n('p',error.message,'error'));}
+};
 function returnToList(){if(listCell && !$('history-workspace').hidden)openList(listCell.song,listCell.rehearsal);}
 $('history-list-add').onclick=()=>{const {song,rehearsal}=listCell;$('history-list').close();openAdd(song,rehearsal);};
 $('history-detail').addEventListener('close',()=>{ $('history-detail').querySelectorAll('audio').forEach(audio=>audio.pause());returnToList(); });
