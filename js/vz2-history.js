@@ -61,7 +61,7 @@ function openList(song,rehearsal){listCell={song,rehearsal};renderList();if(!$('
 function returnToList(){if(listCell && !$('history-workspace').hidden)openList(listCell.song,listCell.rehearsal);}
 $('history-list-add').onclick=()=>{const {song,rehearsal}=listCell;$('history-list').close();openAdd(song,rehearsal);};
 $('history-detail').addEventListener('close',()=>{ $('history-detail').querySelectorAll('audio').forEach(audio=>audio.pause());returnToList(); });
-$('history-add').addEventListener('close',returnToList);
+document.querySelectorAll('[data-history-back]').forEach(b=>b.onclick=()=>{$('history-add').close();returnToList();});
 function audioButton(recording,label,start=0){const f=recording?.files?.find(x=>x.url);if(!f)return null;const a=n('audio');a.controls=true;a.preload='none';a.src=f.url;a.addEventListener('loadedmetadata',()=>{a.currentTime=start/1000;},{once:true});const box=n('div');box.append(n('small',label,'history-audio-label'),a);return box;}
 function details(label,contents){const d=n('details'),s=n('summary',label);d.append(s,...contents);return d;}
 function detail(p){const body=$('history-detail').querySelector('.history-detail-body');$('history-detail-title').textContent=p.start_body?.trim()||title(p);body.replaceChildren(n('p',contextTitle(p.song_title,p.rehearsal_title),'history-detail-context'),n('small','Pokus #'+p.id));const quick=n('div','', 'history-listen');const clipAudio=audioButton(p.clip,'Výstřižek');const sourceAudio=audioButton(p.source,'Původní nahrávka',p.start_ms);if(clipAudio)quick.append(clipAudio);if(sourceAudio)quick.append(sourceAudio);body.append(quick);
