@@ -62,7 +62,7 @@ a rozbalení mixu. Maximalizovaný může být vždy pouze jeden panel.
 Matice obsahuje v každé buňce jediný odznak s počtem pokusů odpovídajících
 aktuálnímu filtru audia. Kliknutí otevře `#history-list` s kompaktním seznamem;
 každá položka ukazuje značku začátku, zdrojový soubor, výstřižek a časový úsek.
-Teprve výběr položky otevře `#history-detail` včetně přehrávačů. Zavření detailu
-nebo tlačítko Zpět obnoví seznam. Přidávání je dostupné ze seznamu i u prázdné
+Teprve výběr položky otevře `#history-detail` včetně přehrávačů. Křížek nebo Escape v detailu
+obnoví seznam. Přidávání je dostupné ze seznamu i u prázdné
 buňky; host má u prázdné buňky pouze pomlčku. Propojený úsek a jeho výstřižek
 se počítají jako jeden pokus.
