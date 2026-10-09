@@ -80,13 +80,11 @@
         if (mode !== 'looper') looperMenu.open = false;
         update();
     }
-    function exitFullscreen() {
+    function exitFullscreen() { window.Vz2Layout.exitFullscreen(shell); }
+    function restoreFullscreen() {
         if (!fullscreen) return;
         const previous = fullscreen; fullscreen = null;
         shell.classList.remove('player-fullscreen'); collapsed = previous.collapsed;
-        $('player-fullscreen').setAttribute('aria-pressed', 'false'); $('player-fullscreen').setAttribute('aria-label', 'Celá obrazovka');
-        $('looper-fullscreen').querySelector('i').className = 'ti ti-maximize';
-        $('looper-fullscreen').querySelector('span').textContent = 'Celá obrazovka';
         if (mode === 'mixer' && previous.mixerExpanded !== !$('mt-mixer').hidden && !$('mt-mixer-toggle').hidden) $('mt-mixer-toggle').click();
         layout(); body.scrollTop = previous.scroll; $('looper-wave-scroll').scrollLeft = previous.waveScroll;
     }
@@ -290,11 +288,15 @@
     }, true);
     $('player-help-close').onclick = () => $('player-help-dialog').close();
     $('player-collapse').onclick = () => { collapsed = !collapsed; layout(); };
-    $('player-fullscreen').onclick = () => {
-        if (fullscreen) exitFullscreen();
-        else { fullscreen = { collapsed, scroll: body.scrollTop, waveScroll: $('looper-wave-scroll').scrollLeft, mixerExpanded: !$('mt-mixer').hidden }; collapsed = false; shell.classList.add('player-fullscreen'); if (mode === 'mixer' && $('mt-mixer').hidden && !$('mt-mixer-toggle').hidden) $('mt-mixer-toggle').click(); $('player-fullscreen').setAttribute('aria-pressed', 'true'); $('player-fullscreen').setAttribute('aria-label', 'Opustit celou obrazovku'); $('looper-fullscreen').querySelector('i').className = 'ti ti-minimize'; $('looper-fullscreen').querySelector('span').textContent = 'Ukončit celou obrazovku'; layout(); }
-    };
-    $('looper-fullscreen').onclick = () => { looperMenu.open = false; $('player-fullscreen').click(); };
+    window.Vz2Layout.registerFullscreen(shell, {
+        enter() {
+            fullscreen = { collapsed, scroll: body.scrollTop, waveScroll: $('looper-wave-scroll').scrollLeft, mixerExpanded: !$('mt-mixer').hidden };
+            collapsed = false; shell.classList.add('player-fullscreen');
+            if (mode === 'mixer' && $('mt-mixer').hidden && !$('mt-mixer-toggle').hidden) $('mt-mixer-toggle').click();
+            layout();
+        },
+        exit: restoreFullscreen
+    });
     $('looper-close').onclick = () => { looperMenu.open = false; $('player-close').click(); };
     $('player-close').onclick = () => document.dispatchEvent(new Event('vz2:player-close'));
     $('player-play').onclick = async () => {
@@ -341,9 +343,6 @@
     document.addEventListener('multitrack:selected', () => { mixerPending = false; });
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && looperMenu.open) { looperMenu.open = false; e.preventDefault(); return; }
-        if (!fullscreen || document.querySelector('dialog[open]')) return;
-        if (e.key === 'Escape') { if ($('player-options').open) $('player-options').open = false; else exitFullscreen(); e.preventDefault(); }
-        if (e.key === 'Tab') { const controls = [...shell.querySelectorAll('button,input,select,a,summary')].filter(n => !n.disabled && n.getClientRects().length); const first = controls[0], last = controls.at(-1); if (e.shiftKey && document.activeElement === first) { last?.focus(); e.preventDefault(); } else if (!e.shiftKey && document.activeElement === last) { first?.focus(); e.preventDefault(); } }
     });
     document.addEventListener('click', e => { if (looperMenu.open && !looperMenu.contains(e.target)) looperMenu.open = false; });
     new ResizeObserver(() => { if (looper && !collapsed) draw(); }).observe($('looper-wave-scroll'));

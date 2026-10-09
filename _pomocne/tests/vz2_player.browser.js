@@ -62,7 +62,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         assert.equal((await state()).collapsed, true); assert.equal((await state()).position, 3);
         await page.locator('#looper-options > summary').click();
         assert.equal(await page.locator('#looper-menu').isVisible(), true);
-        await page.locator('#looper-fullscreen').click();
+        await page.locator('#player-fullscreen').click();
         assert.equal((await state()).fullscreen, true); assert.equal((await state()).collapsed, false);
         assert.deepEqual(await page.locator('#player-shell').evaluate(n => { const r = n.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }), [0, 0, 1440, 900]);
         await page.locator('#looper-zoom').evaluate(n => { n.value = 4; n.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -85,6 +85,12 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         const starts = await page.evaluate(() => window.audioStarts.slice(-2));
         assert.equal(starts.length, 2); assert.equal(starts[0].when, starts[1].when); assert.equal(starts[0].offset, starts[1].offset);
         await page.locator('#player-collapse').click(); assert.equal((await state()).playing, true);
+        await page.locator('[data-workspace-target="history"]').click();
+        assert.equal((await state()).mode, 'mixer'); assert.equal((await state()).playing, true);
+        assert.equal((await state()).collapsed, true);
+        await page.locator('[data-workspace-target="panels"]').click();
+        assert.equal((await state()).playing, true);
+
         await page.locator('#player-fullscreen').click();
         assert.equal((await state()).playing, true);
         await page.locator('.mt-mute').first().click(); assert.equal((await page.evaluate(() => window.MultitrackApp.getState())).tracks[0].muted, true);
@@ -127,7 +133,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         await page.locator('#looper-play').click();
         await page.locator('#looper-timestamps .ts-passage').getByRole('button', { name: 'Upravit', exact: true }).click();
         await page.locator('.vz2-timestamp-editor [name=body]').fill('Upravená pasáž');
-        await page.locator('.vz2-timestamp-editor').getByRole('button', { name: 'Uložit', exact: true }).click();
+        await page.locator('.vz2-timestamp-editor').getByRole('button', { name: 'Pasáž', exact: true }).click();
         await page.locator('.looper-wave-marker-text').getByText('Upravená pasáž', { exact: true }).waitFor();
         await page.locator('#looper-options > summary').click(); await page.locator('#looper-copy-link').click();
         const copied = await page.evaluate(() => navigator.clipboard.readText());
@@ -139,7 +145,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
             assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight), 'Active Looper fits ' + width);
         }
         await page.setViewportSize({ width: 390, height: 844 });
-        await page.locator('#looper-options > summary').click(); await page.locator('#looper-fullscreen').click();
+        await page.locator('#player-fullscreen').click();
         await page.screenshot({ path: path.join(temp, 'ui-stage3-looper-mobile.png') });
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
         await page.locator('#looper-options > summary').click(); await page.locator('#looper-close').click();

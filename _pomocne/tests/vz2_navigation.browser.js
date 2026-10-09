@@ -62,6 +62,8 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         check(true, 'navigation: close stops playback; browser Back/Forward restores route without reloading page');
         await open(); await ready();
         await page.locator('[data-kind=rehearsal]').click();
+        // Other browser suites also create rehearsals; choose this fixture explicitly.
+        await page.locator('#collections .collection > button:first-child').filter({ hasText: 'Navigace — zkouška' }).click();
         await page.locator('#collection-title-name').getByText('Navigace — zkouška', { exact: true }).waitFor();
         assert.equal(await page.locator('#mixer-panel').isVisible(), false);
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);

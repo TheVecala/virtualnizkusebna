@@ -140,7 +140,7 @@
     }
     async function navigate(params, force = false) {
         if (!await canNavigate(params, force)) return;
-        window.Vz2Layout.hideIdeas(false);
+        window.Vz2Layout.showWorkspace('panels');
         setRoute(params); deepLinkSeeked = false;
         message('');
         if (data) await applyRoute();
@@ -620,14 +620,14 @@
     window.addEventListener('popstate', async () => {
         const next = new URLSearchParams(location.search);
         if (!await canNavigate(Object.fromEntries(next))) { setRoute(Object.fromEntries(qs), true); return; }
-        window.Vz2Layout.hideIdeas(false);
+        window.Vz2Layout.showWorkspace('panels');
         qs = next; deepLinkSeeked = false;
         if (data) applyRoute().catch(e => message(e.message, true));
     });
     $('create-collection')?.addEventListener('submit', async e => {
         e.preventDefault(); const f = e.currentTarget, b = f.querySelector('button'); b.disabled = true;
         if (!await window.Vz2SongMap.canLeave()) { b.disabled = false; return; }
-        try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); window.Vz2Layout.hideIdeas(false); setRoute({ collection_id: String(r.id) }); f.reset(); $('create-collection-dialog').close(); window.Vz2Layout.closeCatalog(); await refresh(); }
+        try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); window.Vz2Layout.showWorkspace('panels'); setRoute({ collection_id: String(r.id) }); f.reset(); $('create-collection-dialog').close(); window.Vz2Layout.closeCatalog(); await refresh(); }
         catch (err) { f.querySelector('.edit-error').textContent = err.message; } finally { b.disabled = false; }
     });
     $('edit-cancel').addEventListener('click', () => $('editor').close());

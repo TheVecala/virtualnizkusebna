@@ -26,7 +26,10 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await page.route('https://cdn.jsdelivr.net/**', r => r.abort());
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await page.locator('#lyrics-content .document-preview').getByText(/Sloka 160/).waitFor();
-        const visible = () => page.locator('#content-area > .panel:visible').evaluateAll(nodes => nodes.sort((a, b) => a.getBoundingClientRect().x - b.getBoundingClientRect().x).map(n => n.dataset.panel));
+        const visible = async () => {
+            await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting') && document.body.dataset.layout);
+            return page.locator('#content-area > .panel:visible').evaluateAll(nodes => nodes.sort((a, b) => a.getBoundingClientRect().x - b.getBoundingClientRect().x).map(n => n.dataset.panel));
+        };
         const toggle = id => page.locator('[data-desktop-panel="' + id + '"]');
         assert.deepEqual(await visible(), ['recordings', 'lyrics', 'tablature']);
         await toggle('discussion').click();
@@ -72,6 +75,13 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         assert((await page.locator('#lyrics-content').evaluate(n => n.scrollTop)) > 0);
         assert.equal(await page.locator('#tablature-content').evaluate(n => n.scrollTop), 0);
         assert.equal(await page.evaluate(() => scrollY), 0);
+        const lyricsScroll = await page.locator('#lyrics-content').evaluate(n => n.scrollTop);
+        await page.locator('[data-workspace-target="history"]').click();
+        await page.locator('#history-workspace .history-table').waitFor();
+        await page.locator('[data-workspace-target="panels"]').click();
+        assert.deepEqual(await visible(), ['recordings', 'lyrics', 'tablature', 'discussion']);
+        assert.equal(await page.locator('#lyrics-content').evaluate(n => n.scrollTop), lyricsScroll, 'switching workspaces preserves each panel scroll');
+
         for (const id of ['recordings', 'lyrics', 'tablature']) await toggle(id).click();
         assert.deepEqual(await visible(), ['discussion']);
         assert(await toggle('discussion').isDisabled());

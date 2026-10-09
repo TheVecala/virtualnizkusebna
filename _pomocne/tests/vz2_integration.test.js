@@ -343,7 +343,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_content.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1','songmap'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_song_map.browser')({ base, clients, good, request, db, check, temp });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_navigation.browser')({ base, clients, good, request, db, check, temp, upload, wav });
-        if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_layout.browser')({ base, clients, good, request, db, check, temp, upload, wav });
+        if (['1', 'layout'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_layout.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1', 'recordings'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_recordings.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1', 'player'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_player.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1', 'ideas'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_ideas.browser')({ base, clients, good, request, check, temp, upload, wav });

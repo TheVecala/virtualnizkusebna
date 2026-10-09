@@ -10,18 +10,22 @@
     }
     const validId = id => ids.includes(id);
     const validSet = a => Array.isArray(a) && a.length > 0 && a.length <= 4 && a.every(validId) && new Set(a).size === a.length;
-    let ideasOpen = false, fullscreenPanel = null;
+    let ideasOpen = false, activeWorkspace = 'panels', fullscreenPanel = null;
+    const surfaces = new Map([...document.querySelectorAll('[data-workspace]')].map(panel => [panel.dataset.workspace, panel]));
+    const fullscreenHandlers = new WeakMap();
     function setPanelFullscreen(panel) {
         if (fullscreenPanel === panel) panel = null;
         if (fullscreenPanel) {
             fullscreenPanel.classList.remove('panel-fullscreen');
             updateFullscreenButton(fullscreenPanel, false);
+            fullscreenHandlers.get(fullscreenPanel)?.exit?.();
         }
         fullscreenPanel = panel;
         if (panel) {
             document.querySelectorAll('#player-options[open], #looper-options[open], .shell-menu[open], .actions-menu[open], .collection-menu[open]').forEach(menu => menu.open = false);
             panel.classList.add('panel-fullscreen');
             updateFullscreenButton(panel, true);
+            fullscreenHandlers.get(panel)?.enter?.();
         }
     }
     function updateFullscreenButton(panel, active) {
@@ -34,15 +38,21 @@
         control.firstElementChild.className = active ? 'ti ti-minimize' : 'ti ti-maximize';
     }
     function addFullscreenButton(panel) {
-        const header = panel.querySelector(':scope > .panel-header');
-        if (!header || header.querySelector('.panel-fullscreen-button')) return;
-        const control = document.createElement('button');
+        const header = panel.querySelector(':scope > .panel-header, :scope > .player-header');
+        if (!header) return;
+        const existing = header.querySelector('.panel-fullscreen-button');
+        if (existing?.dataset.fullscreenBound) return;
+        const control = existing || document.createElement('button');
         control.type = 'button'; control.className = 'panel-fullscreen-button';
         const icon = document.createElement('i'); icon.className = 'ti ti-maximize'; icon.setAttribute('aria-hidden', 'true');
-        control.append(icon);
+        if (!existing) control.append(icon);
+        control.dataset.fullscreenBound = 'true';
         control.addEventListener('click', () => setPanelFullscreen(panel));
-        if (panel.id === 'ideas-workspace') header.insertBefore(control, $('ideas-back'));
-        else header.append(control);
+        if (!existing) {
+            if (panel.id === 'ideas-workspace') header.insertBefore(control, $('ideas-back'));
+            else if (panel.id === 'history-workspace') header.insertBefore(control, $('history-close'));
+            else header.append(control);
+        }
         updateFullscreenButton(panel, false);
     }
     const state = {
@@ -63,11 +73,15 @@
     function apply() {
         if (desktop.matches && $('catalog-dialog').open && !catalogOpenedOnDesktop) closeCatalog();
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current];
-        if (fullscreenPanel && (ideasOpen ? fullscreenPanel.id !== 'ideas-workspace' : fullscreenPanel.id === 'ideas-workspace' || !shown.includes(fullscreenPanel.dataset.panel))) setPanelFullscreen(fullscreenPanel);
+        if (fullscreenPanel && fullscreenPanel.id !== 'player-shell' &&
+            (fullscreenPanel.closest('[data-workspace]')?.dataset.workspace !== activeWorkspace ||
+            (fullscreenPanel.dataset.panel && !shown.includes(fullscreenPanel.dataset.panel)))) setPanelFullscreen(fullscreenPanel);
         document.body.dataset.layout = current;
-        document.body.dataset.workspace = ideasOpen ? 'ideas' : 'panels';
-        $('content-area').hidden = ideasOpen;
-        $('ideas-workspace').hidden = !ideasOpen;
+        document.body.dataset.workspace = activeWorkspace;
+        surfaces.forEach((panel, key) => panel.hidden = key !== activeWorkspace);
+        document.querySelectorAll('[data-workspace-target]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.workspaceTarget === activeWorkspace)));
+        $('show-history').setAttribute('aria-pressed', String(activeWorkspace === 'history'));
+        $('desktop-panels').hidden = activeWorkspace === 'history';
         $('show-ideas').setAttribute('aria-pressed', String(ideasOpen));
         $('bn-napady').setAttribute('aria-pressed', String(ideasOpen));
         ids.forEach(id => {
@@ -80,9 +94,9 @@
         document.querySelectorAll('[data-desktop-panel]').forEach(b => {
             const selected = state.desktop.includes(b.dataset.desktopPanel);
             b.setAttribute('aria-pressed', String(selected));
-            b.disabled = !ideasOpen && selected && state.desktop.length === 1;
+            b.disabled = activeWorkspace === 'panels' && selected && state.desktop.length === 1;
         });
-        document.querySelectorAll('[data-mobile-panel]').forEach(b => b.setAttribute('aria-pressed', String(!ideasOpen && b.dataset.mobilePanel === state.mobile)));
+        document.querySelectorAll('[data-mobile-panel]').forEach(b => b.setAttribute('aria-pressed', String(activeWorkspace === 'panels' && b.dataset.mobilePanel === state.mobile)));
         const slot = $(desktop.matches && !$('catalog-dialog').open ? 'sidebar-slot' : 'catalog-dialog-slot');
         if ($('sidebar').parentElement !== slot) {
             closeCatalog(); slot.append($('sidebar'));
@@ -104,7 +118,7 @@
         header.insertBefore(select, header.querySelector('.panel-header-actions') || header.querySelector('.panel-fullscreen-button'));
     });
     document.querySelectorAll('[data-desktop-panel]').forEach(b => b.addEventListener('click', async () => {
-        if (ideasOpen) { hideIdeas(); return; }
+        if (activeWorkspace !== 'panels') { showWorkspace('panels'); return; }
         const id = b.dataset.desktopPanel;
         if (id === 'tablature' && state.desktop.includes(id) && state.desktop.length > 1 && !await window.Vz2SongMap.canLeave()) return;
         if (state.desktop.includes(id)) { if (state.desktop.length > 1) state.desktop = state.desktop.filter(x => x !== id); }
@@ -113,7 +127,7 @@
     }));
     document.querySelectorAll('[data-mobile-panel]').forEach(b => b.addEventListener('click', async () => {
         if (state.mobile === 'tablature' && b.dataset.mobilePanel !== 'tablature' && !await window.Vz2SongMap.canLeave()) return;
-        hideIdeas(false);
+        showWorkspace('panels');
         state.mobile = b.dataset.mobilePanel; save('mobile'); apply();
     }));
     $('catalog-picker').addEventListener('click', openCatalog);
@@ -187,6 +201,8 @@
     });
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape' || e.defaultPrevented || !fullscreenPanel || document.querySelector('dialog[open]')) return;
+        const menu = fullscreenPanel.querySelector('details[open]');
+        if (menu) { menu.open = false; menu.querySelector('summary').focus(); e.preventDefault(); return; }
         const control = fullscreenPanel.querySelector('.panel-fullscreen-button');
         setPanelFullscreen(fullscreenPanel); control.focus({ preventScroll: true }); e.preventDefault();
     });
@@ -199,20 +215,35 @@
         else if (!e.shiftKey && document.activeElement === last) { first?.focus(); e.preventDefault(); }
     });
     desktop.addEventListener('change', apply); mobile.addEventListener('change', apply);
+    function showWorkspace(key) {
+        if (!surfaces.has(key) || key === activeWorkspace) return;
+        const wasIdeas = ideasOpen;
+        activeWorkspace = key; ideasOpen = key === 'ideas';
+        if (wasIdeas !== ideasOpen) window.Vz2Player?.setIdeasMode(ideasOpen);
+        closeCatalog(); apply();
+        document.dispatchEvent(new CustomEvent('vz2:workspace-changed', { detail: { workspace: key } }));
+    }
     function hideIdeas(focus = true) {
         if (!ideasOpen) return;
-        if (fullscreenPanel?.id === 'ideas-workspace') setPanelFullscreen(fullscreenPanel);
-        ideasOpen = false; window.Vz2Player?.setIdeasMode(false); apply();
+        showWorkspace('panels');
         if (focus) $(mobile.matches ? 'bn-napady' : 'show-ideas').focus({ preventScroll: true });
     }
+    document.querySelectorAll('[data-workspace-target]').forEach(control => control.addEventListener('click', () => {
+        if (control.dataset.workspaceTarget === 'history') $('show-history').click();
+        else showWorkspace(control.dataset.workspaceTarget);
+    }));
+    addFullscreenButton($('history-workspace'));
     window.Vz2Layout = {
-        closeCatalog, hideIdeas,
+        closeCatalog, hideIdeas, showWorkspace,
+        registerFullscreen(panel, handlers = {}) { fullscreenHandlers.set(panel, handlers); addFullscreenButton(panel); },
+        exitFullscreen(panel) { if (fullscreenPanel === panel) setPanelFullscreen(panel); },
         showIdeas() {
             if (ideasOpen) return;
-            ideasOpen = true; addFullscreenButton($('ideas-workspace')); closeCatalog(); window.Vz2Player?.setIdeasMode(true); apply();
+            addFullscreenButton($('ideas-workspace')); showWorkspace('ideas');
             $('ideas-back').focus({ preventScroll: true });
         },
         revealRecording() {
+            showWorkspace('panels');
             const current = mode();
             if (current === 'mobile') state.mobile = 'recordings';
             else if (!state[current].includes('recordings')) {

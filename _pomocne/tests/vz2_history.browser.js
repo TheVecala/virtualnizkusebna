@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
 
 module.exports = async function ({ base, clients, request, check, song, rehearsal, source, clip, directClip, start, end }) {
     const executablePath = [process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, chromium.executablePath()].find(p => p && fs.existsSync(p));
-    const browser = await chromium.launch({ headless: true, executablePath });
+    const browser = await chromium.launch({ headless: true, executablePath, args: ['--autoplay-policy=no-user-gesture-required'] });
     try {
         const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
         const [name, value] = clients.admin.cookie.split('=');
@@ -32,8 +32,36 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
             await add.getByRole('button', { name: 'Přidat', exact: true }).click();
             await add.waitFor({ state: 'hidden' });
         }
+        await page.evaluate(async rid => {
+            const catalog = await (await fetch('php/ajax/vz2.php?action=catalog')).json();
+            const recording = catalog.recordings.find(r => Number(r.id) === rid);
+            await window.Vz2Player.openLooper(recording, recording.files[0]);
+            window.songPanelBeforeHistory = document.getElementById('content-area');
+        }, source);
+        await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
+        await page.locator('#looper-audio').evaluate(async audio => { audio.muted = true; audio.loop = true; await audio.play(); });
         await openHistory();
-        assert.equal(await page.locator('#app-shell').isVisible(), false);
+        assert.equal(await page.locator('#app-shell').isVisible(), true);
+        assert.equal(await page.locator('#sidebar-slot #sidebar').isVisible(), true);
+        assert.equal(await page.locator('#song-workspace').isVisible(), false);
+        assert.equal(await page.locator('#player-shell').isVisible(), true);
+        assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
+        const geometry = await page.evaluate(() => {
+            const history = document.getElementById('history-workspace').getBoundingClientRect();
+            const player = document.getElementById('player-shell').getBoundingClientRect();
+            const sidebar = document.getElementById('sidebar-slot').getBoundingClientRect();
+            return { history: { x: history.x, y: history.y, bottom: history.bottom, width: history.width }, playerBottom: player.bottom, sidebarRight: sidebar.right };
+        });
+        assert(geometry.history.x >= geometry.sidebarRight && geometry.history.y >= geometry.playerBottom && geometry.history.bottom <= 1000);
+        await history.locator('.panel-fullscreen-button').click();
+        assert.equal(await history.locator('.panel-fullscreen-button').getAttribute('aria-pressed'), 'true');
+        assert.deepEqual(await history.evaluate(n => { const r = n.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }), [0, 0, 1440, 1000]);
+        assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
+        await page.keyboard.press('Escape');
+        assert.equal(await history.locator('.panel-fullscreen-button').getAttribute('aria-pressed'), 'false');
+        assert.equal(await page.locator('#player-fullscreen').isVisible(), true);
+        assert.equal(await page.locator('#looper-fullscreen').count(), 0);
+        check(true, 'browser history: workspace retains sidebar and playing Looper; shared header fullscreen restores on Escape');
         await addCandidate('i:' + source + ':' + start.id + ':' + end.id);
         await cell().locator('.history-play').click();
         await detail.waitFor();
@@ -64,11 +92,17 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await history.locator('tbody tr').count(), 1);
         await page.locator('#history-audio-filter').check();
         assert.equal(await history.locator('.history-play').count(), 2);
-        await page.locator('#history-close').click();
-        assert.equal(await page.locator('#app-shell').isVisible(), true);
+        await page.locator('[data-workspace-target="panels"]').click();
+        assert.equal(await page.locator('#song-workspace').isVisible(), true);
+        assert.equal(await page.evaluate(() => window.songPanelBeforeHistory === document.getElementById('content-area')), true);
+        assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
         await page.setViewportSize({ width: 390, height: 844 });
         await openHistory();
         assert.equal(await history.isVisible(), true);
+        assert.equal(await page.locator('#history-song-filter').inputValue(), String(song.id));
+        assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
+        assert.equal(await page.locator('#history-audio-filter').isChecked(), true);
+        assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
         assert(await page.locator('#history-close').isVisible());
         const bounds = await history.boundingBox();
         assert(bounds.x >= 0 && bounds.width <= 390, 'matrix stays within mobile viewport');

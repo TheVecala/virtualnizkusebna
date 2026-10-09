@@ -40,5 +40,20 @@ názvem.
 
 Výběr skladby ani výstřižku se nepřidává do uploadu nebo Looperu. Server audio
 nestříhá a export neposkytuje Edison/CSV automatizaci. Obecný TXT export značek
-zůstal zachován; samostatný TXT export úseků používá přesné
-`hh:mm:ss.mmm` a neúplné značky vypisuje odděleně.
+zobrazuje čas jako `mm:ss`, stejně jako TXT export úseků. Neúplné značky
+export úseků vypisuje odděleně. Export pro mp3splt zachovává přesné časy.
+
+
+## Pracovní plochy a maximalizace
+
+`#workspace-surfaces` obsahuje rovnocenné pracovní plochy označené
+`data-workspace`. Plocha skladby obaluje původní `#content-area` se čtyřmi
+panely, historie obsahuje matici; přehrávač a katalog jsou součástí společného
+rámce mimo tuto vrstvu. `Vz2Layout.showWorkspace()` přepíná viditelnost bez
+odstranění obsahu panelů a bez zásahu do přehrávání. Historie při návratu
+aktualizuje data, ale zachovává filtry, orientaci a posunutí matice.
+
+Maximalizaci řídí `Vz2Layout` pro panely, historii, Nápady i přehrávač.
+Ikona je přímo v hlavičce; další kliknutí nebo Escape obnoví běžné rozložení.
+Přehrávač přes `registerFullscreen()` navíc zachovává sbalení, posun waveformu
+a rozbalení mixu. Maximalizovaný může být vždy pouze jeden panel.

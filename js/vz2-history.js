@@ -27,6 +27,15 @@ function detail(p){const body=$('history-detail').querySelector('.history-detail
 function openAdd(song,rehearsal){cell={song,rehearsal};const box=$('history-add').querySelector('.history-candidates');box.replaceChildren();data.unassigned_intervals.filter(i=>i.rehearsal_collection_id==rehearsal.id).forEach(i=>{const l=n('label');const r=n('input');r.type='radio';r.name='candidate';r.value='i:'+i.recording_id+':'+i.start_timestamp_id+':'+i.end_timestamp_id;l.append(r,document.createTextNode(' Úsek '+i.recording_title+' · '+clock(i.start_ms)+'–'+clock(i.end_ms)));box.append(l);});data.unassigned_clips.filter(c=>c.collection_id==song.id).forEach(c=>{const l=n('label');const r=n('input');r.type='radio';r.name='candidate';r.value='c:'+c.id;l.append(r,document.createTextNode(' Výstřižek '+c.title+' · '+c.audio_state));box.append(l);});if(!box.children.length)box.append(n('p','Pro tuto buňku není žádný dokončený nezařazený úsek ani volný výstřižek.'));$('history-add').querySelector('.history-context').textContent=song.title+' × '+rehearsal.title;$('history-add').showModal();}
 $('history-add').querySelector('form').onsubmit=async e=>{e.preventDefault();const chosen=new FormData(e.currentTarget).get('candidate');if(!chosen){e.currentTarget.querySelector('.error').textContent='Vyberte podklad.';return;}const parts=chosen.split(':'),body={action:'create',song_collection_id:Number(cell.song.id),rehearsal_collection_id:Number(cell.rehearsal.id),source_recording_id:null,start_timestamp_id:null,end_timestamp_id:null,clip_recording_id:null};if(parts[0]==='c')body.clip_recording_id=Number(parts[1]);else{body.source_recording_id=Number(parts[1]);body.start_timestamp_id=Number(parts[2]);body.end_timestamp_id=Number(parts[3]);}try{data=await request(body);$('history-add').close();render();}catch(err){e.currentTarget.querySelector('.error').textContent=err.message;}};
 document.querySelectorAll('[data-history-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
-$('show-history').onclick=async()=>{scroll={x:0,y:0};$('history-workspace').hidden=false;$('app-shell').hidden=true;$('history-status').textContent='Načítám historii…';$('history-matrix').replaceChildren();try{data=await request();render();$('history-status').textContent='';}catch(e){$('history-status').textContent=e.message;}};
-$('history-close').onclick=()=>{$('history-workspace').hidden=true;$('app-shell').hidden=false;};$('history-orientation').onclick=e=>{transposed=!transposed;e.currentTarget.setAttribute('aria-pressed',String(transposed));render();};$('history-song-filter').onchange=render;$('history-audio-filter').onchange=render;$('history-matrix').onscroll=e=>{scroll={x:e.currentTarget.scrollLeft,y:e.currentTarget.scrollTop};};
+let loading = false;
+$('show-history').onclick=async()=>{
+ window.Vz2Layout.showWorkspace('history');
+ if(loading)return;
+ loading=true;$('history-status').textContent='Načítám historii…';
+ try{data=await request();render();$('history-status').textContent='';}
+ catch(e){$('history-status').textContent=e.message;}
+ finally{loading=false;}
+};
+$('history-close').onclick=()=>{window.Vz2Layout.showWorkspace('panels');document.querySelector('[data-workspace-target="panels"]').focus({preventScroll:true});};
+$('history-orientation').onclick=e=>{transposed=!transposed;e.currentTarget.setAttribute('aria-pressed',String(transposed));render();};$('history-song-filter').onchange=render;$('history-audio-filter').onchange=render;$('history-matrix').onscroll=e=>{scroll={x:e.currentTarget.scrollLeft,y:e.currentTarget.scrollTop};};
 })();
