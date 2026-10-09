@@ -43,12 +43,25 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
             assert.equal(await list.isVisible(), false);
             assert.equal(await page.locator('dialog[open]').count(), 1);
         }
-        async function addCandidate(value) {
+        async function addCandidate(value, extra = null) {
             await openList();
             await page.locator('#history-list-add').click();
-            await add.locator('input[value="' + value + '"]').check();
-            await add.getByRole('button', { name: 'Přidat', exact: true }).click();
-            await add.waitFor({ state: 'hidden' });
+            assert.equal(await add.locator('.history-context').textContent(), 'skladba: Historie – skladba × zkouška: Historie – zkouška');
+            assert.equal(await add.locator('input[type=radio]').count(), 0);
+            for (const candidate of [value, extra].filter(Boolean)) {
+                const item = add.locator('[data-candidate="' + candidate + '"]');
+                if (candidate.startsWith('i:')) {
+                    assert.equal(await item.locator('strong').textContent(), 'cela-zkouska.wav');
+                    assert.equal(await item.locator('small').textContent(), 'úsek: 00:01 - 00:04');
+                    assert.equal(await item.locator('.history-candidate-note').textContent(), 'Začátek pokusu');
+                }
+                await item.getByRole('button', { name: 'Přidat', exact: true }).click();
+                await add.locator('.history-add-status').getByText('Pokus přidán.', { exact: true }).waitFor();
+                assert.equal(await add.isVisible(), true);
+                assert.equal(await item.count(), 0, 'assigned item disappears without closing the modal');
+                assert(await add.evaluate(n=>n.scrollWidth<=n.clientWidth+1), 'per-item actions fit the viewport');
+            }
+            await add.getByRole('button', { name: 'Hotovo', exact: true }).click();
             await list.waitFor();
         }
         await page.evaluate(async rid => {
@@ -81,7 +94,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await page.locator('#player-fullscreen').isVisible(), true);
         assert.equal(await page.locator('#looper-fullscreen').count(), 0);
         check(true, 'browser history: workspace retains sidebar and playing Looper; shared header fullscreen restores on Escape');
-        await addCandidate('i:' + source + ':' + start.id + ':' + end.id);
+        await addCandidate('i:' + source + ':' + start.id + ':' + end.id, 'c:' + directClip);
         await openAttempt('Začátek pokusu');
         await detail.waitFor();
         assert.equal(await page.locator('#history-detail-title').textContent(), 'Začátek pokusu');
@@ -111,8 +124,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await detail.getByRole('button', { name: 'Odpojit výstřižek', exact: true }).isEnabled(), true);
         await detail.getByRole('button', { name: 'Zavřít detail a vrátit se k seznamu', exact: true }).click();
         await list.waitFor();
-        assert.equal(await list.locator('.history-list-row').count(), 1);
-        await addCandidate('c:' + directClip);
+        assert.equal(await list.locator('.history-list-row').count(), 2, 'two items added during a single modal opening');
         assert.equal(await list.locator('.history-list-row').count(), 2);
         assert.equal(await list.locator('audio').count(), 0, 'audio controls only appear in the selected attempt detail');
         await closeList();

@@ -36,6 +36,7 @@ module.exports = async function ({ base, clients, request, good, upload, wav, db
     const create = { action: 'create', song_collection_id: song.id, rehearsal_collection_id: rehearsal.id, source_recording_id: source, start_timestamp_id: start.id, end_timestamp_id: end.id, clip_recording_id: null };
     let data = await read();
     assert(data.unassigned_intervals.some(i => i.start_timestamp_id === start.id && i.recording_title === 'cela-zkouska.wav'));
+    assert.equal(data.unassigned_intervals.find(i => i.start_timestamp_id === start.id).start_body, 'Začátek pokusu');
     assert(data.unassigned_clips.some(c => c.id === clip && c.title === 'vystrizek.wav'));
     assert.equal((await request(clients.anon, endpoint)).status, 401);
     assert.equal((await read('guest')).can_edit, false);

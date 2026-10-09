@@ -86,8 +86,44 @@ function detail(p){const body=$('history-detail').querySelector('.history-detail
   body.append(details('Úpravy',[label,sel,n('small','Výběrem připojíte, změníte nebo odpojíte výstřižek tohoto pokusu.'),save,n('p','Odebrání z historie odstraní tento pokus z matice. Nahrávky, výstřižky a časové značky zůstanou zachované.','history-removal-help'),del]));
  }
  $('history-detail').showModal();}
-function openAdd(song,rehearsal){cell={song,rehearsal};const box=$('history-add').querySelector('.history-candidates');box.replaceChildren();data.unassigned_intervals.filter(i=>i.rehearsal_collection_id==rehearsal.id).forEach(i=>{const l=n('label');const r=n('input');r.type='radio';r.name='candidate';r.value='i:'+i.recording_id+':'+i.start_timestamp_id+':'+i.end_timestamp_id;l.append(r,document.createTextNode(' Úsek '+i.recording_title+' · '+clock(i.start_ms)+'–'+clock(i.end_ms)));box.append(l);});data.unassigned_clips.filter(c=>c.collection_id==song.id).forEach(c=>{const l=n('label');const r=n('input');r.type='radio';r.name='candidate';r.value='c:'+c.id;l.append(r,document.createTextNode(' Výstřižek '+c.title+' · '+c.audio_state));box.append(l);});if(!box.children.length)box.append(n('p','Pro tuto buňku není žádný dokončený nezařazený úsek ani volný výstřižek.'));$('history-add').querySelector('.history-context').textContent=song.title+' × '+rehearsal.title;$('history-add').showModal();}
-$('history-add').querySelector('form').onsubmit=async e=>{e.preventDefault();const chosen=new FormData(e.currentTarget).get('candidate');if(!chosen){e.currentTarget.querySelector('.error').textContent='Vyberte podklad.';return;}const parts=chosen.split(':'),body={action:'create',song_collection_id:Number(cell.song.id),rehearsal_collection_id:Number(cell.rehearsal.id),source_recording_id:null,start_timestamp_id:null,end_timestamp_id:null,clip_recording_id:null};if(parts[0]==='c')body.clip_recording_id=Number(parts[1]);else{body.source_recording_id=Number(parts[1]);body.start_timestamp_id=Number(parts[2]);body.end_timestamp_id=Number(parts[3]);}try{data=await request(body);$('history-add').close();render();}catch(err){e.currentTarget.querySelector('.error').textContent=err.message;}};
+let addBusy=false;
+function renderCandidates(){
+ const {song,rehearsal}=cell,box=$('history-add').querySelector('.history-candidates');box.replaceChildren();
+ $('history-add').querySelector('.history-context').textContent=contextTitle(song.title,rehearsal.title);
+ function candidate(key,name,description,startBody,fields){
+  const row=n('div',undefined,'history-candidate'),text=n('div',undefined,'history-candidate-text'),add=n('button','Přidat');
+  row.dataset.candidate=key;text.append(n('strong',name),n('small',description));
+  if(startBody)text.append(n('p',startBody,'history-candidate-note'));
+  add.type='button';add.disabled=addBusy;add.onclick=()=>addCandidate(fields,row);row.append(text,add);box.append(row);
+ }
+ data.unassigned_intervals.filter(i=>i.rehearsal_collection_id==rehearsal.id).forEach(i=>candidate(
+  'i:'+i.recording_id+':'+i.start_timestamp_id+':'+i.end_timestamp_id,i.recording_title,
+  'úsek: '+clock(i.start_ms)+' - '+clock(i.end_ms),i.start_body,
+  {source_recording_id:Number(i.recording_id),start_timestamp_id:Number(i.start_timestamp_id),end_timestamp_id:Number(i.end_timestamp_id)}
+ ));
+ data.unassigned_clips.filter(c=>c.collection_id==song.id).forEach(c=>candidate(
+  'c:'+c.id,c.title,'Výstřižek'+(c.audio_state==='available'?'':' · Audio není dostupné'),null,{clip_recording_id:Number(c.id)}
+ ));
+ if(!box.children.length)box.append(n('p','Pro tuto buňku není žádný dokončený nezařazený úsek ani volný výstřižek.'));
+}
+function openAdd(song,rehearsal){
+ cell={song,rehearsal};renderCandidates();$('history-add').querySelector('.error').textContent='';$('history-add').querySelector('.history-add-status').textContent='';$('history-add').showModal();
+}
+async function addCandidate(fields,row){
+ if(addBusy)return;
+ const context=cell,dialog=$('history-add'),next=row.nextElementSibling?.querySelector('button')?.closest('[data-candidate]')?.dataset.candidate;
+ addBusy=true;dialog.querySelectorAll('.history-candidate button').forEach(button=>button.disabled=true);dialog.querySelector('.error').textContent='';dialog.querySelector('.history-add-status').textContent='';
+ try{
+  data=await request({action:'create',song_collection_id:Number(context.song.id),rehearsal_collection_id:Number(context.rehearsal.id),source_recording_id:null,start_timestamp_id:null,end_timestamp_id:null,clip_recording_id:null,...fields});
+  render();if($('history-list').open)renderList();
+  if(dialog.open && context===cell){
+   addBusy=false;renderCandidates();dialog.querySelector('.history-add-status').textContent='Pokus přidán.';
+   const remaining=[...dialog.querySelectorAll('.history-candidate')];
+   (remaining.find(candidate=>candidate.dataset.candidate===next)?.querySelector('button')||remaining[0]?.querySelector('button')||dialog.querySelector('[data-history-close]')).focus({preventScroll:true});
+  }
+ }catch(error){if(dialog.open && context===cell)dialog.querySelector('.error').textContent=error.message;}
+ finally{addBusy=false;dialog.querySelectorAll('.history-candidate button').forEach(button=>button.disabled=false);}
+}
 document.querySelectorAll('[data-history-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 let loading = false;
 $('show-history').onclick=async()=>{

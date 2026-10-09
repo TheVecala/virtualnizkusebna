@@ -66,3 +66,10 @@ Teprve výběr položky otevře `#history-detail` včetně přehrávačů. Kří
 obnoví seznam. Přidávání je dostupné ze seznamu i u prázdné
 buňky; host má u prázdné buňky pouze pomlčku. Propojený úsek a jeho výstřižek
 se počítají jako jeden pokus.
+
+
+V dialogu Přidat pokus má každý dostupný úsek či výstřižek vlastní tlačítko
+Přidat. Úsek zobrazuje název zdrojového souboru, rozsah v `mm:ss` a text značky
+začátku. Po úspěšném přiřazení položka zmizí z dostupných podkladů, matice se
+aktualizuje a dialog zůstane otevřený pro další přidávání. Hotovo nebo křížek
+vrátí uživatele k seznamu pokusů.
