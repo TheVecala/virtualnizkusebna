@@ -205,7 +205,7 @@
         await applyRoute();
     }
     async function mutate(fields) { await api(fields); message('Uloženo.'); await refresh(); }
-    function reorderControls(parent, list, item, params) {
+    function reorderControls(parent, list, item, params, afterReorder) {
         if (!cfg.write || !cfg.canReorder) return;
         const index = list.indexOf(item);
         [-1, 1].forEach(delta => {
@@ -213,6 +213,7 @@
                 const ids = list.map(x => Number(x.id));
                 [ids[index], ids[index + delta]] = [ids[index + delta], ids[index]];
                 await mutate({ action: 'reorder', ids, ...params });
+                if (afterReorder) await afterReorder(delta);
             });
             b.setAttribute('aria-label', delta < 0 ? 'Posunout výše' : 'Posunout níže');
             b.disabled = index + delta < 0 || index + delta >= list.length;
@@ -530,16 +531,21 @@
             select.append(icon, node('span', c.title, 'collection-name'));
             select.title = c.title; select.setAttribute('aria-pressed', String(String(selected) === String(c.id))); row.append(select);
             const menu = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Možnosti: ' + c.title); menu.append(summary);
+            menu.dataset.collectionId = c.id;
             const popover = node('div', undefined, 'collection-menu-popover');
-            if (cfg.write && c.can_edit) popover.append(button('Přejmenovat', () => openEdit(c, 'collection')));
-            const reload = button('', refresh, 'vz2-icon-button');
-            reload.title = 'Obnovit'; reload.setAttribute('aria-label', 'Obnovit');
-            const reloadIcon = node('i', undefined, 'ti ti-refresh'); reloadIcon.setAttribute('aria-hidden', 'true');
-            reload.append(reloadIcon); popover.append(reload);
             const order = node('div', undefined, 'collection-order');
-            reorderControls(order, list, c, { scope: 'collections', kind, revision: Number(data.orders.find(o => o.kind === kind).revision) });
+            reorderControls(order, list, c, { scope: 'collections', kind, revision: Number(data.orders.find(o => o.kind === kind).revision) }, async delta => {
+                const restored = $('collections').querySelector(`.collection-menu[data-collection-id="${c.id}"]`);
+                if (!restored) return;
+                restored.closest('.collection').scrollIntoView({ block: 'nearest' });
+                // Let scrolling finish before opening: scrolling the catalogue normally closes menus.
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                restored.open = true;
+                restored.querySelectorAll('.collection-order button')[delta < 0 ? 0 : 1].focus({ preventScroll: true });
+            });
             if (order.childElementCount) popover.append(order);
-            if (cfg.write && cfg.admin) popover.append(button('Úplně smazat celek', () => remove(c, 'collection', true), 'danger'));
+            if (cfg.write && c.can_edit) popover.append(button('Přejmenovat', () => openEdit(c, 'collection')));
+            if (cfg.write && cfg.admin) popover.append(button('Smazat', () => remove(c, 'collection', true), 'danger'));
             menu.append(popover); row.append(menu);
             $('collections').append(row);
         });

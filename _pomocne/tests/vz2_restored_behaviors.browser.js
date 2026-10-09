@@ -48,13 +48,12 @@ module.exports = async ({ base, clients, good, wav, db, check }) => {
         await page.locator('#editor').waitFor({ state: 'hidden' });
         assert.equal(db('SELECT summary FROM vz2_recordings WHERE id=?', [recording.id])[0].summary, 'Souhrn bez krátkého popisku');
         await page.reload();
-        const attachment = page.locator('#content article').filter({ has: page.getByRole('heading', { name: 'attachment.pdf', exact: true }) });
-        await attachment.locator('summary').click();
+        const attachment = page.locator('#content .attachment-card').filter({ hasText: 'attachment.pdf' });
+        await attachment.locator('.recording-toggle').click();
         await attachment.getByRole('button', { name: 'Upravit', exact: true }).click();
         await editor.locator('[name=title]').fill('Dočasný popisek');
         await editor.getByRole('button', { name: 'Uložit', exact: true }).click();
         await page.locator('#editor').waitFor({ state: 'hidden' });
-        await attachment.locator('summary').click();
         await attachment.getByRole('button', { name: 'Upravit', exact: true }).click();
         await editor.locator('[name=title]').fill('');
         await editor.locator('[name=summary]').fill('Popis přílohy');
@@ -76,12 +75,38 @@ module.exports = async ({ base, clients, good, wav, db, check }) => {
         await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'));
         assert.notEqual(new URL(page.url()).searchParams.get('collection_id'), String(archived.id), 'Default selection skips the archived first row');
         assert(!(await page.locator('#collections .collection-name').allTextContents()).includes(archived.title));
-        const orderResponse = page.waitForResponse(r => r.url().includes('php/ajax/vz2.php') && r.request().method() === 'POST');
+        const movedTitle = await page.locator('#collections .collection-name').first().textContent();
         await page.locator('#collections .collection').first().locator('summary').click();
-        await page.locator('#collections .collection').first().getByRole('button', { name: 'Posunout níže', exact: true }).click();
-        assert.equal((await orderResponse).status(), 200, 'Reorder accepts the visible active list');
+        const movedRow = page.locator('#collections .collection').filter({ has: page.locator('.collection-name', { hasText: movedTitle }) });
+        const menu = movedRow.locator('.collection-menu');
+        const up = menu.getByRole('button', { name: 'Posunout výše', exact: true });
+        const down = menu.getByRole('button', { name: 'Posunout níže', exact: true });
+        assert.equal(await up.isDisabled(), true);
+        const geometry = await menu.evaluate(m => {
+            const popover = m.querySelector('.collection-menu-popover');
+            const arrows = [...m.querySelectorAll('.collection-order button')].map(b => b.getBoundingClientRect());
+            return { width: popover.getBoundingClientRect().width, vertical: arrows[0].bottom <= arrows[1].top,
+                order: [...popover.children].map(c => c.className === 'collection-order' ? 'arrows' : c.textContent) };
+        });
+        assert(geometry.width < 220 && geometry.vertical);
+        assert.deepEqual(geometry.order, ['arrows', 'Přejmenovat', 'Smazat']);
+        for (const [direction, position] of [[down, 1], [down, 2], [up, 1], [up, 0]]) {
+            const orderResponse = page.waitForResponse(r => r.url().includes('php/ajax/vz2.php') && r.request().method() === 'POST');
+            await direction.click();
+            assert.equal((await orderResponse).status(), 200, 'Repeated reorder accepts the latest active list and revision');
+            await page.waitForFunction(({ title, position }) => {
+                const rows = [...document.querySelectorAll('#collections .collection')];
+                return rows[position]?.querySelector('.collection-name').textContent === title
+                    && rows[position].querySelector('.collection-menu').open;
+            }, { title: movedTitle, position });
+            const persisted = db("SELECT title FROM vz2_collections WHERE lifecycle='active' AND kind='song' ORDER BY sort_order,id");
+            assert.equal(persisted[position].title, movedTitle);
+            assert.equal(await up.isDisabled(), position === 0);
+        }
+        await page.keyboard.press('Escape');
+        assert.equal(await menu.evaluate(m => m.open), false, 'The persistent reorder menu still closes with Escape');
         assert.equal(Number(db('SELECT sort_order FROM vz2_collections WHERE id=?', [archived.id])[0].sort_order), 0);
         assert.deepEqual(errors, []);
-        check(true, 'restored behaviors: archived songs stay out of catalog and default selection; active songs can still be reordered');
+        check(true, 'restored behaviors: archived songs stay out of catalog; compact collection menu stays open across repeated reorder');
     } finally { await browser.close(); }
 };
