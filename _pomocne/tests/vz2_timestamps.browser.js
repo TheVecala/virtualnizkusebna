@@ -107,6 +107,10 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal((await notes.textContent()).includes('úsek do'), false);
         assert.equal((await notes.textContent()).includes('propojený konec'), false);
         assert(Math.abs(await card.locator('audio').evaluate(a => a.currentTime) - 2) < 0.05);
+        await notes.locator('.ts-song_start .ts-time').click();
+        await page.waitForFunction(rid => !document.querySelector('#recording-' + rid + ' audio').paused, id);
+        assert(Math.abs(await card.locator('audio').evaluate(a => a.currentTime) - 1.123) < 0.3, 'clicking a timestamp starts native playback at its time');
+        await card.locator('audio').evaluate(a => a.pause());
         await notes.getByRole('button', { name: 'Smyčka', exact: true }).first().click();
         await notes.getByRole('button', { name: 'Vypnout smyčku', exact: true }).waitFor();
         await page.waitForTimeout(1400);
@@ -194,6 +198,10 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await dialog.getByRole('button', { name: 'Pasáž', exact: true }).click(); await dialog.waitFor({ state: 'hidden' });
         await mixerNotes.getByText('Společná pasáž Mixéru', { exact: true }).waitFor();
         assert.equal(await mixerNotes.locator('.ts-passage').evaluate(e => getComputedStyle(e).marginLeft), '12px', 'passages form the middle hierarchy level');
+        await mixerNotes.locator('.ts-passage .ts-time').click();
+        await page.waitForFunction(() => window.MultitrackApp.getState()?.playing === true);
+        assert((await page.evaluate(() => window.MultitrackApp.getState().position)) < 2, 'clicking a timestamp starts Mixer playback at its time');
+        await page.evaluate(() => window.MultitrackApp.pause());
         await mixerNotes.getByRole('button', { name: 'Smyčka', exact: true }).click();
         await page.waitForFunction(() => window.MultitrackApp.getState()?.playing === true);
         await page.evaluate(() => window.MultitrackApp.seek(9.95)); await page.waitForTimeout(400);

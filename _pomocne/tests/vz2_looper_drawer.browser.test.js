@@ -36,7 +36,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
             await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamps.js') });
             await page.evaluate(() => {
                 window.notes = Vz2Timestamps.mount(document.getElementById('looper-timestamps'), 1,
-                    { canPlay: () => true, currentTimeMs: () => 3000, durationMs: () => 100000, seek: ms => { window.seekTime = ms; } });
+                    { canPlay: () => true, currentTimeMs: () => 3000, durationMs: () => 100000, seek: ms => { window.seekTime = ms; }, playRange: async ms => { window.playTime = ms; } });
             });
             await page.waitForFunction(() => window.notes.list);
             const actions = page.locator('.looper-timestamp-actions');
@@ -61,9 +61,9 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 assert.deepEqual(await editor.locator('.ts-time-row > *').evaluateAll(elements => elements.map(element => element.name || element.dataset.delta || element.className)),
                     ['time', '-1000', '1000', 'ts-time-current']);
                 await editor.getByRole('button', { name: 'Přičíst jednu sekundu', exact: true }).click();
-                assert.equal(await editor.locator('input[name=time]').inputValue(), '00:00:04.000');
+                assert.equal(await editor.locator('input[name=time]').inputValue(), '00:04');
                 await editor.getByRole('button', { name: 'Odečíst jednu sekundu', exact: true }).click();
-                assert.equal(await editor.locator('input[name=time]').inputValue(), '00:00:03.000');
+                assert.equal(await editor.locator('input[name=time]').inputValue(), '00:03');
                 await editor.locator('input[name=time]').fill('00:12');
                 await editor.getByRole('button', { name: 'Zachytit čas', exact: true }).click();
                 assert.equal(await editor.locator('input[name=time]').inputValue(), '00:03');
@@ -106,7 +106,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 await page.evaluate(() => {
                     window.notes.destroy();
                     window.notes = Vz2Timestamps.mount(document.getElementById('looper-timestamps'), 1,
-                        { canPlay: () => true, currentTimeMs: () => 3000, durationMs: () => 100000, seek: ms => { window.seekTime = ms; } });
+                        { canPlay: () => true, currentTimeMs: () => 3000, durationMs: () => 100000, seek: ms => { window.seekTime = ms; }, playRange: async ms => { window.playTime = ms; } });
                 });
                 await page.waitForFunction(() => window.notes.list);
                 assert.equal(await editor.locator('[name=body]').inputValue(), 'Rozepsaný text', 'draft survives a player refresh');
@@ -134,12 +134,12 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 assert(await editor.isVisible());
                 await editor.getByRole('button', { name: 'Zavřít časovou značku' }).click();
                 await actions.waitFor({ state: 'visible' });
-                await actions.getByRole('button', { name: 'Otevřít časové značky', exact: true }).click();
+                await actions.getByRole('button', { name: 'Zavřít časové značky', exact: true }).waitFor();
                 if (process.env.LOOPER_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.LOOPER_SCREENSHOT_DIR, `looper-drawer-${width}.png`) });
                 const scroll = await notes.evaluate(n => { n.scrollTop = n.scrollHeight; return n.scrollTop; }); assert(scroll > 0);
                 assert.deepEqual(await page.locator('#looper-wave').boundingBox(), before);
                 await notes.locator('.ts-time').last().click();
-                assert.equal(await page.evaluate(() => window.seekTime), 79000);
+                assert.equal(await page.evaluate(() => window.playTime), 79000);
                 await actions.getByRole('button', { name: 'Zavřít časové značky', exact: true }).click();
                 assert.equal(await notes.isVisible(), false);
                 await actions.locator('button').first().click(); await page.keyboard.press('Escape');

@@ -270,6 +270,7 @@
     function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
         const audio = node('audio'); audio.controls = true; audio.preload = 'metadata'; audio.src = file.url;
+        audio.dataset.source = 'web';
         const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
         const cache = button('Uložit offline', async () => {
             const current = await idbKeyval.get(cacheKey, store);
@@ -290,7 +291,7 @@
         });
         actions.append(cache);
         idbKeyval.get(cacheKey, store).then(blob => {
-            if (blob instanceof Blob && audio.isConnected && !cache.disabled) { const url = URL.createObjectURL(blob); blobs.push(url); audio.src = url; cache.textContent = 'Odebrat offline kopii'; }
+            if (blob instanceof Blob && audio.isConnected && !cache.disabled) { const url = URL.createObjectURL(blob); blobs.push(url); audio.src = url; audio.dataset.source = 'offline'; cache.textContent = 'Odebrat offline kopii'; }
         }).catch(() => { cache.textContent = 'Offline úložiště není dostupné'; cache.disabled = true; });
         const seek = () => {
             const seconds = Number(qs.get('time_ms') || 0) / 1000;

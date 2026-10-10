@@ -26,6 +26,7 @@
     function error(text) { if (mode === 'looper') $('looper-status').textContent = text; else { $('mt-notice').hidden = false; $('mt-notice').textContent = text; } }
     function update() {
         const s = getState();
+        shell.dataset.source = mode === 'looper' ? looper?.source || '' : mode === 'mixer' ? s?.source || '' : '';
         $('player-play').disabled = !s || s.phase !== 'ready';
         $('player-play').textContent = s?.playing ? '❚❚' : '▶';
         $('player-play').setAttribute('aria-label', s?.playing ? 'Pozastavit' : 'Přehrát');
@@ -176,8 +177,8 @@
                 if (!live()) return;
                 current.peaks = Float32Array.from(peakData.peaks);
                 current.blob = current.cached ? blob : null;
-                if (current.cached) { current.url = URL.createObjectURL(blob); audio.src = current.url; }
-                else audio.src = file.url;
+                if (current.cached) { current.url = URL.createObjectURL(blob); audio.src = current.url; current.source = 'offline'; }
+                else { audio.src = file.url; current.source = 'web'; }
                 offlineLabel(current.cached); offline.disabled = false;
                 $('looper-status').textContent = ''; update();
                 if (!serverPeaks) uploadPeaks(peakData.peaks);
@@ -191,6 +192,7 @@
             }
             if (!live()) return;
             current.blob = blob; current.url = URL.createObjectURL(blob); audio.src = current.url;
+            current.source = current.cached ? 'offline' : 'web';
             offlineLabel(current.cached); offline.disabled = false;
             $('looper-status').textContent = 'Připravuji průběh…'; current.decoding = true;
             try {

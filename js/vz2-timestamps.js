@@ -456,7 +456,10 @@
                         else if (Number(row.id) === Number(songInterval.end.id)) item.classList.add('ts-song-linked-end');
                         else item.classList.add('ts-song-linked-inside');
                     }
-                    const seek = button(compactFormat(row.time_ms), () => { api.stopLoop(); this.adapter.seek(row.time_ms); }); seek.className = 'ts-time'; seek.title = 'Přejít na ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
+                    const seek = button(compactFormat(row.time_ms), async () => {
+                        try { api.stopLoop(); await this.adapter.playRange(row.time_ms); }
+                        catch (e) { status.textContent = e.message; }
+                    }); seek.className = 'ts-time'; seek.title = 'Přehrát od ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
                     const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
                     const boundary = row.kind === 'song_start' || row.kind === 'song_end' ? boundaryIcon(row.kind) : null;
                     // Older empty boundaries store an arrow as their body; show the type icon once.

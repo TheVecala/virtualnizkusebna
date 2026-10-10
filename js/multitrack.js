@@ -496,6 +496,7 @@
                 sourceSampleRate: null,
                 buffer: null,
                 blob: null,
+                source: null,
                 gainNode: null,
                 sourceNode: null,
                 volume: 1,
@@ -734,7 +735,8 @@
                 if (track.unavailable) { updateTrackStatus(track, 'error', null, 'Audio na serveru chybí nebo bylo odstraněno.'); return; }
                 return cachedTrackBlob(track).then(function(cachedBlob) {
                     if (token !== loadSerial || set !== currentSet) throw cancelledError();
-                    if (cachedBlob) return cachedBlob;
+                    if (cachedBlob) { track.source = 'offline'; return cachedBlob; }
+                    track.source = 'web';
                     updateTrackStatus(track, 'downloading', 0, '');
                     return downloadBlob(track.url, function(percent) {
                         if (token === loadSerial && set === currentSet) {
@@ -1551,6 +1553,7 @@
                 name: currentSet.metadata ? currentSet.metadata.name : currentSet.item.name,
                 phase: currentSet.phase,
                 playing: currentSet.playing,
+                source: currentSet.activeTracks && currentSet.activeTracks.length && currentSet.activeTracks.every(function(track) { return track.source === 'offline'; }) ? 'offline' : 'web',
                 position: currentPosition(currentSet),
                 duration: currentSet.duration,
                 tracks: currentSet.tracks.map(function(track) {
