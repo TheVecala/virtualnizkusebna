@@ -1,6 +1,8 @@
 (function () {
     'use strict';
     const titles = { lyrics_chords: 'Text a akordy', tablature: 'Tabulatura' };
+    const documentTitle = (collection, kind, title) => kind === 'lyrics_chords' && collection.kind === 'rehearsal' && (!title || title === titles[kind])
+        ? 'Zápis ze zkoušky' : title || titles[kind];
     const make = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
     const button = (label, run) => { const b = make('button', label); b.type = 'button'; b.onclick = run; return b; };
     const iconButton = (label, icon, run) => {
@@ -62,7 +64,7 @@
     }
     window.addEventListener('beforeunload', e => { if (current?.dirty || current?.busy || ideas?.dirty || ideas?.busy) { e.preventDefault(); e.returnValue = ''; } });
     async function openDocument(collection, kind) {
-        const ctx = start(titles[kind] + ' — ' + collection.title); if (!ctx) return;
+        const ctx = start(documentTitle(collection, kind) + ' — ' + collection.title); if (!ctx) return;
         const query = { action: 'document', collection_id: collection.id, kind };
         const meta = make('p', '', 'vz2-attribution'), form = make('form'), titleLabel = make('label', 'Název dokumentu'), title = make('input');
         title.required = true; title.maxLength = 200; title.name = 'document_title'; titleLabel.append(title);
@@ -84,7 +86,7 @@
                 + ' · upravil/a ' + author(state.document.editor,state.document.editor_active) + ' · ' + date(state.document.updated_at) : 'Dokument se vytvoří při prvním uložení.';
         }
         function assign(value) {
-            state = value; title.value = value.document?.title || titles[kind]; body.value = value.version?.body || '';
+            state = value; title.value = documentTitle(collection, kind, value.document?.title); body.value = value.version?.body || '';
             title.readOnly = body.readOnly = !value.can_edit; save.hidden = !value.can_edit; showHistory.hidden = !value.document;
             ctx.dirty = false; compare.hidden = comparison.hidden = true; ctx.status.textContent = ''; showMeta();
         }
@@ -92,7 +94,7 @@
         async function compareLatest() {
             await busy(ctx, async () => {
                 const latest = await api(query); if (!ctx.live()) return;
-                comparison.hidden = false; comparison.textContent = 'Aktuálně na serveru — ' + (latest.document?.title || titles[kind]) + '\n\n' + (latest.version?.body || '(Dokument zatím neexistuje.)');
+                comparison.hidden = false; comparison.textContent = 'Aktuálně na serveru — ' + documentTitle(collection, kind, latest.document?.title) + '\n\n' + (latest.version?.body || '(Dokument zatím neexistuje.)');
                 // Show the current content first; accepting its revision is a separate action.
                 accept.hidden = false; ctx.latest = latest;
             });
@@ -226,7 +228,7 @@
                     const result = await api({ action: 'document', collection_id: collection.id, kind });
                     if (!live()) return;
                     edit.textContent = result.can_edit ? 'Upravit / historie' : 'Otevřít / historie';
-                    status.textContent = result.document ? result.document.title + ' · verze ' + result.document.current_revision : 'Zatím bez dokumentu.';
+                    status.textContent = result.document ? documentTitle(collection, kind, result.document.title) + ' · verze ' + result.document.current_revision : 'Zatím bez dokumentu.';
                     content.textContent = result.version?.body || '';
                 } catch (e) { if (live()) { status.textContent = e.message; status.append(button('Zkusit znovu', load)); } }
             }

@@ -10,7 +10,8 @@
     }
     const validId = id => ids.includes(id);
     const validSet = a => Array.isArray(a) && a.length > 0 && a.length <= 4 && a.every(validId) && new Set(a).size === a.length;
-    let ideasOpen = false, activeWorkspace = 'panels', fullscreenPanel = null;
+    let ideasOpen = false, activeWorkspace = 'panels', fullscreenPanel = null, collectionKind = 'song';
+    const panelName = id => id === 'lyrics' && collectionKind === 'rehearsal' ? 'Zápis ze zkoušky' : names[id];
     const surfaces = new Map([...document.querySelectorAll('[data-workspace]')].map(panel => [panel.dataset.workspace, panel]));
     const fullscreenHandlers = new WeakMap();
     function setPanelFullscreen(panel) {
@@ -73,6 +74,16 @@
     function apply() {
         if (desktop.matches && $('catalog-dialog').open && !catalogOpenedOnDesktop) closeCatalog();
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current];
+        $('panel-lyrics').setAttribute('aria-label', panelName('lyrics'));
+        $('panel-lyrics').querySelector('.panel-header h2').textContent = panelName('lyrics');
+        updateFullscreenButton($('panel-lyrics'), fullscreenPanel === $('panel-lyrics'));
+        const desktopLyrics = document.querySelector('[data-desktop-panel="lyrics"]');
+        const mobileLyrics = document.querySelector('[data-mobile-panel="lyrics"]');
+        desktopLyrics.textContent = collectionKind === 'rehearsal' ? 'Zápis' : 'Text';
+        mobileLyrics.lastChild.textContent = collectionKind === 'rehearsal' ? 'zápis' : 'text';
+        desktopLyrics.setAttribute('aria-label', panelName('lyrics'));
+        mobileLyrics.setAttribute('aria-label', panelName('lyrics'));
+        document.querySelectorAll('.panel-header select option[value="lyrics"]').forEach(option => option.textContent = panelName('lyrics'));
         if (fullscreenPanel && fullscreenPanel.id !== 'player-shell' &&
             (fullscreenPanel.closest('[data-workspace]')?.dataset.workspace !== activeWorkspace ||
             (fullscreenPanel.dataset.panel && !shown.includes(fullscreenPanel.dataset.panel)))) setPanelFullscreen(fullscreenPanel);
@@ -89,7 +100,7 @@
             panel.hidden = !shown.includes(id);
             panel.style.order = String(current === 'tablet' ? shown.indexOf(id) : ids.indexOf(id));
             select.value = id;
-            select.setAttribute('aria-label', current === 'tablet' && shown.includes(id) ? (shown.indexOf(id) === 0 ? 'Levý panel' : 'Pravý panel') : 'Výběr panelu: ' + names[id]);
+            select.setAttribute('aria-label', current === 'tablet' && shown.includes(id) ? (shown.indexOf(id) === 0 ? 'Levý panel' : 'Pravý panel') : 'Výběr panelu: ' + panelName(id));
         });
         document.querySelectorAll('[data-desktop-panel]').forEach(b => {
             const selected = state.desktop.includes(b.dataset.desktopPanel);
@@ -235,6 +246,7 @@
     addFullscreenButton($('history-workspace'));
     window.Vz2Layout = {
         closeCatalog, hideIdeas, showWorkspace,
+        setCollectionKind(kind) { collectionKind = kind === 'rehearsal' ? 'rehearsal' : 'song'; apply(); },
         registerFullscreen(panel, handlers = {}) { fullscreenHandlers.set(panel, handlers); addFullscreenButton(panel); },
         exitFullscreen(panel) { if (fullscreenPanel === panel) setPanelFullscreen(panel); },
         showIdeas() {
