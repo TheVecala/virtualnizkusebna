@@ -2,7 +2,7 @@
     'use strict';
     const $ = id => document.getElementById(id), shell = $('player-shell'), body = $('player-body');
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
-    let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, ideasPrevious = null;
+    let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false;
     const mixer = $('mixer-panel'); body.append(mixer);
     // Retain the Mixer IDs and event handlers; expose secondary actions in the shared header.
     $('player-actions').append($('mixer-copy-link'), $('mt-offline'));
@@ -91,7 +91,7 @@
     }
     function resetShell() {
         exitFullscreen(); mode = 'empty'; id = null; collapsed = false; mixerPending = false;
-        $('player-title').textContent = 'Vyberte nahrávku'; $('player-title').title = ''; $('looper-wave-name').textContent = '';
+        $('player-title').disabled = true; $('player-title').textContent = 'Vyberte nahrávku'; $('player-title').title = ''; $('looper-wave-name').textContent = '';
         $('player-options').open = false; looperMenu.open = false; layout();
     }
     function closeLooper() {
@@ -110,7 +110,8 @@
         mode = nextMode; id = String(recording.id);
         const names = (recording.files || []).map(file => file.original_name || file.display_name || file.title).filter(Boolean);
         const title = nextMode === 'looper' ? (looper?.file?.original_name || looper?.file?.display_name || looper?.file?.title || recording.title) : (names.join(', ') || recording.title);
-        $('player-title').textContent = title; $('player-title').title = title;
+        const sourceTitle = recording.collection_title ? recording.collection_title + ' · ' + title : title;
+        $('player-title').textContent = sourceTitle; $('player-title').title = 'Přejít k nahrávce: ' + sourceTitle; $('player-title').disabled = false;
         $('looper-wave-name').textContent = nextMode === 'looper' ? title : '';
         layout();
     }
@@ -301,6 +302,7 @@
     });
     $('looper-close').onclick = () => { looperMenu.open = false; $('player-close').click(); };
     $('player-close').onclick = () => document.dispatchEvent(new Event('vz2:player-close'));
+    $('player-title').onclick = () => document.dispatchEvent(new Event('vz2:player-source'));
     $('player-play').onclick = async () => {
         try { if (mode === 'looper') { if (looper.audio.paused) await looper.audio.play(); else looper.audio.pause(); } else if (mode === 'mixer') { if (window.MultitrackApp.getState()?.playing) window.MultitrackApp.pause(); else { document.querySelectorAll('#content audio').forEach(a => a.pause()); await window.MultitrackApp.play(); } } update(); }
         catch (e) { error(e.message); }
@@ -351,11 +353,6 @@
     setInterval(update, 100);
     window.Vz2Player = {
         getState, openLooper, closeLooper,
-        setIdeasMode(active) {
-            if (active) { exitFullscreen(); ideasPrevious = { mode, id, collapsed }; if (mode !== 'empty') collapsed = true; }
-            else { if (ideasPrevious?.mode === mode && ideasPrevious.id === id) collapsed = ideasPrevious.collapsed; ideasPrevious = null; }
-            layout();
-        },
         showMixer(recording) { closeLooper(); if (mode !== 'mixer' || id !== String(recording.id)) mixerPending = true; select('mixer', recording); },
         hideMixer() { if (mode === 'mixer') resetShell(); },
         mixerFailed() { mixerPending = false; },

@@ -10,7 +10,10 @@
     }
     const validId = id => ids.includes(id);
     const validSet = a => Array.isArray(a) && a.length > 0 && a.length <= 4 && a.every(validId) && new Set(a).size === a.length;
-    let ideasOpen = false, activeWorkspace = 'panels', fullscreenPanel = null, collectionKind = 'song';
+    let ideasOpen = false, activeWorkspace = 'songs', fullscreenPanel = null, collectionKind = 'song';
+    let ideaSection = read('ideas:section', 'write', value => ['write', 'draw', 'speak'].includes(value));
+    const isCollection = () => ['songs', 'rehearsals'].includes(activeWorkspace);
+    const availableIds = () => collectionKind === 'rehearsal' ? ids.filter(id => id !== 'tablature') : ids;
     const panelName = id => id === 'lyrics' && collectionKind === 'rehearsal' ? 'Zápis ze zkoušky' : names[id];
     const surfaces = new Map([...document.querySelectorAll('[data-workspace]')].map(panel => [panel.dataset.workspace, panel]));
     const fullscreenHandlers = new WeakMap();
@@ -28,6 +31,7 @@
             updateFullscreenButton(panel, true);
             fullscreenHandlers.get(panel)?.enter?.();
         }
+        apply();
     }
     function updateFullscreenButton(panel, active) {
         const control = panel.querySelector('.panel-fullscreen-button');
@@ -50,68 +54,115 @@
         control.dataset.fullscreenBound = 'true';
         control.addEventListener('click', () => setPanelFullscreen(panel));
         if (!existing) {
-            if (panel.id === 'ideas-workspace') header.insertBefore(control, $('ideas-back'));
-            else if (panel.id === 'history-workspace') header.insertBefore(control, $('history-close'));
-            else header.append(control);
+            header.append(control);
         }
         updateFullscreenButton(panel, false);
     }
-    const state = {
-        desktop: read('desktop', ids.slice(0, 3), validSet),
-        tablet: read('tablet', ['recordings', 'lyrics'], a => validSet(a) && a.length === 2),
-        mobile: read('mobile', 'recordings', validId)
+    const states = {
+        song: {
+            desktop: read('song:desktop', read('desktop', ids.slice(0, 3), validSet), validSet),
+            tablet: read('song:tablet', read('tablet', ['recordings', 'lyrics'], a => validSet(a) && a.length === 2), a => validSet(a) && a.length === 2),
+            mobile: read('song:mobile', read('mobile', 'recordings', validId), validId)
+        },
+        rehearsal: {
+            desktop: read('rehearsal:desktop', ['recordings', 'lyrics', 'discussion'], a => validSet(a) && !a.includes('tablature')),
+            tablet: read('rehearsal:tablet', ['recordings', 'lyrics'], a => validSet(a) && a.length === 2 && !a.includes('tablature')),
+            mobile: read('rehearsal:mobile', 'recordings', id => validId(id) && id !== 'tablature')
+        }
     };
-    function save(mode) { try { localStorage.setItem(prefix + mode, JSON.stringify(state[mode])); } catch (_) { /* Private mode / full storage: keep the in-memory choice. */ } }
+    let state = states.song;
+    function save(mode) { try { localStorage.setItem(prefix + collectionKind + ':' + mode, JSON.stringify(state[mode])); } catch (_) { /* Keep the in-memory choice. */ } }
     function mode() { return desktop.matches ? 'desktop' : mobile.matches ? 'mobile' : 'tablet'; }
     let catalogOpenedOnDesktop = false;
-    function closeCatalog() { catalogOpenedOnDesktop = false; if ($('catalog-dialog').open) $('catalog-dialog').close(); }
-    function openCatalog() {
-        if ($('catalog-dialog').open) return;
-        catalogOpenedOnDesktop = desktop.matches;
-        if (desktop.matches) $('catalog-dialog-slot').append($('sidebar'));
-        $('catalog-dialog').showModal();
+    function closeCatalog() {
+        catalogOpenedOnDesktop = false;
+        if ($('catalog-dialog').open) $('catalog-dialog').close();
+        $('catalog-picker').setAttribute('aria-expanded', 'false');
     }
+    function placeCatalog() {
+        if (!$('catalog-dialog').open) return;
+        const anchor = $('catalog-picker').getBoundingClientRect();
+        const viewportTop = window.visualViewport?.offsetTop || 0;
+        const height = window.visualViewport?.height || innerHeight;
+        const lower = viewportTop + height - (mobile.matches && height > 500 ? $('mobile-dock').offsetHeight + 8 : 8);
+        const top = Math.max(viewportTop + 8, Math.min(anchor.bottom + 6, lower - 120));
+        const available = Math.max(40, lower - top);
+        $('catalog-dialog').style.setProperty('--catalog-top', top + 'px');
+        $('catalog-dialog').style.setProperty('--catalog-height', available + 'px');
+        $('catalog-dialog').style.setProperty('--catalog-left', Math.max(8, Math.min(anchor.left, innerWidth - 428)) + 'px');
+    }
+    function openCatalog() {
+        if (!isCollection()) return;
+        if ($('catalog-dialog').open) { closeCatalog(); return; }
+        catalogOpenedOnDesktop = desktop.matches;
+        $('catalog-dialog-slot').append($('sidebar'));
+        $('catalog-dialog').showModal();
+        $('catalog-picker').setAttribute('aria-expanded', 'true');
+        placeCatalog(); $('catalog-search').focus();
+    }
+    function moveControls(id, slot) { const control = $(id), target = $(slot); if (control.parentElement !== target) target.append(control); }
     function apply() {
         if (desktop.matches && $('catalog-dialog').open && !catalogOpenedOnDesktop) closeCatalog();
-        const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current];
+        const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current], collection = isCollection();
         $('panel-lyrics').setAttribute('aria-label', panelName('lyrics'));
         $('panel-lyrics').querySelector('.panel-header h2').textContent = panelName('lyrics');
         updateFullscreenButton($('panel-lyrics'), fullscreenPanel === $('panel-lyrics'));
-        const desktopLyrics = document.querySelector('[data-desktop-panel="lyrics"]');
-        const mobileLyrics = document.querySelector('[data-mobile-panel="lyrics"]');
-        desktopLyrics.textContent = collectionKind === 'rehearsal' ? 'Zápis' : 'Text';
-        mobileLyrics.lastChild.textContent = collectionKind === 'rehearsal' ? 'zápis' : 'text';
-        desktopLyrics.setAttribute('aria-label', panelName('lyrics'));
-        mobileLyrics.setAttribute('aria-label', panelName('lyrics'));
-        document.querySelectorAll('.panel-header select option[value="lyrics"]').forEach(option => option.textContent = panelName('lyrics'));
-        if (fullscreenPanel && fullscreenPanel.id !== 'player-shell' &&
-            (fullscreenPanel.closest('[data-workspace]')?.dataset.workspace !== activeWorkspace ||
-            (fullscreenPanel.dataset.panel && !shown.includes(fullscreenPanel.dataset.panel)))) setPanelFullscreen(fullscreenPanel);
+        document.querySelectorAll('[data-desktop-panel="lyrics"], [data-mobile-panel="lyrics"]').forEach(control => {
+            control.textContent = collectionKind === 'rehearsal' ? 'Zápis' : 'Text';
+            control.setAttribute('aria-label', panelName('lyrics'));
+        });
+        document.querySelectorAll('.panel-header select option').forEach(option => {
+            option.textContent = panelName(option.value);
+            option.hidden = option.disabled = !availableIds().includes(option.value);
+        });
+        if (fullscreenPanel && fullscreenPanel.id !== 'player-shell') {
+            const surface = fullscreenPanel.closest('[data-workspace]')?.dataset.workspace;
+            if ((surface === 'panels' ? !collection : surface !== activeWorkspace) ||
+                (fullscreenPanel.dataset.panel && !shown.includes(fullscreenPanel.dataset.panel))) setPanelFullscreen(null);
+        }
         document.body.dataset.layout = current;
         document.body.dataset.workspace = activeWorkspace;
-        surfaces.forEach((panel, key) => panel.hidden = key !== activeWorkspace);
+        document.body.dataset.collectionKind = collectionKind;
+        surfaces.forEach((panel, key) => panel.hidden = key === 'panels' ? !collection : key !== activeWorkspace);
+        $('collection-header').hidden = !collection;
+        $('sidebar-slot').hidden = !collection;
+        $('song-workspace').setAttribute('aria-label', collectionKind === 'rehearsal' ? 'Pracovní plocha zkoušky' : 'Pracovní plocha skladby');
         document.querySelectorAll('[data-workspace-target]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.workspaceTarget === activeWorkspace)));
-        $('show-history').setAttribute('aria-pressed', String(activeWorkspace === 'history'));
-        $('desktop-panels').hidden = activeWorkspace === 'history';
-        $('show-ideas').setAttribute('aria-pressed', String(ideasOpen));
-        $('bn-napady').setAttribute('aria-pressed', String(ideasOpen));
+        const label = collectionKind === 'rehearsal' ? 'Zkoušky' : 'Skladby';
+        $('catalog-heading').textContent = $('collection-kind-label').textContent = label;
+        $('catalog-dialog').setAttribute('aria-label', label);
+        $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
+        $('catalog-search').placeholder = collectionKind === 'rehearsal' ? 'Hledat zkoušku…' : 'Hledat skladbu…';
+        $('mobile-panels').hidden = !collection;
+        // Move the existing controls, preserving values and listeners at every breakpoint.
+        moveControls('history-controls', mobile.matches && fullscreenPanel?.id !== 'history-workspace' ? 'mobile-context' : 'history-controls-slot');
+        moveControls('ideas-controls', mobile.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'mobile-context' : 'ideas-controls-slot');
+        $('history-controls').hidden = activeWorkspace !== 'history';
+        $('ideas-controls').hidden = activeWorkspace !== 'ideas';
+        document.querySelectorAll('[data-idea-section]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.ideaSection === ideaSection)));
+        document.querySelectorAll('[data-idea-panel]').forEach(panel => panel.hidden = panel.dataset.ideaPanel !== ideaSection);
         ids.forEach(id => {
             const panel = $('panel-' + id), select = panel.querySelector('select');
-            panel.hidden = !shown.includes(id);
+            panel.hidden = !shown.includes(id) || !availableIds().includes(id);
             panel.style.order = String(current === 'tablet' ? shown.indexOf(id) : ids.indexOf(id));
-            select.value = id;
-            select.setAttribute('aria-label', current === 'tablet' && shown.includes(id) ? (shown.indexOf(id) === 0 ? 'Levý panel' : 'Pravý panel') : 'Výběr panelu: ' + panelName(id));
+            if (select) {
+                select.value = id;
+                select.setAttribute('aria-label', current === 'tablet' && shown.includes(id) ? (shown.indexOf(id) === 0 ? 'Levý panel' : 'Pravý panel') : 'Výběr panelu: ' + panelName(id));
+            }
         });
         document.querySelectorAll('[data-desktop-panel]').forEach(b => {
             const selected = state.desktop.includes(b.dataset.desktopPanel);
+            b.hidden = !availableIds().includes(b.dataset.desktopPanel);
             b.setAttribute('aria-pressed', String(selected));
-            b.disabled = activeWorkspace === 'panels' && selected && state.desktop.length === 1;
+            b.disabled = selected && state.desktop.length === 1;
         });
-        document.querySelectorAll('[data-mobile-panel]').forEach(b => b.setAttribute('aria-pressed', String(activeWorkspace === 'panels' && b.dataset.mobilePanel === state.mobile)));
+        document.querySelectorAll('[data-mobile-panel]').forEach(b => {
+            b.hidden = !availableIds().includes(b.dataset.mobilePanel);
+            b.setAttribute('aria-pressed', String(b.dataset.mobilePanel === state.mobile));
+        });
         const slot = $(desktop.matches && !$('catalog-dialog').open ? 'sidebar-slot' : 'catalog-dialog-slot');
-        if ($('sidebar').parentElement !== slot) {
-            closeCatalog(); slot.append($('sidebar'));
-        }
+        if ($('sidebar').parentElement !== slot) { closeCatalog(); slot.append($('sidebar')); }
+        placeCatalog();
     }
     ids.forEach(id => {
         addFullscreenButton($('panel-' + id));
@@ -120,7 +171,6 @@
         select.addEventListener('change', async () => {
             const slot = state.tablet.indexOf(id), other = 1 - slot, next = select.value;
             if (slot < 0) return;
-            if (id === 'tablature' && next !== id && state.tablet[other] !== next && !await window.Vz2SongMap.canLeave()) { select.value = id; return; }
             if (state.tablet[other] === next) state.tablet[other] = id;
             state.tablet[slot] = next; save('tablet'); apply();
             $('panel-' + next).querySelector('select').focus({ preventScroll: true });
@@ -129,26 +179,24 @@
         header.insertBefore(select, header.querySelector('.panel-header-actions') || header.querySelector('.panel-fullscreen-button'));
     });
     document.querySelectorAll('[data-desktop-panel]').forEach(b => b.addEventListener('click', async () => {
-        if (activeWorkspace !== 'panels') { showWorkspace('panels'); return; }
         const id = b.dataset.desktopPanel;
-        if (id === 'tablature' && state.desktop.includes(id) && state.desktop.length > 1 && !await window.Vz2SongMap.canLeave()) return;
         if (state.desktop.includes(id)) { if (state.desktop.length > 1) state.desktop = state.desktop.filter(x => x !== id); }
         else state.desktop.push(id);
         save('desktop'); apply();
     }));
     document.querySelectorAll('[data-mobile-panel]').forEach(b => b.addEventListener('click', async () => {
-        if (state.mobile === 'tablature' && b.dataset.mobilePanel !== 'tablature' && !await window.Vz2SongMap.canLeave()) return;
-        showWorkspace('panels');
         state.mobile = b.dataset.mobilePanel; save('mobile'); apply();
     }));
     $('catalog-picker').addEventListener('click', openCatalog);
-    $('bn-skladby').addEventListener('click', openCatalog);
     $('catalog-close').addEventListener('click', closeCatalog);
-    $('catalog-dialog').addEventListener('cancel', e => e.preventDefault());
-    $('catalog-dialog').addEventListener('close', apply);
-    $('bn-napady').addEventListener('click', () => $('show-ideas').click());
+    $('catalog-dialog').addEventListener('click', e => {
+        if (e.target !== $('catalog-dialog')) return;
+        const rect = e.target.getBoundingClientRect();
+        if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) closeCatalog();
+    });
+    $('catalog-dialog').addEventListener('close', () => { $('catalog-picker').setAttribute('aria-expanded', 'false'); apply(); });
     $('create-collection-open')?.addEventListener('click', () => {
-        const rehearsal = document.querySelector('[data-kind="rehearsal"]').getAttribute('aria-pressed') === 'true';
+        const rehearsal = collectionKind === 'rehearsal';
         $('create-collection-title').textContent = rehearsal ? 'Nová zkouška' : 'Nová skladba';
         $('create-collection').querySelector('.edit-error').textContent = '';
         $('create-collection-dialog').showModal();
@@ -227,35 +275,34 @@
     });
     desktop.addEventListener('change', apply); mobile.addEventListener('change', apply);
     function showWorkspace(key) {
-        if (!surfaces.has(key) || key === activeWorkspace) return;
-        const wasIdeas = ideasOpen;
+        if (key === 'panels') key = collectionKind === 'rehearsal' ? 'rehearsals' : 'songs';
+        if (!['songs', 'rehearsals', 'history', 'ideas'].includes(key)) return;
+        const changed = key !== activeWorkspace;
         activeWorkspace = key; ideasOpen = key === 'ideas';
-        if (wasIdeas !== ideasOpen) window.Vz2Player?.setIdeasMode(ideasOpen);
         closeCatalog(); apply();
-        document.dispatchEvent(new CustomEvent('vz2:workspace-changed', { detail: { workspace: key } }));
+        if (changed) document.dispatchEvent(new CustomEvent('vz2:workspace-changed', { detail: { workspace: key } }));
     }
-    function hideIdeas(focus = true) {
-        if (!ideasOpen) return;
-        showWorkspace('panels');
-        if (focus) $(mobile.matches ? 'bn-napady' : 'show-ideas').focus({ preventScroll: true });
-    }
-    document.querySelectorAll('[data-workspace-target]').forEach(control => control.addEventListener('click', () => {
-        if (control.dataset.workspaceTarget === 'history') $('show-history').click();
-        else showWorkspace(control.dataset.workspaceTarget);
+    function requestWorkspace(key) { document.dispatchEvent(new CustomEvent('vz2:workspace-request', { detail: { workspace: key } })); }
+    function hideIdeas() { requestWorkspace(collectionKind === 'rehearsal' ? 'rehearsals' : 'songs'); }
+    document.querySelectorAll('[data-workspace-target]').forEach(control => control.addEventListener('click', () => requestWorkspace(control.dataset.workspaceTarget)));
+    document.querySelectorAll('[data-idea-section]').forEach(control => control.addEventListener('click', () => {
+        ideaSection = control.dataset.ideaSection;
+        try { localStorage.setItem(prefix + 'ideas:section', JSON.stringify(ideaSection)); } catch (_) { /* Keep the in-memory choice. */ }
+        apply();
     }));
+    window.addEventListener('resize', placeCatalog);
+    window.visualViewport?.addEventListener('resize', placeCatalog);
     addFullscreenButton($('history-workspace'));
+    addFullscreenButton($('ideas-workspace'));
     window.Vz2Layout = {
         closeCatalog, hideIdeas, showWorkspace,
-        setCollectionKind(kind) { collectionKind = kind === 'rehearsal' ? 'rehearsal' : 'song'; apply(); },
+        getWorkspace: () => activeWorkspace,
+        setCollectionKind(kind) { collectionKind = kind === 'rehearsal' ? 'rehearsal' : 'song'; state = states[collectionKind]; apply(); },
         registerFullscreen(panel, handlers = {}) { fullscreenHandlers.set(panel, handlers); addFullscreenButton(panel); },
-        exitFullscreen(panel) { if (fullscreenPanel === panel) setPanelFullscreen(panel); },
-        showIdeas() {
-            if (ideasOpen) return;
-            addFullscreenButton($('ideas-workspace')); showWorkspace('ideas');
-            $('ideas-back').focus({ preventScroll: true });
-        },
+        exitFullscreen(panel) { if (fullscreenPanel === panel) setPanelFullscreen(null); },
+        showIdeas() { showWorkspace('ideas'); },
         revealRecording() {
-            showWorkspace('panels');
+            showWorkspace(collectionKind === 'rehearsal' ? 'rehearsals' : 'songs');
             const current = mode();
             if (current === 'mobile') state.mobile = 'recordings';
             else if (!state[current].includes('recordings')) {

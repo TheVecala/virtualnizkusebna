@@ -85,10 +85,10 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         const starts = await page.evaluate(() => window.audioStarts.slice(-2));
         assert.equal(starts.length, 2); assert.equal(starts[0].when, starts[1].when); assert.equal(starts[0].offset, starts[1].offset);
         await page.locator('#player-collapse').click(); assert.equal((await state()).playing, true);
-        await page.locator('[data-workspace-target="history"]').click();
+        await page.locator('[data-workspace-target="history"]:visible').click();
         assert.equal((await state()).mode, 'mixer'); assert.equal((await state()).playing, true);
         assert.equal((await state()).collapsed, true);
-        await page.locator('[data-workspace-target="panels"]').click();
+        await page.locator('[data-workspace-target="songs"]:visible').click();
         assert.equal((await state()).playing, true);
 
         await page.locator('#player-fullscreen').click();

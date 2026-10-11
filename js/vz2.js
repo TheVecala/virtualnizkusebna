@@ -3,7 +3,11 @@
     const cfg = window.VZ2;
     let qs = new URLSearchParams(location.search);
     let data, selected, kind = 'song', edit, move, logBefore, mixerId = null;
-    let navigationSerial = 0, catalogSerial = 0;
+    let navigationSerial = 0, catalogSerial = 0, playerSerial = 0, mixerSeek = null;
+    let renderedCollection, renderedData;
+    const collectionMemory = { song: null, rehearsal: null };
+    try { const saved = JSON.parse(localStorage.getItem(cfg.cachePrefix + 'workspaces:collections')); for (const k of Object.keys(collectionMemory)) if (saved?.[k] != null) collectionMemory[k] = String(saved[k]); } catch (_) { /* First visit / private storage. */ }
+    const surfaceMemory = new Map(), catalogMemory = { song: { search: '', scroll: 0 }, rehearsal: { search: '', scroll: 0 } };
     const blobs = [];
     const offlineUrls = [];
     let offlineViewSerial = 0;
@@ -12,7 +16,6 @@
     const expandedRecordings = new Set();
     const expandedAttachments = new Set();
     let mixerNotes;
-    let deepLinkSeeked = false;
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     const $ = id => document.getElementById(id);
     const mixerPanel = $('mixer-panel');
@@ -131,78 +134,120 @@
         if (url.href !== location.href) history[replace ? 'replaceState' : 'pushState'](null, '', url);
         qs = url.searchParams;
     }
-    async function canNavigate(params, force = false) {
+    function resolveRoute(params) {
         const target = data?.recordings.find(r => String(r.id) === String(params.recording_id));
-        const nextMode = target?.kind === 'multitrack' ? 'mixer' : target?.kind === 'single' && params.view === 'looper' ? 'looper' : 'empty';
-        const collectionId = target?.collection_id || params.collection_id || data?.collections.find(c => c.kind === (params.kind === 'rehearsal' ? 'rehearsal' : 'song') && c.lifecycle === 'active')?.id;
-        if (!force && !window.Vz2Player.canLeave(target?.id, nextMode)) return false;
-        return window.Vz2SongMap.canLeave(collectionId);
+        const requestedKind = params.workspace === 'rehearsals' || params.kind === 'rehearsal' ? 'rehearsal' : 'song';
+        const requestedId = target?.collection_id || params.collection_id || collectionMemory[requestedKind];
+        const collection = data?.collections.find(c => String(c.id) === String(requestedId) && c.lifecycle === 'active')
+            || data?.collections.find(c => c.kind === requestedKind && c.lifecycle === 'active');
+        const nextKind = collection?.kind || requestedKind;
+        const workspace = ['history', 'ideas'].includes(params.workspace) ? params.workspace : nextKind === 'rehearsal' ? 'rehearsals' : 'songs';
+        return { target, collection, kind: nextKind, workspace };
+    }
+    function rememberSurface() {
+        if (!['songs', 'rehearsals'].includes(window.Vz2Layout.getWorkspace())) return;
+        if (selected != null) surfaceMemory.set(String(selected), Object.fromEntries([...document.querySelectorAll('#content-area .panel-body')].map(host => [host.closest('.panel').dataset.panel, host.scrollTop])));
+        catalogMemory[kind] = { search: $('catalog-search').value, scroll: $('collections').scrollTop };
+    }
+    function filterCatalog() {
+        const query = $('catalog-search').value.toLocaleLowerCase('cs');
+        $('collections').querySelectorAll('.collection').forEach(row => row.hidden = !row.querySelector('.collection-name').textContent.toLocaleLowerCase('cs').includes(query));
+    }
+    async function canNavigate(params, force = false) {
+        const next = resolveRoute(params), target = next.target;
+        const nextMode = target?.kind === 'multitrack' ? 'mixer' : target?.kind === 'single' && params.view === 'looper' ? 'looper' : null;
+        if (!force && nextMode && !window.Vz2Player.canLeave(target.id, nextMode)) return false;
+        // Hiding the song workspace keeps its map mounted, including an unfinished edit.
+        if (['history', 'ideas'].includes(next.workspace) || next.kind !== 'song') return true;
+        return window.Vz2SongMap.canLeave(next.collection?.id);
     }
     async function navigate(params, force = false) {
-        if (!await canNavigate(params, force)) return;
-        window.Vz2Layout.showWorkspace('panels');
-        setRoute(params); deepLinkSeeked = false;
-        message('');
-        if (data) await applyRoute();
-    }
-    async function applyRoute() {
         const serial = ++navigationSerial;
-        const target = data.recordings.find(r => String(r.id) === qs.get('recording_id'));
-        kind = qs.get('kind') === 'rehearsal' ? 'rehearsal' : 'song';
-        selected = target?.collection_id || qs.get('collection_id');
-        let collection = data.collections.find(c => String(c.id) === String(selected));
-        if (!collection) collection = data.collections.find(c => c.kind === kind && c.lifecycle === 'active');
-        selected = collection?.id; kind = collection?.kind || kind;
-        const nextMixer = target?.kind === 'multitrack' && target.lifecycle === 'active' ? String(target.id) : null;
-        const nextLooper = target?.kind === 'single' && target.lifecycle === 'active' && target.files[0]?.url && qs.get('view') === 'looper' ? String(target.id) : null;
-        if (mixerId !== nextMixer) { stopMixer(); deepLinkSeeked = false; }
-        const player = window.Vz2Player.getState();
-        if (player?.mode === 'looper' && player.id !== nextLooper) window.Vz2Player.closeLooper();
-        mixerId = nextMixer;
-        if (nextMixer) window.Vz2Player.showMixer(target);
-        // Recording identity determines its parent, including after a server-side move.
-        const params = { kind };
-        if (selected) params.collection_id = String(selected);
-        if (target) {
-            params.recording_id = String(target.id);
-            if (qs.has('time_ms')) params.time_ms = qs.get('time_ms');
-            if (nextMixer) params.view = 'mixer';
-            if (nextLooper) params.view = 'looper';
+        if (!await canNavigate(params, force) || serial !== navigationSerial) return false;
+        rememberSurface();
+        setRoute(params); message('');
+        if (data) await applyRoute(!!params.recording_id);
+        return true;
+    }
+    async function applyRoute(openRecording = false) {
+        const params = Object.fromEntries(qs), next = resolveRoute(params), target = next.target;
+        // Non-collection workspaces preserve the mounted song/rehearsal surface.
+        if (!['history', 'ideas'].includes(next.workspace) || renderedData === undefined) {
+            selected = next.collection?.id; kind = next.kind;
+            if (selected != null) collectionMemory[kind] = String(selected);
+            try { localStorage.setItem(cfg.cachePrefix + 'workspaces:collections', JSON.stringify(collectionMemory)); } catch (_) { /* Keep memory. */ }
         }
-        const missing = qs.has('recording_id') && !target;
-        setRoute(params, true);
-        render();
-        if (target) window.Vz2Layout.revealRecording();
-        seekMixerLink();
-        if (missing) message('Odkazovaná nahrávka již neexistuje.', true);
-        // The catalogue and layout are usable; deep-linked audio loads in its own player.
+        const route = { workspace: next.workspace, kind };
+        if (selected != null) route.collection_id = String(selected);
+        if (target && !['history', 'ideas'].includes(next.workspace)) {
+            route.recording_id = String(target.id);
+            if (params.time_ms !== undefined) route.time_ms = params.time_ms;
+            if (params.view) route.view = params.view;
+        }
+        setRoute(route, true);
+        const nextMixer = openRecording && target?.kind === 'multitrack' && target.lifecycle === 'active' ? String(target.id) : null;
+        const nextLooper = openRecording && target?.kind === 'single' && target.lifecycle === 'active' && target.files[0]?.url && params.view === 'looper' ? String(target.id) : null;
+        const loadSerial = nextMixer || nextLooper ? ++playerSerial : playerSerial;
+        if (nextMixer || nextLooper) {
+            if (mixerId && mixerId !== nextMixer) stopMixer();
+            if (nextMixer) {
+                mixerId = nextMixer; window.Vz2Player.showMixer(withSource(target));
+                $('mixer-context').textContent = (next.kind === 'song' ? 'Skladba: ' : 'Zkouška: ') + (next.collection?.title || '');
+                $('mt-playing-name').textContent = recordingName(target);
+                mixerSeek = { id: nextMixer, seconds: Math.max(0, Number(params.time_ms || 0) / 1000) };
+            }
+        }
+        const rebuild = renderedCollection !== selected || renderedData !== data || nextMixer;
+        if (rebuild) render();
+        window.Vz2Layout.showWorkspace(next.workspace);
+        if (rebuild && ['songs', 'rehearsals'].includes(next.workspace)) {
+            $('panel-recordings').querySelector('.panel-body').scrollTop = surfaceMemory.get(String(selected))?.recordings || 0;
+            $('collections').scrollTop = catalogMemory[kind].scroll;
+        }
+        if (target && openRecording && !['history', 'ideas'].includes(next.workspace)) window.Vz2Layout.revealRecording();
+        if (params.recording_id && !target) message('Odkazovaná nahrávka již neexistuje.', true);
         window.Vz2Boot?.ready();
-        if (nextLooper) {
-            await window.Vz2Player.openLooper(target, target.files[0], Number(qs.get('time_ms') || 0) / 1000, !deepLinkSeeked);
-            if (serial !== navigationSerial) return;
-            deepLinkSeeked = true;
+        if (next.workspace === 'ideas') window.Vz2Content.openDiscussion({ scope: 'ideas' });
+        if (nextLooper) await window.Vz2Player.openLooper(withSource(target), target.files[0], Number(params.time_ms || 0) / 1000, true);
+        if (nextMixer) {
+            if (String(window.MultitrackApp?.getState()?.id) !== nextMixer) {
+                try {
+                    await window.MultitrackApp.refreshList();
+                    if (loadSerial !== playerSerial) return;
+                    if (!window.MultitrackApp.load(nextMixer)) throw new Error('Nahrávka není dostupná. Obnovte seznam.');
+                } catch (e) { if (loadSerial === playerSerial) { window.Vz2Player.mixerFailed(); message(e.message, true); } }
+            }
+            seekMixerLink();
         }
-        if (nextMixer && String(window.MultitrackApp?.getState()?.id) !== nextMixer) {
-            try {
-                await window.MultitrackApp.refreshList();
-                if (serial !== navigationSerial) return;
-                if (!window.MultitrackApp.load(nextMixer)) throw new Error('Nahrávka není dostupná. Obnovte seznam.');
-            } catch (e) { if (serial === navigationSerial) { window.Vz2Player.mixerFailed(); message(e.message, true); } }
-        }
+    }
+    function withSource(recording) {
+        return { ...recording, collection_title: data.collections.find(c => String(c.id) === String(recording.collection_id))?.title || '' };
+    }
+    function closePlayer() {
+        ++playerSerial; mixerSeek = null;
+        if (mixerId) stopMixer();
+        window.Vz2Player.closeLooper();
+        const params = Object.fromEntries(qs);
+        delete params.recording_id; delete params.view; delete params.time_ms;
+        setRoute(params, true);
+        if (data) { rememberSurface(); render(); }
     }
     async function refresh() {
-        const serial = ++catalogSerial, latest = await api();
+        const serial = ++catalogSerial, initial = !data, latest = await api();
         if (serial !== catalogSerial) return;
         const routeRecording = latest.recordings.find(r => String(r.id) === qs.get('recording_id'));
         const routeCollectionId = routeRecording?.collection_id || qs.get('collection_id');
         const routeCollection = latest.collections.find(c => String(c.id) === String(routeCollectionId))
             || latest.collections.find(c => c.kind === (qs.get('kind') === 'rehearsal' ? 'rehearsal' : 'song') && c.lifecycle === 'active');
-        if (!await window.Vz2SongMap.canLeave(routeCollection?.id) || serial !== catalogSerial) return;
+        if (routeCollection?.kind === 'song' && !await window.Vz2SongMap.canLeave(routeCollection.id) || serial !== catalogSerial) return;
+        if (data) rememberSurface();
         data = latest;
         const playing = window.MultitrackApp?.getState();
         const playingRecording = playing && data.recordings.find(r => String(r.id) === String(playing.id));
         if (playing && (!playingRecording || playingRecording.lifecycle !== 'active' || (playing.phase !== 'archived' && !playingRecording.files.some(f => f.state === 'available')))) stopMixer();
-        await applyRoute();
+        const looper = window.Vz2Player.getState();
+        if (looper?.mode === 'looper' && !data.recordings.some(r => String(r.id) === looper.id && r.lifecycle === 'active' && r.files.some(f => f.url))) window.Vz2Player.closeLooper();
+        await applyRoute(initial);
     }
     async function mutate(fields) { await api(fields); message('Uloženo.'); await refresh(); }
     function reorderControls(parent, list, item, params, afterReorder) {
@@ -523,7 +568,6 @@
         timestampPanels.splice(0).forEach(p => p.destroy());
         document.querySelectorAll('.recording-actions-dialog').forEach(dialog => dialog.remove());
         document.querySelectorAll('#content audio').forEach(a => a.pause()); blobs.splice(0).forEach(URL.revokeObjectURL);
-        document.querySelectorAll('[data-kind]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
         const list = data.collections.filter(c => c.kind === kind && c.lifecycle === 'active'); $('collections').replaceChildren();
         list.forEach(c => {
             const row = node('div', undefined, 'collection');
@@ -561,10 +605,12 @@
         }
         $('collection-title-name').textContent = c?.title || 'Zatím tu nic není';
         $('collection-title').title = c?.title || '';
-        $('bn-skladby').lastChild.textContent = kind === 'rehearsal' ? 'zkoušky' : 'skladby';
         if ($('create-collection-open')) $('create-collection-open').textContent = kind === 'rehearsal' ? '+ Nová zkouška' : '+ Nová skladba';
         window.Vz2Layout.setCollectionKind(c?.kind || kind);
-        window.Vz2Content.mountPreviews(c);
+        const savedScroll = surfaceMemory.get(String(selected)) || {};
+        window.Vz2Content.mountPreviews(c, savedScroll);
+        $('catalog-search').value = catalogMemory[kind].search; filterCatalog();
+        $('collections').scrollTop = catalogMemory[kind].scroll;
         if (!c) content.append(node('h1', 'Zatím tu nic není'), node('p', 'Vytvořte skladbu nebo zkoušku. Audio můžete přidat později.'));
         else {
             content.append(node('small', 'Vytvořil/a ' + c.author, 'collection-attribution vz2-attribution'));
@@ -598,13 +644,26 @@
                 card.append(body); content.append(card);
             });
         }
+        renderedCollection = selected; renderedData = data;
+        $('panel-recordings').querySelector('.panel-body').scrollTop = savedScroll.recordings || 0;
         $('operations').hidden = !data.operations.length;
         const operations = $('operations').querySelector('div'); operations.replaceChildren();
         data.operations.forEach(op => { const row = node('p', '#' + op.id + ' · ' + op.target_title + ' · ' + op.state + ' '); if (cfg.write) row.append(button('Dokončit', async () => { await api({ action: 'retry', operation_id: Number(op.id) }); await refresh(); })); operations.append(row); });
     }
-    document.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => {
-        navigate({ kind: b.dataset.kind }).catch(e => message(e.message, true));
-    }));
+    $('catalog-search').addEventListener('input', filterCatalog);
+    document.addEventListener('vz2:workspace-request', e => {
+        if (!data) return;
+        const workspace = e.detail.workspace;
+        const nextKind = workspace === 'rehearsals' ? 'rehearsal' : workspace === 'songs' ? 'song' : kind;
+        const params = { workspace, kind: nextKind };
+        if (collectionMemory[nextKind]) params.collection_id = collectionMemory[nextKind];
+        navigate(params).catch(e => message(e.message, true));
+    });
+    document.addEventListener('vz2:player-source', () => {
+        const current = window.Vz2Player.getState();
+        const recording = data?.recordings.find(r => String(r.id) === current?.id);
+        if (recording) navigate({ collection_id: String(recording.collection_id) }).then(changed => { if (changed) window.Vz2Layout.revealRecording(); }).catch(e => message(e.message, true));
+    });
     if ($('upload-open')) $('upload-open').addEventListener('click', () => {
         const dialog = $('upload-dialog');
         if (!dialog.querySelector('form')) return;
@@ -612,7 +671,7 @@
     });
     $('mixer-close').addEventListener('click', async () => {
         const previous = mixerId;
-        await navigate({ collection_id: String(selected) }, true);
+        closePlayer();
         const card = $('recording-' + previous);
         card?.scrollIntoView({ block: 'nearest' }); card?.querySelector('button')?.focus({ preventScroll: true });
     });
@@ -626,16 +685,19 @@
         } catch (e) { message(e.message, true); }
     });
     window.addEventListener('popstate', async () => {
+        const serial = ++navigationSerial;
         const next = new URLSearchParams(location.search);
-        if (!await canNavigate(Object.fromEntries(next))) { setRoute(Object.fromEntries(qs), true); return; }
-        window.Vz2Layout.showWorkspace('panels');
-        qs = next; deepLinkSeeked = false;
+        if (!await canNavigate(Object.fromEntries(next), true)) { setRoute(Object.fromEntries(qs), true); return; }
+        if (serial !== navigationSerial) return;
+        rememberSurface(); qs = next;
+        // In-page history restores browsing. Only an explicit Open action or a
+        // newly loaded deep link may replace or seek the shared player.
         if (data) applyRoute().catch(e => message(e.message, true));
     });
     $('create-collection')?.addEventListener('submit', async e => {
         e.preventDefault(); const f = e.currentTarget, b = f.querySelector('button'); b.disabled = true;
-        if (!await window.Vz2SongMap.canLeave()) { b.disabled = false; return; }
-        try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); window.Vz2Layout.showWorkspace('panels'); setRoute({ collection_id: String(r.id) }); f.reset(); $('create-collection-dialog').close(); window.Vz2Layout.closeCatalog(); await refresh(); }
+        if (kind === 'song' && !await window.Vz2SongMap.canLeave()) { b.disabled = false; return; }
+        try { const r = await api({ action: 'collection_create', kind, title: f.elements.title.value }); rememberSurface(); setRoute({ collection_id: String(r.id), kind }); f.reset(); $('create-collection-dialog').close(); window.Vz2Layout.closeCatalog(); await refresh(); }
         catch (err) { f.querySelector('.edit-error').textContent = err.message; } finally { b.disabled = false; }
     });
     $('edit-cancel').addEventListener('click', () => $('editor').close());
@@ -739,7 +801,6 @@
         $('offline-clear').disabled = !count;
     }
     $('show-offline').addEventListener('click', () => showOffline().catch(e => message(e.message, true)));
-    $('show-ideas').addEventListener('click', () => window.Vz2Content.openDiscussion({ scope: 'ideas' }));
     $('mixer-discussion').addEventListener('click', () => {
         const id = window.MultitrackApp?.getState()?.id;
         const recording = data?.recordings.find(r => String(r.id) === String(id));
@@ -775,13 +836,13 @@
         catch (e) { $('content').replaceChildren(node('p', 'Před přehráním obnovte přihlášení a seznam.')); message(e.message, true); }
     });
     function seekMixerLink() {
-        const current = window.MultitrackApp.getState(), seconds = Number(qs.get('time_ms')) / 1000;
-        if (!deepLinkSeeked && current?.phase === 'ready' && String(current.id) === qs.get('recording_id') && Number.isFinite(seconds)) {
-            window.MultitrackApp.seek(Math.max(0, seconds)); deepLinkSeeked = true;
+        const current = window.MultitrackApp.getState();
+        if (mixerSeek && current?.phase === 'ready' && String(current.id) === mixerSeek.id && Number.isFinite(mixerSeek.seconds)) {
+            window.MultitrackApp.seek(mixerSeek.seconds); mixerSeek = null;
         }
     }
     document.addEventListener('multitrack:ready', seekMixerLink);
-    document.addEventListener('vz2:player-close', () => { navigate({ collection_id: String(selected) }, true).catch(e => message(e.message, true)); });
+    document.addEventListener('vz2:player-close', closePlayer);
     document.addEventListener('multitrack:selected', e => {
         mixerNotes?.destroy(); window.Vz2Timestamps.stopLoop();
         mixerNotes = window.Vz2Timestamps.mount($('mixer-timestamps'), e.detail.id, mixerAdapter(e.detail.id));

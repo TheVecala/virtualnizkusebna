@@ -53,13 +53,10 @@
     function startIdeas() {
         if (current && !close(current)) return null;
         const host = document.getElementById('ideas-workspace');
-        const header = make('div', undefined, 'panel-header'), content = make('div', undefined, 'panel-body content-editor');
-        const title = make('h2', 'Nápady'); title.id = 'ideas-title'; host.setAttribute('aria-labelledby', title.id);
-        const back = button('Zpět k panelům', () => window.Vz2Layout.hideIdeas()); back.id = 'ideas-back'; back.className = 'panel-header-action';
-        header.append(title, back);
+        const content = document.getElementById('ideas-write'), title = document.getElementById('ideas-title');
         const ctx = { dialog: content, busy: false, dirty: false, status: make('p', 'Načítám…', 'error') };
         ctx.status.setAttribute('role', 'status'); ctx.title = title; ctx.live = () => host.isConnected;
-        content.append(ctx.status); host.replaceChildren(header, content); ideas = ctx;
+        content.append(ctx.status); ideas = ctx;
         window.Vz2Layout.showIdeas(); return ctx;
     }
     window.addEventListener('beforeunload', e => { if (current?.dirty || current?.busy || ideas?.dirty || ideas?.busy) { e.preventDefault(); e.returnValue = ''; } });
@@ -138,7 +135,6 @@
         await busy(ctx, async () => { assign(await api(query)); });
     }
     async function openDiscussion(scope) {
-        if (scope.scope === 'ideas' && !await window.Vz2SongMap.canLeave()) return;
         const isIdeas = scope.scope === 'ideas';
         if (isIdeas && ideas) { window.Vz2Layout.showIdeas(); return; }
         const ctx = isIdeas ? startIdeas() : start('Diskuse'); if (!ctx) return;
@@ -208,11 +204,11 @@
         return make('small', author(post.author, post.author_active) + ' · ' + date(post.created_at)
             + (post.revision > 1 ? ' · upravil/a ' + author(post.editor, post.editor_active) + ' · ' + date(post.updated_at) : ''), 'vz2-attribution');
     }
-    function mountPreviews(collection) {
+    function mountPreviews(collection, scroll = {}) {
         previewCollection = collection;
         const serial = ++previewSerial;
         const live = () => serial === previewSerial;
-        window.Vz2SongMap.mount(collection);
+        if (collection?.kind === 'song' || (!collection && document.body.dataset.collectionKind !== 'rehearsal')) window.Vz2SongMap.mount(collection);
         const hosts = ['lyrics', 'discussion'].map(id => document.getElementById(id + '-content'));
         const actionHosts = ['lyrics', 'discussion'].map(id => document.getElementById(id + '-actions'));
         actionHosts.forEach(host => host.replaceChildren());
@@ -230,6 +226,7 @@
                     edit.textContent = result.can_edit ? 'Upravit / historie' : 'Otevřít / historie';
                     status.textContent = result.document ? documentTitle(collection, kind, result.document.title) + ' · verze ' + result.document.current_revision : 'Zatím bez dokumentu.';
                     content.textContent = result.version?.body || '';
+                    host.scrollTop = scroll.lyrics || 0;
                 } catch (e) { if (live()) { status.textContent = e.message; status.append(button('Zkusit znovu', load)); } }
             }
             await load();
@@ -252,6 +249,7 @@
                     posts.append(item);
                 });
                 before = result.next_before; older.hidden = !before;
+                if (!cursor) host.scrollTop = scroll.discussion || 0;
             } catch (e) { if (live()) { status.textContent = e.message; status.append(button('Zkusit znovu', () => loadDiscussion(cursor))); } }
             finally { loading = false; older.disabled = false; }
         }
