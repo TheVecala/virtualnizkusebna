@@ -140,6 +140,17 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 return layout;
             });
             assert(!titleLayout.clipped && titleLayout.chevronVisible, `Collection title or picker arrow is clipped at ${width}`);
+            const shortTitle = await page.evaluate(() => {
+                const name = document.querySelector('#collection-title-name');
+                const original = name.textContent;
+                name.textContent = 'Tváře';
+                const nameBox = name.getBoundingClientRect();
+                const pickerBox = document.querySelector('#catalog-picker').getBoundingClientRect();
+                const result = { oneLine: nameBox.height < 40, fullWidth: pickerBox.width > innerWidth * .8 };
+                name.textContent = original;
+                return result;
+            });
+            assert(shortTitle.oneLine && shortTitle.fullWidth, `A short collection title should use the whole row at ${width}`);
         }
         console.log('PASS: long collection names remain readable with the picker arrow on mobile');
 

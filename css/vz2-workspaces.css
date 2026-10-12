@@ -88,7 +88,8 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     #topbar .shell-menu > summary { width: 36px; height: 32px; min-height: 32px; padding: 7px; }
     #collection-header { padding: 7px 12px 10px; border: 0; }
     #collection-title { font-size: 22px; line-height: 1.35; }
-    #catalog-picker { width: fit-content; justify-content: flex-start; min-height: 40px; }
+    #catalog-picker { width: 100%; justify-content: flex-start; min-height: 40px; }
+    #collection-title-name { flex: 1 1 auto; }
     .panel[data-panel] > .panel-header { flex-wrap: nowrap; gap: 4px; }
     .panel[data-panel] > .panel-header > h2,
     .panel[data-panel] > .panel-header > .panel-section-icon { display: none; }
