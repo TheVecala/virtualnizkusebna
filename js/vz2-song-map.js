@@ -95,8 +95,8 @@
         controls.append(modeRow);
         ctx.actions.append(make('span', draft.dirty ? 'Neuloženo' : 'Uloženo', 'song-map-save-state'));
         if (!ctx.preview) {
-            if (ctx.response.can_edit) { const save = button('Uložit mapu', () => saveMap(ctx)); save.disabled = !draft.dirty || ctx.busy; ctx.actions.append(save); }
-            if (ctx.response.document) ctx.actions.append(button('Historie mapy', () => history(ctx)));
+            if (ctx.response.can_edit) { const save = button('Uložit', () => saveMap(ctx)); save.disabled = !draft.dirty || ctx.busy; ctx.actions.append(save); }
+            if (ctx.response.document) ctx.actions.append(button('Historie', () => history(ctx)));
             if (ctx.conflict) controls.append(button('Porovnat aktuální verzi', () => compare(ctx)));
         }
         if (!ctx.copy && (ctx.mode === 'listen' || (ctx.mode === 'edit' && ctx.editAction === 'paint'))) palette(ctx, controls);
