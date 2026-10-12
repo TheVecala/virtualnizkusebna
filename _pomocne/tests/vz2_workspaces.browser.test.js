@@ -116,7 +116,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         }
         console.log('PASS: all four workspaces at 320–1440 px, no document overflow, controls above the character navigation');
 
-        for (const width of [390, 1200]) {
+        for (const width of [320, 390]) {
             await page.setViewportSize({ width, height: 900 });
             await switchTo('rehearsals');
             const titleLayout = await page.evaluate(() => {
@@ -135,7 +135,29 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             });
             assert(!titleLayout.clipped && titleLayout.chevronVisible, `Collection title or picker arrow is clipped at ${width}`);
         }
-        console.log('PASS: long collection names remain readable with the picker arrow at narrow widths');
+        console.log('PASS: long collection names remain readable with the picker arrow on mobile');
+
+        await page.setViewportSize({ width: 1200, height: 900 });
+        assert.equal(await page.locator('#catalog-search').count(), 0);
+        for (const [workspace, control, slot] of [
+            ['songs', '#desktop-panels', 'songs-subnav'],
+            ['rehearsals', '#desktop-panels', 'rehearsals-subnav'],
+            ['history', '#history-controls', 'history-subnav'],
+            ['ideas', '#ideas-controls', 'ideas-subnav']
+        ]) {
+            await switchTo(workspace);
+            assert.equal(await page.locator(control).evaluate(node => node.parentElement.id), slot);
+            assert(await page.locator(control).isVisible(), `${workspace} controls should be visible in the top navigation`);
+            assert.equal(await page.locator('#collection-header').isVisible(), false);
+            const topbar = await page.evaluate(() => {
+                const navigation = document.querySelector('#workspace-navigation');
+                const menu = document.querySelector('#topbar .shell-menu');
+                return { fits: navigation.scrollWidth <= navigation.clientWidth + 1,
+                    separate: navigation.getBoundingClientRect().right <= menu.getBoundingClientRect().left + 1 };
+            });
+            assert(topbar.fits && topbar.separate, `${workspace} submenu overlaps the desktop topbar at 1200 px`);
+        }
+        console.log('PASS: desktop submenus follow their active workspace without a collection header or catalog search');
 
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('ideas');
@@ -165,7 +187,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.keyboard.press('Escape');
         assert(await page.locator('#mobile-context #history-orientation').isVisible());
         await page.setViewportSize({ width: 1440, height: 900 });
-        await page.locator('#history-controls-slot #history-orientation').waitFor({ state: 'visible' });
+        await page.locator('#history-subnav #history-orientation').waitFor({ state: 'visible' });
         assert(await page.locator('#history-audio-filter').isChecked());
         await page.locator('#history-filter summary').click();
         assert(await page.locator('#history-song-filter').isVisible(), 'Desktop song filter opens inside its details menu');
@@ -179,9 +201,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#catalog-picker').getAttribute('aria-expanded'), 'true');
         const title = await page.locator('#catalog-picker').boundingBox(), dropdown = await page.locator('#catalog-dialog').boundingBox();
         assert(dropdown.y >= title.y + title.height, 'Catalog drops down from the large title');
-        await page.locator('#catalog-search').fill('8. října');
-        assert.equal(await page.locator('#collections .collection:visible').count(), 1);
-        await page.locator('#collections .collection:visible > button').click();
+        assert.equal(await page.locator('#collections .collection:visible').count(), 2);
+        await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 8. října' }).click();
         await page.locator('[data-mobile-panel=recordings]').click();
         await page.locator('#recording-11 .recording-toggle').click();
         await page.locator('#recording-11').getByRole('button', { name: 'Otevřít', exact: true }).click();

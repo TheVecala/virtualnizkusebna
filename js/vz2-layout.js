@@ -98,7 +98,8 @@
         $('catalog-dialog-slot').append($('sidebar'));
         $('catalog-dialog').showModal();
         $('catalog-picker').setAttribute('aria-expanded', 'true');
-        placeCatalog(); $('catalog-search').focus();
+        placeCatalog();
+        ($('collections').querySelector('.collection > button') || $('create-collection-open') || $('catalog-close')).focus();
     }
     function moveControls(id, slot) { const control = $(id), target = $(slot); if (control.parentElement !== target) target.append(control); }
     function apply() {
@@ -132,11 +133,11 @@
         $('catalog-heading').textContent = $('collection-kind-label').textContent = label;
         $('catalog-dialog').setAttribute('aria-label', label);
         $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
-        $('catalog-search').placeholder = collectionKind === 'rehearsal' ? 'Hledat zkoušku…' : 'Hledat skladbu…';
         $('mobile-panels').hidden = !collection;
         // Move the existing controls, preserving values and listeners at every breakpoint.
-        moveControls('history-controls', mobile.matches && fullscreenPanel?.id !== 'history-workspace' ? 'mobile-context' : 'history-controls-slot');
-        moveControls('ideas-controls', mobile.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'mobile-context' : 'ideas-controls-slot');
+        moveControls('desktop-panels', collectionKind === 'rehearsal' ? 'rehearsals-subnav' : 'songs-subnav');
+        moveControls('history-controls', mobile.matches && fullscreenPanel?.id !== 'history-workspace' ? 'mobile-context' : desktop.matches && fullscreenPanel?.id !== 'history-workspace' ? 'history-subnav' : 'history-controls-slot');
+        moveControls('ideas-controls', mobile.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'mobile-context' : desktop.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'ideas-subnav' : 'ideas-controls-slot');
         $('history-controls').hidden = activeWorkspace !== 'history';
         $('ideas-controls').hidden = activeWorkspace !== 'ideas';
         document.querySelectorAll('[data-idea-section]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.ideaSection === ideaSection)));

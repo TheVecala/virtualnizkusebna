@@ -122,10 +122,10 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 </div></div></section>
 <header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA DK!</a>
 <nav id="workspace-navigation" aria-label="Pracovní plochy">
-<button type="button" data-workspace-target="songs" aria-pressed="true">Skladby</button>
-<button type="button" data-workspace-target="rehearsals" aria-pressed="false">Zkoušky</button>
-<button type="button" id="show-history" data-workspace-target="history" aria-pressed="false">Matice</button>
-<button type="button" id="show-ideas" data-workspace-target="ideas" aria-pressed="false">Nápady</button>
+<button type="button" data-workspace-target="songs" aria-pressed="true">Skladby</button><div id="songs-subnav" class="workspace-subnav"></div>
+<button type="button" data-workspace-target="rehearsals" aria-pressed="false">Zkoušky</button><div id="rehearsals-subnav" class="workspace-subnav"></div>
+<button type="button" id="show-history" data-workspace-target="history" aria-pressed="false">Matice</button><div id="history-subnav" class="workspace-subnav"></div>
+<button type="button" id="show-ideas" data-workspace-target="ideas" aria-pressed="false">Nápady</button><div id="ideas-subnav" class="workspace-subnav"></div>
 </nav>
 <span class="topbar-account" title="Přihlášený účet: <?=auth_h($_SESSION['user_name']??'Host')?>"><?=auth_h($_SESSION['user_name']??'Host')?></span>
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
@@ -162,7 +162,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header">
 <?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ Nová skladba</button><?php endif;?>
 <button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
-<h2 id="catalog-heading">Skladby</h2><input id="catalog-search" type="search" placeholder="Hledat skladbu…" aria-label="Hledat v seznamu">
+<h2 id="catalog-heading">Skladby</h2>
 <div id="collections"></div>
 </aside></div><div id="workspace">
 <div id="workspace-surfaces">

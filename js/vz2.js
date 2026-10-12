@@ -7,7 +7,7 @@
     let renderedCollection, renderedData;
     const collectionMemory = { song: null, rehearsal: null };
     try { const saved = JSON.parse(localStorage.getItem(cfg.cachePrefix + 'workspaces:collections')); for (const k of Object.keys(collectionMemory)) if (saved?.[k] != null) collectionMemory[k] = String(saved[k]); } catch (_) { /* First visit / private storage. */ }
-    const surfaceMemory = new Map(), catalogMemory = { song: { search: '', scroll: 0 }, rehearsal: { search: '', scroll: 0 } };
+    const surfaceMemory = new Map(), catalogMemory = { song: { scroll: 0 }, rehearsal: { scroll: 0 } };
     const blobs = [];
     const offlineUrls = [];
     let offlineViewSerial = 0;
@@ -147,11 +147,7 @@
     function rememberSurface() {
         if (!['songs', 'rehearsals'].includes(window.Vz2Layout.getWorkspace())) return;
         if (selected != null) surfaceMemory.set(String(selected), Object.fromEntries([...document.querySelectorAll('#content-area .panel-body')].map(host => [host.closest('.panel').dataset.panel, host.scrollTop])));
-        catalogMemory[kind] = { search: $('catalog-search').value, scroll: $('collections').scrollTop };
-    }
-    function filterCatalog() {
-        const query = $('catalog-search').value.toLocaleLowerCase('cs');
-        $('collections').querySelectorAll('.collection').forEach(row => row.hidden = !row.querySelector('.collection-name').textContent.toLocaleLowerCase('cs').includes(query));
+        catalogMemory[kind].scroll = $('collections').scrollTop;
     }
     async function canNavigate(params, force = false) {
         const next = resolveRoute(params), target = next.target;
@@ -650,7 +646,6 @@
         window.Vz2Layout.setCollectionKind(c?.kind || kind);
         const savedScroll = surfaceMemory.get(String(selected)) || {};
         window.Vz2Content.mountPreviews(c, savedScroll);
-        $('catalog-search').value = catalogMemory[kind].search; filterCatalog();
         $('collections').scrollTop = catalogMemory[kind].scroll;
         if (!c) content.append(node('h1', 'Zatím tu nic není'), node('p', 'Vytvořte skladbu nebo zkoušku. Audio můžete přidat později.'));
         else {
@@ -693,7 +688,6 @@
         const operations = $('operations').querySelector('div'); operations.replaceChildren();
         data.operations.forEach(op => { const row = node('p', '#' + op.id + ' · ' + op.target_title + ' · ' + op.state + ' '); if (cfg.write) row.append(button('Dokončit', async () => { await api({ action: 'retry', operation_id: Number(op.id) }); await refresh(); })); operations.append(row); });
     }
-    $('catalog-search').addEventListener('input', filterCatalog);
     document.addEventListener('vz2:workspace-request', e => {
         if (!data) return;
         const workspace = e.detail.workspace;
