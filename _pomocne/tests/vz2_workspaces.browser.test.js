@@ -18,7 +18,7 @@ const hash = createHash('sha256').update(wav).digest('hex');
 const collections = ['Nová skladba', 'Poslední vlak', 'Zkouška 8. října', 'Zkouška 1. října'].map((title, index) => ({ id: index + 1, title, kind: index < 2 ? 'song' : 'rehearsal', lifecycle: 'active', author: 'Petr', recordings_revision: 1 }));
 const file = id => ({ id, url: '/sample.wav', state: 'available', original_name: 'zkouška.wav', title: '', sha256: hash, byte_size: wav.length, duration_ms: 180000, mime: 'audio/wav' });
 const recordings = [
-    { id: 11, collection_id: 3, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Celá zkouška', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(1)], can_edit: true },
+    { id: 11, collection_id: 3, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Celá zkouška', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(1)], can_edit: true, can_move: true },
     { id: 12, collection_id: 3, kind: 'multitrack', lifecycle: 'active', audio_state: 'available', title: 'Společný mix', revision: 1, author: 'Klára', duration_ms: 180000, files: [file(2)] },
     { id: 13, collection_id: 1, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Domácí nahrávka', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(3)], can_move: true }
 ];
@@ -329,15 +329,19 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('[data-mobile-panel=recordings]').click();
         assert(await page.locator('#recording-11 .recording-caption').isVisible(), 'The short caption is visible while the recording is collapsed');
         assert.equal(await page.locator('#recording-11 .recording-caption-text').textContent(), 'Celá zkouška');
+        assert.equal(await page.locator('#recording-11 .recording-author').textContent(), 'Vložil Petr');
+        assert.equal(await page.locator('#recording-11 .recording-body .vz2-attribution').filter({ hasText: 'Vložil Petr' }).count(), 0);
         await shot('recording-caption-390');
         await page.locator('#recording-11 .recording-caption-edit').click();
         assert(await page.locator('#editor').isVisible(), 'The caption icon opens the existing editor');
         assert.equal(await page.locator('#edit-form [name=title]').inputValue(), 'Celá zkouška');
         await page.locator('#edit-cancel').click();
         await page.locator('#recording-11 .recording-toggle').click();
+        assert.equal(await page.locator('#recording-11 .recording-actions .recording-order-controls button').count(), 2, 'Ordering arrows are beside the main recording actions');
+        await shot('recording-expanded-390');
         await page.locator('#recording-11 .recording-actions').getByRole('button', { name: 'Další' }).click();
-        assert.equal(await page.locator('#recording-actions-11 .recording-action-order button').count(), 2, 'Ordering arrows live in their own menu section');
-        assert.equal(await page.locator('#recording-actions-11 .recording-action-edit button[aria-label^="Posunout"]').count(), 0, 'Edit actions contain no ordering arrows');
+        assert.equal(await page.locator('#recording-actions-11 .recording-action-order, #recording-actions-11 .recording-action-edit').count(), 0, 'The actions dialog has no edit or ordering section');
+        assert.equal(await page.locator('#recording-actions-11 .recording-action-files').getByRole('button', { name: 'Přesunout' }).count(), 1, 'Move is grouped with file actions');
         await page.locator('#recording-actions-11').getByRole('button', { name: 'Přejmenovat soubor' }).click();
         assert.equal(await page.locator('#edit-form [name=title]').inputValue(), 'zkouška.wav');
         await page.locator('#edit-form [name=title]').fill('Nový název.wav');

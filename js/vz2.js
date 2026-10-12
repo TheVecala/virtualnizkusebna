@@ -56,8 +56,6 @@
         };
         const fileNames = recording.files.map(fileName).join(', ');
         const file = section('recording-action-files', 'file-download', 'Soubor', fileNames || 'Soubor není dostupný.');
-        const edit = section('recording-action-edit', 'edit', 'Úpravy', 'Změna údajů a umístění.');
-        const order = section('recording-action-order', 'arrows-up-down', 'Pořadí', 'Posunout nahrávku nebo soubor v seznamu.');
         const danger = section('recording-action-danger', 'alert-triangle', 'Odstranění', 'Nevratné nebo destruktivní operace.');
         const footer = node('div', undefined, 'recording-action-footer');
         footer.append(button('Zavřít', () => dialog.close()));
@@ -95,9 +93,9 @@
         const toggle = button('Další', () => { dialog.showModal(); close.focus(); });
         toggle.setAttribute('aria-haspopup', 'dialog'); toggle.setAttribute('aria-controls', dialog.id);
         return {
-            dialog, toggle, fileActions: file.actions, editActions: edit.actions, orderActions: order.actions, dangerActions: danger.actions,
+            dialog, toggle, fileActions: file.actions, dangerActions: danger.actions,
             finish() {
-                [file, edit, order, danger].forEach(group => { if (group.actions.childElementCount) options.append(group.card); });
+                [file, danger].forEach(group => { if (group.actions.childElementCount) options.append(group.card); });
                 document.body.append(dialog);
             }
         };
@@ -396,8 +394,8 @@
         setExpanded(expandedRecordings.has(id));
         toggle.addEventListener('click', () => setExpanded(body.hidden));
         card.append(toggle);
+        const caption = node('div', undefined, 'recording-caption');
         if (r.title || cfg.write && r.can_edit) {
-            const caption = node('div', undefined, 'recording-caption');
             caption.append(node('span', r.title || 'Přidat popisek', r.title ? 'recording-caption-text' : 'recording-caption-text is-empty'));
             if (cfg.write && r.can_edit) {
                 const editCaption = button('✎', () => openEdit(r, 'recording'), 'recording-caption-edit');
@@ -406,8 +404,9 @@
                 editCaption.setAttribute('aria-haspopup', 'dialog'); editCaption.setAttribute('aria-controls', 'editor');
                 caption.append(editCaption);
             }
-            card.append(caption);
         }
+        caption.append(node('small', 'Vložil ' + r.author, 'recording-author vz2-attribution'));
+        card.append(caption);
         const audioState = r.lifecycle === 'active' ? r.audio_state : r.lifecycle;
         const singleFile = r.kind === 'single' ? r.files[0] : null;
         const status = node('p', undefined, 'recording-status');
@@ -418,15 +417,12 @@
         status.dataset.state = audioState;
         const description = node('div', undefined, 'recording-description');
         if (status.textContent) description.append(status);
-        description.append(node('small', 'Vložil ' + r.author, 'vz2-attribution'));
-        body.append(description);
+        if (description.childElementCount) body.append(description);
         if (r.summary) body.append(node('p', r.summary, 'recording-summary'));
         if (r.summary_author) body.append(node('small', 'Souhrn: ' + r.summary_author + (r.summary_editor ? ' · upravil/a ' + r.summary_editor : ''), 'vz2-attribution'));
         const actions = node('div', undefined, 'action-list recording-actions');
         const recordingMenu = recordingActionsDialog(r);
         const fileActions = recordingMenu.fileActions;
-        const editActions = recordingMenu.editActions;
-        const orderActions = recordingMenu.orderActions;
         const dangerActions = recordingMenu.dangerActions;
         let adapter;
         if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions, fileActions);
@@ -448,27 +444,29 @@
             const li = node('li', fileName(f) + (f.url ? '' : ' · ' + state(f.state)));
             if (f.url) fileActions.append(fileLink(f));
             if (cfg.write && r.can_edit) fileActions.append(button(r.files.length > 1 ? 'Přejmenovat soubor: ' + fileName(f) : 'Přejmenovat soubor', () => openEdit(f, 'track', r)));
-            if (cfg.write && cfg.canReorder && r.can_edit && r.files.length > 1) {
-                const row = node('div', undefined, 'recording-order-row');
-                row.append(node('span', fileName(f), 'recording-order-label'));
-                reorderControls(row, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
-                orderActions.append(row);
+            if (r.kind !== 'single') {
+                if (cfg.write && cfg.canReorder && r.can_edit && r.files.length > 1) {
+                    li.classList.add('recording-track-row');
+                    const label = node('span', li.textContent, 'recording-track-label');
+                    li.replaceChildren(label);
+                    const controls = node('div', undefined, 'recording-track-order');
+                    reorderControls(controls, r.files, f, { scope: 'tracks', recording_id: Number(r.id), revision: Number(r.revision) });
+                    li.append(controls);
+                }
+                files.append(li);
             }
-            if (r.kind !== 'single') files.append(li);
         });
         if (files.childElementCount) body.append(files);
-        if (cfg.write && r.can_edit) editActions.append(button('Upravit', () => openEdit(r, 'recording')));
-        moveControl(editActions, r, 'recording');
+        moveControl(fileActions, r, 'recording');
         if (cfg.write && r.can_remove && r.audio_state !== 'deleted') dangerActions.append(button('Odstranit audio', () => remove(r, 'recording'), 'danger'));
         if (cfg.write && cfg.admin) dangerActions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
-        if (cfg.write && cfg.canReorder) {
-            const row = node('div', undefined, 'recording-order-row');
-            row.append(node('span', 'Nahrávka', 'recording-order-label'));
-            reorderControls(row, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
-            orderActions.prepend(row);
-        }
-        if (fileActions.childElementCount || editActions.childElementCount || orderActions.childElementCount || dangerActions.childElementCount) {
+        if (fileActions.childElementCount || dangerActions.childElementCount) {
             recordingMenu.finish(); actions.append(recordingMenu.toggle);
+        }
+        if (cfg.write && cfg.canReorder) {
+            const controls = node('div', undefined, 'recording-order-controls');
+            reorderControls(controls, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
+            actions.append(controls);
         }
         if (actions.childElementCount) body.append(actions);
         if (adapter?.audio) body.append(adapter.audio);

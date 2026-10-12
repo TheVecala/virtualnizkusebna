@@ -42,20 +42,20 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.screenshot({ path: path.join(temp, 'ui-stage2-desktop-collapsed.png') });
         for (const id of ids) await card(id).locator('.recording-toggle').click();
         assert.equal(await expanded(), 3);
+        assert.equal(await card(ids[2]).locator('.recording-track-order button').count(), 4, 'Track order controls stay beside their tracks');
         const restored = await card(ids[0]).evaluate(card => {
             const body = card.querySelector('.recording-body');
-            const description = body.querySelector('.recording-description');
             const children = [...body.children];
             return {
                 duration: card.querySelector('.recording-duration').textContent,
                 directStatus: !!card.querySelector(':scope > .recording-status'),
                 caption: card.querySelector('.recording-caption-text').textContent,
-                author: description.querySelector('.vz2-attribution').textContent,
+                author: card.querySelector('.recording-author').textContent,
                 actionsBeforeAudio: children.indexOf(body.querySelector('.recording-actions')) < children.indexOf(body.querySelector('audio'))
             };
         });
         assert.deepEqual(restored, { duration: '0:10', directStatus: false, caption: 'První záběr', author: 'Vložil Admin', actionsBeforeAudio: true });
-        check(true, 'recordings: short caption stays visible in the card, author and actions remain in the expanded body');
+        check(true, 'recordings: short caption and author stay above the divider; actions remain in the expanded body');
 
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         const audio = card(ids[0]).locator('audio');
@@ -114,6 +114,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.equal(await actionsDialog.getByText('one.wav', { exact: true }).count(), 1, 'File name is displayed as the file section description');
         assert.deepEqual(await actionsDialog.getByRole('link', { name: 'Stáhnout soubor one.wav', exact: true }).allTextContents(), ['Stáhnout']);
         assert.equal(await actionsDialog.locator('.recording-action-files').getByRole('button', { name: 'Přejmenovat soubor', exact: true }).count(), 1);
+        assert.equal(await actionsDialog.locator('.recording-action-files').getByRole('button', { name: 'Přesunout', exact: true }).count(), 1);
         assert.equal(await actions.locator(':scope > button', { hasText: 'Odstranit audio' }).count(), 0, 'Remove audio is not directly visible');
         await actionsDialog.getByRole('button', { name: 'Odstranit audio', exact: true }).waitFor();
         assert.equal(await actions.locator(':scope > button', { hasText: 'Úplně smazat' }).count(), 0, 'Full deletion is not directly visible');
@@ -121,8 +122,9 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await actionsDialog.getByRole('button', { name: 'Kopírovat odkaz na čas', exact: true }).click();
         const link = await page.evaluate(() => navigator.clipboard.readText());
         assert.equal(new URL(link).searchParams.get('recording_id'), String(ids[0]));
-        await menuToggle.click();
-        await actionsDialog.getByRole('button', { name: 'Upravit', exact: true }).click();
+        assert.equal(await actionsDialog.locator('.recording-action-edit, .recording-action-order').count(), 0);
+        assert.equal(await card(ids[0]).locator('.recording-order-controls button').count(), 2);
+        await card(ids[0]).locator('.recording-caption-edit').click();
         await page.locator('#edit-form [name=title]').fill('Přejmenovaný záběr');
         await page.locator('#edit-form').getByRole('button', { name: 'Uložit', exact: true }).click();
         await card(ids[0]).getByText('Přejmenovaný záběr', { exact: true }).waitFor();
