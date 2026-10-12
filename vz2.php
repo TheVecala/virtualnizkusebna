@@ -172,7 +172,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div class="timeline"><output id="looper-time">00:00</output><input id="looper-seek" aria-label="Čas Looperu" type="range" min="0" max="0" step="0.01" value="0"><output id="looper-duration">00:00</output></div>
 <div id="looper-timestamps"></div></section>
 </div></section>
-<div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header">
+<div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header"><h2 id="catalog-heading-mobile">Skladby</h2>
 <?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ Nová skladba</button><?php endif;?>
 <button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
 <h2 id="catalog-heading">Skladby</h2>

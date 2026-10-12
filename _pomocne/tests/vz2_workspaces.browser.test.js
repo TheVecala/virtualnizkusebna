@@ -159,6 +159,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
 
         await page.setViewportSize({ width: 320, height: 900 });
         await switchTo('songs');
+        await page.locator('#catalog-picker').click();
+        const compactCatalog = await page.locator('#catalog-dialog').boundingBox();
+        const compactHeading = await page.locator('#catalog-heading-mobile').boundingBox();
+        const compactCreate = await page.locator('#create-collection-open').boundingBox();
+        const compactClose = await page.locator('#catalog-close').boundingBox();
+        assert.equal(await page.locator('#catalog-heading-mobile').textContent(), 'Skladby');
+        assert(compactCatalog.width < 320 - 16 && compactClose.x + compactClose.width <= compactCatalog.x + compactCatalog.width, 'Catalog header fits compactly at 320 px');
+        assert(Math.abs(compactHeading.y + compactHeading.height / 2 - compactCreate.y - compactCreate.height / 2) < 2, 'Song title and creation button share one row at 320 px');
+        await page.locator('#catalog-close').click();
+
+        await page.setViewportSize({ width: 320, height: 900 });
+        await switchTo('songs');
         for (const panel of ['lyrics', 'tablature', 'discussion']) {
             await page.locator(`[data-mobile-panel=${panel}]`).click();
             assert(await page.locator(`#panel-${panel}`).isVisible());
@@ -269,6 +281,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#catalog-picker').getAttribute('aria-expanded'), 'true');
         const title = await page.locator('#catalog-picker').boundingBox(), dropdown = await page.locator('#catalog-dialog').boundingBox();
         assert(dropdown.y >= title.y + title.height, 'Catalog drops down from the large title');
+        const heading = await page.locator('#catalog-heading-mobile').boundingBox(), create = await page.locator('#create-collection-open').boundingBox();
+        assert(Math.abs(heading.y + heading.height / 2 - create.y - create.height / 2) < 2, 'Catalog title and creation button share one row');
+        assert(dropdown.width < 390 - 16, 'Mobile catalog uses less than the full viewport width');
+        await shot('catalog-rehearsals-390');
         assert.equal(await page.locator('#collections .collection:visible').count(), 2);
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 8. října' }).click();
         assert.equal(await page.locator('#mobile-panels button:visible').count(), 3);

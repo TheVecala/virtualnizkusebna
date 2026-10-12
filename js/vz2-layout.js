@@ -134,6 +134,7 @@
         document.querySelectorAll('[data-workspace-target]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.workspaceTarget === activeWorkspace)));
         const label = collectionKind === 'rehearsal' ? 'Zkoušky' : 'Skladby';
         $('catalog-heading').textContent = $('collection-kind-label').textContent = label;
+        $('catalog-heading-mobile').textContent = label;
         $('collection-kind-inline').textContent = collectionKind === 'rehearsal' ? 'Zkouška:' : 'Skladba:';
         $('catalog-dialog').setAttribute('aria-label', label);
         $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
