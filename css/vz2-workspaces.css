@@ -11,8 +11,8 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
 .workspace-heading { min-width: 0; flex: 1; }
 #collection-kind-label { display: block; color: var(--vz-muted); font-size: 10px; }
 #collection-title { display: block; width: 100%; font-size: 20px; margin: 0; white-space: normal; }
-#catalog-picker { display: flex; align-items: center; gap: 12px; max-width: 100%; min-height: 38px; padding: 0; font-size: inherit; font-weight: 700; }
-#collection-title-name { min-width: 0; }
+#catalog-picker { display: flex; align-items: center; gap: 12px; max-width: 100%; min-height: 38px; padding: 0; overflow: visible; font-size: inherit; font-weight: 700; white-space: normal; }
+#collection-title-name { min-width: 0; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
 .catalog-chevron { display: grid; place-items: center; flex: 0 0 28px; height: 28px; border: 1px solid #6b713d; border-radius: 5px; background: var(--vz-primary-soft); color: var(--vz-primary-hover); font-size: 22px; line-height: 1; }
 #catalog-picker[aria-expanded=true] .catalog-chevron { transform: rotate(180deg); }
 #desktop-panels { margin: 0; flex: 0 0 auto; }

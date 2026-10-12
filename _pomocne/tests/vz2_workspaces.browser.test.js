@@ -116,6 +116,27 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         }
         console.log('PASS: all four workspaces at 320–1440 px, no document overflow, controls above the character navigation');
 
+        for (const width of [390, 1200]) {
+            await page.setViewportSize({ width, height: 900 });
+            await switchTo('rehearsals');
+            const titleLayout = await page.evaluate(() => {
+                const name = document.querySelector('#collection-title-name');
+                const picker = document.querySelector('#catalog-picker');
+                const chevron = picker.querySelector('.catalog-chevron');
+                const original = name.textContent;
+                name.textContent = 'S120 — zkouška s delším názvem složky';
+                const nameBox = name.getBoundingClientRect();
+                const pickerBox = picker.getBoundingClientRect();
+                const chevronBox = chevron.getBoundingClientRect();
+                const layout = { clipped: name.scrollWidth > name.clientWidth + 1 || name.scrollHeight > name.clientHeight + 1,
+                    chevronVisible: chevronBox.right <= pickerBox.right + 1 && chevronBox.left >= nameBox.right - 1 };
+                name.textContent = original;
+                return layout;
+            });
+            assert(!titleLayout.clipped && titleLayout.chevronVisible, `Collection title or picker arrow is clipped at ${width}`);
+        }
+        console.log('PASS: long collection names remain readable with the picker arrow at narrow widths');
+
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('ideas');
         await page.locator('#ideas-write textarea').fill('Rozepsaný nápad');
