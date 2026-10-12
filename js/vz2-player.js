@@ -285,7 +285,7 @@
         ctx.strokeStyle = '#e2e4e1'; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
     }
     shell.addEventListener('click', e => {
-        if (mode !== 'empty' || !e.target.closest('.looper-header-controls > button')) return;
+        if (mode !== 'empty') return;
         e.preventDefault(); e.stopImmediatePropagation();
         if (!$('player-help-dialog').open) $('player-help-dialog').showModal();
     }, true);

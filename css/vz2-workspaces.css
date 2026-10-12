@@ -11,6 +11,8 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
 #player-title:not(:disabled):hover { color: var(--vz-primary-hover); text-decoration: underline; text-underline-offset: 3px; }
 #player-title:disabled { opacity: 1; cursor: default; }
 #player-shell[data-mode=empty] #player-title { display: none; }
+#player-shell[data-mode=empty] { cursor: pointer; }
+.player-emblem path { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
 .workspace-header { display: flex; flex: 0 0 auto; align-items: center; gap: 12px; padding: 8px 10px; flex-wrap: nowrap; }
 .workspace-header > .panel-fullscreen-button { margin-left: 0; }
 .workspace-heading { min-width: 0; flex: 1; }
@@ -108,11 +110,11 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     #mobile-panels button[aria-pressed=true] { color: #151708; background: var(--vz-primary); border-color: var(--vz-primary); }
     #player-shell[data-mode=looper]:not(.player-fullscreen) { max-height: 46dvh; min-height: 0; }
     #player-shell[data-mode=empty] .player-header { flex-wrap: nowrap; gap: 6px; padding: 6px 8px; }
-    #player-shell[data-mode=empty] .player-ident { flex: 0 0 auto; flex-direction: row; align-items: center; min-height: 0; padding-left: 0; }
-    #player-shell[data-mode=empty] .player-emblem { display: none; }
+    #player-shell[data-mode=empty] .player-ident { flex: 0 0 auto; flex-direction: row; align-items: center; min-height: 0; padding-left: 0; gap: 4px; }
+    #player-shell[data-mode=empty] .player-emblem { position: static; display: block; transform: none; flex: 0 0 30px; width: 30px; height: 30px; }
     #player-shell[data-mode=empty] #player-mode { white-space: nowrap; font-size: 12px; }
     #player-shell[data-mode=empty] .looper-header-controls { flex: 1 1 auto; width: auto; min-width: 0; flex-wrap: nowrap; justify-content: flex-end; gap: 2px; padding-top: 0; border-top: 0; }
-    #player-shell[data-mode=empty] .looper-header-controls > button { flex: 0 1 38px; width: 38px; min-width: 0; height: 38px; min-height: 38px; padding: 0; }
+    #player-shell[data-mode=empty] .looper-header-controls > button { flex: 0 1 clamp(32px, 9vw, 38px); width: clamp(32px, 9vw, 38px); min-width: 0; height: clamp(32px, 9vw, 38px); min-height: clamp(32px, 9vw, 38px); padding: 0; }
     #player-shell:not(.player-fullscreen) #player-body { min-height: 0; overflow-y: auto; }
     #catalog-dialog { inset: var(--catalog-top, 120px) 8px auto; width: fit-content; min-width: min(270px, calc(100vw - 16px)); max-width: min(340px, calc(100vw - 16px)); max-height: var(--catalog-height, 60dvh); }
     #catalog-dialog #sidebar { max-height: var(--catalog-height, 60dvh); }

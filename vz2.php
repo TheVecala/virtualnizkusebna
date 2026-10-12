@@ -148,7 +148,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <main id="app-shell" aria-busy="true"><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
 <section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
-<div class="player-header"><div class="player-ident"><i class="player-emblem ti ti-wave-sine" aria-hidden="true"></i><strong id="player-mode">Přehrávač</strong><button id="player-title" type="button" title="Přejít ke zdroji nahrávky" disabled></button></div>
+<div class="player-header"><div class="player-ident"><svg class="player-emblem" viewBox="0 0 36 36" aria-hidden="true"><path d="M4 18c5 0 5-10 10-10s5 20 10 20 5-10 8-10"/></svg><strong id="player-mode">Přehrávač</strong><button id="player-title" type="button" title="Přejít ke zdroji nahrávky" disabled></button></div>
 <div class="looper-header-controls" role="group" aria-label="Ovládání Looperu">
 <button id="looper-restart" type="button" title="Na začátek" aria-label="Na začátek"><i class="ti ti-player-track-prev" aria-hidden="true"></i></button>
 <button id="looper-back" type="button" title="Zpět o 5 sekund" aria-label="Zpět o 5 sekund"><i class="ti ti-player-skip-back" aria-hidden="true"></i></button>

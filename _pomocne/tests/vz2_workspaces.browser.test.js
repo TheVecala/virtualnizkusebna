@@ -94,6 +94,21 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             });
             assert(emptyPlayer.sameRow && emptyPlayer.inside && !emptyPlayer.overflow && emptyPlayer.height < 70, `Empty player fits in one row at ${width}: ${JSON.stringify(emptyPlayer)}`);
         }
+        await page.setViewportSize({ width: 320, height: 900 });
+        assert(await page.locator('#player-shell .player-emblem').isVisible(), 'The empty player shows its logo');
+        await page.locator('#player-mode').click();
+        assert(await page.locator('#player-help-dialog').isVisible(), 'Clicking the empty player title opens help');
+        await page.locator('#player-help-close').click();
+        await page.locator('#player-shell .player-emblem').click();
+        assert(await page.locator('#player-help-dialog').isVisible(), 'Clicking the player logo opens help');
+        await page.locator('#player-help-close').click();
+        await page.locator('#player-shell').click({ position: { x: 2, y: 2 } });
+        assert(await page.locator('#player-help-dialog').isVisible(), 'Clicking empty player background opens help');
+        await page.locator('#player-help-close').click();
+        await page.locator('#looper-play').focus();
+        await page.keyboard.press('Enter');
+        assert(await page.locator('#player-help-dialog').isVisible(), 'Empty player controls still open help by keyboard');
+        await page.locator('#player-help-close').click();
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.waitForFunction(() => document.querySelectorAll('#content-area > .panel:not([hidden])').length === 3);
         const playerBounds = await page.locator('#player-shell').boundingBox(), sidebarBounds = await page.locator('#sidebar').boundingBox();
