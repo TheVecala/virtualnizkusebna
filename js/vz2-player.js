@@ -91,7 +91,7 @@
     }
     function resetShell() {
         exitFullscreen(); mode = 'empty'; id = null; collapsed = false; mixerPending = false;
-        $('player-title').disabled = true; $('player-title').textContent = 'Vyberte nahrávku'; $('player-title').title = ''; $('looper-wave-name').textContent = '';
+        $('player-title').disabled = true; $('player-title').textContent = ''; $('player-title').title = ''; $('looper-wave-name').textContent = '';
         $('player-options').open = false; looperMenu.open = false; layout();
     }
     function closeLooper() {

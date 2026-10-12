@@ -82,6 +82,20 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     try {
         await page.goto('http://vz2-workspaces.test/index.php?v=2'); await ready();
         assert.equal(await page.locator('#content-area > .panel:visible').count(), 3);
+        assert.equal(await page.locator('#player-title').textContent(), '');
+        for (const width of [320, 390, 767, 1440]) {
+            await page.setViewportSize({ width, height: 900 });
+            const emptyPlayer = await page.evaluate(() => {
+                const shell = document.querySelector('#player-shell').getBoundingClientRect();
+                const label = document.querySelector('#player-mode').getBoundingClientRect();
+                const controls = document.querySelector('.looper-header-controls').getBoundingClientRect();
+                return { height: shell.height, sameRow: Math.abs(label.y + label.height / 2 - controls.y - controls.height / 2) < 3,
+                    inside: controls.right <= shell.right - 1, overflow: document.documentElement.scrollWidth > innerWidth + 1 };
+            });
+            assert(emptyPlayer.sameRow && emptyPlayer.inside && !emptyPlayer.overflow && emptyPlayer.height < 70, `Empty player fits in one row at ${width}: ${JSON.stringify(emptyPlayer)}`);
+        }
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.waitForFunction(() => document.querySelectorAll('#content-area > .panel:not([hidden])').length === 3);
         const playerBounds = await page.locator('#player-shell').boundingBox(), sidebarBounds = await page.locator('#sidebar').boundingBox();
         assert(sidebarBounds.y >= playerBounds.y + playerBounds.height, 'The catalog starts below the global player');
         await page.locator('#tablature-content').getByRole('button', { name: 'Vytvořit mapu', exact: true }).click();
