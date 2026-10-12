@@ -110,9 +110,8 @@
         updateFullscreenButton($('panel-lyrics'), fullscreenPanel === $('panel-lyrics'));
         document.querySelectorAll('[data-desktop-panel="lyrics"], [data-mobile-panel="lyrics"]').forEach(control => {
             const label = collectionKind === 'rehearsal' ? 'Zápis' : 'Text';
-            const text = control.querySelector('.section-button-label, .section-button-label-mobile');
+            const text = control.querySelector('.section-button-label');
             if (text) text.textContent = label;
-            else control.textContent = label;
             control.setAttribute('aria-label', panelName('lyrics'));
             control.title = panelName('lyrics');
         });
@@ -137,16 +136,12 @@
         $('catalog-heading').textContent = $('collection-kind-label').textContent = label;
         $('catalog-dialog').setAttribute('aria-label', label);
         $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
-        const mobilePicker = $('mobile-panel-picker');
-        mobilePicker.open = false;
-        mobilePicker.hidden = !collection || !mobile.matches;
+        const mobilePanels = $('mobile-panels');
+        mobilePanels.hidden = !collection || !mobile.matches;
         if (collection && mobile.matches) {
             const header = $('panel-' + state.mobile).querySelector('.panel-header');
-            if (mobilePicker.parentElement !== header) header.prepend(mobilePicker);
-            $('mobile-panel-name').textContent = panelName(state.mobile);
-            $('mobile-panel-trigger').querySelector('use').setAttribute('href', '#section-icon-' + state.mobile);
+            if (mobilePanels.parentElement !== header) header.prepend(mobilePanels);
         }
-        $('mobile-panels').hidden = !collection;
         // Move the existing controls, preserving values and listeners at every breakpoint.
         moveControls('desktop-panels', 'sidebar');
         moveControls('history-controls', mobile.matches && fullscreenPanel?.id !== 'history-workspace' ? 'mobile-context' : 'history-controls-slot');
@@ -200,17 +195,8 @@
     }));
     document.querySelectorAll('[data-mobile-panel]').forEach(b => b.addEventListener('click', async () => {
         state.mobile = b.dataset.mobilePanel; save('mobile'); apply();
-        $('mobile-panel-trigger').focus({ preventScroll: true });
+        b.focus({ preventScroll: true });
     }));
-    document.addEventListener('click', event => {
-        if (!event.target.closest('#mobile-panel-picker')) $('mobile-panel-picker').open = false;
-    });
-    document.addEventListener('keydown', event => {
-        if (event.key !== 'Escape' || !$('mobile-panel-picker').open) return;
-        $('mobile-panel-picker').open = false;
-        $('mobile-panel-trigger').focus({ preventScroll: true });
-        event.preventDefault();
-    });
     $('catalog-picker').addEventListener('click', openCatalog);
     $('catalog-close').addEventListener('click', closeCatalog);
     $('catalog-dialog').addEventListener('click', e => {

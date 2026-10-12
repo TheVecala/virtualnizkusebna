@@ -110,7 +110,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 if (width < 768) {
                     if (workspace === 'songs' || workspace === 'rehearsals') {
                         assert.equal(await page.locator('#mobile-context').isVisible(), false);
-                        assert(await page.locator('#mobile-panel-picker').isVisible());
+                        assert(await page.locator('#mobile-panels').isVisible());
                         assert(geometry.dockHeight < 80, `${workspace}: mobile dock should contain only main navigation`);
                     } else {
                         assert(Math.abs(geometry.controls - geometry.nav) <= 1);
@@ -143,18 +143,28 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         }
         console.log('PASS: long collection names remain readable with the picker arrow on mobile');
 
+        await page.setViewportSize({ width: 320, height: 900 });
+        await switchTo('songs');
+        for (const panel of ['lyrics', 'tablature', 'discussion']) {
+            await page.locator(`[data-mobile-panel=${panel}]`).click();
+            assert(await page.locator(`#panel-${panel}`).isVisible());
+            const fit = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1,
+                iconWidth: document.querySelector('#mobile-panels button').getBoundingClientRect().width,
+                headerWidth: document.querySelector('#mobile-panels').getBoundingClientRect().width,
+                panelWidth: document.querySelector('#content-area > .panel:not([hidden])').getBoundingClientRect().width }));
+            assert(!fit.overflow && fit.iconWidth >= 40 && fit.headerWidth < fit.panelWidth, `${panel}: section icons should fit at 320 px`);
+            if (panel === 'tablature') await shot('songs-map-320');
+        }
+        await page.locator('[data-mobile-panel=recordings]').click();
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('songs');
-        await page.locator('#mobile-panel-trigger').click();
         assert.equal(await page.locator('#mobile-panels button:visible').count(), 4);
-        await shot('mobile-panel-menu-390');
         await page.locator('[data-mobile-panel=tablature]').click();
         assert(await page.locator('#panel-tablature').isVisible());
-        assert.equal(await page.locator('#mobile-panel-name').textContent(), 'Mapa skladby');
-        assert.equal(await page.locator('#mobile-panel-picker').getAttribute('open'), null);
-        await page.locator('#mobile-panel-trigger').click();
+        assert.equal(await page.locator('#mobile-panels').evaluate(node => node.parentElement.closest('.panel').id), 'panel-tablature');
+        assert.equal(await page.locator('#mobile-panels [data-mobile-panel=tablature]').getAttribute('aria-pressed'), 'true');
         await page.locator('[data-mobile-panel=recordings]').click();
-        console.log('PASS: mobile panel selector opens from the active panel header and frees the bottom dock');
+        console.log('PASS: mobile section icons switch panels in one tap and free the bottom dock');
 
         await page.setViewportSize({ width: 1200, height: 900 });
         assert.equal(await page.locator('#catalog-search').count(), 0);
@@ -235,7 +245,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(dropdown.y >= title.y + title.height, 'Catalog drops down from the large title');
         assert.equal(await page.locator('#collections .collection:visible').count(), 2);
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 8. října' }).click();
-        await page.locator('#mobile-panel-trigger').click();
+        assert.equal(await page.locator('#mobile-panels button:visible').count(), 3);
         await page.locator('[data-mobile-panel=recordings]').click();
         await page.locator('#recording-11 .recording-toggle').click();
         await page.locator('#recording-11').getByRole('button', { name: 'Otevřít', exact: true }).click();
