@@ -105,17 +105,17 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             for (const workspace of ['songs', 'rehearsals', 'history', 'ideas']) {
                 await switchTo(workspace);
                 if (workspace === 'history') await page.locator('.history-table').waitFor();
-                const geometry = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1, height: document.documentElement.scrollHeight > innerHeight + 1, controls: document.querySelector('#mobile-context').getBoundingClientRect().bottom, nav: document.querySelector('#bottom-nav').getBoundingClientRect().top, dockHeight: document.querySelector('#mobile-dock').getBoundingClientRect().height }));
+                const geometry = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1, height: document.documentElement.scrollHeight > innerHeight + 1, dockHeight: document.querySelector('#mobile-dock').getBoundingClientRect().height }));
                 assert(!geometry.overflow && !geometry.height, `${workspace}: viewport overflow at ${width}`);
                 if (width < 768) {
-                    if (workspace === 'songs' || workspace === 'rehearsals') {
-                        assert.equal(await page.locator('#mobile-context').isVisible(), false);
-                        assert(await page.locator('#mobile-panels').isVisible());
-                        assert(geometry.dockHeight < 80, `${workspace}: mobile dock should contain only main navigation`);
-                    } else {
-                        assert(Math.abs(geometry.controls - geometry.nav) <= 1);
-                        assert.equal(await page.locator('#mobile-context > :visible').count(), 1);
+                    if (workspace === 'songs' || workspace === 'rehearsals') assert(await page.locator('#mobile-panels').isVisible());
+                    else {
+                        const header = workspace === 'history' ? '#history-workspace .workspace-header' : '#ideas-workspace .workspace-header';
+                        const controls = workspace === 'history' ? '#history-controls' : '#ideas-controls';
+                        const headerBox = await page.locator(header).boundingBox(), controlsBox = await page.locator(controls).boundingBox();
+                        assert(controlsBox.y >= headerBox.y && controlsBox.y + controlsBox.height <= headerBox.y + headerBox.height + 1, `${workspace}: controls fit in one header row`);
                     }
+                    assert(geometry.dockHeight < 80, `${workspace}: mobile dock should contain only main navigation`);
                 }
                 if (width === 390 || width === 1440) await shot(`${workspace}-${width}`);
             }
@@ -224,9 +224,14 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('history');
         await page.locator('#history-orientation').click(); await page.locator('#history-audio-filter').check();
         await page.locator('#history-filter summary').click();
-        const popup = await page.locator('.history-filter-menu').boundingBox(), footer = await page.locator('#mobile-context').boundingBox();
-        assert(popup.y + popup.height < footer.y, 'Filter opens above the context bar');
+        const popup = await page.locator('.history-filter-menu').boundingBox(), header = await page.locator('#history-workspace .workspace-header').boundingBox(), footer = await page.locator('#bottom-nav').boundingBox();
+        assert(popup.y >= header.y + header.height - 1 && popup.y + popup.height < footer.y, `Filter opens below the header and above the main navigation: ${JSON.stringify({popup, header, footer})}`);
+        assert(popup.x >= 0 && popup.x + popup.width <= 390, 'Filter fits inside the mobile viewport');
         await page.locator('#history-song-filter').selectOption('1');
+        await page.locator('#history-options summary').click();
+        const optionsMenu = await page.locator('#history-menu').boundingBox();
+        assert(optionsMenu.x >= 0 && optionsMenu.x + optionsMenu.width <= 390, 'Matrix options fit inside the mobile viewport');
+        await page.locator('#history-options summary').click();
         await switchTo('songs'); await switchTo('history');
         assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
         assert(await page.locator('#history-audio-filter').isChecked());
@@ -234,7 +239,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-workspace .panel-fullscreen-button').click();
         await page.locator('#history-controls-slot #history-orientation').waitFor({ state: 'visible' });
         await page.keyboard.press('Escape');
-        assert(await page.locator('#mobile-context #history-orientation').isVisible());
+        assert(await page.locator('#history-controls-slot #history-orientation').isVisible());
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.locator('#history-controls-slot #history-orientation').waitFor({ state: 'visible' });
         assert(await page.locator('#history-audio-filter').isChecked());

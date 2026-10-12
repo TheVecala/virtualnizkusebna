@@ -144,8 +144,8 @@
         }
         // Move the existing controls, preserving values and listeners at every breakpoint.
         moveControls('desktop-panels', 'sidebar');
-        moveControls('history-controls', mobile.matches && fullscreenPanel?.id !== 'history-workspace' ? 'mobile-context' : 'history-controls-slot');
-        moveControls('ideas-controls', mobile.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'mobile-context' : 'ideas-controls-slot');
+        moveControls('history-controls', 'history-controls-slot');
+        moveControls('ideas-controls', 'ideas-controls-slot');
         $('history-controls').hidden = activeWorkspace !== 'history';
         $('ideas-controls').hidden = activeWorkspace !== 'ideas';
         document.querySelectorAll('[data-idea-section]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.ideaSection === ideaSection)));
