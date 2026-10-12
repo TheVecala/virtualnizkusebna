@@ -87,13 +87,16 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     #collection-header { padding: 7px 12px 10px; border: 0; }
     #collection-title { font-size: 22px; line-height: 1.35; }
     #catalog-picker { width: fit-content; justify-content: flex-start; min-height: 40px; }
-    .panel[data-panel] > .panel-header { flex-wrap: wrap; gap: 4px; }
+    .panel[data-panel] > .panel-header { flex-wrap: nowrap; gap: 4px; }
     .panel[data-panel] > .panel-header > h2,
     .panel[data-panel] > .panel-header > .panel-section-icon { display: none; }
-    #mobile-panels:not([hidden]) { display: grid; grid-template-columns: repeat(4, 40px); flex: 0 0 auto; gap: 3px; width: max-content; padding: 3px; border: 1px solid #6b713d; border-radius: 7px; background: var(--vz-primary-soft); }
-    body[data-collection-kind=rehearsal] #mobile-panels:not([hidden]) { grid-template-columns: repeat(3, 40px); }
-    #mobile-panels button { display: grid; place-items: center; width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; }
-    #mobile-panels button .section-icon { width: 22px; height: 22px; }
+    .panel[data-panel] > .panel-header > .panel-header-actions { flex: 1 1 0; min-width: 0; margin-left: 0; white-space: nowrap; scrollbar-width: thin; }
+    .panel[data-panel] > .panel-header > .panel-header-actions > * { flex-shrink: 0; }
+    .panel[data-panel] > .panel-header > .panel-fullscreen-button { margin-left: 0; }
+    #mobile-panels:not([hidden]) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); flex: 0 0 clamp(140px, 40vw, 176px); gap: 3px; width: clamp(140px, 40vw, 176px); padding: 3px; border: 1px solid #6b713d; border-radius: 7px; background: var(--vz-primary-soft); }
+    body[data-collection-kind=rehearsal] #mobile-panels:not([hidden]) { grid-template-columns: repeat(3, minmax(0, 1fr)); flex-basis: clamp(108px, 32vw, 138px); width: clamp(108px, 32vw, 138px); }
+    #mobile-panels button { display: grid; place-items: center; min-width: 0; height: 40px; min-height: 40px; padding: 0; }
+    #mobile-panels button .section-icon { width: 20px; height: 20px; }
     #mobile-panels button[aria-pressed=true] { color: #151708; background: var(--vz-primary); border-color: var(--vz-primary); }
     #player-shell[data-mode=looper]:not(.player-fullscreen) { max-height: 46dvh; min-height: 0; }
     #player-shell:not(.player-fullscreen) #player-body { min-height: 0; overflow-y: auto; }

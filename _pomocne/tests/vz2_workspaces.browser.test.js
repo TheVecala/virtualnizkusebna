@@ -148,11 +148,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         for (const panel of ['lyrics', 'tablature', 'discussion']) {
             await page.locator(`[data-mobile-panel=${panel}]`).click();
             assert(await page.locator(`#panel-${panel}`).isVisible());
-            const fit = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1,
-                iconWidth: document.querySelector('#mobile-panels button').getBoundingClientRect().width,
-                headerWidth: document.querySelector('#mobile-panels').getBoundingClientRect().width,
-                panelWidth: document.querySelector('#content-area > .panel:not([hidden])').getBoundingClientRect().width }));
-            assert(!fit.overflow && fit.iconWidth >= 40 && fit.headerWidth < fit.panelWidth, `${panel}: section icons should fit at 320 px`);
+            const fit = await page.evaluate(() => {
+                const header = document.querySelector('#content-area > .panel:not([hidden]) > .panel-header');
+                const icons = document.querySelector('#mobile-panels').getBoundingClientRect();
+                const actions = header.querySelector('.panel-header-actions').getBoundingClientRect();
+                const fullscreen = header.querySelector('.panel-fullscreen-button').getBoundingClientRect();
+                return { overflow: document.documentElement.scrollWidth > innerWidth + 1,
+                    iconWidth: document.querySelector('#mobile-panels button').getBoundingClientRect().width,
+                    headerHeight: header.getBoundingClientRect().height,
+                    oneRow: Math.abs((icons.top + icons.bottom) / 2 - (actions.top + actions.bottom) / 2) < 6 &&
+                        Math.abs((icons.top + icons.bottom) / 2 - (fullscreen.top + fullscreen.bottom) / 2) < 6 };
+            });
+            assert(!fit.overflow && fit.iconWidth >= 28 && fit.headerHeight < 65 && fit.oneRow, `${panel}: section header should stay on one row at 320 px`);
             if (panel === 'tablature') await shot('songs-map-320');
         }
         await page.locator('[data-mobile-panel=recordings]').click();
