@@ -58,12 +58,9 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     #workspace-navigation { flex: 1 1 auto; min-width: 0; justify-content: center; }
     #workspace-navigation > button { padding-inline: 10px; }
     body[data-workspace=songs] #songs-subnav,
-    body[data-workspace=rehearsals] #rehearsals-subnav,
-    body[data-workspace=history] #history-subnav,
-    body[data-workspace=ideas] #ideas-subnav { display: flex; align-items: center; min-width: 0; margin: 0 5px; padding-left: 10px; border-left: 1px solid var(--vz-primary); }
+    body[data-workspace=rehearsals] #rehearsals-subnav { display: flex; align-items: center; min-width: 0; margin: 0 5px; padding-left: 10px; border-left: 1px solid var(--vz-primary); }
     #workspace-navigation .workspace-controls { gap: 4px; }
     #workspace-navigation .workspace-controls button { padding-inline: 8px; }
-    #workspace-navigation #history-controls .history-check { padding-inline: 6px; }
     #collection-header { display: none; }
     #topbar .topbar-account { max-width: 110px; }
 }

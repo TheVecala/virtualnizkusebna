@@ -142,12 +142,12 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         for (const [workspace, control, slot] of [
             ['songs', '#desktop-panels', 'songs-subnav'],
             ['rehearsals', '#desktop-panels', 'rehearsals-subnav'],
-            ['history', '#history-controls', 'history-subnav'],
-            ['ideas', '#ideas-controls', 'ideas-subnav']
+            ['history', '#history-controls', 'history-controls-slot'],
+            ['ideas', '#ideas-controls', 'ideas-controls-slot']
         ]) {
             await switchTo(workspace);
             assert.equal(await page.locator(control).evaluate(node => node.parentElement.id), slot);
-            assert(await page.locator(control).isVisible(), `${workspace} controls should be visible in the top navigation`);
+            assert(await page.locator(control).isVisible(), `${workspace} controls should be visible`);
             assert.equal(await page.locator('#collection-header').isVisible(), false);
             const topbar = await page.evaluate(() => {
                 const navigation = document.querySelector('#workspace-navigation');
@@ -157,7 +157,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             });
             assert(topbar.fits && topbar.separate, `${workspace} submenu overlaps the desktop topbar at 1200 px`);
         }
-        console.log('PASS: desktop submenus follow their active workspace without a collection header or catalog search');
+        console.log('PASS: collection controls follow the desktop navigation; matrix and ideas controls stay in their headers');
 
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('ideas');
@@ -187,7 +187,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.keyboard.press('Escape');
         assert(await page.locator('#mobile-context #history-orientation').isVisible());
         await page.setViewportSize({ width: 1440, height: 900 });
-        await page.locator('#history-subnav #history-orientation').waitFor({ state: 'visible' });
+        await page.locator('#history-controls-slot #history-orientation').waitFor({ state: 'visible' });
         assert(await page.locator('#history-audio-filter').isChecked());
         await page.locator('#history-filter summary').click();
         assert(await page.locator('#history-song-filter').isVisible(), 'Desktop song filter opens inside its details menu');

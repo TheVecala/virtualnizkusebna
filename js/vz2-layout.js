@@ -136,8 +136,8 @@
         $('mobile-panels').hidden = !collection;
         // Move the existing controls, preserving values and listeners at every breakpoint.
         moveControls('desktop-panels', collectionKind === 'rehearsal' ? 'rehearsals-subnav' : 'songs-subnav');
-        moveControls('history-controls', mobile.matches && fullscreenPanel?.id !== 'history-workspace' ? 'mobile-context' : desktop.matches && fullscreenPanel?.id !== 'history-workspace' ? 'history-subnav' : 'history-controls-slot');
-        moveControls('ideas-controls', mobile.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'mobile-context' : desktop.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'ideas-subnav' : 'ideas-controls-slot');
+        moveControls('history-controls', mobile.matches && fullscreenPanel?.id !== 'history-workspace' ? 'mobile-context' : 'history-controls-slot');
+        moveControls('ideas-controls', mobile.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'mobile-context' : 'ideas-controls-slot');
         $('history-controls').hidden = activeWorkspace !== 'history';
         $('ideas-controls').hidden = activeWorkspace !== 'ideas';
         document.querySelectorAll('[data-idea-section]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.ideaSection === ideaSection)));
