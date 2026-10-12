@@ -80,7 +80,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             return json({ ok: true, can_create: true, thread: { id: 9, global_key: query.scope === 'ideas' ? 'ideas' : null, title: 'Diskuse' }, posts: [], next_before: null });
         }
         if (url.pathname === '/php/ajax/vz2_history.php') return json(matrix);
-        if (url.pathname === '/php/ajax/vz2_timestamps.php') return json({ ok: true, entries: [], duration_ms: 180000, timestamps_revision: 1 });
+        if (url.pathname === '/php/ajax/vz2_timestamps.php') return json({ ok: true, recording_id: Number(url.searchParams.get('recording_id')), entries: [], duration_ms: 180000, timestamps_revision: 1, can_create: true, source_filename: 'zkouška.wav' });
         if (url.pathname === '/php/ajax/vz2_peaks.php') return json({ ok: true, peaks: [0.1, 0.6, 0.2, 0.8, 0.1], duration_ms: 180000 });
         return route.fulfill({ status: 204, body: '' });
     });
@@ -350,6 +350,14 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         if (await page.locator('#recording-actions-11').isVisible()) await page.locator('#recording-actions-11 .modal-close').click();
         await page.locator('#recording-11').getByRole('button', { name: 'Otevřít', exact: true }).click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
+        await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
+        const editorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
+        const playerBox = await page.locator('#player-shell').boundingBox();
+        assert(editorBox.y >= playerBox.y + playerBox.height, 'The mobile timestamp editor opens below the player');
+        assert(editorBox.y + editorBox.height <= 844, 'The mobile timestamp editor fits in the viewport');
+        assert(await page.locator('.vz2-timestamp-editor [name=body]').isVisible(), 'The timestamp input is visible');
+        await shot('timestamp-editor-390');
+        await page.locator('.vz2-timestamp-editor .ts-close').click();
         await page.locator('#looper-play').click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.playing);
         await page.evaluate(() => window.testAudio = document.getElementById('looper-audio'));

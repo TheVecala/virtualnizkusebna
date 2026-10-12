@@ -202,9 +202,9 @@
             }
         });
         editor.addEventListener('close', () => {
-            editor.closest('#player-shell')?.classList.remove('ts-creating');
+            document.getElementById('player-shell')?.classList.remove('ts-creating');
             editor.classList.remove('ts-keyboard-open');
-            editor.style.removeProperty('--ts-inline-height');
+            editor.style.removeProperty('--ts-inline-height'); editor.style.removeProperty('--ts-inline-top');
             if (!editor.open && activeEditor?.restoreDrawer && !activeEditor.panel.dead) activeEditor.panel.openDrawer?.();
         });
         editor.addEventListener('focusin', positionInlineEditor);
@@ -253,17 +253,20 @@
         if (!editor?.open || !editor.classList.contains('ts-inline')) return;
         const viewport = window.visualViewport;
         const visibleBottom = (viewport?.offsetTop || 0) + (viewport?.height || innerHeight);
+        const playerBottom = document.getElementById('player-shell')?.getBoundingClientRect().bottom || 0;
+        const top = Math.max(0, Math.min(playerBottom + 8, visibleBottom - 180));
         const covered = Math.max(0, innerHeight - visibleBottom);
         const typing = editor.contains(document.activeElement) && document.activeElement.matches('input[name=body],input[name=time]');
         editor.classList.toggle('ts-keyboard-open', covered > 120 || typing);
-        editor.style.setProperty('--ts-inline-height', Math.max(100, visibleBottom - editor.getBoundingClientRect().top - 8) + 'px');
+        editor.style.setProperty('--ts-inline-top', top + 'px');
+        editor.style.setProperty('--ts-inline-height', Math.max(100, visibleBottom - top - 8) + 'px');
     }
     function openEditor(panel, row) {
         ensureEditor();
         const restoreDrawer = editor.open && activeEditor?.panel === panel && activeEditor.restoreDrawer;
         if (editor.open) {
             if (activeEditor?.busy || activeEditor?.panel.quickBusy || !confirm('Zahodit rozepsanou časovou značku?')) return;
-            editor.closest('#player-shell')?.classList.remove('ts-creating');
+            document.getElementById('player-shell')?.classList.remove('ts-creating');
             editor.close();
         }
         const inline = !row && matchMedia('(max-width: 767px)').matches && panel.inlineHost;
@@ -294,8 +297,8 @@
             panel.closeDrawer?.();
             editor.tabIndex = -1;
             editor.setAttribute('autofocus', '');
-            panel.inlineHost.after(editor);
-            editor.closest('#player-shell')?.classList.add('ts-creating');
+            document.body.append(editor);
+            document.getElementById('player-shell')?.classList.add('ts-creating');
             editor.show(); editor.focus({ preventScroll: true });
             positionInlineEditor();
         } else {
@@ -400,6 +403,7 @@
         let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport, mobileToggle, resizeObserver, mobileMedia;
         const positionDrawer = () => {
             if (mobileActions && mobileMedia.matches) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
+            if (activeEditor?.panel === panel) positionInlineEditor();
         };
         const toggleDrawer = open => {
             container.classList.toggle('ts-drawer-open', open);
@@ -500,8 +504,7 @@
             destroy() {
                 this.dead = true; panels.delete(this); if (loop?.panel === this) api.stopLoop(); shell.remove();
                 if (activeEditor?.panel === this && editor?.open && editor.classList.contains('ts-inline')) {
-                    editor.closest('#player-shell')?.classList.remove('ts-creating');
-                    document.body.append(editor);
+                    document.getElementById('player-shell')?.classList.remove('ts-creating');
                 }
                 resizeObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
                 window.removeEventListener('resize', positionDrawer); document.removeEventListener('keydown', onDrawerKey);
@@ -510,8 +513,7 @@
         };
         if (activeEditor?.panel?.dead && activeEditor.panel.id === id && editor?.open && editor.classList.contains('ts-inline')) {
             activeEditor.panel = panel;
-            panel.inlineHost.after(editor);
-            editor.closest('#player-shell')?.classList.add('ts-creating');
+            document.getElementById('player-shell')?.classList.add('ts-creating');
             positionInlineEditor();
         }
         panels.add(panel); panel.load(); return panel;
