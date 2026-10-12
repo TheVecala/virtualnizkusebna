@@ -137,11 +137,22 @@ function vz2_mutate(array $in): array {
             $type = $attachment ? 'attachment' : 'recording';
             $id = vz2_id($in['id'] ?? null);
             $r = $attachment ? vz2_one($db,"SELECT * FROM $table WHERE id=? FOR UPDATE",[$id]) : vz2_recording($db,$id);
-            vz2_active(vz2_collection($db,(int)$r['collection_id'])); vz2_active($r); vz2_idle($db,$type,$id);
+            $origin=vz2_collection($db,(int)$r['collection_id']); vz2_active($origin); vz2_active($r); vz2_idle($db,$type,$id);
             $move = str_ends_with($action,'_move');
             vz2_permission($move?'move_file':'edit_recording_label',(int)$r['created_by']); vz2_revision($r,$in['revision'] ?? null);
             if ($move) {
                 $target = vz2_collection($db,vz2_id($in['collection_id'] ?? null)); vz2_active($target);
+                if (!$attachment) {
+                    $links=vz2_rows($db,'SELECT id,source_recording_id,clip_recording_id FROM vz2_rehearsal_plays WHERE source_recording_id=? OR clip_recording_id=? FOR UPDATE',[$id,$id]);
+                    if ($links && $origin['kind']!==$target['kind']) throw new Vz2Error('Propojenou nahrávku lze přesunout jen mezi složkami stejného druhu. Nejprve odeberte vazbu v matici.',409);
+                    foreach ($links as $link) {
+                        $source=(int)$link['source_recording_id']===$id;
+                        if (($source && $origin['kind']!=='rehearsal') || (!$source && $origin['kind']!=='song')) throw new Vz2Error('Vazba nahrávky neodpovídá její složce. Přesun vyžaduje kontrolu historie.',409);
+                        if ($source) vz2_query($db,'UPDATE vz2_rehearsal_plays SET rehearsal_collection_id=?,rehearsal_title_snapshot=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[$target['id'],$target['title'],vz2_actor(),$link['id']]);
+                        else vz2_query($db,'UPDATE vz2_rehearsal_plays SET song_collection_id=?,song_title_snapshot=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[$target['id'],$target['title'],vz2_actor(),$link['id']]);
+                        vz2_log($db,'history.reassigned','rehearsal_play',(int)$link['id'],$r['title'],'Přesun nahrávky #'.$id.' do #'.$target['id']);
+                    }
+                }
                 vz2_query($db,"UPDATE $table SET collection_id=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?",[$target['id'],vz2_actor(),$id]);
                 if (!$attachment) vz2_query($db,'UPDATE vz2_collections SET recordings_revision=recordings_revision+1 WHERE id IN (?,?)',[$r['collection_id'],$target['id']]);
                 vz2_log($db,$type.'.moved',$type,$id,$r['title'],'Z kolekce #'.$r['collection_id'].' do #'.$target['id'].' '.$target['title']);

@@ -19,10 +19,13 @@ const collections = ['Nová skladba', 'Poslední vlak', 'Zkouška 8. října', '
 const file = id => ({ id, url: '/sample.wav', state: 'available', original_name: 'zkouška.wav', title: '', sha256: hash, byte_size: wav.length, duration_ms: 180000, mime: 'audio/wav' });
 const recordings = [
     { id: 11, collection_id: 3, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Celá zkouška', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(1)] },
-    { id: 12, collection_id: 3, kind: 'multitrack', lifecycle: 'active', audio_state: 'available', title: 'Společný mix', revision: 1, author: 'Klára', duration_ms: 180000, files: [file(2)] }
+    { id: 12, collection_id: 3, kind: 'multitrack', lifecycle: 'active', audio_state: 'available', title: 'Společný mix', revision: 1, author: 'Klára', duration_ms: 180000, files: [file(2)] },
+    { id: 13, collection_id: 1, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Domácí nahrávka', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(3)], can_move: true }
 ];
-const catalog = { ok: true, collections, recordings, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
-const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source: recordings[0], start_ms: 0, end_ms: 10000 }], unassigned_intervals: [], unassigned_clips: [] };
+const links = [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 5000, end_ms: 10000 },
+    { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: null, clip_recording_id: 13, start_ms: null, end_ms: null }];
+const catalog = { ok: true, collections, recordings, recording_links: links, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
+const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source: recordings[0], start_ms: 5000, end_ms: 10000 }, { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] }], unassigned_intervals: [], unassigned_clips: [] };
 function gate() { let release; const promise = new Promise(resolve => release = resolve); return { promise, release }; }
 (async () => {
     const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || chromium.executablePath() });
@@ -41,7 +44,14 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             const target = path.join(root, url.pathname);
             return route.fulfill({ contentType: url.pathname.endsWith('.css') ? 'text/css' : url.pathname.endsWith('.js') ? 'text/javascript' : 'image/png', body: fs.readFileSync(target) });
         }
-        if (url.pathname === '/sample.wav') return route.fulfill({ contentType: 'audio/wav', body: wav });
+        if (url.pathname === '/sample.wav') {
+            const range = /^bytes=(\d+)-(\d*)$/.exec(route.request().headers().range || '');
+            if (range) {
+                const start = Number(range[1]), end = range[2] ? Math.min(Number(range[2]), wav.length - 1) : wav.length - 1;
+                return route.fulfill({ status: 206, contentType: 'audio/wav', headers: { 'accept-ranges': 'bytes', 'content-range': `bytes ${start}-${end}/${wav.length}` }, body: wav.subarray(start, end + 1) });
+            }
+            return route.fulfill({ contentType: 'audio/wav', headers: { 'accept-ranges': 'bytes' }, body: wav });
+        }
         if (url.pathname === '/php/ajax/vz2.php') {
             if (url.searchParams.get('action') !== 'mixer') return json(catalog);
             if (!url.searchParams.has('id')) {
@@ -136,6 +146,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.locator('#history-controls-slot #history-orientation').waitFor({ state: 'visible' });
         assert(await page.locator('#history-audio-filter').isChecked());
+        await page.locator('#history-filter summary').click();
+        assert(await page.locator('#history-song-filter').isVisible(), 'Desktop song filter opens inside its details menu');
+        await page.locator('#history-filter summary').click();
         console.log('PASS: ideas draft and selected section persist; matrix filters persist and use the same controls on mobile, desktop and fullscreen');
 
         await page.setViewportSize({ width: 390, height: 844 });
@@ -195,6 +208,28 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.deepEqual(confirmations, [], 'Browsing must not prompt to stop playback');
         assert.deepEqual(errors, []);
         console.log('PASS: pending Mixer continues loading while browsing; playing Mixer survives navigation; Back/Forward and reload restore the workspace');
+
+        await switchTo('songs');
+        assert.equal(await page.locator('#recording-13').count(), 1, 'Home recording retains its original card');
+        assert.equal(await page.locator('.linked-recordings li').count(), 1, 'Song lists one linked rehearsal interval');
+        assert((await page.locator('.linked-recordings').textContent()).includes('00:05–00:10'));
+        await page.locator('#recording-13 .recording-toggle').click();
+        await page.locator('#recording-13 .recording-actions').getByRole('button', { name: 'Další' }).click();
+        await page.locator('#recording-actions-13').getByRole('button', { name: 'Přesunout' }).click();
+        assert((await page.locator('#move-links-info').textContent()).includes('matici'));
+        assert.deepEqual(await page.locator('#move-form select option').allTextContents(), ['Nová skladba', 'Poslední vlak']);
+        await page.locator('#move-cancel').click();
+        await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít úsek/ }).click();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
+        assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 8. října');
+        await page.waitForFunction(() => window.Vz2Player.getState()?.position >= 4.9);
+        assert.equal(await page.locator('#recording-11').count(), 1);
+        assert.equal(await page.locator('.linked-recordings li').count(), 1, 'Rehearsal links the song-owned clip without duplicating its own card');
+        await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít nahrávku/ }).click();
+        assert.equal(await page.locator('#collection-title-name').textContent(), 'Nová skladba');
+        assert.equal(await page.locator('#recording-13').count(), 1);
+        assert.deepEqual(errors, []);
+        console.log('PASS: linked recordings appear from both sides; source cards, seek time and linked move choices stay consistent');
     } catch (error) {
         console.error('Browser errors:', errors);
         console.error(await page.locator('#vz2-boot-status, #message').allTextContents());

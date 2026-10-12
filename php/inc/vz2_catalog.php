@@ -43,8 +43,13 @@ function vz2_catalog():array {
         $a['can_move']=auth_is_admin() || (ma_pravo('move_file') && (int)$a['created_by']===(int)($_SESSION['user_id']??0));
     }unset($a);
     $ops=vz2_rows($db,"SELECT id,target_id,target_type,target_title,action,state,error_code,actor_id FROM vz2_file_operations WHERE state<>'completed'".(auth_is_admin()?'':' AND actor_id=?').' ORDER BY id DESC',auth_is_admin()?[]:[(int)($_SESSION['user_id']??0)]);
+    $links=vz2_rows($db,'SELECT p.id,p.song_collection_id,p.rehearsal_collection_id,p.source_recording_id,p.clip_recording_id,st.time_ms start_ms,et.time_ms end_ms
+        FROM vz2_rehearsal_plays p LEFT JOIN vz2_timestamps st ON st.id=p.start_timestamp_id
+        LEFT JOIN vz2_timestamps et ON et.id=p.end_timestamp_id ORDER BY p.id');
+    foreach($links as &$link)foreach($link as $key=>$value)$link[$key]=$value===null?null:(int)$value;
+    unset($link);
     return ['collections'=>$collections,'orders'=>vz2_rows($db,'SELECT * FROM vz2_collection_orders'),
-        'recordings'=>$recordings,'attachments'=>$attachments,'operations'=>$ops];
+        'recordings'=>$recordings,'recording_links'=>$links,'attachments'=>$attachments,'operations'=>$ops];
 }
 function vz2_mixer(?int $id=null):array {
     $catalog=vz2_catalog();$items=[];

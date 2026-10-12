@@ -291,8 +291,15 @@
         parent.append(button('Přesunout', () => {
             move = { item, type };
             const form = $('move-form'), select = form.elements.collection_id;
+            const links = type === 'recording' ? (data.recording_links || []).filter(link => String(link.source_recording_id) === String(item.id) || String(link.clip_recording_id) === String(item.id)) : [];
+            const origin = data.collections.find(c => String(c.id) === String(item.collection_id));
+            const info = $('move-links-info');
+            info.hidden = !links.length;
+            if (links.length) info.textContent = links.length === 1
+                ? 'Nahrávka je propojená v matici. Přesun zároveň upraví její vazbu. Cílem může být jen jiná ' + (origin.kind === 'song' ? 'skladba.' : 'zkouška.')
+                : 'Nahrávka má ' + links.length + ' vazeb v matici. Přesun je upraví společně. Cílem může být jen jiná zkouška.';
             select.replaceChildren();
-            data.collections.filter(c => c.lifecycle === 'active').forEach(c => {
+            data.collections.filter(c => c.lifecycle === 'active' && (!links.length || c.kind === origin.kind)).forEach(c => {
                 const option = node('option', c.title);
                 option.value = c.id;
                 option.selected = String(c.id) === String(item.collection_id);
@@ -560,6 +567,40 @@
             }
         }); return form;
     }
+    function linkedRecordingRows(collection) {
+        const recordings = new Map(data.recordings.map(recording => [String(recording.id), recording]));
+        const collections = new Map(data.collections.map(item => [String(item.id), item]));
+        return (data.recording_links || []).flatMap(link => {
+            if (collection.kind === 'song' && String(link.song_collection_id) !== String(collection.id)) return [];
+            if (collection.kind === 'rehearsal' && String(link.rehearsal_collection_id) !== String(collection.id)) return [];
+            const recording = recordings.get(String(collection.kind === 'song' ? link.source_recording_id : link.clip_recording_id));
+            if (!recording || String(recording.collection_id) === String(collection.id)) return [];
+            const owner = collections.get(String(recording.collection_id));
+            if (!owner) return [];
+            const song = collections.get(String(link.song_collection_id));
+            return [{ link, recording, owner, song }];
+        });
+    }
+    function renderLinkedRecordings(host, collection, rows) {
+        if (!rows.length) return;
+        const section = node('section', undefined, 'linked-recordings');
+        section.append(node('h3', collection.kind === 'song' ? 'Ze zkoušek' : 'Nahrávky přiřazených skladeb'));
+        const list = node('ul');
+        rows.forEach(({ link, recording, owner, song }) => {
+            const item = node('li'), description = node('div', undefined, 'linked-recording-description');
+            description.append(node('strong', recordingName(recording)));
+            const context = collection.kind === 'song' ? 'Zkouška: ' + owner.title : 'Skladba: ' + (song?.title || owner.title);
+            const range = link.start_ms != null && link.end_ms != null ? ' · ' + time(link.start_ms) + '–' + time(link.end_ms) : '';
+            description.append(node('small', context + range + (recording.audio_state === 'available' ? '' : ' · Audio není dostupné')));
+            const open = button(range ? 'Otevřít úsek' : 'Otevřít nahrávku', async () => {
+                const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
+                await navigate({ collection_id: String(owner.id), ...(playable ? { recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(link.start_ms || 0) } : {}) });
+            });
+            open.setAttribute('aria-label', (range ? 'Otevřít úsek ' : 'Otevřít nahrávku ') + recordingName(recording) + ' u ' + owner.title);
+            item.append(description, open); list.append(item);
+        });
+        section.append(list); host.append(section);
+    }
     function render() {
         const liveIds = new Set(data.recordings.map(r => String(r.id)));
         for (const id of expandedRecordings) if (!liveIds.has(id)) expandedRecordings.delete(id);
@@ -615,7 +656,8 @@
         else {
             content.append(node('small', 'Vytvořil/a ' + c.author, 'collection-attribution vz2-attribution'));
             const recordings = data.recordings.filter(r => String(r.collection_id) === String(c.id));
-            if (!recordings.length) content.append(node('p', 'Tento celek zatím nemá žádné nahrávky.'));
+            const linked = linkedRecordingRows(c);
+            if (!recordings.length) content.append(node('p', linked.length ? 'V této složce nejsou vlastní nahrávky.' : 'Tento celek zatím nemá žádné nahrávky.'));
             recordings.forEach(r => content.append(recordingCard(r, recordings, c)));
             data.attachments.filter(a => String(a.collection_id) === String(c.id)).forEach(a => {
                 const card = node('article', undefined, 'recording-card attachment-card');
@@ -643,6 +685,7 @@
                 if (actions.childElementCount) body.append(actions);
                 card.append(body); content.append(card);
             });
+            renderLinkedRecordings(content, c, linked);
         }
         renderedCollection = selected; renderedData = data;
         $('panel-recordings').querySelector('.panel-body').scrollTop = savedScroll.recordings || 0;

@@ -23,19 +23,28 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
 #catalog-dialog[open] { animation: none; }
 #catalog-dialog #collections { max-height: none; }
 #catalog-dialog::backdrop { background: #0005; }
+.linked-recordings { margin: 14px 0 4px; }
+.linked-recordings h3 { margin: 0 0 7px; font-size: 13px; color: var(--vz-primary-hover); }
+.linked-recordings ul { margin: 0; padding: 0; list-style: none; }
+.linked-recordings li { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; padding: 8px 9px; border: 1px solid var(--vz-border); border-radius: 7px; background: var(--vz-surface); }
+.linked-recording-description { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.linked-recording-description strong, .linked-recording-description small { overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere; }
+.linked-recording-description small { color: var(--vz-muted); }
+.linked-recordings li > button { flex: 0 0 auto; }
+@media (max-width: 420px) { .linked-recordings li { align-items: stretch; flex-direction: column; } .linked-recordings li > button { align-self: flex-start; } }
 .workspace-controls { display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; margin: 0; }
 .workspace-controls button { white-space: nowrap; }
 #history-controls-slot, #ideas-controls-slot { margin-left: auto; min-width: 0; }
 #history-controls { min-height: 0; padding: 0; border: 0; background: none; }
 #history-controls .history-check { gap: 5px; padding: 5px 8px; margin: 0 !important; min-height: 30px; border: 1px solid var(--vz-border); border-radius: 4px; white-space: nowrap; background: var(--vz-surface); color: var(--vz-text); }
 #history-controls .history-check.is-active { background: var(--vz-primary-soft); border-color: var(--vz-primary); color: var(--vz-primary-hover); }
-#history-filter { position: relative; text-transform: none; letter-spacing: normal; color: var(--vz-text); }
+#history-filter { display: block; position: relative; text-transform: none; letter-spacing: normal; color: var(--vz-text); }
 #history-filter > summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; max-width: 240px; background: var(--vz-surface); font-size: 12px; }
 #history-filter-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #history-filter.is-active > summary { color: var(--vz-primary-hover); border-color: var(--vz-primary); background: var(--vz-primary-soft); }
 .history-filter-menu { position: absolute; top: calc(100% + 6px); right: 0; width: min(290px, calc(100vw - 24px)); padding: 10px; background: var(--vz-shell); border: 1px solid var(--vz-primary); border-radius: 7px; box-shadow: 0 8px 20px #0008; z-index: 100; }
 .history-filter-menu label { display: block; margin: 0 0 8px; }
-#history-controls #history-song-filter { width: 100%; min-width: 0; margin: 0; font-size: 13px; }
+#history-controls #history-song-filter { display: block; width: 100%; min-width: 0; margin: 0; font-size: 13px; }
 #history-song-filter option { padding: 8px; white-space: normal; }
 #history-options > summary { height: 30px; min-height: 30px; width: 32px; font-size: 18px; }
 .history-header { min-height: 64px; gap: 10px; overflow: visible; }
