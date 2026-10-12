@@ -358,6 +358,15 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(await page.locator('.vz2-timestamp-editor [name=body]').isVisible(), 'The timestamp input is visible');
         await shot('timestamp-editor-390');
         await page.locator('.vz2-timestamp-editor .ts-close').click();
+        await page.locator('#player-fullscreen').click();
+        await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
+        const fullscreenEditorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
+        const timelineBox = await page.locator('#looper-panel .timeline').boundingBox();
+        assert(fullscreenEditorBox.y >= timelineBox.y + timelineBox.height, 'The editor opens below the fullscreen Looper controls');
+        assert(fullscreenEditorBox.y + fullscreenEditorBox.height <= 844, 'The fullscreen editor fits in the viewport');
+        await shot('timestamp-editor-fullscreen-390');
+        await page.locator('.vz2-timestamp-editor .ts-close').click();
+        await page.locator('#player-fullscreen').click();
         await page.locator('#looper-play').click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.playing);
         await page.evaluate(() => window.testAudio = document.getElementById('looper-audio'));

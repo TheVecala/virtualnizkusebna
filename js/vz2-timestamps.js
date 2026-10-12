@@ -253,7 +253,10 @@
         if (!editor?.open || !editor.classList.contains('ts-inline')) return;
         const viewport = window.visualViewport;
         const visibleBottom = (viewport?.offsetTop || 0) + (viewport?.height || innerHeight);
-        const playerBottom = document.getElementById('player-shell')?.getBoundingClientRect().bottom || 0;
+        const player = document.getElementById('player-shell');
+        const playerBottom = player?.classList.contains('player-fullscreen')
+            ? document.querySelector('#looper-panel .timeline')?.getBoundingClientRect().bottom || 0
+            : player?.getBoundingClientRect().bottom || 0;
         const top = Math.max(0, Math.min(playerBottom + 8, visibleBottom - 180));
         const covered = Math.max(0, innerHeight - visibleBottom);
         const typing = editor.contains(document.activeElement) && document.activeElement.matches('input[name=body],input[name=time]');
