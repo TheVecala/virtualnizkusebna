@@ -108,8 +108,8 @@
     function select(nextMode, recording) {
         if (mode !== nextMode || id !== String(recording.id)) { exitFullscreen(); collapsed = false; $('player-options').open = false; looperMenu.open = false; }
         mode = nextMode; id = String(recording.id);
-        const names = (recording.files || []).map(file => file.original_name || file.display_name || file.title).filter(Boolean);
-        const title = nextMode === 'looper' ? (looper?.file?.original_name || looper?.file?.display_name || looper?.file?.title || recording.title) : (names.join(', ') || recording.title);
+        const names = (recording.files || []).map(file => file.title || file.original_name || file.display_name).filter(Boolean);
+        const title = nextMode === 'looper' ? (looper?.file?.title || looper?.file?.original_name || looper?.file?.display_name || recording.title) : (names.join(', ') || recording.title);
         const sourceTitle = recording.collection_title ? recording.collection_title + ' · ' + title : title;
         $('player-title').textContent = sourceTitle; $('player-title').title = 'Přejít k nahrávce: ' + sourceTitle; $('player-title').disabled = false;
         $('looper-wave-name').textContent = nextMode === 'looper' ? title : '';

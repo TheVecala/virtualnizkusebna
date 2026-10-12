@@ -7,7 +7,7 @@ const { createHash } = require('node:crypto');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../..');
 const php = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
-const config = { csrf: 'test', write: true, admin: true, canCreate: true, canUpload: true, canReorder: false, cachePrefix: 'workspaces-test:' };
+const config = { csrf: 'test', write: true, admin: true, canCreate: true, canUpload: true, canReorder: true, cachePrefix: 'workspaces-test:' };
 const html = php.slice(php.indexOf('<!doctype html>'))
     .replace(/<\?=json_encode\(\$config,[\s\S]*?\?>/, JSON.stringify(config)).replace(/<\?[\s\S]*?\?>/g, '');
 const wav = Buffer.alloc(44 + 8000 * 180 * 2);
@@ -18,7 +18,7 @@ const hash = createHash('sha256').update(wav).digest('hex');
 const collections = ['Nová skladba', 'Poslední vlak', 'Zkouška 8. října', 'Zkouška 1. října'].map((title, index) => ({ id: index + 1, title, kind: index < 2 ? 'song' : 'rehearsal', lifecycle: 'active', author: 'Petr', recordings_revision: 1 }));
 const file = id => ({ id, url: '/sample.wav', state: 'available', original_name: 'zkouška.wav', title: '', sha256: hash, byte_size: wav.length, duration_ms: 180000, mime: 'audio/wav' });
 const recordings = [
-    { id: 11, collection_id: 3, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Celá zkouška', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(1)] },
+    { id: 11, collection_id: 3, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Celá zkouška', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(1)], can_edit: true },
     { id: 12, collection_id: 3, kind: 'multitrack', lifecycle: 'active', audio_state: 'available', title: 'Společný mix', revision: 1, author: 'Klára', duration_ms: 180000, files: [file(2)] },
     { id: 13, collection_id: 1, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Domácí nahrávka', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(3)], can_move: true }
 ];
@@ -53,6 +53,15 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             return route.fulfill({ contentType: 'audio/wav', headers: { 'accept-ranges': 'bytes' }, body: wav });
         }
         if (url.pathname === '/php/ajax/vz2.php') {
+            if (route.request().method() === 'POST') {
+                const input = route.request().postDataJSON();
+                if (input.action === 'track_update') {
+                    const recording = recordings.find(row => row.id === input.id);
+                    recording.files.find(entry => entry.id === input.file_id).title = input.title;
+                    recording.revision++;
+                }
+                return json({ ok: true });
+            }
             if (url.searchParams.get('action') !== 'mixer') return json(catalog);
             if (!url.searchParams.has('id')) {
                 mixerRequested?.release(); if (holdMixer) await holdMixer.promise;
@@ -318,7 +327,23 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 8. října' }).click();
         assert.equal(await page.locator('#mobile-panels button:visible').count(), 3);
         await page.locator('[data-mobile-panel=recordings]').click();
+        assert(await page.locator('#recording-11 .recording-caption').isVisible(), 'The short caption is visible while the recording is collapsed');
+        assert.equal(await page.locator('#recording-11 .recording-caption-text').textContent(), 'Celá zkouška');
+        await shot('recording-caption-390');
+        await page.locator('#recording-11 .recording-caption-edit').click();
+        assert(await page.locator('#editor').isVisible(), 'The caption icon opens the existing editor');
+        assert.equal(await page.locator('#edit-form [name=title]').inputValue(), 'Celá zkouška');
+        await page.locator('#edit-cancel').click();
         await page.locator('#recording-11 .recording-toggle').click();
+        await page.locator('#recording-11 .recording-actions').getByRole('button', { name: 'Další' }).click();
+        assert.equal(await page.locator('#recording-actions-11 .recording-action-order button').count(), 2, 'Ordering arrows live in their own menu section');
+        assert.equal(await page.locator('#recording-actions-11 .recording-action-edit button[aria-label^="Posunout"]').count(), 0, 'Edit actions contain no ordering arrows');
+        await page.locator('#recording-actions-11').getByRole('button', { name: 'Přejmenovat soubor' }).click();
+        assert.equal(await page.locator('#edit-form [name=title]').inputValue(), 'zkouška.wav');
+        await page.locator('#edit-form [name=title]').fill('Nový název.wav');
+        await page.locator('#edit-form').getByRole('button', { name: 'Uložit' }).click();
+        await page.waitForFunction(() => document.querySelector('#recording-11 .recording-title')?.textContent === 'Nový název.wav');
+        if (await page.locator('#recording-actions-11').isVisible()) await page.locator('#recording-actions-11 .modal-close').click();
         await page.locator('#recording-11').getByRole('button', { name: 'Otevřít', exact: true }).click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
         await page.locator('#looper-play').click();

@@ -27,8 +27,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await card(ids[2]).waitFor();
         assert.equal(await card(ids[0]).locator('.recording-title').textContent(), 'one.wav');
         assert.equal(await card(ids[1]).locator('.recording-title').textContent(), 'two.wav');
-        assert.equal(await card(ids[0]).locator('.recording-status').textContent(), 'První záběr');
-        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'Druhý záběr');
+        assert.equal(await card(ids[0]).locator('.recording-caption-text').textContent(), 'První záběr');
+        assert.equal(await card(ids[1]).locator('.recording-caption-text').textContent(), 'Druhý záběr');
         const uploadDialog = page.locator('#upload-dialog');
         await page.locator('#upload-open').click();
         await uploadDialog.waitFor({ state: 'visible' });
@@ -49,13 +49,13 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
             return {
                 duration: card.querySelector('.recording-duration').textContent,
                 directStatus: !!card.querySelector(':scope > .recording-status'),
-                description: description.querySelector('.recording-status').textContent,
+                caption: card.querySelector('.recording-caption-text').textContent,
                 author: description.querySelector('.vz2-attribution').textContent,
                 actionsBeforeAudio: children.indexOf(body.querySelector('.recording-actions')) < children.indexOf(body.querySelector('audio'))
             };
         });
-        assert.deepEqual(restored, { duration: '0:10', directStatus: false, description: 'První záběr', author: 'Vložil Admin', actionsBeforeAudio: true });
-        check(true, 'recordings: restored duration-only header, shared description/author row and actions before audio');
+        assert.deepEqual(restored, { duration: '0:10', directStatus: false, caption: 'První záběr', author: 'Vložil Admin', actionsBeforeAudio: true });
+        check(true, 'recordings: short caption stays visible in the card, author and actions remain in the expanded body');
 
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         const audio = card(ids[0]).locator('audio');
@@ -182,7 +182,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.equal(await guest.locator('#upload-open').count(), 0);
         await good('admin', { action: 'remove_audio', id: ids[1], revision: Number(db('SELECT revision FROM vz2_recordings WHERE id=?', [ids[1]])[0].revision), confirm: 'Druhý záběr', request_key: crypto.randomBytes(16).toString('hex') });
         await page.reload();
-        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'Druhý záběr - odstraněno');
+        assert.equal(await card(ids[1]).locator('.recording-caption-text').textContent(), 'Druhý záběr');
+        assert.equal(await card(ids[1]).locator('.recording-status').textContent(), 'Audio odstraněno');
         assert.equal(await card(ids[1]).locator('.recording-deleted').count(), 1);
         assert.equal(await card(ids[1]).locator('.recording-body > .files').count(), 0);
         assert.deepEqual(errors, []);
