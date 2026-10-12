@@ -122,8 +122,8 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 </div></div></section>
 <header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA DK!</a>
 <nav id="workspace-navigation" aria-label="Pracovní plochy">
-<button type="button" data-workspace-target="songs" aria-pressed="true">Skladby</button><div id="songs-subnav" class="workspace-subnav"></div>
-<button type="button" data-workspace-target="rehearsals" aria-pressed="false">Zkoušky</button><div id="rehearsals-subnav" class="workspace-subnav"></div>
+<button type="button" data-workspace-target="songs" aria-pressed="true">Skladby</button>
+<button type="button" data-workspace-target="rehearsals" aria-pressed="false">Zkoušky</button>
 <button type="button" id="show-history" data-workspace-target="history" aria-pressed="false">Matice</button>
 <button type="button" id="show-ideas" data-workspace-target="ideas" aria-pressed="false">Nápady</button>
 </nav>
@@ -132,6 +132,12 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
 <a href="help.php">Nápověda</a>
 <button id="show-offline">Správa offline souborů</button><button id="logout">Odhlásit</button></nav></details></header>
+<svg class="section-icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+<symbol id="section-icon-recordings" viewBox="0 0 24 24"><path d="M3 10v4m4-8v12m4-15v18m4-13v8m4-11v14m3-9v4"/></symbol>
+<symbol id="section-icon-lyrics" viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h13M4 20h9"/></symbol>
+<symbol id="section-icon-tablature" viewBox="0 0 24 24"><path d="m2 5 7-2 6 2 7-2v16l-7 2-6-2-7 2V5Zm7-2v16m6-14v16"/></symbol>
+<symbol id="section-icon-discussion" viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9l-5 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10M7 13h7"/></symbol>
+</defs></svg>
 <main id="app-shell" aria-busy="true"><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
 <section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
@@ -168,16 +174,16 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div id="workspace-surfaces">
 <header id="collection-header" class="workspace-header">
 <div class="workspace-heading"><span id="collection-kind-label">Skladby</span><h1 id="collection-title"><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" aria-expanded="false" title="Vybrat skladbu"><span id="collection-title-name">Načítám…</span><span class="catalog-chevron" aria-hidden="true">⌄</span></button></h1></div>
-<nav id="desktop-panels" class="workspace-controls" aria-label="Zobrazené panely"><button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Mapa</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button></nav>
+<nav id="desktop-panels" class="workspace-controls" aria-label="Zobrazené panely"><button data-desktop-panel="recordings" aria-pressed="true" title="Nahrávky"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-recordings"/></svg><span class="section-button-label">Nahrávky</span></button><button data-desktop-panel="lyrics" aria-pressed="true" title="Text a akordy"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-lyrics"/></svg><span class="section-button-label">Text</span></button><button data-desktop-panel="tablature" aria-pressed="true" title="Mapa skladby"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-tablature"/></svg><span class="section-button-label">Mapa</span></button><button data-desktop-panel="discussion" aria-pressed="false" title="Diskuse"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-discussion"/></svg><span class="section-button-label">Diskuse</span></button></nav>
 </header>
 <section id="song-workspace" data-workspace="panels" aria-label="Pracovní plocha skladby">
 <div id="content-area">
-<section id="panel-recordings" class="panel" data-panel="recordings" aria-label="Nahrávky"><div class="panel-header"><h2>Nahrávky</h2><?php if($config['canUpload']):?><div class="panel-header-actions"><button id="upload-open" type="button" aria-haspopup="dialog" aria-controls="upload-dialog" hidden>Vložit</button></div><?php endif;?></div><div class="panel-body"><section id="content"><p>Načítám…</p></section>
+<section id="panel-recordings" class="panel" data-panel="recordings" aria-label="Nahrávky"><div class="panel-header"><svg class="section-icon panel-section-icon" aria-hidden="true"><use href="#section-icon-recordings"/></svg><h2>Nahrávky</h2><?php if($config['canUpload']):?><div class="panel-header-actions"><button id="upload-open" type="button" aria-haspopup="dialog" aria-controls="upload-dialog" hidden>Vložit</button></div><?php endif;?></div><div class="panel-body"><section id="content"><p>Načítám…</p></section>
 <section id="operations" hidden><h2>Nedokončené operace</h2><div></div></section>
 </div></section>
-<section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><h2>Text a akordy</h2><div id="lyrics-actions" class="panel-header-actions"></div></div><div id="lyrics-content" class="panel-body"></div></section>
-<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Mapa skladby"><div class="panel-header"><h2>Mapa skladby</h2><div id="tablature-actions" class="panel-header-actions"></div></div><div id="tablature-content" class="panel-body"></div></section>
-<section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><h2>Diskuse</h2><div id="discussion-actions" class="panel-header-actions"></div></div><div id="discussion-content" class="panel-body"></div></section>
+<section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><svg class="section-icon panel-section-icon" aria-hidden="true"><use href="#section-icon-lyrics"/></svg><h2>Text a akordy</h2><div id="lyrics-actions" class="panel-header-actions"></div></div><div id="lyrics-content" class="panel-body"></div></section>
+<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Mapa skladby"><div class="panel-header"><svg class="section-icon panel-section-icon" aria-hidden="true"><use href="#section-icon-tablature"/></svg><h2>Mapa skladby</h2><div id="tablature-actions" class="panel-header-actions"></div></div><div id="tablature-content" class="panel-body"></div></section>
+<section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><svg class="section-icon panel-section-icon" aria-hidden="true"><use href="#section-icon-discussion"/></svg><h2>Diskuse</h2><div id="discussion-actions" class="panel-header-actions"></div></div><div id="discussion-content" class="panel-body"></div></section>
 </div></section>
 <section id="history-workspace" data-workspace="history" hidden aria-label="Matice zkoušek" aria-labelledby="history-title"><header class="history-header panel-header workspace-header"><div class="history-heading"><span class="history-emblem" aria-hidden="true"><i class="ti ti-calendar-stats"></i></span><div><h2 id="history-title">Matice zkoušek</h2><p>Skladby napříč jednotlivými zkouškami</p></div></div><div id="history-controls-slot"><div id="history-controls" class="history-toolbar workspace-controls">
 <button id="history-orientation" type="button" aria-pressed="false" title="Prohodit osy"><i class="ti ti-switch-horizontal" aria-hidden="true"></i><span class="desktop-label">Prohodit osy</span><span class="mobile-label">Směr</span></button>

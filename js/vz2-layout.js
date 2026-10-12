@@ -109,8 +109,12 @@
         $('panel-lyrics').querySelector('.panel-header h2').textContent = panelName('lyrics');
         updateFullscreenButton($('panel-lyrics'), fullscreenPanel === $('panel-lyrics'));
         document.querySelectorAll('[data-desktop-panel="lyrics"], [data-mobile-panel="lyrics"]').forEach(control => {
-            control.textContent = collectionKind === 'rehearsal' ? 'Zápis' : 'Text';
+            const label = collectionKind === 'rehearsal' ? 'Zápis' : 'Text';
+            const text = control.querySelector('.section-button-label');
+            if (text) text.textContent = label;
+            else control.textContent = label;
             control.setAttribute('aria-label', panelName('lyrics'));
+            control.title = panelName('lyrics');
         });
         document.querySelectorAll('.panel-header select option').forEach(option => {
             option.textContent = panelName(option.value);
@@ -135,7 +139,7 @@
         $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
         $('mobile-panels').hidden = !collection;
         // Move the existing controls, preserving values and listeners at every breakpoint.
-        moveControls('desktop-panels', collectionKind === 'rehearsal' ? 'rehearsals-subnav' : 'songs-subnav');
+        moveControls('desktop-panels', 'sidebar');
         moveControls('history-controls', mobile.matches && fullscreenPanel?.id !== 'history-workspace' ? 'mobile-context' : 'history-controls-slot');
         moveControls('ideas-controls', mobile.matches && fullscreenPanel?.id !== 'ideas-workspace' ? 'mobile-context' : 'ideas-controls-slot');
         $('history-controls').hidden = activeWorkspace !== 'history';

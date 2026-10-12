@@ -96,7 +96,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#collections .collection > button').filter({ hasText: 'Poslední vlak' }).click();
         await page.getByRole('dialog', { name: 'Neuložené změny', exact: true }).getByRole('button', { name: 'Zůstat', exact: true }).click();
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Nová skladba');
-        await page.locator('#tablature-actions').getByRole('button', { name: 'Uložit mapu', exact: true }).click();
+        await page.locator('#tablature-actions').getByRole('button', { name: 'Uložit', exact: true }).click();
         await page.getByText('Mapa uložena · verze 1', { exact: true }).waitFor();
         console.log('PASS: existing map editor and save; rehearsal has its own panels; draft survives workspace changes, collection guard remains');
 
@@ -140,8 +140,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 1200, height: 900 });
         assert.equal(await page.locator('#catalog-search').count(), 0);
         for (const [workspace, control, slot] of [
-            ['songs', '#desktop-panels', 'songs-subnav'],
-            ['rehearsals', '#desktop-panels', 'rehearsals-subnav'],
+            ['songs', '#desktop-panels', 'sidebar'],
+            ['rehearsals', '#desktop-panels', 'sidebar'],
             ['history', '#history-controls', 'history-controls-slot'],
             ['ideas', '#ideas-controls', 'ideas-controls-slot']
         ]) {
@@ -156,8 +156,21 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                     separate: navigation.getBoundingClientRect().right <= menu.getBoundingClientRect().left + 1 };
             });
             assert(topbar.fits && topbar.separate, `${workspace} submenu overlaps the desktop topbar at 1200 px`);
+            if (workspace === 'songs' || workspace === 'rehearsals') {
+                const sidebar = await page.evaluate(() => {
+                    const top = selector => document.querySelector(selector).getBoundingClientRect().top;
+                    return { ordered: top('#desktop-panels') < top('#catalog-heading') && top('#catalog-heading') < top('.catalog-header') && top('.catalog-header') < top('#collections'),
+                        buttonWidth: document.querySelector('#desktop-panels button').getBoundingClientRect().width,
+                        sameIcon: document.querySelector('#desktop-panels [data-desktop-panel=recordings] use').getAttribute('href') === document.querySelector('#panel-recordings .panel-header use').getAttribute('href') };
+                });
+                assert(sidebar.ordered && sidebar.buttonWidth >= 40 && sidebar.sameIcon, `${workspace} sidebar section controls should stay above the scrolling list`);
+            }
         }
-        console.log('PASS: collection controls follow the desktop navigation; matrix and ideas controls stay in their headers');
+        await switchTo('songs');
+        await page.locator('#desktop-panels [data-desktop-panel=discussion]').click();
+        assert(await page.locator('#panel-discussion').isVisible());
+        await page.locator('#desktop-panels [data-desktop-panel=discussion]').click();
+        console.log('PASS: icon controls stay above the desktop catalog and toggle panels; matrix and ideas controls stay in their headers');
 
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('ideas');
