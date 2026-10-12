@@ -125,6 +125,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         for (const width of [320, 390]) {
             await page.setViewportSize({ width, height: 900 });
             await switchTo('rehearsals');
+            assert.equal(await page.locator('#collection-kind-inline').textContent(), 'Zkouška:');
             const titleLayout = await page.evaluate(() => {
                 const name = document.querySelector('#collection-title-name');
                 const picker = document.querySelector('#catalog-picker');
@@ -151,6 +152,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 return result;
             });
             assert(shortTitle.oneLine && shortTitle.fullWidth, `A short collection title should use the whole row at ${width}`);
+            await switchTo('songs');
+            assert.equal(await page.locator('#collection-kind-inline').textContent(), 'Skladba:');
         }
         console.log('PASS: long collection names remain readable with the picker arrow on mobile');
 
