@@ -105,11 +105,17 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             for (const workspace of ['songs', 'rehearsals', 'history', 'ideas']) {
                 await switchTo(workspace);
                 if (workspace === 'history') await page.locator('.history-table').waitFor();
-                const geometry = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1, height: document.documentElement.scrollHeight > innerHeight + 1, controls: document.querySelector('#mobile-context').getBoundingClientRect().bottom, nav: document.querySelector('#bottom-nav').getBoundingClientRect().top }));
+                const geometry = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1, height: document.documentElement.scrollHeight > innerHeight + 1, controls: document.querySelector('#mobile-context').getBoundingClientRect().bottom, nav: document.querySelector('#bottom-nav').getBoundingClientRect().top, dockHeight: document.querySelector('#mobile-dock').getBoundingClientRect().height }));
                 assert(!geometry.overflow && !geometry.height, `${workspace}: viewport overflow at ${width}`);
                 if (width < 768) {
-                    assert(Math.abs(geometry.controls - geometry.nav) <= 1);
-                    assert.equal(await page.locator('#mobile-context > :visible').count(), 1);
+                    if (workspace === 'songs' || workspace === 'rehearsals') {
+                        assert.equal(await page.locator('#mobile-context').isVisible(), false);
+                        assert(await page.locator('#mobile-panel-picker').isVisible());
+                        assert(geometry.dockHeight < 80, `${workspace}: mobile dock should contain only main navigation`);
+                    } else {
+                        assert(Math.abs(geometry.controls - geometry.nav) <= 1);
+                        assert.equal(await page.locator('#mobile-context > :visible').count(), 1);
+                    }
                 }
                 if (width === 390 || width === 1440) await shot(`${workspace}-${width}`);
             }
@@ -129,13 +135,26 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 const pickerBox = picker.getBoundingClientRect();
                 const chevronBox = chevron.getBoundingClientRect();
                 const layout = { clipped: name.scrollWidth > name.clientWidth + 1 || name.scrollHeight > name.clientHeight + 1,
-                    chevronVisible: chevronBox.right <= pickerBox.right + 1 && chevronBox.left >= nameBox.right - 1 };
+                    chevronVisible: chevronBox.right <= pickerBox.right + 1 && chevronBox.left >= nameBox.right - 1 && chevronBox.left - nameBox.right <= 12 };
                 name.textContent = original;
                 return layout;
             });
             assert(!titleLayout.clipped && titleLayout.chevronVisible, `Collection title or picker arrow is clipped at ${width}`);
         }
         console.log('PASS: long collection names remain readable with the picker arrow on mobile');
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        await switchTo('songs');
+        await page.locator('#mobile-panel-trigger').click();
+        assert.equal(await page.locator('#mobile-panels button:visible').count(), 4);
+        await shot('mobile-panel-menu-390');
+        await page.locator('[data-mobile-panel=tablature]').click();
+        assert(await page.locator('#panel-tablature').isVisible());
+        assert.equal(await page.locator('#mobile-panel-name').textContent(), 'Mapa skladby');
+        assert.equal(await page.locator('#mobile-panel-picker').getAttribute('open'), null);
+        await page.locator('#mobile-panel-trigger').click();
+        await page.locator('[data-mobile-panel=recordings]').click();
+        console.log('PASS: mobile panel selector opens from the active panel header and frees the bottom dock');
 
         await page.setViewportSize({ width: 1200, height: 900 });
         assert.equal(await page.locator('#catalog-search').count(), 0);
@@ -216,6 +235,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(dropdown.y >= title.y + title.height, 'Catalog drops down from the large title');
         assert.equal(await page.locator('#collections .collection:visible').count(), 2);
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 8. října' }).click();
+        await page.locator('#mobile-panel-trigger').click();
         await page.locator('[data-mobile-panel=recordings]').click();
         await page.locator('#recording-11 .recording-toggle').click();
         await page.locator('#recording-11').getByRole('button', { name: 'Otevřít', exact: true }).click();
