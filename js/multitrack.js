@@ -622,7 +622,8 @@
         if (dom.mixerToggle) {
             dom.mixerToggle.hidden = true;
             dom.mixerToggle.setAttribute('aria-expanded', 'false');
-            dom.mixerToggle.textContent = 'Rozbalit mix';
+            dom.mixerToggle.textContent = 'Mix';
+            dom.mixerToggle.setAttribute('aria-label', 'Rozbalit mix');
         }
     }
 
@@ -1500,7 +1501,8 @@
             var open = dom.mixer.hidden;
             dom.mixer.hidden = !open;
             dom.mixerToggle.setAttribute('aria-expanded', String(open));
-            dom.mixerToggle.textContent = open ? 'Sbalit mix' : 'Rozbalit mix';
+            dom.mixerToggle.textContent = 'Mix';
+            dom.mixerToggle.setAttribute('aria-label', open ? 'Sbalit mix' : 'Rozbalit mix');
         });
         if (dom.restart) dom.restart.addEventListener('click', restartTransport);
         if (dom.backward) dom.backward.addEventListener('click', function() { seekBy(-5); });
