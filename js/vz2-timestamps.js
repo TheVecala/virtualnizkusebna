@@ -410,7 +410,7 @@
         const reload = iconButton('Obnovit značky', 'refresh', () => panel.load());
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
         const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
-        toolbar.append(add, quickUp, quickDown, reload, stop, exportButton); content.append(status, list, toolbar); shell.append(summary, content); container.append(shell);
+        toolbar.append(add, quickUp, quickDown, reload, stop, exportButton); content.append(status, toolbar, list); shell.append(summary, content); container.append(shell);
         let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport, mobileToggle, resizeObserver, mobileMedia;
         const mixerPanel = container.id === 'mixer-timestamps';
         const positionDrawer = () => {
