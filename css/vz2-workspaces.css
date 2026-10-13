@@ -31,7 +31,7 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
 #desktop-panels { margin: 0; flex: 0 0 auto; }
 #catalog-heading { margin: 0 0 7px; color: var(--vz-primary-hover); font-size: 14px; }
 #catalog-heading-mobile { display: none; }
-#catalog-dialog { inset: var(--catalog-top, 120px) auto auto var(--catalog-left, 8px); margin: 0; width: min(420px, calc(100vw - 16px)); min-height: 0; max-height: var(--catalog-height, 65dvh); padding: 0; border-color: var(--vz-primary); border-radius: 9px; }
+#catalog-dialog { inset: var(--catalog-top, 120px) auto auto var(--catalog-left, 8px); margin: 0; width: min(420px, calc(100vw - 16px)); min-height: 0; max-height: var(--catalog-height, 65dvh); padding: 10px; border-color: var(--vz-primary); border-radius: 9px; }
 #catalog-dialog #sidebar { height: auto; max-height: var(--catalog-height, 65dvh); border-right: 0; }
 #catalog-dialog[open] { animation: none; }
 #catalog-dialog #collections { max-height: none; }
