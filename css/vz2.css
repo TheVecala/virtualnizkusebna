@@ -356,7 +356,7 @@ dialog form { margin-top: 0; }
     #player-body .mt-channel { flex-basis: 104px; }
 }
 /* Compact recordings: disclosure never mounts, replaces or stops a player. */
-.recording-card { padding: 0; margin: 0 0 7px; }
+.recording-card { padding: 0; margin: 0 0 7px; border-color: #53604e; }
 .recording-toggle { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 7px 9px; border: 0; background: transparent; }
 .recording-toggle::after { content: '›'; grid-column: 3; align-self: center; font-size: 21px; color: var(--vz-muted); }
 .recording-toggle[aria-expanded=true]::after { transform: rotate(90deg); color: var(--vz-primary); }
