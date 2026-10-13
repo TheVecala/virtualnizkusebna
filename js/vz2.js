@@ -124,6 +124,7 @@
         window.Vz2Timestamps.stopLoop();
         window.MultitrackApp?.destroy();
         mixerNotes?.destroy(); mixerNotes = null;
+        $('mixer-export').disabled = true;
         mixerId = null; mixerPanel.hidden = true;
         window.Vz2Player.hideMixer();
     }
@@ -727,6 +728,7 @@
         dialog.showModal(); dialog.querySelector('[name=title]').focus();
     });
     $('mixer-copy-link').addEventListener('click', async () => {
+        $('looper-options').open = false;
         try {
             const current = window.MultitrackApp?.getState();
             if (!current || String(current.id) !== mixerId) throw new Error('Nejdříve načtěte nahrávku.');
@@ -734,6 +736,10 @@
             url.search = new URLSearchParams({ v: '2', recording_id: mixerId, time_ms: Math.round(current.position * 1000), view: 'mixer' });
             await navigator.clipboard.writeText(url.href); message('Odkaz zkopírován.');
         } catch (e) { message(e.message, true); }
+    });
+    $('mixer-export').addEventListener('click', () => {
+        $('looper-options').open = false;
+        mixerNotes?.export();
     });
     window.addEventListener('popstate', async () => {
         const serial = ++navigationSerial;
@@ -891,6 +897,7 @@
     document.addEventListener('multitrack:selected', e => {
         mixerNotes?.destroy(); window.Vz2Timestamps.stopLoop();
         mixerNotes = window.Vz2Timestamps.mount($('mixer-timestamps'), e.detail.id, mixerAdapter(e.detail.id));
+        $('mixer-export').disabled = false;
     });
     const initialise = () => refresh().catch(e => { window.Vz2Boot?.fail(); stopMixer(); message(e.message, true); $('content').replaceChildren(node('p', 'Seznam se nepodařilo načíst.')); });
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialise, { once: true });

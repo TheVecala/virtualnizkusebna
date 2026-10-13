@@ -398,7 +398,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('history'); await switchTo('ideas'); await switchTo('rehearsals');
         assert(await page.evaluate(() => window.MultitrackApp.getState()?.playing));
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState().id), '12');
-        await page.locator('#player-close').click();
+        await page.locator('#looper-options > summary').click(); await page.locator('#looper-close').click();
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         await page.goBack();
         await page.waitForFunction(() => document.body.dataset.workspace === 'ideas');

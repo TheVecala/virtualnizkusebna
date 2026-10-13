@@ -254,8 +254,12 @@
         const viewport = window.visualViewport;
         const visibleBottom = (viewport?.offsetTop || 0) + (viewport?.height || innerHeight);
         const player = document.getElementById('player-shell');
+        const mixerToggle = document.getElementById('mt-mixer-toggle');
+        const fullscreenAnchor = player?.dataset.mode === 'mixer'
+            ? (!mixerToggle?.hidden ? mixerToggle : document.querySelector('#mixer-panel .timeline'))
+            : document.querySelector('#looper-panel .timeline');
         const playerBottom = player?.classList.contains('player-fullscreen')
-            ? document.querySelector('#looper-panel .timeline')?.getBoundingClientRect().bottom || 0
+            ? fullscreenAnchor?.getBoundingClientRect().bottom || 0
             : player?.getBoundingClientRect().bottom || 0;
         const top = Math.max(0, Math.min(playerBottom + 8, visibleBottom - 180));
         const covered = Math.max(0, innerHeight - visibleBottom);
@@ -273,6 +277,10 @@
             editor.close();
         }
         const inline = !row && matchMedia('(max-width: 767px)').matches && panel.inlineHost;
+        if (inline && panel.containerId === 'mixer-timestamps') {
+            const mixToggle = document.getElementById('mt-mixer-toggle');
+            if (mixToggle?.getAttribute('aria-expanded') === 'true') mixToggle.click();
+        }
         activeEditor = { panel, row, revision: panel.list.timestamps_revision,
             restoreDrawer: !!inline && (restoreDrawer || panel.drawerOpen?.()) };
         const f = editor.querySelector('form');
@@ -409,6 +417,10 @@
             if (activeEditor?.panel === panel) positionInlineEditor();
         };
         const toggleDrawer = open => {
+            if (open && container.id === 'mixer-timestamps') {
+                const mixToggle = document.getElementById('mt-mixer-toggle');
+                if (mixToggle?.getAttribute('aria-expanded') === 'true') mixToggle.click();
+            }
             container.classList.toggle('ts-drawer-open', open);
             mobileToggle.textContent = (open ? 'Zavřít' : 'Otevřít') + ' časové značky';
             mobileToggle.setAttribute('aria-expanded', String(open));
@@ -420,7 +432,7 @@
             }
         };
         const onMobileChange = () => { toggleDrawer(false); positionDrawer(); };
-        if (container.id === 'looper-timestamps') {
+        if (container.id === 'looper-timestamps' || container.id === 'mixer-timestamps') {
             mobileMedia = matchMedia('(max-width: 767px)');
             mobileActions = el('div'); mobileActions.className = 'looper-timestamp-actions';
             mobileToggle = button('Otevřít časové značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
@@ -434,12 +446,14 @@
             mobileExport = button('Export', () => openExport(panel)); mobileExport.disabled = true;
             add.classList.add('ts-desktop-action'); quickUp.classList.add('ts-desktop-action'); quickDown.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
             mobileActions.append(mobileToggle, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport); container.before(mobileActions);
+            document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
             resizeObserver = new ResizeObserver(positionDrawer);
             resizeObserver.observe(document.getElementById('player-shell')); resizeObserver.observe(mobileActions);
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, inlineHost: mobileActions || shell,
+        const panel = { id, adapter, containerId: container.id, inlineHost: mobileActions || shell,
+            export: () => openExport(panel),
             drawerOpen: mobileActions ? () => container.classList.contains('ts-drawer-open') : null,
             closeDrawer: mobileActions ? () => toggleDrawer(false) : null,
             openDrawer: mobileActions ? () => toggleDrawer(true) : null,
@@ -512,6 +526,7 @@
                 resizeObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
                 window.removeEventListener('resize', positionDrawer); document.removeEventListener('keydown', onDrawerKey);
                 mobileActions?.remove(); container.classList.remove('ts-drawer-open'); container.style.removeProperty('--ts-drawer-top');
+                document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
             }
         };
         if (activeEditor?.panel?.dead && activeEditor.panel.id === id && editor?.open && editor.classList.contains('ts-inline')) {
