@@ -41,7 +41,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         assert.equal(await page.locator('#recording-' + single.id).count(), 1);
         check(true, 'navigation: single and multitrack share one catalogue and Mixer opens above its panels');
         await page.evaluate(() => { window.MultitrackApp.seek(2); });
-        await page.locator('#player-options > summary').click(); await page.locator('#mixer-copy-link').click();
+        await page.locator('#looper-options > summary').click(); await page.locator('#mixer-copy-link').click();
         const copied = new URL(await page.evaluate(() => navigator.clipboard.readText()));
         assert.equal(copied.searchParams.get('recording_id'), String(mix.id));
         assert.equal(copied.searchParams.get('time_ms'), '2000');

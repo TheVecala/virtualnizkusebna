@@ -26,7 +26,7 @@
         }
         fullscreenPanel = panel;
         if (panel) {
-            document.querySelectorAll('#player-options[open], #looper-options[open], #history-options[open], .shell-menu[open], .actions-menu[open], .collection-menu[open]').forEach(menu => menu.open = false);
+            document.querySelectorAll('#looper-options[open], #history-options[open], .shell-menu[open], .actions-menu[open], .collection-menu[open]').forEach(menu => menu.open = false);
             panel.classList.add('panel-fullscreen');
             updateFullscreenButton(panel, true);
             fullscreenHandlers.get(panel)?.enter?.();

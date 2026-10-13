@@ -224,18 +224,15 @@ dialog form { margin-top: 0; }
 #looper-panel > :not(#looper-timestamps) { flex: 0 0 auto; }
 #looper-timestamps { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .looper-timestamp-actions { display: none; }
-#player-options { margin: 0; }
-#player-options > summary { min-height: 30px; width: 32px; }
-#player-options .action-list { position: fixed; z-index: 45; right: 12px; top: 94px; width: min(300px, calc(100vw - 24px)); max-height: 65vh; overflow: auto; box-shadow: 0 5px 16px #0006; }
 #player-shell[data-mode=empty] { max-height: 38px; }
 #player-shell[data-mode=empty] .player-header > button { display: none; }
 #player-shell.player-collapsed { flex-shrink: 0; }
 #player-shell.player-fullscreen { position: fixed; inset: 0; z-index: 40; width: 100%; height: 100vh; height: 100dvh; max-height: none; border: 0; }
 .player-fullscreen #player-body { flex: 1; }
-.player-fullscreen #player-options .action-list { top: 46px; }
 #player-body #mixer-panel { border: 0; border-radius: 0; margin: 0; padding: 0; width: 100%; background: transparent; overflow: visible; }
 #mixer-panel #mt-playing-name { display: none; }
 #mixer-context { margin: 0 0 6px; color: var(--vz-muted); font-size: 12px; }
+#mt-mixer-toggle { display: block; margin-top: 8px; min-height: 32px; }
 #player-body #mt-tracks { gap: 8px; padding-block: 4px; }
 #player-body .mt-channel { background: var(--vz-surface); border-color: var(--vz-border); border-radius: 4px; }
 #player-body .mt-channel-button { color: var(--vz-text); background: var(--vz-shell); border-color: var(--vz-border); }
@@ -259,7 +256,6 @@ dialog form { margin-top: 0; }
 .looper-header-controls { display: none; align-items: center; gap: 4px; flex: 0 0 auto; }
 #player-shell[data-mode=looper] .looper-header-controls { display: flex; }
 #player-shell[data-mode=looper] #player-play,
-#player-shell[data-mode=looper] #player-options,
 #player-shell[data-mode=looper] #player-close { display: none; }
 .looper-header-controls > button,
 .looper-volume-control > button,
@@ -283,7 +279,7 @@ dialog form { margin-top: 0; }
 #looper-volume-value { width: 34px; color: var(--vz-muted); font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; }
 #player-shell[data-mode=looper] #player-collapse { flex: 0 0 38px; }
 #looper-options { display: none; flex: 0 0 auto; position: relative; margin: 0; }
-#player-shell[data-mode=looper] #looper-options { display: block; }
+#player-shell:is([data-mode=looper], [data-mode=mixer]) #looper-options { display: block; }
 #looper-options > summary { list-style: none; }
 #looper-options > summary::-webkit-details-marker { display: none; }
 #looper-options[open] > summary { border-color: var(--vz-primary); }
@@ -296,6 +292,8 @@ dialog form { margin-top: 0; }
 .looper-menu-section i { flex: 0 0 20px; color: var(--vz-muted); font-size: 18px; text-align: center; }
 .looper-menu-section > button > span { display: flex; flex-direction: column; }
 #looper-offline-status { color: var(--vz-muted); font-size: 11px; line-height: 1.35; }
+#looper-menu #mt-offline-status { color: var(--vz-muted); font-size: 11px; line-height: 1.35; }
+#mixer-menu-actions { border-top: 0; }
 .looper-menu-section .looper-menu-danger, .looper-menu-danger i { color: #ff8888; }
 .looper-menu-section .looper-menu-danger:hover { color: #ffaaaa; background: #341c1c; }
 #looper-wave-scroll { position: relative; overflow: auto hidden; border-radius: 0; }
@@ -353,10 +351,8 @@ dialog form { margin-top: 0; }
     .player-header > button { flex-basis: 40px; width: 40px; min-height: 40px; }
     #player-mode { font-size: 10px; }
     #player-title { font-size: 11px; }
-    #player-options > summary { min-width: 40px; min-height: 40px; }
     #player-body .mt-channel-button { width: 40px; height: 40px; }
     #player-body .mt-channel { flex-basis: 104px; }
-    #player-options .action-list { top: 98px; }
 }
 /* Compact recordings: disclosure never mounts, replaces or stops a player. */
 .recording-card { padding: 0; margin: 0 0 7px; }
@@ -491,10 +487,13 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
     .looper-timestamp-actions { display: flex; gap: 5px; margin-top: 8px; }
     .looper-timestamp-actions > button { min-height: 32px; padding: 4px 6px; font-size: 11px; }
     .looper-timestamp-actions > button:first-child { flex: 1; }
-    #looper-timestamps { display: none; position: fixed; z-index: 35; inset: var(--ts-drawer-top, 50%) 8px 0; padding: 8px 10px; background: var(--vz-panel); border: 1px solid var(--vz-player-border); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 20px #0006; }
-    #looper-timestamps.ts-drawer-open { display: block; animation: timestamp-drawer-rise .18s ease-out; }
-    #looper-timestamps .vz2-timestamps { margin: 0; border: 0; }
-    #looper-timestamps .ts-summary, #looper-timestamps .ts-desktop-action { display: none; }
+    #looper-timestamps, #mixer-timestamps { display: none; position: fixed; z-index: 35; inset: var(--ts-drawer-top, 50%) 8px 0; padding: 8px 10px; overflow: auto; background: var(--vz-panel); border: 1px solid var(--vz-player-border); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 20px #0006; }
+    #looper-timestamps.ts-drawer-open, #mixer-timestamps.ts-drawer-open { display: block; animation: timestamp-drawer-rise .18s ease-out; }
+    #looper-timestamps .vz2-timestamps, #mixer-timestamps .vz2-timestamps { margin: 0; border: 0; }
+    #looper-timestamps .ts-summary, #looper-timestamps .ts-desktop-action,
+    #mixer-timestamps .ts-summary, #mixer-timestamps .ts-desktop-action { display: none; }
+    #mt-mixer-toggle { width: 100%; }
+    #mt-mixer:not([hidden]) { position: fixed; z-index: 35; inset: var(--mt-drawer-top, 50%) 8px 0; padding: 8px 10px; overflow: auto; overscroll-behavior: contain; background: var(--vz-panel); border: 1px solid var(--vz-player-border); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 20px #0006; animation: timestamp-drawer-rise .18s ease-out; }
     #topbar .brand { grid-column: 1; grid-row: 1; color: var(--vz-muted); font-size: 10px; font-weight: 500; letter-spacing: .04em; }
     #collection-title { grid-column: 1; grid-row: 2; width: 100%; font-size: 14px; line-height: 1.35; }
     .collection-path-prefix { color: var(--vz-muted); font-weight: 400; }
@@ -530,7 +529,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
     .recording-status { padding: 0 10px 9px; font-size: 11px; }
 }
 @keyframes timestamp-drawer-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { #looper-timestamps.ts-drawer-open { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #looper-timestamps.ts-drawer-open, #mixer-timestamps.ts-drawer-open, #mt-mixer:not([hidden]) { animation: none; } }
 @media (max-width: 360px) {
     .looper-volume-control { flex-basis: 100%; justify-content: center; }
 }
@@ -659,10 +658,12 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 @media(max-width:767px){.history-candidate>button{min-height:44px}}
 
 /* Both players use the same visible transport in the shared header. */
-#player-shell[data-mode=mixer] .player-header { min-height: 52px; gap: 10px; padding: 6px 10px; background: #2b3035; border-bottom: 1px solid #3d4349; }
+#player-shell[data-mode=mixer] .player-header { position: relative; z-index: 30; min-height: 52px; gap: 10px; padding: 6px 10px; background: #2b3035; border-bottom: 1px solid #3d4349; }
 #player-shell[data-mode=mixer] .looper-header-controls { display: flex; }
 #player-shell[data-mode=mixer] #player-play,
 #player-shell[data-mode=mixer] #looper-loop { display: none; }
+#player-shell[data-mode=mixer] #player-close { display: none; }
+#player-shell[data-mode=mixer] #player-collapse { flex: 0 0 38px; }
 #player-shell[data-mode=mixer] #player-mode { flex: 0 0 auto; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
 #player-shell[data-mode=mixer] #player-title { color: #a4abb1; }
 @media (max-width: 767px) {

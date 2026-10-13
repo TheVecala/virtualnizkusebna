@@ -4,10 +4,17 @@
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, mixerVolumeBeforeMute = 1;
     const mixer = $('mixer-panel'); body.append(mixer);
-    // Retain the Mixer IDs and event handlers; expose secondary actions in the shared header.
-    $('player-actions').append($('mixer-copy-link'), $('mt-offline'));
+    // Retain Mixer handlers while showing secondary actions in the shared menu.
+    $('mixer-menu-actions').prepend($('mt-offline'), $('mixer-copy-link'));
     const copy = $('looper-copy-link'), offline = $('looper-offline'), download = $('looper-export');
     const looperMenu = $('looper-options');
+    const mixerMedia = matchMedia('(max-width: 767px)');
+    function positionMixerDrawer() {
+        if (mode !== 'mixer' || !mixerMedia.matches || $('mt-mixer').hidden) return;
+        const notesActions = mixer.querySelector('.looper-timestamp-actions');
+        const anchor = notesActions?.getBoundingClientRect().height ? notesActions : $('mt-mixer-toggle');
+        mixer.style.setProperty('--mt-drawer-top', Math.max(0, anchor.getBoundingClientRect().bottom + 8) + 'px');
+    }
     function offlineLabel(cached) {
         $('looper-offline-label').textContent = cached ? 'Odebrat offline kopii' : 'Uložit pro offline';
         $('looper-offline-status').textContent = cached ? 'uloženo v tomto prohlížeči' : 'přehrávám ze sítě';
@@ -90,9 +97,13 @@
         $('player-collapse').setAttribute('aria-expanded', String(!collapsed));
         $('player-collapse').setAttribute('aria-label', collapsed ? 'Rozbalit přehrávač' : 'Sbalit přehrávač');
         $('player-collapse').firstElementChild.className = collapsed ? 'ti ti-chevron-down' : 'ti ti-chevron-up';
-        $('player-options').hidden = mode === 'empty';
+        $('looper-menu-actions').hidden = mode !== 'looper';
+        $('mixer-menu-actions').hidden = mode !== 'mixer';
+        looperMenu.querySelector('summary').setAttribute('aria-label', mode === 'mixer' ? 'Otevřít menu Mixéru' : 'Otevřít menu Looperu');
+        $('looper-close').querySelector('span').textContent = mode === 'mixer' ? 'Zavřít mixér' : 'Zavřít looper';
         $('mixer-copy-link').hidden = $('mt-offline').hidden = mode !== 'mixer';
-        if (mode !== 'looper') looperMenu.open = false;
+        if (mode === 'empty') looperMenu.open = false;
+        positionMixerDrawer();
         update();
     }
     function exitFullscreen() { window.Vz2Layout.exitFullscreen(shell); }
@@ -100,13 +111,12 @@
         if (!fullscreen) return;
         const previous = fullscreen; fullscreen = null;
         shell.classList.remove('player-fullscreen'); collapsed = previous.collapsed;
-        if (mode === 'mixer' && previous.mixerExpanded !== !$('mt-mixer').hidden && !$('mt-mixer-toggle').hidden) $('mt-mixer-toggle').click();
         layout(); body.scrollTop = previous.scroll; $('looper-wave-scroll').scrollLeft = previous.waveScroll;
     }
     function resetShell() {
         exitFullscreen(); mode = 'empty'; id = null; collapsed = false; mixerPending = false;
         $('player-title').disabled = true; $('player-title-full').textContent = ''; $('player-title-mobile').textContent = ''; $('player-title').title = ''; $('looper-wave-name').textContent = '';
-        $('player-options').open = false; looperMenu.open = false; layout();
+        looperMenu.open = false; layout();
     }
     function closeLooper() {
         const old = looper; looper = null;
@@ -120,7 +130,7 @@
         if (mode === 'looper') resetShell();
     }
     function select(nextMode, recording) {
-        if (mode !== nextMode || id !== String(recording.id)) { exitFullscreen(); collapsed = false; $('player-options').open = false; looperMenu.open = false; }
+        if (mode !== nextMode || id !== String(recording.id)) { exitFullscreen(); collapsed = false; looperMenu.open = false; }
         mode = nextMode; id = String(recording.id);
         const names = (recording.files || []).map(file => file.title || file.original_name || file.display_name).filter(Boolean);
         const title = nextMode === 'looper' ? (looper?.file?.title || looper?.file?.original_name || looper?.file?.display_name || recording.title) : (names.join(', ') || recording.title);
@@ -312,15 +322,27 @@
     $('player-collapse').onclick = () => { collapsed = !collapsed; layout(); };
     window.Vz2Layout.registerFullscreen(shell, {
         enter() {
-            fullscreen = { collapsed, scroll: body.scrollTop, waveScroll: $('looper-wave-scroll').scrollLeft, mixerExpanded: !$('mt-mixer').hidden };
+            fullscreen = { collapsed, scroll: body.scrollTop, waveScroll: $('looper-wave-scroll').scrollLeft };
             collapsed = false; shell.classList.add('player-fullscreen');
-            if (mode === 'mixer' && $('mt-mixer').hidden && !$('mt-mixer-toggle').hidden) $('mt-mixer-toggle').click();
             layout();
         },
         exit: restoreFullscreen
     });
     $('looper-close').onclick = () => { looperMenu.open = false; $('player-close').click(); };
     $('player-close').onclick = () => document.dispatchEvent(new Event('vz2:player-close'));
+    $('mt-mixer-toggle').addEventListener('click', () => queueMicrotask(() => {
+        if ($('mt-mixer-toggle').getAttribute('aria-expanded') !== 'true') return;
+        const notesToggle = mixer.querySelector('.looper-timestamp-actions > button:first-child');
+        if (notesToggle?.getAttribute('aria-expanded') === 'true') notesToggle.click();
+        positionMixerDrawer();
+    }));
+    document.addEventListener('vz2:timestamp-actions-changed', positionMixerDrawer);
+    window.addEventListener('resize', positionMixerDrawer);
+    new ResizeObserver(positionMixerDrawer).observe(mixer);
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || mode !== 'mixer' || !mixerMedia.matches || $('mt-mixer').hidden || document.querySelector('dialog[open]')) return;
+        $('mt-mixer-toggle').click(); $('mt-mixer-toggle').focus(); e.preventDefault(); e.stopPropagation();
+    }, true);
     $('player-title').onclick = () => document.dispatchEvent(new Event('vz2:player-source'));
     $('player-play').onclick = async () => {
         try { if (mode === 'looper') { if (looper.audio.paused) await looper.audio.play(); else looper.audio.pause(); } else if (mode === 'mixer') { if (window.MultitrackApp.getState()?.playing) window.MultitrackApp.pause(); else { document.querySelectorAll('#content audio').forEach(a => a.pause()); await window.MultitrackApp.play(); } } update(); }
