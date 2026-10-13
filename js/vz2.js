@@ -726,12 +726,6 @@
         if (!dialog.querySelector('form')) return;
         dialog.showModal(); dialog.querySelector('[name=title]').focus();
     });
-    $('mixer-close').addEventListener('click', async () => {
-        const previous = mixerId;
-        closePlayer();
-        const card = $('recording-' + previous);
-        card?.scrollIntoView({ block: 'nearest' }); card?.querySelector('button')?.focus({ preventScroll: true });
-    });
     $('mixer-copy-link').addEventListener('click', async () => {
         try {
             const current = window.MultitrackApp?.getState();
@@ -858,12 +852,6 @@
         $('offline-clear').disabled = !count;
     }
     $('show-offline').addEventListener('click', () => showOffline().catch(e => message(e.message, true)));
-    $('mixer-discussion').addEventListener('click', () => {
-        const id = window.MultitrackApp?.getState()?.id;
-        const recording = data?.recordings.find(r => String(r.id) === String(id));
-        if (recording) window.Vz2Content.openDiscussion({ collection_id: recording.collection_id });
-        else message('Nejdříve vyberte vícestopou nahrávku.', true);
-    });
     $('offline-clear').addEventListener('click', async () => {
         if (!confirm('Odebrat všechny offline kopie tohoto prostředí z prohlížeče?')) return;
         try {
