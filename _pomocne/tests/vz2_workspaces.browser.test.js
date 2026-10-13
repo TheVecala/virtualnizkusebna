@@ -431,6 +431,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#move-cancel').click();
         await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít úsek/ }).click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
+        assert.equal(await page.locator('body').getAttribute('data-workspace'), 'rehearsals');
+        assert.equal(await page.locator('#bn-zkousky').getAttribute('aria-pressed'), 'true', 'The mobile dock switches to Rehearsals with the interval');
+        assert.equal(await page.locator('#bn-skladby').getAttribute('aria-pressed'), 'false');
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 8. října');
         await page.waitForFunction(() => window.Vz2Player.getState()?.position >= 4.9);
         assert.equal(await page.locator('#recording-11').count(), 1);

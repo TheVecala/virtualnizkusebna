@@ -615,7 +615,7 @@
             description.append(node('small', context + range + (recording.audio_state === 'available' ? '' : ' · Audio není dostupné')));
             const open = button(range ? 'Otevřít úsek' : 'Otevřít nahrávku', async () => {
                 const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
-                await navigate({ collection_id: String(owner.id), ...(playable ? { recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(link.start_ms || 0) } : {}) });
+                await navigate({ workspace: owner.kind === 'rehearsal' ? 'rehearsals' : 'songs', kind: owner.kind, collection_id: String(owner.id), ...(playable ? { recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(link.start_ms || 0) } : {}) });
             });
             open.setAttribute('aria-label', (range ? 'Otevřít úsek ' : 'Otevřít nahrávku ') + recordingName(recording) + ' u ' + owner.title);
             item.append(description, open); list.append(item);
