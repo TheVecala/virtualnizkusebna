@@ -4,6 +4,11 @@
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, mixerVolumeBeforeMute = 1;
     const mixer = $('mixer-panel'); body.append(mixer);
+    function fileName(file) {
+        const name = file?.title || file?.display_name || file?.original_name || '';
+        const extension = file?.format || /\.([^.]+)$/.exec(file?.original_name || file?.display_name || '')?.[1];
+        return name && extension && !name.toLowerCase().endsWith('.' + extension.toLowerCase()) ? name + '.' + extension : name;
+    }
     // Retain Mixer handlers while showing secondary actions in the shared menu.
     $('mixer-menu-actions').prepend($('mt-offline'), $('mixer-copy-link'));
     const copy = $('looper-copy-link'), offline = $('looper-offline'), download = $('looper-export');
@@ -132,13 +137,13 @@
     function select(nextMode, recording) {
         if (mode !== nextMode || id !== String(recording.id)) { exitFullscreen(); collapsed = false; looperMenu.open = false; }
         mode = nextMode; id = String(recording.id);
-        const names = (recording.files || []).map(file => file.title || file.original_name || file.display_name).filter(Boolean);
-        const title = nextMode === 'looper' ? (looper?.file?.title || looper?.file?.original_name || looper?.file?.display_name || recording.title) : (names.join(', ') || recording.title);
+        const names = (recording.files || []).map(fileName).filter(Boolean);
+        const title = nextMode === 'looper' ? (fileName(looper?.file) || recording.title) : (names.join(', ') || recording.title);
         const sourceTitle = recording.collection_title ? recording.collection_title + ' · ' + title : title;
         $('player-title-full').textContent = sourceTitle;
         const firstFile = recording.files?.[0];
         $('player-title-mobile').textContent = nextMode === 'mixer'
-            ? (firstFile?.original_name || firstFile?.display_name || firstFile?.title || recording.title)
+            ? (fileName(firstFile) || recording.title)
             : sourceTitle;
         $('player-title').title = 'Přejít k nahrávce: ' + sourceTitle; $('player-title').disabled = false;
         $('looper-wave-name').textContent = nextMode === 'looper' ? title : '';

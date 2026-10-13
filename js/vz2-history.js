@@ -5,7 +5,7 @@ let data=null, transposed=false, scroll={x:0,y:0}, cell=null, listCell=null;
 async function request(body){const r=await fetch('php/ajax/vz2_history.php',{method:body?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json','X-CSRF-Token':window.VZ2.csrf}:{},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||'Historii nelze načíst.');return j;}
 function playable(p){return [p.clip,p.source].some(r=>r?.files?.some(f=>f.url));}
 function clock(ms){return Vz2Timestamps.format(ms);}
-function recordingName(r){return (r?.files||[]).map(f=>f.original_name||f.display_name||f.title).filter(Boolean).join(', ')||r?.title||'';}
+function recordingName(r){return (r?.files||[]).map(f=>f.display_name||f.original_name||f.title).filter(Boolean).join(', ')||r?.title||'';}
 function contextTitle(song,rehearsal){return 'skladba: '+song+' × zkouška: '+rehearsal;}
 function title(p){return recordingName(p.clip)||p.clip_title||(recordingName(p.source)?recordingName(p.source)+' · ':'')+clock(p.start_ms||0);}
 function option(value,text){const o=n('option',text);o.value=value;return o;}
