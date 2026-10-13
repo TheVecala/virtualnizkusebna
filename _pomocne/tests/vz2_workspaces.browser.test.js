@@ -16,7 +16,7 @@ wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24);
 wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(wav.length - 44, 40);
 const hash = createHash('sha256').update(wav).digest('hex');
 const collections = ['Nová skladba', 'Poslední vlak', 'Zkouška 8. října', 'Zkouška 1. října'].map((title, index) => ({ id: index + 1, title, kind: index < 2 ? 'song' : 'rehearsal', lifecycle: 'active', author: 'Petr', recordings_revision: 1 }));
-const file = id => ({ id, url: '/sample.wav', state: 'available', original_name: 'zkouška.wav', title: '', sha256: hash, byte_size: wav.length, duration_ms: 180000, mime: 'audio/wav' });
+const file = id => ({ id, url: '/sample.wav', state: 'available', original_name: 'zkouška.wav', title: 'zkouška', sha256: hash, byte_size: wav.length, duration_ms: 180000, mime: 'audio/wav' });
 const recordings = [
     { id: 11, collection_id: 3, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Celá zkouška', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(1)], can_edit: true, can_move: true },
     { id: 12, collection_id: 3, kind: 'multitrack', lifecycle: 'active', audio_state: 'available', title: 'Společný mix', revision: 1, author: 'Klára', duration_ms: 180000, files: [file(2)] },
@@ -185,11 +185,15 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 name.textContent = 'Tváře';
                 const nameBox = name.getBoundingClientRect();
                 const pickerBox = document.querySelector('#catalog-picker').getBoundingClientRect();
-                const result = { oneLine: nameBox.height < 40, fullWidth: pickerBox.width > innerWidth * .8 };
+                const panelBox = document.querySelector('#content-area > .panel:not([hidden])').getBoundingClientRect();
+                const result = { oneLine: nameBox.height < 40, compact: pickerBox.width < innerWidth * .55,
+                    attached: Math.abs(pickerBox.bottom - panelBox.top) <= 2 && Math.abs(pickerBox.left - panelBox.left) <= 2,
+                    button: getComputedStyle(document.querySelector('#catalog-picker')).borderTopWidth !== '0px' };
                 name.textContent = original;
                 return result;
             });
-            assert(shortTitle.oneLine && shortTitle.fullWidth, `A short collection title should use the whole row at ${width}`);
+            assert(shortTitle.oneLine && shortTitle.compact && shortTitle.attached && shortTitle.button,
+                `Collection picker should be a compact tab attached to the panel at ${width}`);
             await switchTo('songs');
             assert.equal(await page.locator('#collection-kind-inline').textContent(), 'Skladba:');
         }
@@ -315,6 +319,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('rehearsals');
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 1. října');
+        assert.equal(await page.locator('#recording-11 .recording-title').textContent(), 'zkouška.wav');
         await page.locator('#catalog-picker').click();
         assert.equal(await page.locator('#catalog-picker').getAttribute('aria-expanded'), 'true');
         const title = await page.locator('#catalog-picker').boundingBox(), dropdown = await page.locator('#catalog-dialog').boundingBox();

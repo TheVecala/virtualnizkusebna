@@ -113,7 +113,11 @@
     }
     function key() { return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); }
     function time(ms) { return window.Vz2Timestamps.format(ms); }
-    function fileName(file) { return file?.title || file?.original_name || file?.display_name || ''; }
+    function fileName(file) {
+        const name = file?.title || file?.display_name || file?.original_name || '';
+        const extension = file?.format || /\.([^.]+)$/.exec(file?.original_name || file?.display_name || '')?.[1];
+        return name && extension && !name.toLowerCase().endsWith('.' + extension.toLowerCase()) ? name + '.' + extension : name;
+    }
     function recordingName(recording) {
         const names = recording.files.map(fileName).filter(Boolean);
         if (recording.kind === 'single') return names[0] || recording.title || 'Nahrávka';
