@@ -215,6 +215,7 @@ dialog form { margin-top: 0; }
 .player-header { flex: 0 0 auto; display: flex; align-items: center; gap: 5px; min-width: 0; padding: 4px 8px; }
 #player-mode { color: var(--vz-primary); font-size: 11px; letter-spacing: .05em; }
 #player-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+#player-title-mobile { display: none; }
 .player-header > button { width: 32px; flex: 0 0 32px; padding: 3px; }
 #player-play { color: var(--vz-primary); background: var(--vz-primary-soft); }
 #player-body { min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; padding: 8px; scrollbar-width: thin; }
@@ -233,14 +234,12 @@ dialog form { margin-top: 0; }
 .player-fullscreen #player-body { flex: 1; }
 .player-fullscreen #player-options .action-list { top: 46px; }
 #player-body #mixer-panel { border: 0; border-radius: 0; margin: 0; padding: 0; width: 100%; background: transparent; overflow: visible; }
-#mixer-panel > .toolbar:first-child { display: none; }
 #mixer-panel #mt-playing-name { display: none; }
 #mixer-context { margin: 0 0 6px; color: var(--vz-muted); font-size: 12px; }
 #player-body #mt-tracks { gap: 8px; padding-block: 4px; }
 #player-body .mt-channel { background: var(--vz-surface); border-color: var(--vz-border); border-radius: 4px; }
 #player-body .mt-channel-button { color: var(--vz-text); background: var(--vz-shell); border-color: var(--vz-border); }
 #player-body .mt-channel-button[aria-pressed=true], #player-body .mt-channel-button.is-active { background: var(--vz-primary-soft); border-color: var(--vz-primary); color: var(--vz-primary-hover); }
-#player-body #mt-play { color: var(--vz-primary-hover); border-color: var(--vz-primary); }
 #player-body .vz2-timestamps { margin-top: 10px; }
 #player-body .vz2-timestamps > .ts-summary { min-height: 32px; padding: 5px 0; font-size: 13px; }
 #player-body .vz2-timestamps li { padding: 4px 6px; }
@@ -275,8 +274,7 @@ dialog form { margin-top: 0; }
 #player-shell[data-source=offline] { --vz-play-source: #a8dcb2; --vz-play-source-soft: #315240; }
 #player-shell[data-source=web] { --vz-play-source: #e7aaa8; --vz-play-source-soft: #563839; }
 #player-shell:is([data-source=offline], [data-source=web]) #player-play,
-#player-shell:is([data-source=offline], [data-source=web]) #looper-play,
-#player-shell:is([data-source=offline], [data-source=web]) #mt-play { color: var(--vz-play-source); border-color: var(--vz-play-source); background: var(--vz-play-source-soft); }
+#player-shell:is([data-source=offline], [data-source=web]) #looper-play { color: var(--vz-play-source); border-color: var(--vz-play-source); background: var(--vz-play-source-soft); }
 .recording-card audio[data-source=offline] { accent-color: #a8dcb2; }
 .recording-card audio[data-source=web] { accent-color: #e7aaa8; }
 #looper-loop[aria-pressed=true], #looper-mute[aria-pressed=true] { color: var(--vz-primary); border-color: var(--vz-primary); }
@@ -659,3 +657,19 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 .history-add-status{font-size:12px;color:var(--vz-primary-hover)}
 .history-add-status:empty{display:none}
 @media(max-width:767px){.history-candidate>button{min-height:44px}}
+
+/* Both players use the same visible transport in the shared header. */
+#player-shell[data-mode=mixer] .player-header { min-height: 52px; gap: 10px; padding: 6px 10px; background: #2b3035; border-bottom: 1px solid #3d4349; }
+#player-shell[data-mode=mixer] .looper-header-controls { display: flex; }
+#player-shell[data-mode=mixer] #player-play,
+#player-shell[data-mode=mixer] #looper-loop { display: none; }
+#player-shell[data-mode=mixer] #player-mode { flex: 0 0 auto; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
+#player-shell[data-mode=mixer] #player-title { color: #a4abb1; }
+@media (max-width: 767px) {
+    #player-shell[data-mode=mixer] .player-header { gap: 4px; padding: 8px; background: transparent; }
+    #player-shell[data-mode=mixer] .looper-header-controls { order: 3; width: 100%; justify-content: center; border-top: 1px solid var(--vz-border); padding-top: 4px; }
+    #player-shell[data-mode=mixer] #player-mode { color: var(--vz-muted); font-size: 10px; font-weight: 500; letter-spacing: .04em; }
+    #player-shell[data-mode=mixer] #player-title { color: var(--vz-text); }
+    #player-shell[data-mode=mixer] #player-title-full { display: none; }
+    #player-shell[data-mode=mixer] #player-title-mobile { display: inline; }
+}

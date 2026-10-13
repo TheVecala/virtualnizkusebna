@@ -394,7 +394,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#recording-12').getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
         await mixerRequested.promise; await switchTo('songs'); holdMixer.release(); holdMixer = null;
         await page.waitForFunction(() => window.Vz2Player.getState()?.mode === 'mixer' && window.Vz2Player.getState()?.phase === 'ready');
-        await page.locator('#player-play').click(); await page.waitForFunction(() => window.MultitrackApp.getState()?.playing);
+        await page.locator('#looper-play').click(); await page.waitForFunction(() => window.MultitrackApp.getState()?.playing);
         await switchTo('history'); await switchTo('ideas'); await switchTo('rehearsals');
         assert(await page.evaluate(() => window.MultitrackApp.getState()?.playing));
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState().id), '12');
