@@ -140,10 +140,13 @@
         $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
         const mobilePanels = $('mobile-panels');
         mobilePanels.hidden = !collection || !mobile.matches;
+        const collectionHeader = $('collection-header');
+        const collectionHeading = $('collection-title').parentElement;
+        if (mobilePanels.parentElement !== collectionHeader) collectionHeader.append(mobilePanels);
         if (collection && mobile.matches) {
             const header = $('panel-' + state.mobile).querySelector('.panel-header');
-            if (mobilePanels.parentElement !== header) header.prepend(mobilePanels);
-        }
+            if (collectionHeading.parentElement !== header) header.prepend(collectionHeading);
+        } else if (collectionHeading.parentElement !== collectionHeader) collectionHeader.prepend(collectionHeading);
         // Move the existing controls, preserving values and listeners at every breakpoint.
         moveControls('desktop-panels', 'sidebar');
         moveControls('history-controls', 'history-controls-slot');

@@ -146,7 +146,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 const geometry = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1, height: document.documentElement.scrollHeight > innerHeight + 1, dockHeight: document.querySelector('#mobile-dock').getBoundingClientRect().height }));
                 assert(!geometry.overflow && !geometry.height, `${workspace}: viewport overflow at ${width}`);
                 if (width < 768) {
-                    if (workspace === 'songs' || workspace === 'rehearsals') assert(await page.locator('#mobile-panels').isVisible());
+                    if (workspace === 'songs' || workspace === 'rehearsals') {
+                        assert(await page.locator('#mobile-panels').isVisible());
+                        const labelsFit = await page.locator('#mobile-panels button:visible .section-button-label').evaluateAll(labels => labels.every(label => label.getBoundingClientRect().width > 0 && label.scrollWidth <= label.clientWidth + 1));
+                        assert(labelsFit, `${workspace}: section tab labels fit at ${width} px`);
+                    }
                     else {
                         const header = workspace === 'history' ? '#history-workspace .workspace-header' : '#ideas-workspace .workspace-header';
                         const controls = workspace === 'history' ? '#history-controls' : '#ideas-controls';
@@ -173,27 +177,27 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 const nameBox = name.getBoundingClientRect();
                 const pickerBox = picker.getBoundingClientRect();
                 const chevronBox = chevron.getBoundingClientRect();
-                const layout = { clipped: name.scrollWidth > name.clientWidth + 1 || name.scrollHeight > name.clientHeight + 1,
+                const layout = { clipped: name.scrollWidth > name.clientWidth + 1,
                     chevronVisible: chevronBox.right <= pickerBox.right + 1 && chevronBox.left >= nameBox.right - 1 && chevronBox.left - nameBox.right <= 12 };
                 name.textContent = original;
                 return layout;
             });
-            assert(!titleLayout.clipped && titleLayout.chevronVisible, `Collection title or picker arrow is clipped at ${width}`);
+            assert(titleLayout.clipped && titleLayout.chevronVisible, `Long collection names should shorten while the picker arrow stays visible at ${width}`);
             const shortTitle = await page.evaluate(() => {
                 const name = document.querySelector('#collection-title-name');
                 const original = name.textContent;
                 name.textContent = 'Tváře';
                 const nameBox = name.getBoundingClientRect();
                 const pickerBox = document.querySelector('#catalog-picker').getBoundingClientRect();
-                const panelBox = document.querySelector('#content-area > .panel:not([hidden])').getBoundingClientRect();
-                const result = { oneLine: nameBox.height < 40, compact: pickerBox.width < innerWidth * .55,
-                    attached: Math.abs(pickerBox.bottom - panelBox.top) <= 2 && Math.abs(pickerBox.left - panelBox.left) <= 2,
+                const panel = document.querySelector('#content-area > .panel:not([hidden])');
+                const result = { oneLine: nameBox.height < 40, compact: pickerBox.width < innerWidth * .75,
+                    inHeader: picker.closest('.panel-header') === panel.querySelector('.panel-header'),
                     button: getComputedStyle(document.querySelector('#catalog-picker')).borderTopWidth !== '0px' };
                 name.textContent = original;
                 return result;
             });
-            assert(shortTitle.oneLine && shortTitle.compact && shortTitle.attached && shortTitle.button,
-                `Collection picker should be a compact tab attached to the panel at ${width}`);
+            assert(shortTitle.oneLine && shortTitle.compact && shortTitle.inHeader && shortTitle.button,
+                `Collection picker should fit in the active panel header at ${width}`);
             await switchTo('songs');
             assert.equal(await page.locator('#collection-kind-inline').textContent(), 'Skladba:');
         }
@@ -220,28 +224,32 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             assert(await page.locator(`#panel-${panel}`).isVisible());
             const fit = await page.evaluate(() => {
                 const header = document.querySelector('#content-area > .panel:not([hidden]) > .panel-header');
-                const icons = document.querySelector('#mobile-panels').getBoundingClientRect();
+                const tabs = document.querySelector('#mobile-panels').getBoundingClientRect();
+                const picker = document.querySelector('#catalog-picker').getBoundingClientRect();
                 const actions = header.querySelector('.panel-header-actions').getBoundingClientRect();
                 const fullscreen = header.querySelector('.panel-fullscreen-button').getBoundingClientRect();
                 return { overflow: document.documentElement.scrollWidth > innerWidth + 1,
-                    iconWidth: document.querySelector('#mobile-panels button').getBoundingClientRect().width,
+                    tabWidth: document.querySelector('#mobile-panels button').getBoundingClientRect().width,
                     headerHeight: header.getBoundingClientRect().height,
-                    oneRow: Math.abs((icons.top + icons.bottom) / 2 - (actions.top + actions.bottom) / 2) < 6 &&
-                        Math.abs((icons.top + icons.bottom) / 2 - (fullscreen.top + fullscreen.bottom) / 2) < 6 };
+                    tabsAbove: tabs.bottom <= header.getBoundingClientRect().top + 2,
+                    oneRow: Math.abs((picker.top + picker.bottom) / 2 - (actions.top + actions.bottom) / 2) < 6 &&
+                        Math.abs((picker.top + picker.bottom) / 2 - (fullscreen.top + fullscreen.bottom) / 2) < 6 };
             });
-            assert(!fit.overflow && fit.iconWidth >= 28 && fit.headerHeight < 65 && fit.oneRow, `${panel}: section header should stay on one row at 320 px`);
+            assert(!fit.overflow && fit.tabWidth >= 60 && fit.tabsAbove && fit.headerHeight < 65 && fit.oneRow, `${panel}: section tabs and picker should fit at 320 px`);
             if (panel === 'tablature') await shot('songs-map-320');
         }
         await page.locator('[data-mobile-panel=recordings]').click();
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('songs');
         assert.equal(await page.locator('#mobile-panels button:visible').count(), 4);
+        assert.deepEqual(await page.locator('#mobile-panels .section-button-label').allTextContents(), ['Nahrávky', 'Text', 'Mapa', 'Diskuse']);
         await page.locator('[data-mobile-panel=tablature]').click();
         assert(await page.locator('#panel-tablature').isVisible());
-        assert.equal(await page.locator('#mobile-panels').evaluate(node => node.parentElement.closest('.panel').id), 'panel-tablature');
+        assert.equal(await page.locator('#mobile-panels').evaluate(node => node.parentElement.id), 'collection-header');
+        assert.equal(await page.locator('#catalog-picker').evaluate(node => node.closest('.panel').id), 'panel-tablature');
         assert.equal(await page.locator('#mobile-panels [data-mobile-panel=tablature]').getAttribute('aria-pressed'), 'true');
         await page.locator('[data-mobile-panel=recordings]').click();
-        console.log('PASS: mobile section icons switch panels in one tap and free the bottom dock');
+        console.log('PASS: labeled mobile section tabs switch panels while the collection picker follows the active panel');
 
         await page.setViewportSize({ width: 1200, height: 900 });
         assert.equal(await page.locator('#catalog-search').count(), 0);
