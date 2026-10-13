@@ -141,7 +141,8 @@
     function resolveRoute(params) {
         const target = data?.recordings.find(r => String(r.id) === String(params.recording_id));
         const requestedKind = params.workspace === 'rehearsals' || params.kind === 'rehearsal' ? 'rehearsal' : 'song';
-        const requestedId = target?.collection_id || params.collection_id || collectionMemory[requestedKind];
+        // Linked rehearsal audio can play while its song folder remains selected.
+        const requestedId = (params.keep_collection === '1' && params.collection_id) || target?.collection_id || params.collection_id || collectionMemory[requestedKind];
         const collection = data?.collections.find(c => String(c.id) === String(requestedId) && c.lifecycle === 'active')
             || data?.collections.find(c => c.kind === requestedKind && c.lifecycle === 'active');
         const nextKind = collection?.kind || requestedKind;
@@ -183,6 +184,7 @@
             route.recording_id = String(target.id);
             if (params.time_ms !== undefined) route.time_ms = params.time_ms;
             if (params.view) route.view = params.view;
+            if (params.keep_collection === '1') route.keep_collection = '1';
         }
         setRoute(route, true);
         const nextMixer = openRecording && target?.kind === 'multitrack' && target.lifecycle === 'active' ? String(target.id) : null;
@@ -228,7 +230,7 @@
         if (mixerId) stopMixer();
         window.Vz2Player.closeLooper();
         const params = Object.fromEntries(qs);
-        delete params.recording_id; delete params.view; delete params.time_ms;
+        delete params.recording_id; delete params.view; delete params.time_ms; delete params.keep_collection;
         setRoute(params, true);
         if (data) { rememberSurface(); render(); }
     }
@@ -236,7 +238,7 @@
         const serial = ++catalogSerial, initial = !data, latest = await api();
         if (serial !== catalogSerial) return;
         const routeRecording = latest.recordings.find(r => String(r.id) === qs.get('recording_id'));
-        const routeCollectionId = routeRecording?.collection_id || qs.get('collection_id');
+        const routeCollectionId = (qs.get('keep_collection') === '1' && qs.get('collection_id')) || routeRecording?.collection_id || qs.get('collection_id');
         const routeCollection = latest.collections.find(c => String(c.id) === String(routeCollectionId))
             || latest.collections.find(c => c.kind === (qs.get('kind') === 'rehearsal' ? 'rehearsal' : 'song') && c.lifecycle === 'active');
         if (routeCollection?.kind === 'song' && !await window.Vz2SongMap.canLeave(routeCollection.id) || serial !== catalogSerial) return;
@@ -615,7 +617,14 @@
             description.append(node('small', context + range + (recording.audio_state === 'available' ? '' : ' · Audio není dostupné')));
             const open = button(range ? 'Otevřít úsek' : 'Otevřít nahrávku', async () => {
                 const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
-                await navigate({ workspace: owner.kind === 'rehearsal' ? 'rehearsals' : 'songs', kind: owner.kind, collection_id: String(owner.id), ...(playable ? { recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(link.start_ms || 0) } : {}) });
+                const keepCollection = collection.kind === 'song' && !!range;
+                const destination = keepCollection ? collection : owner;
+                await navigate({
+                    workspace: destination.kind === 'rehearsal' ? 'rehearsals' : 'songs',
+                    kind: destination.kind, collection_id: String(destination.id),
+                    ...(keepCollection ? { keep_collection: '1' } : {}),
+                    ...(playable ? { recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(link.start_ms || 0) } : {})
+                });
             });
             open.setAttribute('aria-label', (range ? 'Otevřít úsek ' : 'Otevřít nahrávku ') + recordingName(recording) + ' u ' + owner.title);
             item.append(description, open); list.append(item);
