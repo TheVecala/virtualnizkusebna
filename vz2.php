@@ -210,7 +210,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <label>Hlasitost<input id="mt-master-volume" type="range" min="0" max="100" value="100"><output id="mt-master-value">100 %</output></label></div>
 <button id="mt-offline" aria-pressed="false" hidden><i class="ti ti-download" aria-hidden="true"></i><span><span id="mt-offline-label">Uložit offline</span><small id="mt-offline-status"></small></span></button>
 <div class="timeline"><output id="mt-current-time">00:00</output><input id="mt-seek" type="range" min="0" max="0" step="0.01" value="0"><output id="mt-total-time">00:00</output></div>
-<button id="mt-mixer-toggle" type="button" aria-expanded="false" aria-controls="mt-mixer" hidden>Rozbalit mix</button>
+<div id="mixer-action-row"><button id="mt-mixer-toggle" type="button" aria-label="Rozbalit mix" aria-expanded="false" aria-controls="mt-mixer" hidden>Mix</button></div>
 <div id="mt-loading-panel" hidden><p id="mt-load-summary"></p><div id="mt-track-statuses"></div><button id="mt-loading-cancel">Zrušit načítání</button></div>
 <div id="mt-mixer" hidden><div id="mt-tracks"></div></div>
 <div id="mixer-timestamps"></div>

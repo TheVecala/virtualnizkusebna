@@ -87,10 +87,22 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         assert.equal(await page.locator('#looper-options > summary').isVisible(), true);
         await page.locator('#looper-options > summary').click();
         assert.equal(await page.locator('#mixer-menu-actions').isVisible(), true);
+        assert.equal(await page.locator('#mixer-export').isVisible(), true);
         assert.equal(await page.locator('#looper-menu-actions').isVisible(), false);
         assert.equal(await page.locator('#looper-close span').textContent(), 'Zavřít mixér');
         await page.locator('#looper-options > summary').click();
         await page.waitForFunction(() => !!document.querySelector('#mixer-panel .looper-timestamp-actions'));
+        assert.equal(await page.locator('#mixer-action-row').getByRole('button').count(), 5);
+        assert.equal(await page.locator('#mixer-action-row').getByText('Export').count(), 0);
+        assert.equal(await page.locator('#mt-mixer-toggle').textContent(), 'Mix');
+        assert.equal(await page.locator('#mixer-action-row .looper-timestamp-actions > button:first-child').textContent(), 'Časové značky');
+        await page.setViewportSize({ width: 320, height: 844 });
+        assert(await page.locator('#mixer-action-row').evaluate(row => {
+            const buttons = [...row.querySelectorAll('button:not([hidden])')];
+            return buttons.length === 5 && buttons.every(button => Math.abs(button.getBoundingClientRect().top - buttons[0].getBoundingClientRect().top) < 3)
+                && row.scrollWidth <= row.clientWidth;
+        }), 'Mixer actions stay in one row on a narrow phone');
+        await page.setViewportSize({ width: 390, height: 844 });
         const seekBox = await page.locator('#mt-seek').boundingBox(), toggleBox = await page.locator('#mt-mixer-toggle').boundingBox();
         assert(toggleBox.y >= seekBox.y + seekBox.height, 'Mix toggle is below the progress bar');
         await page.locator('#mt-mixer-toggle').click();

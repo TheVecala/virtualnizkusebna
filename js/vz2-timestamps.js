@@ -412,6 +412,7 @@
         const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
         toolbar.append(add, quickUp, quickDown, reload, stop, exportButton); content.append(status, list, toolbar); shell.append(summary, content); container.append(shell);
         let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport, mobileToggle, resizeObserver, mobileMedia;
+        const mixerPanel = container.id === 'mixer-timestamps';
         const positionDrawer = () => {
             if (mobileActions && mobileMedia.matches) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
             if (activeEditor?.panel === panel) positionInlineEditor();
@@ -422,7 +423,8 @@
                 if (mixToggle?.getAttribute('aria-expanded') === 'true') mixToggle.click();
             }
             container.classList.toggle('ts-drawer-open', open);
-            mobileToggle.textContent = (open ? 'Zavřít' : 'Otevřít') + ' časové značky';
+            mobileToggle.textContent = mixerPanel ? 'Časové značky' : (open ? 'Zavřít' : 'Otevřít') + ' časové značky';
+            if (mixerPanel) mobileToggle.setAttribute('aria-label', (open ? 'Zavřít' : 'Otevřít') + ' časové značky');
             mobileToggle.setAttribute('aria-expanded', String(open));
             if (open) { shell.open = true; positionDrawer(); }
         };
@@ -435,7 +437,8 @@
         if (container.id === 'looper-timestamps' || container.id === 'mixer-timestamps') {
             mobileMedia = matchMedia('(max-width: 767px)');
             mobileActions = el('div'); mobileActions.className = 'looper-timestamp-actions';
-            mobileToggle = button('Otevřít časové značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
+            mobileToggle = button(mixerPanel ? 'Časové značky' : 'Otevřít časové značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
+            if (mixerPanel) mobileToggle.setAttribute('aria-label', 'Otevřít časové značky');
             mobileToggle.setAttribute('aria-expanded', 'false'); mobileToggle.setAttribute('aria-controls', container.id);
             mobileAdd = button('Přidat značku', () => openEditor(panel, null)); mobileAdd.disabled = true;
             mobileQuickUp = button('👍', () => quickNote(panel, '👍'));
@@ -443,9 +446,12 @@
             for (const [control, label] of [[mobileQuickUp, 'Přidat poznámku: palec nahoru'], [mobileQuickDown, 'Přidat poznámku: palec dolů']]) {
                 control.className = 'ts-quick-note'; control.title = label; control.setAttribute('aria-label', label); control.disabled = true;
             }
-            mobileExport = button('Export', () => openExport(panel)); mobileExport.disabled = true;
+            if (!mixerPanel) { mobileExport = button('Export', () => openExport(panel)); mobileExport.disabled = true; }
             add.classList.add('ts-desktop-action'); quickUp.classList.add('ts-desktop-action'); quickDown.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
-            mobileActions.append(mobileToggle, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport); container.before(mobileActions);
+            mobileActions.append(mobileToggle, mobileAdd, mobileQuickUp, mobileQuickDown);
+            if (mobileExport) mobileActions.append(mobileExport);
+            if (mixerPanel) document.getElementById('mixer-action-row').append(mobileActions);
+            else container.before(mobileActions);
             document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
             resizeObserver = new ResizeObserver(positionDrawer);
             resizeObserver.observe(document.getElementById('player-shell')); resizeObserver.observe(mobileActions);
@@ -463,7 +469,8 @@
                 this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = !value.can_create; exportButton.disabled = false;
                 for (const control of [quickUp, quickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 if (mobileActions) {
-                    mobileAdd.hidden = !value.can_create; mobileAdd.disabled = !value.can_create; mobileExport.disabled = false;
+                    mobileAdd.hidden = !value.can_create; mobileAdd.disabled = !value.can_create;
+                    if (mobileExport) mobileExport.disabled = false;
                     for (const control of [mobileQuickUp, mobileQuickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 }
                 if (loop?.panel === this) api.stopLoop();
