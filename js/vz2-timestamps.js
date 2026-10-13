@@ -204,7 +204,7 @@
         editor.addEventListener('close', () => {
             document.getElementById('player-shell')?.classList.remove('ts-creating');
             editor.classList.remove('ts-keyboard-open');
-            editor.style.removeProperty('--ts-inline-height'); editor.style.removeProperty('--ts-inline-top');
+            editor.style.removeProperty('--ts-inline-max-height'); editor.style.removeProperty('--ts-inline-bottom');
             if (!editor.open && activeEditor?.restoreDrawer && !activeEditor.panel.dead) activeEditor.panel.openDrawer?.();
         });
         editor.addEventListener('focusin', positionInlineEditor);
@@ -252,7 +252,8 @@
     function positionInlineEditor() {
         if (!editor?.open || !editor.classList.contains('ts-inline')) return;
         const viewport = window.visualViewport;
-        const visibleBottom = (viewport?.offsetTop || 0) + (viewport?.height || innerHeight);
+        const visibleTop = viewport?.offsetTop || 0;
+        const visibleBottom = visibleTop + (viewport?.height || innerHeight);
         const player = document.getElementById('player-shell');
         const mixerToggle = document.getElementById('mt-mixer-toggle');
         const fullscreenAnchor = player?.dataset.mode === 'mixer'
@@ -261,12 +262,11 @@
         const playerBottom = player?.classList.contains('player-fullscreen')
             ? fullscreenAnchor?.getBoundingClientRect().bottom || 0
             : player?.getBoundingClientRect().bottom || 0;
-        const top = Math.max(0, Math.min(playerBottom + 8, visibleBottom - 180));
         const covered = Math.max(0, innerHeight - visibleBottom);
         const typing = editor.contains(document.activeElement) && document.activeElement.matches('input[name=body],input[name=time]');
         editor.classList.toggle('ts-keyboard-open', covered > 120 || typing);
-        editor.style.setProperty('--ts-inline-top', top + 'px');
-        editor.style.setProperty('--ts-inline-height', Math.max(100, visibleBottom - top - 8) + 'px');
+        editor.style.setProperty('--ts-inline-bottom', Math.max(8, covered + 8) + 'px');
+        editor.style.setProperty('--ts-inline-max-height', Math.max(100, visibleBottom - Math.max(visibleTop + 8, playerBottom + 8) - 8) + 'px');
     }
     function openEditor(panel, row) {
         ensureEditor();

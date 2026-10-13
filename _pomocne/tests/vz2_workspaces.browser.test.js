@@ -370,7 +370,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const editorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
         const playerBox = await page.locator('#player-shell').boundingBox();
         assert(editorBox.y >= playerBox.y + playerBox.height, 'The mobile timestamp editor opens below the player');
-        assert(editorBox.y + editorBox.height <= 844, 'The mobile timestamp editor fits in the viewport');
+        assert(editorBox.height < 380, 'The mobile timestamp editor uses only the height its controls need');
+        assert(Math.abs(editorBox.y + editorBox.height - (844 - 8)) <= 2, 'The mobile timestamp editor stays at the bottom');
         assert(await page.locator('.vz2-timestamp-editor [name=body]').isVisible(), 'The timestamp input is visible');
         await shot('timestamp-editor-390');
         await page.locator('.vz2-timestamp-editor .ts-close').click();
@@ -379,7 +380,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const fullscreenEditorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
         const timelineBox = await page.locator('#looper-panel .timeline').boundingBox();
         assert(fullscreenEditorBox.y >= timelineBox.y + timelineBox.height, 'The editor opens below the fullscreen Looper controls');
-        assert(fullscreenEditorBox.y + fullscreenEditorBox.height <= 844, 'The fullscreen editor fits in the viewport');
+        assert(fullscreenEditorBox.height < 380 && fullscreenEditorBox.y + fullscreenEditorBox.height <= 844, 'The fullscreen editor stays compact and visible');
         await shot('timestamp-editor-fullscreen-390');
         await page.locator('.vz2-timestamp-editor .ts-close').click();
         await page.locator('#player-fullscreen').click();
