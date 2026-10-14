@@ -35,7 +35,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message));
-    page.on('dialog', async dialog => { confirmations.push(dialog.message()); await dialog.accept(); });
+    page.on('dialog', async dialog => {
+        confirmations.push(dialog.message());
+        const filename = ['old.jpg', 'active.jpg'].find(name => dialog.message().includes(name));
+        await dialog.accept(filename);
+    });
     const savedMaps = new Map();
     await context.route('https://cdn.jsdelivr.net/**', r => r.abort());
     await context.route('http://vz2-workspaces.test/**', async route => {
@@ -60,6 +64,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                     const recording = recordings.find(row => row.id === input.id);
                     recording.files.find(entry => entry.id === input.file_id).title = input.title;
                     recording.revision++;
+                }
+                if (input.action === 'remove_attachment') {
+                    assert.equal(input.confirm, catalog.attachments.find(entry => entry.id === input.id)?.original_name);
+                    catalog.attachments.splice(catalog.attachments.findIndex(entry => entry.id === input.id), 1);
                 }
                 return json({ ok: true });
             }
@@ -493,8 +501,22 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít ve skladbě/ }).click();
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Nová skladba');
         assert.equal(await page.locator('#recording-13').count(), 1);
+        catalog.attachments.push(
+            { id: 21, collection_id: 1, title: '', original_name: 'old.jpg', state: 'deleted', url: null, author: 'Petr', revision: 2, can_remove: true },
+            { id: 22, collection_id: 1, title: '', original_name: 'active.jpg', state: 'available', url: '/sample.wav', author: 'Petr', revision: 1, can_remove: true }
+        );
+        await page.reload(); await ready();
+        const oldAttachment = page.locator('.attachment-card').filter({ hasText: 'old.jpg' });
+        await oldAttachment.locator('.recording-toggle').click();
+        assert((await oldAttachment.textContent()).includes('Soubor odstraněn'));
+        await oldAttachment.getByRole('button', { name: 'Smazat položku' }).click();
+        await page.waitForFunction(() => !document.querySelector('.attachment-card')?.textContent.includes('old.jpg'));
+        const activeAttachment = page.locator('.attachment-card').filter({ hasText: 'active.jpg' });
+        await activeAttachment.locator('.recording-toggle').click();
+        await activeAttachment.getByRole('button', { name: 'Odstranit přílohu' }).click();
+        await page.waitForFunction(() => !document.querySelector('.attachment-card'));
         assert.deepEqual(errors, []);
-        console.log('PASS: linked recordings appear from both sides; source cards, seek time and linked move choices stay consistent');
+        console.log('PASS: linked recordings and attachment removal, including old entries with deleted files');
     } catch (error) {
         console.error('Browser errors:', errors);
         console.error(await page.locator('#vz2-boot-status, #message').allTextContents());
