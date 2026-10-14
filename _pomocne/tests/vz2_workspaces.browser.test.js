@@ -185,6 +185,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             assert(titleLayout.clipped && titleLayout.chevronVisible, `Long collection names should shorten while the picker arrow stays visible at ${width}`);
             const shortTitle = await page.evaluate(() => {
                 const name = document.querySelector('#collection-title-name');
+                const picker = document.querySelector('#catalog-picker');
                 const original = name.textContent;
                 name.textContent = 'Tváře';
                 const nameBox = name.getBoundingClientRect();
@@ -329,7 +330,6 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('rehearsals');
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 1. října');
-        assert.equal(await page.locator('#recording-11 .recording-title').textContent(), 'zkouška.wav');
         await page.locator('#catalog-picker').click();
         assert.equal(await page.locator('#catalog-picker').getAttribute('aria-expanded'), 'true');
         const title = await page.locator('#catalog-picker').boundingBox(), dropdown = await page.locator('#catalog-dialog').boundingBox();
@@ -341,6 +341,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await shot('catalog-rehearsals-390');
         assert.equal(await page.locator('#collections .collection:visible').count(), 2);
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 8. října' }).click();
+        assert.equal(await page.locator('#recording-11 .recording-title').textContent(), 'zkouška.wav');
         assert.equal(await page.locator('#mobile-panels button:visible').count(), 3);
         await page.locator('[data-mobile-panel=recordings]').click();
         assert(await page.locator('#recording-11 .recording-caption').isVisible(), 'The short caption is visible while the recording is collapsed');
@@ -432,6 +433,22 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#recording-13').count(), 1, 'Home recording retains its original card');
         assert.equal(await page.locator('.linked-recordings li').count(), 1, 'Song lists one linked rehearsal interval');
         assert((await page.locator('.linked-recordings').textContent()).includes('00:05–00:10'));
+        const rehearsalInterval = page.locator('.linked-recordings .linked-recording-card');
+        await rehearsalInterval.locator('.recording-toggle').click();
+        assert.equal(await rehearsalInterval.locator('audio').count(), 1, 'The linked interval has an inline player');
+        assert.equal(await rehearsalInterval.getByRole('button', { name: /Otevřít ve zkoušce/ }).count(), 1);
+        assert.equal(await rehearsalInterval.getByRole('button', { name: /Smazat|Odstranit|Přesunout|Upravit/ }).count(), 0, 'Source management is absent from the linked card');
+        await page.waitForFunction(() => {
+            const audio = document.querySelector('.linked-recordings audio');
+            return audio && audio.readyState >= 1 && audio.currentTime >= 4.9;
+        });
+        await rehearsalInterval.locator('audio').evaluate(audio => { audio.currentTime = 11; });
+        await page.waitForFunction(() => document.querySelector('.linked-recordings audio').currentTime <= 10);
+        await rehearsalInterval.locator('audio').evaluate(async audio => { audio.currentTime = 9.8; await audio.play(); });
+        await page.waitForFunction(() => {
+            const audio = document.querySelector('.linked-recordings audio');
+            return audio.paused && audio.currentTime >= 9.95 && audio.currentTime <= 10;
+        });
         await page.locator('#recording-13 .recording-toggle').click();
         await page.locator('#recording-13 .recording-actions').getByRole('button', { name: 'Další' }).click();
         await page.locator('#recording-actions-13').getByRole('button', { name: 'Přesunout' }).click();
@@ -454,10 +471,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('body').getAttribute('data-workspace'), 'songs');
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Nová skladba');
         assert.equal(await page.evaluate(() => window.Vz2Player.getState()?.id), '11');
-        await switchTo('rehearsals');
+        await page.locator('.linked-recordings .recording-toggle').click();
+        await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít ve zkoušce/ }).click();
+        assert.equal(await page.locator('#recording-11 .recording-toggle').getAttribute('aria-expanded'), 'true', 'The source recording opens in its rehearsal');
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 8. října');
         assert.equal(await page.locator('.linked-recordings li').count(), 1, 'Rehearsal links the song-owned clip without duplicating its own card');
+        const songClip = page.locator('.linked-recordings .linked-recording-card');
+        await songClip.locator('.recording-toggle').click();
+        assert.equal(await songClip.locator('audio').count(), 1, 'The song clip has a full inline player');
         await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít nahrávku/ }).click();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.id === '13');
+        assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 8. října', 'Opening the player keeps the rehearsal folder');
+        await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít ve skladbě/ }).click();
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Nová skladba');
         assert.equal(await page.locator('#recording-13').count(), 1);
         assert.deepEqual(errors, []);
