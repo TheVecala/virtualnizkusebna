@@ -14,6 +14,7 @@
     const timestampPanels = [];
     // Disclosure state lives only in this document; a reload always starts collapsed.
     const expandedRecordings = new Set();
+    const expandedLinkedRecordings = new Set();
     const expandedAttachments = new Set();
     let mixerNotes;
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
@@ -609,25 +610,85 @@
         const section = node('section', undefined, 'linked-recordings');
         section.append(node('h3', collection.kind === 'song' ? 'Ze zkoušek' : 'Nahrávky přiřazených skladeb'));
         const list = node('ul');
-        rows.forEach(({ link, recording, owner, song }) => {
-            const item = node('li'), description = node('div', undefined, 'linked-recording-description');
-            description.append(node('strong', recordingName(recording)));
-            const context = collection.kind === 'song' ? 'Zkouška: ' + owner.title : 'Skladba: ' + (song?.title || owner.title);
-            const range = link.start_ms != null && link.end_ms != null ? ' · ' + time(link.start_ms) + '–' + time(link.end_ms) : '';
-            description.append(node('small', context + range + (recording.audio_state === 'available' ? '' : ' · Audio není dostupné')));
-            const open = button(range ? 'Otevřít úsek' : 'Otevřít nahrávku', async () => {
-                const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
-                const keepCollection = collection.kind === 'song' && !!range;
-                const destination = keepCollection ? collection : owner;
+        rows.forEach(({ link, recording, owner }) => {
+            const name = recordingName(recording);
+            const hasRange = link.start_ms != null && link.end_ms != null && link.end_ms > link.start_ms;
+            const context = (owner.kind === 'rehearsal' ? 'Zkouška: ' : 'Skladba: ') + owner.title;
+            const item = node('li', undefined, 'recording-card linked-recording-card');
+            const body = node('div', undefined, 'recording-body');
+            const key = collection.id + ':' + link.id + ':' + recording.id;
+            body.id = 'linked-recording-body-' + collection.id + '-' + link.id + '-' + recording.id;
+            const toggle = node('button', undefined, 'recording-toggle'); toggle.type = 'button';
+            toggle.append(node('span', name, 'recording-title'), node('small', hasRange ? time(link.end_ms - link.start_ms) : recording.duration_ms == null ? 'délka nezjištěna' : time(recording.duration_ms), 'recording-duration'));
+            toggle.setAttribute('aria-controls', body.id);
+            const setExpanded = open => {
+                body.hidden = !open; toggle.setAttribute('aria-expanded', String(open));
+                if (open) expandedLinkedRecordings.add(key); else expandedLinkedRecordings.delete(key);
+            };
+            setExpanded(expandedLinkedRecordings.has(key));
+            toggle.addEventListener('click', () => setExpanded(body.hidden));
+            item.append(toggle);
+            const caption = node('div', undefined, 'recording-caption');
+            caption.append(node('span', recording.title || context, 'recording-caption-text'));
+            caption.append(node('small', 'Vložil ' + recording.author, 'recording-author vz2-attribution'));
+            item.append(caption);
+            body.append(node('p', context + (hasRange ? ' · úsek ' + time(link.start_ms) + '–' + time(link.end_ms) : ''), 'linked-recording-context'));
+            if (recording.summary) body.append(node('p', recording.summary, 'recording-summary'));
+            if (recording.audio_state !== 'available' || recording.lifecycle !== 'active') {
+                body.append(node('p', recording.lifecycle === 'active' ? state(recording.audio_state) : state(recording.lifecycle), 'recording-status'));
+            }
+            const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
+            const file = recording.kind === 'single' ? recording.files[0] : null;
+            if (playable && file?.url) {
+                const audio = node('audio'); audio.controls = true; audio.preload = 'metadata'; audio.src = file.url;
+                audio.dataset.source = 'web';
+                audio.setAttribute('aria-label', (hasRange ? 'Přehrát úsek ' : 'Přehrát nahrávku ') + name);
+                if (hasRange) {
+                    const start = link.start_ms / 1000, end = link.end_ms / 1000;
+                    const endTime = () => Number.isFinite(audio.duration) ? Math.min(end, audio.duration) : end;
+                    audio.addEventListener('loadedmetadata', () => { audio.currentTime = start; });
+                    audio.addEventListener('seeking', () => {
+                        if (audio.currentTime < start) audio.currentTime = start;
+                        else if (audio.currentTime > endTime()) { audio.currentTime = endTime(); audio.pause(); }
+                    });
+                    audio.addEventListener('timeupdate', () => {
+                        if (!audio.paused && audio.currentTime >= endTime()) { audio.pause(); audio.currentTime = endTime(); }
+                    });
+                    audio.addEventListener('play', () => {
+                        if (audio.currentTime >= endTime() - 0.05 || audio.currentTime < start) audio.currentTime = start;
+                    });
+                }
+                audio.addEventListener('play', () => {
+                    document.querySelectorAll('#content audio').forEach(other => { if (other !== audio) other.pause(); });
+                    document.getElementById('looper-audio')?.pause();
+                    window.MultitrackApp?.pause();
+                });
+                body.append(audio);
+            } else if (playable && recording.kind === 'multitrack') {
+                body.append(node('p', 'Přehrávání vícestopé nahrávky je v mixéru.', 'linked-recording-context'));
+            }
+            const actions = node('div', undefined, 'action-list linked-recording-actions');
+            const open = button(hasRange ? 'Otevřít úsek' : 'Otevřít', async () => {
                 await navigate({
-                    workspace: destination.kind === 'rehearsal' ? 'rehearsals' : 'songs',
-                    kind: destination.kind, collection_id: String(destination.id),
-                    ...(keepCollection ? { keep_collection: '1' } : {}),
-                    ...(playable ? { recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(link.start_ms || 0) } : {})
+                    workspace: collection.kind === 'rehearsal' ? 'rehearsals' : 'songs', kind: collection.kind,
+                    collection_id: String(collection.id), keep_collection: '1',
+                    recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper',
+                    time_ms: String(hasRange ? link.start_ms : 0)
                 });
             });
-            open.setAttribute('aria-label', (range ? 'Otevřít úsek ' : 'Otevřít nahrávku ') + recordingName(recording) + ' u ' + owner.title);
-            item.append(description, open); list.append(item);
+            open.disabled = !playable;
+            open.setAttribute('aria-label', (hasRange ? 'Otevřít úsek ' : 'Otevřít nahrávku ') + name + ' v ' + (recording.kind === 'multitrack' ? 'mixéru' : 'looperu'));
+            const source = button(owner.kind === 'rehearsal' ? 'Otevřít ve zkoušce' : 'Otevřít ve skladbě', async () => {
+                const changed = await navigate({ workspace: owner.kind === 'rehearsal' ? 'rehearsals' : 'songs', kind: owner.kind, collection_id: String(owner.id) });
+                if (!changed) return;
+                window.Vz2Layout.revealRecording();
+                const sourceCard = $('recording-' + recording.id);
+                const disclosure = sourceCard?.querySelector('.recording-toggle');
+                if (disclosure?.getAttribute('aria-expanded') === 'false') disclosure.click();
+                sourceCard?.scrollIntoView({ block: 'nearest' });
+            });
+            actions.append(open, source); body.append(actions);
+            item.append(body); list.append(item);
         });
         section.append(list); host.append(section);
     }

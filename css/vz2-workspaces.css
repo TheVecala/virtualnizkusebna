@@ -39,12 +39,13 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
 .linked-recordings { margin: 14px 0 4px; }
 .linked-recordings h3 { margin: 0 0 7px; font-size: 13px; color: var(--vz-primary-hover); }
 .linked-recordings ul { margin: 0; padding: 0; list-style: none; }
-.linked-recordings li { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; padding: 8px 9px; border: 1px solid var(--vz-border); border-radius: 7px; background: var(--vz-surface); }
-.linked-recording-description { display: grid; gap: 3px; min-width: 0; flex: 1; }
-.linked-recording-description strong, .linked-recording-description small { overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere; }
-.linked-recording-description small { color: var(--vz-muted); }
-.linked-recordings li > button { flex: 0 0 auto; }
-@media (max-width: 420px) { .linked-recordings li { align-items: stretch; flex-direction: column; } .linked-recordings li > button { align-self: flex-start; } }
+.linked-recordings .linked-recording-card { display: block; padding: 0; margin-bottom: 7px; border: 1px solid var(--vz-border); border-radius: 7px; background: var(--vz-surface); }
+.linked-recording-card .recording-caption { gap: 8px; }
+.linked-recording-card .recording-caption-text { flex: 1 1 auto; }
+.linked-recording-card .recording-author { flex: 0 0 auto; }
+.linked-recording-context { margin: 0 0 8px; color: var(--vz-muted); font-size: 12px; overflow-wrap: anywhere; }
+.linked-recording-card audio { display: block; width: 100%; max-width: 100%; margin: 0 0 8px; }
+.linked-recording-actions { margin-top: 0; }
 .workspace-controls { display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; margin: 0; }
 .workspace-controls button { white-space: nowrap; }
 #history-controls-slot, #ideas-controls-slot { margin-left: auto; min-width: 0; }
