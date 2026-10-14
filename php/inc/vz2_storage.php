@@ -246,7 +246,7 @@ function vz2_run_operation(int $id): array {
                     vz2_log($db,'recording.created','recording',$target,$op['target_title'],'Upload dokončen.',$id,$actor);
                 }else vz2_query($db,"UPDATE vz2_attachments SET state='available' WHERE id=?",[$target]);
             }
-            if(str_starts_with($op['action'],'delete_'))vz2_delete_rows($db,$op);
+            if(str_starts_with($op['action'],'delete_') || $op['action']==='remove_attachment')vz2_delete_rows($db,$op);
             vz2_log($db,$op['action'].'.completed',$op['target_type'],$target,$op['target_title'],'Souborová operace dokončena.',$id,$actor);
             vz2_query($db,"UPDATE vz2_file_operations SET state='completed',error_code=NULL,updated_at=UTC_TIMESTAMP(),completed_at=UTC_TIMESTAMP() WHERE id=?",[$id]);
         });
@@ -258,6 +258,10 @@ function vz2_run_operation(int $id): array {
 }
 function vz2_delete_rows(mysqli $db,array $op):void {
     $id=(int)$op['target_id'];$collection=$op['target_type']==='collection';
+    if($op['target_type']==='attachment'){
+        vz2_query($db,'DELETE FROM vz2_attachments WHERE id=?',[$id]);
+        return;
+    }
     $recordings=$collection?vz2_rows($db,'SELECT * FROM vz2_recordings WHERE collection_id=?',[$id]):[vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$id])];
     foreach($recordings as $r){
         vz2_query($db,'UPDATE vz2_timestamps SET paired_timestamp_id=NULL WHERE recording_id=? AND paired_timestamp_id IS NOT NULL',[$r['id']]);

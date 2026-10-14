@@ -278,7 +278,8 @@
         $('editor').showModal();
     }
     async function remove(item, type, full = false) {
-        const text = full ? 'Úplně odstranit položku a všechny její informace?' : 'Odstranit soubory a zachovat informace?';
+        const removeItem = full || type === 'attachment';
+        const text = removeItem ? 'Úplně odstranit položku a všechny její informace?' : 'Odstranit soubory a zachovat informace?';
         const name = type === 'recording' ? recordingName(item) : fileName(item);
         const confirmation = prompt(text + '\n' + name + (item.title ? '\nPro potvrzení napište popisek:\n' + item.title : '\nPro potvrzení napište název souboru:\n' + (item.files?.[0]?.original_name || name)));
         if (confirmation === null) return;
@@ -287,7 +288,7 @@
         window.MultitrackApp?.destroy();
         await refresh();
         await window.MultitrackApp?.refreshList();
-        message(full ? 'Položka byla odstraněna. Deník zůstává.' : 'Soubory byly odstraněny, informace zůstávají.');
+        message(removeItem ? 'Položka byla odstraněna. Deník zůstává.' : 'Soubory byly odstraněny, informace zůstávají.');
     }
     function moveControl(parent, item, type) {
         if (!cfg.write || !item.can_move) return;
@@ -315,7 +316,7 @@
         }));
     }
     function fileLink(file) {
-        if (!file.url) return node('span', fileName(file) + ' · ' + state(file.state));
+        if (!file.url) return node('span', fileName(file) + ' · ' + (file.state === 'deleted' ? 'Soubor odstraněn' : state(file.state)));
         const a = node('a', 'Stáhnout'); a.href = file.url + '&download=1';
         a.setAttribute('aria-label', 'Stáhnout soubor ' + fileName(file)); return a;
     }
@@ -803,7 +804,7 @@
                 if (a.url) actions.append(fileLink(a));
                 if (cfg.write && a.can_edit) actions.append(button('Upravit', () => openEdit(a, 'attachment')));
                 moveControl(actions, a, 'attachment');
-                if (cfg.write && a.can_remove && a.state !== 'deleted') actions.append(button('Odstranit soubor', () => remove(a, 'attachment'), 'danger'));
+                if (cfg.write && a.can_remove) actions.append(button(a.state === 'deleted' ? 'Smazat položku' : 'Odstranit přílohu', () => remove(a, 'attachment'), 'danger'));
                 if (actions.childElementCount) body.append(actions);
                 card.append(body); content.append(card);
             });
