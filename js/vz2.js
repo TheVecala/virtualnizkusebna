@@ -601,8 +601,7 @@
             if (!recording || String(recording.collection_id) === String(collection.id)) return [];
             const owner = collections.get(String(recording.collection_id));
             if (!owner) return [];
-            const song = collections.get(String(link.song_collection_id));
-            return [{ link, recording, owner, song }];
+            return [{ link, recording, owner }];
         });
     }
     function renderLinkedRecordings(host, collection, rows) {
@@ -610,7 +609,7 @@
         const section = node('section', undefined, 'linked-recordings');
         section.append(node('h3', collection.kind === 'song' ? 'Ze zkoušek' : 'Nahrávky přiřazených skladeb'));
         const list = node('ul');
-        rows.forEach(({ link, recording, owner }) => {
+        function linkedCard({ link, recording, owner }, groupedInterval = false) {
             const name = recordingName(recording);
             const hasRange = link.start_ms != null && link.end_ms != null && link.end_ms > link.start_ms;
             const context = (owner.kind === 'rehearsal' ? 'Zkouška: ' : 'Skladba: ') + owner.title;
@@ -619,7 +618,14 @@
             const key = collection.id + ':' + link.id + ':' + recording.id;
             body.id = 'linked-recording-body-' + collection.id + '-' + link.id + '-' + recording.id;
             const toggle = node('button', undefined, 'recording-toggle'); toggle.type = 'button';
-            toggle.append(node('span', name, 'recording-title'), node('small', hasRange ? time(link.end_ms - link.start_ms) : recording.duration_ms == null ? 'délka nezjištěna' : time(recording.duration_ms), 'recording-duration'));
+            if (groupedInterval) {
+                const label = node('span', undefined, 'linked-interval-label');
+                label.append(node('span', 'Výstřížek ' + time(link.start_ms) + '–' + time(link.end_ms), 'recording-title'));
+                if (link.start_body?.trim()) label.append(node('small', link.start_body.trim(), 'linked-interval-note'));
+                toggle.append(label);
+            } else {
+                toggle.append(node('span', name, 'recording-title'), node('small', hasRange ? time(link.end_ms - link.start_ms) : recording.duration_ms == null ? 'délka nezjištěna' : time(recording.duration_ms), 'recording-duration'));
+            }
             toggle.setAttribute('aria-controls', body.id);
             const setExpanded = open => {
                 body.hidden = !open; toggle.setAttribute('aria-expanded', String(open));
@@ -628,12 +634,14 @@
             setExpanded(expandedLinkedRecordings.has(key));
             toggle.addEventListener('click', () => setExpanded(body.hidden));
             item.append(toggle);
-            const caption = node('div', undefined, 'recording-caption');
-            caption.append(node('span', recording.title || context, 'recording-caption-text'));
-            caption.append(node('small', 'Vložil ' + recording.author, 'recording-author vz2-attribution'));
-            item.append(caption);
-            body.append(node('p', context + (hasRange ? ' · úsek ' + time(link.start_ms) + '–' + time(link.end_ms) : ''), 'linked-recording-context'));
-            if (recording.summary) body.append(node('p', recording.summary, 'recording-summary'));
+            if (!groupedInterval) {
+                const caption = node('div', undefined, 'recording-caption');
+                caption.append(node('span', recording.title || context, 'recording-caption-text'));
+                caption.append(node('small', 'Vložil ' + recording.author, 'recording-author vz2-attribution'));
+                item.append(caption);
+                body.append(node('p', context + (hasRange ? ' · úsek ' + time(link.start_ms) + '–' + time(link.end_ms) : ''), 'linked-recording-context'));
+                if (recording.summary) body.append(node('p', recording.summary, 'recording-summary'));
+            }
             if (recording.audio_state !== 'available' || recording.lifecycle !== 'active') {
                 body.append(node('p', recording.lifecycle === 'active' ? state(recording.audio_state) : state(recording.lifecycle), 'recording-status'));
             }
@@ -688,8 +696,32 @@
                 sourceCard?.scrollIntoView({ block: 'nearest' });
             });
             actions.append(open, source); body.append(actions);
-            item.append(body); list.append(item);
-        });
+            item.append(body); return item;
+        }
+        if (collection.kind === 'song') {
+            const groups = new Map();
+            rows.forEach(row => {
+                const id = String(row.recording.id);
+                if (!groups.has(id)) groups.set(id, []);
+                groups.get(id).push(row);
+            });
+            groups.forEach(group => {
+                const { recording, owner } = group[0];
+                const item = node('li', undefined, 'linked-recording-group');
+                const header = node('div', undefined, 'linked-recording-group-header');
+                header.append(node('h4', recordingName(recording), 'linked-recording-group-title'));
+                const caption = node('div', undefined, 'recording-caption');
+                if (recording.title) caption.append(node('span', recording.title, 'recording-caption-text'));
+                caption.append(node('small', 'Vložil ' + recording.author, 'recording-author vz2-attribution'));
+                header.append(caption, node('small', 'Zkouška: ' + owner.title, 'linked-recording-group-source'));
+                if (recording.summary) header.append(node('p', recording.summary, 'recording-summary'));
+                item.append(header);
+                const intervals = node('ul', undefined, 'linked-recording-intervals');
+                group.sort((a, b) => a.link.start_ms - b.link.start_ms || a.link.end_ms - b.link.end_ms || a.link.id - b.link.id)
+                    .forEach(row => intervals.append(linkedCard(row, true)));
+                item.append(intervals); list.append(item);
+            });
+        } else rows.forEach(row => list.append(linkedCard(row)));
         section.append(list); host.append(section);
     }
     function render() {

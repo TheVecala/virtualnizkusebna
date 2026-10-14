@@ -22,7 +22,8 @@ const recordings = [
     { id: 12, collection_id: 3, kind: 'multitrack', lifecycle: 'active', audio_state: 'available', title: 'Společný mix', revision: 1, author: 'Klára', duration_ms: 180000, files: [file(2)] },
     { id: 13, collection_id: 1, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Domácí nahrávka', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(3)], can_move: true }
 ];
-const links = [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 5000, end_ms: 10000 },
+const links = [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 15000, start_body: 'Další pokus', end_ms: 20000 },
+    { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 5000, start_body: 'Začátek skladby', end_ms: 10000 },
     { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: null, clip_recording_id: 13, start_ms: null, end_ms: null }];
 const catalog = { ok: true, collections, recordings, recording_links: links, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
 const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source: recordings[0], start_ms: 5000, end_ms: 10000 }, { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] }], unassigned_intervals: [], unassigned_clips: [] };
@@ -431,9 +432,16 @@ function gate() { let release; const promise = new Promise(resolve => release = 
 
         await switchTo('songs');
         assert.equal(await page.locator('#recording-13').count(), 1, 'Home recording retains its original card');
-        assert.equal(await page.locator('.linked-recordings li').count(), 1, 'Song lists one linked rehearsal interval');
-        assert((await page.locator('.linked-recordings').textContent()).includes('00:05–00:10'));
-        const rehearsalInterval = page.locator('.linked-recordings .linked-recording-card');
+        const rehearsalGroup = page.locator('.linked-recordings .linked-recording-group');
+        assert.equal(await rehearsalGroup.count(), 1, 'Intervals from the same source appear under one recording');
+        assert.equal(await rehearsalGroup.locator('.linked-recording-group-title').textContent(), 'Nový název.wav', 'The shared heading uses the current source filename');
+        assert.equal(await rehearsalGroup.locator('.recording-caption-text').textContent(), 'Celá zkouška');
+        assert.equal(await rehearsalGroup.locator('.recording-author').count(), 1);
+        assert.equal(await rehearsalGroup.locator('.linked-recording-group-source').textContent(), 'Zkouška: Zkouška 8. října');
+        assert.deepEqual(await rehearsalGroup.locator('.linked-interval-label .recording-title').allTextContents(), ['Výstřížek 00:05–00:10', 'Výstřížek 00:15–00:20'], 'Linked intervals are sorted by start time');
+        assert.deepEqual(await rehearsalGroup.locator('.linked-interval-note').allTextContents(), ['Začátek skladby', 'Další pokus']);
+        assert.equal(await rehearsalGroup.locator('.linked-recording-card .recording-caption, .linked-recording-card .linked-recording-context').count(), 0, 'Interval details do not repeat source metadata');
+        const rehearsalInterval = rehearsalGroup.locator('.linked-recording-card').first();
         await rehearsalInterval.locator('.recording-toggle').click();
         assert.equal(await rehearsalInterval.locator('audio').count(), 1, 'The linked interval has an inline player');
         assert.equal(await rehearsalInterval.getByRole('button', { name: /Otevřít ve zkoušce/ }).count(), 1);
@@ -455,7 +463,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert((await page.locator('#move-links-info').textContent()).includes('matici'));
         assert.deepEqual(await page.locator('#move-form select option').allTextContents(), ['Nová skladba', 'Poslední vlak']);
         await page.locator('#move-cancel').click();
-        await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít úsek/ }).click();
+        await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít úsek/ }).first().click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
         assert.equal(await page.locator('body').getAttribute('data-workspace'), 'songs');
         assert.equal(await page.locator('#bn-skladby').getAttribute('aria-pressed'), 'true', 'The mobile dock stays on Songs while the interval plays');
@@ -471,8 +479,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('body').getAttribute('data-workspace'), 'songs');
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Nová skladba');
         assert.equal(await page.evaluate(() => window.Vz2Player.getState()?.id), '11');
-        await page.locator('.linked-recordings .recording-toggle').click();
-        await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít ve zkoušce/ }).click();
+        await page.locator('.linked-recordings .recording-toggle').first().click();
+        await page.locator('.linked-recordings').getByRole('button', { name: /Otevřít ve zkoušce/ }).first().click();
         assert.equal(await page.locator('#recording-11 .recording-toggle').getAttribute('aria-expanded'), 'true', 'The source recording opens in its rehearsal');
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 8. října');
         assert.equal(await page.locator('.linked-recordings li').count(), 1, 'Rehearsal links the song-owned clip without duplicating its own card');

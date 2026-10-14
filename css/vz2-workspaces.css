@@ -39,7 +39,18 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
 .linked-recordings { margin: 14px 0 4px; }
 .linked-recordings h3 { margin: 0 0 7px; font-size: 13px; color: var(--vz-primary-hover); }
 .linked-recordings ul { margin: 0; padding: 0; list-style: none; }
+.linked-recording-group { margin-bottom: 9px; border: 1px solid var(--vz-border); border-radius: 7px; background: var(--vz-shell); }
+.linked-recording-group-header { padding: 8px 9px 3px; }
+.linked-recording-group-title { margin: 0; font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
+.linked-recording-group-header .recording-caption { padding: 2px 0 1px; }
+.linked-recording-group-source { display: block; margin-bottom: 5px; color: var(--vz-muted); overflow-wrap: anywhere; }
+.linked-recording-group-header .recording-summary { margin-top: 5px; }
+.linked-recordings .linked-recording-intervals { padding: 0 8px 8px; }
+.linked-recording-intervals .linked-recording-card:last-child { margin-bottom: 0; }
 .linked-recordings .linked-recording-card { display: block; padding: 0; margin-bottom: 7px; border: 1px solid var(--vz-border); border-radius: 7px; background: var(--vz-surface); }
+.linked-interval-label { display: grid; gap: 2px; min-width: 0; }
+.linked-interval-label .recording-title { white-space: normal; overflow-wrap: anywhere; }
+.linked-interval-label .linked-interval-note { white-space: pre-wrap; overflow-wrap: anywhere; text-overflow: clip; }
 .linked-recording-card .recording-caption { gap: 8px; }
 .linked-recording-card .recording-caption-text { flex: 1 1 auto; }
 .linked-recording-card .recording-author { flex: 0 0 auto; }
