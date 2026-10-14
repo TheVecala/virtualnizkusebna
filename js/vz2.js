@@ -281,7 +281,9 @@
         const removeItem = full || type === 'attachment';
         const text = removeItem ? 'Úplně odstranit položku a všechny její informace?' : 'Odstranit soubory a zachovat informace?';
         const name = type === 'recording' ? recordingName(item) : fileName(item);
-        const confirmation = prompt(text + '\n' + name + (item.title ? '\nPro potvrzení napište popisek:\n' + item.title : '\nPro potvrzení napište název souboru:\n' + (item.files?.[0]?.original_name || name)));
+        const confirmation = type === 'recording'
+            ? (window.confirm(text + '\n' + name) ? (item.title || item.files?.[0]?.original_name || name) : null)
+            : prompt(text + '\n' + name + (item.title ? '\nPro potvrzení napište popisek:\n' + item.title : '\nPro potvrzení napište název souboru:\n' + (item.files?.[0]?.original_name || name)));
         if (confirmation === null) return;
         await api({ action: full ? 'delete_' + type : type === 'recording' ? 'remove_audio' : 'remove_attachment',
             id: Number(item.id), revision: Number(item.revision), confirm: confirmation, request_key: key() });
