@@ -30,13 +30,14 @@ const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collectio
 function gate() { let release; const promise = new Promise(resolve => release = resolve); return { promise, release }; }
 (async () => {
     const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || chromium.executablePath() });
-    const errors = [], confirmations = [];
+    const errors = [], confirmations = [], deletionDialogs = [], recordingDeletions = [];
     let holdMixer = null, mixerRequested = null;
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message));
     page.on('dialog', async dialog => {
         confirmations.push(dialog.message());
+        if (dialog.message().includes('odstranit položku') || dialog.message().includes('Odstranit soubory')) deletionDialogs.push(dialog.type());
         const filename = ['old.jpg', 'active.jpg'].find(name => dialog.message().includes(name));
         await dialog.accept(filename);
     });
@@ -68,6 +69,17 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 if (input.action === 'remove_attachment') {
                     assert.equal(input.confirm, catalog.attachments.find(entry => entry.id === input.id)?.original_name);
                     catalog.attachments.splice(catalog.attachments.findIndex(entry => entry.id === input.id), 1);
+                }
+                if (input.action === 'remove_audio' || input.action === 'delete_recording') {
+                    const recording = recordings.find(entry => entry.id === input.id);
+                    assert.equal(input.confirm, recording.title || recording.files[0].original_name);
+                    recordingDeletions.push(input.action);
+                    if (input.action === 'remove_audio') {
+                        recording.audio_state = 'deleted';
+                        recording.files[0].state = 'deleted';
+                        recording.files[0].url = null;
+                        recording.revision++;
+                    } else recordings.splice(recordings.indexOf(recording), 1);
                 }
                 return json({ ok: true });
             }
@@ -515,8 +527,20 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await activeAttachment.locator('.recording-toggle').click();
         await activeAttachment.getByRole('button', { name: 'Odstranit přílohu' }).click();
         await page.waitForFunction(() => !document.querySelector('.attachment-card'));
+        recordings[2].can_remove = true;
+        await page.reload(); await ready();
+        await page.locator('#recording-13 .recording-toggle').click();
+        await page.locator('#recording-13 .recording-actions').getByRole('button', { name: 'Další' }).click();
+        await page.locator('#recording-actions-13').getByRole('button', { name: 'Odstranit audio' }).click();
+        await page.waitForFunction(() => document.querySelector('#recording-13 .recording-status')?.dataset.state === 'deleted');
+        if (await page.locator('#recording-13 .recording-toggle').getAttribute('aria-expanded') === 'false') await page.locator('#recording-13 .recording-toggle').click();
+        await page.locator('#recording-13 .recording-actions').getByRole('button', { name: 'Další' }).click();
+        await page.locator('#recording-actions-13').getByRole('button', { name: 'Úplně smazat' }).click();
+        await page.waitForFunction(() => !document.querySelector('#recording-13'));
+        assert.deepEqual(recordingDeletions, ['remove_audio', 'delete_recording']);
+        assert.deepEqual(deletionDialogs.slice(-2), ['confirm', 'confirm'], 'Deleting a recording only asks for yes/no confirmation');
         assert.deepEqual(errors, []);
-        console.log('PASS: linked recordings and attachment removal, including old entries with deleted files');
+        console.log('PASS: linked recordings, attachment removal, and recording deletion without name entry');
     } catch (error) {
         console.error('Browser errors:', errors);
         console.error(await page.locator('#vz2-boot-status, #message').allTextContents());
