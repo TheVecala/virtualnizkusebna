@@ -84,7 +84,7 @@
         const anchor = $('catalog-picker').getBoundingClientRect();
         const viewportTop = window.visualViewport?.offsetTop || 0;
         const height = window.visualViewport?.height || innerHeight;
-        const lower = viewportTop + height - (mobile.matches && height > 500 ? $('mobile-dock').offsetHeight + 8 : 8);
+        const lower = viewportTop + height - (mobile.matches && height > 500 ? $('mobile-sections-dock').offsetHeight + 8 : 8);
         const top = Math.max(viewportTop + 8, Math.min(anchor.bottom + 6, lower - 120));
         const available = Math.max(40, lower - top);
         $('catalog-dialog').style.setProperty('--catalog-top', top + 'px');
@@ -140,9 +140,9 @@
         $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
         const mobilePanels = $('mobile-panels');
         mobilePanels.hidden = !collection || !mobile.matches;
+        $('mobile-sections-dock').hidden = mobilePanels.hidden;
         const collectionHeader = $('collection-header');
         const collectionHeading = $('collection-title').parentElement;
-        if (mobilePanels.parentElement !== collectionHeader) collectionHeader.append(mobilePanels);
         if (collection && mobile.matches) {
             const header = $('panel-' + state.mobile).querySelector('.panel-header');
             if (collectionHeading.parentElement !== header) header.prepend(collectionHeading);
