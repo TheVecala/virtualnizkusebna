@@ -111,6 +111,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 </script>
 <link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/multitrack.css"><link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/vz2.css?v=<?=filemtime(__DIR__.'/css/vz2.css')?>">
 <link rel="stylesheet" data-vz2-icons media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" data-vz2-style media="print" href="css/vz2-workspaces.css?v=<?=filemtime(__DIR__.'/css/vz2-workspaces.css')?>">
 </head><body>
 <section id="vz2-boot" aria-label="Načítání zkušebny"><div id="vz2-boot-inner">
 <div id="vz2-boot-brand"><b>DK</b><span>VIRTUÁLNÍ ZKUŠEBNA</span></div>
@@ -119,26 +120,36 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div id="vz2-boot-footer"><p id="vz2-boot-status" role="status" aria-live="polite">Načítáme skladby a nahrávky…</p><button id="vz2-boot-retry" type="button" hidden onclick="location.reload()">Zkusit znovu</button>
 <noscript><style>#vz2-boot-status { display: none; } #vz2-boot-wave span { animation: none; }</style><p id="vz2-boot-noscript">Pro otevření zkušebny povol JavaScript v prohlížeči a obnov stránku.</p></noscript>
 </div></div></section>
-<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA DK!</a><h1 id="collection-title"><span class="collection-path-prefix" aria-hidden="true">/</span><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" title="Vybrat skladbu nebo zkoušku"><span id="collection-title-name">Načítám…</span></button></h1>
-<nav id="desktop-panels" aria-label="Zobrazené panely">
-<button data-desktop-panel="recordings" aria-pressed="true">Nahrávky</button><button data-desktop-panel="lyrics" aria-pressed="true">Text</button><button data-desktop-panel="tablature" aria-pressed="true">Mapa</button><button data-desktop-panel="discussion" aria-pressed="false">Diskuse</button>
-</nav><button id="show-ideas" aria-pressed="false" aria-controls="ideas-workspace">Nápady</button>
+<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA DK!</a>
+<nav id="workspace-navigation" aria-label="Pracovní plochy">
+<button type="button" data-workspace-target="songs" aria-pressed="true">Skladby</button>
+<button type="button" data-workspace-target="rehearsals" aria-pressed="false">Zkoušky</button>
+<button type="button" id="show-history" data-workspace-target="history" aria-pressed="false">Matice</button>
+<button type="button" id="show-ideas" data-workspace-target="ideas" aria-pressed="false">Nápady</button>
+</nav>
 <span class="topbar-account" title="Přihlášený účet: <?=auth_h($_SESSION['user_name']??'Host')?>"><?=auth_h($_SESSION['user_name']??'Host')?></span>
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
-<a href="help.php">Nápověda</a><button id="show-history" type="button">Historie zkoušení</button>
+<a href="help.php">Nápověda</a>
 <button id="show-offline">Správa offline souborů</button><button id="logout">Odhlásit</button></nav></details></header>
+<svg class="section-icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+<symbol id="section-icon-recordings" viewBox="0 0 24 24"><path d="M3 10v4m4-8v12m4-15v18m4-13v8m4-11v14m3-9v4"/></symbol>
+<symbol id="section-icon-lyrics" viewBox="0 0 24 24"><path d="M4 5h16M4 10h16M4 15h13M4 20h9"/></symbol>
+<symbol id="section-icon-tablature" viewBox="0 0 24 24"><path d="m2 5 7-2 6 2 7-2v16l-7 2-6-2-7 2V5Zm7-2v16m6-14v16"/></symbol>
+<symbol id="section-icon-discussion" viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9l-5 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10M7 13h7"/></symbol>
+<symbol id="section-icon-direction" viewBox="0 0 24 24"><path d="M4 7h16m0 0-4-4m4 4-4 4M20 17H4m0 0 4-4m-4 4 4 4"/></symbol>
+<symbol id="section-icon-audio" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Zm12 0a4 4 0 0 1 0 6m2-9a8 8 0 0 1 0 12"/></symbol>
+<symbol id="section-icon-filter" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v5l-4 2v-7L3 5Z"/></symbol>
+<symbol id="section-icon-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+<symbol id="section-icon-write" viewBox="0 0 24 24"><path d="m4 17 11-11 3 3L7 20H4v-3Zm9-9 3 3M4 5h7M4 20h16"/></symbol>
+<symbol id="section-icon-draw" viewBox="0 0 24 24"><path d="M16 3c-3 5-8 8-8 13a4 4 0 0 0 8 0c0-2 2-5 4-8l-4-5ZM8 16c-3 0-5 2-5 5 3 0 5-1 6-3"/></symbol>
+<symbol id="section-icon-speak" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0m-7 7v3m-4 0h8"/></symbol>
+</defs></svg>
 <main id="app-shell" aria-busy="true"><p id="message" role="status" aria-live="polite"></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
-<div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header">
-<?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ Nová skladba</button><?php endif;?>
-<button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
-<div class="tabs" role="group" aria-label="Přepnout skladby a zkoušky"><button data-kind="song" aria-pressed="true">Skladby</button><span class="catalog-switch-icon" aria-hidden="true">⇄</span><button data-kind="rehearsal" aria-pressed="false">Zkoušky</button></div>
-<div id="collections"></div>
-</aside></div><div id="workspace">
 <section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
-<div class="player-header"><div class="player-ident"><i class="player-emblem ti ti-wave-sine" aria-hidden="true"></i><strong id="player-mode">Přehrávač</strong><span id="player-title">Vyberte nahrávku</span></div>
-<div class="looper-header-controls" role="group" aria-label="Ovládání Looperu">
+<div class="player-header"><div class="player-ident"><svg class="player-emblem" viewBox="0 0 36 36" aria-hidden="true"><path d="M4 18c5 0 5-10 10-10s5 20 10 20 5-10 8-10"/></svg><strong id="player-mode">Přehrávač</strong><button id="player-title" type="button" title="Přejít ke zdroji nahrávky" disabled><span id="player-title-full"></span><span id="player-title-mobile"></span></button></div>
+<div class="looper-header-controls" role="group" aria-label="Ovládání přehrávání">
 <button id="looper-restart" type="button" title="Na začátek" aria-label="Na začátek"><i class="ti ti-player-track-prev" aria-hidden="true"></i></button>
 <button id="looper-back" type="button" title="Zpět o 5 sekund" aria-label="Zpět o 5 sekund"><i class="ti ti-player-skip-back" aria-hidden="true"></i></button>
 <button id="looper-play" type="button" title="Přehrát" aria-label="Přehrát"><i class="ti ti-player-play-filled" aria-hidden="true"></i></button>
@@ -149,9 +160,9 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <button id="player-play" type="button" aria-label="Přehrát" disabled>▶</button>
 <button id="player-collapse" type="button" aria-label="Sbalit přehrávač" aria-expanded="true" disabled><i class="ti ti-chevron-up" aria-hidden="true"></i></button>
 <button id="player-fullscreen" class="panel-fullscreen-button" type="button" aria-label="Celá obrazovka: Looper a Mixér" title="Celá obrazovka" aria-pressed="false" disabled><i class="ti ti-maximize" aria-hidden="true"></i></button>
-<details id="player-options" class="actions-menu"><summary aria-label="Možnosti přehrávače">⋮</summary><div class="action-list" id="player-actions"></div></details>
 <details id="looper-options"><summary aria-label="Otevřít menu Looperu" title="Další možnosti" aria-controls="looper-menu"><i class="ti ti-dots-vertical" aria-hidden="true"></i></summary><div id="looper-menu">
-<div class="looper-menu-section"><button id="looper-offline" type="button"><i class="ti ti-download" aria-hidden="true"></i><span><span id="looper-offline-label">Uložit pro offline</span><small id="looper-offline-status">přehrávám ze sítě</small></span></button><button id="looper-copy-link" type="button"><i class="ti ti-link" aria-hidden="true"></i><span>Vytvořit odkaz na pozici</span></button><a id="looper-export"><i class="ti ti-file-export" aria-hidden="true"></i><span>Export časových značek</span></a></div>
+<div id="looper-menu-actions" class="looper-menu-section"><button id="looper-offline" type="button"><i class="ti ti-download" aria-hidden="true"></i><span><span id="looper-offline-label">Uložit pro offline</span><small id="looper-offline-status">přehrávám ze sítě</small></span></button><button id="looper-copy-link" type="button"><i class="ti ti-link" aria-hidden="true"></i><span>Vytvořit odkaz na pozici</span></button><a id="looper-export"><i class="ti ti-file-export" aria-hidden="true"></i><span>Export časových značek</span></a></div>
+<div id="mixer-menu-actions" class="looper-menu-section" hidden><button id="mixer-export" type="button" disabled><i class="ti ti-file-export" aria-hidden="true"></i><span>Export časových značek</span></button></div>
 <div class="looper-menu-section"><button id="looper-close" class="looper-menu-danger" type="button"><i class="ti ti-x" aria-hidden="true"></i><span>Zavřít looper</span></button></div>
 </div></details>
 <button id="player-close" type="button" aria-label="Zavřít přehrávač" disabled>×</button></div>
@@ -161,44 +172,60 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div class="timeline"><output id="looper-time">00:00</output><input id="looper-seek" aria-label="Čas Looperu" type="range" min="0" max="0" step="0.01" value="0"><output id="looper-duration">00:00</output></div>
 <div id="looper-timestamps"></div></section>
 </div></section>
+<div id="workspace-frame">
+<div id="mobile-dock">
+<nav id="bottom-nav" aria-label="Pracovní plochy">
+<button id="bn-skladby" data-workspace-target="songs" aria-pressed="true"><img src="meat/ikona_skladby.png" alt="">Skladby</button>
+<button id="bn-zkousky" data-workspace-target="rehearsals" aria-pressed="false"><img src="meat/ikona_nahravky.png" alt="">Zkoušky</button>
+<button id="bn-matice" data-workspace-target="history" aria-pressed="false"><img src="meat/ikona_text.png" alt="">Matice</button>
+<button id="bn-napady" data-workspace-target="ideas" aria-pressed="false"><img src="meat/ikona_napady.png" alt="">Nápady</button>
+</nav></div>
+<div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header"><h2 id="catalog-heading-mobile">Skladby</h2>
+<?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ Nová skladba</button><?php endif;?>
+<button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
+<h2 id="catalog-heading">Skladby</h2>
+<div id="collections"></div>
+</aside></div><div id="workspace">
 <div id="workspace-surfaces">
-<nav id="workspace-switcher" aria-label="Pracovní plochy"><button type="button" data-workspace-target="panels" aria-controls="song-workspace" aria-pressed="true">Skladba</button><button type="button" data-workspace-target="history" aria-controls="history-workspace" aria-pressed="false">Historie zkoušení</button></nav>
+<header id="collection-header" class="workspace-header">
+<div class="workspace-heading"><span id="collection-kind-label">Skladby</span><h1 id="collection-title"><button id="catalog-picker" type="button" aria-haspopup="dialog" aria-controls="catalog-dialog" aria-expanded="false" title="Vybrat skladbu"><span id="collection-kind-inline">Skladba:</span><span id="collection-title-name">Načítám…</span><span class="catalog-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 8 8 8 8-8"/></svg></span></button></h1></div>
+<nav id="desktop-panels" class="workspace-controls" aria-label="Zobrazené panely"><button data-desktop-panel="recordings" aria-pressed="true" title="Nahrávky"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-recordings"/></svg><span class="section-button-label">Nahrávky</span></button><button data-desktop-panel="lyrics" aria-pressed="true" title="Text a akordy"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-lyrics"/></svg><span class="section-button-label">Text</span></button><button data-desktop-panel="tablature" aria-pressed="true" title="Mapa skladby"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-tablature"/></svg><span class="section-button-label">Mapa</span></button><button data-desktop-panel="discussion" aria-pressed="false" title="Diskuse"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-discussion"/></svg><span class="section-button-label">Diskuse</span></button></nav>
+</header>
 <section id="song-workspace" data-workspace="panels" aria-label="Pracovní plocha skladby">
 <div id="content-area">
-<section id="panel-recordings" class="panel" data-panel="recordings" aria-label="Nahrávky"><div class="panel-header"><h2>Nahrávky</h2><?php if($config['canUpload']):?><div class="panel-header-actions"><button id="upload-open" type="button" aria-haspopup="dialog" aria-controls="upload-dialog" hidden>Vložit</button></div><?php endif;?></div><div class="panel-body"><section id="content"><p>Načítám…</p></section>
+<section id="panel-recordings" class="panel" data-panel="recordings" aria-label="Nahrávky"><div class="panel-header"><svg class="section-icon panel-section-icon" aria-hidden="true"><use href="#section-icon-recordings"/></svg><h2>Nahrávky</h2><?php if($config['canUpload']):?><div class="panel-header-actions"><button id="upload-open" type="button" aria-haspopup="dialog" aria-controls="upload-dialog" hidden>Vložit</button></div><?php endif;?></div><div class="panel-body"><section id="content"><p>Načítám…</p></section>
 <section id="operations" hidden><h2>Nedokončené operace</h2><div></div></section>
 </div></section>
-<section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><h2>Text a akordy</h2><div id="lyrics-actions" class="panel-header-actions"></div></div><div id="lyrics-content" class="panel-body"></div></section>
-<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Mapa skladby"><div class="panel-header"><h2>Mapa skladby</h2><div id="tablature-actions" class="panel-header-actions"></div></div><div id="tablature-content" class="panel-body"></div></section>
-<section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><h2>Diskuse</h2><div id="discussion-actions" class="panel-header-actions"></div></div><div id="discussion-content" class="panel-body"></div></section>
+<section id="panel-lyrics" class="panel" data-panel="lyrics" aria-label="Text a akordy"><div class="panel-header"><svg class="section-icon panel-section-icon" aria-hidden="true"><use href="#section-icon-lyrics"/></svg><h2>Text a akordy</h2><div id="lyrics-actions" class="panel-header-actions"></div></div><div id="lyrics-content" class="panel-body"></div></section>
+<section id="panel-tablature" class="panel" data-panel="tablature" aria-label="Mapa skladby"><div class="panel-header"><svg class="section-icon panel-section-icon" aria-hidden="true"><use href="#section-icon-tablature"/></svg><h2>Mapa skladby</h2><div id="tablature-actions" class="panel-header-actions"></div></div><div id="tablature-content" class="panel-body"></div></section>
+<section id="panel-discussion" class="panel" data-panel="discussion" aria-label="Diskuse"><div class="panel-header"><svg class="section-icon panel-section-icon" aria-hidden="true"><use href="#section-icon-discussion"/></svg><h2>Diskuse</h2><div id="discussion-actions" class="panel-header-actions"></div></div><div id="discussion-content" class="panel-body"></div></section>
 </div></section>
-<section id="history-workspace" data-workspace="history" hidden aria-label="Historie zkoušení" aria-labelledby="history-title"><header class="history-header panel-header"><div class="history-heading"><span class="history-emblem" aria-hidden="true"><i class="ti ti-calendar-stats"></i></span><div><h2 id="history-title">Historie zkoušení</h2><p>Skladby napříč jednotlivými zkouškami</p></div></div><details id="history-options"><summary aria-label="Otevřít menu historie zkoušení" title="Další možnosti" aria-controls="history-menu"><i class="ti ti-dots-vertical" aria-hidden="true"></i></summary><div id="history-menu" class="looper-menu-section"><button id="history-unassigned-open" type="button" aria-haspopup="dialog" aria-controls="history-unassigned"><i class="ti ti-list-details" aria-hidden="true"></i><span>Nezařazené úseky a výstřižky</span></button></div></details><button id="history-close" class="modal-close" type="button" aria-label="Zpět k pracovní ploše skladby" title="Zpět ke skladbě">×</button></header><div class="history-toolbar"><label class="history-song-control"><span>Skladba</span><select id="history-song-filter"><option value="">Všechny skladby</option></select></label><label class="history-check"><input id="history-audio-filter" type="checkbox"><span>Jen s dostupným audiem</span></label><button id="history-orientation" type="button" aria-pressed="false"><i class="ti ti-switch-horizontal" aria-hidden="true"></i><span>Prohodit osy</span></button></div><p id="history-status" role="status" aria-live="polite"></p><div id="history-matrix" tabindex="0" aria-label="Matice historie zkoušení"></div></section>
-<section id="ideas-workspace" data-workspace="ideas" hidden aria-label="Nápady"></section></div></div></div>
+<section id="history-workspace" data-workspace="history" hidden aria-label="Matice zkoušek" aria-labelledby="history-title"><header class="history-header panel-header workspace-header"><div class="history-heading"><span class="history-emblem" aria-hidden="true"><i class="ti ti-calendar-stats"></i></span><div><h2 id="history-title">Matice zkoušek</h2><p>Skladby napříč jednotlivými zkouškami</p></div></div><div id="history-controls-slot"><div id="history-controls" class="history-toolbar workspace-controls">
+<button id="history-orientation" type="button" aria-pressed="false" title="Prohodit osy"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-direction"/></svg><span class="desktop-label">Prohodit osy</span></button>
+<label class="history-check" title="Jen s dostupným audiem"><input id="history-audio-filter" type="checkbox"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-audio"/></svg><span class="desktop-label">S dostupným audiem</span></label>
+<details id="history-filter" class="history-song-control"><summary><svg class="section-icon" aria-hidden="true"><use href="#section-icon-filter"/></svg><span id="history-filter-label">Všechny skladby</span><span aria-hidden="true">⌄</span></summary><div class="history-filter-menu"><label for="history-song-filter">Filtr skladeb</label><select id="history-song-filter" size="6" aria-label="Filtr skladeb"><option value="">Všechny skladby</option></select></div></details>
+<details id="history-options"><summary aria-label="Další možnosti matice" title="Další možnosti" aria-controls="history-menu"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-more"/></svg></summary><div id="history-menu" class="looper-menu-section"><button id="history-unassigned-open" type="button" aria-haspopup="dialog" aria-controls="history-unassigned"><i class="ti ti-list-details" aria-hidden="true"></i><span>Nezařazené úseky a výstřižky</span></button></div></details>
+</div></div></header><p id="history-status" role="status" aria-live="polite"></p><div id="history-matrix" tabindex="0" aria-label="Matice historie zkoušení"></div></section>
+<section id="ideas-workspace" data-workspace="ideas" hidden aria-label="Nápady" aria-labelledby="ideas-title"><header class="panel-header workspace-header"><h2 id="ideas-title">Nápady</h2><div id="ideas-controls-slot"><nav id="ideas-controls" class="workspace-controls" aria-label="Sekce nápadů"><button type="button" data-idea-section="write" aria-pressed="true" title="Piš"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-write"/></svg><span>Piš</span></button><button type="button" data-idea-section="draw" aria-pressed="false" title="Kresli"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-draw"/></svg><span>Kresli</span></button><button type="button" data-idea-section="speak" aria-pressed="false" title="Mluv"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-speak"/></svg><span>Mluv</span></button></nav></div></header><div id="ideas-write" class="panel-body content-editor" data-idea-panel="write"></div><div id="ideas-draw" class="panel-body idea-future" data-idea-panel="draw" hidden><h3>Kresli</h3><p>Prostor pro kresby a náčrty připravujeme.</p></div><div id="ideas-speak" class="panel-body idea-future" data-idea-panel="speak" hidden><h3>Mluv</h3><p>Prostor pro hlasové nápady připravujeme.</p></div></section></div></div></div>
+<div id="mobile-sections-dock">
+<nav id="mobile-panels" class="workspace-controls" aria-label="Sekce skladby nebo zkoušky"><button data-mobile-panel="recordings" aria-pressed="true" aria-label="Nahrávky" title="Nahrávky"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-recordings"/></svg><span class="section-button-label">Nahrávky</span></button><button data-mobile-panel="lyrics" aria-pressed="false" aria-label="Text a akordy" title="Text a akordy"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-lyrics"/></svg><span class="section-button-label">Text</span></button><button data-mobile-panel="tablature" aria-pressed="false" aria-label="Mapa skladby" title="Mapa skladby"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-tablature"/></svg><span class="section-button-label">Mapa</span></button><button data-mobile-panel="discussion" aria-pressed="false" aria-label="Diskuse" title="Diskuse"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-discussion"/></svg><span class="section-button-label">Diskuse</span></button></nav>
+</div></div>
 <section id="activity" class="utility-panel" hidden aria-label="Deník změn"><div class="dialog-header"><h2>Deník změn</h2><button class="modal-close" type="button" data-close-utility="activity" aria-label="Zavřít deník" title="Zavřít deník">×</button></div><div class="log-entries"></div><button id="log-more">Starší změny</button></section>
 <section id="offline-files" class="utility-panel" hidden aria-label="Offline soubory"><div class="dialog-header"><h2>Offline soubory</h2><button class="modal-close" type="button" data-close-utility="offline-files" aria-label="Zavřít offline soubory" title="Zavřít offline soubory">×</button></div><p class="offline-intro">Kopie uložené v tomto prohlížeči zůstanou dostupné i po odstranění audia ze serveru.</p><div class="offline-files-list"></div><div class="offline-footer"><button id="offline-clear" class="danger">Odebrat vše</button></div></section>
-<section id="mixer-panel" class="mt-shell" hidden aria-label="Mixér vybrané nahrávky"><div class="dialog-header"><div class="toolbar"><h2>Mixér</h2><button id="mixer-copy-link" type="button">Kopírovat odkaz na čas</button></div><button id="mixer-close" class="modal-close" type="button" aria-label="Zavřít Mixér" title="Zavřít Mixér">×</button></div>
+<section id="mixer-panel" class="mt-shell" hidden aria-label="Mixér vybrané nahrávky"><button id="mixer-copy-link" type="button" hidden><i class="ti ti-link" aria-hidden="true"></i><span>Vytvořit odkaz na pozici</span></button>
 <p id="mixer-context"></p>
 <div id="mt-notice" role="status" hidden></div>
 <h3 id="mt-playing-name">Vyberte vícestopou nahrávku</h3><div id="mt-empty">Vyberte nahrávku ze seznamu.</div>
-<div class="toolbar"><button id="mt-restart" title="Na začátek">⏮</button><button id="mt-backward">−5 s</button>
+<div class="mt-internal-transport" hidden><button id="mt-restart" title="Na začátek">⏮</button><button id="mt-backward">−5 s</button>
 <button id="mt-play" aria-label="Přehrát"><span id="mt-play-icon"></span> Přehrát / pauza</button><button id="mt-forward">+5 s</button>
-<label>Hlasitost<input id="mt-master-volume" type="range" min="0" max="100" value="100"><output id="mt-master-value">100 %</output></label>
-<button id="mt-mixer-toggle" aria-expanded="false" hidden>Rozbalit mix</button>
-<button id="mt-offline" aria-pressed="false"><span id="mt-offline-label">Uložit offline</span><small id="mt-offline-status"></small></button></div>
+<label>Hlasitost<input id="mt-master-volume" type="range" min="0" max="100" value="100"><output id="mt-master-value">100 %</output></label></div>
+<button id="mt-offline" aria-pressed="false" hidden><i class="ti ti-download" aria-hidden="true"></i><span><span id="mt-offline-label">Uložit offline</span><small id="mt-offline-status"></small></span></button>
 <div class="timeline"><output id="mt-current-time">00:00</output><input id="mt-seek" type="range" min="0" max="0" step="0.01" value="0"><output id="mt-total-time">00:00</output></div>
+<div id="mixer-action-row"><button id="mt-mixer-toggle" type="button" aria-label="Rozbalit mix" aria-expanded="false" aria-controls="mt-mixer" hidden>Mix</button></div>
 <div id="mt-loading-panel" hidden><p id="mt-load-summary"></p><div id="mt-track-statuses"></div><button id="mt-loading-cancel">Zrušit načítání</button></div>
 <div id="mt-mixer" hidden><div id="mt-tracks"></div></div>
 <div id="mixer-timestamps"></div>
-<button id="mixer-discussion">Diskuse ke skladbě / zkoušce</button>
 </section></main>
-<nav id="bottom-nav" aria-label="Mobilní navigace">
-<button id="bn-skladby" aria-haspopup="dialog"><img src="meat/ikona_skladby.png" alt="">skladby</button>
-<button data-mobile-panel="recordings" aria-pressed="true"><img src="meat/ikona_nahravky.png" alt="">nahrávky</button>
-<button data-mobile-panel="lyrics" aria-pressed="false"><img src="meat/ikona_text.png" alt="">text</button>
-<button data-mobile-panel="tablature" aria-pressed="false"><img src="meat/drinking2.png" alt="">mapa</button>
-<button data-mobile-panel="discussion" aria-pressed="false"><img src="meat/ikona_diskuse.png" alt="">diskuse</button>
-<button id="bn-napady" aria-pressed="false" aria-controls="ideas-workspace"><img src="meat/ikona_napady.png" alt="">nápady</button>
-</nav>
 <dialog id="catalog-dialog" aria-label="Skladby a zkoušky"><div id="catalog-dialog-slot"></div></dialog>
 <?php if($config['canCreate']):?><dialog id="create-collection-dialog" aria-labelledby="create-collection-title"><form id="create-collection"><div class="dialog-header"><h2 id="create-collection-title">Nová skladba</h2><button id="create-collection-cancel" class="modal-close" type="button" aria-label="Zavřít vytvoření skladby nebo zkoušky" title="Zavřít">×</button></div><label>Nový název<input name="title" maxlength="200" required></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Vytvořit</button></div></form></dialog><?php endif;?>
 
@@ -208,7 +235,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <dialog id="history-detail" aria-labelledby="history-detail-title"><div class="dialog-header"><h2 id="history-detail-title"></h2><button type="button" class="modal-close" data-history-close aria-label="Zavřít detail a vrátit se k seznamu" title="Zpět k seznamu">×</button></div><div class="history-detail-body"></div></dialog>
 <?php if($config['canUpload']):?><dialog id="upload-dialog" aria-labelledby="upload-title"></dialog><?php endif;?>
 <dialog id="editor"><form id="edit-form"><div class="dialog-header"><h2>Upravit</h2><button type="button" id="edit-cancel" class="modal-close" aria-label="Zavřít úpravu" title="Zavřít">×</button></div><label>Název<input name="title" maxlength="200" required></label><label id="summary-label">Popisek<textarea name="summary" maxlength="10000" rows="5"></textarea></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Uložit</button><button type="button" id="edit-reload" hidden>Načíst aktuální verzi</button></div></form></dialog>
-<dialog id="move-dialog" aria-labelledby="move-title"><form id="move-form"><div class="dialog-header"><h2 id="move-title">Přesunout <span id="move-item-title"></span></h2><button type="button" id="move-cancel" class="modal-close" aria-label="Zavřít přesun" title="Zavřít">×</button></div><label>Cílová skladba nebo zkouška<select name="collection_id" required></select></label><p class="edit-error" role="alert"></p><div class="toolbar"><button type="submit">Potvrdit přesun</button></div></form></dialog>
+<dialog id="move-dialog" aria-labelledby="move-title"><form id="move-form"><div class="dialog-header"><h2 id="move-title">Přesunout <span id="move-item-title"></span></h2><button type="button" id="move-cancel" class="modal-close" aria-label="Zavřít přesun" title="Zavřít">×</button></div><p id="move-links-info" class="muted" hidden></p><label>Cílová skladba nebo zkouška<select name="collection_id" required></select></label><p class="edit-error" role="alert"></p><div class="toolbar"><button type="submit">Potvrdit přesun</button></div></form></dialog>
 <dialog id="logout-dialog" aria-labelledby="logout-title"><span class="logout-icon" aria-hidden="true">🎸</span><p id="logout-title">Opravdu chceš opustit zkušebnu?</p><p id="logout-error" class="edit-error" role="alert" hidden></p><button id="logout-confirm" type="button">zpět do reálného světa</button><button id="logout-cancel" type="button">zůstat ve zkušebně</button></dialog>
 <dialog id="player-help-dialog" aria-labelledby="player-help-title"><div class="dialog-header"><h2 id="player-help-title">Nápověda přehrávače</h2><button id="player-help-close" class="modal-close" type="button" aria-label="Zavřít nápovědu">×</button></div><p>Nejprve vyberte nahrávku ze seznamu a otevřete ji v Looperu nebo Mixéru.</p><p class="muted">Podrobnou nápovědu doplníme později.</p></dialog>
 <script>window.VZ2=<?=json_encode($config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_HEX_APOS)?>;

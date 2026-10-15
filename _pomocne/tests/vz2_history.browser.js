@@ -20,9 +20,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'));
         const history = page.locator('#history-workspace'), add = page.locator('#history-add'), detail = page.locator('#history-detail'), list = page.locator('#history-list'), unassigned = page.locator('#history-unassigned');
         async function openHistory() {
-            const menu = page.locator('.shell-menu');
-            if ((await menu.getAttribute('open')) === null) await menu.locator('summary').click();
-            await page.locator('#show-history').click();
+            await page.locator('[data-workspace-target=history]:visible').click();
             await history.locator('.history-table').waitFor();
         }
         const cell = () => history.locator('td[data-song-id="'+song.id+'"][data-rehearsal-id="'+rehearsal.id+'"]');
@@ -73,11 +71,11 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
         await page.locator('#looper-audio').evaluate(async audio => { audio.muted = true; audio.loop = true; await audio.play(); });
         await openHistory();
-        await history.locator('#history-options > summary').click();
+        await page.locator('#history-options > summary').click();
         assert.equal(await history.locator('#history-menu > button').count(), 1);
         await page.locator('#history-unassigned-open').click();
         await unassigned.waitFor();
-        assert.equal(await history.locator('#history-options').getAttribute('open'), null);
+        assert.equal(await page.locator('#history-options').getAttribute('open'), null);
         assert.equal(await unassigned.locator('.history-unassigned-section').count(), 2);
         assert.equal(await unassigned.locator('.history-unassigned-section').first().locator('h3').textContent(), 'Úseky (1)');
         assert.equal(await unassigned.locator('.history-unassigned-section').first().locator('li small').textContent(), 'Zkouška: Historie – zkouška · 00:01–00:04');
@@ -85,11 +83,13 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert((await unassigned.textContent()).includes('Jiná skladba historie'));
         assert.equal(await unassigned.locator('.history-unassigned-section').last().locator('li').count(), 3);
         await unassigned.locator('[data-history-close]').click();
+        await page.locator('#history-filter summary').click();
         await page.locator('#history-song-filter').selectOption(String(song.id));
-        await history.locator('#history-options > summary').click();
+        await page.locator('#history-options > summary').click();
         await page.locator('#history-unassigned-open').click();
         assert.equal(await unassigned.locator('.history-unassigned-section').last().locator('li').count(), 3, 'matrix song filter does not restrict the global list');
         await unassigned.locator('[data-history-close]').click();
+        await page.locator('#history-filter summary').click();
         await page.locator('#history-song-filter').selectOption('');
         assert.equal(await page.locator('#app-shell').isVisible(), true);
         assert.equal(await page.locator('#sidebar-slot #sidebar').isVisible(), true);
@@ -170,12 +170,13 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await cell().locator('.history-count').textContent(), '2');
         assert.equal(await cell().locator('button').count(), 1, 'matrix cell has one count regardless of attempt count');
         assert.equal(await history.locator('.history-list-row, .history-add').count(), 0);
-        await history.locator('#history-options > summary').click();
+        await page.locator('#history-options > summary').click();
         await page.locator('#history-unassigned-open').click();
         assert.equal(await unassigned.locator('.history-unassigned-section').first().locator('h3').textContent(), 'Úseky (0)');
         assert.equal(await unassigned.locator('.history-unassigned-section').last().locator('h3').textContent(), 'Výstřižky (1)');
         await unassigned.locator('[data-history-close]').click();
         check(true, 'browser history: menu opens matrix; interval assignment seeks original audio and connects clip; two attempts share a single count and open via a compact list');
+        await page.locator('#history-filter summary').click();
         await page.locator('#history-song-filter').selectOption(String(song.id));
         assert.equal(await history.locator('thead th').count(), 2);
         await page.locator('#history-orientation').click();
@@ -183,14 +184,14 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await history.locator('tbody tr').count(), 1);
         await page.locator('#history-audio-filter').check();
         assert.equal(await cell().locator('.history-count').textContent(), '2');
-        await page.locator('[data-workspace-target="panels"]').click();
+        await page.locator('[data-workspace-target="songs"]:visible').click();
         assert.equal(await page.locator('#song-workspace').isVisible(), true);
         assert.equal(await page.evaluate(() => window.songPanelBeforeHistory === document.getElementById('content-area')), true);
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
         await page.setViewportSize({ width: 390, height: 844 });
         await openHistory();
         assert.equal(await history.isVisible(), true);
-        await history.locator('#history-options > summary').click();
+        await page.locator('#history-options > summary').click();
         await page.locator('#history-unassigned-open').click();
         assert((await unassigned.boundingBox()).width <= 390);
         await unassigned.locator('[data-history-close]').click();
@@ -198,7 +199,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
         assert.equal(await page.locator('#history-audio-filter').isChecked(), true);
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
-        assert(await page.locator('#history-close').isVisible());
+        assert(await page.locator('#bn-matice').isVisible());
         const bounds = await history.boundingBox();
         assert(bounds.x >= 0 && bounds.width <= 390, 'matrix stays within mobile viewport');
         await openAttempt('samostatny-pokus.wav');
@@ -225,7 +226,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await guestPage.goto(base + 'index.php?v=2');
         await guestPage.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'));
         await guestPage.locator('.shell-menu > summary').click();
-        await guestPage.locator('#show-history').click();
+        await guestPage.locator('[data-workspace-target=history]:visible').click();
         await guestPage.locator('#history-matrix .history-table').waitFor();
         await guestPage.locator('#history-options > summary').click();
         await guestPage.locator('#history-unassigned-open').click();

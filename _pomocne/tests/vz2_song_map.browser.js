@@ -177,11 +177,10 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         assert.equal(JSON.parse((await getMap()).json().version.body).sections[0].bars[0].detail, 'Detail upravený přímo v MAPĚ');
         await mode(page, 'UPRAVIT'); await bars(page).first().click(); await host.getByRole('button', { name: 'Změnit', exact: true }).click(); await type(page, 'HI-HAT'); await bars(page).first().click();
         await page.locator('[data-mobile-panel=lyrics]').click();
-        await dialog(page, 'Neuložené změny').getByRole('button', { name: 'Zůstat', exact: true }).click();
-        assert.equal(await page.locator('#panel-tablature').isVisible(), true);
-        await page.locator('[data-mobile-panel=lyrics]').click();
-        await dialog(page, 'Neuložené změny').getByRole('button', { name: 'Zahodit změny', exact: true }).click();
         assert.equal(await page.locator('#panel-lyrics').isVisible(), true);
+        assert.equal(await page.locator('dialog[open]').count(), 0, 'Hiding the map retains its draft without prompting');
+        await page.locator('[data-mobile-panel=tablature]').click();
+        assert.equal(await page.locator('#tablature-actions .song-map-save-state').textContent(), 'Neuloženo');
         await page.setViewportSize({ width: 1440, height: 900 });
         await mode(page, 'UPRAVIT'); await bars(page).first().click(); await host.getByRole('button', { name: 'Změnit', exact: true }).click(); await type(page, 'HI-HAT'); await bars(page).first().click();
         await page.locator('#catalog-picker').click(); await page.locator('#collections > .collection').filter({ hasText: other.title || 'Mapa — jiná skladba' }).locator('button').first().click();

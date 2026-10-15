@@ -84,6 +84,24 @@ module.exports = async function ({ base, clients, request, good, upload, wav, db
     }
     data = await read();
     assert.equal(data.plays.filter(p => p.song_collection_id === song.id && p.rehearsal_collection_id === rehearsal.id).length, 2);
+    const moveRecording = async (id, collectionId) => {
+        const revision = db('SELECT revision FROM vz2_recordings WHERE id=?', [id])[0].revision;
+        await good('admin', { action: 'recording_move', id, revision, collection_id: collectionId });
+    };
+    const directFile = db('SELECT id,relative_path FROM vz2_audio_files WHERE recording_id=?', [directClip])[0];
+    await moveRecording(directClip, otherSong.id);
+    assert.equal(Number(db('SELECT song_collection_id FROM vz2_rehearsal_plays WHERE clip_recording_id=?', [directClip])[0].song_collection_id), otherSong.id);
+    const movedCatalog = (await request(clients.admin, 'php/ajax/vz2.php?action=catalog')).json();
+    assert(movedCatalog.recording_links.some(link => link.clip_recording_id === directClip && link.song_collection_id === otherSong.id && link.rehearsal_collection_id === rehearsal.id));
+    await moveRecording(directClip, song.id);
+    assert.deepEqual(db('SELECT id,relative_path FROM vz2_audio_files WHERE recording_id=?', [directClip])[0], directFile);
+    await moveRecording(source, otherRehearsal.id);
+    assert.equal(Number(db('SELECT rehearsal_collection_id FROM vz2_rehearsal_plays WHERE source_recording_id=?', [source])[0].rehearsal_collection_id), otherRehearsal.id);
+    const linkedRevision = db('SELECT revision FROM vz2_recordings WHERE id=?', [source])[0].revision;
+    assert.equal((await request(clients.admin, 'php/ajax/vz2.php', { action: 'recording_move', id: source, revision: linkedRevision, collection_id: song.id })).status, 409);
+    assert.equal(Number(db('SELECT collection_id FROM vz2_recordings WHERE id=?', [source])[0].collection_id), otherRehearsal.id);
+    await moveRecording(source, rehearsal.id);
+    check(true, 'history: linked moves update the matching matrix side atomically, preserve files and reject cross-kind moves');
     const recording = db('SELECT * FROM vz2_recordings WHERE id=?', [source])[0];
     await good('admin', { action: 'remove_audio', id: source, revision: recording.revision, confirm: recording.title, request_key: crypto.randomBytes(16).toString('hex') });
     data = await read();

@@ -2,12 +2,24 @@
     'use strict';
     const $ = id => document.getElementById(id), shell = $('player-shell'), body = $('player-body');
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
-    let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, ideasPrevious = null;
+    let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, mixerVolumeBeforeMute = 1;
     const mixer = $('mixer-panel'); body.append(mixer);
-    // Retain the Mixer IDs and event handlers; expose secondary actions in the shared header.
-    $('player-actions').append($('mixer-copy-link'), $('mt-offline'));
+    function fileName(file) {
+        const name = file?.title || file?.display_name || file?.original_name || '';
+        const extension = file?.format || /\.([^.]+)$/.exec(file?.original_name || file?.display_name || '')?.[1];
+        return name && extension && !name.toLowerCase().endsWith('.' + extension.toLowerCase()) ? name + '.' + extension : name;
+    }
+    // Retain Mixer handlers while showing secondary actions in the shared menu.
+    $('mixer-menu-actions').prepend($('mt-offline'), $('mixer-copy-link'));
     const copy = $('looper-copy-link'), offline = $('looper-offline'), download = $('looper-export');
     const looperMenu = $('looper-options');
+    const mixerMedia = matchMedia('(max-width: 767px)');
+    function positionMixerDrawer() {
+        if (mode !== 'mixer' || !mixerMedia.matches || $('mt-mixer').hidden) return;
+        const notesActions = mixer.querySelector('.looper-timestamp-actions');
+        const anchor = notesActions?.getBoundingClientRect().height ? notesActions : $('mt-mixer-toggle');
+        mixer.style.setProperty('--mt-drawer-top', Math.max(0, anchor.getBoundingClientRect().bottom + 8) + 'px');
+    }
     function offlineLabel(cached) {
         $('looper-offline-label').textContent = cached ? 'Odebrat offline kopii' : 'Uložit pro offline';
         $('looper-offline-status').textContent = cached ? 'uloženo v tomto prohlížeči' : 'přehrávám ze sítě';
@@ -30,6 +42,20 @@
         $('player-play').disabled = !s || s.phase !== 'ready';
         $('player-play').textContent = s?.playing ? '❚❚' : '▶';
         $('player-play').setAttribute('aria-label', s?.playing ? 'Pozastavit' : 'Přehrát');
+        if (mode === 'mixer') {
+            const ready = s?.phase === 'ready', volume = Number($('mt-master-volume').value) / 100;
+            for (const name of ['looper-restart', 'looper-back', 'looper-play', 'looper-forward', 'looper-volume', 'looper-mute']) $(name).disabled = !ready;
+            $('looper-play').firstElementChild.className = s?.playing ? 'ti ti-player-pause-filled' : 'ti ti-player-play-filled';
+            $('looper-play').setAttribute('aria-label', s?.playing ? 'Pozastavit' : 'Přehrát');
+            $('looper-play').title = s?.playing ? 'Pozastavit' : 'Přehrát';
+            if (document.activeElement !== $('looper-volume')) $('looper-volume').value = volume;
+            $('looper-volume-value').textContent = Math.round(volume * 100) + '%';
+            $('looper-mute').setAttribute('aria-pressed', String(volume === 0));
+            $('looper-mute').firstElementChild.className = volume === 0 ? 'ti ti-volume-off' : 'ti ti-volume';
+            $('looper-mute').setAttribute('aria-label', volume === 0 ? 'Zapnout zvuk' : 'Ztlumit zvuk');
+            $('looper-mute').title = volume === 0 ? 'Zapnout zvuk' : 'Ztlumit zvuk';
+            return;
+        }
         if (mode !== 'looper' || !looper) return;
         const a = looper.audio, ready = looper.phase === 'ready';
         for (const control of ['looper-restart', 'looper-back', 'looper-play', 'looper-forward', 'looper-loop', 'looper-seek']) $(control).disabled = !ready;
@@ -76,9 +102,13 @@
         $('player-collapse').setAttribute('aria-expanded', String(!collapsed));
         $('player-collapse').setAttribute('aria-label', collapsed ? 'Rozbalit přehrávač' : 'Sbalit přehrávač');
         $('player-collapse').firstElementChild.className = collapsed ? 'ti ti-chevron-down' : 'ti ti-chevron-up';
-        $('player-options').hidden = mode === 'empty';
+        $('looper-menu-actions').hidden = mode !== 'looper';
+        $('mixer-menu-actions').hidden = mode !== 'mixer';
+        looperMenu.querySelector('summary').setAttribute('aria-label', mode === 'mixer' ? 'Otevřít menu Mixéru' : 'Otevřít menu Looperu');
+        $('looper-close').querySelector('span').textContent = mode === 'mixer' ? 'Zavřít mixér' : 'Zavřít looper';
         $('mixer-copy-link').hidden = $('mt-offline').hidden = mode !== 'mixer';
-        if (mode !== 'looper') looperMenu.open = false;
+        if (mode === 'empty') looperMenu.open = false;
+        positionMixerDrawer();
         update();
     }
     function exitFullscreen() { window.Vz2Layout.exitFullscreen(shell); }
@@ -86,13 +116,12 @@
         if (!fullscreen) return;
         const previous = fullscreen; fullscreen = null;
         shell.classList.remove('player-fullscreen'); collapsed = previous.collapsed;
-        if (mode === 'mixer' && previous.mixerExpanded !== !$('mt-mixer').hidden && !$('mt-mixer-toggle').hidden) $('mt-mixer-toggle').click();
         layout(); body.scrollTop = previous.scroll; $('looper-wave-scroll').scrollLeft = previous.waveScroll;
     }
     function resetShell() {
         exitFullscreen(); mode = 'empty'; id = null; collapsed = false; mixerPending = false;
-        $('player-title').textContent = 'Vyberte nahrávku'; $('player-title').title = ''; $('looper-wave-name').textContent = '';
-        $('player-options').open = false; looperMenu.open = false; layout();
+        $('player-title').disabled = true; $('player-title-full').textContent = ''; $('player-title-mobile').textContent = ''; $('player-title').title = ''; $('looper-wave-name').textContent = '';
+        looperMenu.open = false; layout();
     }
     function closeLooper() {
         const old = looper; looper = null;
@@ -106,11 +135,17 @@
         if (mode === 'looper') resetShell();
     }
     function select(nextMode, recording) {
-        if (mode !== nextMode || id !== String(recording.id)) { exitFullscreen(); collapsed = false; $('player-options').open = false; looperMenu.open = false; }
+        if (mode !== nextMode || id !== String(recording.id)) { exitFullscreen(); collapsed = false; looperMenu.open = false; }
         mode = nextMode; id = String(recording.id);
-        const names = (recording.files || []).map(file => file.original_name || file.display_name || file.title).filter(Boolean);
-        const title = nextMode === 'looper' ? (looper?.file?.original_name || looper?.file?.display_name || looper?.file?.title || recording.title) : (names.join(', ') || recording.title);
-        $('player-title').textContent = title; $('player-title').title = title;
+        const names = (recording.files || []).map(fileName).filter(Boolean);
+        const title = nextMode === 'looper' ? (fileName(looper?.file) || recording.title) : (names.join(', ') || recording.title);
+        const sourceTitle = recording.collection_title ? recording.collection_title + ' · ' + title : title;
+        $('player-title-full').textContent = sourceTitle;
+        const firstFile = recording.files?.[0];
+        $('player-title-mobile').textContent = nextMode === 'mixer'
+            ? (fileName(firstFile) || recording.title)
+            : sourceTitle;
+        $('player-title').title = 'Přejít k nahrávce: ' + sourceTitle; $('player-title').disabled = false;
         $('looper-wave-name').textContent = nextMode === 'looper' ? title : '';
         layout();
     }
@@ -284,7 +319,7 @@
         ctx.strokeStyle = '#e2e4e1'; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
     }
     shell.addEventListener('click', e => {
-        if (mode !== 'empty' || !e.target.closest('.looper-header-controls > button')) return;
+        if (mode !== 'empty') return;
         e.preventDefault(); e.stopImmediatePropagation();
         if (!$('player-help-dialog').open) $('player-help-dialog').showModal();
     }, true);
@@ -292,28 +327,58 @@
     $('player-collapse').onclick = () => { collapsed = !collapsed; layout(); };
     window.Vz2Layout.registerFullscreen(shell, {
         enter() {
-            fullscreen = { collapsed, scroll: body.scrollTop, waveScroll: $('looper-wave-scroll').scrollLeft, mixerExpanded: !$('mt-mixer').hidden };
+            fullscreen = { collapsed, scroll: body.scrollTop, waveScroll: $('looper-wave-scroll').scrollLeft };
             collapsed = false; shell.classList.add('player-fullscreen');
-            if (mode === 'mixer' && $('mt-mixer').hidden && !$('mt-mixer-toggle').hidden) $('mt-mixer-toggle').click();
             layout();
         },
         exit: restoreFullscreen
     });
     $('looper-close').onclick = () => { looperMenu.open = false; $('player-close').click(); };
     $('player-close').onclick = () => document.dispatchEvent(new Event('vz2:player-close'));
+    $('mt-mixer-toggle').addEventListener('click', () => queueMicrotask(() => {
+        if ($('mt-mixer-toggle').getAttribute('aria-expanded') !== 'true') return;
+        const notesToggle = mixer.querySelector('.looper-timestamp-actions > button:first-child');
+        if (notesToggle?.getAttribute('aria-expanded') === 'true') notesToggle.click();
+        positionMixerDrawer();
+    }));
+    document.addEventListener('vz2:timestamp-actions-changed', positionMixerDrawer);
+    window.addEventListener('resize', positionMixerDrawer);
+    new ResizeObserver(positionMixerDrawer).observe(mixer);
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || mode !== 'mixer' || !mixerMedia.matches || $('mt-mixer').hidden || document.querySelector('dialog[open]')) return;
+        $('mt-mixer-toggle').click(); $('mt-mixer-toggle').focus(); e.preventDefault(); e.stopPropagation();
+    }, true);
+    $('player-title').onclick = () => document.dispatchEvent(new Event('vz2:player-source'));
     $('player-play').onclick = async () => {
         try { if (mode === 'looper') { if (looper.audio.paused) await looper.audio.play(); else looper.audio.pause(); } else if (mode === 'mixer') { if (window.MultitrackApp.getState()?.playing) window.MultitrackApp.pause(); else { document.querySelectorAll('#content audio').forEach(a => a.pause()); await window.MultitrackApp.play(); } } update(); }
         catch (e) { error(e.message); }
     };
     $('looper-play').onclick = () => $('player-play').click();
     const seek = seconds => { if (!looper || looper.phase !== 'ready') return; window.Vz2Timestamps.stopLoop(); looper.audio.currentTime = Math.max(0, Math.min(looper.audio.duration || 0, seconds)); update(); };
-    $('looper-restart').onclick = () => seek(0); $('looper-back').onclick = () => seek((looper?.audio.currentTime || 0) - 5); $('looper-forward').onclick = () => seek((looper?.audio.currentTime || 0) + 5);
+    $('looper-restart').onclick = () => mode === 'mixer' ? $('mt-restart').click() : seek(0);
+    $('looper-back').onclick = () => mode === 'mixer' ? $('mt-backward').click() : seek((looper?.audio.currentTime || 0) - 5);
+    $('looper-forward').onclick = () => mode === 'mixer' ? $('mt-forward').click() : seek((looper?.audio.currentTime || 0) + 5);
     $('looper-seek').oninput = e => seek(Number(e.target.value)); $('looper-zoom').oninput = draw;
     $('looper-zoom-out').onclick = () => { $('looper-zoom').value = Math.max(1, Number($('looper-zoom').value) - 1); draw(); };
     $('looper-zoom-in').onclick = () => { $('looper-zoom').value = Math.min(16, Number($('looper-zoom').value) + 1); draw(); };
     $('looper-wave').onclick = e => { if (looper) seek(e.offsetX / $('looper-wave').clientWidth * looper.audio.duration); };
-    $('looper-volume').oninput = e => { if (looper) { looper.audio.volume = Number(e.target.value); looper.audio.muted = false; update(); } };
-    $('looper-mute').onclick = () => { if (looper) { looper.audio.muted = !looper.audio.muted; update(); } };
+    $('looper-volume').oninput = e => {
+        if (mode === 'mixer') {
+            $('mt-master-volume').value = Math.round(Number(e.target.value) * 100);
+            $('mt-master-volume').dispatchEvent(new Event('input', { bubbles: true }));
+            if (Number(e.target.value) > 0) mixerVolumeBeforeMute = Number(e.target.value);
+            update();
+        } else if (looper) { looper.audio.volume = Number(e.target.value); looper.audio.muted = false; update(); }
+    };
+    $('looper-mute').onclick = () => {
+        if (mode === 'mixer') {
+            const current = Number($('mt-master-volume').value) / 100;
+            if (current > 0) mixerVolumeBeforeMute = current;
+            $('mt-master-volume').value = Math.round((current === 0 ? mixerVolumeBeforeMute : 0) * 100);
+            $('mt-master-volume').dispatchEvent(new Event('input', { bubbles: true }));
+            update();
+        } else if (looper) { looper.audio.muted = !looper.audio.muted; update(); }
+    };
     $('looper-loop').onclick = () => { if (looper) { window.Vz2Timestamps.stopLoop(); looper.audio.loop = !looper.audio.loop; update(); } };
     copy.onclick = async () => { if (!looper) return; looperMenu.open = false; try { const url = new URL('index.php', location.href); url.search = new URLSearchParams({ v: '2', recording_id: id, view: 'looper', time_ms: Math.round(looper.audio.currentTime * 1000) }); await navigator.clipboard.writeText(url.href); $('looper-status').textContent = 'Odkaz zkopírován.'; } catch (e) { error(e.message); } };
     download.onclick = () => { looperMenu.open = false; };
@@ -351,11 +416,6 @@
     setInterval(update, 100);
     window.Vz2Player = {
         getState, openLooper, closeLooper,
-        setIdeasMode(active) {
-            if (active) { exitFullscreen(); ideasPrevious = { mode, id, collapsed }; if (mode !== 'empty') collapsed = true; }
-            else { if (ideasPrevious?.mode === mode && ideasPrevious.id === id) collapsed = ideasPrevious.collapsed; ideasPrevious = null; }
-            layout();
-        },
         showMixer(recording) { closeLooper(); if (mode !== 'mixer' || id !== String(recording.id)) mixerPending = true; select('mixer', recording); },
         hideMixer() { if (mode === 'mixer') resetShell(); },
         mixerFailed() { mixerPending = false; },

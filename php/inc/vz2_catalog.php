@@ -6,18 +6,18 @@ require_once __DIR__.'/vz2_timestamps.php';
 function vz2_file_public(array $f,string $type):array {
     $available=$f['state']==='available' && is_file(vz2_path($f['relative_path']));
     $status=$f['state']==='available' && !$available?'missing':$f['state'];
-    $format=$type==='audio'?($f['format']??pathinfo($f['original_name'],PATHINFO_EXTENSION)):'';
-    $displayName=$f['original_name']?:$f['title'];
+    $format=$type==='audio'?($f['format']??pathinfo($f['original_name'],PATHINFO_EXTENSION)):pathinfo($f['original_name'],PATHINFO_EXTENSION);
+    $displayName=$f['title']?:$f['original_name'];
     if($format!=='' && !str_ends_with(strtolower($displayName),'.'.strtolower($format)))$displayName.='.'.$format;
     return ['id'=>(int)$f['id'],'title'=>$f['title'],'display_name'=>$displayName,'original_name'=>$f['original_name'],
-        'format'=>$f['format']??pathinfo($f['relative_path'],PATHINFO_EXTENSION),'byte_size'=>(int)$f['byte_size'],
+        'format'=>$format,'byte_size'=>(int)$f['byte_size'],
         'sha256'=>$f['sha256'],'duration_ms'=>isset($f['duration_ms'])?(int)$f['duration_ms']:null,
         'sort_order'=>(int)($f['sort_order']??0),'state'=>$status,'deleted_at'=>$f['deleted_at'],
         'deleted_by'=>$f['deleted_by']===null?null:(int)$f['deleted_by'],
         'url'=>$available?'php/ajax/vz2_files.php?type='.$type.'&id='.$f['id'].'&hash='.$f['sha256']:null];
 }
 function vz2_recording_display_name(array $recording):string {
-    $names=array_values(array_filter(array_map(fn($f)=>$f['original_name']?:($f['display_name']??$f['title']),$recording['files']??[])));
+    $names=array_values(array_filter(array_map(fn($f)=>$f['display_name']??($f['original_name']?:$f['title']),$recording['files']??[])));
     return $names?implode(', ',$names):($recording['title']?:'Nahrávka');
 }
 function vz2_catalog():array {
@@ -43,8 +43,13 @@ function vz2_catalog():array {
         $a['can_move']=auth_is_admin() || (ma_pravo('move_file') && (int)$a['created_by']===(int)($_SESSION['user_id']??0));
     }unset($a);
     $ops=vz2_rows($db,"SELECT id,target_id,target_type,target_title,action,state,error_code,actor_id FROM vz2_file_operations WHERE state<>'completed'".(auth_is_admin()?'':' AND actor_id=?').' ORDER BY id DESC',auth_is_admin()?[]:[(int)($_SESSION['user_id']??0)]);
+    $links=vz2_rows($db,'SELECT p.id,p.song_collection_id,p.rehearsal_collection_id,p.source_recording_id,p.clip_recording_id,st.time_ms start_ms,st.body start_body,et.time_ms end_ms
+        FROM vz2_rehearsal_plays p LEFT JOIN vz2_timestamps st ON st.id=p.start_timestamp_id
+        LEFT JOIN vz2_timestamps et ON et.id=p.end_timestamp_id ORDER BY p.id');
+    foreach($links as &$link)foreach(['id','song_collection_id','rehearsal_collection_id','source_recording_id','clip_recording_id','start_ms','end_ms'] as $key)$link[$key]=$link[$key]===null?null:(int)$link[$key];
+    unset($link);
     return ['collections'=>$collections,'orders'=>vz2_rows($db,'SELECT * FROM vz2_collection_orders'),
-        'recordings'=>$recordings,'attachments'=>$attachments,'operations'=>$ops];
+        'recordings'=>$recordings,'recording_links'=>$links,'attachments'=>$attachments,'operations'=>$ops];
 }
 function vz2_mixer(?int $id=null):array {
     $catalog=vz2_catalog();$items=[];

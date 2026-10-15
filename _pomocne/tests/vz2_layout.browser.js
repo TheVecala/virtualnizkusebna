@@ -76,9 +76,9 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         assert.equal(await page.locator('#tablature-content').evaluate(n => n.scrollTop), 0);
         assert.equal(await page.evaluate(() => scrollY), 0);
         const lyricsScroll = await page.locator('#lyrics-content').evaluate(n => n.scrollTop);
-        await page.locator('[data-workspace-target="history"]').click();
+        await page.locator('[data-workspace-target="history"]:visible').click();
         await page.locator('#history-workspace .history-table').waitFor();
-        await page.locator('[data-workspace-target="panels"]').click();
+        await page.locator('[data-workspace-target="songs"]:visible').click();
         assert.deepEqual(await visible(), ['recordings', 'lyrics', 'tablature', 'discussion']);
         assert.equal(await page.locator('#lyrics-content').evaluate(n => n.scrollTop), lyricsScroll, 'switching workspaces preserves each panel scroll');
 
@@ -110,8 +110,8 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         assert.equal(await page.locator('#create-collection-dialog').isVisible(), false);
         assert(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1));
         await resize(1024, 400);
+        await page.locator('[data-workspace-target=rehearsals]:visible').click();
         await page.locator('#catalog-picker').click();
-        await page.getByRole('button', { name: 'Zkoušky', exact: true }).click();
         await page.locator('#create-collection-open').click();
         assert.equal(await page.locator('#create-collection-title').textContent(), 'Nová zkouška');
         await page.locator('#create-collection-cancel').click();
@@ -120,7 +120,7 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         assert(await page.locator('#sidebar-slot #sidebar').isVisible());
         check(true, 'layout: mobile creation, short viewport/keyboard-sized resize, rehearsal dialog and sidebar migration');
         await page.evaluate(() => { for (const key of Object.keys(localStorage)) if (key.includes('layout:')) localStorage.setItem(key, '{broken'); });
-        await page.reload(); assert.deepEqual(await visible(), ['recordings', 'lyrics', 'tablature']);
+        await page.reload(); assert.deepEqual(await visible(), ['recordings', 'lyrics', 'discussion']);
         assert.deepEqual(errors, []);
         check(true, 'layout: invalid stored preferences recover defaults; no JavaScript errors');
     } finally { await browser.close(); }
