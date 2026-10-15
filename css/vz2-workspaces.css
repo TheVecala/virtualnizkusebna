@@ -126,7 +126,7 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     .panel[data-panel] > .panel-header > .panel-fullscreen-button { margin-left: 0; }
     #mobile-panels:not([hidden]) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; width: 100%; padding: 0; border: 0; background: none; }
     body[data-collection-kind=rehearsal] #mobile-panels:not([hidden]) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    #mobile-panels button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; height: 52px; min-height: 52px; padding: 3px 1px; border: 1px solid transparent; border-radius: 9px 9px 0 0; background: none; }
+    #mobile-panels button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; height: 44px; min-height: 44px; padding: 3px 1px; border: 1px solid transparent; border-radius: 8px; background: none; }
     #mobile-panels button .section-icon { width: 22px; height: 22px; flex: 0 0 22px; }
     #mobile-panels button .section-button-label { position: static; width: auto; height: auto; margin: 0; overflow: hidden; clip: auto; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; line-height: 1.1; }
     #mobile-panels button[aria-pressed=true] { color: var(--vz-primary-hover); background: var(--vz-primary-soft); border-color: #6b713d; }
@@ -168,7 +168,7 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     #bottom-nav button[aria-pressed=true] { color: var(--vz-primary-hover); background: var(--vz-primary-soft); border-color: #6b713d; box-shadow: none; }
     #bottom-nav img { width: 27px; height: 27px; }
     #bottom-nav button[aria-pressed=true] img { width: 29px; height: 29px; }
-    #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 0 8px env(safe-area-inset-bottom); border-top: 1px solid #6b713d; background: var(--vz-shell); z-index: 20; }
+    #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); border-top: 1px solid #6b713d; background: var(--vz-shell); z-index: 20; }
     #activity.utility-panel, #offline-files.utility-panel { bottom: calc(53px + env(safe-area-inset-bottom)); }
     body:is([data-workspace=history], [data-workspace=ideas]) #activity.utility-panel,
     body:is([data-workspace=history], [data-workspace=ideas]) #offline-files.utility-panel { bottom: 8px; }
