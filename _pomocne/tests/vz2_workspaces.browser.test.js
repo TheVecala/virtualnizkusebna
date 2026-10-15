@@ -171,14 +171,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                         dockHeight: rect('#mobile-dock').height,
                         topMenuBelowPlayer: rect('#mobile-dock').top >= rect('#player-shell').bottom - 1,
                         topMenuAboveContent: rect('#mobile-dock').bottom <= rect('.layout').top + 1,
-                        bottomMenuBelowContent: rect('#mobile-sections-dock').top >= rect('#app-shell').bottom - 1 };
+                        bottomMenuBelowContent: rect('#mobile-sections-dock').top >= rect('.layout').bottom - 1,
+                        menusInsideFrame: rect('#mobile-dock').top >= rect('#workspace-frame').top - 1 &&
+                            rect('#mobile-sections-dock').bottom <= rect('#workspace-frame').bottom + 1,
+                        frameBorder: getComputedStyle(document.querySelector('#workspace-frame')).borderTopColor };
                 });
                 assert(!geometry.overflow && !geometry.height, `${workspace}: viewport overflow at ${width}`);
                 if (width < 768) {
                     assert(geometry.topMenuBelowPlayer && geometry.topMenuAboveContent, `${workspace}: main navigation belongs below the player at ${width} px`);
                     if (workspace === 'songs' || workspace === 'rehearsals') {
                         assert(await page.locator('#mobile-panels').isVisible());
-                        assert(geometry.bottomMenuBelowContent, `${workspace}: section navigation belongs below the content at ${width} px`);
+                        assert(geometry.bottomMenuBelowContent && geometry.menusInsideFrame && geometry.frameBorder === 'rgb(107, 113, 61)',
+                            `${workspace}: the olive frame contains both fixed menus and the content at ${width} px`);
                         const labelsFit = await page.locator('#mobile-panels button:visible .section-button-label').evaluateAll(labels => labels.every(label => label.getBoundingClientRect().width > 0 && label.scrollWidth <= label.clientWidth + 1));
                         assert(labelsFit, `${workspace}: section tab labels fit at ${width} px`);
                     }
@@ -282,6 +286,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#mobile-panels [data-mobile-panel=tablature]').getAttribute('aria-pressed'), 'true');
         await page.locator('[data-mobile-panel=recordings]').click();
         console.log('PASS: labeled mobile section tabs switch panels while the collection picker follows the active panel');
+
+        await page.setViewportSize({ width: 390, height: 500 });
+        await page.locator('[data-mobile-panel=lyrics]').click();
+        await page.waitForFunction(() => {
+            const body = document.querySelector('#lyrics-content');
+            return body.scrollHeight > body.clientHeight + 100;
+        });
+        const sectionsBeforeScroll = await page.locator('#mobile-sections-dock').boundingBox();
+        const lyricsScroll = await page.locator('#lyrics-content').evaluate(body => { body.scrollTop = 180; return body.scrollTop; });
+        const sectionsAfterScroll = await page.locator('#mobile-sections-dock').boundingBox();
+        assert(lyricsScroll > 0 && sectionsAfterScroll.y === sectionsBeforeScroll.y, 'The bottom sections stay fixed while the active content scrolls');
+        await page.locator('[data-mobile-panel=recordings]').click();
 
         await page.setViewportSize({ width: 1200, height: 900 });
         assert.equal(await page.locator('#catalog-search').count(), 0);
