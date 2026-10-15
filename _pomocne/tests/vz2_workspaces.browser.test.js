@@ -164,11 +164,21 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             for (const workspace of ['songs', 'rehearsals', 'history', 'ideas']) {
                 await switchTo(workspace);
                 if (workspace === 'history') await page.locator('.history-table').waitFor();
-                const geometry = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth + 1, height: document.documentElement.scrollHeight > innerHeight + 1, dockHeight: document.querySelector('#mobile-dock').getBoundingClientRect().height }));
+                const geometry = await page.evaluate(() => {
+                    const rect = selector => document.querySelector(selector).getBoundingClientRect();
+                    return { overflow: document.documentElement.scrollWidth > innerWidth + 1,
+                        height: document.documentElement.scrollHeight > innerHeight + 1,
+                        dockHeight: rect('#mobile-dock').height,
+                        topMenuBelowPlayer: rect('#mobile-dock').top >= rect('#player-shell').bottom - 1,
+                        topMenuAboveContent: rect('#mobile-dock').bottom <= rect('.layout').top + 1,
+                        bottomMenuBelowContent: rect('#mobile-sections-dock').top >= rect('#app-shell').bottom - 1 };
+                });
                 assert(!geometry.overflow && !geometry.height, `${workspace}: viewport overflow at ${width}`);
                 if (width < 768) {
+                    assert(geometry.topMenuBelowPlayer && geometry.topMenuAboveContent, `${workspace}: main navigation belongs below the player at ${width} px`);
                     if (workspace === 'songs' || workspace === 'rehearsals') {
                         assert(await page.locator('#mobile-panels').isVisible());
+                        assert(geometry.bottomMenuBelowContent, `${workspace}: section navigation belongs below the content at ${width} px`);
                         const labelsFit = await page.locator('#mobile-panels button:visible .section-button-label').evaluateAll(labels => labels.every(label => label.getBoundingClientRect().width > 0 && label.scrollWidth <= label.clientWidth + 1));
                         assert(labelsFit, `${workspace}: section tab labels fit at ${width} px`);
                     }
@@ -178,12 +188,12 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                         const headerBox = await page.locator(header).boundingBox(), controlsBox = await page.locator(controls).boundingBox();
                         assert(controlsBox.y >= headerBox.y && controlsBox.y + controlsBox.height <= headerBox.y + headerBox.height + 1, `${workspace}: controls fit in one header row`);
                     }
-                    assert(geometry.dockHeight < 80, `${workspace}: mobile dock should contain only main navigation`);
+                    assert(geometry.dockHeight < 80, `${workspace}: main navigation fits below the player`);
                 }
                 if (width === 390 || width === 1440) await shot(`${workspace}-${width}`);
             }
         }
-        console.log('PASS: all four workspaces at 320–1440 px, no document overflow, controls above the character navigation');
+        console.log('PASS: all four workspaces at 320–1440 px, no document overflow, main navigation below the player and section navigation below the content');
 
         for (const width of [320, 390]) {
             await page.setViewportSize({ width, height: 900 });
@@ -253,11 +263,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 return { overflow: document.documentElement.scrollWidth > innerWidth + 1,
                     tabWidth: document.querySelector('#mobile-panels button').getBoundingClientRect().width,
                     headerHeight: header.getBoundingClientRect().height,
-                    tabsAbove: tabs.bottom <= header.getBoundingClientRect().top + 2,
+                    tabsBelow: tabs.top >= header.getBoundingClientRect().bottom - 2,
                     oneRow: Math.abs((picker.top + picker.bottom) / 2 - (actions.top + actions.bottom) / 2) < 6 &&
                         Math.abs((picker.top + picker.bottom) / 2 - (fullscreen.top + fullscreen.bottom) / 2) < 6 };
             });
-            assert(!fit.overflow && fit.tabWidth >= 60 && fit.tabsAbove && fit.headerHeight < 65 && fit.oneRow, `${panel}: section tabs and picker should fit at 320 px`);
+            assert(!fit.overflow && fit.tabWidth >= 60 && fit.tabsBelow && fit.headerHeight < 65 && fit.oneRow, `${panel}: bottom section tabs and picker should fit at 320 px`);
             if (panel === 'tablature') await shot('songs-map-320');
         }
         await page.locator('[data-mobile-panel=recordings]').click();
@@ -267,7 +277,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.deepEqual(await page.locator('#mobile-panels .section-button-label').allTextContents(), ['Nahrávky', 'Text', 'Mapa', 'Diskuse']);
         await page.locator('[data-mobile-panel=tablature]').click();
         assert(await page.locator('#panel-tablature').isVisible());
-        assert.equal(await page.locator('#mobile-panels').evaluate(node => node.parentElement.id), 'collection-header');
+        assert.equal(await page.locator('#mobile-panels').evaluate(node => node.parentElement.id), 'mobile-sections-dock');
         assert.equal(await page.locator('#catalog-picker').evaluate(node => node.closest('.panel').id), 'panel-tablature');
         assert.equal(await page.locator('#mobile-panels [data-mobile-panel=tablature]').getAttribute('aria-pressed'), 'true');
         await page.locator('[data-mobile-panel=recordings]').click();
@@ -324,8 +334,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('history');
         await page.locator('#history-orientation').click(); await page.locator('#history-audio-filter').check();
         await page.locator('#history-filter summary').click();
-        const popup = await page.locator('.history-filter-menu').boundingBox(), header = await page.locator('#history-workspace .workspace-header').boundingBox(), footer = await page.locator('#bottom-nav').boundingBox();
-        assert(popup.y >= header.y + header.height - 1 && popup.y + popup.height < footer.y, `Filter opens below the header and above the main navigation: ${JSON.stringify({popup, header, footer})}`);
+        const popup = await page.locator('.history-filter-menu').boundingBox(), header = await page.locator('#history-workspace .workspace-header').boundingBox(), mainNavigation = await page.locator('#bottom-nav').boundingBox();
+        assert(header.y >= mainNavigation.y + mainNavigation.height - 1 && popup.y >= header.y + header.height - 1 && popup.y + popup.height < 844,
+            `Filter opens below the header within the viewport: ${JSON.stringify({popup, header, mainNavigation})}`);
         assert(popup.x >= 0 && popup.x + popup.width <= 390, 'Filter fits inside the mobile viewport');
         await page.locator('#history-song-filter').selectOption('1');
         await page.locator('#history-options summary').click();

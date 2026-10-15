@@ -172,6 +172,13 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div class="timeline"><output id="looper-time">00:00</output><input id="looper-seek" aria-label="Čas Looperu" type="range" min="0" max="0" step="0.01" value="0"><output id="looper-duration">00:00</output></div>
 <div id="looper-timestamps"></div></section>
 </div></section>
+<div id="mobile-dock">
+<nav id="bottom-nav" aria-label="Pracovní plochy">
+<button id="bn-skladby" data-workspace-target="songs" aria-pressed="true"><img src="meat/ikona_skladby.png" alt="">Skladby</button>
+<button id="bn-zkousky" data-workspace-target="rehearsals" aria-pressed="false"><img src="meat/ikona_nahravky.png" alt="">Zkoušky</button>
+<button id="bn-matice" data-workspace-target="history" aria-pressed="false"><img src="meat/ikona_text.png" alt="">Matice</button>
+<button id="bn-napady" data-workspace-target="ideas" aria-pressed="false"><img src="meat/ikona_napady.png" alt="">Nápady</button>
+</nav></div>
 <div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header"><h2 id="catalog-heading-mobile">Skladby</h2>
 <?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ Nová skladba</button><?php endif;?>
 <button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
@@ -215,14 +222,9 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div id="mt-mixer" hidden><div id="mt-tracks"></div></div>
 <div id="mixer-timestamps"></div>
 </section></main>
-<div id="mobile-dock">
-<nav id="bottom-nav" aria-label="Pracovní plochy">
-<button id="bn-skladby" data-workspace-target="songs" aria-pressed="true"><img src="meat/ikona_skladby.png" alt="">Skladby</button>
-<button id="bn-zkousky" data-workspace-target="rehearsals" aria-pressed="false"><img src="meat/ikona_nahravky.png" alt="">Zkoušky</button>
-<button id="bn-matice" data-workspace-target="history" aria-pressed="false"><img src="meat/ikona_text.png" alt="">Matice</button>
-<button id="bn-napady" data-workspace-target="ideas" aria-pressed="false"><img src="meat/ikona_napady.png" alt="">Nápady</button>
-</nav></div>
+<div id="mobile-sections-dock">
 <nav id="mobile-panels" class="workspace-controls" aria-label="Sekce skladby nebo zkoušky"><button data-mobile-panel="recordings" aria-pressed="true" aria-label="Nahrávky" title="Nahrávky"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-recordings"/></svg><span class="section-button-label">Nahrávky</span></button><button data-mobile-panel="lyrics" aria-pressed="false" aria-label="Text a akordy" title="Text a akordy"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-lyrics"/></svg><span class="section-button-label">Text</span></button><button data-mobile-panel="tablature" aria-pressed="false" aria-label="Mapa skladby" title="Mapa skladby"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-tablature"/></svg><span class="section-button-label">Mapa</span></button><button data-mobile-panel="discussion" aria-pressed="false" aria-label="Diskuse" title="Diskuse"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-discussion"/></svg><span class="section-button-label">Diskuse</span></button></nav>
+</div>
 <dialog id="catalog-dialog" aria-label="Skladby a zkoušky"><div id="catalog-dialog-slot"></div></dialog>
 <?php if($config['canCreate']):?><dialog id="create-collection-dialog" aria-labelledby="create-collection-title"><form id="create-collection"><div class="dialog-header"><h2 id="create-collection-title">Nová skladba</h2><button id="create-collection-cancel" class="modal-close" type="button" aria-label="Zavřít vytvoření skladby nebo zkoušky" title="Zavřít">×</button></div><label>Nový název<input name="title" maxlength="200" required></label><p class="edit-error" role="alert"></p><div class="toolbar"><button>Vytvořit</button></div></form></dialog><?php endif;?>
 
