@@ -27,7 +27,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await page.locator('.layout').isVisible(), true, 'Legacy Mixer URL now opens the shared catalogue');
         assert.equal(await page.locator('#mt-selector').isVisible(), false, 'No separate Mixer catalogue');
         await page.locator('#recording-' + mixId + ' .recording-toggle').click();
-        await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
+        await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít v Mixéru', exact: true }).click();
         await page.waitForFunction(() => { const box = document.getElementById('mixer-panel').getBoundingClientRect(); return box.top >= -1 && box.top < innerHeight; });
         const mixerBox = await page.locator('#mixer-panel').boundingBox();
         assert(mixerBox && mixerBox.y >= -1 && mixerBox.y < 1000, 'Mixer opens inside the shared collection view: ' + JSON.stringify(mixerBox));
@@ -188,7 +188,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         const download = page.waitForEvent('download'); await exportDialog.getByRole('link', { name: 'Stáhnout TXT', exact: true }).click();
         assert.equal((await download).suggestedFilename(), 'nahravka-' + id + '-zapisy.txt');
         await page.locator('#recording-' + mixId + ' .recording-toggle').click();
-        await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
+        await page.locator('#recording-' + mixId).getByRole('button', { name: 'Otevřít v Mixéru', exact: true }).click();
         await page.waitForFunction(rid => window.MultitrackApp?.getState()?.id === String(rid) && window.MultitrackApp.getState().phase === 'ready', mixId);
         const mixerNotes = page.locator('#mixer-timestamps');
         await mixerNotes.locator('.ts-summary').click();

@@ -77,7 +77,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.equal(await card(ids[0]).locator('.recording-body > .files').count(), 0, 'Single file name is shown above the player only');
         assert.deepEqual(await card(ids[2]).locator('.recording-body > .files li').allTextContents(), ['guitar.wav', 'bass.wav']);
         assert.equal(await card(ids[0]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Open action is not detached at the top of the recording card');
-        assert.deepEqual((await actions.locator(':scope > button').allTextContents()).slice(0, 2), ['Uložit offline', 'Otevřít'], 'Offline and open actions remain directly visible');
+        assert.deepEqual((await actions.locator(':scope > button').allTextContents()).slice(0, 2), ['Uložit offline', 'Otevřít v Looperu'], 'Offline and Looper actions remain directly visible');
         let finishDownload;
         const heldDownload = new Promise(resolve => { finishDownload = resolve; });
         await page.route('**/php/ajax/vz2_files.php?**', async route => {
@@ -154,7 +154,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await card(ids[1]).waitFor();
         await card(ids[2]).locator('.recording-toggle').click();
-        await card(ids[2]).locator('.recording-body > .recording-actions').getByRole('button', { name: 'Otevřít Mixér', exact: true }).waitFor();
+        await card(ids[2]).locator('.recording-body > .recording-actions').getByRole('button', { name: 'Otevřít v Mixéru', exact: true }).waitFor();
         await card(ids[2]).locator('.recording-actions').getByRole('button', { name: 'Další', exact: true }).click();
         assert.equal(await page.locator('#recording-actions-' + ids[2]).getByRole('button', { name: 'Úplně smazat', exact: true }).count(), 1, 'Admin can fully delete a multitrack recording');
         await page.locator('#recording-actions-' + ids[2]).getByRole('button', { name: 'Zavřít', exact: true }).click();
@@ -165,10 +165,10 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await card(ids[1]).locator('.recording-toggle').click();
         await page.waitForFunction(id => document.querySelector('#recording-' + id + ' audio').readyState >= 1, ids[1]);
         assert.equal(await card(ids[1]).locator('.recording-actions').count(), 1, 'Single audio retains one shared action list');
-        // Chromium animates native media controls after revealing a hidden audio.
-        await page.waitForTimeout(500);
-        await card(ids[1]).locator('audio').click({ position: { x: 25, y: 27 } });
+        assert.equal(await card(ids[1]).locator('.vz2-audio-transport:visible').count(), 0, 'The player starts collapsed');
+        await card(ids[1]).locator('.recording-actions .vz2-audio-trigger').click();
         await page.waitForFunction(id => !document.querySelector('#recording-' + id + ' audio').paused, ids[1]);
+        assert.equal(await card(ids[1]).locator('.vz2-audio-transport:visible').count(), 1, 'Play expands the custom controls');
         await card(ids[1]).locator('audio').evaluate(a => a.pause());
         await page.screenshot({ path: path.join(temp, 'ui-stage2-mobile-expanded.png') });
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight));

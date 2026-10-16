@@ -23,7 +23,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         const open = async () => {
             const card = page.locator('#recording-' + mix.id);
             if (await card.locator('.recording-toggle').getAttribute('aria-expanded') === 'false') await card.locator('.recording-toggle').click();
-            await card.getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
+            await card.getByRole('button', { name: 'Otevřít v Mixéru', exact: true }).click();
         };
         const ready = () => page.waitForFunction(id => window.MultitrackApp?.getState()?.id === String(id) && window.MultitrackApp.getState().phase === 'ready', mix.id);
         await page.goto(base + 'index.php?v=2&collection_id=' + song.id);
