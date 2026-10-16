@@ -1497,6 +1497,7 @@
     }
 
     function bindEvents() {
+        function stopTimestampLoop() { window.Vz2Timestamps?.stopLoop(); }
         if (dom.mixerToggle) dom.mixerToggle.addEventListener('click', function() {
             var open = dom.mixer.hidden;
             dom.mixer.hidden = !open;
@@ -1504,12 +1505,13 @@
             dom.mixerToggle.textContent = 'Mix';
             dom.mixerToggle.setAttribute('aria-label', open ? 'Sbalit mix' : 'Rozbalit mix');
         });
-        if (dom.restart) dom.restart.addEventListener('click', restartTransport);
-        if (dom.backward) dom.backward.addEventListener('click', function() { seekBy(-5); });
-        if (dom.play) dom.play.addEventListener('click', togglePlayback);
-        if (dom.forward) dom.forward.addEventListener('click', function() { seekBy(5); });
+        if (dom.restart) dom.restart.addEventListener('click', function() { stopTimestampLoop(); restartTransport(); });
+        if (dom.backward) dom.backward.addEventListener('click', function() { stopTimestampLoop(); seekBy(-5); });
+        if (dom.play) dom.play.addEventListener('click', function() { stopTimestampLoop(); togglePlayback(); });
+        if (dom.forward) dom.forward.addEventListener('click', function() { stopTimestampLoop(); seekBy(5); });
         if (dom.seek) {
             dom.seek.addEventListener('pointerdown', beginScrub);
+            dom.seek.addEventListener('input', stopTimestampLoop);
             dom.seek.addEventListener('input', updateScrub);
             dom.seek.addEventListener('change', endScrub);
             dom.seek.addEventListener('blur', endScrub);
