@@ -26,7 +26,13 @@ const links = [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, sourc
     { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 5000, start_body: 'Začátek skladby', end_ms: 10000 },
     { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: null, clip_recording_id: 13, start_ms: null, end_ms: null }];
 const catalog = { ok: true, collections, recordings, recording_links: links, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
-const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 15000, end_ms: 20000, start_body: 'Další pokus', notes: [] }, { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [] }, { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] }], unassigned_intervals: [], unassigned_clips: [] };
+const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [
+    { id: 3, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 15000, end_ms: 20000, start_body: 'Další pokus', notes: [] },
+    { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [], can_edit: true },
+    { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] },
+    { id: 4, song_collection_id: 2, rehearsal_collection_id: 3, song_title: 'Poslední vlak', rehearsal_title: 'Zkouška 8. října', source: recordings[0], clip: recordings[2], clip_recording_id: 13, start_ms: 20000, end_ms: 30000, start_body: 'Připojený výstřižek', notes: [] },
+    { id: 5, song_collection_id: 1, rehearsal_collection_id: 4, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 1. října', source_recording_id: 44, source: { ...recordings[0], id: 44, audio_state: 'deleted', files: [{ ...file(44), url: null }] }, start_ms: 40000, end_ms: 50000, start_body: 'Smazaná nahrávka', notes: [] }
+], unassigned_intervals: [], unassigned_clips: [] };
 const timestampRows = [
     { id: 101, time_ms: 1000, kind: 'song_start', body: 'Začátek výstřižku' },
     { id: 102, time_ms: 2000, kind: 'song_end', paired_timestamp_id: 101, body: 'Konec výstřižku' }
@@ -216,6 +222,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#history-list .history-source-clips').getByText('zkouška.wav').count(), 0, 'source filename is shown once in the group heading');
         assert.equal(await page.locator('#history-list .history-list-row').count(), 3, 'standalone clip remains its own row');
         await page.locator('#history-list .history-list-row').first().click();
+        assert.equal(await page.locator('#history-detail .history-detail-context').textContent(), 'zkouška: Zkouška 8. října × skladba: Nová skladba');
+        assert.equal(await page.locator('#history-detail-title').textContent(), 'Začátek skladby');
+        assert.equal(await page.locator('#history-detail .history-detail-card').count(), 2, 'source and clip use separate cards');
+        assert.equal(await page.locator('#history-detail .history-detail-card').first().getByText('Úsek 00:05–00:10').count(), 1);
+        assert.equal(await page.locator('#history-detail .history-add-clip').isVisible(), true);
+        assert.equal(await page.locator('#history-detail').getByText('Úpravy').count(), 0);
+        assert.equal(await page.locator('#history-detail .history-detail-body > .danger').isVisible(), true);
+        await page.locator('#history-detail .history-add-clip').click();
+        assert.equal(await page.locator('#history-detail .history-add-clip').isVisible(), false);
+        assert.equal(await page.locator('#history-detail .history-detail-card').last().isVisible(), true);
+        assert.equal(await page.locator('#history-detail').getByLabel('Připojený výstřižek').count(), 1);
+        assert.equal(await page.locator('#history-detail').getByRole('button', { name: 'Připojit výstřižek' }).isDisabled(), true);
         assert.equal(await page.locator('#history-detail .vz2-audio-trigger, #history-detail .vz2-audio-collapse').count(), 0, 'Matrix detail has no separate play or collapse button');
         assert.equal(await page.locator('#history-detail .vz2-audio-transport:visible').count(), 1, 'Matrix detail shows its player immediately');
         await page.locator('#history-detail .vz2-audio-play-pause').click();
@@ -225,6 +243,20 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const matrixPlayerFits = await page.locator('#history-detail .vz2-audio-transport').evaluate(element => element.scrollWidth <= element.clientWidth);
         assert(matrixPlayerFits, 'Matrix player fits without horizontal scrolling at 320 px');
         await page.setViewportSize({ width: 390, height: 844 });
+        await page.locator('#history-detail [data-history-close]').click();
+        await page.locator('#history-list [data-history-close]').click();
+        await page.locator('td[data-song-id="2"][data-rehearsal-id="3"] .history-count').click();
+        await page.locator('#history-list .history-list-row').click();
+        assert.equal(await page.locator('#history-detail .history-detail-card').count(), 2, 'attached clip has its own card');
+        assert.equal(await page.locator('#history-detail .vz2-audio-transport:visible').count(), 1, 'closed clip card does not show a second player');
+        await page.locator('#history-detail .history-detail-card').last().locator('summary').click();
+        assert.equal(await page.locator('#history-detail .vz2-audio-transport:visible').count(), 2, 'opening the clip reveals its player');
+        await page.locator('#history-detail [data-history-close]').click();
+        await page.locator('#history-list [data-history-close]').click();
+        await page.locator('td[data-song-id="1"][data-rehearsal-id="4"] .history-count').click();
+        await page.locator('#history-list .history-list-row').click();
+        assert.equal(await page.locator('#history-detail .history-detail-card').first().locator('summary').textContent(), 'Původní nahrávka (smazána)');
+        assert.equal(await page.locator('#history-detail audio').count(), 0, 'deleted recording has no player');
         await page.locator('#history-detail [data-history-close]').click();
         await page.locator('#history-list [data-history-close]').click();
         console.log('PASS: matrix detail shows the shared playback row without an extra play button');

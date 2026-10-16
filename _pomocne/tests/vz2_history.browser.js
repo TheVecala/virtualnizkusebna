@@ -136,7 +136,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await openAttempt('Začátek pokusu');
         await detail.waitFor();
         assert.equal(await page.locator('#history-detail-title').textContent(), 'Začátek pokusu');
-        assert.equal(await detail.locator('.history-detail-context').textContent(), 'skladba: Historie – skladba × zkouška: Historie – zkouška');
+        assert.equal(await detail.locator('.history-detail-context').textContent(), 'zkouška: Historie – zkouška × skladba: Historie – skladba');
         assert.equal(await detail.locator('.history-start').count(), 0);
         assert.equal(await detail.locator('#history-detail-back').count(), 0);
         assert.equal(await detail.locator('audio').count(), 1);
@@ -151,7 +151,9 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await detail.getByText('Poznámky (2)', { exact: true }).click();
         assert((await detail.textContent()).includes('Poznámka uvnitř'));
         assert(!(await detail.textContent()).includes('Poznámka za úsekem'));
-        await detail.getByText('Úpravy', { exact: true }).click();
+        await detail.getByRole('button', { name: '+ Přidat výstřižek', exact: true }).click();
+        assert.equal(await detail.getByText('Úpravy', { exact: true }).count(), 0);
+        assert.equal(await detail.getByRole('button', { name: 'Odebrat pokus z historie', exact: true }).isVisible(), true);
         assert.equal(await detail.getByRole('button', { name: 'Připojit výstřižek', exact: true }).isDisabled(), true);
         await detail.getByLabel('Připojený výstřižek', { exact: true }).selectOption(String(clip));
         await detail.getByRole('button', { name: 'Připojit výstřižek', exact: true }).click();
@@ -159,7 +161,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await list.waitFor();
         await openAttempt('vystrizek.wav');
         assert.equal(await detail.locator('audio').count(), 2);
-        await detail.getByText('Úpravy', { exact: true }).click();
+        await detail.locator('.history-detail-card').last().locator('summary').click();
         assert.equal(await detail.getByRole('button', { name: 'Změnit připojený výstřižek', exact: true }).isDisabled(), true);
         await detail.getByLabel('Připojený výstřižek', { exact: true }).selectOption('');
         assert.equal(await detail.getByRole('button', { name: 'Odpojit výstřižek', exact: true }).isEnabled(), true);
@@ -207,7 +209,6 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await openAttempt('samostatny-pokus.wav');
         assert.equal(await detail.locator('audio').count(), 1);
         assert.equal(await page.locator('#history-detail-title').textContent(), 'samostatny-pokus.wav', 'standalone clip uses its filename as the heading');
-        await detail.getByText('Úpravy', { exact: true }).click();
         await detail.getByRole('button', { name: 'Odebrat pokus z historie', exact: true }).click();
         await detail.waitFor({ state: 'hidden' });
         await list.waitFor();
@@ -244,6 +245,8 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await guestPage.locator('#history-list-add').isVisible(), false);
         await guestPage.locator('#history-list .history-list-row').filter({ hasText: 'vystrizek.wav' }).click();
         assert.equal(await guestPage.locator('#history-detail audio').count(), 2);
+        assert.equal(await guestPage.locator('#history-detail .vz2-audio-transport:visible').count(), 1);
+        await guestPage.locator('#history-detail .history-detail-card').last().locator('summary').click();
         assert.equal(await guestPage.locator('#history-detail .vz2-audio-transport:visible').count(), 2);
         assert.equal(await guestPage.locator('#history-detail-title').textContent(), 'Začátek pokusu');
         assert.equal(await guestPage.locator('#history-detail select').count(), 0);
