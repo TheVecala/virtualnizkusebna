@@ -26,7 +26,7 @@ const links = [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, sourc
     { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 5000, start_body: 'Začátek skladby', end_ms: 10000 },
     { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: null, clip_recording_id: 13, start_ms: null, end_ms: null }];
 const catalog = { ok: true, collections, recordings, recording_links: links, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
-const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source: recordings[0], start_ms: 5000, end_ms: 10000 }, { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] }], unassigned_intervals: [], unassigned_clips: [] };
+const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [] }, { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] }], unassigned_intervals: [], unassigned_clips: [] };
 function gate() { let release; const promise = new Promise(resolve => release = resolve); return { promise, release }; }
 (async () => {
     const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || chromium.executablePath() });
@@ -198,6 +198,23 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             }
         }
         console.log('PASS: all four workspaces at 320–1440 px, no document overflow, main navigation below the player and section navigation below the content');
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        await switchTo('history');
+        await page.locator('td[data-song-id="1"][data-rehearsal-id="3"] .history-count').click();
+        await page.locator('#history-list .history-list-row').first().click();
+        assert.equal(await page.locator('#history-detail .vz2-audio-trigger, #history-detail .vz2-audio-collapse').count(), 0, 'Matrix detail has no separate play or collapse button');
+        assert.equal(await page.locator('#history-detail .vz2-audio-transport:visible').count(), 1, 'Matrix detail shows its player immediately');
+        await page.locator('#history-detail .vz2-audio-play-pause').click();
+        await page.waitForFunction(() => !document.querySelector('#history-detail audio').paused);
+        await shot('matrix-player-390');
+        await page.setViewportSize({ width: 320, height: 844 });
+        const matrixPlayerFits = await page.locator('#history-detail .vz2-audio-transport').evaluate(element => element.scrollWidth <= element.clientWidth);
+        assert(matrixPlayerFits, 'Matrix player fits without horizontal scrolling at 320 px');
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.locator('#history-detail [data-history-close]').click();
+        await page.locator('#history-list [data-history-close]').click();
+        console.log('PASS: matrix detail shows the shared playback row without an extra play button');
 
         for (const width of [320, 390]) {
             await page.setViewportSize({ width, height: 900 });
@@ -532,11 +549,12 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             const audio = document.querySelector('.linked-recordings audio');
             return audio && audio.readyState >= 1 && audio.currentTime >= 4.9;
         });
-        assert.equal(await rehearsalInterval.locator('.vz2-audio-transport:visible').count(), 0, 'A linked excerpt also starts compact');
-        await rehearsalInterval.locator('.vz2-audio-trigger').click();
+        assert.equal(await rehearsalInterval.locator('.vz2-audio-trigger, .vz2-audio-collapse').count(), 0, 'The linked excerpt has no separate play or collapse button');
+        assert.equal(await rehearsalInterval.locator('.vz2-audio-transport:visible').count(), 1, 'The linked excerpt shows its controls directly');
+        await rehearsalInterval.locator('.vz2-audio-play-pause').click();
         await page.waitForFunction(() => !document.querySelector('.linked-recordings audio').paused);
         assert.equal(await rehearsalInterval.locator('.vz2-audio-transport input').getAttribute('max'), '5', 'The seek range covers only the excerpt');
-        await rehearsalInterval.locator('.vz2-audio-trigger').click();
+        await rehearsalInterval.locator('.vz2-audio-play-pause').click();
         await rehearsalInterval.locator('audio').evaluate(audio => { audio.currentTime = 11; });
         await page.waitForFunction(() => document.querySelector('.linked-recordings audio').currentTime <= 10);
         await rehearsalInterval.locator('audio').evaluate(async audio => { audio.currentTime = 9.8; await audio.play(); });

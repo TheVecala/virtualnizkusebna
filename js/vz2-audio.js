@@ -18,14 +18,16 @@
         const start = Number(options.start) || 0;
         const end = Number(options.end);
         const actionRow = options.actionRow;
-        const root = document.createElement('div'); root.className = 'vz2-inline-player'; root.hidden = !!options.actionRow;
+        const inlineControls = !!options.inlineControls;
+        const root = document.createElement('div'); root.className = 'vz2-inline-player'; root.hidden = !!actionRow;
+        if (inlineControls) root.classList.add('has-visible-controls');
         const trigger = document.createElement('button'); trigger.type = 'button'; trigger.className = 'vz2-audio-trigger';
         const icon = document.createElement('span'); icon.className = 'vz2-audio-icon'; icon.setAttribute('aria-hidden', 'true');
         const label = document.createElement('span'); label.textContent = 'Přehrát';
         const hint = document.createElement('small'); hint.className = 'vz2-audio-hint';
         trigger.append(icon, label, hint);
         trigger.setAttribute('aria-label', options.label || 'Přehrát nahrávku');
-        const transport = document.createElement('div'); transport.className = 'vz2-audio-transport'; transport.hidden = true;
+        const transport = document.createElement('div'); transport.className = 'vz2-audio-transport'; transport.hidden = !inlineControls;
         const playPause = document.createElement('button'); playPause.type = 'button'; playPause.className = 'vz2-audio-play-pause';
         const current = document.createElement('output'); current.textContent = '0:00';
         const seek = document.createElement('input'); seek.type = 'range'; seek.min = '0'; seek.max = '1'; seek.step = '0.1'; seek.value = '0';
@@ -34,16 +36,16 @@
         const mute = document.createElement('button'); mute.type = 'button'; mute.className = 'vz2-audio-mute';
         const collapse = document.createElement('button'); collapse.type = 'button'; collapse.className = 'vz2-audio-collapse';
         collapse.textContent = '⌃'; collapse.setAttribute('aria-label', 'Sbalit přehrávač'); collapse.title = 'Sbalit přehrávač';
-        if (actionRow) transport.append(playPause);
+        if (actionRow || inlineControls) transport.append(playPause);
         transport.append(current, seek, duration, mute);
-        if (!actionRow) transport.append(collapse);
+        if (!actionRow && !inlineControls) transport.append(collapse);
         root.append(audio, transport);
         if (actionRow) actionRow.append(trigger);
-        else root.prepend(trigger);
+        else if (!inlineControls) root.prepend(trigger);
 
         function setOpen(open) {
             root.hidden = !open && !!actionRow;
-            transport.hidden = !open;
+            transport.hidden = !open && !inlineControls;
             actionRow?.classList.toggle('is-player-open', open);
             refresh();
         }
