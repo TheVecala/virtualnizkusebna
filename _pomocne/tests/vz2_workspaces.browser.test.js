@@ -28,7 +28,7 @@ const links = [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, sourc
 const catalog = { ok: true, collections, recordings, recording_links: links, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
 const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [
     { id: 3, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 15000, end_ms: 20000, start_body: 'Další pokus', notes: [] },
-    { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [], can_edit: true },
+    { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [{ time_ms: 6000, body: 'Poznámka' }], can_edit: true },
     { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] },
     { id: 4, song_collection_id: 2, rehearsal_collection_id: 3, song_title: 'Poslední vlak', rehearsal_title: 'Zkouška 8. října', source: recordings[0], clip: recordings[2], clip_recording_id: 13, start_ms: 20000, end_ms: 30000, start_body: 'Připojený výstřižek', notes: [] },
     { id: 5, song_collection_id: 1, rehearsal_collection_id: 4, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 1. října', source_recording_id: 44, source: { ...recordings[0], id: 44, audio_state: 'deleted', files: [{ ...file(44), url: null }] }, start_ms: 40000, end_ms: 50000, start_body: 'Smazaná nahrávka', notes: [] }
@@ -221,11 +221,25 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.deepEqual(await page.locator('#history-list .history-source-clips .history-list-text strong').allTextContents(), ['Začátek skladby', 'Další pokus'], 'excerpts are ordered by start time and use start timestamp titles');
         assert.equal(await page.locator('#history-list .history-source-clips').getByText('zkouška.wav').count(), 0, 'source filename is shown once in the group heading');
         assert.equal(await page.locator('#history-list .history-list-row').count(), 3, 'standalone clip remains its own row');
+        assert.deepEqual(await page.locator('#history-list .history-list-counts').allTextContents(), ['R:1 V:0 P:1', 'R:1 V:0 P:0', 'R:0 V:1 P:0']);
+        assert(await page.locator('#history-list').evaluate(list => list.scrollWidth <= list.clientWidth + 1), 'counts fit in the list on mobile');
+        await shot('matrix-list-390');
         await page.locator('#history-list .history-list-row').first().click();
         assert.equal(await page.locator('#history-detail .history-detail-context').textContent(), 'zkouška: Zkouška 8. října × skladba: Nová skladba');
         assert.equal(await page.locator('#history-detail-title').textContent(), 'Začátek skladby');
         assert.equal(await page.locator('#history-detail .history-detail-card').count(), 2, 'source and clip use separate cards');
-        assert.equal(await page.locator('#history-detail .history-detail-card').first().getByText('Úsek 00:05–00:10').count(), 1);
+        const sourceCard = page.locator('#history-detail .history-detail-card').first();
+        assert.equal(await sourceCard.locator('summary').textContent(), 'Původní nahrávka ze zkoušky');
+        assert.equal(await sourceCard.getAttribute('open'), '', 'source card is expanded by default');
+        const jump = sourceCard.getByRole('button', { name: 'Přejít na začátek úseku 00:05' });
+        assert.equal(await jump.textContent(), 'Úsek 00:05–00:10');
+        const lineBounds = await sourceCard.evaluate(card => ({ name: card.querySelector('.history-card-filename').getBoundingClientRect().toJSON(), jump: card.querySelector('.history-range-jump').getBoundingClientRect().toJSON() }));
+        assert(Math.abs((lineBounds.name.top + lineBounds.name.bottom) / 2 - (lineBounds.jump.top + lineBounds.jump.bottom) / 2) < 8, `source filename and jump link share one row on mobile: ${JSON.stringify(lineBounds)}`);
+        await sourceCard.locator('audio').evaluate(audio => { audio.load(); });
+        await page.waitForFunction(() => document.querySelector('#history-detail audio').readyState >= 1);
+        await sourceCard.locator('audio').evaluate(audio => { audio.currentTime = 17; });
+        await jump.click();
+        await page.waitForFunction(() => Math.abs(document.querySelector('#history-detail audio').currentTime - 5) < .1);
         assert.equal(await page.locator('#history-detail .history-add-clip').isVisible(), true);
         assert.equal(await page.locator('#history-detail').getByText('Úpravy').count(), 0);
         assert.equal(await page.locator('#history-detail .history-detail-body > .danger').isVisible(), true);
@@ -246,6 +260,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-detail [data-history-close]').click();
         await page.locator('#history-list [data-history-close]').click();
         await page.locator('td[data-song-id="2"][data-rehearsal-id="3"] .history-count').click();
+        assert.equal(await page.locator('#history-list .history-list-counts').textContent(), 'R:1 V:1 P:0');
         await page.locator('#history-list .history-list-row').click();
         assert.equal(await page.locator('#history-detail .history-detail-card').count(), 2, 'attached clip has its own card');
         assert.equal(await page.locator('#history-detail .vz2-audio-transport:visible').count(), 1, 'closed clip card does not show a second player');
@@ -255,7 +270,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-list [data-history-close]').click();
         await page.locator('td[data-song-id="1"][data-rehearsal-id="4"] .history-count').click();
         await page.locator('#history-list .history-list-row').click();
-        assert.equal(await page.locator('#history-detail .history-detail-card').first().locator('summary').textContent(), 'Původní nahrávka (smazána)');
+        assert.equal(await page.locator('#history-detail .history-detail-card').first().locator('summary').textContent(), 'Původní nahrávka ze zkoušky (smazána)');
         assert.equal(await page.locator('#history-detail audio').count(), 0, 'deleted recording has no player');
         await page.locator('#history-detail [data-history-close]').click();
         await page.locator('#history-list [data-history-close]').click();

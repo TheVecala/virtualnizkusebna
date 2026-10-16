@@ -51,6 +51,9 @@ function renderList(){
  });
  function appendPlay(p,target,grouped){
   const li=n('li'),button=n('button',undefined,'history-list-row'),icon=n('i'),text=n('span',undefined,'history-list-text');
+  const sourceCount=Number(!!p.source),clipCount=Number(!!p.clip),noteCount=p.notes?.length??0;
+  const counts=n('span',`R:${sourceCount} V:${clipCount} P:${noteCount}`,'history-list-counts');
+  counts.setAttribute('aria-label',`Původní nahrávka: ${sourceCount}, výstřižek: ${clipCount}, poznámky: ${noteCount}`);
   const start=p.start_body?.trim(),name=grouped?(start && start!=='↑' ? start : 'Začátek'):start && start!=='↑' ? start : title(p);
   const description=[];
   if(!grouped && p.clip)description.push('Výstřižek: '+recordingName(p.clip));
@@ -59,7 +62,7 @@ function renderList(){
   icon.className='ti '+(playable(p)?'ti-file-music':'ti-volume-off');icon.setAttribute('aria-hidden','true');
   text.append(n('strong',name),n('small',description.join(' · ')));
   button.type='button';button.dataset.playId=p.id;button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','history-detail');
-  button.append(icon,text);button.onclick=()=>{$('history-list').close();detail(p);};li.append(button);target.append(li);
+  button.append(icon,text,counts);button.onclick=()=>{$('history-list').close();detail(p);};li.append(button);target.append(li);
  }
  const shown=new Set();
  plays.forEach(p=>{
@@ -114,12 +117,22 @@ function detail(p){
  body.replaceChildren();
  if(p.source_recording_id||p.source){
   const deleted=!p.source||p.source.audio_state==='deleted',contents=[];
-  if(p.source)contents.push(n('strong',recordingName(p.source),'history-card-filename'));
-  else contents.push(n('p','Původní nahrávka už není dostupná.','history-card-unavailable'));
-  if(p.start_ms!=null&&p.end_ms!=null)contents.push(n('small','Úsek '+clock(p.start_ms)+'–'+clock(p.end_ms),'history-card-range'));
-  const player=audioButton(p.source,'Původní nahrávka',p.start_ms);
+  const player=audioButton(p.source,'Původní nahrávka ze zkoušky',p.start_ms);
+  if(p.source){
+   const line=n('div',undefined,'history-source-line');line.append(n('strong',recordingName(p.source),'history-card-filename'));
+   if(p.start_ms!=null&&p.end_ms!=null){
+    const range='Úsek '+clock(p.start_ms)+'–'+clock(p.end_ms);
+    if(player){
+     const jump=n('button',range,'history-card-range history-range-jump');jump.type='button';jump.title='Přejít na začátek úseku';
+     jump.setAttribute('aria-label','Přejít na začátek úseku '+clock(p.start_ms));
+     jump.onclick=()=>{window.Vz2Timestamps?.stopLoop();const audio=player.querySelector('audio'),time=p.start_ms/1000;if(audio.readyState>=1)audio.currentTime=time;else{audio.addEventListener('loadedmetadata',()=>{audio.currentTime=time;},{once:true});audio.load();}};
+     line.append(jump);
+    }else line.append(n('small',range,'history-card-range'));
+   }
+   contents.push(line);
+  }else contents.push(n('p','Původní nahrávka už není dostupná.','history-card-unavailable'));
   if(player)contents.push(player);
-  body.append(historyCard('Původní nahrávka'+(deleted?' (smazána)':''),contents,true));
+  body.append(historyCard('Původní nahrávka ze zkoušky'+(deleted?' (smazána)':''),contents,true));
  }
  const clipContents=[];
  if(p.clip){

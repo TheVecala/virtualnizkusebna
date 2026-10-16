@@ -638,6 +638,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 .history-list-text{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere;white-space:normal}
 .history-list-text strong{font-size:13px}
 .history-list-text small{font-size:11px;color:var(--vz-muted)}
+.history-list-counts{flex:0 0 auto;margin-left:auto;align-self:center;color:var(--vz-muted);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .history-source-group{padding:10px 0 2px}
 .history-source-title{margin:0 4px 4px;font-size:14px;line-height:1.35;overflow-wrap:anywhere}
 .history-source-clips{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--vz-primary)}
@@ -668,6 +669,11 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 #history-detail .history-detail-card>*:not(summary){margin-left:12px;margin-right:12px}
 .history-card-filename{display:block;margin-top:10px;overflow-wrap:anywhere}
 .history-card-range{display:block;margin-top:2px;color:var(--vz-muted)}
+.history-source-line{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:2px 10px;margin-top:10px}
+.history-source-line .history-card-filename{flex:1 1 auto;min-width:0;margin:0}
+.history-source-line .history-card-range{flex:0 0 auto;margin:0}
+.history-range-jump{padding:2px 4px;border-color:transparent;background:transparent;color:var(--vz-primary-hover);font-size:12px;text-decoration:underline;text-underline-offset:2px}
+.history-range-jump:hover{background:var(--vz-primary-soft)}
 .history-card-audio{margin-top:10px;margin-bottom:10px}
 .history-card-unavailable{margin-top:10px}
 #history-detail .history-detail-card>label{display:block;margin-top:10px}
