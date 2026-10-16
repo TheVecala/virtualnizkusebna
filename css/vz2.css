@@ -638,6 +638,10 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 .history-list-text{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere;white-space:normal}
 .history-list-text strong{font-size:13px}
 .history-list-text small{font-size:11px;color:var(--vz-muted)}
+.history-source-group{padding:10px 0 2px}
+.history-source-title{margin:0 4px 4px;font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.history-source-clips{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--vz-primary)}
+.history-source-clips li:last-child{border-bottom:0}
 .history-list-footer{margin-top:12px}
 .history-list-footer button{max-width:100%;white-space:normal}
 .history-list-empty{padding:12px 0;color:var(--vz-muted);font-size:12px}

@@ -41,18 +41,36 @@ function renderList(){
  const {song,rehearsal}=listCell,items=$('history-list').querySelector('.history-attempts'),plays=cellPlays(song,rehearsal);
  $('history-list-title').textContent=contextTitle(song.title,rehearsal.title);
  items.replaceChildren();
+ const groups=new Map();
  plays.forEach(p=>{
+  if(p.source){
+   const key=p.source_recording_id||p.source.id;
+   if(!groups.has(key))groups.set(key,{source:p.source,plays:[]});
+   groups.get(key).plays.push(p);
+  }
+ });
+ function appendPlay(p,target,grouped){
   const li=n('li'),button=n('button',undefined,'history-list-row'),icon=n('i'),text=n('span',undefined,'history-list-text');
-  const start=p.start_body?.trim(),name=start && start!=='↑' ? start : title(p);
+  const start=p.start_body?.trim(),name=grouped?(start && start!=='↑' ? start : 'Začátek'):start && start!=='↑' ? start : title(p);
   const description=[];
-  if(p.source)description.push('Nahrávka: '+recordingName(p.source));
-  if(p.clip)description.push('Výstřižek: '+recordingName(p.clip));
-  if(p.start_ms!==null)description.push(clock(p.start_ms)+'–'+clock(p.end_ms));
+  if(!grouped && p.clip)description.push('Výstřižek: '+recordingName(p.clip));
+  if(p.start_ms!=null)description.push('Výstřižek '+clock(p.start_ms)+'–'+clock(p.end_ms));
   if(!playable(p))description.push('Audio není dostupné');
   icon.className='ti '+(playable(p)?'ti-file-music':'ti-volume-off');icon.setAttribute('aria-hidden','true');
   text.append(n('strong',name),n('small',description.join(' · ')));
   button.type='button';button.dataset.playId=p.id;button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','history-detail');
-  button.append(icon,text);button.onclick=()=>{$('history-list').close();detail(p);};li.append(button);items.append(li);
+  button.append(icon,text);button.onclick=()=>{$('history-list').close();detail(p);};li.append(button);target.append(li);
+ }
+ const shown=new Set();
+ plays.forEach(p=>{
+  if(!p.source){appendPlay(p,items,false);return;}
+  const key=p.source_recording_id||p.source.id;
+  if(shown.has(key))return;
+  shown.add(key);
+  const group=groups.get(key),li=n('li',undefined,'history-source-group'),heading=n('h3',recordingName(group.source),'history-source-title'),clips=n('ul',undefined,'history-source-clips');
+  group.plays.sort((a,b)=>(a.start_ms??Infinity)-(b.start_ms??Infinity)||Number(a.id)-Number(b.id));
+  group.plays.forEach(clip=>appendPlay(clip,clips,true));
+  li.append(heading,clips);items.append(li);
  });
  if(!plays.length)items.append(n('li','V této buňce nejsou žádné pokusy odpovídající filtrům.','history-list-empty'));
  $('history-list-add').hidden=!data.can_edit;
