@@ -225,7 +225,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#history-detail .history-detail-context').textContent(), 'zkouška: Zkouška 8. října × skladba: Nová skladba');
         assert.equal(await page.locator('#history-detail-title').textContent(), 'Začátek skladby');
         assert.equal(await page.locator('#history-detail .history-detail-card').count(), 2, 'source and clip use separate cards');
-        assert.equal(await page.locator('#history-detail .history-detail-card').first().getByText('Úsek 00:05–00:10').count(), 1);
+        const sourceCard = page.locator('#history-detail .history-detail-card').first();
+        assert.equal(await sourceCard.locator('summary').textContent(), 'Původní nahrávka ze zkoušky');
+        assert.equal(await sourceCard.getAttribute('open'), '', 'source card is expanded by default');
+        const jump = sourceCard.getByRole('button', { name: 'Přejít na začátek úseku 00:05' });
+        assert.equal(await jump.textContent(), 'Úsek 00:05–00:10');
+        const lineBounds = await sourceCard.evaluate(card => ({ name: card.querySelector('.history-card-filename').getBoundingClientRect().toJSON(), jump: card.querySelector('.history-range-jump').getBoundingClientRect().toJSON() }));
+        assert(Math.abs((lineBounds.name.top + lineBounds.name.bottom) / 2 - (lineBounds.jump.top + lineBounds.jump.bottom) / 2) < 8, `source filename and jump link share one row on mobile: ${JSON.stringify(lineBounds)}`);
+        await sourceCard.locator('audio').evaluate(audio => { audio.load(); });
+        await page.waitForFunction(() => document.querySelector('#history-detail audio').readyState >= 1);
+        await sourceCard.locator('audio').evaluate(audio => { audio.currentTime = 17; });
+        await jump.click();
+        await page.waitForFunction(() => Math.abs(document.querySelector('#history-detail audio').currentTime - 5) < .1);
         assert.equal(await page.locator('#history-detail .history-add-clip').isVisible(), true);
         assert.equal(await page.locator('#history-detail').getByText('Úpravy').count(), 0);
         assert.equal(await page.locator('#history-detail .history-detail-body > .danger').isVisible(), true);
@@ -255,7 +266,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-list [data-history-close]').click();
         await page.locator('td[data-song-id="1"][data-rehearsal-id="4"] .history-count').click();
         await page.locator('#history-list .history-list-row').click();
-        assert.equal(await page.locator('#history-detail .history-detail-card').first().locator('summary').textContent(), 'Původní nahrávka (smazána)');
+        assert.equal(await page.locator('#history-detail .history-detail-card').first().locator('summary').textContent(), 'Původní nahrávka ze zkoušky (smazána)');
         assert.equal(await page.locator('#history-detail audio').count(), 0, 'deleted recording has no player');
         await page.locator('#history-detail [data-history-close]').click();
         await page.locator('#history-list [data-history-close]').click();
