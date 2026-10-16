@@ -350,6 +350,7 @@
     }, true);
     $('player-title').onclick = () => document.dispatchEvent(new Event('vz2:player-source'));
     $('player-play').onclick = async () => {
+        window.Vz2Timestamps?.stopLoop();
         try { if (mode === 'looper') { if (looper.audio.paused) await looper.audio.play(); else looper.audio.pause(); } else if (mode === 'mixer') { if (window.MultitrackApp.getState()?.playing) window.MultitrackApp.pause(); else { document.querySelectorAll('#content audio').forEach(a => a.pause()); await window.MultitrackApp.play(); } } update(); }
         catch (e) { error(e.message); }
     };

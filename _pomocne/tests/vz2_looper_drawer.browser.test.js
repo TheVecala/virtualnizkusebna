@@ -51,7 +51,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 await actions.getByRole('button', { name: 'Přidat značku', exact: true }).click();
                 assert(await page.locator('.vz2-timestamp-editor').isVisible());
                 assert.equal(await page.locator('.vz2-timestamp-editor').evaluate(e => e.matches(':modal')), false);
-                assert.equal(await page.locator('.vz2-timestamp-editor').evaluate(e => e.parentElement.id), 'looper-panel');
+                assert.equal(await page.locator('.vz2-timestamp-editor').evaluate(e => e.parentElement.tagName), 'BODY');
                 assert.equal(await page.evaluate(() => document.activeElement?.matches('input[name=body],input[name=time]')), false);
                 await page.locator('#looper-play').click();
                 if (process.env.LOOPER_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.LOOPER_SCREENSHOT_DIR, `looper-add-${width}.png`) });
@@ -110,7 +110,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 });
                 await page.waitForFunction(() => window.notes.list);
                 assert.equal(await editor.locator('[name=body]').inputValue(), 'Rozepsaný text', 'draft survives a player refresh');
-                assert.equal(await editor.evaluate(e => e.parentElement.id), 'looper-panel');
+                assert.equal(await editor.evaluate(e => e.parentElement.tagName), 'BODY');
                 await editor.getByRole('button', { name: 'Přidat poznámku: palec nahoru' }).click();
                 assert.equal(await editor.locator('[name=body]').inputValue(), 'Rozepsaný text');
                 await editor.getByRole('button', { name: 'Poznámka', exact: true }).click();

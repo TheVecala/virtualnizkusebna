@@ -27,6 +27,11 @@ const links = [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, sourc
     { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: null, clip_recording_id: 13, start_ms: null, end_ms: null }];
 const catalog = { ok: true, collections, recordings, recording_links: links, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
 const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [] }, { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] }], unassigned_intervals: [], unassigned_clips: [] };
+const timestampRows = [
+    { id: 101, time_ms: 1000, kind: 'song_start', body: 'Začátek výstřižku' },
+    { id: 102, time_ms: 2000, kind: 'song_end', paired_timestamp_id: 101, body: 'Konec výstřižku' }
+].map(row => ({ author: 'Petr', editor: 'Petr', created_by: 1, updated_by: 1, revision: 1,
+    created_at: '2026-10-16 10:00:00', updated_at: '2026-10-16 10:00:00', can_edit: false, can_delete: false, ...row }));
 function gate() { let release; const promise = new Promise(resolve => release = resolve); return { promise, release }; }
 (async () => {
     const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || chromium.executablePath() });
@@ -101,7 +106,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             return json({ ok: true, can_create: true, thread: { id: 9, global_key: query.scope === 'ideas' ? 'ideas' : null, title: 'Diskuse' }, posts: [], next_before: null });
         }
         if (url.pathname === '/php/ajax/vz2_history.php') return json(matrix);
-        if (url.pathname === '/php/ajax/vz2_timestamps.php') return json({ ok: true, recording_id: Number(url.searchParams.get('recording_id')), entries: [], duration_ms: 180000, timestamps_revision: 1, can_create: true, source_filename: 'zkouška.wav' });
+        if (url.pathname === '/php/ajax/vz2_timestamps.php') {
+            const recordingId = Number(url.searchParams.get('recording_id'));
+            return json({ ok: true, recording_id: recordingId, entries: [11, 12].includes(recordingId) ? timestampRows : [], duration_ms: 180000, timestamps_revision: 1, can_create: true, source_filename: 'zkouška.wav' });
+        }
         if (url.pathname === '/php/ajax/vz2_peaks.php') return json({ ok: true, peaks: [0.1, 0.6, 0.2, 0.8, 0.1], duration_ms: 180000 });
         return route.fulfill({ status: 204, body: '' });
     });
@@ -455,6 +463,19 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#recording-11 .vz2-audio-trigger').click();
         assert.equal(await page.locator('#recording-11 .vz2-audio-transport:visible').count(), 0, 'The player can be collapsed manually');
         assert(await page.locator('#recording-11 audio').evaluate(audio => audio.paused), 'Closing the player pauses its audio');
+        await page.locator('#recording-11 .vz2-timestamps > .ts-summary').click();
+        await page.locator('#recording-11 .ts-song_start').getByRole('button', { name: 'Smyčka' }).click();
+        await page.waitForFunction(() => !document.querySelector('#recording-11 audio').paused);
+        await page.locator('#recording-11 audio').evaluate(audio => { audio.currentTime = 2.1; });
+        await page.waitForFunction(() => {
+            const audio = document.querySelector('#recording-11 audio');
+            return !audio.paused && audio.currentTime >= 1 && audio.currentTime < 2;
+        });
+        await page.locator('#recording-11 .vz2-audio-trigger').click();
+        await page.locator('#recording-11 audio').evaluate(audio => { audio.currentTime = 2.1; });
+        await page.waitForTimeout(150);
+        assert(await page.locator('#recording-11 audio').evaluate(audio => audio.paused), 'Closing the player stops the timestamp loop');
+        assert.equal(await page.locator('#recording-11 .vz2-audio-transport:visible').count(), 0, 'The timestamp loop does not reopen a closed player');
         await shot('recording-expanded-390');
         await page.locator('#recording-11 .recording-actions').getByRole('button', { name: 'Další' }).click();
         assert.equal(await page.locator('#recording-actions-11 .recording-action-order, #recording-actions-11 .recording-action-edit').count(), 0, 'The actions dialog has no edit or ordering section');
@@ -467,6 +488,14 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         if (await page.locator('#recording-actions-11').isVisible()) await page.locator('#recording-actions-11 .modal-close').click();
         await page.locator('#recording-11').getByRole('button', { name: 'Otevřít v Looperu', exact: true }).click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
+        await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Otevřít časové značky' }).click();
+        await page.locator('#looper-timestamps .ts-song_start').getByRole('button', { name: 'Smyčka' }).click();
+        await page.waitForFunction(() => !document.querySelector('#looper-audio').paused);
+        await page.locator('#looper-play').click();
+        await page.locator('#looper-audio').evaluate(audio => { audio.currentTime = 2.1; });
+        await page.waitForTimeout(150);
+        assert(await page.locator('#looper-audio').evaluate(audio => audio.paused), 'Manual Looper pause stops its timestamp loop');
+        await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Zavřít časové značky' }).click();
         await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
         const editorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
         const playerBox = await page.locator('#player-shell').boundingBox();
@@ -512,6 +541,19 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#recording-12').getByRole('button', { name: 'Otevřít v Mixéru', exact: true }).click();
         await mixerRequested.promise; await switchTo('songs'); holdMixer.release(); holdMixer = null;
         await page.waitForFunction(() => window.Vz2Player.getState()?.mode === 'mixer' && window.Vz2Player.getState()?.phase === 'ready');
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.locator('#mixer-timestamps .ts-summary').click();
+        await page.waitForFunction(() => {
+            const button = document.querySelector('#mixer-timestamps .ts-song_start .ts-action');
+            return button && !button.disabled;
+        });
+        await page.locator('#mixer-timestamps .ts-song_start').getByRole('button', { name: 'Smyčka' }).click();
+        await page.waitForFunction(() => window.MultitrackApp.getState()?.playing);
+        await page.locator('#mt-play').evaluate(button => button.click());
+        await page.evaluate(() => window.MultitrackApp.seek(2.1));
+        await page.waitForTimeout(150);
+        assert.equal(await page.evaluate(() => window.MultitrackApp.getState()?.playing), false, 'Manual Mixer pause stops its timestamp loop');
+        await page.setViewportSize({ width: 390, height: 844 });
         await page.locator('#looper-play').click(); await page.waitForFunction(() => window.MultitrackApp.getState()?.playing);
         await switchTo('history'); await switchTo('ideas'); await switchTo('rehearsals');
         assert(await page.evaluate(() => window.MultitrackApp.getState()?.playing));

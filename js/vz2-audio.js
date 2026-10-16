@@ -80,15 +80,16 @@
             catch (_) { if (audio.paused) setOpen(false); }
         }
         trigger.addEventListener('click', () => {
+            window.Vz2Timestamps?.stopLoop();
             if (actionRow && !root.hidden) { audio.pause(); setOpen(false); return; }
             setOpen(true);
             if (!audio.paused) { audio.pause(); return; }
             startPlayback();
         });
-        playPause.addEventListener('click', () => { if (audio.paused) startPlayback(); else audio.pause(); });
-        seek.addEventListener('input', () => { audio.currentTime = start + Number(seek.value); current.textContent = clock(Number(seek.value)); });
+        playPause.addEventListener('click', () => { window.Vz2Timestamps?.stopLoop(); if (audio.paused) startPlayback(); else audio.pause(); });
+        seek.addEventListener('input', () => { window.Vz2Timestamps?.stopLoop(); audio.currentTime = start + Number(seek.value); current.textContent = clock(Number(seek.value)); });
         mute.addEventListener('click', () => { audio.muted = !audio.muted; refresh(); });
-        collapse.addEventListener('click', () => { setOpen(false); trigger.focus(); });
+        collapse.addEventListener('click', () => { window.Vz2Timestamps?.stopLoop(); setOpen(false); trigger.focus(); });
         audio.addEventListener('play', () => {
             document.querySelectorAll('audio').forEach(other => { if (other !== audio) other.pause(); });
             window.MultitrackApp?.pause();
