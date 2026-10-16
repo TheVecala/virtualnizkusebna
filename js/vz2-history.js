@@ -51,6 +51,9 @@ function renderList(){
  });
  function appendPlay(p,target,grouped){
   const li=n('li'),button=n('button',undefined,'history-list-row'),icon=n('i'),text=n('span',undefined,'history-list-text');
+  const sourceCount=Number(!!p.source),clipCount=Number(!!p.clip),noteCount=p.notes?.length??0;
+  const counts=n('span',`R:${sourceCount} V:${clipCount} P:${noteCount}`,'history-list-counts');
+  counts.setAttribute('aria-label',`Původní nahrávka: ${sourceCount}, výstřižek: ${clipCount}, poznámky: ${noteCount}`);
   const start=p.start_body?.trim(),name=grouped?(start && start!=='↑' ? start : 'Začátek'):start && start!=='↑' ? start : title(p);
   const description=[];
   if(!grouped && p.clip)description.push('Výstřižek: '+recordingName(p.clip));
@@ -59,7 +62,7 @@ function renderList(){
   icon.className='ti '+(playable(p)?'ti-file-music':'ti-volume-off');icon.setAttribute('aria-hidden','true');
   text.append(n('strong',name),n('small',description.join(' · ')));
   button.type='button';button.dataset.playId=p.id;button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','history-detail');
-  button.append(icon,text);button.onclick=()=>{$('history-list').close();detail(p);};li.append(button);target.append(li);
+  button.append(icon,text,counts);button.onclick=()=>{$('history-list').close();detail(p);};li.append(button);target.append(li);
  }
  const shown=new Set();
  plays.forEach(p=>{
