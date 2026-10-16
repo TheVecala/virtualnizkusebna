@@ -686,7 +686,7 @@
                     start: hasRange ? link.start_ms / 1000 : 0,
                     end: hasRange ? link.end_ms / 1000 : undefined,
                     knownDurationMs: hasRange ? link.end_ms - link.start_ms : recording.duration_ms,
-                    label: name
+                    label: name, inlineControls: true
                 }).root);
             } else if (playable && recording.kind === 'multitrack') {
                 body.append(node('p', 'Přehrávání vícestopé nahrávky je v mixéru.', 'linked-recording-context'));

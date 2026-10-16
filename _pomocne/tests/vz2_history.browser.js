@@ -140,6 +140,8 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await detail.locator('.history-start').count(), 0);
         assert.equal(await detail.locator('#history-detail-back').count(), 0);
         assert.equal(await detail.locator('audio').count(), 1);
+        assert.equal(await detail.locator('.vz2-audio-trigger, .vz2-audio-collapse').count(), 0, 'Matrix audio has no separate play or collapse button');
+        assert.equal(await detail.locator('.vz2-audio-transport:visible').count(), 1, 'Matrix audio controls are visible immediately');
         const sourceAudio = detail.locator('audio');
         await sourceAudio.evaluate(a => a.load());
         await page.waitForFunction(() => {
@@ -242,6 +244,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await guestPage.locator('#history-list-add').isVisible(), false);
         await guestPage.locator('#history-list .history-list-row').filter({ hasText: 'vystrizek.wav' }).click();
         assert.equal(await guestPage.locator('#history-detail audio').count(), 2);
+        assert.equal(await guestPage.locator('#history-detail .vz2-audio-transport:visible').count(), 2);
         assert.equal(await guestPage.locator('#history-detail-title').textContent(), 'Začátek pokusu');
         assert.equal(await guestPage.locator('#history-detail select').count(), 0);
         check(true, 'browser history: guest can browse and listen but has no edit controls');
