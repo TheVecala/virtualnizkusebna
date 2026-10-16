@@ -404,16 +404,40 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#recording-11 .recording-toggle').click();
         assert.equal(await page.locator('#recording-11 .recording-heading .recording-order-controls button').count(), 2, 'Ordering arrows are beside the filename');
         assert.equal(await page.locator('#recording-11 .recording-actions > button').count(), 4, 'The four main actions share one row');
+        assert.equal(await page.locator('#recording-11 .recording-actions > button').first().getAttribute('class'), 'vz2-audio-trigger');
+        assert.deepEqual((await page.locator('#recording-11 .recording-actions > button').allTextContents()).slice(1), ['Otevřít v Looperu', 'Uložit offline', '☰'], 'Looper, offline and menu follow Play');
         assert.equal(await page.locator('#recording-11 .vz2-audio-transport:visible').count(), 0, 'The player starts collapsed');
         await page.locator('#recording-11 .vz2-audio-trigger').click();
         await page.waitForFunction(() => !document.querySelector('#recording-11 audio').paused);
         assert(await page.locator('#recording-11 .vz2-audio-transport').isVisible(), 'Play reveals the shared controls');
+        assert.equal(await page.locator('#recording-11 .vz2-audio-trigger').getAttribute('aria-label'), 'Zavřít přehrávač zkouška.wav');
+        assert.equal(await page.locator('#recording-11 .vz2-audio-collapse').count(), 0, 'The action-row close button replaces the second collapse button');
+        const playerJoin = await page.evaluate(() => {
+            const actions = document.querySelector('#recording-11 .recording-actions').getBoundingClientRect();
+            const player = document.querySelector('#recording-11 .vz2-inline-player').getBoundingClientRect();
+            return player.top - actions.bottom;
+        });
+        assert(Math.abs(playerJoin) <= 1, 'The opened player touches the action row without a gap');
+        await shot('recording-player-open-390');
+        await page.setViewportSize({ width: 320, height: 844 });
+        const narrowPlayer = await page.evaluate(() => {
+            const transport = document.querySelector('#recording-11 .vz2-audio-transport');
+            const controls = [...transport.children].map(child => child.getBoundingClientRect());
+            return { overflow: transport.scrollWidth > transport.clientWidth,
+                sameRow: controls.every(rect => Math.abs(rect.y + rect.height / 2 - controls[0].y - controls[0].height / 2) < 3) };
+        });
+        await shot('recording-player-open-320');
+        assert(!narrowPlayer.overflow && narrowPlayer.sameRow, 'Playback controls stay on one line at 320 px: ' + JSON.stringify(narrowPlayer));
+        await page.setViewportSize({ width: 390, height: 844 });
         await page.locator('#recording-11 .vz2-audio-transport input').fill('10');
         await page.waitForFunction(() => document.querySelector('#recording-11 audio').currentTime >= 9.9);
-        await page.locator('#recording-11 .vz2-audio-trigger').click();
+        await page.locator('#recording-11 .vz2-audio-play-pause').click();
         assert(await page.locator('#recording-11 .vz2-audio-transport').isVisible(), 'Pause keeps the player expanded');
-        await page.locator('#recording-11 .vz2-audio-collapse').click();
+        await page.locator('#recording-11 .vz2-audio-play-pause').click();
+        await page.waitForFunction(() => !document.querySelector('#recording-11 audio').paused);
+        await page.locator('#recording-11 .vz2-audio-trigger').click();
         assert.equal(await page.locator('#recording-11 .vz2-audio-transport:visible').count(), 0, 'The player can be collapsed manually');
+        assert(await page.locator('#recording-11 audio').evaluate(audio => audio.paused), 'Closing the player pauses its audio');
         await shot('recording-expanded-390');
         await page.locator('#recording-11 .recording-actions').getByRole('button', { name: 'Další' }).click();
         assert.equal(await page.locator('#recording-actions-11 .recording-action-order, #recording-actions-11 .recording-action-edit').count(), 0, 'The actions dialog has no edit or ordering section');

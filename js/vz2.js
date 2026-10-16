@@ -363,6 +363,7 @@
         }));
         return {
             audio,
+            cache,
             canPlay: () => audio.isConnected && audio.readyState >= 1 && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
             durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
@@ -441,14 +442,14 @@
         let adapter;
         if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions, fileActions);
         const mixed = mixerId === String(r.id);
-        if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.append(button('Otevřít v Looperu', async () => {
+        if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.insertBefore(button('Otevřít v Looperu', async () => {
             const seconds = body.querySelector('audio')?.currentTime || 0;
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'looper', time_ms: String(Math.round(seconds * 1000)) });
-        }));
+        }), adapter.cache);
         const inlinePlayer = adapter?.audio ? window.Vz2Audio.mount(adapter.audio, {
             actionRow: actions, knownDurationMs: r.duration_ms, label: primaryName
         }) : null;
-        if (inlinePlayer) actions.classList.add('has-inline-player');
+        if (inlinePlayer) { actions.classList.add('has-inline-player'); actions.prepend(inlinePlayer.trigger); }
         if (r.lifecycle === 'active' && r.kind === 'multitrack' && !mixed) actions.append(button('Otevřít v Mixéru', async () => {
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'mixer' });
             if (mixerId === String(r.id)) mixerPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
