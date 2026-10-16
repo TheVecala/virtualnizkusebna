@@ -77,7 +77,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.equal(await card(ids[0]).locator('.recording-body > .files').count(), 0, 'Single file name is shown above the player only');
         assert.deepEqual(await card(ids[2]).locator('.recording-body > .files li').allTextContents(), ['guitar.wav', 'bass.wav']);
         assert.equal(await card(ids[0]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Open action is not detached at the top of the recording card');
-        assert.deepEqual((await actions.locator(':scope > button').allTextContents()).slice(0, 2), ['Uložit offline', 'Otevřít v Looperu'], 'Offline and Looper actions remain directly visible');
+        assert.equal(await actions.locator(':scope > button').first().getAttribute('class'), 'vz2-audio-trigger');
+        assert.deepEqual((await actions.locator(':scope > button').allTextContents()).slice(1, 3), ['Otevřít v Looperu', 'Uložit offline'], 'Looper and offline follow Play directly');
         let finishDownload;
         const heldDownload = new Promise(resolve => { finishDownload = resolve; });
         await page.route('**/php/ajax/vz2_files.php?**', async route => {

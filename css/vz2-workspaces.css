@@ -62,11 +62,15 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
 .recording-heading > .recording-toggle { flex: 1 1 auto; min-width: 0; }
 .recording-heading > .recording-order-controls { display: flex; flex: 0 0 auto; gap: 4px; padding-right: 7px; }
 .recording-heading > .recording-order-controls button { width: 28px; min-height: 28px; height: 28px; }
-.recording-actions.has-inline-player { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.25fr) minmax(0, 1fr) 35px; }
+.recording-actions.has-inline-player { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1.2fr) 35px; }
 .recording-actions.has-inline-player > button { width: 100%; height: 100%; min-width: 0; padding: 5px 3px; font-size: 11px; line-height: 1.2; }
 .recording-actions .recording-menu-toggle { width: 35px; min-width: 35px; font-size: 20px; line-height: 1; }
+.recording-actions.has-inline-player.is-player-open { padding-bottom: 0; border-bottom: 0; border-radius: 4px 4px 0 0; }
+.recording-actions.is-player-open .vz2-audio-trigger { position: relative; z-index: 1; margin-bottom: -1px; border-color: var(--vz-primary); border-bottom-color: var(--vz-shell); border-radius: 4px 4px 0 0; background: var(--vz-shell); color: var(--vz-primary-hover); }
 .vz2-inline-player { min-width: 0; }
-.recording-body > .vz2-inline-player { margin: 4px 0 8px; }
+.recording-body > .vz2-inline-player { margin: 0 0 8px; }
+.recording-actions.is-player-open + .vz2-inline-player { padding: 6px; border: 1px solid var(--vz-border); border-top: 1px solid var(--vz-primary); border-radius: 0 0 4px 4px; background: var(--vz-shell); }
+.recording-actions.is-player-open + .vz2-inline-player .vz2-audio-transport { padding: 2px 0; border: 0; }
 .vz2-inline-player > audio[hidden] { display: none !important; }
 .vz2-audio-trigger { display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
 .vz2-audio-trigger .vz2-audio-icon { font-size: 15px; line-height: 1; }
@@ -81,7 +85,8 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
 .vz2-audio-transport input[type=range]::-webkit-slider-thumb { width: 13px; height: 13px; margin-top: -4.5px; border: 0; border-radius: 50%; appearance: none; background: var(--vz-primary-hover); }
 .vz2-audio-transport input[type=range]::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: var(--vz-primary-hover); }
 .vz2-audio-transport > button { flex: 0 0 29px; width: 29px; min-height: 29px; height: 29px; padding: 0; }
-@media (min-width: 500px) { .recording-actions .vz2-audio-trigger small { display: inline; } }
+.vz2-audio-transport .vz2-audio-play-pause { font-size: 16px; }
+@media (max-width: 360px) { .vz2-audio-transport { gap: 3px; } .vz2-audio-transport output { min-width: 30px; font-size: 10px; } }
 .workspace-controls { display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; margin: 0; }
 .workspace-controls button { white-space: nowrap; }
 #history-controls-slot, #ideas-controls-slot { margin-left: auto; min-width: 0; }
