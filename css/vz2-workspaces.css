@@ -168,8 +168,8 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     #bottom-nav button[aria-pressed=true] { color: var(--vz-primary-hover); background: var(--vz-primary-soft); border-color: #6b713d; box-shadow: none; }
     #bottom-nav img { width: 27px; height: 27px; }
     #bottom-nav button[aria-pressed=true] img { width: 29px; height: 29px; }
-    #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); border-top: 1px solid #6b713d; background: var(--vz-shell); z-index: 20; }
-    #activity.utility-panel, #offline-files.utility-panel { bottom: calc(53px + env(safe-area-inset-bottom)); }
+    #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 4px 8px; border-top: 1px solid #6b713d; background: var(--vz-shell); z-index: 20; }
+    #activity.utility-panel, #offline-files.utility-panel { bottom: 53px; }
     body:is([data-workspace=history], [data-workspace=ideas]) #activity.utility-panel,
     body:is([data-workspace=history], [data-workspace=ideas]) #offline-files.utility-panel { bottom: 8px; }
 }
