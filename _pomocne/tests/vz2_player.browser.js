@@ -34,7 +34,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
             if (await toggle.getAttribute('aria-expanded') === 'true') await toggle.click();
         };
         const openLooper = () => openRecording(single.id, 'Otevřít');
-        const openMixer = () => openRecording(mix.id, 'Otevřít Mixér');
+        const openMixer = () => openRecording(mix.id, 'Otevřít v Mixéru');
         const state = () => page.evaluate(() => window.Vz2Player.getState());
         const ready = mode => page.waitForFunction(mode => { const s = window.Vz2Player.getState(); return s?.mode === mode && s.phase === 'ready' && !s.loading; }, mode);
         await openLooper(); await ready('looper');

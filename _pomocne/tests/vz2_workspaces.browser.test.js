@@ -402,7 +402,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#edit-form [name=title]').inputValue(), 'Celá zkouška');
         await page.locator('#edit-cancel').click();
         await page.locator('#recording-11 .recording-toggle').click();
-        assert.equal(await page.locator('#recording-11 .recording-actions .recording-order-controls button').count(), 2, 'Ordering arrows are beside the main recording actions');
+        assert.equal(await page.locator('#recording-11 .recording-heading .recording-order-controls button').count(), 2, 'Ordering arrows are beside the filename');
+        assert.equal(await page.locator('#recording-11 .recording-actions > button').count(), 4, 'The four main actions share one row');
+        assert.equal(await page.locator('#recording-11 .vz2-audio-transport:visible').count(), 0, 'The player starts collapsed');
+        await page.locator('#recording-11 .vz2-audio-trigger').click();
+        await page.waitForFunction(() => !document.querySelector('#recording-11 audio').paused);
+        assert(await page.locator('#recording-11 .vz2-audio-transport').isVisible(), 'Play reveals the shared controls');
+        await page.locator('#recording-11 .vz2-audio-transport input').fill('10');
+        await page.waitForFunction(() => document.querySelector('#recording-11 audio').currentTime >= 9.9);
+        await page.locator('#recording-11 .vz2-audio-trigger').click();
+        assert(await page.locator('#recording-11 .vz2-audio-transport').isVisible(), 'Pause keeps the player expanded');
+        await page.locator('#recording-11 .vz2-audio-collapse').click();
+        assert.equal(await page.locator('#recording-11 .vz2-audio-transport:visible').count(), 0, 'The player can be collapsed manually');
         await shot('recording-expanded-390');
         await page.locator('#recording-11 .recording-actions').getByRole('button', { name: 'Další' }).click();
         assert.equal(await page.locator('#recording-actions-11 .recording-action-order, #recording-actions-11 .recording-action-edit').count(), 0, 'The actions dialog has no edit or ordering section');
@@ -413,7 +424,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#edit-form').getByRole('button', { name: 'Uložit' }).click();
         await page.waitForFunction(() => document.querySelector('#recording-11 .recording-title')?.textContent === 'Nový název.wav');
         if (await page.locator('#recording-actions-11').isVisible()) await page.locator('#recording-actions-11 .modal-close').click();
-        await page.locator('#recording-11').getByRole('button', { name: 'Otevřít', exact: true }).click();
+        await page.locator('#recording-11').getByRole('button', { name: 'Otevřít v Looperu', exact: true }).click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
         await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
         const editorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
@@ -457,7 +468,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
 
         await switchTo('rehearsals'); await page.locator('#recording-12 .recording-toggle').click();
         holdMixer = gate(); mixerRequested = gate();
-        await page.locator('#recording-12').getByRole('button', { name: 'Otevřít Mixér', exact: true }).click();
+        await page.locator('#recording-12').getByRole('button', { name: 'Otevřít v Mixéru', exact: true }).click();
         await mixerRequested.promise; await switchTo('songs'); holdMixer.release(); holdMixer = null;
         await page.waitForFunction(() => window.Vz2Player.getState()?.mode === 'mixer' && window.Vz2Player.getState()?.phase === 'ready');
         await page.locator('#looper-play').click(); await page.waitForFunction(() => window.MultitrackApp.getState()?.playing);
@@ -497,6 +508,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             const audio = document.querySelector('.linked-recordings audio');
             return audio && audio.readyState >= 1 && audio.currentTime >= 4.9;
         });
+        assert.equal(await rehearsalInterval.locator('.vz2-audio-transport:visible').count(), 0, 'A linked excerpt also starts compact');
+        await rehearsalInterval.locator('.vz2-audio-trigger').click();
+        await page.waitForFunction(() => !document.querySelector('.linked-recordings audio').paused);
+        assert.equal(await rehearsalInterval.locator('.vz2-audio-transport input').getAttribute('max'), '5', 'The seek range covers only the excerpt');
+        await rehearsalInterval.locator('.vz2-audio-trigger').click();
         await rehearsalInterval.locator('audio').evaluate(audio => { audio.currentTime = 11; });
         await page.waitForFunction(() => document.querySelector('.linked-recordings audio').currentTime <= 10);
         await rehearsalInterval.locator('audio').evaluate(async audio => { audio.currentTime = 9.8; await audio.play(); });

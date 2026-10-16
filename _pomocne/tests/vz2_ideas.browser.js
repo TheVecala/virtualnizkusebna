@@ -19,7 +19,7 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await page.route('https://cdn.jsdelivr.net/**', r => r.abort());
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await page.locator('#recording-' + single.id + ' .recording-toggle').click();
-        await page.locator('#recording-' + single.id).getByRole('button', { name: 'Otevřít', exact: true }).click();
+        await page.locator('#recording-' + single.id).getByRole('button', { name: 'Otevřít v Looperu', exact: true }).click();
         await page.locator('#recording-' + single.id + ' .recording-toggle').click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
         await page.locator('#looper-play').click();

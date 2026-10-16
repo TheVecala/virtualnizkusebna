@@ -91,7 +91,8 @@
                 child.addEventListener('close', restore, { once: true });
             });
         }, true);
-        const toggle = button('Další', () => { dialog.showModal(); close.focus(); });
+        const toggle = button('☰', () => { dialog.showModal(); close.focus(); }, 'recording-menu-toggle');
+        toggle.setAttribute('aria-label', 'Další'); toggle.title = 'Další možnosti nahrávky';
         toggle.setAttribute('aria-haspopup', 'dialog'); toggle.setAttribute('aria-controls', dialog.id);
         return {
             dialog, toggle, fileActions: file.actions, dangerActions: danger.actions,
@@ -327,7 +328,7 @@
     }
     function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
-        const audio = node('audio'); audio.controls = true; audio.preload = 'metadata'; audio.src = file.url;
+        const audio = node('audio'); audio.preload = 'metadata'; audio.src = file.url;
         audio.dataset.source = 'web';
         const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
         const cache = button('Uložit offline', async () => {
@@ -404,7 +405,9 @@
         }
         setExpanded(expandedRecordings.has(id));
         toggle.addEventListener('click', () => setExpanded(body.hidden));
-        card.append(toggle);
+        const heading = node('div', undefined, 'recording-heading');
+        heading.append(toggle);
+        card.append(heading);
         const caption = node('div', undefined, 'recording-caption');
         if (r.title || cfg.write && r.can_edit) {
             caption.append(node('span', r.title || 'Přidat popisek', r.title ? 'recording-caption-text' : 'recording-caption-text is-empty'));
@@ -438,11 +441,15 @@
         let adapter;
         if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions, fileActions);
         const mixed = mixerId === String(r.id);
-        if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.insertBefore(button('Otevřít', async () => {
+        if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.append(button('Otevřít v Looperu', async () => {
             const seconds = body.querySelector('audio')?.currentTime || 0;
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'looper', time_ms: String(Math.round(seconds * 1000)) });
-        }), actions.children[1] || null);
-        if (r.lifecycle === 'active' && r.kind === 'multitrack' && !mixed) actions.append(button('Otevřít Mixér', async () => {
+        }));
+        const inlinePlayer = adapter?.audio ? window.Vz2Audio.mount(adapter.audio, {
+            actionRow: actions, knownDurationMs: r.duration_ms, label: primaryName
+        }) : null;
+        if (inlinePlayer) actions.classList.add('has-inline-player');
+        if (r.lifecycle === 'active' && r.kind === 'multitrack' && !mixed) actions.append(button('Otevřít v Mixéru', async () => {
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'mixer' });
             if (mixerId === String(r.id)) mixerPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }));
@@ -477,10 +484,10 @@
         if (cfg.write && cfg.canReorder) {
             const controls = node('div', undefined, 'recording-order-controls');
             reorderControls(controls, list, r, { scope: 'recordings', collection_id: Number(collection.id), revision: Number(collection.recordings_revision) });
-            actions.append(controls);
+            heading.append(controls);
         }
         if (actions.childElementCount) body.append(actions);
-        if (adapter?.audio) body.append(adapter.audio);
+        if (inlinePlayer) body.append(inlinePlayer.root);
         timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
         card.append(body); return card;
     }
@@ -651,7 +658,7 @@
             const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
             const file = recording.kind === 'single' ? recording.files[0] : null;
             if (playable && file?.url) {
-                const audio = node('audio'); audio.controls = true; audio.preload = 'metadata'; audio.src = file.url;
+                const audio = node('audio'); audio.preload = 'metadata'; audio.src = file.url;
                 audio.dataset.source = 'web';
                 audio.setAttribute('aria-label', (hasRange ? 'Přehrát úsek ' : 'Přehrát nahrávku ') + name);
                 if (hasRange) {
@@ -674,7 +681,12 @@
                     document.getElementById('looper-audio')?.pause();
                     window.MultitrackApp?.pause();
                 });
-                body.append(audio);
+                body.append(window.Vz2Audio.mount(audio, {
+                    start: hasRange ? link.start_ms / 1000 : 0,
+                    end: hasRange ? link.end_ms / 1000 : undefined,
+                    knownDurationMs: hasRange ? link.end_ms - link.start_ms : recording.duration_ms,
+                    label: name
+                }).root);
             } else if (playable && recording.kind === 'multitrack') {
                 body.append(node('p', 'Přehrávání vícestopé nahrávky je v mixéru.', 'linked-recording-context'));
             }
