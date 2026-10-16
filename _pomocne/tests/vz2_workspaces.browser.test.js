@@ -26,7 +26,7 @@ const links = [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, sourc
     { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 5000, start_body: 'Začátek skladby', end_ms: 10000 },
     { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: null, clip_recording_id: 13, start_ms: null, end_ms: null }];
 const catalog = { ok: true, collections, recordings, recording_links: links, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
-const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [] }, { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] }], unassigned_intervals: [], unassigned_clips: [] };
+const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 15000, end_ms: 20000, start_body: 'Další pokus', notes: [] }, { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [] }, { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] }], unassigned_intervals: [], unassigned_clips: [] };
 const timestampRows = [
     { id: 101, time_ms: 1000, kind: 'song_start', body: 'Začátek výstřižku' },
     { id: 102, time_ms: 2000, kind: 'song_end', paired_timestamp_id: 101, body: 'Konec výstřižku' }
@@ -210,6 +210,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('history');
         await page.locator('td[data-song-id="1"][data-rehearsal-id="3"] .history-count').click();
+        assert.equal(await page.locator('#history-list .history-source-group').count(), 1, 'excerpts from one recording share one group');
+        assert.equal(await page.locator('#history-list .history-source-title').textContent(), 'zkouška.wav');
+        assert.deepEqual(await page.locator('#history-list .history-source-clips .history-list-text strong').allTextContents(), ['Začátek skladby', 'Další pokus'], 'excerpts are ordered by start time and use start timestamp titles');
+        assert.equal(await page.locator('#history-list .history-source-clips').getByText('zkouška.wav').count(), 0, 'source filename is shown once in the group heading');
+        assert.equal(await page.locator('#history-list .history-list-row').count(), 3, 'standalone clip remains its own row');
         await page.locator('#history-list .history-list-row').first().click();
         assert.equal(await page.locator('#history-detail .vz2-audio-trigger, #history-detail .vz2-audio-collapse').count(), 0, 'Matrix detail has no separate play or collapse button');
         assert.equal(await page.locator('#history-detail .vz2-audio-transport:visible').count(), 1, 'Matrix detail shows its player immediately');
