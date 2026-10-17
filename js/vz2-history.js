@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id), n=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
-let data=null, transposed=false, scroll={x:0,y:0}, cell=null, listCell=null;
+let data=null, transposed=false, scroll={x:0,y:0}, cell=null, listCell=null, playsByCell=new Map();
 async function request(body){const r=await fetch('php/ajax/vz2_history.php',{method:body?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json','X-CSRF-Token':window.VZ2.csrf}:{},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||'Historii nelze načíst.');return j;}
 function playable(p){return [p.clip,p.source].some(r=>r?.files?.some(f=>f.url));}
 function clock(ms){return Vz2Timestamps.format(ms);}
@@ -10,11 +10,19 @@ function contextTitle(song,rehearsal){return 'skladba: '+song+' × zkouška: '+r
 function title(p){return recordingName(p.clip)||p.clip_title||(recordingName(p.source)?recordingName(p.source)+' · ':'')+clock(p.start_ms||0);}
 function option(value,text){const o=n('option',text);o.value=value;return o;}
 function refreshFilter(){const select=$('history-song-filter'),v=select.value;select.replaceChildren(option('','Všechny skladby'));data.songs.forEach(s=>select.append(option(s.id,s.title)));select.value=v;}
-function cellPlays(song, rehearsal) {
+function cellKey(songId,rehearsalId){return String(songId)+':'+String(rehearsalId);}
+function indexPlays(){
  const onlyAudio=$('history-audio-filter').checked;
- return data.plays.filter(p=>p.song_collection_id==song.id && p.rehearsal_collection_id==rehearsal.id && (!onlyAudio || playable(p)));
+ playsByCell=new Map();
+ data.plays.forEach(p=>{
+  if(onlyAudio&&!playable(p))return;
+  const key=cellKey(p.song_collection_id,p.rehearsal_collection_id);
+  if(!playsByCell.has(key))playsByCell.set(key,[]);
+  playsByCell.get(key).push(p);
+ });
 }
-function render(){if(!data)return;refreshFilter();syncControls();const selected=Number($('history-song-filter').value)||null;
+function cellPlays(song,rehearsal){return playsByCell.get(cellKey(song.id,rehearsal.id))||[];}
+function render(){if(!data)return;indexPlays();refreshFilter();syncControls();const selected=Number($('history-song-filter').value)||null;
  const songs=data.songs.filter(s=>!selected||Number(s.id)===selected), rehearsals=data.rehearsals, rows=transposed?songs:rehearsals, cols=transposed?rehearsals:songs;
  const matrix=$('history-matrix');
  if(!songs.length||!rehearsals.length){const empty=n('div',undefined,'history-empty'),icon=n('i');icon.className='ti ti-calendar-off';icon.setAttribute('aria-hidden','true');empty.append(icon,n('h3',selected?'Pro výběr nejsou žádná data':'Historie je zatím prázdná'),n('p',selected?'Zkuste zobrazit všechny skladby nebo změnit filtr.':'Až propojíte úsek zkoušky se skladbou, objeví se tady.'));matrix.replaceChildren(empty);return;}

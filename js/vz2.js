@@ -328,7 +328,7 @@
     }
     function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
-        const audio = node('audio'); audio.preload = 'metadata'; audio.src = file.url;
+        const audio = node('audio'); audio.preload = 'none'; audio.src = file.url;
         audio.dataset.source = 'web';
         const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
         const cache = button('Uložit offline', async () => {
@@ -393,6 +393,17 @@
     function recordingCard(r, list, collection) {
         const card = node('article', undefined, 'recording-card'); card.id = 'recording-' + r.id;
         const body = node('div', undefined, 'recording-body'); body.id = 'recording-body-' + r.id;
+        let adapter, timestampPanel;
+        const prepareDetails = () => {
+            if (adapter?.audio?.preload === 'none') {
+                adapter.audio.preload = 'metadata';
+                adapter.audio.load();
+            }
+            if (!timestampPanel) {
+                timestampPanel = window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null));
+                timestampPanels.push(timestampPanel);
+            }
+        };
         const primaryName = recordingName(r);
         const title = node('span', primaryName, 'recording-title');
         title.title = r.files.map(fileName).filter(Boolean).join(', ') || primaryName;
@@ -403,6 +414,7 @@
         function setExpanded(open) {
             body.hidden = !open; toggle.setAttribute('aria-expanded', String(open));
             if (open) expandedRecordings.add(id); else expandedRecordings.delete(id);
+            if (open && body.isConnected) prepareDetails();
         }
         setExpanded(expandedRecordings.has(id));
         toggle.addEventListener('click', () => setExpanded(body.hidden));
@@ -439,7 +451,6 @@
         const recordingMenu = recordingActionsDialog(r);
         const fileActions = recordingMenu.fileActions;
         const dangerActions = recordingMenu.dangerActions;
-        let adapter;
         if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions, fileActions);
         const mixed = mixerId === String(r.id);
         if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.insertBefore(button('Otevřít v Looperu', async () => {
@@ -489,7 +500,7 @@
         }
         if (actions.childElementCount) body.append(actions);
         if (inlinePlayer) body.append(inlinePlayer.root);
-        timestampPanels.push(window.Vz2Timestamps.mount(body, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null)));
+        if (!body.hidden) prepareDetails();
         card.append(body); return card;
     }
     async function createUploadPeaks(recordingId, originals, report) {
@@ -638,9 +649,14 @@
                 toggle.append(node('span', name, 'recording-title'), node('small', hasRange ? time(link.end_ms - link.start_ms) : recording.duration_ms == null ? 'délka nezjištěna' : time(recording.duration_ms), 'recording-duration'));
             }
             toggle.setAttribute('aria-controls', body.id);
+            let audio;
+            const prepareAudio = () => {
+                if (audio?.preload === 'none') { audio.preload = 'metadata'; audio.load(); }
+            };
             const setExpanded = open => {
                 body.hidden = !open; toggle.setAttribute('aria-expanded', String(open));
                 if (open) expandedLinkedRecordings.add(key); else expandedLinkedRecordings.delete(key);
+                if (open) prepareAudio();
             };
             setExpanded(expandedLinkedRecordings.has(key));
             toggle.addEventListener('click', () => setExpanded(body.hidden));
@@ -659,7 +675,7 @@
             const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
             const file = recording.kind === 'single' ? recording.files[0] : null;
             if (playable && file?.url) {
-                const audio = node('audio'); audio.preload = 'metadata'; audio.src = file.url;
+                audio = node('audio'); audio.preload = 'none'; audio.src = file.url;
                 audio.dataset.source = 'web';
                 audio.setAttribute('aria-label', (hasRange ? 'Přehrát úsek ' : 'Přehrát nahrávku ') + name);
                 if (hasRange) {
@@ -712,6 +728,7 @@
                 sourceCard?.scrollIntoView({ block: 'nearest' });
             });
             actions.append(open, source); body.append(actions);
+            if (!body.hidden) prepareAudio();
             item.append(body); return item;
         }
         if (collection.kind === 'song') {
