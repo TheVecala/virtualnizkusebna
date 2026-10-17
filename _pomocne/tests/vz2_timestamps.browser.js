@@ -45,6 +45,9 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await notes.locator('.ts-content').isVisible(), true, 'chevron heading expands timestamp controls and entries');
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
         assert.equal(await dialog.locator('.ts-mode').textContent(), 'Přidat značku');
+        assert.equal(await dialog.getByRole('button', { name: 'Uložit poznámku' }).isVisible(), true);
+        assert.equal(await dialog.locator('[name=time]').isVisible(), false);
+        await dialog.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).click();
         assert.equal(await dialog.getByRole('button', { name: 'Zachytit čas', exact: true }).isVisible(), true);
         assert.equal(await dialog.locator('.ts-original-kind').count(), 0);
         assert.equal(await dialog.locator('[name=keep]').count(), 0);

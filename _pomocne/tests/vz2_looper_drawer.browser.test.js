@@ -21,11 +21,13 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
         await page.route('http://looper.test/**', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
         await page.goto('http://looper.test/');
         for (const width of [320, 390, 767, 1440]) {
+            await page.evaluate(() => localStorage.removeItem('vz2-timestamp-add-view'));
             await page.setViewportSize({ width, height: 844 });
             await page.setContent(`<style>${fs.readFileSync(path.join(root, 'css/vz2.css'), 'utf8')}</style>${markup}<div>Obsah aplikace</div>`);
             await page.evaluate(value => {
                 window.VZ2 = { cachePrefix: 'test-', csrf: 'test' };
                 window.timestampWrites = [];
+                delete window.seekTime;
                 window.fetch = async (_url, options) => {
                     if (options?.body) window.timestampWrites.push(JSON.parse(options.body));
                     return { ok: true, json: async () => structuredClone(value) };
@@ -50,13 +52,45 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 }
                 await actions.getByRole('button', { name: 'Přidat značku', exact: true }).click();
                 assert(await page.locator('.vz2-timestamp-editor').isVisible());
+                const editor = page.locator('.vz2-timestamp-editor');
+                assert(await editor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).isVisible());
+                assert(await editor.getByRole('button', { name: 'Uložit poznámku' }).isVisible());
+                assert.equal(await editor.locator('.ts-simple-time-value').textContent(), '00:03');
+                assert.equal(await editor.locator('.ts-time-row').isVisible(), false);
+                if (process.env.LOOPER_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.LOOPER_SCREENSHOT_DIR, `looper-simple-${width}.png`) });
+                if (width === 320) {
+                    await editor.locator('[name=body]').focus();
+                    await page.evaluate(() => {
+                        window.simpleVisualViewport = window.visualViewport;
+                        Object.defineProperty(window, 'visualViewport', { configurable: true, value: { offsetTop: 0, height: innerHeight - 300 } });
+                        document.querySelector('.vz2-timestamp-editor input[name=body]').dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+                    });
+                    const footer = await editor.locator('.ts-editor-footer').boundingBox();
+                    assert(footer.y + footer.height <= 844 - 300 + 1, 'simple save stays above the mobile keyboard');
+                    await page.evaluate(() => { Object.defineProperty(window, 'visualViewport', { configurable: true, value: window.simpleVisualViewport }); });
+                    await editor.focus();
+                }
+                await editor.locator('[name=body]').fill('Rozepsaná poznámka');
+                await editor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).click();
+                assert.equal(await editor.locator('[name=body]').inputValue(), 'Rozepsaná poznámka');
+                await editor.getByRole('checkbox', { name: 'Vrátit na čas' }).check();
+                await editor.getByRole('button', { name: 'Zpět k jednoduchému zobrazení' }).click();
+                assert.equal(await editor.locator('[name=body]').inputValue(), 'Rozepsaná poznámka');
+                if (width === 320) await editor.locator('[name=body]').press('Enter');
+                else await editor.getByRole('button', { name: 'Uložit poznámku' }).click();
+                assert.deepEqual(await page.evaluate(() => {
+                    const { kind, time_ms, body } = window.timestampWrites.at(-1);
+                    return { kind, time_ms, body };
+                }), { kind: 'note', time_ms: 3000, body: 'Rozepsaná poznámka' });
+                assert.equal(await page.evaluate(() => window.seekTime), undefined);
+                assert.equal(await editor.locator('[name=body]').inputValue(), '');
+                await editor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).click();
                 assert.equal(await page.locator('.vz2-timestamp-editor').evaluate(e => e.matches(':modal')), false);
                 assert.equal(await page.locator('.vz2-timestamp-editor').evaluate(e => e.parentElement.tagName), 'BODY');
                 assert.equal(await page.evaluate(() => document.activeElement?.matches('input[name=body],input[name=time]')), false);
                 await page.locator('#looper-play').click();
                 if (process.env.LOOPER_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.LOOPER_SCREENSHOT_DIR, `looper-add-${width}.png`) });
                 assert.equal(await page.locator('.vz2-timestamp-editor input[name=time]').inputValue(), '00:03');
-                const editor = page.locator('.vz2-timestamp-editor');
                 assert.equal(await editor.locator('[name=body]').getAttribute('autocomplete'), 'off');
                 assert.deepEqual(await editor.locator('.ts-time-row > *').evaluateAll(elements => elements.map(element => element.name || element.dataset.delta || element.className)),
                     ['time', '-1000', '1000', 'ts-time-current']);
@@ -155,6 +189,33 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 assert.equal(await actions.isVisible(), false);
                 await notes.locator('summary').click();
                 assert(await notes.getByRole('button', { name: 'Přidat značku', exact: true }).isVisible());
+                await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
+                const editor = page.locator('.vz2-timestamp-editor');
+                assert(await editor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).isVisible());
+                if (process.env.LOOPER_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.LOOPER_SCREENSHOT_DIR, `looper-simple-${width}.png`) });
+                await editor.locator('[name=body]').fill('Poznámka z desktopu');
+                await editor.getByRole('button', { name: 'Uložit poznámku' }).click();
+                assert.equal(await editor.isVisible(), false);
+                assert.deepEqual(await page.evaluate(() => {
+                    const { kind, time_ms, body } = window.timestampWrites.at(-1);
+                    return { kind, time_ms, body };
+                }), { kind: 'note', time_ms: 3000, body: 'Poznámka z desktopu' });
+                await notes.getByRole('button', { name: 'Upravit', exact: true }).first().click();
+                assert.equal(await editor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).isVisible(), false);
+                assert(await editor.getByRole('button', { name: 'Poznámka', exact: true }).isVisible());
+                await editor.getByRole('button', { name: 'Zavřít časovou značku' }).click();
+                await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
+                assert(await editor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).isVisible());
+                await editor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).click();
+                await editor.locator('[name=body]').fill('Rozepsáno na desktopu');
+                await editor.getByRole('button', { name: 'Zpět k jednoduchému zobrazení' }).click();
+                assert.equal(await editor.locator('[name=body]').inputValue(), 'Rozepsáno na desktopu');
+                await editor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).click();
+                await editor.getByRole('button', { name: 'Zavřít časovou značku' }).click();
+                await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
+                assert(await editor.getByRole('button', { name: 'Zpět k jednoduchému zobrazení' }).isVisible());
+                assert.equal(await page.evaluate(() => localStorage.getItem('vz2-timestamp-add-view')), 'advanced');
+                await editor.getByRole('button', { name: 'Zavřít časovou značku' }).click();
                 assert(await notes.evaluate(n => n.scrollHeight > n.clientHeight));
             }
             await page.evaluate(() => window.notes.destroy());

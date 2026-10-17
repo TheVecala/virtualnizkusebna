@@ -86,6 +86,14 @@
     if (!root.document) return;
     root.Vz2Timestamps = api;
     const panels = new Set();
+    const addViewKey = 'vz2-timestamp-add-view';
+    function rememberedAddView() {
+        try { return localStorage.getItem(addViewKey) === 'advanced' ? 'advanced' : 'simple'; }
+        catch (_) { return 'simple'; }
+    }
+    function rememberAddView(view) {
+        try { localStorage.setItem(addViewKey, view); } catch (_) { /* Storage may be unavailable. */ }
+    }
     let editor, pairDialog, exportDialog, activeEditor, activePair, activeExportPanel, loop, loopBusy = false, loopSerial = 0;
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     const boundaryIcon = kind => {
@@ -145,20 +153,25 @@
             if (context.row) { fields.id = context.row.id; fields.revision = context.row.revision; }
             const result = await request(context.panel.id, fields); publish(result);
             context.revision = result.timestamps_revision;
-            if (form.elements.return_position.checked && context.panel.adapter?.canPlay()) context.panel.adapter.seek(fields.time_ms);
+            if (context.view === 'advanced' && form.elements.return_position.checked && context.panel.adapter?.canPlay()) context.panel.adapter.seek(fields.time_ms);
             editor.querySelector('.error').textContent = '';
             if (editor.classList.contains('ts-inline') && !context.row) {
                 form.elements.body.value = '';
                 setEditorTime(context.panel.adapter?.currentTimeMs() ?? fields.time_ms);
             } else editor.close();
         } catch (err) { editor.querySelector('.error').textContent = err.message; editor.querySelector('.ts-rebase').hidden = err.status !== 409; }
-        finally { context.busy = false; controls.forEach(b => b.disabled = false); form.elements.return_position.disabled = !context.panel.adapter?.canPlay(); }
+        finally {
+            context.busy = false; controls.forEach(b => b.disabled = false);
+            setEditorView(context.view);
+            form.elements.return_position.disabled = !context.panel.adapter?.canPlay();
+        }
     }
     // Keep the exact position separately from the editable mm:ss display.
     function setEditorTime(ms) {
         activeEditor.timeMs = Math.max(0, Math.round(Number(ms) || 0));
         activeEditor.timeText = format(activeEditor.timeMs);
         editor.querySelector('form').elements.time.value = activeEditor.timeText;
+        editor.querySelector('.ts-simple-time-value').textContent = activeEditor.timeText;
     }
     function editorTimeMs() {
         const text = editor.querySelector('form').elements.time.value;
@@ -189,7 +202,21 @@
     function ensureEditor() {
         if (editor) return;
         editor = el('dialog'); editor.className = 'vz2-timestamp-editor';
-        editor.innerHTML = '<form autocomplete="off"><div class="ts-editor-top"><p class="ts-mode"></p><p class="ts-context"></p><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div><div class="ts-editor-body"><label class="ts-body"><span class="visually-hidden">Text</span><input type="text" name="body" aria-label="Text časové značky" placeholder="Text" autocomplete="off" autocapitalize="sentences" spellcheck="true"></label><div class="ts-time-row"><input type="text" name="time" required inputmode="numeric" aria-label="Čas ve formátu minuty a sekundy" autocomplete="off" spellcheck="false"><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+</button><button type="button" class="ts-time-current" title="Převzít čas z přehrávače">Zachytit čas</button></div><div class="ts-editor-options"><label class="ts-return"><input type="checkbox" name="return_position"> Vrátit na čas</label><div class="ts-quick-notes"><button type="button" class="ts-quick-note" data-symbol="👍" aria-label="Přidat poznámku: palec nahoru" title="Přidat poznámku: palec nahoru">👍</button><button type="button" class="ts-quick-note" data-symbol="👎" aria-label="Přidat poznámku: palec dolů" title="Přidat poznámku: palec dolů">👎</button></div></div><p role="alert" class="error"></p><pre class="ts-current" hidden></pre></div><div class="ts-editor-footer"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button><button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button></div></form>';
+        editor.innerHTML = `<form autocomplete="off">
+            <div class="ts-editor-top"><p class="ts-mode"></p><p class="ts-context"></p><button type="button" class="ts-back-simple" aria-label="Zpět k jednoduchému zobrazení" title="Zpět k jednoduchému zobrazení" hidden>←</button><button type="button" class="ts-close modal-close" aria-label="Zavřít časovou značku" title="Zavřít">×</button></div>
+            <div class="ts-editor-body">
+                <p class="ts-simple-time" hidden>Čas značky <strong class="ts-simple-time-value"></strong></p>
+                <label class="ts-body"><span class="visually-hidden">Text</span><input type="text" name="body" aria-label="Text časové značky" placeholder="Poznámka" autocomplete="off" autocapitalize="sentences" spellcheck="true"></label>
+                <div class="ts-time-row"><input type="text" name="time" required inputmode="numeric" aria-label="Čas ve formátu minuty a sekundy" autocomplete="off" spellcheck="false"><button type="button" class="ts-time-adjust" data-delta="-1000" aria-label="Odečíst jednu sekundu">−</button><button type="button" class="ts-time-adjust" data-delta="1000" aria-label="Přičíst jednu sekundu">+</button><button type="button" class="ts-time-current" title="Převzít čas z přehrávače">Zachytit čas</button></div>
+                <div class="ts-editor-options"><label class="ts-return"><input type="checkbox" name="return_position"> Vrátit na čas</label><div class="ts-quick-notes"><button type="button" class="ts-quick-note" data-symbol="👍" aria-label="Přidat poznámku: palec nahoru" title="Přidat poznámku: palec nahoru">👍</button><button type="button" class="ts-quick-note" data-symbol="👎" aria-label="Přidat poznámku: palec dolů" title="Přidat poznámku: palec dolů">👎</button></div></div>
+                <p role="alert" class="error"></p><pre class="ts-current" hidden></pre>
+            </div>
+            <div class="ts-editor-footer">
+                <div class="ts-simple-actions" hidden><button type="button" class="ts-open-advanced">Otevřít pokročilé možnosti</button><button type="submit" name="kind" value="note" class="ts-save-note">Uložit poznámku</button></div>
+                <div class="ts-advanced-actions"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button></div>
+                <button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button>
+            </div>
+        </form>`;
         const form = editor.querySelector('form');
         form.elements.time.addEventListener('change', () => {
             try { setEditorTime(editorTimeMs()); }
@@ -211,6 +238,11 @@
         window.visualViewport?.addEventListener('resize', positionInlineEditor);
         window.visualViewport?.addEventListener('scroll', positionInlineEditor);
         editor.querySelectorAll('.ts-close').forEach(close => { close.onclick = () => editor.close(); });
+        editor.querySelector('.ts-open-advanced').onclick = () => setEditorView('advanced', true);
+        editor.querySelector('.ts-back-simple').onclick = () => {
+            try { setEditorTime(editorTimeMs()); setEditorView('simple', true); }
+            catch (e) { editor.querySelector('.error').textContent = e.message; }
+        };
         editor.querySelector('.ts-time-current').onclick = () => {
             const ms = activeEditor?.panel.adapter?.currentTimeMs();
             if (Number.isFinite(ms)) setEditorTime(ms);
@@ -249,6 +281,23 @@
         });
         document.body.append(editor);
     }
+    function setEditorView(view, remember = false) {
+        const simple = view === 'simple' && !activeEditor.row;
+        activeEditor.view = simple ? 'simple' : 'advanced';
+        editor.querySelector('.ts-simple-time').hidden = !simple;
+        editor.querySelector('.ts-time-row').hidden = simple;
+        editor.querySelector('.ts-editor-options').hidden = simple;
+        editor.querySelector('.ts-simple-actions').hidden = !simple;
+        editor.querySelector('.ts-advanced-actions').hidden = simple;
+        editor.querySelector('.ts-back-simple').hidden = simple || !!activeEditor.row;
+        editor.querySelectorAll('.ts-simple-actions button').forEach(control => { control.disabled = !simple; });
+        editor.querySelectorAll('.ts-advanced-actions button').forEach(control => { control.disabled = simple; });
+        if (remember) rememberAddView(activeEditor.view);
+        const body = editor.querySelector('form').elements.body;
+        body.placeholder = simple ? 'Poznámka' : 'Text';
+        body.setAttribute('aria-label', simple ? 'Poznámka' : 'Text časové značky');
+        positionInlineEditor();
+    }
     function positionInlineEditor() {
         if (!editor?.open || !editor.classList.contains('ts-inline')) return;
         const viewport = window.visualViewport;
@@ -286,9 +335,10 @@
         const f = editor.querySelector('form');
         setEditorTime(row ? row.time_ms : panel.adapter?.currentTimeMs() ?? 0);
         f.elements.body.value = row?.body || '';
+        setEditorView(row ? 'advanced' : rememberedAddView());
         editor.classList.toggle('ts-edit-mode', !!row);
         editor.querySelector('.ts-mode').textContent = row ? 'Upravit značku' : 'Přidat značku';
-        editor.querySelectorAll('.ts-editor-footer button[name=kind]').forEach(control => {
+        editor.querySelectorAll('.ts-advanced-actions button[name=kind]').forEach(control => {
             control.classList.toggle('ts-original-kind', !!row && control.value === row.kind);
         });
         editor.querySelector('.ts-quick-notes').hidden = !!row;
@@ -340,6 +390,7 @@
             panel.quickBusy = false;
             controls.forEach(control => control.disabled = fromEditor ? false : !panel.list?.can_create);
             if (fromEditor) {
+                setEditorView(activeEditor.view);
                 editor.querySelector('.ts-time-current').disabled = !panel.adapter?.canPlay();
                 editor.querySelector('.ts-return input').disabled = !panel.adapter?.canPlay();
             }
