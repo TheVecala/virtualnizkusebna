@@ -39,7 +39,7 @@ $command=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
 if($command['action']==='init'){
  $db->query('CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');$db->select_db('${database}');
  $db->query("SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE'");
- foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
+ foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql','006_vz2_rehearsal_starts.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
  foreach([['Admin','admin','admin-test'],['Alice','muzikant','alice-test'],['Bob','muzikant','bob-test']] as $u){$s=$db->prepare('INSERT INTO users(name,role,password_hash) VALUES (?,?,?)');$s->execute([$u[0],$u[1],password_hash($u[2],PASSWORD_DEFAULT)]);}
  $s=$db->prepare('UPDATE auth_settings SET guest_enabled=1,guest_password_hash=? WHERE id=1');$s->execute([password_hash('guest-test',PASSWORD_DEFAULT)]);
  echo json_encode(['version'=>$db->server_info,'mode'=>$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0]]);
@@ -331,6 +331,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         await require('./vz2_timestamps.integration')({ request, clients, db, good, upload, check, login });
         await require('./vz2_history.integration')({ base, clients, request, good, upload, wav, db, check, browser: ['1', 'history'].includes(process.env.VZ2_TEST_BROWSER) });
         await require('./vz2_content.integration')({ request, clients, db, good, check, login });
+        await require('./vz2_rehearsal_starts.integration')({ request, clients, db, good, check });
         await require('./vz2_song_map.integration')({ request, clients, db, good, check });
         const marker=path.join(media,'.vz2-storage-id');fs.renameSync(marker,marker+'.held');
         check((await catalog('admin').then(()=>false,()=>true)), 'missing dataset marker stops catalog filesystem access');

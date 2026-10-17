@@ -13,8 +13,9 @@
     let ideasOpen = false, activeWorkspace = 'songs', fullscreenPanel = null, collectionKind = 'song';
     let ideaSection = read('ideas:section', 'write', value => ['write', 'draw', 'speak'].includes(value));
     const isCollection = () => ['songs', 'rehearsals'].includes(activeWorkspace);
-    const availableIds = () => collectionKind === 'rehearsal' ? ids.filter(id => id !== 'tablature') : ids;
-    const panelName = id => id === 'lyrics' && collectionKind === 'rehearsal' ? 'Zápis ze zkoušky' : names[id];
+    const availableIds = () => ids;
+    const panelName = id => collectionKind === 'rehearsal' && id === 'lyrics' ? 'Zápis ze zkoušky'
+        : collectionKind === 'rehearsal' && id === 'tablature' ? 'Začátky skladeb' : names[id];
     const surfaces = new Map([...document.querySelectorAll('[data-workspace]')].map(panel => [panel.dataset.workspace, panel]));
     const fullscreenHandlers = new WeakMap();
     function setPanelFullscreen(panel) {
@@ -65,9 +66,9 @@
             mobile: read('song:mobile', read('mobile', 'recordings', validId), validId)
         },
         rehearsal: {
-            desktop: read('rehearsal:desktop', ['recordings', 'lyrics', 'discussion'], a => validSet(a) && !a.includes('tablature')),
-            tablet: read('rehearsal:tablet', ['recordings', 'lyrics'], a => validSet(a) && a.length === 2 && !a.includes('tablature')),
-            mobile: read('rehearsal:mobile', 'recordings', id => validId(id) && id !== 'tablature')
+            desktop: read('rehearsal:desktop', ['recordings', 'lyrics', 'tablature', 'discussion'], validSet),
+            tablet: read('rehearsal:tablet', ['recordings', 'lyrics'], a => validSet(a) && a.length === 2),
+            mobile: read('rehearsal:mobile', 'recordings', validId)
         }
     };
     let state = states.song;
@@ -107,13 +108,23 @@
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current], collection = isCollection();
         $('panel-lyrics').setAttribute('aria-label', panelName('lyrics'));
         $('panel-lyrics').querySelector('.panel-header h2').textContent = panelName('lyrics');
+        $('panel-tablature').setAttribute('aria-label', panelName('tablature'));
+        $('panel-tablature').querySelector('.panel-header h2').textContent = panelName('tablature');
         updateFullscreenButton($('panel-lyrics'), fullscreenPanel === $('panel-lyrics'));
+        updateFullscreenButton($('panel-tablature'), fullscreenPanel === $('panel-tablature'));
         document.querySelectorAll('[data-desktop-panel="lyrics"], [data-mobile-panel="lyrics"]').forEach(control => {
             const label = collectionKind === 'rehearsal' ? 'Zápis' : 'Text';
             const text = control.querySelector('.section-button-label');
             if (text) text.textContent = label;
             control.setAttribute('aria-label', panelName('lyrics'));
             control.title = panelName('lyrics');
+        });
+        document.querySelectorAll('[data-desktop-panel="tablature"], [data-mobile-panel="tablature"]').forEach(control => {
+            const label = collectionKind === 'rehearsal' ? 'Začátky' : 'Mapa';
+            const text = control.querySelector('.section-button-label');
+            if (text) text.textContent = label;
+            control.setAttribute('aria-label', panelName('tablature'));
+            control.title = panelName('tablature');
         });
         document.querySelectorAll('.panel-header select option').forEach(option => {
             option.textContent = panelName(option.value);

@@ -12,9 +12,9 @@ try {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     if ($method === 'GET') {
         $action = $_GET['action'] ?? '';
-        if (!in_array($action,['document','history','discussion'],true)) throw new Vz2Error('Neznámé čtení.');
+        if (!in_array($action,['document','history','discussion','draft_from_starts'],true)) throw new Vz2Error('Neznámé čtení.');
         $db = vz2_db(); $db->begin_transaction(MYSQLI_TRANS_START_READ_ONLY | MYSQLI_TRANS_START_WITH_CONSISTENT_SNAPSHOT);
-        try { $result = $action === 'discussion' ? vz2_discussion_read($db,$_GET) : vz2_document_read($db,$_GET); $db->commit(); }
+        try { $result = $action === 'discussion' ? vz2_discussion_read($db,$_GET) : ($action === 'draft_from_starts' ? vz2_rehearsal_starts_draft($db,$_GET) : vz2_document_read($db,$_GET)); $db->commit(); }
         catch (Throwable $e) { $db->rollback(); throw $e; }
     } elseif ($method === 'POST') {
         $raw = file_get_contents('php://input',false,null,0,8*1048576+1);

@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    const titles = { lyrics_chords: 'Text a akordy', tablature: 'Tabulatura' };
+    const titles = { lyrics_chords: 'Text a akordy', tablature: 'Tabulatura', rehearsal_starts: 'Začátky skladeb' };
     const documentTitle = (collection, kind, title) => kind === 'lyrics_chords' && collection.kind === 'rehearsal' && (!title || title === titles[kind])
         ? 'Zápis ze zkoušky' : title || titles[kind];
     const make = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
@@ -69,7 +69,19 @@
         const save = make('button', 'Uložit novou verzi'), compare = button('Načíst aktuální verzi k porovnání', compareLatest);
         compare.hidden = true;
         const comparison = make('pre', '', 'content-preview'); comparison.hidden = true;
-        const controls = make('div', undefined, 'toolbar'); controls.append(save, compare);
+        const generate = kind === 'rehearsal_starts' ? button('Předvyplnit ze začátků skladeb', async () => {
+            if (body.value.trim() && !confirm('Nahradit obsah editoru návrhem z aktuálních značek? Uložená verze zůstane beze změny.')) return;
+            await busy(ctx, async () => {
+                const result = await api({ action: 'draft_from_starts', collection_id: collection.id });
+                if (!ctx.live()) return;
+                body.value = result.text; ctx.dirty = true;
+                ctx.status.textContent = 'Návrh je v editoru. Upravte ho a uložte jako novou verzi.';
+            });
+            if (ctx.live() && ctx.dirty) body.focus();
+        }) : null;
+        const controls = make('div', undefined, 'toolbar');
+        if (generate) controls.append(generate);
+        controls.append(save, compare);
         form.append(titleLabel, bodyLabel, controls);
         const history = make('section'), historyList = make('div'), preview = make('pre', '', 'content-preview'); preview.hidden = true;
         const restore = iconButton('Obnovit jako novou verzi', 'restore', restoreVersion); restore.hidden = true;
@@ -84,7 +96,9 @@
         }
         function assign(value) {
             state = value; title.value = documentTitle(collection, kind, value.document?.title); body.value = value.version?.body || '';
-            title.readOnly = body.readOnly = !value.can_edit; save.hidden = !value.can_edit; showHistory.hidden = !value.document;
+            title.readOnly = body.readOnly = !value.can_edit; save.hidden = !value.can_edit;
+            if (generate) generate.hidden = !value.can_edit;
+            showHistory.hidden = !value.document;
             ctx.dirty = false; compare.hidden = comparison.hidden = true; ctx.status.textContent = ''; showMeta();
         }
         function fields(action) { return { action, collection_id: Number(collection.id), kind, document_id: state.document?.id ?? null, current_revision: state.document?.current_revision ?? 0 }; }
@@ -208,16 +222,27 @@
         previewCollection = collection;
         const serial = ++previewSerial;
         const live = () => serial === previewSerial;
-        if (collection?.kind === 'song' || (!collection && document.body.dataset.collectionKind !== 'rehearsal')) window.Vz2SongMap.mount(collection);
+        const rehearsalPanel = collection?.kind === 'rehearsal' || (!collection && document.body.dataset.collectionKind === 'rehearsal');
+        document.getElementById('song-map-content').hidden = rehearsalPanel;
+        document.getElementById('tablature-actions').hidden = rehearsalPanel;
+        document.getElementById('rehearsal-starts-content').hidden = !rehearsalPanel;
+        document.getElementById('rehearsal-starts-actions').hidden = !rehearsalPanel;
+        if (!rehearsalPanel) window.Vz2SongMap.mount(collection);
+        if (rehearsalPanel) {
+            document.getElementById('rehearsal-starts-actions').replaceChildren();
+            document.getElementById('rehearsal-starts-content').replaceChildren(make('p', collection ? 'Načítám…' : 'Vyberte zkoušku.', 'muted'));
+        }
         const hosts = ['lyrics', 'discussion'].map(id => document.getElementById(id + '-content'));
         const actionHosts = ['lyrics', 'discussion'].map(id => document.getElementById(id + '-actions'));
         actionHosts.forEach(host => host.replaceChildren());
         hosts.forEach(host => host.replaceChildren(make('p', collection ? 'Načítám…' : 'Vyberte skladbu nebo zkoušku.', 'muted')));
         if (!collection) return;
-        [['lyrics_chords', hosts[0]]].forEach(async ([kind, host]) => {
+        const documents = [['lyrics_chords', hosts[0], actionHosts[0], 'lyrics']];
+        if (collection.kind === 'rehearsal') documents.push(['rehearsal_starts', document.getElementById('rehearsal-starts-content'), document.getElementById('rehearsal-starts-actions'), 'tablature']);
+        documents.forEach(async ([kind, host, actions, scrollKey]) => {
             const edit = button('Otevřít editor', () => openDocument(collection, kind));
             const content = make('pre', '', 'document-preview'), status = make('p', 'Načítám…', 'muted');
-            actionHosts[0].replaceChildren(edit);
+            actions.replaceChildren(edit);
             host.replaceChildren(status, content);
             async function load() {
                 try {
@@ -226,7 +251,7 @@
                     edit.textContent = result.can_edit ? 'Upravit / historie' : 'Otevřít / historie';
                     status.textContent = result.document ? documentTitle(collection, kind, result.document.title) + ' · verze ' + result.document.current_revision : 'Zatím bez dokumentu.';
                     content.textContent = result.version?.body || '';
-                    host.scrollTop = scroll.lyrics || 0;
+                    (scrollKey === 'tablature' ? host.parentElement : host).scrollTop = scroll[scrollKey] || 0;
                 } catch (e) { if (live()) { status.textContent = e.message; status.append(button('Zkusit znovu', load)); } }
             }
             await load();

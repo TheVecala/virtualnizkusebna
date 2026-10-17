@@ -401,7 +401,7 @@
     async function mount(collection) {
         if (current?.collection.id === collection?.id) return;
         const ticket = ++serial;
-        const host = document.getElementById('tablature-content'), actions = document.getElementById('tablature-actions');
+        const host = document.getElementById('song-map-content'), actions = document.getElementById('tablature-actions');
         current = null; host.replaceChildren(); actions.replaceChildren();
         if (!collection || collection.kind !== 'song') { host.append(make('p', collection ? 'Mapa skladby je dostupná u skladeb.' : 'Vyberte skladbu.', 'muted')); return; }
         const ctx = { collection, host, actions, draft: new Draft(), response: null, mode: 'map', editAction: 'select', selectionOpen: false, tool: null, copy: null, notice: '', busy: false }; current = ctx;

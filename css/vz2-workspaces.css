@@ -116,7 +116,6 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     #workspace-navigation > button { padding-inline: 10px; }
     #collection-header { display: none; }
     #sidebar > #desktop-panels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); order: 0; flex: 0 0 auto; gap: 5px; padding: 6px; margin: 0 0 10px; border: 1px solid #6b713d; border-radius: 7px; background: var(--vz-primary-soft); }
-    body[data-collection-kind=rehearsal] #sidebar > #desktop-panels { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     #sidebar > #desktop-panels button { display: grid; place-items: center; min-width: 0; min-height: 40px; padding: 0; }
     #sidebar > #desktop-panels button[aria-pressed=true] { color: #151708; background: var(--vz-primary); border-color: var(--vz-primary); }
     #sidebar > #catalog-heading { order: 1; }

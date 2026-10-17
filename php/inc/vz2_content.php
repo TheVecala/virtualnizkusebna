@@ -9,8 +9,12 @@ function vz2_content_right(string $right, ?int $owner = null): bool {
         && (auth_is_admin() || (ma_pravo($right) && ($owner === null || $owner === vz2_actor())));
 }
 function vz2_document_kind($kind): string {
-    if (!in_array($kind, ['lyrics_chords','tablature','song_map'], true)) throw new Vz2Error('Neplatný druh dokumentu.');
+    if (!in_array($kind, ['lyrics_chords','tablature','song_map','rehearsal_starts'], true)) throw new Vz2Error('Neplatný druh dokumentu.');
     return $kind;
+}
+function vz2_document_collection_kind(string $kind, array $collection): void {
+    if ($kind === 'song_map') vz2_song_map_collection($collection);
+    if ($kind === 'rehearsal_starts' && $collection['kind'] !== 'rehearsal') throw new Vz2Error('Přehled začátků patří pouze ke zkoušce.',422);
 }
 function vz2_content_dates(array $row): array {
     foreach (['created_at','updated_at','version_created_at'] as $key) if (isset($row[$key])) $row[$key] = str_replace(' ', 'T', $row[$key]).'Z';
@@ -20,10 +24,47 @@ function vz2_document_body($body): string {
     if (!is_string($body) || preg_match('//u', $body) !== 1 || trim($body) === '' || strlen($body) > 1048576) throw new Vz2Error('Dokument musí obsahovat text a může mít nejvýše 1 MiB v UTF-8.');
     return $body; // Preserve indentation, chords, tablature and trailing newlines.
 }
+function vz2_rehearsal_starts_draft(mysqli $db, array $in): array {
+    $collection = vz2_one($db, 'SELECT id,kind,lifecycle FROM vz2_collections WHERE id=?', [vz2_id($in['collection_id'] ?? null)]);
+    vz2_document_collection_kind('rehearsal_starts',$collection);
+    if ($collection['lifecycle'] !== 'active' || !vz2_content_right('edit_text')) throw new Vz2Error('Předvyplnění vyžaduje právo upravovat text.',403);
+    $recordings = vz2_rows($db, 'SELECT id,kind,title FROM vz2_recordings WHERE collection_id=? ORDER BY sort_order,id', [$collection['id']]);
+    $files = vz2_rows($db, 'SELECT f.recording_id,f.title,f.original_name,f.format FROM vz2_audio_files f JOIN vz2_recordings r ON r.id=f.recording_id WHERE r.collection_id=? ORDER BY r.sort_order,r.id,f.sort_order,f.id', [$collection['id']]);
+    $names = [];
+    $counts = [];
+    foreach ($files as $file) {
+        $id = (int)$file['recording_id'];
+        $counts[$id] = ($counts[$id] ?? 0) + 1;
+        if (isset($names[$id])) continue;
+        $name = $file['title'] ?: $file['original_name'];
+        $extension = $file['format'];
+        if ($extension !== '' && !str_ends_with(strtolower($name),'.'.strtolower($extension))) $name .= '.'.$extension;
+        $names[$id] = $name;
+    }
+    $starts = vz2_rows($db, "SELECT t.recording_id,t.time_ms,t.body FROM vz2_timestamps t JOIN vz2_recordings r ON r.id=t.recording_id WHERE r.collection_id=? AND t.kind='song_start' ORDER BY r.sort_order,r.id,t.time_ms,t.id", [$collection['id']]);
+    $byRecording = [];
+    foreach ($starts as $start) $byRecording[(int)$start['recording_id']][] = $start;
+    $sections = [];
+    foreach ($recordings as $index => $recording) {
+        $id = (int)$recording['id'];
+        $name = $names[$id] ?? ($recording['title'] ?: 'Nahrávka');
+        if ($recording['kind'] !== 'single' && ($counts[$id] ?? 0) > 1) $name .= ' +'.($counts[$id]-1);
+        $lines = ['Nahrávka '.($index+1).' — '.$name];
+        foreach ($byRecording[$id] ?? [] as $start) {
+            $label = preg_replace('/\s+/u',' ',trim($start['body']));
+            if ($label === '' || $label === '↑') $label = 'Začátek skladby';
+            $time = (int)$start['time_ms'];
+            $lines[] = sprintf('  %02d:%02d  %s',intdiv($time,60000),intdiv($time,1000)%60,$label);
+        }
+        if (count($lines) === 1) $lines[] = '  Žádné začátky skladeb.';
+        $sections[] = implode("\n",$lines);
+    }
+    return ['text'=>$sections ? implode("\n\n",$sections)."\n" : "Zatím žádné nahrávky.\n"];
+}
 function vz2_document_read(mysqli $db, array $in): array {
     $collection = vz2_one($db, 'SELECT id,title,kind,lifecycle FROM vz2_collections WHERE id=?', [vz2_id($in['collection_id'] ?? null)]);
     $kind = vz2_document_kind($in['kind'] ?? null);
-    if ($kind === 'song_map') vz2_song_map_collection($collection);
+    vz2_document_collection_kind($kind,$collection);
     $rows = vz2_rows($db, 'SELECT d.*,a.name author,a.active author_active,e.name editor,e.active editor_active FROM vz2_documents d JOIN users a ON a.id=d.created_by JOIN users e ON e.id=d.updated_by WHERE d.collection_id=? AND d.kind=?', [$collection['id'],$kind]);
     $result = ['collection_id'=>(int)$collection['id'], 'collection_title'=>$collection['title'], 'kind'=>$kind, 'can_edit'=>$collection['lifecycle']==='active' && vz2_content_right('edit_text'), 'document'=>null];
     if (!$rows) {
@@ -51,7 +92,7 @@ function vz2_document_write(array $in): array {
         vz2_permission('edit_text');
         $collection = vz2_collection($db, vz2_id($in['collection_id'] ?? null)); vz2_active($collection); vz2_idle($db,'collection',(int)$collection['id']);
         $kind = vz2_document_kind($in['kind'] ?? null);
-        if ($kind === 'song_map') vz2_song_map_collection($collection);
+        vz2_document_collection_kind($kind,$collection);
         $rows = vz2_rows($db, 'SELECT * FROM vz2_documents WHERE collection_id=? AND kind=? FOR UPDATE', [$collection['id'],$kind]);
         $doc = $rows[0] ?? null;
         $expected = $in['current_revision'] ?? null;

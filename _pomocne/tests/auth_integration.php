@@ -114,7 +114,7 @@ try {
     }
     $config .= 'function ma_pravo(string $p): bool { return in_array($p, ["admin"=>["edit_text","delete_val"],"muzikant"=>["edit_text"]][$_SESSION["role"] ?? ""] ?? [], true); } require_once __DIR__."/php/auth.php"; auth_refresh_session();';
     file_put_contents($temp . '/config.php', $config);
-    foreach (['002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql'] as $migration) {
+    foreach (['002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql','006_vz2_rehearsal_starts.sql'] as $migration) {
         $db->multi_query(file_get_contents($root . '/_pomocne/migrations/' . $migration));
         do { if ($result = $db->store_result()) $result->free(); } while ($db->more_results() && $db->next_result());
     }

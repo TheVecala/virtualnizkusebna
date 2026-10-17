@@ -52,7 +52,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const filename = ['old.jpg', 'active.jpg'].find(name => dialog.message().includes(name));
         await dialog.accept(filename);
     });
-    const savedMaps = new Map();
+    const savedMaps = new Map(), savedOverviews = new Map();
     await context.route('https://cdn.jsdelivr.net/**', r => r.abort());
     await context.route('http://vz2-workspaces.test/**', async route => {
         const url = new URL(route.request().url()), json = value => route.fulfill({ json: value });
@@ -103,6 +103,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         }
         if (url.pathname === '/php/ajax/vz2_content.php') {
             const query = route.request().method() === 'POST' ? route.request().postDataJSON() : Object.fromEntries(url.searchParams);
+            if (query.action === 'draft_from_starts') return json({ ok: true, text: 'Nahrávka 1 — zkouška.wav\n  00:05  Písnička\n' });
+            if (query.kind === 'rehearsal_starts') {
+                const key = String(query.collection_id);
+                if (query.action === 'document_save') {
+                    const previous = savedOverviews.get(key);
+                    savedOverviews.set(key, { body: query.body, revision: (previous?.revision || 0) + 1 });
+                }
+                const saved = savedOverviews.get(key);
+                return json({ ok: true, can_edit: true,
+                    document: saved ? { id: 8, title: 'Začátky skladeb', current_revision: saved.revision, author: 'Petr', editor: 'Petr', updated_at: '2026-10-17T10:00:00Z' } : null,
+                    version: saved ? { body: saved.body } : null });
+            }
             if (query.kind === 'song_map') {
                 if (query.action === 'document_save') savedMaps.set(String(query.collection_id), query.body);
                 const body = savedMaps.get(String(query.collection_id));
@@ -160,8 +172,21 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#tablature-content').getByRole('button', { name: 'Vytvořit mapu', exact: true }).click();
         await page.locator('.song-map-add-bar').click();
         await switchTo('rehearsals');
-        assert.equal(await page.locator('#panel-tablature').isVisible(), false);
+        assert.equal(await page.locator('#panel-tablature').isVisible(), true);
+        assert.equal(await page.locator('#panel-tablature h2').textContent(), 'Začátky skladeb');
         assert.equal(await page.locator('#panel-lyrics h2').textContent(), 'Zápis ze zkoušky');
+        await page.locator('#rehearsal-starts-content').getByText('Zatím bez dokumentu.', { exact: true }).waitFor();
+        await page.locator('#rehearsal-starts-actions button').click();
+        const overviewEditor = page.locator('.vz2-content-dialog');
+        await overviewEditor.getByRole('button', { name: 'Předvyplnit ze začátků skladeb', exact: true }).click();
+        assert.equal(savedOverviews.size, 0, 'Prefill does not save a version');
+        assert.equal(await overviewEditor.locator('[name=document_body]').inputValue(), 'Nahrávka 1 — zkouška.wav\n  00:05  Písnička\n');
+        await overviewEditor.locator('[name=document_body]').fill('Ručně upravený přehled');
+        await overviewEditor.getByRole('button', { name: 'Uložit novou verzi', exact: true }).click();
+        await overviewEditor.getByText('Nová verze uložena.', { exact: true }).waitFor();
+        assert.equal(savedOverviews.get('3').body, 'Ručně upravený přehled');
+        await overviewEditor.getByRole('button', { name: 'Zavřít', exact: true }).click();
+        await page.locator('#rehearsal-starts-content .document-preview').getByText('Ručně upravený přehled', { exact: true }).waitFor();
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 1. října' }).click();
         await switchTo('songs');
         assert.equal(await page.locator('.song-map-bar').count(), 1, 'A rehearsal switch keeps the unfinished song map');
