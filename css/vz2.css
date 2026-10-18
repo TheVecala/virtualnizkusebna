@@ -742,3 +742,26 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
     #player-shell[data-mode=mixer] #player-title-full { display: none; }
     #player-shell[data-mode=mixer] #player-title-mobile { display: inline; }
 }
+
+/* Keep desktop timestamp editing in the player surface so transport stays usable. */
+@media (min-width: 768px) {
+    .vz2-timestamp-editor.ts-docked[open] { position: relative; inset: auto; display: block; width: min(500px, 100%); max-height: none; margin: 8px 0 8px auto; overflow: visible; }
+    .vz2-timestamp-editor.ts-docked form { max-height: none; }
+    .recording-body > .vz2-timestamp-editor.ts-docked { margin-top: 8px; margin-bottom: 12px; }
+    #player-shell.ts-desktop-editing:not(.player-fullscreen) { max-height: min(calc(100dvh - 16px), 650px); }
+    #looper-timestamps.ts-editor-open, #mixer-timestamps.ts-editor-open { display: flex; flex-direction: column; gap: 8px; min-height: 205px; overflow: auto; }
+    #looper-timestamps.ts-editor-open.ts-editor-advanced, #mixer-timestamps.ts-editor-open.ts-editor-advanced { min-height: 260px; }
+    #looper-timestamps.ts-editor-open > .vz2-timestamps, #mixer-timestamps.ts-editor-open > .vz2-timestamps { order: 1; flex: 1 1 auto; min-width: 0; margin-top: 0; }
+    #looper-timestamps.ts-editor-open > .ts-docked, #mixer-timestamps.ts-editor-open > .ts-docked { order: 0; flex: 0 0 auto; align-self: flex-end; margin: 0; }
+    .ts-pair-inline { padding: 8px 14px 14px; }
+    .ts-pair-inline h2 { margin: 0 0 10px; font-size: 16px; }
+    .ts-pair-inline label { margin: 0 0 12px; }
+    .ts-pair-inline select { width: 100%; }
+    .ts-pair-inline .toolbar { justify-content: flex-end; }
+    .ts-pair-inline .ts-pair-save { background: var(--vz-primary-soft); border-color: var(--vz-primary); color: var(--vz-primary-hover); }
+}
+@media (min-width: 1100px) {
+    #looper-timestamps.ts-editor-open, #mixer-timestamps.ts-editor-open { display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, 500px); align-items: start; gap: 12px; overflow: auto; }
+    #looper-timestamps.ts-editor-open > .vz2-timestamps, #mixer-timestamps.ts-editor-open > .vz2-timestamps { grid-column: 1; grid-row: 1; max-height: 100%; overflow: auto; }
+    #looper-timestamps.ts-editor-open > .ts-docked, #mixer-timestamps.ts-editor-open > .ts-docked { grid-column: 2; grid-row: 1; align-self: start; width: 100%; max-height: 100%; }
+}
