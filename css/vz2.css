@@ -659,12 +659,18 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 .history-list-row>i{flex:0 0 20px;color:var(--vz-primary)}
 .history-list-text{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere;white-space:normal}
 .history-list-text strong{font-size:13px}
-.history-list-text small{font-size:11px;color:var(--vz-muted)}
-.history-list-counts{flex:0 0 auto;margin-left:auto;align-self:center;color:var(--vz-muted);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.history-list-text small{font-size:12px;color:var(--vz-muted)}
+.history-origin-badge{align-self:flex-start;padding:2px 7px;border:1px solid #55775e;border-radius:999px;background:#203529;color:#a9dfb7;font-size:11px;font-weight:700;line-height:1.2}
+.history-list-row[data-origin="interval"] .history-origin-badge,.history-origin-badge[data-origin="interval"]{border-color:#56718d;background:#202f40;color:#b2d4f8}
+.history-list-row[data-origin="standalone"] .history-origin-badge,.history-origin-badge[data-origin="standalone"]{border-color:#866c47;background:#3a2f22;color:#f0c88d}
+.history-list-row[data-origin="interval"]>i{color:#b2d4f8}
+.history-list-row[data-origin="standalone"]>i{color:#f0c88d}
 .history-source-group{padding:10px 0 2px}
 .history-source-title{margin:0 4px 4px;font-size:14px;line-height:1.35;overflow-wrap:anywhere}
-.history-source-clips{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--vz-primary)}
-.history-source-clips li:last-child{border-bottom:0}
+.history-source-clips,.history-direct-clips{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--vz-primary)}
+.history-direct-group{padding:10px 0 2px}
+.history-direct-clips{border-left-color:#b68b51}
+.history-source-clips li:last-child,.history-direct-clips li:last-child{border-bottom:0}
 .history-list-footer{margin-top:12px}
 .history-list-footer button{max-width:100%;white-space:normal}
 .history-list-empty{padding:12px 0;color:var(--vz-muted);font-size:12px}
@@ -681,6 +687,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--vz-prima
 .history-context-cross{margin:0 2px;color:var(--vz-muted)}
 #history-detail-title{margin:0;font-size:16px;font-weight:650;line-height:1.4}
 #history-detail .history-detail-body{display:grid;gap:10px;min-width:0}
+.history-detail-origin{justify-self:start}
 #history-detail .history-detail-card{overflow:hidden;padding:0;border:1px solid var(--vz-border);border-radius:6px;background:var(--vz-surface)}
 #history-detail .history-detail-card[open]{border-color:var(--vz-primary)}
 #history-detail .history-detail-card>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;list-style:none;font-size:15px;font-weight:650}

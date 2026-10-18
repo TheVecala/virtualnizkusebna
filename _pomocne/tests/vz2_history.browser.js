@@ -133,8 +133,17 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await page.locator('dialog[open]').count(), 0, 'Escape also dismisses the add/list flow');
         check(true, 'browser history: add header Back returns to list; close and Escape dismiss both dialogs');
         await addCandidate('i:' + source + ':' + start.id + ':' + end.id, 'c:' + directClip);
+        const intervalRow = list.locator('.history-list-row[data-origin="interval"]');
+        const directRow = list.locator('.history-list-row[data-origin="standalone"]');
+        assert.equal(await intervalRow.locator('.history-origin-badge').textContent(), 'Úsek bez výstřižku');
+        assert((await intervalRow.textContent()).includes('Čas zkoušky: 00:01–00:04'));
+        assert((await list.locator('.history-source-title').first().textContent()).includes('cela-zkouska.wav'));
+        assert.equal(await directRow.locator('.history-origin-badge').textContent(), 'Samostatný soubor');
+        assert((await directRow.textContent()).includes('Bez vazby na časový úsek zkoušky'));
+        assert((await directRow.textContent()).includes('samostatny-pokus.wav'));
         await openAttempt('Začátek pokusu');
         await detail.waitFor();
+        assert.equal(await detail.locator('.history-detail-origin').textContent(), 'Úsek bez výstřižku');
         assert.equal(await page.locator('#history-detail-title').textContent(), 'Začátek pokusu');
         assert.equal(await detail.locator('.history-detail-context').textContent(), 'zkouška: Historie – zkouška × skladba: Historie – skladba');
         assert.equal(await detail.locator('.history-start').count(), 0);
@@ -159,6 +168,10 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await detail.getByRole('button', { name: 'Připojit výstřižek', exact: true }).click();
         await detail.waitFor({ state: 'hidden' });
         await list.waitFor();
+        const linkedRow = list.locator('.history-list-row[data-origin="linked-clip"]');
+        assert.equal(await linkedRow.locator('.history-origin-badge').textContent(), 'Úsek + výstřižek');
+        assert((await linkedRow.textContent()).includes('Soubor: vystrizek.wav'));
+        assert.equal(await list.locator('.history-list-row[data-origin="standalone"]').count(), 1);
         await openAttempt('vystrizek.wav');
         assert.equal(await detail.locator('audio').count(), 2);
         await detail.locator('.history-detail-card').last().locator('summary').click();
@@ -207,6 +220,8 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         const bounds = await history.boundingBox();
         assert(bounds.x >= 0 && bounds.width <= 390, 'matrix stays within mobile viewport');
         await openAttempt('samostatny-pokus.wav');
+        assert.equal(await detail.locator('.history-detail-origin').textContent(), 'Samostatný soubor');
+        assert.equal(await detail.locator('.history-detail-card').first().locator('summary').textContent(), 'Samostatný soubor');
         assert.equal(await detail.locator('audio').count(), 1);
         assert.equal(await page.locator('#history-detail-title').textContent(), 'samostatny-pokus.wav', 'standalone clip uses its filename as the heading');
         await detail.getByRole('button', { name: 'Odebrat pokus z historie', exact: true }).click();
