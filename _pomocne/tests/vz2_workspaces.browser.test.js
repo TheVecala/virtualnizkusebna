@@ -48,7 +48,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     page.on('pageerror', e => errors.push(e.message));
     page.on('dialog', async dialog => {
         confirmations.push(dialog.message());
-        if (dialog.message().includes('odstranit položku') || dialog.message().includes('Odstranit soubory')) deletionDialogs.push(dialog.type());
+        if (dialog.message().includes('odstranit položku') || dialog.message().includes('Odstranit soubory') || dialog.message().includes('Úplně smazat nahrávku')) deletionDialogs.push(dialog.type());
         const filename = ['old.jpg', 'active.jpg'].find(name => dialog.message().includes(name));
         await dialog.accept(filename);
     });
@@ -733,12 +733,15 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.waitForFunction(() => !document.querySelector('.attachment-card'));
         recordings[2].can_remove = true;
         await page.reload(); await ready();
+        await page.evaluate(() => { window.VZ2.admin = false; });
         await page.locator('#recording-13 .recording-toggle').click();
         await page.locator('#recording-13 .recording-actions').getByRole('button', { name: 'Další' }).click();
         await page.locator('#recording-actions-13').getByRole('button', { name: 'Odstranit audio' }).click();
         await page.waitForFunction(() => document.querySelector('#recording-13 .recording-status')?.dataset.state === 'deleted');
         if (await page.locator('#recording-13 .recording-toggle').getAttribute('aria-expanded') === 'false') await page.locator('#recording-13 .recording-toggle').click();
         await page.locator('#recording-13 .recording-actions').getByRole('button', { name: 'Další' }).click();
+        assert.equal(await page.evaluate(() => window.VZ2.admin), false);
+        assert.equal(await page.locator('#recording-actions-13').getByRole('button', { name: 'Úplně smazat' }).count(), 1, 'Uploader sees full deletion after audio removal');
         await page.locator('#recording-actions-13').getByRole('button', { name: 'Úplně smazat' }).click();
         await page.waitForFunction(() => !document.querySelector('#recording-13'));
         assert.deepEqual(recordingDeletions, ['remove_audio', 'delete_recording']);

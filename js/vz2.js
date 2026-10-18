@@ -57,7 +57,7 @@
         };
         const fileNames = recording.files.map(fileName).join(', ');
         const file = section('recording-action-files', 'file-download', 'Soubor', fileNames || 'Soubor není dostupný.');
-        const danger = section('recording-action-danger', 'alert-triangle', 'Odstranění', 'Nevratné nebo destruktivní operace.');
+        const danger = section('recording-action-danger', 'alert-triangle', 'Odstranění', 'Audio lze odstranit se zachováním zápisu, nebo smazat celou nahrávku.');
         const footer = node('div', undefined, 'recording-action-footer');
         footer.append(button('Zavřít', () => dialog.close()));
         dialog.append(header, options, footer);
@@ -280,7 +280,9 @@
     }
     async function remove(item, type, full = false) {
         const removeItem = full || type === 'attachment';
-        const text = removeItem ? 'Úplně odstranit položku a všechny její informace?' : 'Odstranit soubory a zachovat informace?';
+        const text = full && type === 'recording'
+            ? 'Úplně smazat nahrávku včetně audia, popisku a časových značek? Tuto akci nelze vrátit.'
+            : removeItem ? 'Úplně odstranit položku a všechny její informace?' : 'Odstranit soubory a zachovat informace?';
         const name = type === 'recording' ? recordingName(item) : fileName(item);
         const confirmation = type === 'recording'
             ? (window.confirm(text + '\n' + name) ? (item.title || item.files?.[0]?.original_name || name) : null)
@@ -489,7 +491,7 @@
         if (files.childElementCount) body.append(files);
         moveControl(fileActions, r, 'recording');
         if (cfg.write && r.can_remove && r.audio_state !== 'deleted') dangerActions.append(button('Odstranit audio', () => remove(r, 'recording'), 'danger'));
-        if (cfg.write && cfg.admin) dangerActions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
+        if (cfg.write && r.can_remove) dangerActions.append(button('Úplně smazat', () => remove(r, 'recording', true), 'danger'));
         if (fileActions.childElementCount || dangerActions.childElementCount) {
             recordingMenu.finish(); actions.append(recordingMenu.toggle);
         }

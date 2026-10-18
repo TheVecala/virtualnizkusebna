@@ -62,7 +62,7 @@
 
       <section id="nahravky" class="help-section searchable">
         <div class="section-heading"><span class="section-icon"><i class="ti ti-music"></i></span><div><p>03</p><h2>Nahrávky</h2></div></div>
-        <div class="split-copy"><div><h3>Nahrání souboru</h3><p>U vybrané skladby nebo zkoušky zvolte <b>Vložit</b>, vyberte druh Běžná, Vícestopá nebo Příloha a soubory. Potvrďte tlačítkem <b>Nahrát</b>.</p></div><div><h3>Úpravy nahrávky</h3><p>Rozbalte kartu nahrávky. Její nabídka umožňuje podle vašich práv upravit popisek, přesunout záznam nebo odstranit audio se zachováním zápisu.</p></div></div>
+        <div class="split-copy"><div><h3>Nahrání souboru</h3><p>U vybrané skladby nebo zkoušky zvolte <b>Vložit</b>, vyberte druh Běžná, Vícestopá nebo Příloha a soubory. Potvrďte tlačítkem <b>Nahrát</b>.</p></div><div><h3>Úpravy nahrávky</h3><p>Rozbalte kartu nahrávky. Její nabídka umožňuje podle vašich práv upravit popisek, přesunout záznam, odstranit audio se zachováním zápisu nebo úplně smazat vlastní nahrávku. Nahrávku propojenou s historií lze odstranit jen se zachováním zápisu.</p></div></div>
       </section>
 
       <section id="looper" class="help-section searchable">

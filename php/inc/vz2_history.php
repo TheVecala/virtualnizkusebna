@@ -62,11 +62,11 @@ function vz2_history_write(array $in): array {
         $start=isset($in['start_timestamp_id']) && $in['start_timestamp_id']!==null?vz2_id($in['start_timestamp_id']):null;
         $end=isset($in['end_timestamp_id']) && $in['end_timestamp_id']!==null?vz2_id($in['end_timestamp_id']):null;
         $clip=isset($in['clip_recording_id']) && $in['clip_recording_id']!==null?vz2_id($in['clip_recording_id']):null;
-        if($action==='create' && $source){$r=vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$source]);if((int)$r['collection_id']!==(int)$rehearsal['id'])throw new Vz2Error('Zdroj při zařazení nepatří do vybrané zkoušky.');
+        if($action==='create' && $source){$r=vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$source]);vz2_active($r);if((int)$r['collection_id']!==(int)$rehearsal['id'])throw new Vz2Error('Zdroj při zařazení nepatří do vybrané zkoušky.');
             $a=vz2_one($db,'SELECT * FROM vz2_timestamps WHERE id=?',[$start]);$b=vz2_one($db,'SELECT * FROM vz2_timestamps WHERE id=?',[$end]);
             if((int)$a['recording_id']!==$source || (int)$b['recording_id']!==$source || $a['kind']!=='song_start' || $b['kind']!=='song_end' || (int)$b['paired_timestamp_id']!==$start || (int)$b['time_ms']<=(int)$a['time_ms'])throw new Vz2Error('Úsek není platná propojená dvojice.');
         }elseif($action==='create' && ($start || $end))throw new Vz2Error('Časy vyžadují zdrojovou nahrávku.');
-        if($clip){$cr=vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$clip]);if((int)$cr['collection_id']!==(int)$song['id'])throw new Vz2Error('Výstřižek nepatří do vybrané skladby.');}
+        if($clip){$cr=vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$clip]);vz2_active($cr);if((int)$cr['collection_id']!==(int)$song['id'])throw new Vz2Error('Výstřižek nepatří do vybrané skladby.');}
         if($action==='create' && !$source && !$clip)throw new Vz2Error('Vyberte kompletní úsek nebo výstřižek.');
         if($action==='create'){
             vz2_query($db,'INSERT INTO vz2_rehearsal_plays(rehearsal_collection_id,song_collection_id,rehearsal_title_snapshot,song_title_snapshot,source_recording_id,start_timestamp_id,end_timestamp_id,clip_recording_id,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())',[$rehearsal['id'],$song['id'],$rehearsal['title'],$song['title'],$source,$start,$end,$clip,vz2_actor(),vz2_actor()]);$id=(int)$db->insert_id;

@@ -167,8 +167,11 @@ function vz2_remove(array $in): array {
         $r=vz2_one($db,"SELECT * FROM $table WHERE id=? FOR UPDATE",[$id]);vz2_active($r);vz2_revision($r,$in['revision']??null);vz2_idle($db,$type,$id);
         if($type!=='collection')vz2_active(vz2_collection($db,(int)$r['collection_id']));
         $full=str_starts_with($action,'delete_');
-        if($full){if(!auth_is_admin())throw new Vz2Error('Úplné smazání smí provést jen admin.',403);}
-        else vz2_permission('delete_file',(int)$r['created_by']);
+        if($action==='delete_collection'){
+            if(!auth_is_admin())throw new Vz2Error('Úplné smazání celé skladby nebo zkoušky smí provést jen admin.',403);
+        }else vz2_permission('delete_file',(int)$r['created_by']);
+        if($action==='delete_recording' && vz2_rows($db,'SELECT id FROM vz2_rehearsal_plays WHERE source_recording_id=? OR clip_recording_id=? LIMIT 1',[$id,$id]))
+            throw new Vz2Error('Nahrávka je propojená s historií. Můžete odstranit audio a zachovat zápis.',409);
         $confirmTitle=$r['title'];
         if($confirmTitle==='' && $type==='recording')$confirmTitle=vz2_one($db,'SELECT original_name FROM vz2_audio_files WHERE recording_id=? ORDER BY sort_order,id LIMIT 1',[$id])['original_name'];
         if($confirmTitle==='' && $type==='attachment')$confirmTitle=$r['original_name'];
@@ -205,7 +208,7 @@ function vz2_run_operation(int $id): array {
     $db=vz2_db();$op=vz2_one($db,'SELECT * FROM vz2_file_operations WHERE id=?',[$id]);
     if(!auth_is_admin() && (int)$op['actor_id']!==vz2_actor())throw new Vz2Error('Cizí operace.',403);
     if($op['state']==='completed')return ['id'=>(int)$op['target_id'],'operation_id'=>$id,'completed'=>true];
-    if(str_starts_with($op['action'],'delete_') && !auth_is_admin())throw new Vz2Error('Úplné smazání smí dokončit jen admin.',403);
+    if($op['action']==='delete_collection' && !auth_is_admin())throw new Vz2Error('Úplné smazání celé skladby nebo zkoušky smí dokončit jen admin.',403);
     vz2_permission(str_starts_with($op['action'],'upload_')?'upload':'delete_file');
     $lock=fopen(vz2_path('.locks/'.$id.'.lock',true),'c');
     if(!$lock || !flock($lock,LOCK_EX|LOCK_NB)){if($lock)fclose($lock);throw new Vz2Error('Operace právě probíhá.',409);}

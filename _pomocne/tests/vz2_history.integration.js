@@ -44,6 +44,9 @@ module.exports = async function ({ base, clients, request, good, upload, wav, db
     assert.equal((await request(clients.admin, endpoint, create, { noCsrf: true })).status, 403);
     assert.equal((await request(clients.admin, endpoint, { ...create, rehearsal_collection_id: otherRehearsal.id })).status, 400);
     assert.equal((await request(clients.admin, endpoint, { ...create, clip_recording_id: foreignClip })).status, 400);
+    db("UPDATE vz2_recordings SET lifecycle='deleting' WHERE id=?", [source]);
+    try { assert.equal((await request(clients.admin, endpoint, create)).status, 409, 'a recording being deleted cannot gain a new history link'); }
+    finally { db("UPDATE vz2_recordings SET lifecycle='active' WHERE id=?", [source]); }
     check(true, 'history: existing paired intervals and clips are offered; login, permissions, CSRF and collection links are enforced');
     data = await save(create);
     let play = data.plays.find(p => p.source_recording_id === source);
@@ -103,6 +106,10 @@ module.exports = async function ({ base, clients, request, good, upload, wav, db
     await moveRecording(source, rehearsal.id);
     check(true, 'history: linked moves update the matching matrix side atomically, preserve files and reject cross-kind moves');
     const recording = db('SELECT * FROM vz2_recordings WHERE id=?', [source])[0];
+    const linkedFile = db('SELECT id,state FROM vz2_audio_files WHERE recording_id=?', [source])[0];
+    const blockedDelete = await request(clients.admin, 'php/ajax/vz2.php', { action: 'delete_recording', id: source, revision: recording.revision, confirm: recording.title, request_key: crypto.randomBytes(16).toString('hex') });
+    assert.equal(blockedDelete.status, 409, blockedDelete.text);
+    assert.equal(db('SELECT state FROM vz2_audio_files WHERE id=?', [linkedFile.id])[0].state, linkedFile.state, 'linked audio remains intact after rejected full deletion');
     await good('admin', { action: 'remove_audio', id: source, revision: recording.revision, confirm: recording.title, request_key: crypto.randomBytes(16).toString('hex') });
     data = await read();
     play = data.plays.find(p => p.source_recording_id === source);
