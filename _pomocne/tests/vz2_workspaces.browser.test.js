@@ -492,7 +492,14 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#collections .collection:visible').count(), 2);
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 8. října' }).click();
         assert.equal(await page.locator('#recording-11 .recording-title').textContent(), 'zkouška.wav');
-        assert.equal(await page.locator('#mobile-panels button:visible').count(), 3);
+        assert.equal(await page.locator('#mobile-panels button:visible').count(), 4);
+        for (const width of [390, 320]) {
+            await page.setViewportSize({ width, height: 844 });
+            const tabRows = await page.locator('#mobile-panels button:visible').evaluateAll(buttons =>
+                buttons.map(button => Math.round(button.getBoundingClientRect().top)));
+            assert.equal(new Set(tabRows).size, 1, `All rehearsal section tabs fit on one row at ${width} px`);
+        }
+        await page.setViewportSize({ width: 390, height: 844 });
         await page.locator('[data-mobile-panel=recordings]').click();
         assert(await page.locator('#recording-11 .recording-caption').isVisible(), 'The short caption is visible while the recording is collapsed');
         assert.equal(await page.locator('#recording-11 .recording-caption-text').textContent(), 'Celá zkouška');

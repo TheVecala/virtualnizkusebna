@@ -153,7 +153,6 @@ body:is([data-workspace=history], [data-workspace=ideas]) .layout { grid-templat
     .panel[data-panel] > .panel-header > .panel-header-actions > * { flex-shrink: 0; }
     .panel[data-panel] > .panel-header > .panel-fullscreen-button { margin-left: 0; }
     #mobile-panels:not([hidden]) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; width: 100%; padding: 0; border: 0; background: none; }
-    body[data-collection-kind=rehearsal] #mobile-panels:not([hidden]) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     #mobile-panels button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; height: 44px; min-height: 44px; padding: 3px 1px; border: 1px solid transparent; border-radius: 8px; background: none; }
     #mobile-panels button .section-icon { width: 22px; height: 22px; flex: 0 0 22px; }
     #mobile-panels button .section-button-label { position: static; width: auto; height: auto; margin: 0; overflow: hidden; clip: auto; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; line-height: 1.1; }
