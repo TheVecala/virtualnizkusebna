@@ -8,6 +8,7 @@ const root = path.resolve(__dirname, '../..');
 const php = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
 const config = { csrf: 'test', write: false, admin: false, canCreate: false, canUpload: false, canReorder: false, cachePrefix: 'boot-test:' };
 const html = php.slice(php.indexOf('<!doctype html>'))
+    .replace("<?php readfile(__DIR__ . '/css/themes.css'); ?>", fs.readFileSync(path.join(root, 'css/themes.css'), 'utf8'))
     .replace(/<\?=json_encode\(\$config,[\s\S]*?\?>/, JSON.stringify(config))
     .replace(/<\?[\s\S]*?\?>/g, '');
 const catalog = { ok: true, collections: [{ id: 1, title: 'Zkušební skladba', kind: 'song', lifecycle: 'active', author: 'Tester' }], recordings: [], attachments: [], operations: [], orders: [{ kind: 'song', revision: 1 }] };

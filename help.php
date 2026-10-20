@@ -6,6 +6,7 @@
   <meta name="description" content="Kompletní nápověda k aplikaci Virtuální zkušebna.">
   <title>Nápověda · Virtuální zkušebna</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/themes.css?v=<?= filemtime(__DIR__ . '/css/themes.css') ?>">
   <link rel="stylesheet" href="css/help.css?v=<?= filemtime(__DIR__ . '/css/help.css') ?>">
   <script src="js/help.js?v=<?= filemtime(__DIR__ . '/js/help.js') ?>" defer></script>
 </head>

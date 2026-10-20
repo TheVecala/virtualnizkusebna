@@ -9,6 +9,7 @@ const root = path.resolve(__dirname, '../..');
 const php = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
 const config = { csrf: 'test', write: true, admin: true, canCreate: true, canUpload: true, canReorder: true, cachePrefix: 'workspaces-test:' };
 const html = php.slice(php.indexOf('<!doctype html>'))
+    .replace("<?php readfile(__DIR__ . '/css/themes.css'); ?>", fs.readFileSync(path.join(root, 'css/themes.css'), 'utf8'))
     .replace(/<\?=json_encode\(\$config,[\s\S]*?\?>/, JSON.stringify(config)).replace(/<\?[\s\S]*?\?>/g, '');
 const wav = Buffer.alloc(44 + 8000 * 180 * 2);
 wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16);

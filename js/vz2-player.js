@@ -3,6 +3,17 @@
     const $ = id => document.getElementById(id), shell = $('player-shell'), body = $('player-body');
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, mixerVolumeBeforeMute = 1;
+    let waveColors;
+    function waveformColors() {
+        if (waveColors) return waveColors;
+        const styles = getComputedStyle(document.documentElement);
+        waveColors = {
+            idle: styles.getPropertyValue('--color-waveform-idle').trim(),
+            played: styles.getPropertyValue('--color-waveform-played').trim(),
+            playhead: styles.getPropertyValue('--color-waveform-playhead').trim()
+        };
+        return waveColors;
+    }
     const mixer = $('mixer-panel'); body.append(mixer);
     function fileName(file) {
         const name = file?.title || file?.display_name || file?.original_name || '';
@@ -258,9 +269,9 @@
         const regions = document.createDocumentFragment(), markers = document.createDocumentFragment();
         const entries = current.timestamps || [];
         const visuals = {
-            song_start: { icon: '♪', color: '#58c878', name: 'Začátek skladby' },
-            passage: { icon: '↔', color: '#f0a044', name: 'Pasáž' },
-            note: { icon: '●', color: '#59aaf5', name: 'Poznámka' }
+            song_start: { icon: '♪', name: 'Začátek skladby' },
+            passage: { icon: '↔', name: 'Pasáž' },
+            note: { icon: '●', name: 'Poznámka' }
         };
         if (durationMs > 0) entries.forEach(entry => {
             const start = Number(entry.time_ms);
@@ -279,7 +290,8 @@
             const marker = document.createElement('button'); marker.type = 'button';
             marker.className = 'looper-wave-marker' + (x > width - 155 ? ' is-end' : '');
             marker.dataset.timestampId = entry.id;
-            marker.style.left = x + 'px'; marker.style.setProperty('--marker-color', visual.color);
+            marker.dataset.kind = entry.kind;
+            marker.style.left = x + 'px';
             const description = visual.name + ': ' + entry.body + ' (' + window.Vz2Timestamps.format(ms) + ')';
             marker.title = description; marker.setAttribute('aria-label', description);
             const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
@@ -302,11 +314,12 @@
         const durationMs = Number.isFinite(looper.audio.duration) ? looper.audio.duration * 1000 : 0;
         if (looper.markersDirty || looper.markerWidth !== width || looper.markerDuration !== durationMs) renderWaveTimestamps(looper, width, durationMs);
         const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, width, height);
+        const colors = waveformColors();
         const peaks = looper.peaks;
         const x = (looper.audio.currentTime / (looper.audio.duration || 1)) * width;
         if (peaks) {
             for (const played of [false, true]) {
-                ctx.strokeStyle = played ? '#c4cf24' : '#aeb3b7'; ctx.beginPath();
+                ctx.strokeStyle = played ? colors.played : colors.idle; ctx.beginPath();
                 for (let i = 0; i < peaks.length; i++) {
                     const px = i / peaks.length * width;
                     if ((px <= x) !== played) continue;
@@ -316,7 +329,7 @@
                 ctx.stroke();
             }
         }
-        ctx.strokeStyle = '#e2e4e1'; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+        ctx.strokeStyle = colors.playhead; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
     }
     shell.addEventListener('click', e => {
         if (mode !== 'empty') return;

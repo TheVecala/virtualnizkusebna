@@ -1,0 +1,148 @@
+/* Zkušebna 2.0: semantic colors shared by the app, login, help and admin pages. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Brand and titles */
+  --color-primary: #A8B879;
+  --color-primary-hover: #C2D19A;
+  --color-primary-bg: #35402D;
+  --color-primary-text: #C2D19A;
+  --color-on-primary: #20271D;
+  --color-song-title: #E2C477;
+  --color-rehearsal-title: #9FC4A3;
+  --color-recording-title: #D5DCC2;
+
+  /* Page, panels and copy */
+  --color-background: #1B201D;
+  --color-shell: #222823;
+  --color-panel: #292F2B;
+  --color-surface: #303831;
+  --color-surface-expanded: #354036;
+  --color-text: #E7EBE1;
+  --color-text-secondary: #CDD5C9;
+  --color-text-muted: #ABB6A7;
+  --color-border: #4B584D;
+  --color-border-strong: #687868;
+  --color-divider: #414D43;
+  --color-content-border: #667463;
+  --color-player-border: #617568;
+  --color-content-preview-bg: #242C26;
+  --color-content-preview-border: #687868;
+  --color-navigation-border: #758469;
+  --color-surface-highlight: #FFFFFF0A;
+  --color-shadow-faint: #0002;
+  --color-shadow-soft: #0003;
+  --color-shadow-medium: #0006;
+  --color-shadow-strong: #0009;
+  --color-shadow-deep: #000B;
+  --color-overlay: #000A;
+  --color-overlay-light: #0005;
+
+  /* Links, controls and focus */
+  --color-link: #C2D19A;
+  --color-link-hover: #D5E0B4;
+  --color-icon: #A8B879;
+  --color-focus: #D1DDAA;
+  --color-control-bg: #303831;
+  --color-control-text: #E7EBE1;
+  --color-control-border: #586559;
+  --color-control-hover-border: #C2D19A;
+  --color-control-selected-bg: #35402D;
+  --color-control-selected-text: #C2D19A;
+  --color-control-selected-border: #A8B879;
+  --color-control-disabled-text: #879386;
+  --color-dropdown-bg: #252D27;
+  --color-dropdown-hover-bg: #35402D;
+  --color-dropdown-border: #586559;
+
+  /* Messages and actions */
+  --color-success: #A7CBAA;
+  --color-success-bg: #293C2E;
+  --color-success-border: #719777;
+  --color-danger: #ECA19A;
+  --color-danger-bg: #402D2D;
+  --color-danger-border: #BD7774;
+  --color-warning: #E0C483;
+  --color-warning-bg: #403828;
+  --color-warning-border: #AD925E;
+  --color-info: #A9C7CF;
+  --color-info-bg: #293A3D;
+  --color-info-border: #7598A0;
+  --color-action-accent: #C3A8C6;
+  --color-action-bg: #3B3040;
+  --color-export-accent: #A9C9CD;
+  --color-export-bg: #293D40;
+
+  /* Dialogs and the first paint */
+  --color-dialog-bg: #292F2B;
+  --color-dialog-text: #E7EBE1;
+  --color-dialog-border: #687868;
+  --color-boot-bg: #1B201D;
+  --color-boot-text: #E7EBE1;
+  --color-login-input-bg: #292F2B;
+
+  /* Looper, waveform and timestamp kinds */
+  --color-player-bg: #292F2B;
+  --color-player-header-bg: #303831;
+  --color-player-header-border: #4B584D;
+  --color-player-title: #CDD5C9;
+  --color-waveform-bg: #1B201D;
+  --color-waveform-idle: #ABB6A7;
+  --color-waveform-played: #A8B879;
+  --color-waveform-playhead: #E7EBE1;
+  --color-waveform-region: #E2C47722;
+  --color-waveform-label-bg: #202823E8;
+  --color-waveform-label-text: #F0F2E9;
+  --color-waveform-control-bg: #202823E8;
+  --color-waveform-control-border: #9DAB98;
+  --color-waveform-control-text: #F0F2E9;
+  --color-timestamp-bg: #252D27;
+  --color-timestamp-linked-bg: #2D4031;
+  --color-timestamp-song-start: #9FC4A3;
+  --color-timestamp-passage: #E2C477;
+  --color-timestamp-note: #A9C7CF;
+  --color-timestamp-editor-border: #83936B;
+  --color-timestamp-editor-ring: #A8B87940;
+  --color-source-offline: #A7CBAA;
+  --color-source-offline-bg: #2F4A36;
+  --color-source-web: #E0B1A4;
+  --color-source-web-bg: #4A3632;
+
+  /* Mixer */
+  --color-mixer-notice-bg: #2C3B2E;
+  --color-mixer-warning-bg: #403828;
+  --color-mixer-error-bg: #402D2D;
+  --color-mixer-master-bg: #354036;
+  --color-mixer-mute-bg: #A65D5B;
+  --color-mixer-mute-text: #FFFFFF;
+  --color-mixer-fader-track: #1E2620;
+  --color-mixer-fader-top: #E1E6DB;
+  --color-mixer-fader-bottom: #9EAA9D;
+  --color-mixer-fader-border: #1B201D;
+
+  /* History, recordings and supporting pages */
+  --color-recording-border: #61735D;
+  --color-recording-deleted: #D99C95;
+  --color-history-row-hover: #354036;
+  --color-history-origin-source: #A7CBAA;
+  --color-history-origin-source-bg: #293C2E;
+  --color-history-origin-source-border: #719777;
+  --color-history-origin-interval: #A9C7CF;
+  --color-history-origin-interval-bg: #293A3D;
+  --color-history-origin-interval-border: #7598A0;
+  --color-history-origin-standalone: #E0C483;
+  --color-history-origin-standalone-bg: #403828;
+  --color-history-origin-standalone-border: #AD925E;
+  --color-help-header-bg: #222823F0;
+  --color-help-search-bg: #E7EBE1;
+  --color-help-search-text: #354036;
+  --color-help-key-bg: #DDE4D8;
+  --color-help-key-border: #B9C7B7;
+  --color-help-callout-bg: #2C3B2E;
+  --color-help-demo-bg: #1E2620;
+  --color-help-support-text: #20271D;
+  --color-help-support-eyebrow: #344223;
+  --color-help-support-link-bg: #20271D;
+  --color-help-support-link-text: #E7EBE1;
+}

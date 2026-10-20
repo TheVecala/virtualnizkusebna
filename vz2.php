@@ -23,30 +23,31 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
 <!doctype html>
 <html lang="cs" class="vz2-booting"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zkušebna DK!</title>
+<style><?php readfile(__DIR__ . '/css/themes.css'); ?></style>
 <!-- Critical startup UI stays inline: it must paint before external CSS and JS arrive. -->
 <style>
-html.vz2-booting { background: #111416; }
+html.vz2-booting { background: var(--color-boot-bg); }
 html.vz2-booting body { margin: 0; overflow: hidden; }
 html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
-#vz2-boot { position: fixed; inset: 0; z-index: 100000; box-sizing: border-box; padding: max(28px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: #111416; color: #e9ebe6; font: 14px/1.6 system-ui, sans-serif; overflow: auto; transition: opacity .16s ease; }
+#vz2-boot { position: fixed; inset: 0; z-index: 100000; box-sizing: border-box; padding: max(28px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: var(--color-boot-bg); color: var(--color-boot-text); font: 14px/1.6 system-ui, sans-serif; overflow: auto; transition: opacity .16s ease; }
 #vz2-boot [hidden] { display: none !important; }
 #vz2-boot-inner { display: flex; flex-direction: column; width: min(100%, 420px); height: 100%; min-height: 360px; max-height: 720px; margin: auto; }
-#vz2-boot-brand { display: flex; align-items: center; gap: 10px; color: #a2a8aa; font-size: 11px; font-weight: 650; letter-spacing: .12em; }
-#vz2-boot-brand b { color: #b5bb51; font-size: 13px; letter-spacing: .03em; }
-#vz2-boot-brand span { border-left: 1px solid #42484b; padding-left: 10px; }
+#vz2-boot-brand { display: flex; align-items: center; gap: 10px; color: var(--color-text-muted); font-size: 11px; font-weight: 650; letter-spacing: .12em; }
+#vz2-boot-brand b { color: var(--color-primary); font-size: 13px; letter-spacing: .03em; }
+#vz2-boot-brand span { border-left: 1px solid var(--color-divider); padding-left: 10px; }
 #vz2-boot-center { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 30px 0; text-align: center; }
-#vz2-boot-title { margin: 0; color: #e9ebe6; font: 700 clamp(36px, 10vw, 54px)/1.12 system-ui, sans-serif; letter-spacing: -.045em; }
-#vz2-boot-title span { color: #b5bb51; }
-#vz2-boot-subtitle { margin: 20px 0 0; color: #a2a8aa; font: 14px/1.7 system-ui, sans-serif; }
+#vz2-boot-title { margin: 0; color: var(--color-boot-text); font: 700 clamp(36px, 10vw, 54px)/1.12 system-ui, sans-serif; letter-spacing: -.045em; }
+#vz2-boot-title span { color: var(--color-primary); }
+#vz2-boot-subtitle { margin: 20px 0 0; color: var(--color-text-muted); font: 14px/1.7 system-ui, sans-serif; }
 #vz2-boot-wave { display: flex; align-items: center; gap: 6px; height: 52px; margin-bottom: 29px; }
-#vz2-boot-wave span { width: 5px; height: 12px; border-radius: 4px; background: #b5bb51; animation: vz2-boot-pulse 1.8s ease-in-out infinite; animation-delay: -.6s; }
+#vz2-boot-wave span { width: 5px; height: 12px; border-radius: 4px; background: var(--color-primary); animation: vz2-boot-pulse 1.8s ease-in-out infinite; animation-delay: -.6s; }
 #vz2-boot-wave span:nth-child(2), #vz2-boot-wave span:nth-child(6) { height: 24px; animation-delay: -.4s; }
 #vz2-boot-wave span:nth-child(3), #vz2-boot-wave span:nth-child(5) { height: 38px; animation-delay: -.2s; }
 #vz2-boot-wave span:nth-child(4) { height: 50px; animation-delay: 0s; }
 #vz2-boot-footer { min-height: 44px; text-align: center; }
-#vz2-boot-status { margin: 0; color: #a2a8aa; font: 12px/1.65 system-ui, sans-serif; }
-#vz2-boot-retry { margin-top: 14px; min-height: 44px; padding: 8px 18px; border: 1px solid #b5bb51; border-radius: 5px; background: #272b14; color: #e9ebe6; font: 14px/1.5 system-ui, sans-serif; cursor: pointer; }
-#vz2-boot-retry:focus-visible { outline: 2px solid #b5bb51; outline-offset: 4px; }
+#vz2-boot-status { margin: 0; color: var(--color-text-muted); font: 12px/1.65 system-ui, sans-serif; }
+#vz2-boot-retry { margin-top: 14px; min-height: 44px; padding: 8px 18px; border: 1px solid var(--color-primary); border-radius: 5px; background: var(--color-primary-bg); color: var(--color-boot-text); font: 14px/1.5 system-ui, sans-serif; cursor: pointer; }
+#vz2-boot-retry:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 #vz2-boot.is-leaving { opacity: 0; pointer-events: none; }
 #vz2-boot.is-failed #vz2-boot-wave span { animation: none; opacity: .5; }
 @keyframes vz2-boot-pulse { 0%, 100% { transform: scaleY(.55); opacity: .6; } 50% { transform: scaleY(1); opacity: 1; } }
@@ -109,7 +110,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
     window.Vz2Boot = { ready() { ready = true; reveal(); }, fail };
 }());
 </script>
-<link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/multitrack.css"><link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/vz2.css?v=<?=filemtime(__DIR__.'/css/vz2.css')?>">
+<link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/multitrack.css?v=<?=filemtime(__DIR__.'/css/multitrack.css')?>"><link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/vz2.css?v=<?=filemtime(__DIR__.'/css/vz2.css')?>">
 <link rel="stylesheet" data-vz2-icons media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <link rel="stylesheet" data-vz2-style media="print" href="css/vz2-workspaces.css?v=<?=filemtime(__DIR__.'/css/vz2-workspaces.css')?>">
 </head><body>

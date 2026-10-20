@@ -23,7 +23,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
         for (const width of [320, 390, 767, 960, 1440]) {
             await page.evaluate(() => localStorage.removeItem('vz2-timestamp-add-view'));
             await page.setViewportSize({ width, height: 844 });
-            await page.setContent(`<style>${fs.readFileSync(path.join(root, 'css/vz2.css'), 'utf8')}</style>${markup}<div>Obsah aplikace</div>`);
+            await page.setContent(`<style>${fs.readFileSync(path.join(root, 'css/themes.css'), 'utf8')}${fs.readFileSync(path.join(root, 'css/vz2.css'), 'utf8')}</style>${markup}<div>Obsah aplikace</div>`);
             await page.evaluate(value => {
                 window.VZ2 = { cachePrefix: 'test-', csrf: 'test' };
                 window.timestampWrites = [];
