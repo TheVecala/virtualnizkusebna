@@ -6,8 +6,10 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../..');
 const php = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
+const theme = process.env.VZ2_TEST_THEME === 'light' ? 'light' : 'dark';
 const config = { csrf: 'test', write: false, admin: false, canCreate: false, canUpload: false, canReorder: false, cachePrefix: 'boot-test:' };
 const html = php.slice(php.indexOf('<!doctype html>'))
+    .replace('<?= site_theme() ?>', theme)
     .replace("<?php readfile(__DIR__ . '/css/themes.css'); ?>", fs.readFileSync(path.join(root, 'css/themes.css'), 'utf8'))
     .replace(/<\?=json_encode\(\$config,[\s\S]*?\?>/, JSON.stringify(config))
     .replace(/<\?[\s\S]*?\?>/g, '');
@@ -72,6 +74,9 @@ function gate() { let release; const promise = new Promise(resolve => { release 
         try {
             await open(first);
             await first.page.locator('#vz2-boot-title').waitFor();
+            assert.equal(await first.page.locator('html').getAttribute('data-theme'), theme);
+            assert.equal(await first.page.locator('#vz2-boot').evaluate(node => getComputedStyle(node).backgroundColor),
+                theme === 'light' ? 'rgb(243, 242, 233)' : 'rgb(27, 32, 29)');
             assert.equal(await first.page.locator('#vz2-boot-subtitle').textContent(), 'Už to najíždí.....');
             assert.equal(await first.page.locator('#topbar').isVisible(), false);
             await first.page.waitForFunction(() => performance.getEntriesByName('first-contentful-paint').length > 0);
@@ -89,11 +94,13 @@ function gate() { let release; const promise = new Promise(resolve => { release 
             assert(await first.page.locator('#topbar').isVisible());
             assert.equal(await first.page.locator('#app-shell').getAttribute('aria-busy'), null);
             assert.equal(await first.page.locator('#content-area > .panel:visible').count(), 3);
+            if (process.env.BOOT_SCREENSHOT_DIR) await first.page.screenshot({ path: path.join(process.env.BOOT_SCREENSHOT_DIR, `app-${theme}-1440.png`) });
             await first.page.setViewportSize({ width: 390, height: 844 });
             await first.page.waitForFunction(() => document.body.dataset.layout === 'mobile');
             assert.equal(await first.page.locator('#content-area > .panel:visible').count(), 1);
             await first.page.locator('[data-mobile-panel="lyrics"]').click();
             assert(await first.page.locator('#panel-lyrics').isVisible());
+            if (process.env.BOOT_SCREENSHOT_DIR) await first.page.screenshot({ path: path.join(process.env.BOOT_SCREENSHOT_DIR, `app-${theme}-390.png`) });
             assert.equal(await first.page.locator('#vz2-boot').count(), 0);
             assert.deepEqual(first.errors, []);
             console.log('PASS: splash paints with all CSS/JS blocked; 320–1440px; reveals only after CSS and catalogue');

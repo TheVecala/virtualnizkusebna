@@ -1,5 +1,6 @@
+<?php require_once __DIR__ . '/config.theme.php'; ?>
 <!doctype html>
-<html lang="cs">
+<html lang="cs" data-theme="<?= site_theme() ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">

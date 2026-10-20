@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../..');
+const theme = process.env.VZ2_TEST_THEME === 'light' ? 'light' : 'dark';
 const source = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
 const markup = source.slice(source.indexOf('<section id="player-shell"'), source.indexOf('<div id="content-area">'))
     .replace('data-mode="empty"', 'data-mode="looper"').replaceAll(' hidden', '');
@@ -24,6 +25,9 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
             await page.evaluate(() => localStorage.removeItem('vz2-timestamp-add-view'));
             await page.setViewportSize({ width, height: 844 });
             await page.setContent(`<style>${fs.readFileSync(path.join(root, 'css/themes.css'), 'utf8')}${fs.readFileSync(path.join(root, 'css/vz2.css'), 'utf8')}</style>${markup}<div>Obsah aplikace</div>`);
+            await page.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
+            assert.equal(await page.locator('#player-shell').evaluate(node => getComputedStyle(node).getPropertyValue('--color-player-bg').trim()),
+                theme === 'light' ? '#FFFFFF' : '#292F2B');
             await page.evaluate(value => {
                 window.VZ2 = { cachePrefix: 'test-', csrf: 'test' };
                 window.timestampWrites = [];

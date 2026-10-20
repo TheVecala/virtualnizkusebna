@@ -21,7 +21,7 @@ $config=['csrf'=>auth_csrf_token(),'write'=>$write,'admin'=>auth_is_admin(),'can
     'cachePrefix'=>'vz2:'.VZ2_DATASET_KEY.':'.VZ2_ENVIRONMENT.':'];
 ?>
 <!doctype html>
-<html lang="cs" class="vz2-booting"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="cs" data-theme="<?= site_theme() ?>" class="vz2-booting"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zkušebna DK!</title>
 <style><?php readfile(__DIR__ . '/css/themes.css'); ?></style>
 <!-- Critical startup UI stays inline: it must paint before external CSS and JS arrive. -->

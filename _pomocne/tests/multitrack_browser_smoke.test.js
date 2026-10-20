@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const theme = process.env.VZ2_TEST_THEME === 'light' ? 'light' : 'dark';
 let chromium;
 try {
     ({ chromium } = require('playwright'));
@@ -180,6 +181,9 @@ const audio = {
         });
 
         await page.setContent(html);
+        await page.addStyleTag({ content: fs.readFileSync(path.resolve(__dirname, '..', '..', 'css', 'themes.css'), 'utf8')
+            + fs.readFileSync(path.resolve(__dirname, '..', '..', 'css', 'multitrack.css'), 'utf8') });
+        await page.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
         await page.addScriptTag({ path: path.resolve(__dirname, '..', '..', 'js', 'multitrack.js') });
         await page.evaluate(async () => { await window.MultitrackApp.refreshList(); window.MultitrackApp.load('set-a'); });
         await page.waitForFunction(() => window.MultitrackApp.getState()?.phase === 'ready');
@@ -188,6 +192,8 @@ const audio = {
         assert.equal(state.tracks.length, 2);
         assert.deepEqual(state.tracks.map(track => track.sampleRate), [44100, 44100]);
         assert.equal(await page.locator('.mt-channel').count(), 2);
+        assert.equal(await page.locator('.mt-channel').first().evaluate(node => getComputedStyle(node).backgroundColor),
+            theme === 'light' ? 'rgb(248, 249, 244)' : 'rgb(48, 56, 49)');
         assert.match(await page.locator('#mt-notice').textContent(), /délky stop nejsou stejné/i);
         assert.equal(maximumConcurrentAudioRequests, 1, 'Síťové stahování stop musí být sekvenční.');
 

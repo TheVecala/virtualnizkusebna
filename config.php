@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/config.theme.php';
 // ── Databáze ──
 define('DB_HOST', 'localhost');
 define('DB_USER', 'hanakdusan');

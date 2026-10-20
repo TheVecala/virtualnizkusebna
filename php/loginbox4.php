@@ -28,7 +28,7 @@ $login_error = $login_unavailable ? 'Přihlášení nyní není dostupné. Zkust
     : ($wrong_password ? 'Špatné přístupové heslo!' : '');
 ?>
 <!doctype html>
-<html lang="cs">
+<html lang="cs" data-theme="<?= site_theme() ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
