@@ -80,20 +80,29 @@
             if (ctx.response?.can_edit) ctx.host.append(button('Vytvořit mapu', () => { draft.create(); ctx.mode = 'edit'; ctx.editAction = 'select'; ctx.selectionOpen = false; render(ctx); }));
             return;
         }
-        const modeRow = make('div', undefined, 'song-map-mode-row');
-        const modes = make('div', undefined, 'song-map-modes'); modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', 'Režim Mapy');
-        [['map','MAPA'],['edit','UPRAVIT'],['listen','ZÁPIS POSLECHEM']].forEach(([mode, title]) => {
-            if (mode !== 'map' && !ctx.response.can_edit) return;
-            const control = button(title, () => { ctx.mode = mode; ctx.tool = null; ctx.copy = null; ctx.editAction = 'select'; ctx.selectionOpen = false; render(ctx); });
-            control.setAttribute('aria-pressed', String(ctx.mode === mode)); modes.append(control);
-        });
-        modeRow.append(modes);
-        if (ctx.mode !== 'map') {
-            const undo = button('↶ Zpět', () => { draft.undo(); ctx.copy = null; ctx.selectionOpen = false; ctx.scrollToEnd = ctx.mode === 'listen'; render(ctx); }, 'song-map-undo');
-            undo.disabled = !draft.history.length; modeRow.append(undo);
-        }
-        controls.append(modeRow);
-        ctx.actions.append(make('span', draft.dirty ? 'Neuloženo' : 'Uloženo', 'song-map-save-state'));
+        const modeRow = compact => {
+            const row = make('div', undefined, compact ? 'song-map-mode-row song-map-mode-row-mobile' : 'song-map-mode-row');
+            const modes = make('div', undefined, 'song-map-modes'); modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', 'Režim Mapy');
+            [['map','MAPA'],['edit','UPRAVIT'],['listen','ZÁPIS POSLECHEM']].forEach(([mode, title]) => {
+                if (mode !== 'map' && !ctx.response.can_edit) return;
+                const control = button(compact && mode === 'listen' ? 'POSLECH' : title, () => { ctx.mode = mode; ctx.tool = null; ctx.copy = null; ctx.editAction = 'select'; ctx.selectionOpen = false; render(ctx); });
+                if (compact) { control.setAttribute('aria-label', title); control.title = title; }
+                control.setAttribute('aria-pressed', String(ctx.mode === mode)); modes.append(control);
+            });
+            row.append(modes);
+            if (ctx.mode !== 'map') {
+                const undo = button(compact ? '↶' : '↶ Zpět', () => { draft.undo(); ctx.copy = null; ctx.selectionOpen = false; ctx.scrollToEnd = ctx.mode === 'listen'; render(ctx); }, 'song-map-undo');
+                if (compact) { undo.setAttribute('aria-label', 'Zpět'); undo.title = 'Zpět'; }
+                undo.disabled = !draft.history.length; row.append(undo);
+            }
+            return row;
+        };
+        controls.append(modeRow(false));
+        ctx.actions.append(modeRow(true));
+        const saveState = make('span', draft.dirty ? 'Neuloženo' : 'Uloženo', 'song-map-save-state');
+        saveState.dataset.dirty = String(draft.dirty); saveState.title = saveState.textContent;
+        saveState.setAttribute('aria-label', saveState.textContent);
+        ctx.actions.append(saveState);
         if (!ctx.preview) {
             if (ctx.response.can_edit) { const save = button('Uložit', () => saveMap(ctx)); save.disabled = !draft.dirty || ctx.busy; ctx.actions.append(save); }
             if (ctx.response.document) ctx.actions.append(button('Historie', () => history(ctx)));
@@ -105,6 +114,7 @@
             tools.append(make('span', 'Vyberte cílové takty (' + ctx.copy.targets.size + ')'), button('Použít detail na vybrané takty', () => applyCopy(ctx)), button('Ukončit kopírování', () => { ctx.copy = null; render(ctx); }));
             controls.append(tools);
         }
+        controls.classList.toggle('song-map-controls-only-modes', controls.childElementCount === 1);
         const scroll = make('div', undefined, 'song-map-scroll');
         const view = make('div', undefined, 'song-map'); view.dataset.mode = ctx.mode;
         let number = 0;
