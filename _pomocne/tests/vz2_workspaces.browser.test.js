@@ -28,10 +28,10 @@ const links = [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, sourc
     { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: null, clip_recording_id: 13, start_ms: null, end_ms: null }];
 const catalog = { ok: true, collections, recordings, recording_links: links, attachments: [], operations: [], orders: [{ kind: "song", revision: 1 }, { kind: "rehearsal", revision: 1 }] };
 const matrix = { ok: true, songs: collections.slice(0, 2), rehearsals: collections.slice(2), can_edit: true, plays: [
-    { id: 3, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 15000, end_ms: 20000, start_body: 'Další pokus', notes: [] },
-    { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [{ time_ms: 6000, body: 'Poznámka' }], can_edit: true },
-    { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip: recordings[2] },
-    { id: 4, song_collection_id: 2, rehearsal_collection_id: 3, song_title: 'Poslední vlak', rehearsal_title: 'Zkouška 8. října', source: recordings[0], clip: recordings[2], clip_recording_id: 13, start_ms: 20000, end_ms: 30000, start_body: 'Připojený výstřižek', notes: [] },
+    { id: 3, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source_recording_id: 11, source: recordings[0], start_ms: 15000, end_ms: 20000, start_body: 'Další pokus', notes: [] },
+    { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 8. října', source_recording_id: 11, source: recordings[0], start_ms: 5000, end_ms: 10000, start_body: 'Začátek skladby', notes: [{ time_ms: 6000, body: 'Poznámka' }], can_edit: true },
+    { id: 2, song_collection_id: 1, rehearsal_collection_id: 3, clip_recording_id: 13, clip: recordings[2] },
+    { id: 4, song_collection_id: 2, rehearsal_collection_id: 3, song_title: 'Poslední vlak', rehearsal_title: 'Zkouška 8. října', source_recording_id: 11, source: recordings[0], clip: recordings[2], clip_recording_id: 13, start_ms: 20000, end_ms: 30000, start_body: 'Připojený výstřižek', notes: [] },
     { id: 5, song_collection_id: 1, rehearsal_collection_id: 4, song_title: 'Nová skladba', rehearsal_title: 'Zkouška 1. října', source_recording_id: 44, source: { ...recordings[0], id: 44, audio_state: 'deleted', files: [{ ...file(44), url: null }] }, start_ms: 40000, end_ms: 50000, start_body: 'Smazaná nahrávka', notes: [] }
 ], unassigned_intervals: [], unassigned_clips: [] };
 const timestampRows = [
@@ -180,6 +180,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#rehearsal-starts-actions button').click();
         const overviewEditor = page.locator('.vz2-content-dialog');
         await overviewEditor.getByRole('button', { name: 'Předvyplnit ze začátků skladeb', exact: true }).click();
+        await overviewEditor.getByText('Návrh je v editoru. Upravte ho a uložte jako novou verzi.', { exact: true }).waitFor();
         assert.equal(savedOverviews.size, 0, 'Prefill does not save a version');
         assert.equal(await overviewEditor.locator('[name=document_body]').inputValue(), 'Nahrávka 1 — zkouška.wav\n  00:05  Písnička\n');
         await overviewEditor.locator('[name=document_body]').fill('Ručně upravený přehled');
@@ -214,15 +215,16 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                         bottomMenuBelowContent: rect('#mobile-sections-dock').top >= rect('.layout').bottom - 1,
                         menusInsideFrame: rect('#mobile-dock').top >= rect('#workspace-frame').top - 1 &&
                             rect('#mobile-sections-dock').bottom <= rect('#workspace-frame').bottom + 1,
-                        frameBorder: getComputedStyle(document.querySelector('#workspace-frame')).borderTopColor };
+                        frameBorder: getComputedStyle(document.querySelector('#workspace-frame')).borderTopColor,
+                        menuBorder: getComputedStyle(document.querySelector('#mobile-dock')).borderBottomColor };
                 });
                 assert(!geometry.overflow && !geometry.height, `${workspace}: viewport overflow at ${width}`);
                 if (width < 768) {
                     assert(geometry.topMenuBelowPlayer && geometry.topMenuAboveContent, `${workspace}: main navigation belongs below the player at ${width} px`);
                     if (workspace === 'songs' || workspace === 'rehearsals') {
                         assert(await page.locator('#mobile-panels').isVisible());
-                        assert(geometry.bottomMenuBelowContent && geometry.menusInsideFrame && geometry.frameBorder === 'rgb(107, 113, 61)',
-                            `${workspace}: the olive frame contains both fixed menus and the content at ${width} px`);
+                        assert(geometry.bottomMenuBelowContent && geometry.menusInsideFrame && geometry.frameBorder === geometry.menuBorder,
+                            `${workspace}: the navigation frame contains both fixed menus and the content at ${width} px`);
                         const labelsFit = await page.locator('#mobile-panels button:visible .section-button-label').evaluateAll(labels => labels.every(label => label.getBoundingClientRect().width > 0 && label.scrollWidth <= label.clientWidth + 1));
                         assert(labelsFit, `${workspace}: section tab labels fit at ${width} px`);
                     }
@@ -243,12 +245,12 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('history');
         await page.locator('td[data-song-id="1"][data-rehearsal-id="3"] .history-count').click();
         assert.equal(await page.locator('#history-list .history-source-group').count(), 1, 'excerpts from one recording share one group');
-        assert.equal(await page.locator('#history-list .history-source-title').textContent(), 'zkouška.wav');
+        assert.equal(await page.locator('#history-list .history-source-group .history-source-title').textContent(), 'Zdroj: zkouška.wav');
         assert.deepEqual(await page.locator('#history-list .history-source-clips .history-list-text strong').allTextContents(), ['Začátek skladby', 'Další pokus'], 'excerpts are ordered by start time and use start timestamp titles');
         assert.equal(await page.locator('#history-list .history-source-clips').getByText('zkouška.wav').count(), 0, 'source filename is shown once in the group heading');
         assert.equal(await page.locator('#history-list .history-list-row').count(), 3, 'standalone clip remains its own row');
-        assert.deepEqual(await page.locator('#history-list .history-list-counts').allTextContents(), ['R:1 V:0 P:1', 'R:1 V:0 P:0', 'R:0 V:1 P:0']);
-        assert(await page.locator('#history-list').evaluate(list => list.scrollWidth <= list.clientWidth + 1), 'counts fit in the list on mobile');
+        assert.deepEqual(await page.locator('#history-list .history-list-row .history-origin-badge').allTextContents(), ['Úsek bez výstřižku', 'Úsek bez výstřižku', 'Samostatný soubor']);
+        assert(await page.locator('#history-list').evaluate(list => list.scrollWidth <= list.clientWidth + 1), 'origin badges fit in the list on mobile');
         await shot('matrix-list-390');
         await page.locator('#history-list .history-list-row').first().click();
         assert.equal(await page.locator('#history-detail .history-detail-context').textContent(), 'zkouška: Zkouška 8. října × skladba: Nová skladba');
@@ -286,7 +288,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-detail [data-history-close]').click();
         await page.locator('#history-list [data-history-close]').click();
         await page.locator('td[data-song-id="2"][data-rehearsal-id="3"] .history-count').click();
-        assert.equal(await page.locator('#history-list .history-list-counts').textContent(), 'R:1 V:1 P:0');
+        assert.equal(await page.locator('#history-list .history-list-row .history-origin-badge').textContent(), 'Úsek + výstřižek');
         await page.locator('#history-list .history-list-row').click();
         assert.equal(await page.locator('#history-detail .history-detail-card').count(), 2, 'attached clip has its own card');
         assert.equal(await page.locator('#history-detail .vz2-audio-transport:visible').count(), 1, 'closed clip card does not show a second player');
