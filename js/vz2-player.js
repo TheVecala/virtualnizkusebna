@@ -306,7 +306,7 @@
         current.markerWidth = width; current.markerDuration = durationMs; current.markersDirty = false;
     }
     function draw() {
-        const canvas = $('looper-wave'), width = Math.max(1, Math.min(16384, $('looper-wave-scroll').clientWidth * Number($('looper-zoom').value))), height = fullscreen ? 180 : 90;
+        const canvas = $('looper-wave'), width = Math.max(1, Math.min(16384, $('looper-wave-scroll').clientWidth * Number($('looper-zoom').value))), height = fullscreen && !matchMedia('(max-width: 767px)').matches ? 180 : 90;
         if (!looper || !width) return;
         $('looper-wave-track').style.width = width + 'px'; $('looper-wave-track').style.height = height + 'px';
         canvas.style.width = width + 'px'; canvas.style.height = height + 'px';

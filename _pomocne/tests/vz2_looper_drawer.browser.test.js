@@ -184,11 +184,35 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 assert.equal(await notes.isVisible(), false);
                 await page.evaluate(() => {
                     document.getElementById('player-shell').classList.add('player-fullscreen');
-                    const wave = document.getElementById('looper-wave'); wave.height = 180; wave.style.height = '180px';
-                    document.getElementById('looper-wave-track').style.height = '180px';
                 });
-                await actions.locator('button').first().click(); assert(await notes.isVisible());
+                assert(await notes.isVisible(), 'fullscreen timestamps open automatically');
+                assert.equal(await actions.locator('button').first().isVisible(), false, 'fullscreen timestamps cannot be collapsed');
+                assert(await notes.locator('details').evaluate(node => node.open));
+                const reload = actions.getByRole('button', { name: 'Obnovit značky', exact: true });
+                assert(await reload.isVisible());
+                assert(await reload.evaluate(node => node.previousElementSibling.textContent === 'Přidat značku'));
                 assert((await notes.boundingBox()).height > 100);
+                await actions.getByRole('button', { name: 'Přidat značku', exact: true }).click();
+                assert(await notes.isVisible() && await actions.isVisible(), 'adding a timestamp keeps the list and actions visible');
+                assert.equal(await editor.evaluate(node => node.parentElement.id), 'looper-timestamps');
+                for (const view of ['advanced', 'simple']) {
+                    if (view === 'simple') await editor.getByRole('button', { name: 'Zpět k jednoduchému zobrazení' }).click();
+                    const formBox = await editor.boundingBox();
+                    const firstRow = await notes.locator('li').first().boundingBox();
+                    const actionsBox = await actions.boundingBox();
+                    assert(formBox.y >= actionsBox.y + actionsBox.height, 'form does not cover actions');
+                    assert(firstRow.y >= formBox.y + formBox.height && firstRow.y + firstRow.height <= 844, 'timestamp rows remain visible below the form');
+                }
+                await notes.locator('.ts-time').first().click();
+                assert.equal(await page.evaluate(() => window.playTime), 0, 'list remains interactive while adding');
+                await reload.click();
+                assert(await editor.isVisible(), 'refresh keeps the form open');
+                await editor.getByRole('button', { name: 'Zavřít časovou značku' }).click();
+                assert(await notes.isVisible() && await actions.isVisible());
+                await page.evaluate(() => document.getElementById('player-shell').classList.remove('player-fullscreen'));
+                assert.equal(await notes.isVisible(), false, 'leaving fullscreen restores the closed drawer');
+                await actions.getByRole('button', { name: 'Otevřít časové značky' }).click();
+                assert(await notes.getByRole('button', { name: 'Obnovit značky' }).isVisible(), 'refresh returns to the drawer');
             } else {
                 assert.equal(await actions.isVisible(), false);
                 await notes.locator('summary').click();

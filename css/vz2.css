@@ -36,8 +36,8 @@
     .vz2-timestamp-editor.ts-keyboard-open form { max-height: var(--ts-inline-max-height, 100dvh); }
     .vz2-timestamp-editor.ts-keyboard-open .ts-editor-body { min-height: 0; overflow-y: auto; }
     .vz2-timestamp-editor.ts-keyboard-open .ts-editor-top, .vz2-timestamp-editor.ts-keyboard-open .ts-editor-footer { flex-shrink: 0; }
-    #player-shell.ts-creating .looper-timestamp-actions { display: none; }
-    #player-shell.ts-creating.player-fullscreen #player-body, #player-shell.ts-creating.player-fullscreen #looper-panel { overflow-y: auto; }
+    #player-shell.ts-creating:not([data-mode=looper].player-fullscreen) .looper-timestamp-actions { display: none; }
+    #player-shell.ts-creating.player-fullscreen:not([data-mode=looper]) #player-body { overflow-y: auto; }
 }
 
 .content-actions{margin:16px 0}.vz2-content-dialog{width:min(940px,96vw);max-height:92vh;overflow:auto}.vz2-content-dialog h2{flex:1;margin:4px 0}.vz2-content-dialog textarea[name=document_body]{font:14px/1.6 ui-monospace,Consolas,monospace;white-space:pre;tab-size:4;resize:vertical}.vz2-content-dialog .content-preview{font:14px/1.6 ui-monospace,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:35vh;overflow:auto;background:var(--color-content-preview-bg);padding:14px;border:1px solid var(--color-content-preview-border)}.vz2-content-dialog section>div>button{display:block;width:100%;text-align:left;margin:8px 0}.content-posts{margin-top:16px}.content-posts p{overflow-wrap:anywhere}.vz2-content-dialog input,.vz2-content-dialog textarea{max-width:100%}.vz2-content-dialog[aria-busy=true]{cursor:progress}
@@ -512,6 +512,9 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
     .looper-timestamp-actions > button:first-child { flex: 1; }
     #looper-timestamps, #mixer-timestamps { display: none; position: fixed; z-index: 35; inset: var(--ts-drawer-top, 50%) 8px 0; padding: 8px 10px; overflow: auto; background: var(--color-panel); border: 1px solid var(--color-player-border); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 20px var(--color-shadow-medium); }
     #looper-timestamps.ts-drawer-open, #mixer-timestamps.ts-drawer-open { display: block; animation: timestamp-drawer-rise .18s ease-out; }
+    #player-shell.player-fullscreen #looper-timestamps { display: block; position: static; flex: 1 1 0; min-height: 0; margin-top: 8px; animation: none; box-shadow: none; }
+    #player-shell.player-fullscreen #looper-panel > .looper-timestamp-actions > button:first-child { display: none; }
+    #player-shell.player-fullscreen #looper-timestamps > .ts-inline[open] { position: static; width: 100%; margin: 0 0 8px; box-shadow: none; }
     #looper-timestamps .vz2-timestamps, #mixer-timestamps .vz2-timestamps { margin: 0; border: 0; }
     #looper-timestamps .ts-summary, #looper-timestamps .ts-desktop-action,
     #mixer-timestamps .ts-summary, #mixer-timestamps .ts-desktop-action { display: none; }

@@ -383,6 +383,13 @@
     }
     function positionInlineEditor() {
         if (!editor?.open || !editor.classList.contains('ts-inline')) return;
+        const panel = activeEditor.panel;
+        const pinned = panel.pinnedOpen?.();
+        const host = pinned ? panel.container : document.body;
+        if (editor.parentElement !== host) {
+            if (pinned) { host.prepend(editor); host.scrollTop = 0; }
+            else host.append(editor);
+        }
         const viewport = window.visualViewport;
         const visibleTop = viewport?.offsetTop || 0;
         const visibleBottom = visibleTop + (viewport?.height || innerHeight);
@@ -390,7 +397,7 @@
         const mixerToggle = document.getElementById('mt-mixer-toggle');
         const fullscreenAnchor = player?.dataset.mode === 'mixer'
             ? (!mixerToggle?.hidden ? mixerToggle : document.querySelector('#mixer-panel .timeline'))
-            : document.querySelector('#looper-panel .timeline');
+            : document.querySelector(pinned ? '#looper-panel .looper-timestamp-actions' : '#looper-panel .timeline');
         const playerBottom = player?.classList.contains('player-fullscreen')
             ? fullscreenAnchor?.getBoundingClientRect().bottom || 0
             : player?.getBoundingClientRect().bottom || 0;
@@ -552,13 +559,20 @@
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
         const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
         toolbar.append(add, quickUp, quickDown, reload, stop, exportButton); content.append(status, toolbar, list); shell.append(summary, content); container.append(shell);
-        let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport, mobileToggle, resizeObserver, mobileMedia;
+        let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport, mobileToggle, resizeObserver, playerObserver, mobileMedia;
         const mixerPanel = container.id === 'mixer-timestamps';
+        const pinnedOpen = () => container.id === 'looper-timestamps' && mobileMedia?.matches
+            && document.getElementById('player-shell').classList.contains('player-fullscreen');
         const positionDrawer = () => {
+            if (pinnedOpen()) {
+                shell.open = true;
+                if (reload.parentElement !== mobileActions) mobileAdd.after(reload);
+            } else if (reload.parentElement !== toolbar) quickDown.after(reload);
             if (mobileActions && mobileMedia.matches) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
             if (activeEditor?.panel === panel) positionInlineEditor();
         };
         const toggleDrawer = open => {
+            if (pinnedOpen()) return;
             if (open && container.id === 'mixer-timestamps') {
                 const mixToggle = document.getElementById('mt-mixer-toggle');
                 if (mixToggle?.getAttribute('aria-expanded') === 'true') mixToggle.click();
@@ -570,7 +584,7 @@
             if (open) { shell.open = true; positionDrawer(); }
         };
         const onDrawerKey = e => {
-            if (e.key === 'Escape' && container.classList.contains('ts-drawer-open') && !editor?.open && !exportDialog?.open) {
+            if (e.key === 'Escape' && !pinnedOpen() && container.classList.contains('ts-drawer-open') && !editor?.open && !exportDialog?.open) {
                 toggleDrawer(false); mobileToggle.focus();
             }
         };
@@ -596,10 +610,12 @@
             document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
             resizeObserver = new ResizeObserver(positionDrawer);
             resizeObserver.observe(document.getElementById('player-shell')); resizeObserver.observe(mobileActions);
+            playerObserver = new MutationObserver(positionDrawer);
+            playerObserver.observe(document.getElementById('player-shell'), { attributes: true, attributeFilter: ['class'] });
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, container, shell, containerId: container.id, inlineHost: mobileActions || shell,
+        const panel = { id, adapter, container, shell, containerId: container.id, inlineHost: mobileActions || shell, pinnedOpen,
             export: () => openExport(panel),
             drawerOpen: mobileActions ? () => container.classList.contains('ts-drawer-open') : null,
             closeDrawer: mobileActions ? () => toggleDrawer(false) : null,
@@ -672,7 +688,7 @@
                     document.getElementById('player-shell')?.classList.remove('ts-creating');
                 }
                 if (activeEditor?.panel === this && editor?.open && editor.classList.contains('ts-docked')) clearDockedLayout();
-                resizeObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
+                resizeObserver?.disconnect(); playerObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
                 window.removeEventListener('resize', positionDrawer); document.removeEventListener('keydown', onDrawerKey);
                 mobileActions?.remove(); container.classList.remove('ts-drawer-open'); container.style.removeProperty('--ts-drawer-top');
                 document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
@@ -687,6 +703,7 @@
             activeEditor.panel = panel;
             dockEditor(panel);
         }
+        positionDrawer();
         panels.add(panel); panel.load(); return panel;
     };
     setInterval(() => panels.forEach(p => p.playback()), 500);

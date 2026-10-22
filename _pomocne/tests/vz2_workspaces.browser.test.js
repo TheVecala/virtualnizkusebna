@@ -592,7 +592,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(await page.locator('.vz2-timestamp-editor [name=body]').isVisible(), 'The timestamp input is visible');
         await shot('timestamp-editor-390');
         await page.locator('.vz2-timestamp-editor .ts-close').click();
+        const normalWaveHeight = (await page.locator('#looper-wave').boundingBox()).height;
         await page.locator('#player-fullscreen').click();
+        assert.equal((await page.locator('#looper-wave').boundingBox()).height, normalWaveHeight, 'Mobile fullscreen preserves waveform height');
+        assert(await page.locator('#looper-timestamps .ts-song_start').isVisible(), 'Mobile fullscreen opens timestamps automatically');
         await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
         const fullscreenEditorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
         const timelineBox = await page.locator('#looper-panel .timeline').boundingBox();
