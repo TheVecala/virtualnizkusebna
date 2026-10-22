@@ -59,6 +59,7 @@ function gate() { let release; const promise = new Promise(resolve => { release 
             if (url.pathname === '/php/ajax/vz2_content.php') return route.fulfill({ json: { ok: true, map: null, document: null, posts: [], can_edit: false, next_before: null } });
             if (url.pathname === '/php/ajax/vz2_timestamps.php') return route.fulfill({ json: { ok: true, entries: [], duration_ms: 1000, timestamps_revision: 1 } });
             if (url.pathname === '/php/ajax/vz2_peaks.php') return route.fulfill({ json: { ok: true, peaks: [], duration_ms: 1000 } });
+            if (url.pathname === '/preview.png') return route.fulfill({ contentType: 'image/png', body: fs.readFileSync(path.join(root, 'meat/ikona_text.png')) });
             if (url.pathname === '/audio.wav') { audioRequests++; await sound.promise; return route.abort(); }
             return route.fulfill({ status: 204, body: '' });
         });
@@ -152,6 +153,29 @@ function gate() { let release; const promise = new Promise(resolve => { release 
             assert.deepEqual(audio.errors, []);
             console.log('PASS: direct recording link reveals workspace while audio is still downloading');
         } finally { await audio.close(); }
+
+        const attachments = await fixture({ catalog: { ...catalog, attachments: [
+            { id: 1, collection_id: 1, title: '', original_name: 'picture.png', mime_type: 'image/png', state: 'available', url: 'preview.png?hash=test', author: 'Tester' },
+            { id: 2, collection_id: 1, title: '', original_name: 'notes.txt', mime_type: 'text/plain', state: 'available', url: 'preview.png?hash=test', author: 'Tester' }
+        ] } });
+        try {
+            await open(attachments); await ready(attachments);
+            const imageCard = attachments.page.locator('.attachment-card').filter({ hasText: 'picture.png' });
+            const preview = imageCard.locator('.attachment-preview');
+            assert.equal(await preview.locator('img').getAttribute('src'), null);
+            assert.equal(attachments.requests.filter(path => path === '/preview.png').length, 0, 'Collapsed attachment must not load its image');
+            await imageCard.locator('.recording-toggle').click();
+            assert.equal(new URL(await preview.getAttribute('href'), attachments.page.url()).searchParams.get('preview'), '1');
+            assert(await preview.locator('img').evaluate(async img => { await img.decode(); return img.naturalWidth > 0; }));
+            assert.equal(attachments.requests.filter(path => path === '/preview.png').length, 1, 'Expanding loads the image once');
+            assert.equal(await imageCard.getByRole('link', { name: /Stáhnout soubor/ }).count(), 1);
+            const textCard = attachments.page.locator('.attachment-card').filter({ hasText: 'notes.txt' });
+            await textCard.locator('.recording-toggle').click();
+            assert.equal(await textCard.locator('.attachment-preview').count(), 0);
+            assert(await preview.evaluate(link => link.getBoundingClientRect().right <= document.documentElement.clientWidth + 1));
+            assert.deepEqual(attachments.errors, []);
+            console.log('PASS: image preview loads only after expansion, keeps download, and fits mobile width');
+        } finally { await attachments.close(); }
 
         const noJS = await fixture({ noJS: true });
         try {

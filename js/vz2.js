@@ -823,15 +823,24 @@
                 toggle.append(node('span', fileName(a), 'recording-title'), node('small', 'Příloha', 'recording-duration'));
                 toggle.setAttribute('aria-controls', body.id);
                 const id = String(a.id);
+                let image = null;
                 function setExpanded(open) {
                     body.hidden = !open; toggle.setAttribute('aria-expanded', String(open));
+                    if (open && image && !image.hasAttribute('src')) image.src = a.url + '&preview=1';
                     if (open) expandedAttachments.add(id); else expandedAttachments.delete(id);
                 }
-                setExpanded(expandedAttachments.has(id));
                 toggle.addEventListener('click', () => setExpanded(body.hidden));
                 card.append(toggle);
                 if (a.title) body.append(node('p', a.title, 'recording-status'));
                 if (a.summary) body.append(node('p', a.summary, 'recording-summary'));
+                if (a.url && ['image/jpeg', 'image/png', 'image/gif'].includes(a.mime_type)) {
+                    const preview = node('a', undefined, 'attachment-preview');
+                    preview.href = a.url + '&preview=1'; preview.target = '_blank'; preview.rel = 'noopener';
+                    image = node('img'); image.alt = 'Náhled obrázku ' + fileName(a);
+                    image.loading = 'lazy'; image.decoding = 'async';
+                    preview.append(image, node('span', 'Zobrazit celý obrázek'));
+                    body.append(preview);
+                }
                 if (!a.url) body.append(fileLink(a));
                 body.append(node('small', 'Vložil/a ' + a.author, 'vz2-attribution'));
                 const actions = node('div', undefined, 'action-list attachment-actions');
@@ -840,6 +849,7 @@
                 moveControl(actions, a, 'attachment');
                 if (cfg.write && a.can_remove) actions.append(button(a.state === 'deleted' ? 'Smazat položku' : 'Odstranit přílohu', () => remove(a, 'attachment'), 'danger'));
                 if (actions.childElementCount) body.append(actions);
+                setExpanded(expandedAttachments.has(id));
                 card.append(body); content.append(card);
             });
             renderLinkedRecordings(content, c, linked);

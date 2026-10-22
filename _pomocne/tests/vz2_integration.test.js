@@ -282,6 +282,20 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         assert.equal(result.status, 201, result.text); const attachmentId = result.json().id;
         let attachment = (await catalog('alice')).attachments.find(x => Number(x.id) === attachmentId);
         check(attachment, 'non-audio attachment stays in its own catalog');
+        const textPreview = await request(clients.alice, attachment.url + '&preview=1');
+        check(textPreview.status === 200 && textPreview.headers.get('content-disposition').startsWith('attachment;'), 'text attachments still download when preview is requested');
+        result = await upload('alice', a.id, 'Obrázek', 'attachment', ['preview.png'], [fs.readFileSync(path.join(root, 'meat/ikona_text.png'))]);
+        assert.equal(result.status, 201, result.text);
+        const imageAttachment = (await catalog('alice')).attachments.find(x => Number(x.id) === result.json().id);
+        const imagePreview = await request(clients.alice, imageAttachment.url + '&preview=1');
+        const imageDownload = await request(clients.alice, imageAttachment.url + '&preview=1&download=1');
+        check(imageAttachment.mime_type === 'image/png' && imagePreview.status === 200
+            && imagePreview.headers.get('content-type') === 'image/png'
+            && imagePreview.headers.get('content-disposition').startsWith('inline;')
+            && imagePreview.buffer.equals(fs.readFileSync(path.join(root, 'meat/ikona_text.png'))), 'image preview opens inline with original bytes');
+        check(imageDownload.status === 200 && imageDownload.headers.get('content-disposition').startsWith('attachment;'), 'image download remains available');
+        check((await request(clients.anon, imageAttachment.url + '&preview=1')).status === 401, 'image preview requires login');
+        await good('alice', { action: 'remove_attachment', id: imageAttachment.id, revision: imageAttachment.revision, confirm: imageAttachment.title, request_key: crypto.randomBytes(16).toString('hex') });
         const attachmentPath = db('SELECT relative_path FROM vz2_attachments WHERE id=?', [attachmentId])[0].relative_path;
         check((await api('bob', { action: 'remove_attachment', id: attachmentId, revision: attachment.revision, confirm: attachment.title, request_key: crypto.randomBytes(16).toString('hex') })).status === 403, 'foreign attachment cannot be deleted');
         await good('alice', { action: 'remove_attachment', id: attachmentId, revision: attachment.revision, confirm: attachment.title, request_key: crypto.randomBytes(16).toString('hex') });

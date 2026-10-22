@@ -10,7 +10,7 @@ function vz2_file_public(array $f,string $type):array {
     $displayName=$f['title']?:$f['original_name'];
     if($format!=='' && !str_ends_with(strtolower($displayName),'.'.strtolower($format)))$displayName.='.'.$format;
     return ['id'=>(int)$f['id'],'title'=>$f['title'],'display_name'=>$displayName,'original_name'=>$f['original_name'],
-        'format'=>$format,'byte_size'=>(int)$f['byte_size'],
+        'format'=>$format,'mime_type'=>$f['mime_type'],'byte_size'=>(int)$f['byte_size'],
         'sha256'=>$f['sha256'],'duration_ms'=>isset($f['duration_ms'])?(int)$f['duration_ms']:null,
         'sort_order'=>(int)($f['sort_order']??0),'state'=>$status,'deleted_at'=>$f['deleted_at'],
         'deleted_by'=>$f['deleted_by']===null?null:(int)$f['deleted_by'],

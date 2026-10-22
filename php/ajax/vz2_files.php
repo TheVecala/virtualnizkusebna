@@ -27,7 +27,9 @@ try{
     }
     $handle=fopen($path,'rb');if(!$handle)throw new Vz2Error('Soubor nelze otevřít.',503);
     header('Content-Type: '.$f['mime_type']);header('Content-Length: '.($end-$start+1));
-    if($type==='attachment' || isset($_GET['download']))header("Content-Disposition: attachment; filename=\"soubor-$id\"; filename*=UTF-8''".rawurlencode($f['original_name']));
+    $inlineImage=$type==='attachment' && ($_GET['preview']??null)==='1' && !isset($_GET['download'])
+        && in_array($f['mime_type'],['image/jpeg','image/png','image/gif'],true);
+    if($type==='attachment' || isset($_GET['download']))header('Content-Disposition: '.($inlineImage?'inline':'attachment')."; filename=\"soubor-$id\"; filename*=UTF-8''".rawurlencode($f['original_name']));
     session_write_close();
     if(($_SERVER['REQUEST_METHOD']??'GET')!=='HEAD'){
         fseek($handle,$start);$remaining=$end-$start+1;

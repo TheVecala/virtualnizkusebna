@@ -416,6 +416,9 @@ dialog form { margin-top: 0; }
 .action-list > * { min-width: 0; max-width: 100%; }
 .action-list > select { width: 100%; }
 .attachment-card .recording-status { padding: 0; }
+.attachment-preview { display: block; width: fit-content; max-width: 100%; margin: 8px 0; font-size: 12px; }
+.attachment-preview img { display: block; width: auto; height: auto; max-width: 100%; max-height: 280px; border: 1px solid var(--color-border); border-radius: 4px; }
+.attachment-preview span { display: block; margin-top: 4px; }
 .attachment-actions > a { display: inline-flex; align-items: center; min-height: 40px; padding: 8px; border: 1px solid var(--color-control-border); border-radius: 4px; background: var(--color-control-bg); color: var(--color-control-text); text-decoration: none; }
 .attachment-actions > a:hover { border-color: var(--color-control-hover-border); }
 .files li .action-list button { margin: 0; }
