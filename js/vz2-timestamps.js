@@ -669,9 +669,10 @@
                     }));
                     if (row.kind === 'song_start' && end == null) text.append(' ', el('small', '— neúplný úsek'));
                     if (row.kind === 'song_end' && !row.paired_timestamp_id) text.append(' ', el('small', '— konec bez začátku'));
-                    item.append(seek);
-                    if (boundary) item.append(boundary);
-                    item.append(text, authors, actions); list.append(item);
+                    const rowMain = el('div'); rowMain.className = 'ts-row-main';
+                    rowMain.append(seek);
+                    if (boundary) rowMain.append(boundary);
+                    rowMain.append(text, authors, actions); item.append(rowMain); list.append(item);
                 }); this.playback();
                 if (typeof this.adapter?.timestampsChanged === 'function') this.adapter.timestampsChanged(value.entries);
             },

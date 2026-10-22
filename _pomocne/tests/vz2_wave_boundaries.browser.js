@@ -21,9 +21,10 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         kind: 'song_end', time_ms: 6000, body: 'Konec testu', paired_timestamp_id: startId
     });
     assert.equal(end.status, 201, end.text);
+    const passageBody = 'Testovací pasáž s delším popisem a několika detaily pro zarovnání tlačítek';
     const passage = await request(clients.admin, 'php/ajax/vz2_timestamps.php', {
         action: 'create', recording_id: recording.id, timestamps_revision: end.json().timestamps_revision,
-        kind: 'passage', time_ms: 3000, body: 'Testovací pasáž'
+        kind: 'passage', time_ms: 3000, body: passageBody
     });
     assert.equal(passage.status, 201, passage.text);
     const note = await request(clients.admin, 'php/ajax/vz2_timestamps.php', {
@@ -57,7 +58,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         await noteMarker.waitFor({ state: 'visible' });
         assert.equal(await page.locator('.looper-wave-marker-icon').count(), 0, 'Waveform timestamps have no label icons');
         assert.equal(await page.locator('#looper-wave-regions').count(), 0, 'Passage does not color a waveform interval');
-        assert.equal(await passageMarker.locator('.looper-wave-marker-text').textContent(), 'Testovací pasáž');
+        assert.equal(await passageMarker.locator('.looper-wave-marker-text').textContent(), passageBody);
         assert.equal(await noteMarker.locator('.looper-wave-marker-text').textContent(), 'Testovací poznámka');
         assert.equal(await startMarker.locator('.looper-wave-boundary path').count(), 1);
         assert.equal(await endMarker.locator('.looper-wave-boundary path').count(), 1);
@@ -72,7 +73,24 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         assert(Math.abs((await page.evaluate(() => window.Vz2Player.getState().position)) - 2) < 0.1, 'Arrow seeks to the start timestamp');
         await endMarker.locator('.looper-wave-marker-label').click();
         assert(Math.abs((await page.evaluate(() => window.Vz2Player.getState().position)) - 6) < 0.1, 'End marker seeks to its timestamp');
+        await page.setViewportSize({ width: 1872, height: 844 });
+        await page.locator('#player-fullscreen').click();
+        const timestamps = page.locator('#looper-timestamps .vz2-timestamps');
+        await timestamps.locator('.ts-summary').click();
+        const layout = await timestamps.evaluate(shell => {
+            const list = shell.querySelector('ol').getBoundingClientRect();
+            const rows = [...shell.querySelectorAll('li .ts-row-main')].map(item => ({
+                kind: item.parentElement.className,
+                right: item.querySelector('.toolbar').getBoundingClientRect().right,
+                width: item.getBoundingClientRect().width
+            }));
+            const actions = rows.map(item => item.right);
+            return { listWidth: list.width, actionOffset: Math.max(...actions) - list.left, alignment: Math.max(...actions) - Math.min(...actions), rows };
+        });
+        assert(layout.listWidth > 1000 && layout.actionOffset < 550, 'Actions stay near timestamp text on a wide screen');
+        assert(layout.alignment < 2, 'Actions remain aligned across timestamp kinds and text lengths: ' + JSON.stringify(layout));
+        await page.locator('#looper-timestamps').screenshot({ path: path.join(temp, 'timestamp-actions-desktop.png') });
         assert.deepEqual(errors, []);
-        check(true, 'browser: waveform boundary arrows, icon-free passage and note labels, no colored passage interval, mobile layout and seeking');
+        check(true, 'browser: waveform labels and arrows, passage styling, seeking and aligned timestamp actions');
     } finally { await browser.close(); }
 };

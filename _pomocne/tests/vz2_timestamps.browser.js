@@ -62,7 +62,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await notes.locator('.ts-song_start p').filter({ hasText: '<img src=x onerror=alert(1)> Začátek' }).waitFor();
         await closeCreated();
         assert.equal(await notes.locator('img').count(), 0);
-        assert.equal(await notes.locator('.ts-song_start > .ts-boundary-icon[aria-label="Začátek skladby"]').count(), 1);
+        assert.equal(await notes.locator('.ts-song_start > .ts-row-main > .ts-boundary-icon[aria-label="Začátek skladby"]').count(), 1);
         await notes.getByRole('button', { name: 'Upravit', exact: true }).click();
         assert.equal(await dialog.locator('.ts-mode').textContent(), 'Upravit značku');
         assert.equal(await dialog.locator('.ts-context > span').textContent(), 'audio.wav');
@@ -86,7 +86,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await dialog.getByRole('button', { name: 'Začátek', exact: true }).click();
         await dialog.waitFor({ state: 'hidden' });
         await notes.locator('.ts-song_start p').filter({ hasText: 'Můj rozepsaný text' }).waitFor();
-        assert.equal(await notes.locator('.ts-song_start > .ts-boundary-icon').count(), 1, 'start type arrow remains after editing its text');
+        assert.equal(await notes.locator('.ts-song_start > .ts-row-main > .ts-boundary-icon').count(), 1, 'start type arrow remains after editing its text');
         assert.equal(db('SELECT time_ms FROM vz2_timestamps WHERE recording_id=? AND body=?', [id, 'Můj rozepsaný text'])[0].time_ms, 1123, 'editing text and +/- one second preserve hidden milliseconds');
         assert.equal(await notes.locator('.ts-kind').count(), 0, 'type is communicated by the coloured hierarchy line, without a duplicate icon');
         assert.equal(await notes.locator('.ts-song_start .ts-action .ti-repeat').count(), 1, 'timestamp actions use compact icons');
@@ -109,7 +109,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await pairDialog.getByRole('button', { name: 'Uložit konec', exact: true }).click();
         await notes.locator('.ts-song_end p').filter({ hasText: 'Konec úseku' }).waitFor();
         await closeCreated();
-        assert.equal(await notes.locator('.ts-song_end > .ts-boundary-icon[aria-label="Konec skladby"]').count(), 1, 'end type arrow is shown with a filled body');
+        assert.equal(await notes.locator('.ts-song_end > .ts-row-main > .ts-boundary-icon[aria-label="Konec skladby"]').count(), 1, 'end type arrow is shown with a filled body');
         assert.equal(await notes.locator('.ts-song_end p').first().textContent(), 'Konec úseku');
         assert.equal(await notes.locator('.ts-song-linked').count(), 2);
         assert.equal(await notes.locator('.ts-song-linked-start').getAttribute('data-song-start-id'), String(existing.id));
