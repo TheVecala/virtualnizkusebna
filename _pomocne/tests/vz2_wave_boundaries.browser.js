@@ -21,6 +21,16 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         kind: 'song_end', time_ms: 6000, body: 'Konec testu', paired_timestamp_id: startId
     });
     assert.equal(end.status, 201, end.text);
+    const passage = await request(clients.admin, 'php/ajax/vz2_timestamps.php', {
+        action: 'create', recording_id: recording.id, timestamps_revision: end.json().timestamps_revision,
+        kind: 'passage', time_ms: 3000, body: 'Testovací pasáž'
+    });
+    assert.equal(passage.status, 201, passage.text);
+    const note = await request(clients.admin, 'php/ajax/vz2_timestamps.php', {
+        action: 'create', recording_id: recording.id, timestamps_revision: passage.json().timestamps_revision,
+        kind: 'note', time_ms: 4000, body: 'Testovací poznámka'
+    });
+    assert.equal(note.status, 201, note.text);
 
     const executablePath = [process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, chromium.executablePath()].find(file => file && fs.existsSync(file));
     const browser = await chromium.launch({ headless: true, executablePath });
@@ -41,8 +51,14 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         }, recording.id);
         const startMarker = page.locator('.looper-wave-marker[data-kind=song_start]');
         const endMarker = page.locator('.looper-wave-marker[data-kind=song_end]');
+        const passageMarker = page.locator('.looper-wave-marker[data-kind=passage]');
+        const noteMarker = page.locator('.looper-wave-marker[data-kind=note]');
         await endMarker.waitFor({ state: 'visible' });
-        assert.equal(await startMarker.locator('.looper-wave-marker-icon').count(), 0, 'Start has no music note');
+        await noteMarker.waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.looper-wave-marker-icon').count(), 0, 'Waveform timestamps have no label icons');
+        assert.equal(await page.locator('#looper-wave-regions').count(), 0, 'Passage does not color a waveform interval');
+        assert.equal(await passageMarker.locator('.looper-wave-marker-text').textContent(), 'Testovací pasáž');
+        assert.equal(await noteMarker.locator('.looper-wave-marker-text').textContent(), 'Testovací poznámka');
         assert.equal(await startMarker.locator('.looper-wave-boundary path').count(), 1);
         assert.equal(await endMarker.locator('.looper-wave-boundary path').count(), 1);
         assert(await page.evaluate(() => {
@@ -57,6 +73,6 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         await endMarker.locator('.looper-wave-marker-label').click();
         assert(Math.abs((await page.evaluate(() => window.Vz2Player.getState().position)) - 6) < 0.1, 'End marker seeks to its timestamp');
         assert.deepEqual(errors, []);
-        check(true, 'browser: start/end waveform arrows, mobile layout and end-marker seeking');
+        check(true, 'browser: waveform boundary arrows, icon-free passage and note labels, no colored passage interval, mobile layout and seeking');
     } finally { await browser.close(); }
 };

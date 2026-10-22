@@ -177,7 +177,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         const marker = page.locator('.looper-wave-marker[data-timestamp-id]');
         await marker.waitFor({ state: 'visible' });
         assert.equal(await marker.locator('.looper-wave-marker-text').textContent(), 'Pasáž pro Looper');
-        assert.equal(await page.locator('.looper-wave-region').count(), 1);
+        assert.equal(await page.locator('#looper-wave-regions').count(), 0);
         assert(Math.abs(await marker.evaluate(n => n.offsetLeft / document.getElementById('looper-wave').width) - 0.05) < 0.002);
         await marker.locator('.looper-wave-marker-label').click();
         assert(Math.abs((await state()).position - 1) < 0.1, 'Waveform marker seeks to its timestamp');

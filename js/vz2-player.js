@@ -142,7 +142,7 @@
             if (old.context) old.context.close().catch(() => {});
             old.peaks = null;
         }
-        $('looper-wave-regions').replaceChildren(); $('looper-wave-markers').replaceChildren();
+        $('looper-wave-markers').replaceChildren();
         if (mode === 'looper') resetShell();
     }
     function select(nextMode, recording) {
@@ -266,24 +266,14 @@
         } catch (e) { if (live()) { current.phase = 'error'; error(e.message); update(); } }
     }
     function renderWaveTimestamps(current, width, durationMs) {
-        const regions = document.createDocumentFragment(), markers = document.createDocumentFragment();
+        const markers = document.createDocumentFragment();
         const entries = current.timestamps || [];
         const visuals = {
             song_start: { arrow: 'M1 1V9H15 M10 4L15 9L10 14', name: 'Začátek skladby' },
             song_end: { arrow: 'M19 1V9H5 M10 4L5 9L10 14', name: 'Konec skladby' },
-            passage: { icon: '↔', name: 'Pasáž' },
-            note: { icon: '●', name: 'Poznámka' }
+            passage: { name: 'Pasáž' },
+            note: { name: 'Poznámka' }
         };
-        if (durationMs > 0) entries.forEach(entry => {
-            const start = Number(entry.time_ms);
-            if (entry.kind !== 'passage' || !Number.isFinite(start) || start < 0 || start > durationMs) return;
-            const end = window.Vz2Timestamps.endOf(entry, entries, durationMs);
-            if (end == null || end <= start) return;
-            const region = document.createElement('div'); region.className = 'looper-wave-region';
-            region.style.left = (start / durationMs * width) + 'px';
-            region.style.width = (Math.min(end, durationMs) - start) / durationMs * width + 'px';
-            regions.append(region);
-        });
         if (durationMs > 0) entries.forEach(entry => {
             const ms = Number(entry.time_ms), visual = visuals[entry.kind];
             if (!visual || !Number.isFinite(ms) || ms < 0 || ms > durationMs) return;
@@ -305,15 +295,10 @@
             }
             const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
             const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
-            if (visual.icon) {
-                const icon = document.createElement('span'); icon.className = 'looper-wave-marker-icon'; icon.textContent = visual.icon; icon.setAttribute('aria-hidden', 'true');
-                label.append(icon);
-            }
             label.append(text); marker.append(label);
             marker.onclick = event => { event.stopPropagation(); seek(ms / 1000); };
             markers.append(marker);
         });
-        $('looper-wave-regions').replaceChildren(regions);
         $('looper-wave-markers').replaceChildren(markers);
         current.markerWidth = width; current.markerDuration = durationMs; current.markersDirty = false;
     }
