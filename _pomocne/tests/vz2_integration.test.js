@@ -28,7 +28,7 @@ const write = (name, value) => { fs.mkdirSync(path.dirname(name), { recursive: t
 const phpString = value => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 for (const dir of ['php', 'js', 'css', 'meat']) fs.cpSync(path.join(root, dir), path.join(web, dir), { recursive: true });
 for (const dir of ['migrations', 'tools']) fs.cpSync(path.join(root, '_pomocne', dir), path.join(web, dir), { recursive: true });
-for (const file of ['index.php', 'vz2.php', 'admin.php', 'help.php']) fs.copyFileSync(path.join(root, file), path.join(web, file));
+for (const file of ['index.php', 'vz2.php', 'admin.php', 'help.php', 'config.theme.php']) fs.copyFileSync(path.join(root, file), path.join(web, file));
 write(path.join(media, '.vz2-storage-id'), database);
 write(path.join(temp, 'db.php'), `<?php
 if(PHP_SAPI!=='cli')exit;
@@ -81,6 +81,7 @@ define('VZ2_ENABLED',true);define('VZ2_WRITES_ENABLED',true);define('VZ2_ENVIRON
 define('VZ2_PUBLIC_ROOT',${phpString(web)});define('VZ2_STORAGE_ACCESS','private');
 $GLOBALS['PRAVA']=['host'=>[],'muzikant'=>['edit_text','upload','comment','reorder','move_file','delete_file','create_val','rename_val','edit_recording_label'],'admin'=>['edit_text','upload','comment','reorder','move_file','delete_file','create_val','rename_val','delete_val','edit_recording_label']];
 function ma_pravo(string $p):bool{return in_array($p,$GLOBALS['PRAVA'][$_SESSION['role']??'']??[],true);}
+require_once __DIR__.'/config.theme.php';
 require_once __DIR__.'/php/auth.php';auth_refresh_session();
 `);
     const clients = Object.fromEntries(['admin', 'alice', 'bob', 'guest', 'anon'].map(n => [n, {}]));
@@ -135,6 +136,11 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         } finally { fs.closeSync(log); }
         for (let i = 0; i < 50; i++) { try { await request(clients.anon, 'index.php?v=2'); break; } catch (_) { await new Promise(r => setTimeout(r, 100)); } }
         for (const name of ['admin', 'alice', 'bob', 'guest']) await login(name);
+        if (process.env.VZ2_TEST_SUITE === 'wave-boundaries') {
+            await require('./vz2_wave_boundaries.browser')({ base, clients, good, request, check, temp, upload, wav });
+            console.log('PASS wave boundaries: ' + checks + ' checks');
+            return;
+        }
         if (process.env.VZ2_TEST_SUITE === 'songmap') {
             await require('./vz2_song_map.integration')({ request, clients, db, good, check });
             await require('./vz2_song_map.browser')({ base, clients, good, request, db, check, temp });

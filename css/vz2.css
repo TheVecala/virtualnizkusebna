@@ -324,11 +324,13 @@ dialog form { margin-top: 0; }
 #looper-wave-markers { z-index: 2; }
 .looper-wave-region { position: absolute; top: 0; bottom: 0; background: var(--color-waveform-region); }
 .looper-wave-marker { position: absolute; top: 0; width: 1px; height: 100%; min-height: 0; padding: 0; overflow: visible; color: var(--marker-color); background: var(--marker-color); border: 0; border-radius: 0; pointer-events: auto; cursor: pointer; }
-.looper-wave-marker[data-kind=song_start] { --marker-color: var(--color-timestamp-song-start); }
+.looper-wave-marker[data-kind=song_start], .looper-wave-marker[data-kind=song_end] { --marker-color: var(--color-timestamp-song-start); }
 .looper-wave-marker[data-kind=passage] { --marker-color: var(--color-timestamp-passage); }
 .looper-wave-marker[data-kind=note] { --marker-color: var(--color-timestamp-note); }
+.looper-wave-boundary { position: absolute; top: 0; left: -1px; width: 20px; height: 16px; fill: none; stroke: var(--marker-color); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: auto; }
+.looper-wave-marker[data-kind=song_end] .looper-wave-boundary { left: -19px; }
 .looper-wave-marker-label { position: absolute; top: 27px; left: 5px; display: inline-flex; align-items: center; gap: 4px; box-sizing: border-box; max-width: 150px; min-height: 18px; padding: 1px 5px; overflow: hidden; color: var(--color-waveform-label-text); background: var(--color-waveform-label-bg); border: 1px solid var(--marker-color); border-radius: 4px; font-size: 10px; font-weight: 500; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.looper-wave-marker.is-end .looper-wave-marker-label { left: auto; right: 5px; }
+.looper-wave-marker.is-label-left .looper-wave-marker-label { left: auto; right: 5px; }
 .looper-wave-marker-icon { color: var(--marker-color); font-weight: 800; }
 .looper-wave-marker-text { overflow: hidden; text-overflow: ellipsis; }
 .looper-wave-marker:hover .looper-wave-marker-label, .looper-wave-marker:focus-visible .looper-wave-marker-label { background: var(--color-waveform-label-bg); }

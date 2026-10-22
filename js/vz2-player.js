@@ -269,7 +269,8 @@
         const regions = document.createDocumentFragment(), markers = document.createDocumentFragment();
         const entries = current.timestamps || [];
         const visuals = {
-            song_start: { icon: '♪', name: 'Začátek skladby' },
+            song_start: { arrow: 'M1 1V9H15 M10 4L15 9L10 14', name: 'Začátek skladby' },
+            song_end: { arrow: 'M19 1V9H5 M10 4L5 9L10 14', name: 'Konec skladby' },
             passage: { icon: '↔', name: 'Pasáž' },
             note: { icon: '●', name: 'Poznámka' }
         };
@@ -288,16 +289,27 @@
             if (!visual || !Number.isFinite(ms) || ms < 0 || ms > durationMs) return;
             const x = Math.min(width - 1, ms / durationMs * width);
             const marker = document.createElement('button'); marker.type = 'button';
-            marker.className = 'looper-wave-marker' + (x > width - 155 ? ' is-end' : '');
+            const labelOnLeft = entry.kind === 'song_end' ? x >= 155 : x > width - 155;
+            marker.className = 'looper-wave-marker' + (labelOnLeft ? ' is-label-left' : '');
             marker.dataset.timestampId = entry.id;
             marker.dataset.kind = entry.kind;
             marker.style.left = x + 'px';
             const description = visual.name + ': ' + entry.body + ' (' + window.Vz2Timestamps.format(ms) + ')';
             marker.title = description; marker.setAttribute('aria-label', description);
+            if (visual.arrow) {
+                const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                arrow.classList.add('looper-wave-boundary'); arrow.setAttribute('viewBox', '0 0 20 16');
+                arrow.setAttribute('aria-hidden', 'true');
+                const path = document.createElementNS(arrow.namespaceURI, 'path'); path.setAttribute('d', visual.arrow);
+                arrow.append(path); marker.append(arrow);
+            }
             const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
-            const icon = document.createElement('span'); icon.className = 'looper-wave-marker-icon'; icon.textContent = visual.icon; icon.setAttribute('aria-hidden', 'true');
             const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
-            label.append(icon, text); marker.append(label);
+            if (visual.icon) {
+                const icon = document.createElement('span'); icon.className = 'looper-wave-marker-icon'; icon.textContent = visual.icon; icon.setAttribute('aria-hidden', 'true');
+                label.append(icon);
+            }
+            label.append(text); marker.append(label);
             marker.onclick = event => { event.stopPropagation(); seek(ms / 1000); };
             markers.append(marker);
         });
