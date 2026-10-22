@@ -5,7 +5,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../..');
 const theme = process.env.VZ2_TEST_THEME === 'light' ? 'light' : 'dark';
-const source = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
+const source = fs.readFileSync(path.join(root, 'index.php'), 'utf8');
 const markup = source.slice(source.indexOf('<section id="player-shell"'), source.indexOf('<div id="content-area">'))
     .replace('data-mode="empty"', 'data-mode="looper"').replaceAll(' hidden', '');
 const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, timestamps_revision: 1, duration_ms: 100000,

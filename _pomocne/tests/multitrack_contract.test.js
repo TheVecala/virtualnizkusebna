@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
-const page = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
+const page = fs.readFileSync(path.join(root, 'index.php'), 'utf8');
 const client = fs.readFileSync(path.join(root, 'js/multitrack.js'), 'utf8');
 const styles = fs.readFileSync(path.join(root, 'css/multitrack.css'), 'utf8');
 for (const id of ['mt-mixer', 'mt-tracks', 'mt-loading-panel', 'mt-offline', 'mt-notice', 'mt-seek']) {

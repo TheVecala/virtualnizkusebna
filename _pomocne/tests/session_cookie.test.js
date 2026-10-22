@@ -73,7 +73,7 @@ echo json_encode(['id'=>session_id(),'previous'=>$previous,'visits'=>$_SESSION['
         assert.doesNotMatch(log, /PHP (Warning|Fatal|Notice)/);
         // All production session entry points must use the common policy.
         const scan=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?scan(path.join(dir,e.name)):[path.join(dir,e.name)]);
-        for(const file of [...scan(path.join(root,'php')), ...['index.php','admin.php','vz2.php'].map(f=>path.join(root,f))]) {
+        for(const file of [...scan(path.join(root,'php')), ...['index.php','admin.php'].map(f=>path.join(root,f))]) {
             if(!file.endsWith('.php') || file===path.join(root,'php/inc/session.php'))continue;
             assert.doesNotMatch(fs.readFileSync(file,'utf8'), /(?<![\w])session_start\s*\(/, file+' bypasses session policy');
         }

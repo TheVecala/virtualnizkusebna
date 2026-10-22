@@ -18,8 +18,8 @@ výchozí commit `560688d`. Přesný obsah balíčku dokládá `manifest.json`.
    Balíček neobsahuje konfiguraci, migrace ani nástroj pro vzdálené mazání.
 5. Ověřte přihlášení, odhlášení, účty a role, katalog, upload, Looper, Mixér,
    obsah a mapu, timestampy, diskusi, historii a offline kopie.
-   `/`, `index.php`, `?v=1`, `?v=2` a `vz2.php` otevírají novou aplikaci.
-   Odstraněné PHP endpointy včetně `multitrack.php` musí vracet 404/410.
+   `/`, `index.php`, `?v=1` a `?v=2` otevírají novou aplikaci.
+   Odstraněné PHP endpointy včetně `multitrack.php` a kořenového `vz2.php` musí vracet 404/410.
 
 `VZ2_ONLY` už aplikace nepoužívá. Pokud je v soukromé konfiguraci, jeho hodnota
 nic nepřepíná; lze jej odstranit. `VZ2_ENABLED`, režim zápisu, identita datasetu

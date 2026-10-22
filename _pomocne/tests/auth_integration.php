@@ -98,7 +98,7 @@ try {
     } while ($db->more_results() && $db->next_result());
     check((int) $db->query('SELECT guest_enabled FROM auth_settings WHERE id = 1')->fetch_row()[0] === 0, 'migration disables guest');
 
-    foreach (['index.php', 'vz2.php', 'admin.php', 'php/auth.php', 'php/inc/session.php',
+    foreach (['index.php', 'admin.php', 'php/auth.php', 'php/inc/session.php',
         'php/loginbox4.php', 'php/login/connect.php', 'php/inc/admin_storage.php',
         'php/inc/admin_storage_view.php', 'php/inc/vz2_core.php', 'css/vz2.css',
         'js/multitrack.js', 'js/vz2-song-map.js', 'js/vz2-song-map-model.js', 'css/help.css', 'css/admin.css'] as $file) {

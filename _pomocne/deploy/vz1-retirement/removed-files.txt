@@ -117,3 +117,4 @@ php/login/logout.php
 php/modals.php
 multitrack.php
 meat/ikona_kazeta.png
+vz2.php

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../..');
-const php = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
+const php = fs.readFileSync(path.join(root, 'index.php'), 'utf8');
 const theme = process.env.VZ2_TEST_THEME === 'light' ? 'light' : 'dark';
 const config = { csrf: 'test', write: false, admin: false, canCreate: false, canUpload: false, canReorder: false, cachePrefix: 'boot-test:' };
 const html = php.slice(php.indexOf('<!doctype html>'))

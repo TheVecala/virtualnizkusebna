@@ -6,7 +6,7 @@ const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../..');
-const php = fs.readFileSync(path.join(root, 'vz2.php'), 'utf8');
+const php = fs.readFileSync(path.join(root, 'index.php'), 'utf8');
 const config = { csrf: 'test', write: true, admin: true, canCreate: true, canUpload: true, canReorder: true, cachePrefix: 'workspaces-test:' };
 const html = php.slice(php.indexOf('<!doctype html>'))
     .replace("<?php readfile(__DIR__ . '/css/themes.css'); ?>", fs.readFileSync(path.join(root, 'css/themes.css'), 'utf8'))

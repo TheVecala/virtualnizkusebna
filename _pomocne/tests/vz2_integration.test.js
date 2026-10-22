@@ -28,7 +28,7 @@ const write = (name, value) => { fs.mkdirSync(path.dirname(name), { recursive: t
 const phpString = value => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 for (const dir of ['php', 'js', 'css', 'meat']) fs.cpSync(path.join(root, dir), path.join(web, dir), { recursive: true });
 for (const dir of ['migrations', 'tools']) fs.cpSync(path.join(root, '_pomocne', dir), path.join(web, dir), { recursive: true });
-for (const file of ['index.php', 'vz2.php', 'admin.php', 'help.php', 'config.theme.php']) fs.copyFileSync(path.join(root, file), path.join(web, file));
+for (const file of ['index.php', 'admin.php', 'help.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
 write(path.join(media, '.vz2-storage-id'), database);
 write(path.join(temp, 'db.php'), `<?php
 if(PHP_SAPI!=='cli')exit;
@@ -136,6 +136,21 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         } finally { fs.closeSync(log); }
         for (let i = 0; i < 50; i++) { try { await request(clients.anon, 'index.php?v=2'); break; } catch (_) { await new Promise(r => setTimeout(r, 100)); } }
         for (const name of ['admin', 'alice', 'bob', 'guest']) await login(name);
+        check((await request(clients.admin, 'vz2.php')).status === 404, 'removed page entry point is unavailable');
+        const entryPath = path.join(web, 'index.php');
+        const normalEntry = fs.readFileSync(entryPath, 'utf8');
+        const maintenanceEntry = normalEntry.replace('$maintenanceMode = false;', '$maintenanceMode = true;');
+        assert.notEqual(maintenanceEntry, normalEntry, 'maintenance switch must be present in index.php');
+        write(entryPath, maintenanceEntry);
+        try {
+            for (const url of ['', 'index.php?v=2&recording_id=42']) {
+                const response = await request(clients.admin, url);
+                check(response.status === 302 && response.headers.get('location') === 'maintenance.html',
+                    'maintenance switch redirects ' + (url || '/') + ' before rendering the application');
+            }
+            check((await request(clients.anon, 'maintenance.html')).status === 200, 'maintenance target exists');
+        } finally { write(entryPath, normalEntry); }
+        check((await request(clients.admin, 'index.php?v=2')).status === 200, 'application resumes after maintenance switch is disabled');
         if (process.env.VZ2_TEST_SUITE === 'wave-boundaries') {
             await require('./vz2_wave_boundaries.browser')({ base, clients, good, request, check, temp, upload, wav });
             console.log('PASS wave boundaries: ' + checks + ' checks');

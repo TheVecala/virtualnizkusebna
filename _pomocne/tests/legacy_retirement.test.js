@@ -12,13 +12,17 @@ const walk = dir => fs.readdirSync(path.join(root, dir), { withFileTypes:true })
     const name = dir + '/' + entry.name;
     return entry.isDirectory() ? (name === 'php/vendor' ? [] : walk(name)) : [name];
 });
-const runtime = ['index.php','vz2.php','admin.php','help.php',...walk('php'),...walk('js'),...walk('css')];
+const runtime = ['index.php','admin.php','help.php',...walk('php'),...walk('js'),...walk('css')];
 for (const file of runtime.filter(f => /\.(php|js|css)$/.test(f))) {
     const text = read(file);
-    for (const old of removed) assert(!text.includes(old), file + ' references retired path ' + old);
+    for (const old of removed) {
+        // The removed root page shares its basename with the active php/ajax/vz2.php API.
+        if (old === 'vz2.php') continue;
+        assert(!text.includes(old), file + ' references retired path ' + old);
+    }
     assert(!/VZ2_ONLY|jQuery|modal_multitrack|storage_refresh/.test(text), 'Legacy branch remains in ' + file);
 }
-for (const page of ['vz2.php','admin.php','help.php','php/loginbox4.php']) {
+for (const page of ['index.php','admin.php','help.php','php/loginbox4.php']) {
     for (const match of read(page).matchAll(/(?:src|href)="((?:js|css|meat)\/[^"?<]+)/g)) {
         assert(fs.existsSync(path.join(root, match[1])), page + ' missing asset: ' + match[1]);
     }
@@ -31,6 +35,7 @@ assert.deepEqual(manifest.removed_files, removed);
 assert(manifest.files.some(f => f.path === 'php/login/connect.php'));
 assert(manifest.files.some(f => f.path === 'js/multitrack.js'));
 assert(manifest.files.some(f => f.path === 'maintenance.html'));
+assert(!manifest.files.some(f => f.path === 'vz2.php'));
 for (const file of manifest.files) {
     assert(!removed.includes(file.path));
     assert(!/^(config|user\/|_vz2_storage\/|_pomocne\/|tools\/)/.test(file.path));

@@ -12,18 +12,18 @@ const out = path.resolve(destination);
 assert(!fs.existsSync(out), 'Output directory must not exist.');
 const git = (...args) => execFileSync('git', args, { cwd: root, windowsHide: true, encoding: 'utf8' }).trim();
 const runtime = name => /^(php|js|css|meat)\//.test(name)
-    || ['index.php','vz2.php','admin.php','help.php','404.html','maintenance.html','favicon.ico'].includes(name);
+    || ['index.php','admin.php','help.php','404.html','maintenance.html','favicon.ico'].includes(name);
 const removed = fs.readFileSync(path.join(root, '_pomocne/deploy/vz1-retirement/removed-files.txt'), 'utf8').trim().split(/\r?\n/);
 assert.equal(new Set(removed).size, removed.length, 'Duplicate retirement path');
 for (const name of removed) {
-    assert(/^(php|js|css|fonts|meat|data)\/[a-zA-Z0-9_./() -]+$/.test(name) || name === 'multitrack.php', 'Invalid retirement path: ' + name);
+    assert(/^(php|js|css|fonts|meat|data)\/[a-zA-Z0-9_./() -]+$/.test(name) || ['multitrack.php','vz2.php'].includes(name), 'Invalid retirement path: ' + name);
     assert(!name.split('/').includes('..'), 'Unsafe retirement path');
     assert(!fs.existsSync(path.join(root,name)), 'Retired file is still present: ' + name);
 }
 const names = git('ls-files').split(/\r?\n/).filter(runtime).filter(name => fs.existsSync(path.join(root, name))).sort();
 const untracked = git('ls-files','--others','--exclude-standard').split(/\r?\n/).filter(runtime);
 assert(!untracked.length, 'Review and track new runtime files before packaging: ' + untracked.join(', '));
-for (const name of ['index.php','vz2.php','php/auth.php','php/loginbox4.php','php/ajax/vz2.php','js/multitrack.js']) assert(names.includes(name), 'Missing runtime: ' + name);
+for (const name of ['index.php','php/auth.php','php/loginbox4.php','php/ajax/vz2.php','js/multitrack.js']) assert(names.includes(name), 'Missing runtime: ' + name);
 const entries = names.map(name => {
     const absolute = path.join(root,name);
     assert(fs.lstatSync(absolute).isFile(), 'Runtime must be a regular file: ' + name);
