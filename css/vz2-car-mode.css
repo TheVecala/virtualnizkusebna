@@ -22,8 +22,9 @@ body.car-mode-open { overflow: hidden; }
 #car-mode #car-folder { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 0; overflow: hidden; border: 0; background: none; font-size: clamp(21px, 6vw, 28px); font-weight: 750; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 #car-close, #car-picker-close { display: grid; place-items: center; width: 48px; height: 48px; min-height: 48px; padding: 0; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); font-size: 30px !important; }
 #car-close { justify-self: end; }
-.car-recording-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 70px; padding: 8px; border: 1px solid var(--color-border-strong); border-radius: 13px; background: var(--color-surface); }
-#car-recording-name { min-width: 0; padding-left: 5px; font-size: 23px; line-height: 1.15; overflow-wrap: anywhere; }
+.car-recording-row { display: grid; flex: 0 0 auto; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 70px; padding: 8px; border: 1px solid var(--color-border-strong); border-radius: 13px; background: var(--color-surface); }
+#car-recording-name { display: -webkit-box; min-width: 0; max-height: 2.3em; padding-left: 5px; overflow: hidden; font-size: 23px; line-height: 1.15; overflow-wrap: anywhere; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+#car-recording-name.is-long { font-size: 19px; }
 #car-mode #car-recording { min-width: 96px; min-height: 56px; padding: 8px 12px; border: 1px solid var(--color-primary); border-radius: 10px; background: var(--color-primary-bg); color: var(--color-primary-hover); font-size: 17px; font-weight: 750; }
 #car-mode #car-recording:hover { background: var(--color-surface-expanded); }
 .car-transport { padding: 10px 13px 12px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-shell); }

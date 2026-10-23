@@ -128,6 +128,7 @@
         $('car-folder').setAttribute('aria-label', 'Změnit složku: ' + folderName);
         $('car-recording-name').textContent = name;
         $('car-recording-name').title = name;
+        $('car-recording-name').classList.toggle('is-long', name.length > 26);
         $('car-recording').textContent = recording ? 'Změnit' : 'Vybrat';
         $('car-recording').setAttribute('aria-label', recording ? 'Změnit nahrávku: ' + name : 'Vybrat nahrávku');
         if (browseCollectionId == null) browseCollectionId = folder?.id;

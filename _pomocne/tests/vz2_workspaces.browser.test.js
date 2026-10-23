@@ -850,7 +850,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.evaluate(() => window.Vz2CarMode.getState().playing), false, 'Opening car mode pauses the playing Looper');
         assert.equal(peakRequests, peaksBeforeCar, 'Entering car mode does not load another waveform');
         assert(Math.abs(await page.evaluate(() => window.Vz2CarMode.getState().position) - 15) < 1, 'Entering car mode keeps the current time');
+        assert.equal(await page.locator('#car-recording-name').evaluate(name => getComputedStyle(name).fontSize), '23px', 'Short filenames keep the large type');
         await page.locator('#car-close').click();
+        const originalCarFileTitle = recordings[0].files[0].title;
+        recordings[0].files[0].title = '261005_184052_jen_bicí_čaj_před_nahráváním';
         await page.goto(carUrl); await ready();
         await page.waitForFunction(() => window.Vz2CarMode.getState()?.phase === 'ready');
         assert(await page.locator('#car-mode').isVisible());
@@ -867,15 +870,27 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             const layout = await page.evaluate(() => {
                 const box = selector => document.querySelector(selector).getBoundingClientRect();
                 const header = box('.car-header'), label = box('.car-mode-label'), folder = box('#car-folder'), close = box('#car-close');
-                const name = box('#car-recording-name'), change = box('#car-recording');
+                const name = box('#car-recording-name'), change = box('#car-recording'), row = box('.car-recording-row'), transport = box('.car-transport');
                 return { centered: Math.abs((folder.left + folder.right) / 2 - (header.left + header.right) / 2) < 2,
                     ordered: label.right <= folder.left && folder.right <= close.left && name.right <= change.left,
                     nameSize: parseFloat(getComputedStyle(document.querySelector('#car-recording-name')).fontSize),
+                    contained: name.bottom <= row.bottom - 6 && row.bottom < transport.top,
+                    lines: name.height / parseFloat(getComputedStyle(document.querySelector('#car-recording-name')).lineHeight),
                     changeWidth: change.width, changeHeight: change.height, overflow: document.querySelector('#car-mode').scrollWidth > innerWidth + 1 };
             });
-            assert(layout.centered && layout.ordered && layout.nameSize >= 22 && layout.changeWidth >= 90 && layout.changeHeight >= 54 && !layout.overflow,
+            assert(layout.centered && layout.ordered && layout.nameSize === 19 && layout.contained && layout.lines <= 2.1
+                && layout.changeWidth >= 90 && layout.changeHeight >= 54 && !layout.overflow,
                 `Car header and recording selector fit at ${width} px: ${JSON.stringify(layout)}`);
         }
+        const carName = page.locator('#car-recording-name');
+        const normalName = await carName.textContent();
+        await carName.evaluate(name => { name.textContent = 'VELMI_DLOUHÝ_NÁZEV_'.repeat(10) + '.wav'; });
+        const extremeName = await carName.evaluate(name => ({ clipped: name.scrollHeight > name.clientHeight + 1,
+            lines: name.getBoundingClientRect().height / parseFloat(getComputedStyle(name).lineHeight),
+            inside: name.getBoundingClientRect().bottom < name.closest('.car-recording-row').getBoundingClientRect().bottom }));
+        assert(extremeName.clipped && extremeName.lines <= 2.1 && extremeName.inside, 'Extremely long filenames are trimmed inside the recording row: ' + JSON.stringify(extremeName));
+        await shot('car-name-extreme-320');
+        await carName.evaluate((name, value) => { name.textContent = value; }, normalName);
         await page.locator('#car-chapter-list .car-chapter').first().waitFor();
         assert.equal(await page.locator('#car-chapter-list .car-chapter').count(), 7, 'All song starts are available');
         await page.waitForFunction(() => document.querySelector('#car-chapter-list .car-chapter.is-current')?.textContent.includes('Část 2'));
@@ -917,6 +932,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(new URL(page.url()).searchParams.get('listen'), '1', 'Selecting another recording retains car mode');
         assert((await page.locator('#car-recording-name').textContent()).includes('zkouška'));
         await page.locator('#car-close').click();
+        recordings[0].files[0].title = originalCarFileTitle;
         assert.equal(new URL(page.url()).searchParams.has('listen'), false);
         assert.equal(await page.locator('#car-mode').isVisible(), false);
         await page.goto('http://vz2-workspaces.test/index.php?v=2&collection_id=3'); await ready();
