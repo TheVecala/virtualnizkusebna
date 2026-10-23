@@ -21,7 +21,8 @@ const file = id => ({ id, url: '/sample.wav', state: 'available', original_name:
 const recordings = [
     { id: 11, collection_id: 3, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Celá zkouška', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(1)], can_edit: true, can_move: true },
     { id: 12, collection_id: 3, kind: 'multitrack', lifecycle: 'active', audio_state: 'available', title: 'Společný mix', revision: 1, author: 'Klára', duration_ms: 180000, files: [file(2)] },
-    { id: 13, collection_id: 1, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Domácí nahrávka', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(3)], can_move: true }
+    { id: 13, collection_id: 1, kind: 'single', lifecycle: 'active', audio_state: 'available', title: 'Domácí nahrávka', revision: 1, author: 'Petr', duration_ms: 180000, files: [file(3)], can_move: true },
+    { id: 14, collection_id: 3, kind: 'single', lifecycle: 'active', audio_state: 'available', title: '', revision: 1, author: 'Petr', duration_ms: 180000, files: [{ ...file(4), original_name: 'bez-popisku.wav', title: 'bez-popisku' }], can_edit: true }
 ];
 const links = [{ id: 3, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 15000, start_body: 'Další pokus', end_ms: 20000 },
     { id: 1, song_collection_id: 1, rehearsal_collection_id: 3, source_recording_id: 11, clip_recording_id: null, start_ms: 5000, start_body: 'Začátek skladby', end_ms: 10000 },
@@ -76,6 +77,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         if (url.pathname === '/php/ajax/vz2.php') {
             if (route.request().method() === 'POST') {
                 const input = route.request().postDataJSON();
+                if (input.action === 'recording_update') {
+                    const recording = recordings.find(row => row.id === input.id);
+                    recording.title = input.title;
+                    recording.revision++;
+                }
                 if (input.action === 'track_update') {
                     const recording = recordings.find(row => row.id === input.id);
                     recording.files.find(entry => entry.id === input.file_id).title = input.title;
@@ -516,6 +522,16 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         }
         await page.setViewportSize({ width: 390, height: 844 });
         await page.locator('[data-mobile-panel=recordings]').click();
+        assert.equal(await page.locator('#recording-14 .recording-toggle').getAttribute('aria-expanded'), 'false');
+        assert.equal(await page.locator('#recording-14 .recording-caption-text').textContent(), 'Přidat popisek');
+        await page.locator('#recording-14').getByRole('button', { name: 'Přidat krátký popisek' }).click();
+        assert(await page.locator('#editor').isVisible(), 'The pencil opens the editor for a recording without a caption');
+        assert.equal(await page.locator('#edit-form [name=title]').inputValue(), '');
+        await page.locator('#edit-form [name=title]').fill('Nový popisek');
+        await page.locator('#edit-form').getByRole('button', { name: 'Uložit' }).click();
+        await page.waitForFunction(() => document.querySelector('#recording-14 .recording-caption-text')?.textContent === 'Nový popisek');
+        assert(await page.locator('#recording-14').getByRole('button', { name: 'Upravit krátký popisek' }).isVisible());
+        assert.equal(recordings.pop().id, 14, 'The caption fixture does not change later recording-picker tests');
         assert(await page.locator('#recording-11 .recording-caption').isVisible(), 'The short caption is visible while the recording is collapsed');
         assert.equal(await page.locator('#recording-11 .recording-caption-text').textContent(), 'Celá zkouška');
         assert.equal(await page.locator('#recording-11 .recording-author').textContent(), 'Vložil Petr');

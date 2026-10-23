@@ -447,11 +447,12 @@
         heading.append(toggle);
         card.append(heading);
         const caption = node('div', undefined, 'recording-caption');
-        if (r.title) {
-            caption.append(node('span', r.title, 'recording-caption-text'));
-            if (cfg.write && r.can_edit) {
+        const canEditCaption = cfg.write && r.can_edit;
+        if (r.title || canEditCaption) {
+            caption.append(node('span', r.title || 'Přidat popisek', 'recording-caption-text' + (r.title ? '' : ' is-empty')));
+            if (canEditCaption) {
                 const editCaption = button('✎', () => openEdit(r, 'recording'), 'recording-caption-edit');
-                editCaption.setAttribute('aria-label', 'Upravit krátký popisek');
+                editCaption.setAttribute('aria-label', r.title ? 'Upravit krátký popisek' : 'Přidat krátký popisek');
                 editCaption.title = editCaption.getAttribute('aria-label');
                 editCaption.setAttribute('aria-haspopup', 'dialog'); editCaption.setAttribute('aria-controls', 'editor');
                 caption.append(editCaption);
@@ -541,7 +542,7 @@
         if (actions.childElementCount) card.append(actions);
         if (inlinePlayer) card.append(inlinePlayer.root);
         card.append(timestampsHost);
-        if (r.title) card.append(caption);
+        if (r.title || canEditCaption) card.append(caption);
         else body.prepend(node('small', 'Vložil ' + r.author, 'recording-author vz2-attribution'));
         if (!body.hidden) prepareAudio();
         if (expandedRecordingTimestamps.has(id)) {
