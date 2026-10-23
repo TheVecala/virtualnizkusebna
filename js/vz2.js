@@ -191,9 +191,11 @@
         }
         setRoute(route, true);
         const nextMixer = openRecording && target?.kind === 'multitrack' && target.lifecycle === 'active' ? String(target.id) : null;
-        const nextLooper = openRecording && target?.kind === 'single' && target.lifecycle === 'active' && target.files[0]?.url && params.view === 'looper' ? String(target.id) : null;
-        const loadSerial = nextMixer || nextLooper ? ++playerSerial : playerSerial;
-        if (nextMixer || nextLooper) {
+        const nextCarAudio = openRecording && params.listen === '1' && matchMedia('(max-width: 767px)').matches
+            && target?.kind === 'single' && target.lifecycle === 'active' && target.files.some(file => file.url) ? String(target.id) : null;
+        const nextLooper = !nextCarAudio && openRecording && target?.kind === 'single' && target.lifecycle === 'active' && target.files[0]?.url && params.view === 'looper' ? String(target.id) : null;
+        const loadSerial = nextMixer || nextLooper || nextCarAudio ? ++playerSerial : playerSerial;
+        if (nextMixer || nextLooper || nextCarAudio) {
             if (mixerId && mixerId !== nextMixer) stopMixer();
             if (nextMixer) {
                 mixerId = nextMixer; window.Vz2Player.showMixer(withSource(target));
@@ -1049,8 +1051,18 @@
     });
     window.Vz2App = {
         getCarContext() { return { collections: data?.collections || [], recordings: data?.recordings || [], selected, kind, player: window.Vz2Player.getState() }; },
-        openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: '0', listen: '1' }, true); },
-        setCarRoute(enabled) { const params = Object.fromEntries(qs); if (enabled) params.listen = '1'; else delete params.listen; setRoute(params, true); }
+        openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'audio', time_ms: '0', listen: '1' }, true); },
+        setCarRoute(enabled, player = null) {
+            const params = Object.fromEntries(qs);
+            if (enabled) {
+                params.listen = '1';
+                if (player?.id) { params.recording_id = String(player.id); params.view = player.mode === 'mixer' ? 'mixer' : 'audio'; params.time_ms = String(Math.round((player.position || 0) * 1000)); }
+            } else {
+                delete params.listen;
+                if (player?.mode === 'audio') { params.view = 'audio'; params.time_ms = String(Math.round((player.position || 0) * 1000)); }
+            }
+            setRoute(params, true);
+        }
     };
     const initialise = () => refresh().catch(e => { window.Vz2Boot?.fail(); stopMixer(); message(e.message, true); $('content').replaceChildren(node('p', 'Seznam se nepodařilo načíst.')); });
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialise, { once: true });
