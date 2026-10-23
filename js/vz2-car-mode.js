@@ -122,8 +122,14 @@
         context = readContext();
         const recording = currentRecording();
         const folder = collection(recording?.collection_id) || collection(context?.selected);
-        $('car-folder').textContent = folder?.title || 'Vybrat složku';
-        $('car-recording').querySelector('strong').textContent = recordingName(recording);
+        const folderName = folder?.title || 'Vybrat složku';
+        const name = recordingName(recording);
+        $('car-folder').textContent = folderName;
+        $('car-folder').setAttribute('aria-label', 'Změnit složku: ' + folderName);
+        $('car-recording-name').textContent = name;
+        $('car-recording-name').title = name;
+        $('car-recording').textContent = recording ? 'Změnit' : 'Vybrat';
+        $('car-recording').setAttribute('aria-label', recording ? 'Změnit nahrávku: ' + name : 'Vybrat nahrávku');
         if (browseCollectionId == null) browseCollectionId = folder?.id;
         if (!picker.hidden) renderPicker();
         if ((timestampId == null ? '' : String(timestampId)) !== (recording?.id == null ? '' : String(recording.id))) loadTimestamps(recording?.id);

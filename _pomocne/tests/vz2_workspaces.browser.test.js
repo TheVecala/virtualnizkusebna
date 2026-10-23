@@ -858,6 +858,24 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(peakRequests, peaksBeforeCar, 'Car mode does not request waveform peaks');
         assert.equal(await page.evaluate(() => window.Vz2CarMode.getState().playing), false, 'The mobile deep link waits for Play');
         assert(Math.abs(await page.evaluate(() => window.Vz2CarMode.getState().position) - 15) < 1, 'The mobile deep link keeps its time');
+        assert.equal(await page.locator('.car-mode-label').innerText(), 'REŽIM\nPOSLECHU');
+        assert.equal(await page.locator('#car-close').textContent(), '×');
+        assert.equal(await page.locator('.car-recording-row small, .car-recording-row .car-chevron').count(), 0, 'The recording row has no old caption or arrow');
+        assert.equal(await page.locator('#car-recording').textContent(), 'Změnit');
+        for (const width of [390, 320]) {
+            await page.setViewportSize({ width, height: 780 });
+            const layout = await page.evaluate(() => {
+                const box = selector => document.querySelector(selector).getBoundingClientRect();
+                const header = box('.car-header'), label = box('.car-mode-label'), folder = box('#car-folder'), close = box('#car-close');
+                const name = box('#car-recording-name'), change = box('#car-recording');
+                return { centered: Math.abs((folder.left + folder.right) / 2 - (header.left + header.right) / 2) < 2,
+                    ordered: label.right <= folder.left && folder.right <= close.left && name.right <= change.left,
+                    nameSize: parseFloat(getComputedStyle(document.querySelector('#car-recording-name')).fontSize),
+                    changeWidth: change.width, changeHeight: change.height, overflow: document.querySelector('#car-mode').scrollWidth > innerWidth + 1 };
+            });
+            assert(layout.centered && layout.ordered && layout.nameSize >= 22 && layout.changeWidth >= 90 && layout.changeHeight >= 54 && !layout.overflow,
+                `Car header and recording selector fit at ${width} px: ${JSON.stringify(layout)}`);
+        }
         await page.locator('#car-chapter-list .car-chapter').first().waitFor();
         assert.equal(await page.locator('#car-chapter-list .car-chapter').count(), 7, 'All song starts are available');
         await page.waitForFunction(() => document.querySelector('#car-chapter-list .car-chapter.is-current')?.textContent.includes('Část 2'));
@@ -897,7 +915,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.waitForFunction(() => window.Vz2CarMode.getState()?.id === '12' && window.Vz2CarMode.getState()?.phase === 'ready');
         assert.equal(await page.evaluate(() => window.Vz2CarMode.getState().playing), false, 'Choosing a recording in car mode waits for Play');
         assert.equal(new URL(page.url()).searchParams.get('listen'), '1', 'Selecting another recording retains car mode');
-        assert((await page.locator('#car-recording').textContent()).includes('zkouška'));
+        assert((await page.locator('#car-recording-name').textContent()).includes('zkouška'));
         await page.locator('#car-close').click();
         assert.equal(new URL(page.url()).searchParams.has('listen'), false);
         assert.equal(await page.locator('#car-mode').isVisible(), false);
