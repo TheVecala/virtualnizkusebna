@@ -167,8 +167,10 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.equal(await card(ids[1]).locator('.recording-actions').count(), 1, 'Single audio retains one shared action list');
         assert.equal(await card(ids[1]).locator('.vz2-audio-transport:visible').count(), 0, 'The player starts collapsed');
         await card(ids[1]).locator('.recording-actions .vz2-audio-trigger').click();
+        assert.equal(await card(ids[1]).locator('.vz2-audio-transport:visible').count(), 1, 'Opening shows the custom controls');
+        assert(await card(ids[1]).locator('audio').evaluate(a => a.paused), 'Opening the player does not start playback');
+        await card(ids[1]).locator('.vz2-audio-play-pause').click();
         await page.waitForFunction(id => !document.querySelector('#recording-' + id + ' audio').paused, ids[1]);
-        assert.equal(await card(ids[1]).locator('.vz2-audio-transport:visible').count(), 1, 'Play expands the custom controls');
         await card(ids[1]).locator('audio').evaluate(a => a.pause());
         await page.screenshot({ path: path.join(temp, 'ui-stage2-mobile-expanded.png') });
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight));

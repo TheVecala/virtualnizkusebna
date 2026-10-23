@@ -55,7 +55,7 @@
         const label = document.createElement('span'); label.textContent = 'Přehrát';
         const hint = document.createElement('small'); hint.className = 'vz2-audio-hint';
         trigger.append(triggerIcon, label, hint);
-        trigger.setAttribute('aria-label', options.label || 'Přehrát nahrávku');
+        trigger.setAttribute('aria-label', options.label || (actionRow ? 'Otevřít přehrávač' : 'Přehrát nahrávku'));
         const transport = document.createElement('div'); transport.className = 'vz2-audio-transport'; transport.hidden = !inlineControls;
         const playPause = document.createElement('button'); playPause.type = 'button'; playPause.className = 'vz2-audio-play-pause';
         const current = document.createElement('output'); current.textContent = '0:00';
@@ -117,8 +117,9 @@
             const expanded = actionRow && !root.hidden;
             if (compactLooper) changeIcon(triggerIcon, expanded ? 'x' : audio.paused ? 'play' : 'pause');
             else triggerIcon.textContent = expanded ? '×' : audio.paused ? '▶' : '❚❚';
-            label.textContent = expanded ? 'Zavřít' : audio.paused ? 'Přehrát' : 'Pozastavit';
-            trigger.setAttribute('aria-label', (expanded ? 'Zavřít přehrávač' : audio.paused ? 'Přehrát' : 'Pozastavit') + (options.label ? ' ' + options.label : ' nahrávku'));
+            label.textContent = expanded ? 'Zavřít' : actionRow ? 'Otevřít' : audio.paused ? 'Přehrát' : 'Pozastavit';
+            const triggerAction = actionRow ? (expanded ? 'Zavřít přehrávač' : 'Otevřít přehrávač') : audio.paused ? 'Přehrát' : 'Pozastavit';
+            trigger.setAttribute('aria-label', triggerAction + (options.label ? ' ' + options.label : ' nahrávku'));
             trigger.title = trigger.getAttribute('aria-label');
             if (compactLooper) changeIcon(playPause.firstElementChild, audio.paused ? 'play' : 'pause');
             else playPause.textContent = audio.paused ? '▶' : '❚❚';
@@ -138,7 +139,7 @@
         }
         trigger.addEventListener('click', () => {
             window.Vz2Timestamps?.stopLoop();
-            if (actionRow && !root.hidden) { audio.pause(); setOpen(false); return; }
+            if (actionRow) { const open = root.hidden; audio.pause(); setOpen(open); return; }
             setOpen(true);
             if (!audio.paused) { audio.pause(); return; }
             startPlayback();

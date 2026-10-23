@@ -548,10 +548,14 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#recording-11 .recording-actions > button:visible').count(), 6, 'Six main actions share one row on mobile');
         assert.equal(await page.locator('#recording-11 .recording-actions > button').first().getAttribute('class'), 'vz2-audio-trigger');
         assert.deepEqual(await page.locator('#recording-11 .recording-actions > button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
-            ['Přehrát zkouška.wav', 'Otevřít v Looperu', 'Uložit offline', 'Otevřít časové značky', 'Poslech v autě', 'Další'],
+            ['Otevřít přehrávač zkouška.wav', 'Otevřít v Looperu', 'Uložit offline', 'Otevřít časové značky', 'Poslech v autě', 'Další'],
             'The icon row keeps the agreed action order');
         assert.equal(await page.locator('#recording-11 .vz2-audio-transport:visible').count(), 0, 'The player starts collapsed');
         await page.locator('#recording-11 .vz2-audio-trigger').click();
+        assert(await page.locator('#recording-11 .vz2-audio-transport').isVisible(), 'The recording player opens without starting playback');
+        assert(await page.locator('#recording-11 audio').evaluate(audio => audio.paused), 'Opening the recording player waits for Play');
+        assert.equal(await page.locator('#recording-11 .vz2-audio-play-pause').getAttribute('aria-label'), 'Přehrát');
+        await page.locator('#recording-11 .vz2-audio-play-pause').click();
         await page.waitForFunction(() => !document.querySelector('#recording-11 audio').paused);
         assert(await page.locator('#recording-11 .vz2-audio-transport').isVisible(), 'Play reveals the shared controls');
         assert.equal(await page.locator('#recording-11 .vz2-audio-trigger').getAttribute('aria-label'), 'Zavřít přehrávač zkouška.wav');
@@ -838,9 +842,12 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const peaksBeforeCar = peakRequests;
         await page.locator('#time-link-close').click();
         await page.setViewportSize({ width: 390, height: 780 });
+        await page.locator('#looper-play').click();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.playing);
         await page.locator('#car-mode-menu-open').click();
         await page.waitForFunction(() => window.Vz2CarMode.getState()?.phase === 'ready');
         assert.equal(await page.evaluate(() => window.Vz2Player.getState()), null, 'Entering car mode closes Looper');
+        assert.equal(await page.evaluate(() => window.Vz2CarMode.getState().playing), false, 'Opening car mode pauses the playing Looper');
         assert.equal(peakRequests, peaksBeforeCar, 'Entering car mode does not load another waveform');
         assert(Math.abs(await page.evaluate(() => window.Vz2CarMode.getState().position) - 15) < 1, 'Entering car mode keeps the current time');
         await page.locator('#car-close').click();
@@ -888,6 +895,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#car-recording').click();
         await page.locator('#car-picker-recordings .car-picker-row').nth(1).click();
         await page.waitForFunction(() => window.Vz2CarMode.getState()?.id === '12' && window.Vz2CarMode.getState()?.phase === 'ready');
+        assert.equal(await page.evaluate(() => window.Vz2CarMode.getState().playing), false, 'Choosing a recording in car mode waits for Play');
         assert.equal(new URL(page.url()).searchParams.get('listen'), '1', 'Selecting another recording retains car mode');
         assert((await page.locator('#car-recording').textContent()).includes('zkouška'));
         await page.locator('#car-close').click();
@@ -903,11 +911,15 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(await page.locator('#car-picker-recordings').isVisible(), 'The collection icon starts with recordings from the current folder');
         await page.locator('#car-picker-recordings .car-picker-row').first().click();
         await page.waitForFunction(() => window.Vz2CarMode.getState()?.mode === 'audio' && window.Vz2CarMode.getState()?.phase === 'ready');
+        assert.equal(await page.evaluate(() => window.Vz2CarMode.getState().playing), false, 'The car mode picker does not autoplay');
+        await page.locator('#car-play').click();
+        await page.waitForFunction(() => window.Vz2CarMode.getState()?.playing);
         assert.equal(peakRequests, peaksBeforeCar, 'Selecting an ordinary recording in car mode skips peaks');
         await page.locator('#car-close').click();
         await page.locator('#recording-11 .recording-car-entry').click();
         await page.waitForFunction(() => window.Vz2CarMode.getState()?.id === '11' && window.Vz2CarMode.getState()?.phase === 'ready');
         assert(await page.locator('#car-mode').isVisible(), 'The recording car icon opens that recording in car mode');
+        assert.equal(await page.evaluate(() => window.Vz2CarMode.getState().playing), false, 'The recording car icon waits for Play');
         await page.locator('#car-close').click();
         await page.evaluate(() => {
             Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: value => { window.copiedTimeLink = value; return Promise.resolve(); } } });

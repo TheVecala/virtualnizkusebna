@@ -6,7 +6,7 @@
     const audioStore = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     let context, browseCollectionId, browseKind = 'song', pickerLevel = 'recordings';
     let timestampList = null, timestampId = null, timestampSerial = 0, activeChapter = null;
-    let previousFocus = null, pendingPlay = null, linkTarget = null, ratingBusy = false;
+    let previousFocus = null, pendingSelection = null, linkTarget = null, ratingBusy = false;
     let single = null, audioSerial = 0;
     const format = seconds => window.Vz2Timestamps.format(Math.max(0, Number(seconds) || 0) * 1000);
     const text = (tag, content, className) => {
@@ -47,11 +47,11 @@
         audio.pause(); audio.removeAttribute('src'); audio.load();
         if (previous?.url) URL.revokeObjectURL(previous.url);
     }
-    async function openSingle(recording, seconds = 0, resume = false) {
+    async function openSingle(recording, seconds = 0) {
         const file = recording.files.find(item => item.url);
         if (!file) { setStatus('Audio není dostupné.', true); return; }
         releaseSingle();
-        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), resume, url: null };
+        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), url: null };
         single = current;
         const serial = audioSerial;
         audio.loop = false;
@@ -69,7 +69,6 @@
         if (!single) return;
         audio.currentTime = Math.min(Math.max(0, audio.duration || 0), single.seconds);
         single.phase = 'ready';
-        if (single.resume) { single.resume = false; audio.play().catch(() => setStatus('Nahrávka je připravena. Spusť ji tlačítkem Play.')); }
         tick();
     });
     audio.addEventListener('error', () => {
@@ -94,7 +93,7 @@
                 if (underlying?.mode === 'looper') window.Vz2Player.closeLooper();
                 const requestedMs = Number(query.get('time_ms') || 0);
                 const seconds = transfer?.position ?? (Number.isFinite(requestedMs) ? Math.max(0, requestedMs) / 1000 : 0);
-                openSingle(selected, seconds, !!transfer?.playing);
+                openSingle(selected, seconds);
             }
         } else if (single && routeRecording?.kind === 'multitrack') releaseSingle();
     }
@@ -209,7 +208,7 @@
         $('car-picker-folder').querySelector('strong').textContent = folder?.title || 'Vybrat složku';
         $('car-picker-recordings').hidden = pickerLevel !== 'recordings';
         $('car-picker-folders').hidden = pickerLevel !== 'folders';
-        $('car-picker-hint').textContent = pickerLevel === 'folders' ? 'Vyber složku a potom nahrávku.' : 'Vyber nahrávku. Po výběru se spustí od začátku.';
+        $('car-picker-hint').textContent = pickerLevel === 'folders' ? 'Vyber složku a potom nahrávku.' : 'Vyber nahrávku. Přehrávání spustíš tlačítkem Play.';
         if (pickerLevel === 'folders') {
             const host = $('car-picker-folder-list'); host.replaceChildren();
             for (const tab of document.querySelectorAll('[data-car-kind]')) tab.setAttribute('aria-pressed', String(tab.dataset.carKind === browseKind));
@@ -247,24 +246,29 @@
     function hidePicker() { picker.hidden = true; $('car-recording').focus(); }
     async function chooseRecording(recording) {
         hidePicker();
-        pendingPlay = String(recording.id);
+        pause();
+        pendingSelection = String(recording.id);
         setStatus('Načítám nahrávku…');
         try {
-            if (!await window.Vz2App.openCarRecording(recording)) { pendingPlay = null; setStatus('Nahrávku se nepodařilo otevřít.', true); return; }
+            if (!await window.Vz2App.openCarRecording(recording)) { pendingSelection = null; setStatus('Nahrávku se nepodařilo otevřít.', true); return; }
             refreshContext();
-        } catch (error) { pendingPlay = null; setStatus(error.message, true); }
+        } catch (error) { pendingSelection = null; setStatus(error.message, true); }
     }
-    async function tryPendingPlay() {
-        if (!pendingPlay) return;
+    function finishPendingSelection() {
+        if (!pendingSelection) return;
         const player = playerState();
-        if (String(player?.id) !== pendingPlay || player?.phase !== 'ready') return;
-        pendingPlay = null;
-        try { seek(0); await play(); setStatus(''); }
-        catch (_) { setStatus('Nahrávka je připravena. Spusť ji tlačítkem Play.'); }
+        if (String(player?.id) !== pendingSelection || player?.phase !== 'ready') return;
+        pendingSelection = null;
+        seek(0); setStatus('');
     }
     function open(manual = false, initialLevel = 'folders') {
         if (!mobile.matches) return;
-        if (mode.hidden) { previousFocus = document.activeElement; window.Vz2Timestamps?.stopLoop(); }
+        if (mode.hidden) {
+            previousFocus = document.activeElement;
+            window.Vz2Timestamps?.stopLoop();
+            document.querySelectorAll('audio').forEach(other => other.pause());
+            window.Vz2Player.pause();
+        }
         mode.hidden = false; document.body.classList.add('car-mode-open');
         if (manual) window.Vz2App?.setCarRoute(true, window.Vz2Player.getState());
         refreshContext(); $('car-close').focus();
@@ -273,7 +277,7 @@
     function close(manual = false) {
         if (mode.hidden) return;
         const current = playerState();
-        picker.hidden = true; mode.hidden = true; pendingPlay = null;
+        picker.hidden = true; mode.hidden = true; pendingSelection = null;
         document.body.classList.remove('car-mode-open');
         if (manual) window.Vz2App?.setCarRoute(false, current);
         if (single) releaseSingle();
@@ -348,7 +352,7 @@
         try { await navigator.clipboard.writeText(url.href); $('time-link-status').textContent = 'Odkaz zkopírován.'; }
         catch (error) { $('time-link-status').textContent = 'Kopírování se nezdařilo: ' + error.message; }
     };
-    setInterval(() => { if (!mode.hidden) { tick(); tryPendingPlay(); } }, 200);
+    setInterval(() => { if (!mode.hidden) { tick(); finishPendingSelection(); } }, 200);
     window.Vz2CarMode = {
         open, close, sync, openShare, getState: playerState,
         async openRecording(recording) {
