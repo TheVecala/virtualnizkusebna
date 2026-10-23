@@ -44,18 +44,16 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.equal(await expanded(), 3);
         assert.equal(await card(ids[2]).locator('.recording-track-order button').count(), 4, 'Track order controls stay beside their tracks');
         const restored = await card(ids[0]).evaluate(card => {
-            const body = card.querySelector('.recording-body');
-            const children = [...body.children];
             return {
                 duration: card.querySelector('.recording-duration').textContent,
                 directStatus: !!card.querySelector(':scope > .recording-status'),
                 caption: card.querySelector('.recording-caption-text').textContent,
                 author: card.querySelector('.recording-author').textContent,
-                actionsBeforeAudio: children.indexOf(body.querySelector('.recording-actions')) < children.indexOf(body.querySelector('audio'))
+                actionsBeforeAudio: card.querySelector(':scope > .recording-actions').nextElementSibling.classList.contains('vz2-inline-player')
             };
         });
         assert.deepEqual(restored, { duration: '0:10', directStatus: false, caption: 'První záběr', author: 'Vložil Admin', actionsBeforeAudio: true });
-        check(true, 'recordings: short caption and author stay above the divider; actions remain in the expanded body');
+        check(true, 'recordings: actions are directly under the title and short caption stays above details');
 
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         const audio = card(ids[0]).locator('audio');
@@ -69,7 +67,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert(Math.abs(await audio.evaluate(a => a.currentTime) - position) < 0.1);
         assert.equal(await page.evaluate(() => window.MultitrackApp.getState()), null);
         check(true, 'recordings: initially collapsed, any number open, native playback and position survive collapse without opening Mixer');
-        const actions = card(ids[0]).locator('.recording-body > .recording-actions');
+        const actions = card(ids[0]).locator(':scope > .recording-actions');
         const actionsDialog = page.locator('#recording-actions-' + ids[0]);
         const menuToggle = actions.getByRole('button', { name: 'Další', exact: true });
         assert.equal(await menuToggle.count(), 1, 'Selected recording actions share one dialog button');
@@ -78,7 +76,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         assert.deepEqual(await card(ids[2]).locator('.recording-body > .files li').allTextContents(), ['guitar.wav', 'bass.wav']);
         assert.equal(await card(ids[0]).locator(':scope > button:not(.recording-toggle)').count(), 0, 'Open action is not detached at the top of the recording card');
         assert.equal(await actions.locator(':scope > button').first().getAttribute('class'), 'vz2-audio-trigger');
-        assert.deepEqual((await actions.locator(':scope > button').allTextContents()).slice(1, 3), ['Otevřít v Looperu', 'Uložit offline'], 'Looper and offline follow Play directly');
+        assert.deepEqual((await actions.locator(':scope > button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label')))).slice(1, 3),
+            ['Otevřít v Looperu', 'Uložit offline'], 'Looper and offline follow Play directly');
         let finishDownload;
         const heldDownload = new Promise(resolve => { finishDownload = resolve; });
         await page.route('**/php/ajax/vz2_files.php?**', async route => {
@@ -155,7 +154,7 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await card(ids[1]).waitFor();
         await card(ids[2]).locator('.recording-toggle').click();
-        await card(ids[2]).locator('.recording-body > .recording-actions').getByRole('button', { name: 'Otevřít v Mixéru', exact: true }).waitFor();
+        await card(ids[2]).locator(':scope > .recording-actions').getByRole('button', { name: 'Otevřít v Mixéru', exact: true }).waitFor();
         await card(ids[2]).locator('.recording-actions').getByRole('button', { name: 'Další', exact: true }).click();
         assert.equal(await page.locator('#recording-actions-' + ids[2]).getByRole('button', { name: 'Úplně smazat', exact: true }).count(), 1, 'Admin can fully delete a multitrack recording');
         await page.locator('#recording-actions-' + ids[2]).getByRole('button', { name: 'Zavřít', exact: true }).click();

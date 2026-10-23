@@ -66,15 +66,26 @@ body[data-collection-kind=rehearsal] #collections .collection > button[aria-pres
 .recording-heading > .recording-toggle { flex: 1 1 auto; min-width: 0; }
 .recording-heading > .recording-order-controls { display: flex; flex: 0 0 auto; gap: 4px; padding-right: 7px; }
 .recording-heading > .recording-order-controls button { width: 28px; min-height: 28px; height: 28px; }
-.recording-actions.has-inline-player { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1.2fr) 35px; }
-.recording-actions.has-inline-player > button { width: 100%; height: 100%; min-width: 0; padding: 5px 3px; font-size: 11px; line-height: 1.2; }
-.recording-actions .recording-menu-toggle { width: 35px; min-width: 35px; font-size: 20px; line-height: 1; }
-.recording-actions.has-inline-player.is-player-open { padding-bottom: 0; border-bottom: 0; border-radius: 4px 4px 0 0; }
-.recording-actions.is-player-open .vz2-audio-trigger { position: relative; z-index: 1; margin-bottom: -1px; border-color: var(--color-primary); border-bottom-color: var(--color-shell); border-radius: 4px 4px 0 0; background: var(--color-shell); color: var(--color-primary-hover); }
+.recording-card > .recording-actions { display: flex; flex-wrap: nowrap; gap: 4px; padding: 0; margin: 3px 8px 7px; border: 0; background: transparent; }
+.recording-actions > button { display: inline-flex; flex: 1 1 0; align-items: center; justify-content: center; min-width: 0; max-width: 52px; width: auto; height: 40px; min-height: 40px; padding: 0; font-size: 20px; line-height: 1; }
+.recording-actions .vz2-audio-trigger > span:not(.vz2-audio-icon) { display: none; }
+.recording-actions .vz2-audio-trigger .vz2-audio-icon { font-size: 20px; }
+.vz2-action-icon { display: block; flex: 0 0 auto; width: 21px; height: 21px; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.recording-actions .vz2-audio-trigger .vz2-action-icon { width: 21px; height: 21px; }
+.recording-actions .recording-menu-toggle { width: auto; min-width: 0; margin-left: auto; font-size: 20px; }
+.recording-actions .recording-car-entry { display: none; }
+.recording-actions .recording-icon-button[aria-expanded=true], .recording-actions.is-player-open .vz2-audio-trigger { border-color: var(--color-primary); color: var(--color-primary-hover); background: var(--color-primary-bg); }
+.recording-actions .recording-icon-button[data-progress] { position: relative; }
+.recording-actions .recording-icon-button[data-progress]::after { content: attr(data-progress); position: absolute; right: 1px; bottom: 1px; padding: 0 2px; border-radius: 2px; background: var(--color-shell); font-size: 9px; line-height: 1.1; }
+.recording-card > .recording-actions.is-player-open { margin-bottom: 0; }
+@media (max-width: 767px) { .recording-actions .recording-car-entry { display: inline-flex; } }
 .vz2-inline-player { min-width: 0; }
-.recording-body > .vz2-inline-player { margin: 0 0 8px; }
-.recording-actions.is-player-open + .vz2-inline-player { padding: 6px; border: 1px solid var(--color-border); border-top: 1px solid var(--color-primary); border-radius: 0 0 4px 4px; background: var(--color-shell); }
-.recording-actions.is-player-open + .vz2-inline-player .vz2-audio-transport { padding: 2px 0; border: 0; }
+.recording-card > .vz2-inline-player { margin: 0 8px 7px; }
+.recording-actions.is-player-open + .vz2-inline-player { padding: 4px 6px 6px; border: 1px solid var(--color-border); border-top: 1px solid var(--color-primary); border-radius: 0 0 4px 4px; background: var(--color-shell); }
+.recording-actions.is-player-open + .vz2-inline-player .vz2-audio-transport { padding: 0; border: 0; }
+.recording-card > .recording-timestamps { margin: 0 8px 7px; padding: 6px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-shell); }
+.recording-timestamps .vz2-timestamps { margin: 0; border: 0; }
+.recording-timestamps .vz2-timestamps > .ts-summary { display: none; }
 .vz2-inline-player > audio[hidden] { display: none !important; }
 .vz2-audio-trigger { display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
 .vz2-audio-trigger .vz2-audio-icon { font-size: 15px; line-height: 1; }
@@ -90,6 +101,14 @@ body[data-collection-kind=rehearsal] #collections .collection > button[aria-pres
 .vz2-audio-transport input[type=range]::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: var(--color-primary-hover); }
 .vz2-audio-transport > button { flex: 0 0 29px; width: 29px; min-height: 29px; height: 29px; padding: 0; }
 .vz2-audio-transport .vz2-audio-play-pause { font-size: 16px; }
+.is-compact-looper .vz2-audio-transport { flex-direction: column; align-items: stretch; gap: 3px; }
+.is-compact-looper .vz2-audio-progress { display: flex; align-items: center; gap: 5px; min-width: 0; min-height: 23px; }
+.is-compact-looper .vz2-audio-progress input[type=range] { flex: 1 1 auto; width: 100%; }
+.is-compact-looper .vz2-audio-controls { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.is-compact-looper .vz2-audio-controls button { display: inline-flex; align-items: center; justify-content: center; flex: 0 1 38px; width: 38px; height: 34px; min-height: 34px; padding: 0; font-size: 17px; }
+.is-compact-looper .vz2-audio-controls .vz2-action-icon { width: 19px; height: 19px; }
+.is-compact-looper .vz2-audio-controls .vz2-audio-play-pause { color: var(--color-primary); border-color: var(--color-primary); }
+.is-compact-looper .vz2-audio-controls button[aria-pressed=true] { color: var(--color-primary); border-color: var(--color-primary); }
 @media (max-width: 360px) { .vz2-audio-transport { gap: 3px; } .vz2-audio-transport output { min-width: 30px; font-size: 10px; } }
 .workspace-controls { display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; margin: 0; }
 .workspace-controls button { white-space: nowrap; }

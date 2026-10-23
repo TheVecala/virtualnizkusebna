@@ -349,6 +349,13 @@
         catch (error) { $('time-link-status').textContent = 'Kopírování se nezdařilo: ' + error.message; }
     };
     setInterval(() => { if (!mode.hidden) { tick(); tryPendingPlay(); } }, 200);
-    window.Vz2CarMode = { open, close, sync, openShare, getState: playerState };
+    window.Vz2CarMode = {
+        open, close, sync, openShare, getState: playerState,
+        async openRecording(recording) {
+            if (!mobile.matches) return;
+            open(true);
+            await chooseRecording(recording);
+        }
+    };
     sync();
 }());

@@ -43,11 +43,10 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
             await dialog.getByRole('button', { name: 'Zavřít časovou značku' }).click();
             await dialog.waitFor({ state: 'hidden' });
         };
-        await card.locator('.recording-toggle').click();
-        assert.equal(await notes.getAttribute('open'), null, 'timestamp section is collapsed by default');
-        assert.equal(await notes.locator('.ts-content').isVisible(), false, 'only the timestamp heading row remains visible while collapsed');
-        await notes.locator('.ts-summary').click();
-        assert.equal(await notes.locator('.ts-content').isVisible(), true, 'chevron heading expands timestamp controls and entries');
+        assert.equal(await notes.count(), 0, 'timestamp section is not mounted before opening its icon');
+        await card.getByRole('button', { name: 'Otevřít časové značky' }).click();
+        assert.equal(await notes.locator('.ts-content').isVisible(), true, 'the icon opens timestamp controls and entries');
+        assert.equal(await notes.locator('.ts-summary').isVisible(), false, 'the old timestamp heading is hidden');
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
         assert.equal(await dialog.locator('.ts-mode').textContent(), 'Přidat značku');
         assert.equal(await dialog.getByRole('button', { name: 'Uložit poznámku' }).isVisible(), true);
@@ -179,7 +178,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await notes.getByText('Text přežije obnovení katalogu', { exact: true }).waitFor({ state: 'attached' });
         assert.equal(await notes.locator('.ts-note').filter({ hasText: 'Text přežije obnovení katalogu' }).evaluate(e => getComputedStyle(e).paddingLeft), '30px', 'notes inside a paired song retain the visual hierarchy');
         await closeCreated();
-        if (!await notes.locator('.ts-content').isVisible()) await notes.locator('.ts-summary').click();
+        if (!await notes.locator('.ts-content').isVisible()) await card.getByRole('button', { name: 'Otevřít časové značky' }).click();
         await notes.getByText('Text přežije obnovení katalogu', { exact: true }).waitFor();
         check(true, 'browser: draft survives catalogue refresh and saves correctly');
         await notes.getByRole('button', { name: 'Přidat značku', exact: true }).click();
@@ -236,7 +235,8 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         } finally { fs.renameSync(path.join(media, firstFile + '.held'), path.join(media, firstFile)); }
         const recording = db('SELECT * FROM vz2_recordings WHERE id=?', [id])[0];
         await good('admin', { action: 'remove_audio', id, revision: recording.revision, confirm: recording.title, request_key: require('node:crypto').randomBytes(16).toString('hex') });
-        await page.reload(); await card.locator('.recording-toggle').click(); await notes.locator('.ts-summary').click(); await notes.locator('.ts-song_start p').filter({ hasText: 'Můj rozepsaný text' }).waitFor();
+        await page.reload(); await card.getByRole('button', { name: 'Otevřít časové značky' }).click();
+        await notes.locator('.ts-song_start p').filter({ hasText: 'Můj rozepsaný text' }).waitFor();
         assert.equal(await card.locator('audio').count(), 0);
         for (const b of await notes.locator('[data-playback]').all()) assert.equal(await b.isDisabled(), true);
         assert.equal(await notes.getByRole('button', { name: 'Upravit', exact: true }).first().isEnabled(), true);

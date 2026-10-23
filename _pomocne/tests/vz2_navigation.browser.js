@@ -33,6 +33,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, db, check, 
         await page.evaluate(() => { window.navigationSentinel = 'same-document'; });
         await open(); await ready();
         assert.equal(await page.locator('#player-body > #mixer-panel').count(), 1);
+        await page.locator('#recording-' + mix.id).getByRole('button', { name: 'Otevřít časové značky' }).click();
         assert.equal(await page.locator('#recording-' + mix.id + ' .vz2-timestamps').count(), 1);
         assert.equal(await page.locator('#mt-selector button').count(), 0);
         assert.equal(await page.locator('#collections').isVisible(), true);
