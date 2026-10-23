@@ -130,7 +130,20 @@
         if (!r.ok || !result.ok) { const e = new Error(result.error || 'Značky nelze načíst.'); e.status = r.status; throw e; }
         return result;
     }
-    function publish(list) { panels.forEach(p => { if (Number(p.id) === list.recording_id) p.update(list); }); }
+    function publish(list) {
+        panels.forEach(p => { if (Number(p.id) === Number(list.recording_id)) p.update(list); });
+        document.dispatchEvent(new CustomEvent('vz2:timestamps-updated', { detail: list }));
+    }
+    api.getList = id => request(id);
+    api.addQuickNote = async (id, symbol, timeMs) => {
+        if (!['👍', '👎'].includes(symbol)) throw new Error('Neplatné hodnocení.');
+        const current = await request(id);
+        if (!current.can_create) throw new Error('K této nahrávce nelze přidat poznámku.');
+        const result = await request(id, { action: 'create', timestamps_revision: current.timestamps_revision,
+            kind: 'note', time_ms: Math.max(0, Math.round(timeMs)), body: symbol });
+        publish(result);
+        return result;
+    };
     api.stopLoop = function () { ++loopSerial; loop = null; panels.forEach(p => p.playback()); };
     // Same interval semantics for HTML media and WebAudio; no second timestamp store.
     setInterval(async () => {

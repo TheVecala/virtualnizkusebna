@@ -43,6 +43,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
 (async () => {
     const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || chromium.executablePath() });
     const errors = [], confirmations = [], deletionDialogs = [], recordingDeletions = [];
+    const carNotes = [];
+    let carTimestampRevision = 1;
     let holdMixer = null, mixerRequested = null;
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
@@ -126,8 +128,17 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         }
         if (url.pathname === '/php/ajax/vz2_history.php') return json(matrix);
         if (url.pathname === '/php/ajax/vz2_timestamps.php') {
-            const recordingId = Number(url.searchParams.get('recording_id'));
-            return json({ ok: true, recording_id: recordingId, entries: [11, 12].includes(recordingId) ? timestampRows : [], duration_ms: 180000, timestamps_revision: 1, can_create: true, source_filename: 'zkouška.wav' });
+            const input = route.request().method() === 'POST' ? route.request().postDataJSON() : null;
+            const recordingId = Number(input?.recording_id || url.searchParams.get('recording_id'));
+            if (input?.action === 'create') {
+                assert.equal(input.timestamps_revision, carTimestampRevision);
+                assert.equal(input.kind, 'note');
+                carNotes.push({ id: 200 + carNotes.length, recording_id: recordingId, kind: 'note', time_ms: input.time_ms, body: input.body,
+                    author: 'Petr', editor: 'Petr', created_by: 1, updated_by: 1, revision: 1, can_edit: false, can_delete: false,
+                    created_at: '2026-10-23 10:00:00', updated_at: '2026-10-23 10:00:00' });
+                carTimestampRevision++;
+            }
+            return json({ ok: true, recording_id: recordingId, entries: [11, 12].includes(recordingId) ? [...timestampRows, ...carNotes.filter(row => row.recording_id === recordingId)] : [], duration_ms: 180000, timestamps_revision: carTimestampRevision, can_create: true, source_filename: 'zkouška.wav' });
         }
         if (url.pathname === '/php/ajax/vz2_peaks.php') return json({ ok: true, peaks: [0.1, 0.6, 0.2, 0.8, 0.1], duration_ms: 180000 });
         return route.fulfill({ status: 204, body: '' });
@@ -376,7 +387,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                     oneRow: Math.abs((picker.top + picker.bottom) / 2 - (actions.top + actions.bottom) / 2) < 6 &&
                         Math.abs((picker.top + picker.bottom) / 2 - (fullscreen.top + fullscreen.bottom) / 2) < 6 };
             });
-            assert(!fit.overflow && fit.tabWidth >= 60 && fit.tabsBelow && fit.headerHeight < 65 && fit.oneRow, `${panel}: bottom section tabs and picker should fit at 320 px`);
+            assert(!fit.overflow && fit.tabWidth >= 60 && fit.tabsBelow && fit.headerHeight < 65 && fit.oneRow, `${panel}: bottom section tabs and picker should fit at 320 px: ${JSON.stringify(fit)}`);
             if (panel === 'tablature') await shot('songs-map-320');
         }
         await page.locator('[data-mobile-panel=recordings]').click();
@@ -761,6 +772,95 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.deepEqual(deletionDialogs.slice(-2), ['confirm', 'confirm'], 'Deleting a recording only asks for yes/no confirmation');
         assert.deepEqual(errors, []);
         console.log('PASS: linked recordings, attachment removal, and recording deletion without name entry');
+
+        timestampRows.push(...[5000, 10000, 20000, 30000, 40000, 50000].map((timeMs, index) => ({
+            id: 110 + index, time_ms: timeMs, kind: 'song_start', body: 'Část ' + (index + 1),
+            author: 'Petr', editor: 'Petr', created_by: 1, updated_by: 1, revision: 1, can_edit: false, can_delete: false,
+            created_at: '2026-10-23 10:00:00', updated_at: '2026-10-23 10:00:00'
+        })));
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto('http://vz2-workspaces.test/index.php?v=2&recording_id=11&view=looper&time_ms=15000');
+        await ready();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
+        await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: value => { window.copiedTimeLink = value; return Promise.resolve(); } } }));
+        await page.locator('#looper-options summary').click();
+        await page.locator('#looper-copy-link').click();
+        assert(await page.locator('#time-link-dialog').isVisible());
+        await page.locator('#time-link-copy').click();
+        assert.equal(new URL(await page.evaluate(() => window.copiedTimeLink)).searchParams.has('listen'), false);
+        await page.locator('#time-link-car').check();
+        await page.locator('#time-link-copy').click();
+        const carUrl = await page.evaluate(() => window.copiedTimeLink);
+        assert.equal(new URL(carUrl).searchParams.get('listen'), '1');
+        await page.locator('#time-link-close').click();
+        await page.setViewportSize({ width: 390, height: 780 });
+        await page.goto(carUrl); await ready();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
+        assert(await page.locator('#car-mode').isVisible());
+        assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), false, 'The mobile deep link waits for Play');
+        assert(Math.abs(await page.evaluate(() => window.Vz2Player.getState().position) - 15) < 1, 'The mobile deep link keeps its time');
+        await page.locator('#car-chapter-list .car-chapter').first().waitFor();
+        assert.equal(await page.locator('#car-chapter-list .car-chapter').count(), 7, 'All song starts are available');
+        await page.waitForFunction(() => document.querySelector('#car-chapter-list .car-chapter.is-current')?.textContent.includes('Část 2'));
+        await page.setViewportSize({ width: 320, height: 700 });
+        assert(await page.evaluate(() => document.querySelector('#car-mode').scrollWidth <= innerWidth + 1 && document.querySelector('#car-chapter-list').clientHeight > 100), 'Car controls and chapters fit a narrow screen');
+        await page.setViewportSize({ width: 390, height: 780 });
+        await shot('car-mode-mobile');
+        await page.locator('#car-back').click();
+        assert(Math.abs(await page.evaluate(() => window.Vz2Player.getState().position) - 5) < 1);
+        await page.locator('#car-forward').click();
+        assert(Math.abs(await page.evaluate(() => window.Vz2Player.getState().position) - 15) < 1);
+        await page.locator('#car-up').click();
+        try { await page.waitForFunction(() => document.querySelector('#car-status').textContent.includes('Hodnocení uloženo'), undefined, { timeout: 3000 }); }
+        catch (_) { throw new Error('Car rating status: ' + await page.locator('#car-status').textContent() + '; notes: ' + JSON.stringify(carNotes)); }
+        assert.equal(carNotes.at(-1)?.body, '👍');
+        assert(Math.abs(carNotes.at(-1).time_ms - 15000) < 1000);
+        await page.locator('#car-down').click();
+        await page.waitForFunction(() => document.querySelector('#car-status').textContent.includes('Hodnocení uloženo') && !document.querySelector('#car-down').disabled);
+        assert.equal(carNotes.at(-1)?.body, '👎');
+        await page.locator('#car-recording').click();
+        await page.locator('#car-picker-folder').click();
+        assert(await page.locator('#car-picker-folders').isVisible());
+        await shot('car-mode-folders');
+        await page.locator('[data-car-kind=song]').click();
+        assert(await page.locator('#car-picker-folder-list').getByText('Nová skladba').isVisible());
+        assert.equal(await page.evaluate(() => window.Vz2Player.getState().id), '11', 'Browsing folders leaves playback intact');
+        await page.locator('[data-car-kind=rehearsal]').click();
+        await page.locator('#car-picker-folder-list').getByRole('button', { name: /Zkouška 8. října/ }).click();
+        assert.equal(await page.locator('#car-picker-recordings .car-picker-row').count(), 2);
+        await page.locator('#car-picker-close').click();
+        await page.locator('#car-chapter-list .car-chapter').filter({ hasText: 'Část 3' }).click();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.playing && window.Vz2Player.getState()?.position >= 19);
+        await page.evaluate(() => { document.getElementById('looper-audio').currentTime = 23; });
+        assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true, 'Song end does not stop car playback');
+        await page.locator('#car-recording').click();
+        await page.locator('#car-picker-recordings .car-picker-row').nth(1).click();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.id === '12' && window.Vz2Player.getState()?.phase === 'ready');
+        assert.equal(new URL(page.url()).searchParams.get('listen'), '1', 'Selecting another recording retains car mode');
+        assert((await page.locator('#car-recording').textContent()).includes('zkouška'));
+        await page.locator('#car-close').click();
+        assert.equal(new URL(page.url()).searchParams.has('listen'), false);
+        assert.equal(await page.locator('#car-mode').isVisible(), false);
+        await page.goto('http://vz2-workspaces.test/index.php?v=2&collection_id=3'); await ready();
+        await page.locator('#car-mode-menu-open').click();
+        assert(await page.locator('#car-picker-folders').isVisible(), 'The main menu car icon opens folder selection without a player');
+        await page.locator('#car-picker-close').click();
+        await page.locator('#car-close').click();
+        await page.locator('#car-mode-collection-open').click();
+        assert(await page.locator('#car-mode').isVisible(), 'The collection header car icon opens car mode');
+        assert(await page.locator('#car-picker-recordings').isVisible(), 'The collection icon starts with recordings from the current folder');
+        await page.locator('#car-picker-close').click();
+        await page.locator('#car-close').click();
+        await page.evaluate(() => {
+            Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: value => { window.copiedTimeLink = value; return Promise.resolve(); } } });
+            window.Vz2CarMode.openShare(11, '', 5000);
+        });
+        await page.locator('#time-link-car').check();
+        await page.locator('#time-link-copy').click();
+        assert.equal(new URL(await page.evaluate(() => window.copiedTimeLink)).searchParams.get('view'), 'looper', 'Inline car links open the shared player');
+        await page.locator('#time-link-close').click();
+        assert.deepEqual(errors, []);
+        console.log('PASS: car mode deep link, compact chapters, rating notes, folder chooser, and continuous playback');
     } catch (error) {
         console.error('Browser errors:', errors);
         console.error(await page.locator('#vz2-boot-status, #message').allTextContents());

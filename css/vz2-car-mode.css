@@ -1,0 +1,83 @@
+.car-entry { display: none; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; height: 40px; min-height: 40px; padding: 0; border: 1px solid var(--color-navigation-border); border-radius: 9px; background: var(--color-primary-bg); color: var(--color-primary-hover); font-size: 23px; }
+.car-entry:hover { border-color: var(--color-primary); background: var(--color-surface-expanded); }
+.car-entry svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.collection-heading-row { display: flex; align-items: stretch; gap: 6px; min-width: 0; }
+.collection-heading-row #collection-title { flex: 0 1 auto; min-width: 0; }
+#time-link-dialog { width: min(440px, calc(100vw - 28px)); padding: 18px; border: 1px solid var(--color-dialog-border); border-radius: 14px; background: var(--color-dialog-bg); color: var(--color-dialog-text); }
+#time-link-dialog::backdrop { background: var(--color-overlay); }
+#time-link-dialog .time-link-option { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 9px 12px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-surface); font-weight: 650; }
+#time-link-dialog .time-link-option input { width: 22px; height: 22px; flex: 0 0 22px; accent-color: var(--color-primary); }
+#time-link-dialog p { color: var(--color-text-muted); font-size: 13px; }
+#time-link-status { min-height: 18px; }
+#time-link-dialog .toolbar { justify-content: flex-end; }
+#car-mode[hidden], #car-picker[hidden] { display: none !important; }
+#car-mode { position: fixed; inset: 0; z-index: 1000; overflow: hidden; background: var(--color-background); color: var(--color-text); font: 16px/1.35 system-ui, sans-serif; }
+body.car-mode-open { overflow: hidden; }
+#car-mode button { cursor: pointer; color: inherit; font: inherit; }
+#car-mode button:disabled { cursor: default; opacity: .5; }
+#car-mode button:focus-visible, #car-mode input:focus-visible, .car-entry:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.car-screen { display: flex; flex-direction: column; box-sizing: border-box; width: min(100%, 560px); height: 100dvh; margin: auto; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); gap: 10px; }
+.car-header { display: flex; align-items: center; gap: 12px; min-height: 46px; }
+.car-header > button, #car-picker-close { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); font-size: 23px !important; }
+.car-header > div { min-width: 0; }
+.car-header small, #car-recording small, #car-picker-folder small { display: block; color: var(--color-primary); font-size: 11px; font-weight: 750; letter-spacing: .1em; }
+#car-folder { display: block; max-width: calc(100vw - 95px); min-height: 28px; padding: 0; overflow: hidden; border: 0; background: none; font-weight: 700 !important; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+#car-recording { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 62px; padding: 9px 13px; border: 1px solid var(--color-border-strong); border-radius: 13px; background: var(--color-surface); text-align: left; }
+#car-recording span { min-width: 0; }
+#car-recording strong { display: block; overflow: hidden; font-size: 19px; text-overflow: ellipsis; white-space: nowrap; }
+#car-recording > .car-chevron { color: var(--color-primary); font-size: 28px; }
+.car-transport { padding: 10px 13px 12px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-shell); }
+.car-time { display: flex; justify-content: space-between; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; font-size: 15px; }
+#car-seek { display: block; width: 100%; height: 27px; margin: 0; accent-color: var(--color-primary); }
+.car-controls { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 9px; }
+.car-controls button { display: grid; place-items: center; min-height: 62px; padding: 4px; border: 1px solid var(--color-border-strong); border-radius: 13px; background: var(--color-surface); font-size: 18px !important; font-weight: 750 !important; }
+.car-controls #car-play { border-color: var(--color-primary); background: var(--color-primary-bg); color: var(--color-primary-hover); font-size: 30px !important; }
+.car-play-icon { display: block; width: 0; height: 0; margin-left: 5px; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-left: 21px solid currentColor; }
+.car-play-icon.is-playing { display: flex; gap: 6px; width: 22px; height: 27px; margin-left: 0; border: 0; }
+.car-play-icon.is-playing::before, .car-play-icon.is-playing::after { content: ''; width: 8px; height: 27px; border-radius: 2px; background: currentColor; }
+.car-rating { display: grid; grid-template-columns: minmax(0, 1fr) 62px 62px; align-items: center; gap: 9px; }
+.car-rating span { color: var(--color-text-secondary); font-size: 13px; font-weight: 650; }
+.car-rating button { min-height: 55px; padding: 0; border: 1px solid var(--color-border-strong); border-radius: 12px; background: var(--color-surface); font-size: 26px !important; }
+#car-status { min-height: 18px; margin: -4px 1px 0; color: var(--color-primary-hover); font-size: 12px; }
+#car-status.is-error { color: var(--color-danger); }
+.car-chapters { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; border-top: 1px solid var(--color-border); }
+.car-chapters h2 { flex: 0 0 auto; margin: 10px 0 8px; font-size: 18px; }
+#car-chapter-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 2px 5px 0; }
+.car-chapter { display: grid; grid-template-columns: 54px minmax(0, 1fr) 18px; align-items: center; gap: 9px; width: 100%; min-height: 53px; margin: 0 0 6px; padding: 6px 11px; border: 1px solid var(--color-border); border-radius: 11px; background: var(--color-surface); text-align: left; }
+.car-chapter.is-current { border-color: var(--color-primary); background: var(--color-primary-bg); color: var(--color-primary-hover); }
+.car-chapter-time { color: var(--color-primary-hover); font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 750; }
+.car-chapter-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+.car-chapter-play { width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 10px solid var(--color-primary); }
+.car-empty { padding: 16px 6px; color: var(--color-text-muted); font-size: 14px; }
+.car-picker { position: absolute; inset: 0; z-index: 2; display: flex; align-items: flex-end; justify-content: center; background: var(--color-overlay); }
+.car-picker-sheet { display: flex; flex-direction: column; box-sizing: border-box; width: min(100%, 560px); max-height: 88dvh; min-height: 55dvh; padding: 10px max(12px, env(safe-area-inset-right)) max(15px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); border: 1px solid var(--color-border-strong); border-radius: 25px 25px 0 0; background: var(--color-panel); box-shadow: 0 -12px 35px var(--color-shadow-strong); }
+.car-picker-handle { flex: 0 0 auto; width: 58px; height: 5px; margin: 0 auto 14px; border-radius: 5px; background: var(--color-border-strong); }
+.car-picker-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+#car-picker-folder { flex: 1 1 auto; min-width: 0; min-height: 52px; padding: 0; border: 0; background: none; text-align: left; }
+#car-picker-folder strong { display: block; overflow: hidden; font-size: 20px; text-overflow: ellipsis; white-space: nowrap; }
+#car-picker-hint { margin: 7px 0 12px; color: var(--color-text-muted); font-size: 13px; }
+.car-picker-list { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#car-picker-folders { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+.car-kind-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 9px; }
+.car-kind-tabs button { min-height: 45px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); font-weight: 700 !important; }
+.car-kind-tabs button[aria-pressed=true] { border-color: var(--color-primary); background: var(--color-primary-bg); color: var(--color-primary-hover) !important; }
+.car-picker-row { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: center; column-gap: 9px; width: 100%; min-height: 68px; margin-bottom: 7px; padding: 8px 11px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); text-align: left; }
+.car-picker-row.is-selected { border-color: var(--color-primary); background: var(--color-primary-bg); }
+.car-picker-row strong { grid-column: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+.car-picker-row small { grid-column: 2; color: var(--color-text-muted); font-size: 12px; }
+.car-picker-row:has(> strong:first-child) strong, .car-picker-row:has(> strong:first-child) small { grid-column: 1 / -1; }
+.car-picker-icon { display: grid; grid-row: 1 / span 2; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: var(--color-surface-expanded); color: var(--color-primary-hover); font-size: 25px; }
+@media (max-width: 767px) {
+    .car-entry { display: inline-flex; }
+    #topbar { display: flex !important; }
+    #topbar .topbar-account { margin-left: auto; }
+    #topbar #car-mode-menu-open { flex: 0 0 36px; width: 36px; height: 36px; min-height: 36px; font-size: 21px; }
+    #topbar .shell-menu { flex: 0 0 auto; }
+    .collection-heading-row #collection-title { width: auto; }
+    .panel[data-panel]:not([data-panel=recordings]) > .panel-header > .workspace-heading { flex: 1 1 auto; width: auto; min-width: 0; max-width: calc(100% - 85px); }
+    .collection-heading-row { min-width: 0; }
+    .collection-heading-row #catalog-picker { min-width: 0; }
+    .collection-heading-row #collection-title-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #car-mode-collection-open { align-self: stretch; min-height: 40px; }
+}
+@media (max-width: 375px) { .car-screen { gap: 7px; } .car-controls button { min-height: 56px; } .car-chapter { min-height: 49px; } }

@@ -153,7 +153,7 @@
         mobilePanels.hidden = !collection || !mobile.matches;
         $('mobile-sections-dock').hidden = mobilePanels.hidden;
         const collectionHeader = $('collection-header');
-        const collectionHeading = $('collection-title').parentElement;
+        const collectionHeading = $('collection-title').closest('.workspace-heading');
         if (collection && mobile.matches) {
             const header = $('panel-' + state.mobile).querySelector('.panel-header');
             if (collectionHeading.parentElement !== header) header.prepend(collectionHeading);

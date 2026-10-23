@@ -181,6 +181,7 @@
             try { localStorage.setItem(cfg.cachePrefix + 'workspaces:collections', JSON.stringify(collectionMemory)); } catch (_) { /* Keep memory. */ }
         }
         const route = { workspace: next.workspace, kind };
+        if (params.listen === '1') route.listen = '1';
         if (selected != null) route.collection_id = String(selected);
         if (target && !['history', 'ideas'].includes(next.workspace)) {
             route.recording_id = String(target.id);
@@ -211,6 +212,7 @@
         if (target && openRecording && !['history', 'ideas'].includes(next.workspace)) window.Vz2Layout.revealRecording();
         if (params.recording_id && !target) message('Odkazovaná nahrávka již neexistuje.', true);
         window.Vz2Boot?.ready();
+        document.dispatchEvent(new Event('vz2:car-context'));
         if (next.workspace === 'ideas') window.Vz2Content.openDiscussion({ scope: 'ideas' });
         if (nextLooper) await window.Vz2Player.openLooper(withSource(target), target.files[0], Number(params.time_ms || 0) / 1000, true);
         if (nextMixer) {
@@ -359,10 +361,7 @@
             if (String(recording.id) === qs.get('recording_id') && Number.isFinite(seconds)) audio.currentTime = Math.min(audio.duration || 0, Math.max(0, seconds));
         };
         audio.addEventListener('loadedmetadata', seek, { once: true });
-        menuActions.append(button('Kopírovat odkaz na čas', async () => {
-            const url = new URL('index.php', location.href); url.search = new URLSearchParams({ v: '2', recording_id: recording.id, time_ms: Math.round(audio.currentTime * 1000) });
-            await navigator.clipboard.writeText(url.href); message('Odkaz zkopírován.');
-        }));
+        menuActions.append(button('Kopírovat odkaz na čas', () => window.Vz2CarMode.openShare(recording.id, '', Math.round(audio.currentTime * 1000))));
         return {
             audio,
             cache,
@@ -878,14 +877,12 @@
         if (!dialog.querySelector('form')) return;
         dialog.showModal(); dialog.querySelector('[name=title]').focus();
     });
-    $('mixer-copy-link').addEventListener('click', async () => {
+    $('mixer-copy-link').addEventListener('click', () => {
         $('looper-options').open = false;
         try {
             const current = window.MultitrackApp?.getState();
             if (!current || String(current.id) !== mixerId) throw new Error('Nejdříve načtěte nahrávku.');
-            const url = new URL('index.php', location.href);
-            url.search = new URLSearchParams({ v: '2', recording_id: mixerId, time_ms: Math.round(current.position * 1000), view: 'mixer' });
-            await navigator.clipboard.writeText(url.href); message('Odkaz zkopírován.');
+            window.Vz2CarMode.openShare(mixerId, 'mixer', Math.round(current.position * 1000));
         } catch (e) { message(e.message, true); }
     });
     $('mixer-export').addEventListener('click', () => {
@@ -1050,6 +1047,11 @@
         mixerNotes = window.Vz2Timestamps.mount($('mixer-timestamps'), e.detail.id, mixerAdapter(e.detail.id));
         $('mixer-export').disabled = false;
     });
+    window.Vz2App = {
+        getCarContext() { return { collections: data?.collections || [], recordings: data?.recordings || [], selected, kind, player: window.Vz2Player.getState() }; },
+        openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: '0', listen: '1' }, true); },
+        setCarRoute(enabled) { const params = Object.fromEntries(qs); if (enabled) params.listen = '1'; else delete params.listen; setRoute(params, true); }
+    };
     const initialise = () => refresh().catch(e => { window.Vz2Boot?.fail(); stopMixer(); message(e.message, true); $('content').replaceChildren(node('p', 'Seznam se nepodařilo načíst.')); });
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialise, { once: true });
     else initialise();

@@ -391,7 +391,7 @@
         } else if (looper) { looper.audio.muted = !looper.audio.muted; update(); }
     };
     $('looper-loop').onclick = () => { if (looper) { window.Vz2Timestamps.stopLoop(); looper.audio.loop = !looper.audio.loop; update(); } };
-    copy.onclick = async () => { if (!looper) return; looperMenu.open = false; try { const url = new URL('index.php', location.href); url.search = new URLSearchParams({ v: '2', recording_id: id, view: 'looper', time_ms: Math.round(looper.audio.currentTime * 1000) }); await navigator.clipboard.writeText(url.href); $('looper-status').textContent = 'Odkaz zkopírován.'; } catch (e) { error(e.message); } };
+    copy.onclick = () => { if (!looper) return; looperMenu.open = false; window.Vz2CarMode.openShare(id, 'looper', Math.round(looper.audio.currentTime * 1000)); };
     download.onclick = () => { looperMenu.open = false; };
     offline.onclick = async () => {
         const current = looper; if (!current) return;
@@ -427,6 +427,18 @@
     setInterval(update, 100);
     window.Vz2Player = {
         getState, openLooper, closeLooper,
+        seek(seconds) {
+            window.Vz2Timestamps.stopLoop();
+            if (mode === 'looper') seek(seconds);
+            else if (mode === 'mixer') window.MultitrackApp.seek(seconds);
+        },
+        async play() {
+            window.Vz2Timestamps.stopLoop();
+            if (mode === 'looper' && looper?.phase === 'ready') await looper.audio.play();
+            else if (mode === 'mixer' && getState()?.phase === 'ready') await window.MultitrackApp.play();
+            update();
+        },
+        pause() { if (mode === 'looper') looper?.audio.pause(); else if (mode === 'mixer') window.MultitrackApp.pause(); update(); },
         showMixer(recording) { closeLooper(); if (mode !== 'mixer' || id !== String(recording.id)) mixerPending = true; select('mixer', recording); },
         hideMixer() { if (mode === 'mixer') resetShell(); },
         mixerFailed() { mixerPending = false; },
