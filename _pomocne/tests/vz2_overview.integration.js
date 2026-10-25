@@ -35,6 +35,9 @@ module.exports = async ({ clients, request, good, db, check }) => {
     check(anonymous.status === 401, 'overview data requires login');
     const page = await request(clients.guest, 'prehled.php');
     check(page.status === 200 && page.text.includes('id="overview-generate"') && page.text.includes('id="overview-output" hidden')
+        && page.text.includes('data-filter="rehearsal_notes"') && page.text.includes('data-filter="song_map_details"')
+        && page.text.includes('id="overview-collection-filters"')
+        && page.text.includes('js/vz2-overview-filter.js') && page.text.includes('js/vz2-overview.js')
         && !page.text.includes('Zrychlit refrén.'), 'standalone page waits for a click before displaying data');
     const response = await request(clients.guest, 'php/ajax/vz2_overview.php');
     assert.equal(response.status, 200, response.text);
@@ -42,7 +45,7 @@ module.exports = async ({ clients, request, good, db, check }) => {
     const foundRehearsal = data.rehearsals.find(item => item.id === rehearsal.id);
     const foundSong = data.songs.find(item => item.id === song.id);
     check(Boolean(foundRehearsal && foundSong), 'overview includes rehearsals and songs');
-    check(foundRehearsal.entries.some(item => item.body === 'Domluvit tempo a druhou sloku.')
+    check(foundRehearsal.entries.some(item => item.body === 'Domluvit tempo a druhou sloku.' && item.kind === 'lyrics_chords')
         && foundRehearsal.entries.some(item => item.body === 'Ručně dopsaný přehled začátků.')
         && foundRehearsal.entries.some(item => item.body === 'Zrychlit refrén.')
         && foundRehearsal.entries.some(item => item.body === 'Bicí později.' && item.time_ms === 83000)

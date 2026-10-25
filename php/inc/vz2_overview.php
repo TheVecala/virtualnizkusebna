@@ -45,7 +45,7 @@ function vz2_overview_data(mysqli $db): array {
         }
         $label = $kind === 'lyrics_chords' && ($kindById[(int)$document['collection_id']] ?? null) === 'rehearsal'
             ? 'Zápisky' : (['lyrics_chords'=>'Text a akordy','tablature'=>'Tabulatura','rehearsal_starts'=>'Začátky skladeb'][$kind] ?? $document['title']);
-        $append((int)$document['collection_id'], ['type'=>'document','label'=>$label,
+        $append((int)$document['collection_id'], ['type'=>'document','kind'=>$kind,'label'=>$label,
             'body'=>$document['body'], 'at'=>$document['updated_at'], 'author'=>$document['author']]);
     }
 

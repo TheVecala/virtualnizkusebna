@@ -22,6 +22,7 @@ try {
 <title>Kompaktní přehled · Zkušebna DK!</title>
 <link rel="stylesheet" href="css/themes.css?v=<?=filemtime(__DIR__.'/css/themes.css')?>">
 <link rel="stylesheet" href="css/vz2-overview.css?v=<?=filemtime(__DIR__.'/css/vz2-overview.css')?>">
+<script src="js/vz2-overview-filter.js?v=<?=filemtime(__DIR__.'/js/vz2-overview-filter.js')?>" defer></script>
 <script src="js/vz2-overview.js?v=<?=filemtime(__DIR__.'/js/vz2-overview.js')?>" defer></script>
 </head>
 <body>
@@ -31,10 +32,62 @@ try {
 <p class="overview-kicker">SAMOSTATNÝ NÁHLED</p>
 <h1>Kompaktní přehled</h1>
 <p>Texty a zápisky ze všech zkoušek a skladeb na jednom místě. Výpis se sestaví jen po kliknutí a je pouze pro čtení.</p>
+<details id="overview-filters" class="overview-filters">
+<summary>Co zobrazit <span id="overview-filter-count">Vše</span></summary>
+<div class="overview-filter-body">
+<div class="overview-filter-actions"><button id="overview-filter-all" type="button">Zaškrtnout vše</button><button id="overview-filter-none" type="button">Zrušit druhy obsahu</button></div>
+<div class="overview-filter-grid">
+<fieldset class="overview-filter-group"><legend>Celky a údaje</legend>
+<label><input type="checkbox" data-filter="rehearsals" checked> Zkoušky</label>
+<label><input type="checkbox" data-filter="songs" checked> Skladby</label>
+<label><input type="checkbox" data-filter="show_empty" checked> I položky bez zápisků</label>
+<label><input type="checkbox" data-filter="show_created" checked> Datum založení</label>
+<label><input type="checkbox" data-filter="show_author" checked> Autor zápisku</label>
+<label><input type="checkbox" data-filter="show_entry_date" checked> Datum zápisku</label>
+</fieldset>
+<fieldset class="overview-filter-group"><legend>Obsah zkoušek</legend>
+<label><input type="checkbox" data-filter="rehearsal_notes" checked> Společné zápisky</label>
+<label><input type="checkbox" data-filter="rehearsal_starts" checked> Přehled začátků skladeb</label>
+<label><input type="checkbox" data-filter="rehearsal_played" checked> Hrané skladby</label>
+<label><input type="checkbox" data-filter="rehearsal_summary" checked> Souhrny</label>
+<label><input type="checkbox" data-filter="rehearsal_attachment" checked> Poznámky k přílohám</label>
+<label><input type="checkbox" data-filter="rehearsal_marker_song_start" checked> Značky začátků skladeb</label>
+<label><input type="checkbox" data-filter="rehearsal_marker_song_end" checked> Značky konců skladeb</label>
+<label><input type="checkbox" data-filter="rehearsal_marker_passage" checked> Značky pasáží</label>
+<label><input type="checkbox" data-filter="rehearsal_marker_note" checked> Časové poznámky</label>
+<label><input type="checkbox" data-filter="rehearsal_discussion" checked> Diskuse</label>
+<label><input type="checkbox" data-filter="rehearsal_other" checked> Ostatní dokumenty</label>
+</fieldset>
+<fieldset class="overview-filter-group"><legend>Obsah skladeb</legend>
+<label><input type="checkbox" data-filter="song_lyrics" checked> Text a akordy</label>
+<label><input type="checkbox" data-filter="song_tablature" checked> Tabulatura</label>
+<label><input type="checkbox" data-filter="song_map_sections" checked> Sekce mapy skladby</label>
+<label><input type="checkbox" data-filter="song_map_details" checked> Detaily taktů</label>
+<label><input type="checkbox" data-filter="song_summary" checked> Souhrny</label>
+<label><input type="checkbox" data-filter="song_attachment" checked> Poznámky k přílohám</label>
+<label><input type="checkbox" data-filter="song_marker_song_start" checked> Značky začátků skladeb</label>
+<label><input type="checkbox" data-filter="song_marker_song_end" checked> Značky konců skladeb</label>
+<label><input type="checkbox" data-filter="song_marker_passage" checked> Značky pasáží</label>
+<label><input type="checkbox" data-filter="song_marker_note" checked> Časové poznámky</label>
+<label><input type="checkbox" data-filter="song_discussion" checked> Diskuse</label>
+<label><input type="checkbox" data-filter="song_other" checked> Ostatní dokumenty</label>
+</fieldset>
+</div>
+<div id="overview-collection-filters" class="overview-collection-filters" hidden>
+<h2>Konkrétní položky</h2>
+<div class="overview-filter-grid">
+<fieldset class="overview-filter-group"><legend>Zkoušky</legend><div class="overview-filter-actions"><button type="button" data-select-kind="rehearsal" data-select="all">Všechny</button><button type="button" data-select-kind="rehearsal" data-select="none">Žádná</button></div><div id="overview-rehearsal-options" class="overview-collection-options"></div></fieldset>
+<fieldset class="overview-filter-group"><legend>Skladby</legend><div class="overview-filter-actions"><button type="button" data-select-kind="song" data-select="all">Všechny</button><button type="button" data-select-kind="song" data-select="none">Žádná</button></div><div id="overview-song-options" class="overview-collection-options"></div></fieldset>
+</div>
+</div>
+<p class="overview-filter-hint">Po vytvoření výpisu se změny zaškrtávátek projeví hned, bez nového načtení.</p>
+</div>
+</details>
 <div class="overview-actions"><button id="overview-generate" type="button">Vytvořit výpis</button><span id="overview-status" role="status" aria-live="polite">Výpis zatím není vytvořený.</span></div>
 </div>
 <div id="overview-output" hidden>
 <div id="overview-meta" class="overview-meta"></div>
+<p id="overview-no-results" class="overview-empty" hidden>Zaškrtněte zkoušky nebo skladby, které chcete zobrazit.</p>
 <nav class="overview-jump" aria-label="Oddíly přehledu"><a href="#overview-rehearsals">Zkoušky</a><a href="#overview-songs">Skladby</a></nav>
 <section id="overview-rehearsals" class="overview-section" aria-labelledby="overview-rehearsals-title"><h2 id="overview-rehearsals-title">Zkoušky</h2><div id="overview-rehearsal-list" class="overview-list"></div></section>
 <section id="overview-songs" class="overview-section" aria-labelledby="overview-songs-title"><h2 id="overview-songs-title">Skladby</h2><div id="overview-song-list" class="overview-list"></div></section>
