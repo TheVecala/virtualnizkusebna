@@ -28,7 +28,7 @@ const write = (name, value) => { fs.mkdirSync(path.dirname(name), { recursive: t
 const phpString = value => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 for (const dir of ['php', 'js', 'css', 'meat']) fs.cpSync(path.join(root, dir), path.join(web, dir), { recursive: true });
 for (const dir of ['migrations', 'tools']) fs.cpSync(path.join(root, '_pomocne', dir), path.join(web, dir), { recursive: true });
-for (const file of ['index.php', 'admin.php', 'help.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
+for (const file of ['index.php', 'admin.php', 'help.php', 'prehled.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
 write(path.join(media, '.vz2-storage-id'), database);
 write(path.join(temp, 'db.php'), `<?php
 if(PHP_SAPI!=='cli')exit;
@@ -166,6 +166,11 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         if (process.env.VZ2_TEST_SUITE === 'history') {
             await require('./vz2_history.integration')({ base, clients, request, good, upload, wav, db, check, browser: process.env.VZ2_TEST_BROWSER === 'history' });
             console.log('PASS history integration: ' + checks + ' checks');
+            return;
+        }
+        if (process.env.VZ2_TEST_SUITE === 'overview') {
+            await require('./vz2_overview.integration')({ clients, request, good, db, check });
+            console.log('PASS overview integration: ' + checks + ' checks');
             return;
         }
         if (process.env.VZ2_TEST_SUITE === 'cleanup' || process.env.VZ2_TEST_BROWSER === 'cleanup') {

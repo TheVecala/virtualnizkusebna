@@ -139,6 +139,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <button id="car-mode-menu-open" class="car-entry" type="button" title="Poslech v autě" aria-label="Poslech v autě"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11 7 5h10l2 6M4 11h16v8H4zM7 19v2m10-2v2M7 15h2m6 0h2"/></svg></button>
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
+<a href="prehled.php">Kompaktní přehled</a>
 <a href="help.php">Nápověda</a>
 <button id="show-offline">Správa offline souborů</button><button id="logout">Odhlásit</button></nav></details></header>
 <svg class="section-icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
