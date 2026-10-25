@@ -74,11 +74,6 @@
             row.append(make('span', time(entry.time_ms), 'overview-marker-time'));
             content.append(make('span', `${kind}: `, 'overview-visually-hidden'));
             content.append(make('span', markerText, 'overview-entry-body'));
-            if (entry.recording_name) {
-                const recording = make('small', ` · nahr. ${entry.recording_name}`, 'overview-marker-recording');
-                recording.title = `Nahrávka: ${entry.recording_name}`;
-                content.append(recording);
-            }
             if (attribution) content.append(make('small', ` · ${attribution}`, 'overview-entry-meta'));
             row.append(content);
             if (entry.kind === 'song_start' || entry.kind === 'song_end') {
@@ -126,7 +121,21 @@
         }
         if (collection.entries.length) {
             const entries = make('div', undefined, 'overview-entries');
-            for (const entry of collection.entries) entries.append(renderEntry(entry, filters));
+            let markerGroup = null, markerRecordingId = null;
+            for (const entry of collection.entries) {
+                if (entry.type !== 'marker') {
+                    markerGroup = null;
+                    entries.append(renderEntry(entry, filters));
+                    continue;
+                }
+                if (!markerGroup || markerRecordingId !== entry.recording_id) {
+                    markerGroup = make('section', undefined, 'overview-marker-group');
+                    markerGroup.append(make('h4', `Nahrávka: ${entry.recording_name}`, 'overview-marker-heading'));
+                    entries.append(markerGroup);
+                    markerRecordingId = entry.recording_id;
+                }
+                markerGroup.append(renderEntry(entry, filters));
+            }
             article.append(entries);
         } else if (!collection.played_songs.length) article.append(make('p', 'Zatím bez textových zápisků.', 'overview-empty'));
         return article;

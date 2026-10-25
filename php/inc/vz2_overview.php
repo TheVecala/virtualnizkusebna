@@ -92,7 +92,7 @@ function vz2_overview_data(mysqli $db): array {
         if ($name === '') $name = trim($marker['recording_title']) ?: 'Nahrávka #'.$id;
         if ($marker['recording_kind'] === 'multitrack' && count($files) > 1) $name .= ' +'.(count($files)-1);
         $append((int)$marker['collection_id'], ['type'=>'marker','kind'=>$marker['kind'],
-            'body'=>$body, 'time_ms'=>(int)$marker['time_ms'], 'recording_name'=>$name,
+            'body'=>$body, 'time_ms'=>(int)$marker['time_ms'], 'recording_id'=>$id, 'recording_name'=>$name,
             'at'=>$marker['created_at'], 'author'=>$marker['author']]);
     }
 

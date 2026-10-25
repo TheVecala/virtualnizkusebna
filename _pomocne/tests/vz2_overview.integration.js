@@ -57,9 +57,9 @@ module.exports = async ({ base, clients, request, good, db, check, browser }) =>
         && foundRehearsal.entries.some(item => item.body === 'Ručně dopsaný přehled začátků.')
         && foundRehearsal.entries.some(item => item.body === 'Zrychlit refrén.')
         && foundRehearsal.entries.some(item => item.body === 'Bicí později.' && item.time_ms === 83000
-            && item.recording_name === 'Zkouška ranní.wav')
+            && item.recording_id === rehearsalRecordingId && item.recording_name === 'Zkouška ranní.wav')
         && foundRehearsal.entries.some(item => item.body === 'Jiný pokus.' && item.time_ms === 83000
-            && item.recording_name === 'Druhý pokus')
+            && item.recording_id === secondRehearsalRecordingId && item.recording_name === 'Druhý pokus')
         && foundRehearsal.entries.some(item => item.body === 'Příště zkusit pomaleji.'),
         'overview joins current documents, summaries, markers and discussion');
     check(foundSong.lifecycle === 'archived' && foundSong.entries.some(item => item.body.includes('Text písně'))
