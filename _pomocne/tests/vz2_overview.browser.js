@@ -23,6 +23,26 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         await page.getByRole('button', { name: 'Vytvořit výpis' }).click();
         await page.locator('#overview-output:not([hidden])').waitFor();
         assert.equal(overviewRequests, 1);
+        const measureGrid = () => page.evaluate(() => {
+            const list = document.querySelector('#overview-rehearsal-list');
+            return {
+                columns: getComputedStyle(list).gridTemplateColumns.trim().split(/\s+/).length,
+                outputWidth: document.querySelector('#overview-output').getBoundingClientRect().width,
+                filterWidth: document.querySelector('#overview-filters').getBoundingClientRect().width,
+                overflow: document.documentElement.scrollWidth - window.innerWidth
+            };
+        });
+        const desktopGrid = await measureGrid();
+        assert(desktopGrid.columns >= 3 && desktopGrid.outputWidth > desktopGrid.filterWidth,
+            'overview uses multiple columns while the filter keeps its width');
+        await page.setViewportSize({ width: 2560, height: 900 });
+        const wideGrid = await measureGrid();
+        assert(wideGrid.columns >= 6 && wideGrid.outputWidth > 2400,
+            'very wide screens can fit many overview columns');
+        assert(Math.abs(wideGrid.filterWidth - desktopGrid.filterWidth) < 2, 'filter width stays unchanged on wide screens');
+        assert(wideGrid.overflow <= 1, 'wide overview has no horizontal overflow');
+        await page.setViewportSize({ width: 1200, height: 720 });
+        check(true, 'browser: responsive overview grid keeps the filter width');
 
         const rehearsalGroups = page.locator('#overview-rehearsal-list .overview-marker-group');
         assert.deepEqual(await rehearsalGroups.locator('.overview-marker-heading').allTextContents(),
@@ -55,6 +75,8 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         check(true, 'browser: one recording heading above each timestamp group');
 
         await page.setViewportSize({ width: 390, height: 480 });
+        const mobileGrid = await measureGrid();
+        assert(mobileGrid.columns === 1 && mobileGrid.overflow <= 1, 'mobile overview uses one column without horizontal overflow');
         const mobileMarker = await start.evaluate(row => ({
             timeY: row.querySelector('.overview-marker-time').getBoundingClientRect().y,
             textY: row.querySelector('.overview-entry-body').getBoundingClientRect().y,
