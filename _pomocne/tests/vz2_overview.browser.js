@@ -27,11 +27,18 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         const start = page.locator('.overview-entry-marker').filter({ hasText: 'Nová píseň' }).first();
         const positions = await start.evaluate(row => {
             const rect = selector => row.querySelector(selector).getBoundingClientRect();
-            const time = rect('.overview-marker-time'), text = rect('.overview-entry-body'), icon = rect('.overview-marker-icon');
-            return { timeX: time.x, timeY: time.y, textX: text.x, textY: text.y, iconX: icon.x, iconY: icon.y };
+            const time = rect('.overview-marker-time'), text = rect('.overview-entry-body');
+            const recording = rect('.overview-marker-recording'), icon = rect('.overview-marker-icon');
+            return { timeX: time.x, timeY: time.y, textX: text.x, textY: text.y,
+                recordingX: recording.x, recordingY: recording.y, iconX: icon.x, iconY: icon.y };
         });
-        assert(positions.timeX < positions.textX && positions.textX < positions.iconX, 'marker order is time, text, start icon');
-        assert(Math.abs(positions.timeY - positions.textY) < 8 && Math.abs(positions.textY - positions.iconY) < 12,
+        assert.equal(await start.locator('.overview-marker-recording').textContent(), ' · nahr. Zkouška ranní.wav');
+        assert.equal(await page.locator('.overview-entry-marker').filter({ hasText: 'Jiný pokus.' })
+            .locator('.overview-marker-recording').textContent(), ' · nahr. Druhý pokus');
+        assert(positions.timeX < positions.textX && positions.textX < positions.recordingX && positions.recordingX < positions.iconX,
+            'marker order is time, text, recording name, start icon');
+        assert(Math.abs(positions.timeY - positions.textY) < 8 && Math.abs(positions.textY - positions.recordingY) < 8
+            && Math.abs(positions.recordingY - positions.iconY) < 12,
             'short timestamp stays on one row');
         const summary = page.locator('.overview-entry').filter({ hasText: 'Zrychlit refrén.' }).first();
         const summaryRows = await summary.evaluate(row => ({
@@ -39,9 +46,14 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
             body: row.querySelector('.overview-entry-body').getBoundingClientRect().y
         }));
         assert(Math.abs(summaryRows.label - summaryRows.body) < 8, 'short summary stays on one row');
-        check(true, 'browser: timestamp order and short text layout');
+        check(true, 'browser: visible marker source and short text layout');
 
         await page.setViewportSize({ width: 390, height: 480 });
+        const mobileMarker = await start.evaluate(row => ({
+            textY: row.querySelector('.overview-entry-body').getBoundingClientRect().y,
+            recordingY: row.querySelector('.overview-marker-recording').getBoundingClientRect().y
+        }));
+        assert(Math.abs(mobileMarker.textY - mobileMarker.recordingY) < 8, 'recording name follows short marker text on mobile');
         await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
         const sticky = await page.locator('#overview-filters').evaluate(element => ({
             top: element.getBoundingClientRect().top, scroll: window.scrollY,

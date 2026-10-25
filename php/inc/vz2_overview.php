@@ -67,15 +67,32 @@ function vz2_overview_data(mysqli $db): array {
             'body'=>$attachment['summary'], 'at'=>$attachment['summary_updated_at'], 'author'=>$attachment['author']]);
     }
 
-    $markers = vz2_rows($db, "SELECT r.collection_id,t.kind,t.time_ms,t.body,t.created_at,u.name author
+    $markers = vz2_rows($db, "SELECT r.id recording_id,r.collection_id,r.kind recording_kind,r.title recording_title,
+            t.kind,t.time_ms,t.body,t.created_at,u.name author
         FROM vz2_timestamps t JOIN vz2_recordings r ON r.id=t.recording_id JOIN users u ON u.id=t.created_by
         WHERE r.lifecycle='active' ORDER BY r.collection_id,r.sort_order,r.id,t.time_ms,t.id");
+    $recordingFiles = [];
+    if ($markers) {
+        $recordingIds = array_values(array_unique(array_map(static fn($marker) => (int)$marker['recording_id'], $markers)));
+        $placeholders = implode(',', array_fill(0, count($recordingIds), '?'));
+        $files = vz2_rows($db, "SELECT recording_id,title,original_name,format FROM vz2_audio_files
+            WHERE recording_id IN ($placeholders) ORDER BY recording_id,sort_order,id", $recordingIds);
+        foreach ($files as $file) $recordingFiles[(int)$file['recording_id']][] = $file;
+    }
     foreach ($markers as $marker) {
         $body = trim($marker['body']);
         if ($marker['kind'] === 'song_end' && ($body === '' || $body === '↓')) continue;
         if ($body === '↑' || $body === '↓') $body = '';
+        $id = (int)$marker['recording_id'];
+        $files = $recordingFiles[$id] ?? [];
+        $name = $files ? (trim($files[0]['title']) ?: $files[0]['original_name']) : '';
+        if ($name !== '' && $files[0]['format'] !== '' && !str_ends_with(strtolower($name), '.'.strtolower($files[0]['format']))) {
+            $name .= '.'.$files[0]['format'];
+        }
+        if ($name === '') $name = trim($marker['recording_title']) ?: 'Nahrávka #'.$id;
+        if ($marker['recording_kind'] === 'multitrack' && count($files) > 1) $name .= ' +'.(count($files)-1);
         $append((int)$marker['collection_id'], ['type'=>'marker','kind'=>$marker['kind'],
-            'body'=>$body, 'time_ms'=>(int)$marker['time_ms'],
+            'body'=>$body, 'time_ms'=>(int)$marker['time_ms'], 'recording_name'=>$name,
             'at'=>$marker['created_at'], 'author'=>$marker['author']]);
     }
 

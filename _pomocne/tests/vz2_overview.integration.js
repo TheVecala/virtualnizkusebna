@@ -20,13 +20,20 @@ module.exports = async ({ base, clients, request, good, db, check, browser }) =>
     }] }));
 
     const rehearsalRecording = 'test/overview-rehearsal-' + rehearsal.id;
+    const secondRehearsalRecording = rehearsalRecording + '-second';
     const songRecording = 'test/overview-song-' + song.id;
     db("INSERT INTO vz2_recordings(collection_id,kind,title,storage_dir,summary,summary_created_by,summary_created_at,summary_updated_by,summary_updated_at,lifecycle,created_by,updated_by,created_at,updated_at) VALUES (?,'single','Skrytá nahrávka',?,'Zrychlit refrén.',1,UTC_TIMESTAMP(),1,UTC_TIMESTAMP(),'active',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsal.id, rehearsalRecording]);
+    db("INSERT INTO vz2_recordings(collection_id,kind,title,storage_dir,lifecycle,created_by,updated_by,created_at,updated_at) VALUES (?,'single','Druhý pokus',?,'active',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsal.id, secondRehearsalRecording]);
     db("INSERT INTO vz2_recordings(collection_id,kind,title,storage_dir,lifecycle,created_by,updated_by,created_at,updated_at) VALUES (?,'single','Skrytý výstřižek',?,'active',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [song.id, songRecording]);
     const rehearsalRecordingId = Number(db('SELECT id FROM vz2_recordings WHERE storage_dir=?', [rehearsalRecording])[0].id);
+    const secondRehearsalRecordingId = Number(db('SELECT id FROM vz2_recordings WHERE storage_dir=?', [secondRehearsalRecording])[0].id);
     const songRecordingId = Number(db('SELECT id FROM vz2_recordings WHERE storage_dir=?', [songRecording])[0].id);
+    db("INSERT INTO vz2_audio_files(recording_id,title,original_name,relative_path,format,mime_type,byte_size,sha256,state,created_by,updated_by,created_at,updated_at) VALUES (?,'Zkouška ranní','zkouska.wav',?,'wav','audio/wav',0,?,'available',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())",
+        [rehearsalRecordingId, rehearsalRecording + '/zkouska.wav', 'a'.repeat(64)]);
     db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,created_by,updated_by,created_at,updated_at) VALUES (?,'note',83000,'Bicí později.',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsalRecordingId]);
     db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,created_by,updated_by,created_at,updated_at) VALUES (?,'song_start',120000,'Nová píseň',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsalRecordingId]);
+    db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,created_by,updated_by,created_at,updated_at) VALUES (?,'note',83000,'Jiný pokus.',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [secondRehearsalRecordingId]);
+    db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,created_by,updated_by,created_at,updated_at) VALUES (?,'note',41000,'Zkusit nižší tón.',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [songRecordingId]);
     db('INSERT INTO vz2_rehearsal_plays(rehearsal_collection_id,song_collection_id,rehearsal_title_snapshot,song_title_snapshot,clip_recording_id,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())', [rehearsal.id,song.id,'Zkouška říjen','Nová píseň',songRecordingId]);
     db("UPDATE vz2_collections SET lifecycle='archived' WHERE id=?", [song.id]);
     const discussion = await request(clients.alice, 'php/ajax/vz2_content.php', { action: 'post_create', thread_id: Number(db('SELECT id FROM vz2_discussion_threads WHERE collection_id=?',[rehearsal.id])[0].id), body: 'Příště zkusit pomaleji.' });
@@ -49,17 +56,21 @@ module.exports = async ({ base, clients, request, good, db, check, browser }) =>
     check(foundRehearsal.entries.some(item => item.body === 'Domluvit tempo a druhou sloku.' && item.kind === 'lyrics_chords')
         && foundRehearsal.entries.some(item => item.body === 'Ručně dopsaný přehled začátků.')
         && foundRehearsal.entries.some(item => item.body === 'Zrychlit refrén.')
-        && foundRehearsal.entries.some(item => item.body === 'Bicí později.' && item.time_ms === 83000)
+        && foundRehearsal.entries.some(item => item.body === 'Bicí později.' && item.time_ms === 83000
+            && item.recording_name === 'Zkouška ranní.wav')
+        && foundRehearsal.entries.some(item => item.body === 'Jiný pokus.' && item.time_ms === 83000
+            && item.recording_name === 'Druhý pokus')
         && foundRehearsal.entries.some(item => item.body === 'Příště zkusit pomaleji.'),
         'overview joins current documents, summaries, markers and discussion');
     check(foundSong.lifecycle === 'archived' && foundSong.entries.some(item => item.body.includes('Text písně'))
         && foundSong.entries.some(item => item.label === 'Mapa · Refrén' && item.body === '1 takt')
         && foundSong.entries.some(item => item.body === 'Hraj tiše.')
+        && foundSong.entries.some(item => item.body === 'Zkusit nižší tón.' && item.recording_name === 'Skrytý výstřižek')
         && foundRehearsal.played_songs.some(item => item.id === song.id && item.count === 1),
-        'overview includes archived song text, map notes and rehearsal song links');
-    check(!response.text.includes('Skrytá nahrávka') && !response.text.includes('Skrytý výstřižek')
+        'overview includes archived song text, map notes, recording fallback and rehearsal song links');
+    check(!response.text.includes('Skrytá nahrávka') && !response.text.includes(rehearsalRecording + '/zkouska.wav')
         && !response.text.includes('audio_files') && !response.text.includes('"url"'),
-        'overview exposes no recording titles, audio files or media links');
+        'overview identifies marker sources without exposing audio files or media links');
     const deniedPost = await request(clients.guest, 'php/ajax/vz2_overview.php', { action: 'generate' });
     check(deniedPost.status === 405, 'overview endpoint is read only');
     if (browser) await require('./vz2_overview.browser')({ base, clients, db, check, rehearsalRecordingId });

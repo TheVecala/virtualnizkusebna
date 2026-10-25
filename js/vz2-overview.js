@@ -74,6 +74,11 @@
             row.append(make('span', time(entry.time_ms), 'overview-marker-time'));
             content.append(make('span', `${kind}: `, 'overview-visually-hidden'));
             content.append(make('span', markerText, 'overview-entry-body'));
+            if (entry.recording_name) {
+                const recording = make('small', ` · nahr. ${entry.recording_name}`, 'overview-marker-recording');
+                recording.title = `Nahrávka: ${entry.recording_name}`;
+                content.append(recording);
+            }
             if (attribution) content.append(make('small', ` · ${attribution}`, 'overview-entry-meta'));
             row.append(content);
             if (entry.kind === 'song_start' || entry.kind === 'song_end') {
