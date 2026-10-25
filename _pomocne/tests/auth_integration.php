@@ -98,14 +98,14 @@ try {
     } while ($db->more_results() && $db->next_result());
     check((int) $db->query('SELECT guest_enabled FROM auth_settings WHERE id = 1')->fetch_row()[0] === 0, 'migration disables guest');
 
-    foreach (['index.php', 'admin.php', 'php/auth.php', 'php/inc/session.php',
+    foreach (['index.php', 'admin.php', 'config.theme.php', 'php/auth.php', 'php/inc/session.php',
         'php/loginbox4.php', 'php/login/connect.php', 'php/inc/admin_storage.php',
-        'php/inc/admin_storage_view.php', 'php/inc/vz2_core.php', 'css/vz2.css',
+        'php/inc/admin_storage_view.php', 'php/inc/vz2_core.php', 'css/themes.css', 'css/vz2.css',
         'js/multitrack.js', 'js/vz2-song-map.js', 'js/vz2-song-map-model.js', 'css/help.css', 'css/admin.css'] as $file) {
         if (!is_dir(dirname($temp . '/' . $file))) mkdir(dirname($temp . '/' . $file), 0777, true);
         copy($root . '/' . $file, $temp . '/' . $file);
     }
-    $config = "<?php\n";
+    $config = "<?php\nrequire_once __DIR__ . '/config.theme.php';\n";
     foreach (['DB_HOST'=>'127.0.0.1:' . $port, 'DB_USER'=>getenv('AUTH_TEST_DB_USER') ?: 'root',
         'DB_PASS'=>getenv('AUTH_TEST_DB_PASS') ?: '', 'DB_NAME'=>$dbName,
         'SITE_URL'=>'http://127.0.0.1', 'VZ2_ENABLED'=>true, 'VZ2_WRITES_ENABLED'=>true,
@@ -155,11 +155,13 @@ try {
     $old = []; request($old, '_legacy_session.php');
     check(request($old, 'admin.php')['status'] === 403, 'old shared session cannot access administration');
     $admin = [];
-    request($admin, 'index.php?collection_id=42&recording_id=7&time_ms=12000');
+    $timeLink = 'index.php?collection_id=42&recording_id=7&time_ms=12000&view=audio&listen=1';
+    check(request($admin, $timeLink)['status'] === 200, 'anonymous time link opens the login form');
     $oldCookie = $admin['cookie'];
-    $response = request($admin, 'index.php?collection_id=42&recording_id=7&time_ms=12000', ['submit_single'=>'1','heslo'=>'Admin-secret-1']);
+    check(request($admin, 'index.php', ['submit_single'=>'1','heslo'=>'wrong'])['status'] === 200, 'failed login retains the time link');
+    $response = request($admin, 'index.php', ['submit_single'=>'1','heslo'=>'Admin-secret-1']);
     check($response['status'] === 302 && $admin['cookie'] !== $oldCookie, 'login regenerates session ID');
-    check($response['location'] === '/index.php?v=2&collection_id=42&recording_id=7&time_ms=12000', 'login preserves current deep link');
+    check($response['location'] === '/index.php?v=2&collection_id=42&recording_id=7&time_ms=12000&view=audio&listen=1', 'login preserves the recording, time and listen mode');
     check(request($admin, 'admin.php', member('Bad CSRF', 'Other-secret-1'))['status'] === 422, 'CSRF required');
     check(save($admin, member('Dušan', '', 'muzikant', '1'))['status'] === 422, 'last admin cannot be demoted');
     check(save($admin, member('Dušan', '', 'admin', '1', false))['status'] === 422, 'last admin cannot be disabled');

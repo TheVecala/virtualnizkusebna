@@ -14,9 +14,11 @@ require_once __DIR__.'/php/inc/vz2_core.php';
 try{
     vz2_ready();
     if(($_SESSION['logged_in_single']??false)!==true){
-        $query=['v'=>'2'];
-        foreach(['collection_id','recording_id','time_ms','view','kind','listen'] as $p)if(isset($_GET[$p]) && is_string($_GET[$p]))$query[$p]=$_GET[$p];
-        $_SESSION['deep_link_after_login']=http_build_query($query);
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $query=['v'=>'2'];
+            foreach(['collection_id','recording_id','time_ms','view','kind','listen'] as $p)if(isset($_GET[$p]) && is_string($_GET[$p]))$query[$p]=$_GET[$p];
+            $_SESSION['deep_link_after_login']=http_build_query($query);
+        }
         require __DIR__.'/php/loginbox4.php';return;
     }
     vz2_login();
