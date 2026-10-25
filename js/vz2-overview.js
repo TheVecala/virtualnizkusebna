@@ -24,6 +24,15 @@
         return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
     };
     const markerNames = { song_start: 'Začátek skladby', song_end: 'Konec skladby', passage: 'Pasáž', note: 'Poznámka' };
+    const presets = {
+        lyrics: ['songs', 'song_lyrics'],
+        starts_notes: ['rehearsals', 'rehearsal_starts', 'rehearsal_notes'],
+        bar_details: ['songs', 'song_map_details'],
+        markers: ['rehearsals', 'songs', ...['rehearsal', 'song'].flatMap(kind =>
+            ['song_start', 'song_end', 'passage', 'note'].map(marker => `${kind}_marker_${marker}`))],
+        summaries: ['rehearsals', 'songs', 'rehearsal_summary', 'song_summary']
+    };
+    const metadataFilters = new Set(['show_created', 'show_author', 'show_entry_date']);
     const selected = { rehearsal: new Map(), song: new Map() };
     const defaultSelected = { rehearsal: true, song: true };
     let snapshot = null;
@@ -65,7 +74,9 @@
     }
 
     function renderEntry(entry, filters) {
-        const row = make('div', undefined, `overview-entry${entry.type === 'marker' ? ' overview-entry-marker' : ''}`);
+        const body = entry.body || '';
+        const wide = entry.type !== 'marker' && (entry.type === 'document' || body.includes('\n') || body.length > 100);
+        const row = make('div', undefined, `overview-entry${entry.type === 'marker' ? ' overview-entry-marker' : ''}${wide ? ' overview-entry-wide' : ''}${entry.type === 'map_detail' ? ' overview-entry-map-detail' : ''}`);
         const attribution = [filters.show_author ? entry.author : '', filters.show_entry_date ? date(entry.at) : ''].filter(Boolean).join(' · ');
         const content = make('div', undefined, 'overview-entry-content');
         if (entry.type === 'marker') {
@@ -84,7 +95,7 @@
             return row;
         }
         row.append(make('strong', entry.label, 'overview-entry-label'));
-        content.append(make(entry.type === 'document' ? 'pre' : 'span', entry.body || '', 'overview-entry-body'));
+        content.append(make(entry.type === 'document' ? 'pre' : 'span', body, 'overview-entry-body'));
         if (attribution) content.append(make('small', ` · ${attribution}`, 'overview-entry-meta'));
         row.append(content);
         return row;
@@ -191,6 +202,17 @@
     $('overview-filter-none').addEventListener('click', () => {
         const keep = new Set(['rehearsals', 'songs', 'show_created', 'show_author', 'show_entry_date']);
         for (const input of fixedInputs()) input.checked = keep.has(input.dataset.filter);
+        updateFilterCount(); renderSnapshot();
+    });
+    $('overview-filters').addEventListener('click', event => {
+        const button = event.target.closest('button[data-overview-preset]');
+        if (!button) return;
+        const keys = presets[button.dataset.overviewPreset];
+        if (!keys) return;
+        const enabled = new Set(keys);
+        for (const input of fixedInputs()) {
+            if (!metadataFilters.has(input.dataset.filter)) input.checked = enabled.has(input.dataset.filter);
+        }
         updateFilterCount(); renderSnapshot();
     });
     $('overview-collection-filters').addEventListener('click', event => {

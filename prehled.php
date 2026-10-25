@@ -36,7 +36,7 @@ try {
 <details id="overview-filters" class="overview-filters">
 <summary>Co zobrazit <span id="overview-filter-count">Vše</span></summary>
 <div class="overview-filter-body">
-<div class="overview-filter-actions"><button id="overview-filter-all" type="button">Zaškrtnout vše</button><button id="overview-filter-none" type="button">Zrušit druhy obsahu</button></div>
+<div class="overview-filter-actions"><button id="overview-filter-all" type="button">Zaškrtnout vše</button><button id="overview-filter-none" type="button">Zrušit druhy obsahu</button><button type="button" data-overview-preset="lyrics">Jen texty</button><button type="button" data-overview-preset="starts_notes">Začátky a zápisky</button><button type="button" data-overview-preset="bar_details">Jen detaily taktů</button><button type="button" data-overview-preset="markers">Jen časové značky</button><button type="button" data-overview-preset="summaries">Jen souhrny</button></div>
 <div class="overview-filter-grid">
 <fieldset class="overview-filter-group"><legend>Celky a údaje</legend>
 <label><input type="checkbox" data-filter="rehearsals" checked> Zkoušky</label>

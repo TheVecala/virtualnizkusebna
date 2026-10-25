@@ -25,8 +25,9 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         assert.equal(overviewRequests, 1);
         const measureGrid = () => page.evaluate(() => {
             const list = document.querySelector('#overview-rehearsal-list');
+            const card = list.querySelector('.overview-collection');
             return {
-                columns: getComputedStyle(list).gridTemplateColumns.trim().split(/\s+/).length,
+                columns: Math.round(list.getBoundingClientRect().width / card.getBoundingClientRect().width),
                 outputWidth: document.querySelector('#overview-output').getBoundingClientRect().width,
                 filterWidth: document.querySelector('#overview-filters').getBoundingClientRect().width,
                 overflow: document.documentElement.scrollWidth - window.innerWidth
@@ -42,7 +43,25 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         assert(Math.abs(wideGrid.filterWidth - desktopGrid.filterWidth) < 2, 'filter width stays unchanged on wide screens');
         assert(wideGrid.overflow <= 1, 'wide overview has no horizontal overflow');
         await page.setViewportSize({ width: 1200, height: 720 });
-        check(true, 'browser: responsive overview grid keeps the filter width');
+        const masonry = await page.locator('#overview-rehearsal-list').evaluate(list => {
+            const longBottom = list.querySelector('.overview-collection').getBoundingClientRect().bottom;
+            const probes = Array.from({ length: 6 }, (_, index) => {
+                const card = document.createElement('article');
+                card.className = 'overview-collection';
+                card.style.height = index === 0 ? '220px' : '90px';
+                list.append(card);
+                return card;
+            });
+            const positions = probes.map(card => {
+                const rect = card.getBoundingClientRect();
+                return { x: rect.x, y: rect.y };
+            });
+            probes.forEach(card => card.remove());
+            return positions.some((item, index) => positions.some((previous, before) =>
+                before < index && Math.abs(item.x - previous.x) < 2 && item.y > previous.y && item.y < longBottom - 20));
+        });
+        assert(masonry, 'short cards fill space beside a much taller card');
+        check(true, 'browser: responsive columns pack cards of different heights');
 
         const rehearsalGroups = page.locator('#overview-rehearsal-list .overview-marker-group');
         assert.deepEqual(await rehearsalGroups.locator('.overview-marker-heading').allTextContents(),
@@ -73,6 +92,54 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         }));
         assert(Math.abs(summaryRows.label - summaryRows.body) < 8, 'short summary stays on one row');
         check(true, 'browser: one recording heading above each timestamp group');
+
+        const documentLayout = await page.locator('#overview-songs .overview-entry-wide').filter({ hasText: 'Text písně' }).first().evaluate(row => {
+            const label = row.querySelector('.overview-entry-label').getBoundingClientRect();
+            const body = row.querySelector('.overview-entry-body').getBoundingClientRect();
+            return { labelBottom: label.bottom, bodyTop: body.top, bodyWidth: body.width, rowWidth: row.getBoundingClientRect().width };
+        });
+        assert(documentLayout.bodyTop >= documentLayout.labelBottom && documentLayout.bodyWidth >= documentLayout.rowWidth - 2,
+            'document text uses the full card width below its label');
+        const detailFont = await page.locator('.overview-entry-map-detail .overview-entry-body').first()
+            .evaluate(element => getComputedStyle(element).fontFamily);
+        assert(detailFont.includes('monospace'), 'bar details use a monospaced font');
+        check(true, 'browser: full-width documents and monospaced bar details');
+
+        await page.locator('#overview-filters > summary').click();
+        const presets = [
+            ['lyrics', ['songs', 'song_lyrics']],
+            ['starts_notes', ['rehearsals', 'rehearsal_starts', 'rehearsal_notes']],
+            ['bar_details', ['songs', 'song_map_details']],
+            ['markers', ['rehearsals', 'songs', ...['rehearsal', 'song'].flatMap(kind =>
+                ['song_start', 'song_end', 'passage', 'note'].map(marker => `${kind}_marker_${marker}`))]],
+            ['summaries', ['rehearsals', 'songs', 'rehearsal_summary', 'song_summary']]
+        ];
+        for (const [name, keys] of presets) {
+            await page.locator(`[data-overview-preset="${name}"]`).click();
+            const checked = await page.locator('#overview-filters input[data-filter]:checked')
+                .evaluateAll(inputs => inputs.map(input => input.dataset.filter));
+            assert.deepEqual(checked.sort(), ['show_created', 'show_author', 'show_entry_date', ...keys].sort(),
+                `preset ${name} selects its content types`);
+            if (name === 'lyrics') {
+                assert(await page.locator('#overview-rehearsals').isHidden());
+                assert.equal(await page.locator('#overview-songs .overview-entry').count(), 1,
+                    'text preset shows only song lyrics');
+            }
+            if (name === 'starts_notes') {
+                assert(await page.locator('#overview-songs').isHidden());
+                assert.equal(await page.locator('#overview-rehearsal-list .overview-entry').count(), 2,
+                    'starts and notes preset shows only the two rehearsal documents');
+            }
+            if (name === 'bar_details') {
+                assert.equal(await page.locator('#overview-songs .overview-entry-map-detail').count(), 1);
+                assert.equal(await page.locator('#overview-songs .overview-entry').count(), 1,
+                    'bar details preset hides other song content');
+            }
+        }
+        await page.locator('#overview-filter-all').click();
+        await page.locator('#overview-filters > summary').click();
+        assert.equal(overviewRequests, 1, 'presets filter the existing snapshot without a new request');
+        check(true, 'browser: content presets select the requested checkboxes');
 
         await page.setViewportSize({ width: 390, height: 480 });
         const mobileGrid = await measureGrid();
