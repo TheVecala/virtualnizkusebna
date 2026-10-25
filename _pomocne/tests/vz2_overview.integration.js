@@ -14,10 +14,18 @@ module.exports = async ({ base, clients, request, good, db, check, browser }) =>
     await saveDocument(rehearsal, 'lyrics_chords', 'Poznámky', 'Domluvit tempo a druhou sloku.');
     await saveDocument(rehearsal, 'rehearsal_starts', 'Začátky skladeb', 'Ručně dopsaný přehled začátků.');
     await saveDocument(song, 'lyrics_chords', 'Text', 'Am  G\nText písně');
-    await saveDocument(song, 'song_map', 'Mapa skladby', JSON.stringify({ schema_version: 1, sections: [{
-        id: 'a'.repeat(32), name: 'Refrén', bars: [{ id: 'b'.repeat(32), base: 'hihat', fill: 0,
-            crash: false, special: null, detail: 'Hraj tiše.' }]
-    }] }));
+    const bar = (id, base, fill = 0, crash = false, special = null, detail = '') => ({
+        id: id.toString(16).padStart(32, '0'), base, fill, crash, special, detail
+    });
+    await saveDocument(song, 'song_map', 'Mapa skladby', JSON.stringify({ schema_version: 1, sections: [
+        { id: 'a'.repeat(32), name: 'Refrén', bars: [
+            bar(1, 'hihat', 0, false, null, 'Hraj tiše.'), bar(2, 'ride', 2),
+            bar(3, 'hihat', 0, true), bar(4, null, 4), bar(5, null, 0, false, 'unknown'),
+            bar(6, null, 0, false, 'pause'), bar(7, null, 0, false, 'stop'),
+            bar(8, 'ride', 0, true), bar(9, 'hihat', 3)
+        ] },
+        { id: 'b'.repeat(32), name: 'Bridge', bars: [bar(10, 'ride')] }
+    ] }));
 
     const rehearsalRecording = 'test/overview-rehearsal-' + rehearsal.id;
     const secondRehearsalRecording = rehearsalRecording + '-second';
@@ -62,9 +70,16 @@ module.exports = async ({ base, clients, request, good, db, check, browser }) =>
             && item.recording_id === secondRehearsalRecordingId && item.recording_name === 'Druhý pokus')
         && foundRehearsal.entries.some(item => item.body === 'Příště zkusit pomaleji.'),
         'overview joins current documents, summaries, markers and discussion');
+    const songMap = foundSong.entries.find(item => item.type === 'map');
     check(foundSong.lifecycle === 'archived' && foundSong.entries.some(item => item.body.includes('Text písně'))
-        && foundSong.entries.some(item => item.label === 'Mapa · Refrén' && item.body === '1 takt')
+        && songMap.label === 'Mapa' && songMap.body === '10 taktů' && songMap.sections.length === 2
+        && songMap.sections[0].name === 'Refrén' && songMap.sections[0].first_bar === 1
+        && songMap.sections[0].bars.length === 9 && songMap.sections[0].bars[0].has_detail
+        && songMap.sections[0].bars[1].base === 'ride' && songMap.sections[0].bars[1].fill === 2
+        && songMap.sections[1].name === 'Bridge' && songMap.sections[1].first_bar === 10
+        && songMap.sections[1].bars.length === 1
         && foundSong.entries.some(item => item.body === 'Hraj tiše.')
+        && foundSong.entries.findIndex(item => item.type === 'map_detail') > foundSong.entries.indexOf(songMap)
         && foundSong.entries.some(item => item.body === 'Zkusit nižší tón.' && item.recording_name === 'Skrytý výstřižek')
         && foundRehearsal.played_songs.some(item => item.id === song.id && item.count === 1),
         'overview includes archived song text, map notes, recording fallback and rehearsal song links');

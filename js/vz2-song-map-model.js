@@ -10,6 +10,16 @@
         ['F4', null, 4, false, null], ['?', null, 0, false, 'unknown'],
         ['Pauza', null, 0, false, 'pause'], ['Stop', null, 0, false, 'stop']
     ].map(([name, base, fill, crash, special]) => ({ name, base, fill, crash, special }));
+    const symbol = bar => {
+        if (bar.special) return { unknown: '?', pause: '—', stop: '■' }[bar.special];
+        if (bar.fill === 4) return 'F4';
+        return (bar.base === 'ride' ? '○' : '□') + (bar.crash ? '✦' : bar.fill ? 'F' + bar.fill : '');
+    };
+    const label = bar => {
+        if (bar.special) return { unknown: 'Neurčený takt', pause: 'Pauza', stop: 'Stop' }[bar.special];
+        if (bar.fill === 4) return 'F4';
+        return (bar.base === 'ride' ? 'Ride' : 'Hi-hat') + (bar.crash ? ' + Crash na začátku' : bar.fill ? ' + F' + bar.fill : '');
+    };
     const semantic = type => ({ base: type.base, fill: type.fill, crash: type.crash, special: type.special });
     class Draft {
         constructor(map = null) { this.reset(map); }
@@ -106,7 +116,7 @@
             this.map = snapshot.map; this.selected = snapshot.selected; this.pending = snapshot.pending;
         }
     }
-    const exported = { Draft, types };
+    const exported = { Draft, types, symbol, label };
     if (typeof module !== 'undefined' && module.exports) module.exports = exported;
     else root.Vz2SongMapModel = exported;
 }(typeof window === 'undefined' ? globalThis : window));

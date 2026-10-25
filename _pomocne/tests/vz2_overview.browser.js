@@ -105,6 +105,24 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         assert(detailFont.includes('monospace'), 'bar details use a monospaced font');
         check(true, 'browser: full-width documents and monospaced bar details');
 
+        const map = page.locator('#overview-songs .overview-map');
+        assert.equal(await map.count(), 1);
+        const sections = map.locator('.overview-map-section');
+        assert.deepEqual(await sections.locator('h4').allTextContents(), ['Refrén', 'Bridge']);
+        assert.equal(await sections.first().locator('.overview-map-row').count(), 2, 'nine bars wrap after the eighth');
+        assert.deepEqual(await sections.first().locator('.overview-map-bar').allTextContents(),
+            ['□', '○F2', '□✦', 'F4', '?', '—', '■', '○✦', '□F3']);
+        assert.equal(await map.locator('.overview-map-bar.has-detail').count(), 1);
+        assert.equal(await sections.nth(1).locator('.overview-map-bar').getAttribute('aria-label'), 'Takt 10: Ride');
+        const mapRow = await sections.first().locator('.overview-map-row').first().evaluate(row => {
+            const bars = [...row.children].map(bar => bar.getBoundingClientRect());
+            return { tops: bars.map(bar => bar.top), groupGap: bars[4].left - bars[3].right,
+                cellGap: bars[1].left - bars[0].right, overflow: row.scrollWidth > row.clientWidth + 1 };
+        });
+        assert(new Set(mapRow.tops).size === 1 && mapRow.groupGap > mapRow.cellGap && !mapRow.overflow,
+            'playing map keeps the four-plus-four bar grouping');
+        check(true, 'browser: playing map shows bar symbols and section order');
+
         await page.locator('#overview-filters > summary').click();
         const presets = [
             ['lyrics', ['songs', 'song_lyrics']],
@@ -141,6 +159,16 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         assert.equal(overviewRequests, 1, 'presets filter the existing snapshot without a new request');
         check(true, 'browser: content presets select the requested checkboxes');
 
+        for (const width of [390, 320]) {
+            await page.setViewportSize({ width, height: 480 });
+            const compactRow = await map.locator('.overview-map-row').first().evaluate(row => ({
+                tops: [...row.children].map(bar => bar.getBoundingClientRect().top),
+                overflow: row.scrollWidth > row.clientWidth + 1
+            }));
+            assert(new Set(compactRow.tops).size === 1 && !compactRow.overflow,
+                `playing map keeps eight bars on one row at ${width}px`);
+            assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+        }
         await page.setViewportSize({ width: 390, height: 480 });
         const mobileGrid = await measureGrid();
         assert(mobileGrid.columns === 1 && mobileGrid.overflow <= 1, 'mobile overview uses one column without horizontal overflow');

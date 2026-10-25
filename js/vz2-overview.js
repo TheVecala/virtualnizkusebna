@@ -75,7 +75,7 @@
 
     function renderEntry(entry, filters) {
         const body = entry.body || '';
-        const wide = entry.type !== 'marker' && (entry.type === 'document' || body.includes('\n') || body.length > 100);
+        const wide = entry.type !== 'marker' && (entry.type === 'document' || entry.type === 'map' || body.includes('\n') || body.length > 100);
         const row = make('div', undefined, `overview-entry${entry.type === 'marker' ? ' overview-entry-marker' : ''}${wide ? ' overview-entry-wide' : ''}${entry.type === 'map_detail' ? ' overview-entry-map-detail' : ''}`);
         const attribution = [filters.show_author ? entry.author : '', filters.show_entry_date ? date(entry.at) : ''].filter(Boolean).join(' · ');
         const content = make('div', undefined, 'overview-entry-content');
@@ -92,6 +92,34 @@
                     `overview-marker-icon${entry.kind === 'song_end' ? ' overview-marker-icon-end' : ''}`);
                 icon.title = kind; icon.setAttribute('aria-hidden', 'true'); row.append(icon);
             }
+            return row;
+        }
+        if (entry.type === 'map') {
+            row.append(make('strong', entry.label, 'overview-entry-label'));
+            const map = make('div', undefined, 'overview-map');
+            for (const section of entry.sections || []) {
+                const block = make('section', undefined, 'overview-map-section');
+                block.append(make('h4', section.name));
+                const bars = Array.isArray(section.bars) ? section.bars : [];
+                for (let index = 0; index < bars.length; index += 8) {
+                    const barRow = make('div', undefined, 'overview-map-row');
+                    bars.slice(index, index + 8).forEach((bar, offset) => {
+                        const cell = make('span', window.Vz2SongMapModel.symbol(bar),
+                            `overview-map-bar${bar.has_detail ? ' has-detail' : ''}`);
+                        const description = `Takt ${Number(section.first_bar) + index + offset}: ${window.Vz2SongMapModel.label(bar)}`;
+                        cell.dataset.base = bar.base || '';
+                        cell.setAttribute('role', 'img');
+                        cell.setAttribute('aria-label', description);
+                        cell.title = description;
+                        barRow.append(cell);
+                    });
+                    block.append(barRow);
+                }
+                map.append(block);
+            }
+            content.append(map);
+            if (attribution) content.append(make('small', attribution, 'overview-entry-meta'));
+            row.append(content);
             return row;
         }
         row.append(make('strong', entry.label, 'overview-entry-label'));

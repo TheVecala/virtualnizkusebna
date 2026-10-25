@@ -3,7 +3,7 @@
     const make = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
     const button = (label, run, cls) => { const b = make('button', label, cls); b.type = 'button'; b.addEventListener('click', run); return b; };
     let current, serial = 0;
-    const { Draft, types } = window.Vz2SongMapModel;
+    const { Draft, types, symbol, label } = window.Vz2SongMapModel;
     const Detail = window.Vz2BarDetail;
     const live = ctx => current === ctx;
     function modal(title) {
@@ -55,16 +55,6 @@
         let data; try { data = await response.json(); } catch (_) { throw new Error('Server nevrátil platnou odpověď.'); }
         if (!response.ok || !data.ok) { const e = new Error(data.error || 'Operace selhala.'); e.status = response.status; throw e; }
         return data;
-    }
-    function symbol(bar) {
-        if (bar.special) return { unknown: '?', pause: '—', stop: '■' }[bar.special];
-        if (bar.fill === 4) return 'F4';
-        return (bar.base === 'ride' ? '○' : '□') + (bar.crash ? '✦' : bar.fill ? 'F' + bar.fill : '');
-    }
-    function label(bar) {
-        if (bar.special) return { unknown: 'Neurčený takt', pause: 'Pauza', stop: 'Stop' }[bar.special];
-        if (bar.fill === 4) return 'F4';
-        return (bar.base === 'ride' ? 'Ride' : 'Hi-hat') + (bar.crash ? ' + Crash na začátku' : bar.fill ? ' + F' + bar.fill : '');
     }
     function render(ctx) {
         const draft = ctx.draft, map = draft.map;

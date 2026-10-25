@@ -28,19 +28,35 @@ function vz2_overview_data(mysqli $db): array {
         if ($kind === 'song_map') {
             $map = json_decode($document['body'],true);
             if (!is_array($map) || !is_array($map['sections'] ?? null)) continue;
+            $barNumber = 1;
+            $mapSections = [];
+            $mapDetails = [];
             foreach ($map['sections'] as $section) {
                 $name = (string)($section['name'] ?? 'Sekce');
                 $bars = is_array($section['bars'] ?? null) ? $section['bars'] : [];
                 $barCount = count($bars);
-                $barLabel = $barCount === 1 ? 'takt' : ($barCount >= 2 && $barCount <= 4 ? 'takty' : 'taktů');
-                $append((int)$document['collection_id'], ['type'=>'map','label'=>'Mapa · '.$name,
-                    'body'=>$barCount.' '.$barLabel, 'at'=>$document['updated_at'], 'author'=>$document['author']]);
+                $playingBars = [];
+                foreach ($bars as $bar) $playingBars[] = [
+                    'base'=>$bar['base'] ?? null, 'fill'=>(int)($bar['fill'] ?? 0),
+                    'crash'=>(bool)($bar['crash'] ?? false), 'special'=>$bar['special'] ?? null,
+                    'has_detail'=>trim((string)($bar['detail'] ?? '')) !== ''
+                ];
+                $mapSections[] = ['name'=>$name, 'bars'=>$playingBars, 'first_bar'=>$barNumber];
                 foreach ($bars as $index => $bar) {
                     if (trim((string)($bar['detail'] ?? '')) === '') continue;
-                    $append((int)$document['collection_id'], ['type'=>'map_detail','label'=>$name.' · takt '.($index+1),
-                        'body'=>$bar['detail'], 'at'=>$document['updated_at'], 'author'=>$document['author']]);
+                    $mapDetails[] = ['type'=>'map_detail','label'=>$name.' · takt '.($barNumber+$index),
+                        'body'=>$bar['detail'], 'at'=>$document['updated_at'], 'author'=>$document['author']];
                 }
+                $barNumber += $barCount;
             }
+            if ($mapSections) {
+                $totalBars = $barNumber - 1;
+                $barLabel = $totalBars === 1 ? 'takt' : ($totalBars >= 2 && $totalBars <= 4 ? 'takty' : 'taktů');
+                $append((int)$document['collection_id'], ['type'=>'map','label'=>'Mapa',
+                    'body'=>$totalBars.' '.$barLabel, 'sections'=>$mapSections,
+                    'at'=>$document['updated_at'], 'author'=>$document['author']]);
+            }
+            foreach ($mapDetails as $detail) $append((int)$document['collection_id'], $detail);
             continue;
         }
         $label = $kind === 'lyrics_chords' && ($kindById[(int)$document['collection_id']] ?? null) === 'rehearsal'
