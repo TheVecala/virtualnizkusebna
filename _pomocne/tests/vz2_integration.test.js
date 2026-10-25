@@ -169,7 +169,8 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
             return;
         }
         if (process.env.VZ2_TEST_SUITE === 'overview') {
-            await require('./vz2_overview.integration')({ clients, request, good, db, check });
+            await require('./vz2_overview.integration')({ base, clients, request, good, db, check,
+                browser: process.env.VZ2_TEST_BROWSER === 'overview' });
             console.log('PASS overview integration: ' + checks + ' checks');
             return;
         }

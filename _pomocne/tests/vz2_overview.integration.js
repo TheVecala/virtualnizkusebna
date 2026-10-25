@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 
-module.exports = async ({ clients, request, good, db, check }) => {
+module.exports = async ({ base, clients, request, good, db, check, browser }) => {
     const rehearsal = await good('admin', { action: 'collection_create', kind: 'rehearsal', title: 'Zkouška říjen' });
     const song = await good('admin', { action: 'collection_create', kind: 'song', title: 'Nová píseň' });
     const saveDocument = async (collection, kind, title, body) => {
@@ -26,6 +26,7 @@ module.exports = async ({ clients, request, good, db, check }) => {
     const rehearsalRecordingId = Number(db('SELECT id FROM vz2_recordings WHERE storage_dir=?', [rehearsalRecording])[0].id);
     const songRecordingId = Number(db('SELECT id FROM vz2_recordings WHERE storage_dir=?', [songRecording])[0].id);
     db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,created_by,updated_by,created_at,updated_at) VALUES (?,'note',83000,'Bicí později.',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsalRecordingId]);
+    db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,created_by,updated_by,created_at,updated_at) VALUES (?,'song_start',120000,'Nová píseň',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsalRecordingId]);
     db('INSERT INTO vz2_rehearsal_plays(rehearsal_collection_id,song_collection_id,rehearsal_title_snapshot,song_title_snapshot,clip_recording_id,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())', [rehearsal.id,song.id,'Zkouška říjen','Nová píseň',songRecordingId]);
     db("UPDATE vz2_collections SET lifecycle='archived' WHERE id=?", [song.id]);
     const discussion = await request(clients.alice, 'php/ajax/vz2_content.php', { action: 'post_create', thread_id: Number(db('SELECT id FROM vz2_discussion_threads WHERE collection_id=?',[rehearsal.id])[0].id), body: 'Příště zkusit pomaleji.' });
@@ -61,4 +62,5 @@ module.exports = async ({ clients, request, good, db, check }) => {
         'overview exposes no recording titles, audio files or media links');
     const deniedPost = await request(clients.guest, 'php/ajax/vz2_overview.php', { action: 'generate' });
     check(deniedPost.status === 405, 'overview endpoint is read only');
+    if (browser) await require('./vz2_overview.browser')({ base, clients, db, check, rehearsalRecordingId });
 };

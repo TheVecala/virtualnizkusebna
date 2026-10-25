@@ -65,16 +65,28 @@
     }
 
     function renderEntry(entry, filters) {
-        const row = make('div', undefined, 'overview-entry');
-        const heading = make('div', undefined, 'overview-entry-heading');
-        const label = entry.type === 'marker'
-            ? `${markerNames[entry.kind] || 'Značka'} · ${time(entry.time_ms)}` : entry.label;
-        heading.append(make('strong', label));
+        const row = make('div', undefined, `overview-entry${entry.type === 'marker' ? ' overview-entry-marker' : ''}`);
         const attribution = [filters.show_author ? entry.author : '', filters.show_entry_date ? date(entry.at) : ''].filter(Boolean).join(' · ');
-        if (attribution) heading.append(make('small', attribution));
-        const body = make(entry.type === 'document' ? 'pre' : 'p', entry.body || '', 'overview-entry-body');
-        if (entry.type === 'marker' && !entry.body) body.textContent = '—';
-        row.append(heading, body);
+        const content = make('div', undefined, 'overview-entry-content');
+        if (entry.type === 'marker') {
+            const kind = markerNames[entry.kind] || 'Značka';
+            const markerText = entry.body || kind;
+            row.append(make('span', time(entry.time_ms), 'overview-marker-time'));
+            content.append(make('span', `${kind}: `, 'overview-visually-hidden'));
+            content.append(make('span', markerText, 'overview-entry-body'));
+            if (attribution) content.append(make('small', ` · ${attribution}`, 'overview-entry-meta'));
+            row.append(content);
+            if (entry.kind === 'song_start' || entry.kind === 'song_end') {
+                const icon = make('span', entry.kind === 'song_start' ? '↑' : '↓',
+                    `overview-marker-icon${entry.kind === 'song_end' ? ' overview-marker-icon-end' : ''}`);
+                icon.title = kind; icon.setAttribute('aria-hidden', 'true'); row.append(icon);
+            }
+            return row;
+        }
+        row.append(make('strong', entry.label, 'overview-entry-label'));
+        content.append(make(entry.type === 'document' ? 'pre' : 'span', entry.body || '', 'overview-entry-body'));
+        if (attribution) content.append(make('small', ` · ${attribution}`, 'overview-entry-meta'));
+        row.append(content);
         return row;
     }
 
@@ -138,6 +150,14 @@
         const filters = currentFilters();
         render(window.Vz2OverviewFilter.filterOverview(snapshot, filters, selectedSets()), filters, snapshot);
     }
+
+    const filterPanel = $('overview-filters');
+    document.addEventListener('pointerdown', event => {
+        if (filterPanel.open && !filterPanel.contains(event.target)) filterPanel.open = false;
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && filterPanel.open) filterPanel.open = false;
+    });
 
     $('overview-filters').addEventListener('change', event => {
         const input = event.target;

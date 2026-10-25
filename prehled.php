@@ -32,6 +32,7 @@ try {
 <p class="overview-kicker">SAMOSTATNÝ NÁHLED</p>
 <h1>Kompaktní přehled</h1>
 <p>Texty a zápisky ze všech zkoušek a skladeb na jednom místě. Výpis se sestaví jen po kliknutí a je pouze pro čtení.</p>
+</div>
 <details id="overview-filters" class="overview-filters">
 <summary>Co zobrazit <span id="overview-filter-count">Vše</span></summary>
 <div class="overview-filter-body">
@@ -84,7 +85,6 @@ try {
 </div>
 </details>
 <div class="overview-actions"><button id="overview-generate" type="button">Vytvořit výpis</button><span id="overview-status" role="status" aria-live="polite">Výpis zatím není vytvořený.</span></div>
-</div>
 <div id="overview-output" hidden>
 <div id="overview-meta" class="overview-meta"></div>
 <p id="overview-no-results" class="overview-empty" hidden>Zaškrtněte zkoušky nebo skladby, které chcete zobrazit.</p>
