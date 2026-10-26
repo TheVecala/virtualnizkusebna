@@ -29,6 +29,7 @@ body[data-collection-kind=song] #collection-title-name,
 body[data-collection-kind=song] #collections .collection > button[aria-pressed=true] .collection-name { color: var(--color-song-title); }
 body[data-collection-kind=rehearsal] #collection-title-name,
 body[data-collection-kind=rehearsal] #collections .collection > button[aria-pressed=true] .collection-name { color: var(--color-rehearsal-title); }
+body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; }
 .catalog-chevron { display: grid; place-items: center; flex: 0 0 18px; height: 18px; color: var(--color-primary-hover); }
 .catalog-chevron svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
 #catalog-picker[aria-expanded=true] .catalog-chevron { transform: rotate(180deg); }
@@ -154,7 +155,7 @@ body[data-collection-kind=rehearsal] #collections .collection > button[aria-pres
     #ideas-controls button { min-height: 40px; }
 }
 @media (max-width: 767px) {
-    #workspace-frame { margin: 0 8px; overflow: hidden; border: 1px solid var(--color-navigation-border); border-radius: 12px; background: var(--color-panel); }
+    #workspace-frame { --workspace-outline: var(--color-primary); margin: 0 8px; overflow: hidden; border: 2px solid var(--workspace-outline); border-top: 0; border-radius: 12px; background: var(--color-panel); }
     #workspace-frame > .layout { min-height: 0; background: var(--color-panel); }
     #content-area { padding: 0; gap: 0; }
     #content-area > .panel:not(.panel-fullscreen),
@@ -225,10 +226,11 @@ body[data-collection-kind=rehearsal] #collections .collection > button[aria-pres
     #history-filter .history-filter-menu { top: calc(100% + 11px); bottom: auto; right: auto; left: 0; width: min(290px, calc(100vw - 130px)); max-height: min(50dvh, 320px); overflow: auto; }
     #history-options #history-menu { top: calc(100% + 11px); bottom: auto; right: auto; left: 0; width: min(290px, calc(100vw - 180px)); max-height: min(50dvh, 320px); overflow: auto; }
     .history-header > .panel-fullscreen-button, #ideas-workspace > .workspace-header > .panel-fullscreen-button { margin-left: auto; }
-    #mobile-dock { display: block; flex: 0 0 auto; padding: 0; border-bottom: 1px solid var(--color-navigation-border); background: var(--color-shell); z-index: 20; }
+    #mobile-dock { display: block; flex: 0 0 auto; padding: 0; border-bottom: 2px solid var(--workspace-outline); background: var(--color-shell); z-index: 20; }
     #bottom-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); height: 56px; min-height: 56px; padding: 0; margin: 0; gap: 4px; background: none; border: 0; overflow: visible; }
-    #bottom-nav button { position: relative; width: auto; min-width: 0; height: 55px; margin: 0; padding: 3px 0; border: 1px solid var(--color-border); border-bottom: 0; border-radius: 9px 9px 0 0; background: var(--color-shell); font-size: 10px; }
-    #bottom-nav button[aria-pressed=true] { color: var(--color-primary-hover); background: var(--color-primary-bg); border-color: var(--color-navigation-border); box-shadow: none; }
+    #bottom-nav button { position: relative; width: auto; min-width: 0; height: 55px; margin: 0; padding: 3px 0; border: 1px solid var(--color-border); border-bottom: 0; border-radius: 9px 9px 0 0; background: var(--color-shell); color: var(--color-text); font-size: 13px; font-weight: 700; }
+    #bottom-nav button[aria-pressed=true] { z-index: 1; color: var(--color-text); background: var(--color-panel); border: 2px solid var(--workspace-outline); border-bottom: 0; box-shadow: none; }
+    #bottom-nav button[aria-pressed=true]::after { content: ''; position: absolute; right: 0; bottom: -3px; left: 0; height: 3px; background: var(--color-panel); pointer-events: none; }
     #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 4px 8px; border-top: 1px solid var(--color-navigation-border); background: var(--color-shell); z-index: 20; }
     #activity.utility-panel, #offline-files.utility-panel { bottom: 53px; }
     body:is([data-workspace=history], [data-workspace=ideas]) #activity.utility-panel,
