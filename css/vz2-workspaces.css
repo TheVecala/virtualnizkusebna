@@ -155,8 +155,8 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #ideas-controls button { min-height: 40px; }
 }
 @media (max-width: 767px) {
-    #workspace-frame { --workspace-outline: var(--color-primary); margin: 0 8px; overflow: hidden; border: 2px solid var(--workspace-outline); border-top: 0; border-radius: 12px; background: var(--color-panel); }
-    #workspace-frame > .layout { min-height: 0; background: var(--color-panel); }
+    #workspace-frame { --workspace-outline: var(--color-primary); margin: 0 8px; overflow: hidden; border: 0; border-bottom: 2px solid var(--workspace-outline); border-radius: 12px; background: var(--color-panel); }
+    #workspace-frame > .layout { min-height: 0; border-left: 2px solid var(--workspace-outline); border-right: 2px solid var(--workspace-outline); background: var(--color-panel); }
     #content-area { padding: 0; gap: 0; }
     #content-area > .panel:not(.panel-fullscreen),
     #history-workspace:not(.panel-fullscreen),
@@ -231,7 +231,7 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #bottom-nav button { position: relative; width: auto; min-width: 0; height: 55px; margin: 0; padding: 3px 0; border: 1px solid var(--color-border); border-bottom: 0; border-radius: 9px 9px 0 0; background: var(--color-shell); color: var(--color-text); font-size: 13px; font-weight: 700; }
     #bottom-nav button[aria-pressed=true] { z-index: 1; color: var(--color-text); background: var(--color-panel); border: 2px solid var(--workspace-outline); border-bottom: 0; box-shadow: none; }
     #bottom-nav button[aria-pressed=true]::after { content: ''; position: absolute; right: 0; bottom: -3px; left: 0; height: 3px; background: var(--color-panel); pointer-events: none; }
-    #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 4px 8px; border-top: 1px solid var(--color-navigation-border); background: var(--color-shell); z-index: 20; }
+    #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 4px 8px; border-top: 1px solid var(--color-navigation-border); border-left: 2px solid var(--workspace-outline); border-right: 2px solid var(--workspace-outline); background: var(--color-shell); z-index: 20; }
     #activity.utility-panel, #offline-files.utility-panel { bottom: 53px; }
     body:is([data-workspace=history], [data-workspace=ideas]) #activity.utility-panel,
     body:is([data-workspace=history], [data-workspace=ideas]) #offline-files.utility-panel { bottom: 8px; }
