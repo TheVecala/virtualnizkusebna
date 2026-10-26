@@ -190,7 +190,7 @@ body[data-collection-kind=rehearsal] #collections .collection > button[aria-pres
     #tablature-actions > button { padding-inline: 5px; }
     #mobile-panels:not([hidden]) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; width: 100%; padding: 0; border: 0; background: none; }
     #mobile-panels button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; height: 44px; min-height: 44px; padding: 3px 1px; border: 1px solid transparent; border-radius: 8px; background: none; }
-    #mobile-panels button .section-icon { width: 22px; height: 22px; flex: 0 0 22px; }
+    #mobile-panels button .panel-character-icon { display: block; flex: 0 0 23px; width: 23px; height: 23px; object-fit: contain; }
     #mobile-panels button .section-button-label { position: static; width: auto; height: auto; margin: 0; overflow: hidden; clip: auto; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; line-height: 1.1; }
     #mobile-panels button[aria-pressed=true] { color: var(--color-primary-hover); background: var(--color-primary-bg); border-color: var(--color-navigation-border); }
     #player-shell[data-mode=looper]:not(.player-fullscreen) { max-height: 46dvh; min-height: 0; }
@@ -229,8 +229,6 @@ body[data-collection-kind=rehearsal] #collections .collection > button[aria-pres
     #bottom-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); height: 56px; min-height: 56px; padding: 0; margin: 0; gap: 4px; background: none; border: 0; overflow: visible; }
     #bottom-nav button { position: relative; width: auto; min-width: 0; height: 55px; margin: 0; padding: 3px 0; border: 1px solid var(--color-border); border-bottom: 0; border-radius: 9px 9px 0 0; background: var(--color-shell); font-size: 10px; }
     #bottom-nav button[aria-pressed=true] { color: var(--color-primary-hover); background: var(--color-primary-bg); border-color: var(--color-navigation-border); box-shadow: none; }
-    #bottom-nav img { width: 27px; height: 27px; }
-    #bottom-nav button[aria-pressed=true] img { width: 29px; height: 29px; }
     #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 4px 8px; border-top: 1px solid var(--color-navigation-border); background: var(--color-shell); z-index: 20; }
     #activity.utility-panel, #offline-files.utility-panel { bottom: 53px; }
     body:is([data-workspace=history], [data-workspace=ideas]) #activity.utility-panel,
