@@ -343,7 +343,7 @@
         const audio = node('audio'); audio.preload = 'none'; audio.src = file.url;
         audio.dataset.source = 'web';
         const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
-        const cache = recordingIconButton('Uložit offline', 'download', async () => {
+        const cache = recordingIconButton('Uložit offline', 'wifi-off', async () => {
             const current = await idbKeyval.get(cacheKey, store);
             if (current instanceof Blob) {
                 if (!confirm('Odebrat offline kopii pouze z tohoto prohlížeče?')) return;
@@ -367,7 +367,7 @@
             if (percent) cache.dataset.progress = percent[1] + '%';
             else if (label === 'Stahuji offline…' || label === 'Ukládám offline…') cache.dataset.progress = '…';
             else delete cache.dataset.progress;
-            cache.replaceChildren(window.Vz2Audio.icon(saved ? 'device-floppy' : 'download'));
+            cache.replaceChildren(window.Vz2Audio.icon(saved ? 'device-floppy' : 'wifi-off'));
         };
         cache.setAttribute('aria-pressed', 'false');
         actions.append(cache);

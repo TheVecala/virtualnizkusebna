@@ -611,7 +611,7 @@
         var available = !!currentSet && !!getCacheStore();
         dom.offline.disabled = !!disabled || !available;
         dom.offline.setAttribute('aria-pressed', String(!!isCached));
-        if (dom.offlineIcon) dom.offlineIcon.className = isCached ? 'ti ti-trash' : 'ti ti-download';
+        if (dom.offlineIcon) dom.offlineIcon.className = isCached ? 'ti ti-trash' : 'ti ti-wifi-off';
         if (dom.offlineLabel) dom.offlineLabel.textContent = isCached ? 'Odebrat offline kopii' : 'Uložit pro offline poslech';
         if (dom.offlineStatus) dom.offlineStatus.textContent = status || (isCached ? 'uloženo offline' : '');
     }

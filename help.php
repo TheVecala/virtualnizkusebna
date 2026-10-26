@@ -116,7 +116,7 @@
       </section>
 
       <section id="offline" class="help-section searchable">
-        <div class="section-heading"><span class="section-icon"><i class="ti ti-cloud-down"></i></span><div><p>08</p><h2>Offline nahrávky</h2></div></div>
+        <div class="section-heading"><span class="section-icon"><i class="ti ti-wifi-off"></i></span><div><p>08</p><h2>Offline nahrávky</h2></div></div>
         <ol class="number-list"><li><b>Otevřete nahrávku v looperu.</b><span>V jeho nabídce zvolte „Uložit pro offline“.</span></li><li><b>Počkejte na dokončení.</b><span>Nezavírejte stránku, dokud aplikace nepotvrdí uložení.</span></li><li><b>Spravujte úložiště.</b><span>V horní nabídce přes „Správa offline souborů“ odstraníte jednotlivé kopie nebo vše.</span></li></ol>
         <p>U <a href="#multitracky">Multitracků</a> použijte tlačítko <b>Uložit pro offline poslech</b> přímo v jejich přehrávači. Ukládá se celá sada stop.</p>
         <div class="callout"><i class="ti ti-device-mobile"></i><p>Offline kopie zůstává pouze v tomto prohlížeči a zařízení. Soukromý režim nebo vymazání dat webu ji může odstranit.</p></div>

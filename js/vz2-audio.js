@@ -5,7 +5,7 @@
         pause: '<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/>',
         x: '<path d="M5 5l14 14M19 5L5 19"/>',
         'wave-sine': '<path d="M2 12c3 0 3-8 6-8s3 16 6 16 3-8 8-8"/>',
-        download: '<path d="M12 3v12m-5-5 5 5 5-5M4 18v3h16v-3"/>',
+        'wifi-off': '<path d="M12 18l.01 0M9.172 15.172a4 4 0 0 1 5.656 0M6.343 12.343a7.963 7.963 0 0 1 3.864 -2.14m4.163 .155a7.965 7.965 0 0 1 3.287 2M3.515 9.515a12 12 0 0 1 3.544 -2.455m3.101 -.92a12 12 0 0 1 10.325 3.374M3 3l18 18"/>',
         'device-floppy': '<path d="M4 3h13l3 3v15H4zM7 3v6h10V3M7 21v-8h10v8"/>',
         'timeline-event': '<path d="M4 3v18M4 6h14l3 4-3 4H4"/>',
         car: '<path d="M5 11 7 5h10l2 6M4 11h16v8H4zM7 19v2m10-2v2M7 15h2m6 0h2"/>',
