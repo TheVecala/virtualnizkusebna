@@ -142,6 +142,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
 <a href="prehled.php">Kompaktní přehled</a>
+<a href="useky.php">Úseky nahrávek</a>
 <a href="help.php">Nápověda</a>
 <button id="show-offline">Správa offline souborů</button><button id="logout">Odhlásit</button></nav></details></header>
 <svg class="section-icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
