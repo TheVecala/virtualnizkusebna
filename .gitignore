@@ -3,7 +3,6 @@
 *.flp
 user
 /session_list.php
-/config.vz2.php
 /_pomocne/dist/
 /dist/vz2-stage6/
 /dist/vz2-session/

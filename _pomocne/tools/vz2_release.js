@@ -1,6 +1,6 @@
 'use strict';
 // All tracked application files outside _pomocne belong in the web root.
-// Private server configuration is preserved separately, never exported.
+// Database connection configuration is preserved separately; VZ2 beta settings are exported.
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -18,7 +18,7 @@ assert(outsideRepo || relativeOut.startsWith('_pomocne' + path.sep),
 const gitRaw = (...args) => execFileSync('git', args, { cwd: root, windowsHide: true, encoding: 'utf8' });
 const git = (...args) => gitRaw(...args).trim();
 const gitPaths = (...args) => gitRaw('ls-files', '-z', ...args).split('\0').filter(Boolean);
-const serverConfiguration = ['config.php', 'config.vz2.php'];
+const serverConfiguration = ['config.php'];
 const auxiliary = name => name === '.gitignore' || name === '.git' || name.startsWith('.git/')
     || name === '_pomocne' || name.startsWith('_pomocne/');
 const runtime = name => !auxiliary(name) && !serverConfiguration.includes(name);
@@ -32,7 +32,7 @@ for (const name of removed) {
 const names = gitPaths().filter(runtime).sort();
 const untracked = gitPaths('--others','--exclude-standard').filter(runtime);
 assert(!untracked.length, 'Review and track new runtime files before packaging: ' + untracked.join(', '));
-for (const name of ['index.php','php/auth.php','php/loginbox4.php','php/ajax/vz2.php','js/multitrack.js']) assert(names.includes(name), 'Missing runtime: ' + name);
+for (const name of ['index.php','config.vz2.php','php/auth.php','php/loginbox4.php','php/ajax/vz2.php','js/multitrack.js']) assert(names.includes(name), 'Missing runtime: ' + name);
 const entries = names.map(name => {
     const absolute = path.join(root,name);
     assert(fs.existsSync(absolute), 'Tracked runtime file is missing; review and stage its deletion: ' + name);

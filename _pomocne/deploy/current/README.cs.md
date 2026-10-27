@@ -10,8 +10,9 @@ Zahrnuté jsou všechny verzované aplikační soubory mimo `_pomocne/`, včetn�
 kořenových stránek, podpory témat, PHP, JavaScriptu, CSS a statických souborů.
 
 `.git/`, `.gitignore`, `_pomocne/`, manifest, tento návod a removed-files.txt
-nepatří do veřejného webového adresáře. Serverové `config.php` a `config.vz2.php`
-se tímto balíčkem nenahrazují; zachovejte jejich nastavení a přístupové údaje.
+nepatří do veřejného webového adresáře. Serverový `config.php` se tímto balíčkem
+nenahrazuje; zachovejte přístupové údaje a URL cílové instalace.
+`config.vz2.php` je verzovaný a balíček ho obsahuje s nastavením pro betu.
 Seznam výjimek je ve zdrojovém repozitáři v `_pomocne/vyjimky-nasazeni.md`.
 `config.theme.php` mezi výjimky nepatří; nahrává se ve stejné podobě jako
 v nasazované verzi Gitu.
@@ -22,8 +23,13 @@ v nasazované verzi Gitu.
    dosavadní nasazený commit nebo manifest a stav databázových migrací.
 2. Před nasazením ověřte potřebné migrace podle návodu dané změny v
    `_pomocne/docs/`. Žádnou migraci balíček neprovádí automaticky.
-3. V servisním okně nahrajte obsah `1_soubory/`. Zachovejte cílové konfigurace,
-   ochranná pravidla webserveru, databázi, uživatelské soubory a sdílené úložiště.
+3. Při zapnutém maintenance nahrajte obsah `1_soubory/`. Zachovejte cílový
+   `config.php`, ochranná pravidla webserveru, databázi, uživatelské soubory
+   a sdílené úložiště. Na alfě v nahraném `config.vz2.php` změňte
+   `VZ2_ENVIRONMENT` z `beta` na `alpha` ještě před vypnutím maintenance.
+   V `config.php` ověřte `SITE_URL` cílové instalace. Sdílený dataset a cesty
+   úložiště se nemění. Pokud má cílový web zůstat pouze pro čtení, zachovejte
+   `VZ2_WRITES_ENABLED=false`; verzovaný soubor má zápisy povolené.
    Nekopírujte v režimu, který automaticky maže ostatní soubory na serveru.
 4. `removed-files.txt` obsahuje pouze známé soubory vyřazené původní VZ1.
    Při jejím dříve dokončeném odstranění je znovu řešit nemusíte. Pokud některý
@@ -33,6 +39,7 @@ v nasazované verzi Gitu.
    Zdrojový strom sám nedokládá, že přenos na server skutečně proběhl úspěšně.
 6. Uložte manifest tohoto nasazení mimo veřejný web. Identifikuje soubory,
    jejich SHA-256, zdrojový commit i případné necommitnuté změny při sestavení.
+   Poznamenejte k němu ruční změnu prostředí alfy v `config.vz2.php`.
 
 ## Konfigurace a přihlašování
 

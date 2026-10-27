@@ -10,15 +10,19 @@ nasazované na web. Platí pro práci v celém projektu, nejen v `_pomocne/`.
   přílohy a vygenerované balíčky patří výhradně do `_pomocne/`.
 - `.git/`, `.gitignore` a `_pomocne/` se na web nekopírují.
 - Serverové `config.php` a `config.vz2.php` jsou schválené výjimky ze shody
-  Gitu a webu; při nasazení zachovej jejich cílové verze. Seznam a pravidla
-  udržuj v [vyjimky-nasazeni.md](vyjimky-nasazeni.md).
+  nastavení alfy a bety, nikoli důvod k ignorování Gitem. `config.vz2.php`
+  verzuj pro betu a zahrnuj do exportu; na alfě se před vypnutím maintenance
+  ručně mění `VZ2_ENVIRONMENT` na `alpha`. `config.php` export vynechává kvůli
+  přístupovým údajům; zachovej cílové připojení a URL. Seznam a pravidla udržuj
+  v [vyjimky-nasazeni.md](vyjimky-nasazeni.md).
 - Nové provozní soubory musí být automaticky zahrnuté do úplného balíčku.
   Nepoužívej ručně udržovaný seznam přípon, kořenových stránek ani adresářů.
 - Balíček vytvářej přes `_pomocne/tools/vz2_release.js`; výstup uvnitř
   repozitáře patří do `_pomocne/dist/`. Součástí výstupu je přesný manifest
   cest a hashů, zdrojový commit a informace o necommitnutých změnách.
-- Přístupové údaje a skutečné serverové konfigurace nevkládej do veřejného
-  balíčku. Při změně způsobu konfigurace nejprve připrav a ověř celý přechod;
+- Přístupové údaje nevkládej do veřejného balíčku. Verzovaný `config.vz2.php`
+  obsahuje nastavení prostředí a sdíleného úložiště bez hesel. Při změně
+  způsobu konfigurace nejprve připrav a ověř celý přechod;
   funkční nastavení serveru se nesmí přepsat nevyplněným vzorem.
 - Nahrání souborů není důkazem skutečně nasazené verze. Nepovažuj větev
   `alpha` nebo `beta` automaticky za stav hostingu; pro porovnání použij

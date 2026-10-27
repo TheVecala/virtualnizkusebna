@@ -35,14 +35,15 @@ assert.deepEqual(manifest.removed_files, removed);
 assert(manifest.files.some(f => f.path === 'php/login/connect.php'));
 assert(manifest.files.some(f => f.path === 'js/multitrack.js'));
 assert(manifest.files.some(f => f.path === 'maintenance.html'));
-for (const name of ['prehled.php', 'useky.php', 'config.theme.php']) {
+for (const name of ['prehled.php', 'useky.php', 'config.theme.php', 'config.vz2.php']) {
     assert(manifest.files.some(f => f.path === name), 'Complete release omits root application file: ' + name);
 }
-assert.deepEqual(manifest.preserved_server_files, ['config.php', 'config.vz2.php']);
+assert.deepEqual(manifest.preserved_server_files, ['config.php']);
+assert.equal(fs.readFileSync(path.join(out, '1_soubory/config.vz2.php'), 'utf8'), read('config.vz2.php'));
 assert(!manifest.files.some(f => f.path === 'vz2.php'));
 for (const file of manifest.files) {
     assert(!removed.includes(file.path));
-    assert(!['config.php', 'config.vz2.php', '.gitignore', 'AGENTS.md'].includes(file.path));
+    assert(!['config.php', '.gitignore', 'AGENTS.md'].includes(file.path));
     assert(!/^(user\/|_vz2_storage\/|_pomocne\/|\.codex-|tools\/)/.test(file.path));
     assert(fs.existsSync(path.join(out, '1_soubory', file.path)));
 }
@@ -60,7 +61,7 @@ const fixtureGit = (...args) => execFileSync('git', args, {cwd:fixture, windowsH
 for (const name of ['index.php','php/auth.php','php/loginbox4.php','php/ajax/vz2.php','js/multitrack.js',
     'nový přehled.php','novy-adresar/asset.webmanifest','.htaccess']) put(name, 'fixture: ' + name);
 put('config.php', 'PRIVATE TEST CONFIGURATION');
-put('config.vz2.php', 'PRIVATE TEST CONFIGURATION');
+put('config.vz2.php', "<?php define('VZ2_ENVIRONMENT', 'beta');\n");
 put('.gitignore', '/_pomocne/dist/\n');
 put('_pomocne/AGENTS.md', 'Development instructions, not web content.');
 put('_pomocne/tools/vz2_release.js', read('_pomocne/tools/vz2_release.js'));
@@ -75,9 +76,10 @@ const synthetic = path.join(temp, 'synthetic-bundle');
 build(synthetic);
 const syntheticFiles = JSON.parse(fs.readFileSync(path.join(synthetic,'manifest.json'))).files.map(file => file.path);
 assert.deepEqual(syntheticFiles.sort(), ['index.php','php/auth.php','php/loginbox4.php','php/ajax/vz2.php',
-    'js/multitrack.js','nový přehled.php','novy-adresar/asset.webmanifest','.htaccess'].sort());
+    'js/multitrack.js','config.vz2.php','nový přehled.php','novy-adresar/asset.webmanifest','.htaccess'].sort());
 assert(!fs.existsSync(path.join(synthetic, '1_soubory/config.php')));
-assert(!fs.existsSync(path.join(synthetic, '1_soubory/config.vz2.php')));
+assert.equal(fs.readFileSync(path.join(synthetic, '1_soubory/config.vz2.php'), 'utf8'),
+    fs.readFileSync(path.join(fixture, 'config.vz2.php'), 'utf8'));
 put('unreviewed.php', 'Unreviewed code');
 assert.throws(() => build(path.join(temp,'untracked-bundle')), /Review and track new runtime files/);
 fs.unlinkSync(path.join(fixture,'unreviewed.php'));

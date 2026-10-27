@@ -1,6 +1,7 @@
 <?php
-// Copy to config.vz2.php on the chosen environment AFTER applying migration 002.
-// Keep that private file out of Git. These values do not enable VZ2 by themselves.
+// Template for a NEW installation AFTER applying migration 002 and preparing storage.
+// The existing alpha/beta dataset uses the versioned ../config.vz2.php instead.
+// Do not replace a working installation's dataset with this placeholder.
 define('VZ2_ENABLED', true);
 define('VZ2_WRITES_ENABLED', false); // Enable after preflight and a verified backup.
 define('VZ2_ENVIRONMENT', 'beta');
