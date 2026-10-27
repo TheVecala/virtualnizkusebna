@@ -27,7 +27,7 @@ try {
         auth_check_csrf($_POST);
         $db->begin_transaction();
         try {
-            // Jeden společný zámek chrání počet adminů i unikátnost hesel
+            // Jeden společný zámek chrání účty a přechodná pravidla hesel
             // při současném ukládání z více oken nebo z alfa a beta verze.
             $guest = auth_settings($db, true);
             auth_refresh_session();
@@ -40,9 +40,9 @@ try {
             if ($action === 'member') {
                 $memberId = auth_save_member($db, $_POST, $guest);
                 if (vz2_enabled()) {
-                    $member = vz2_one($db, 'SELECT name,role,active FROM users WHERE id=?', [$memberId]);
+                    $member = vz2_one($db, 'SELECT username,name,role,active FROM users WHERE id=?', [$memberId]);
                     vz2_log($db, empty($_POST['id']) ? 'user.created' : 'user.updated', 'user', $memberId, $member['name'],
-                        'Role: ' . $member['role'] . '; aktivní: ' . $member['active'] . (!empty($_POST['password']) ? '; změna hesla' : ''));
+                        'Přihlášení: ' . $member['username'] . '; role: ' . $member['role'] . '; aktivní: ' . $member['active'] . (!empty($_POST['password']) ? '; změna hesla' : ''));
                 }
             } elseif ($action === 'guest') {
                 auth_save_guest($db, $_POST, $guest);
@@ -79,7 +79,7 @@ try {
 }
 if ($available) {
     try {
-        $users = $db->query('SELECT id, name, role, active FROM users ORDER BY active DESC, name, id')->fetch_all(MYSQLI_ASSOC);
+        $users = $db->query('SELECT id, username, name, role, active FROM users ORDER BY active DESC, name, id')->fetch_all(MYSQLI_ASSOC);
         $guest = auth_settings($db);
     } catch (Throwable $e) {
         $error = 'Administrace nyní není dostupná. Zkuste to později.';
@@ -88,22 +88,32 @@ if ($available) {
     }
 }
 
-function admin_member_form(array $user): void {
+function admin_member_form(array $user, bool $finalized): void {
     $isNew = empty($user['id']);
     $prefix = $isNew ? 'new' : 'user-' . (int) $user['id'];
+    // Preserve non-secret fields after a validation error, never submitted passwords.
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') === 'member'
+        && ($_POST['id'] ?? '') === ($isNew ? '' : (string) $user['id'])) {
+        foreach (['name', 'username', 'role'] as $field) {
+            if (isset($_POST[$field]) && is_string($_POST[$field])) $user[$field] = $_POST[$field];
+        }
+        $user['active'] = ($_POST['active'] ?? '') === '1' ? 1 : 0;
+    }
     ?>
     <form method="post" action="admin.php#uzivatele" class="admin-form">
       <input type="hidden" name="csrf" value="<?= auth_h(auth_csrf_token()) ?>">
       <input type="hidden" name="action" value="member">
       <input type="hidden" name="id" value="<?= $isNew ? '' : (int) $user['id'] ?>">
       <div class="form-fields">
-        <label for="<?= $prefix ?>-name">Jméno<input id="<?= $prefix ?>-name" name="name" maxlength="100" value="<?= auth_h($user['name']) ?>" required autocomplete="off"></label>
+        <label for="<?= $prefix ?>-name">Zobrazované jméno<input id="<?= $prefix ?>-name" name="name" maxlength="100" value="<?= auth_h($user['name']) ?>" required autocomplete="off"></label>
+        <label for="<?= $prefix ?>-username">Uživatelské jméno<input id="<?= $prefix ?>-username" name="username" minlength="3" maxlength="32" value="<?= auth_h($user['username'] ?? '') ?>" required autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="<?= $prefix ?>-username-hint"></label>
         <label for="<?= $prefix ?>-role">Role<select id="<?= $prefix ?>-role" name="role"><option value="muzikant" <?= $user['role'] === 'muzikant' ? 'selected' : '' ?>>muzikant</option><option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>admin</option></select></label>
         <label for="<?= $prefix ?>-password">Nové heslo<input id="<?= $prefix ?>-password" type="password" name="password" minlength="3" autocomplete="new-password" <?= $isNew ? 'required' : '' ?>></label>
         <label for="<?= $prefix ?>-confirmation">Potvrzení hesla<input id="<?= $prefix ?>-confirmation" type="password" name="password_confirmation" minlength="3" autocomplete="new-password" <?= $isNew ? 'required' : '' ?>></label>
       </div>
       <label class="check-label"><input type="checkbox" name="active" value="1" <?= (int) $user['active'] ? 'checked' : '' ?>> Aktivní účet</label>
-      <p class="form-hint">Heslo alespoň 3 znaky, nejvýše 72 bajtů (diakritika zabere více).<?= $isNew ? '' : ' Prázdné ponechá současné heslo. Při opětovné aktivaci zadejte heslo znovu pro kontrolu shody s jinými přístupy.' ?></p>
+      <p class="form-hint" id="<?= $prefix ?>-username-hint">Uživatelské jméno: 3–32 znaků bez diakritiky a mezer, začíná písmenem nebo číslicí. Povolena je také tečka, pomlčka a podtržítko. Velikost písmen se nerozlišuje; jméno host je vyhrazené pro hosty.</p>
+      <p class="form-hint">Heslo alespoň 3 znaky, nejvýše 72 bajtů (diakritika zabere více).<?= $isNew ? '' : ' Prázdné ponechá současné heslo.' ?><?= !$isNew && !$finalized ? ' Při opětovné aktivaci zadejte heslo znovu pro kontrolu shody s jinými přístupy.' : '' ?></p>
       <button type="submit"><?= $isNew ? 'Přidat člena' : 'Uložit změny' ?></button>
     </form>
     <?php
@@ -140,21 +150,22 @@ function admin_member_form(array $user): void {
           <?php foreach ($users as $user): ?>
           <details class="member-row" <?= $error && ($_POST['action'] ?? '') === 'member' && ($_POST['id'] ?? '') === (string) $user['id'] ? 'open' : '' ?>>
             <summary><span class="member-name"><?= auth_h($user['name']) ?></span><span class="member-role"><?= auth_h($user['role']) ?></span><span class="member-status"><?= (int) $user['active'] ? 'aktivní' : 'neaktivní' ?></span><span class="edit-label">Upravit</span></summary>
-            <?php admin_member_form($user); ?>
+            <?php admin_member_form($user, auth_username_login_finalized($guest)); ?>
           </details>
           <?php endforeach; ?>
         </div>
         <details class="add-member" <?= $error && ($_POST['action'] ?? '') === 'member' && ($_POST['id'] ?? '') === '' ? 'open' : '' ?>>
           <summary>+ Přidat člena</summary>
-          <?php admin_member_form(['id' => null, 'name' => '', 'role' => 'muzikant', 'active' => 1]); ?>
+          <?php admin_member_form(['id' => null, 'username' => '', 'name' => '', 'role' => 'muzikant', 'active' => 1], auth_username_login_finalized($guest)); ?>
         </details>
         <div class="guest-access">
           <h3>Přístup pro hosty</h3>
+          <p>Hosté se přihlašují uživatelským jménem <strong>host</strong> a společným heslem.</p>
           <form method="post" action="admin.php#uzivatele" class="admin-form">
             <input type="hidden" name="csrf" value="<?= auth_h(auth_csrf_token()) ?>">
             <input type="hidden" name="action" value="guest">
             <label class="check-label"><input type="checkbox" name="guest_enabled" value="1" <?= (int) $guest['guest_enabled'] ? 'checked' : '' ?>> Povolit hostovský přístup</label>
-            <p class="form-hint">Heslo <?= $guest['guest_password_hash'] ? 'je nastavené.' : 'zatím není nastavené.' ?> Při zapnutí zadejte heslo a potvrzení pro kontrolu shody s členy.</p>
+            <p class="form-hint">Heslo <?= $guest['guest_password_hash'] ? 'je nastavené.' : 'zatím není nastavené.' ?><?= !auth_username_login_finalized($guest) ? ' Při zapnutí zadejte heslo a potvrzení pro kontrolu shody s členy.' : ' Prázdné ponechá současné heslo.' ?></p>
             <details <?= $error && ($_POST['action'] ?? '') === 'guest' ? 'open' : '' ?>><summary>Změnit / zadat heslo</summary>
               <div class="form-fields">
                 <label>Nové heslo<input type="password" name="password" minlength="3" autocomplete="new-password"></label>

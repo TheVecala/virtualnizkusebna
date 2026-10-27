@@ -45,7 +45,7 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
         const old = {}; await call(old, 'old-session.php');
         check((await call(old, 'php/ajax/vz2.php')).status === 401 && (await call(old, 'admin.php')).status === 403,
             'alpha invalidates legacy shared-password admin session');
-        const login = await call(admin, 'index.php', { submit_single: '1', heslo: 'admin-test' }, true);
+        const login = await call(admin, 'index.php', { submit_single: '1', username: 'admin', heslo: 'admin-test' }, true);
         assert.equal(login.status, 302, login.text);
         const page = await call(admin, 'index.php?v=1');
         const alphaUi = JSON.parse(page.text.match(/window.VZ2=(.*?);/)[1]); admin.csrf = alphaUi.csrf;
@@ -62,6 +62,7 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
         check(streamed.status === 200 && streamed.buffer.equals(fs.readFileSync(path.join(media, file.relative_path))),
             'alpha serves identical bytes from shared physical storage');
         const preflight = (await call(admin, 'tools/vz2_preflight.php')).json();
+        assert.equal(preflight.ok, true, JSON.stringify(preflight));
         check(preflight.ok && preflight.details.environment === 'alpha' && !preflight.details.writes_enabled
             && preflight.details.available_files.count > 0 && preflight.details.site_url === alphaBase.slice(0, -1),
             'alpha read-only preflight validates schema, files and environment URL');
@@ -83,7 +84,7 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
             && !accountsPage.text.includes('Úložiště kapely není dostupné') && !accountsPage.text.includes('Adresářový strom'),
             'VZ2-only administration reports VZ2 without a legacy user directory');
         const accountFields = { action: 'member', csrf: accountsPage.text.match(/name="csrf" value="([a-f0-9]+)"/)[1],
-            id: '3', name: 'Bob Nový', role: 'muzikant', active: '1', password: '', password_confirmation: '' };
+            id: '3', username: 'bob', name: 'Bob Nový', role: 'muzikant', active: '1', password: '', password_confirmation: '' };
         check((await call(admin, 'admin.php', accountFields, true)).status === 403, 'read-only site rejects account mutations too');
         // Real switch: stop beta first, verify both read-only, then enable alpha.
         configure(web, betaConfig.replace('<?php', "<?php define('VZ2_ONLY',true);"), false);
@@ -145,6 +146,7 @@ module.exports = async ({ base, clients, request, db, check, temp, web, media, p
                     });
                     await page.route('https://**', r => r.abort());
                     await page.goto(base);
+                    await page.locator('[name=username]').fill(who === 'guest' ? 'host' : who);
                     await page.locator('[name=heslo]').fill(who + '-test');
                     await page.locator('[name=submit_single]').click();
                     await page.locator('#collections button').first().waitFor({ state: 'attached' });

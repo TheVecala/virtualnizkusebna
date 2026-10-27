@@ -39,8 +39,8 @@ $command=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
 if($command['action']==='init'){
  $db->query('CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');$db->select_db('${database}');
  $db->query("SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE'");
- foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql','006_vz2_rehearsal_starts.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
- foreach([['Admin','admin','admin-test'],['Alice','muzikant','alice-test'],['Bob','muzikant','bob-test']] as $u){$s=$db->prepare('INSERT INTO users(name,role,password_hash) VALUES (?,?,?)');$s->execute([$u[0],$u[1],password_hash($u[2],PASSWORD_DEFAULT)]);}
+ foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql','006_vz2_rehearsal_starts.sql','007_login_usernames.sql','008_login_usernames_finalize.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
+ foreach([['Admin','admin','admin-test'],['Alice','muzikant','alice-test'],['Bob','muzikant','bob-test']] as $u){$s=$db->prepare('INSERT INTO users(username,name,role,password_hash) VALUES (?,?,?,?)');$s->execute([strtolower($u[0]),$u[0],$u[1],password_hash($u[2],PASSWORD_DEFAULT)]);}
  $s=$db->prepare('UPDATE auth_settings SET guest_enabled=1,guest_password_hash=? WHERE id=1');$s->execute([password_hash('guest-test',PASSWORD_DEFAULT)]);
  echo json_encode(['version'=>$db->server_info,'mode'=>$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0]]);
 }elseif($command['action']==='drop'){$db->query('DROP DATABASE ${database}');echo '{}';}
@@ -99,7 +99,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
     async function login(name) {
         const c = clients[name];
         await request(c, 'index.php?v=2');
-        const r = await request(c, 'index.php?v=2', { submit_single: '1', heslo: name + '-test' }, { form: true });
+        const r = await request(c, 'index.php?v=2', { submit_single: '1', username: name === 'guest' ? 'host' : name, heslo: name + '-test' }, { form: true });
         assert.equal(r.status, 302, r.text);
         assert.match(r.headers.get('set-cookie') || '', /; HttpOnly/i, 'login cookie must be HttpOnly');
         assert.match(r.headers.get('set-cookie') || '', /; SameSite=Lax/i, 'login cookie must use SameSite=Lax');
@@ -373,7 +373,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         check(logResponse.status === 200 && !logResponse.text.includes('password_hash') && (await request(clients.alice, 'php/ajax/vz2.php?action=log')).status === 403, 'activity log restricted and sanitized');
         let adminPage = await request(clients.admin, 'admin.php');
         let adminToken = adminPage.text.match(/name="csrf" value="([a-f0-9]+)"/)[1];
-        let account = await request(clients.admin, 'admin.php', {action:'member',csrf:adminToken,id:'3',name:'Bob Nový',role:'muzikant',active:'1',password:'',password_confirmation:''}, {form:true});
+        let account = await request(clients.admin, 'admin.php', {action:'member',csrf:adminToken,id:'3',username:'bob',name:'Bob Nový',role:'muzikant',active:'1',password:'',password_confirmation:''}, {form:true});
         check(account.status===303 && db("SELECT * FROM vz2_activity_log WHERE target_type='user' AND target_id=3").length===1, 'account administration and audit commit together');
         await require('./vz2_timestamps.integration')({ request, clients, db, good, upload, check, login });
         await require('./vz2_history.integration')({ base, clients, request, good, upload, wav, db, check, browser: ['1', 'history'].includes(process.env.VZ2_TEST_BROWSER) });

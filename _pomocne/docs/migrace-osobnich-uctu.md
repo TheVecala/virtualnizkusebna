@@ -1,5 +1,10 @@
 # Osobní účty – nasazení na betu a poté alfu
 
+> Historický postup zavedení osobních účtů s přihlášením pouze heslem.
+> Pro následný přechod na jméno a heslo použijte
+> [Přihlašování jménem](prihlasovani-jmenem.md); popis starého loginu,
+> bootstrapu a jedinečnosti hesel níže se na dokončený nový přechod nevztahuje.
+
 Checkout obsahuje **cílový nový login**. Nenahrávat všechny soubory najednou před
 vytvořením prvního admina. Společnou databázi nemění žádná PHP stránka automaticky.
 

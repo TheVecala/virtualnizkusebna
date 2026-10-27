@@ -43,6 +43,11 @@ function auth_settings(mysqli $db, bool $lock = false): array {
     return $row;
 }
 
+function auth_fingerprint(string $hash, int $generation): string {
+    // Generation zero preserves sessions issued before migration 007.
+    return hash('sha256', $hash . ($generation === 0 ? '' : ':' . $generation));
+}
+
 // V endpointech načítajících config.php se zde promítne deaktivace,
 // změna role/hesla i vypnutí hosta, aniž by se přepisovaly jeho kontroly práv.
 function auth_refresh_session(): void {
@@ -59,17 +64,17 @@ function auth_refresh_session(): void {
         $guest = auth_settings($db);
         $hash = $guest['guest_password_hash'];
         if (!(int) $guest['guest_enabled'] || !$hash
-            || !hash_equals($_SESSION['auth_fingerprint'], hash('sha256', $hash))) {
+            || !hash_equals($_SESSION['auth_fingerprint'], auth_fingerprint($hash, (int) $guest['guest_auth_generation']))) {
             auth_forget_identity();
         }
         return;
     }
     $id = (int) $_SESSION['user_id'];
-    $stmt = $db->prepare('SELECT id, name, role, password_hash FROM users WHERE id = ? AND active = 1');
+    $stmt = $db->prepare('SELECT id, name, role, password_hash, auth_generation FROM users WHERE id = ? AND active = 1');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
-    if (!$user || !hash_equals($_SESSION['auth_fingerprint'], hash('sha256', $user['password_hash']))) {
+    if (!$user || !hash_equals($_SESSION['auth_fingerprint'], auth_fingerprint($user['password_hash'], (int) $user['auth_generation']))) {
         auth_forget_identity();
         return;
     }
@@ -77,32 +82,93 @@ function auth_refresh_session(): void {
     $_SESSION['role'] = $user['role'];
 }
 
-function auth_login(string $password): bool {
-    if ($password === '' || strlen($password) > 72 || strpos($password, "\0") !== false) {
-        return false;
+function auth_normalize_username(string $username): string {
+    return strtolower(trim($username));
+}
+
+function auth_valid_username(string $username): bool {
+    return preg_match('/\A[a-z0-9][a-z0-9._-]{2,31}\z/', $username) === 1;
+}
+
+// Migration 008 is run only after every installation uses username + password.
+function auth_username_login_finalized(array $settings): bool {
+    return (int) ($settings['username_login_finalized'] ?? 0) === 1;
+}
+
+final class AuthLoginRateLimited extends RuntimeException {
+    public int $retryAfter;
+
+    public function __construct(int $retryAfter) {
+        $this->retryAfter = max(1, $retryAfter);
+        parent::__construct('Příliš mnoho neúspěšných pokusů. Zkuste to za chvíli znovu.');
     }
+}
+
+// Shared by both installations and independent of cookies and submitted usernames.
+// Only the server's peer address is trusted; forwarding headers are user input.
+function auth_login_source_key(): string {
+    $address = @inet_pton($_SERVER['REMOTE_ADDR'] ?? '');
+    return hash('sha256', "vz2-login\0" . ($address === false ? 'unknown' : $address));
+}
+
+// The caller holds the auth_settings row lock, also used by account changes.
+function auth_check_login_limit(mysqli $db, string $sourceKey): void {
+    $db->query('DELETE FROM auth_login_attempts WHERE expires_at <= UTC_TIMESTAMP()');
+    $stmt = $db->prepare('SELECT failures, TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), expires_at) AS retry_after
+        FROM auth_login_attempts WHERE source_key = ?');
+    $stmt->bind_param('s', $sourceKey);
+    $stmt->execute();
+    $attempts = $stmt->get_result()->fetch_assoc();
+    if ($attempts && (int) $attempts['failures'] >= 50) {
+        throw new AuthLoginRateLimited((int) $attempts['retry_after']);
+    }
+}
+
+function auth_record_login_failure(mysqli $db, string $sourceKey): void {
+    $stmt = $db->prepare('INSERT INTO auth_login_attempts (source_key, failures, expires_at)
+        VALUES (?, 1, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 15 MINUTE))
+        ON DUPLICATE KEY UPDATE failures = failures + 1');
+    $stmt->bind_param('s', $sourceKey);
+    $stmt->execute();
+}
+
+function auth_login(string $username, string $password): bool {
+    $username = auth_normalize_username($username);
+    $validInput = auth_valid_username($username) && $password !== ''
+        && strlen($password) <= 72 && strpos($password, "\0") === false;
     $db = auth_db();
     $db->begin_transaction();
     try {
         // Stejný zámek používají změny účtů; přihlášení neobnoví právě zrušený přístup.
         $guest = auth_settings($db, true);
-        $users = $db->query('SELECT id, name, role, password_hash FROM users WHERE active = 1');
+        $sourceKey = auth_login_source_key();
+        auth_check_login_limit($db, $sourceKey);
         $identity = null;
-        foreach ($users as $user) {
-            if (password_verify($password, $user['password_hash'])) {
-                $identity = $user;
-                break;
+        if ($validInput) {
+            if ($username === 'host') {
+                if ((int) $guest['guest_enabled'] === 1 && $guest['guest_password_hash']) {
+                    $identity = ['id' => null, 'name' => null, 'role' => 'host',
+                        'password_hash' => $guest['guest_password_hash'], 'auth_generation' => $guest['guest_auth_generation']];
+                }
+            } else {
+                $stmt = $db->prepare('SELECT id, name, role, password_hash, auth_generation FROM users WHERE username = ? AND active = 1');
+                $stmt->bind_param('s', $username);
+                $stmt->execute();
+                $identity = $stmt->get_result()->fetch_assoc();
+            }
+            // Unknown/inactive accounts still perform a password verification.
+            $hash = $identity['password_hash'] ?? '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
+            if (!password_verify($password, $hash)) {
+                $identity = null;
             }
         }
-        if ($identity !== null) {
+        if ($identity !== null && $identity['id'] !== null) {
             $id = (int) $identity['id'];
             $stmt = $db->prepare('UPDATE users SET last_login = NOW() WHERE id = ?');
             $stmt->bind_param('i', $id);
             $stmt->execute();
-        } elseif ((int) $guest['guest_enabled'] === 1 && $guest['guest_password_hash']
-            && password_verify($password, $guest['guest_password_hash'])) {
-            $identity = ['id' => null, 'name' => null, 'role' => 'host',
-                'password_hash' => $guest['guest_password_hash']];
+        } elseif ($identity === null) {
+            auth_record_login_failure($db, $sourceKey);
         }
         $db->commit();
     } catch (Throwable $e) {
@@ -119,7 +185,7 @@ function auth_login(string $password): bool {
     $_SESSION['user_id'] = $identity['id'] === null ? null : (int) $identity['id'];
     $_SESSION['user_name'] = $identity['name'];
     $_SESSION['role'] = $identity['role'];
-    $_SESSION['auth_fingerprint'] = hash('sha256', $identity['password_hash']);
+    $_SESSION['auth_fingerprint'] = auth_fingerprint($identity['password_hash'], (int) $identity['auth_generation']);
     unset($_SESSION['auth_csrf']);
     return true;
 }
@@ -158,6 +224,8 @@ function auth_validate_password(string $password, string $confirmation): void {
 }
 
 function auth_check_duplicate(mysqli $db, string $password, array $guest, int $exceptId = 0, bool $forGuest = false): void {
+    // Keep the old uniqueness rule until the password-only installation is retired.
+    if (auth_username_login_finalized($guest)) return;
     $users = $db->query('SELECT id, password_hash FROM users WHERE active = 1');
     foreach ($users as $user) {
         if ((int) $user['id'] !== $exceptId && password_verify($password, $user['password_hash'])) {
@@ -181,6 +249,19 @@ function auth_save_member(mysqli $db, array $input, array $guest): int {
         throw new InvalidArgumentException('Neplatný člen.');
     }
     $id = (int) $idText;
+    $username = auth_normalize_username(auth_input($input, 'username'));
+    if (!auth_valid_username($username)) {
+        throw new InvalidArgumentException('Uživatelské jméno musí mít 3 až 32 znaků, začínat písmenem nebo číslicí a obsahovat jen písmena bez diakritiky, číslice, tečku, pomlčku nebo podtržítko.');
+    }
+    if ($username === 'host') {
+        throw new InvalidArgumentException('Uživatelské jméno host je vyhrazené pro hostovský přístup.');
+    }
+    $stmt = $db->prepare('SELECT id FROM users WHERE username = ? AND id <> ?');
+    $stmt->bind_param('si', $username, $id);
+    $stmt->execute();
+    if ($stmt->get_result()->fetch_assoc()) {
+        throw new InvalidArgumentException('Toto uživatelské jméno již používá jiný účet.');
+    }
     $name = trim(auth_input($input, 'name'));
     $nameLength = preg_match_all('/./us', $name);
     if ($name === '' || $nameLength === false || $nameLength > 100) {
@@ -207,7 +288,7 @@ function auth_save_member(mysqli $db, array $input, array $guest): int {
     }
     $password = auth_input($input, 'password');
     $confirmation = auth_input($input, 'password_confirmation');
-    if ($old && !(int) $old['active'] && $active && $password === '') {
+    if (!auth_username_login_finalized($guest) && $old && !(int) $old['active'] && $active && $password === '') {
         throw new InvalidArgumentException('Při aktivaci zadejte heslo a jeho potvrzení, abychom ověřili, že jej nepoužívá jiný přístup.');
     }
     $hash = $old['password_hash'] ?? '';
@@ -217,13 +298,19 @@ function auth_save_member(mysqli $db, array $input, array $guest): int {
         $hash = password_hash($password, PASSWORD_DEFAULT);
     }
     if ($id) {
-        $stmt = $db->prepare('UPDATE users SET name = ?, role = ?, active = ?, password_hash = ? WHERE id = ?');
-        $stmt->bind_param('ssisi', $name, $role, $active, $hash, $id);
+        $generation = (int) $old['auth_generation'] + ((int) $old['active'] !== $active ? 1 : 0);
+        $stmt = $db->prepare('UPDATE users SET username = ?, name = ?, role = ?, active = ?, password_hash = ?, auth_generation = ? WHERE id = ?');
+        $stmt->bind_param('sssisii', $username, $name, $role, $active, $hash, $generation, $id);
     } else {
-        $stmt = $db->prepare('INSERT INTO users (name, role, active, password_hash) VALUES (?, ?, ?, ?)');
-        $stmt->bind_param('ssis', $name, $role, $active, $hash);
+        $stmt = $db->prepare('INSERT INTO users (username, name, role, active, password_hash) VALUES (?, ?, ?, ?, ?)');
+        $stmt->bind_param('sssis', $username, $name, $role, $active, $hash);
     }
-    $stmt->execute();
+    try {
+        $stmt->execute();
+    } catch (mysqli_sql_exception $e) {
+        if ($e->getCode() !== 1062) throw $e;
+        throw new InvalidArgumentException('Toto uživatelské jméno již používá jiný účet.');
+    }
     return $id ?: (int) $db->insert_id;
 }
 
@@ -248,16 +335,17 @@ function auth_save_guest(mysqli $db, array $input, array $guest): void {
     $password = auth_input($input, 'password');
     $confirmation = auth_input($input, 'password_confirmation');
     $hash = $guest['guest_password_hash'];
-    if ($enabled && (!(int) $guest['guest_enabled'] || !$hash) && $password === '') {
-        throw new InvalidArgumentException('Při zapnutí hosta zadejte heslo a jeho potvrzení pro kontrolu shody s ostatními přístupy.');
+    if ($enabled && (!$hash || (!auth_username_login_finalized($guest) && !(int) $guest['guest_enabled'])) && $password === '') {
+        throw new InvalidArgumentException('Při zapnutí hosta zadejte heslo a jeho potvrzení.');
     }
     if ($password !== '' || $confirmation !== '') {
         auth_validate_password($password, $confirmation);
         auth_check_duplicate($db, $password, $guest, 0, true);
         $hash = password_hash($password, PASSWORD_DEFAULT);
     }
-    $stmt = $db->prepare('UPDATE auth_settings SET guest_enabled = ?, guest_password_hash = ? WHERE id = 1');
-    $stmt->bind_param('is', $enabled, $hash);
+    $generation = (int) $guest['guest_auth_generation'] + ((int) $guest['guest_enabled'] !== $enabled ? 1 : 0);
+    $stmt = $db->prepare('UPDATE auth_settings SET guest_enabled = ?, guest_password_hash = ?, guest_auth_generation = ? WHERE id = 1');
+    $stmt->bind_param('isi', $enabled, $hash, $generation);
     $stmt->execute();
 }
 
