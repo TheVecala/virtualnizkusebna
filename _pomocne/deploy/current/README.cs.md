@@ -12,8 +12,9 @@ kořenových stránek, podpory témat, PHP, JavaScriptu, CSS a statických soubo
 `.git/`, `.gitignore`, `_pomocne/`, manifest, tento návod a removed-files.txt
 nepatří do veřejného webového adresáře. Serverové `config.php` a `config.vz2.php`
 se tímto balíčkem nenahrazují; zachovejte jejich nastavení a přístupové údaje.
-Konfigurace není totéž jako aplikační soubor `config.theme.php`, který se nahrává.
-Případnou vlastní hodnotu SITE_THEME v něm zachovejte podle požadovaného vzhledu.
+Seznam výjimek je ve zdrojovém repozitáři v `_pomocne/vyjimky-nasazeni.md`.
+`config.theme.php` mezi výjimky nepatří; nahrává se ve stejné podobě jako
+v nasazované verzi Gitu.
 
 ## Postup
 

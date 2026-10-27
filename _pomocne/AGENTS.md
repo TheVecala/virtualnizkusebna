@@ -9,6 +9,9 @@ nasazované na web. Platí pro práci v celém projektu, nejen v `_pomocne/`.
   Vývojové podklady, dokumentace, testy, SQL migrace, nástroje, náhledy,
   přílohy a vygenerované balíčky patří výhradně do `_pomocne/`.
 - `.git/`, `.gitignore` a `_pomocne/` se na web nekopírují.
+- Serverové `config.php` a `config.vz2.php` jsou schválené výjimky ze shody
+  Gitu a webu; při nasazení zachovej jejich cílové verze. Seznam a pravidla
+  udržuj v [vyjimky-nasazeni.md](vyjimky-nasazeni.md).
 - Nové provozní soubory musí být automaticky zahrnuté do úplného balíčku.
   Nepoužívej ručně udržovaný seznam přípon, kořenových stránek ani adresářů.
 - Balíček vytvářej přes `_pomocne/tools/vz2_release.js`; výstup uvnitř
