@@ -232,7 +232,7 @@ function auth_vz2_entry_guard(): void {
     if (PHP_SAPI === 'cli') return;
     $root = realpath(dirname(__DIR__));
     $script = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
-    $allowed = ['index.php','admin.php','help.php','prehled.php','php/ajax/vz2.php',
+    $allowed = ['index.php','admin.php','help.php','prehled.php','useky.php','php/ajax/vz2.php',
         'php/ajax/vz2_files.php','php/ajax/vz2_timestamps.php','php/ajax/vz2_content.php',
         'php/ajax/vz2_peaks.php','php/ajax/vz2_history.php','php/ajax/vz2_overview.php','tools/vz2_preflight.php',
         'tools/vz2_storage_probe.php'];
