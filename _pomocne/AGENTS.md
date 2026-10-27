@@ -1,4 +1,25 @@
-# Pravidla práce v repozitáři
+# Pravidla práce v celém repozitáři
+
+Pokyny jsou uložené v `_pomocne/`, aby mimo tuto složku zůstávaly jen soubory
+nasazované na web. Platí pro práci v celém projektu, nejen v `_pomocne/`.
+
+## Struktura a nasazování
+
+- Kořen repozitáře a jeho provozní podsložky mají odpovídat souborům na webu.
+  Vývojové podklady, dokumentace, testy, SQL migrace, nástroje, náhledy,
+  přílohy a vygenerované balíčky patří výhradně do `_pomocne/`.
+- `.git/`, `.gitignore` a `_pomocne/` se na web nekopírují.
+- Nové provozní soubory musí být automaticky zahrnuté do úplného balíčku.
+  Nepoužívej ručně udržovaný seznam přípon, kořenových stránek ani adresářů.
+- Balíček vytvářej přes `_pomocne/tools/vz2_release.js`; výstup uvnitř
+  repozitáře patří do `_pomocne/dist/`. Součástí výstupu je přesný manifest
+  cest a hashů, zdrojový commit a informace o necommitnutých změnách.
+- Přístupové údaje a skutečné serverové konfigurace nevkládej do veřejného
+  balíčku. Při změně způsobu konfigurace nejprve připrav a ověř celý přechod;
+  funkční nastavení serveru se nesmí přepsat nevyplněným vzorem.
+- Nahrání souborů není důkazem skutečně nasazené verze. Nepovažuj větev
+  `alpha` nebo `beta` automaticky za stav hostingu; pro porovnání použij
+  doložený commit/manifest nasazení.
 
 ## Aktuální commit před začátkem práce
 
