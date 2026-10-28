@@ -108,9 +108,10 @@
             }
         };
     }
-    async function api(fields, action = 'catalog') {
+    async function api(fields, action = 'catalog', signal) {
         const response = await fetch('php/ajax/vz2.php' + (fields ? '' : '?action=' + action), {
             method: fields ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
+            signal,
             headers: fields ? { 'Content-Type': 'application/json', 'X-CSRF-Token': cfg.csrf } : {},
             body: fields ? JSON.stringify(fields) : undefined
         });
@@ -340,10 +341,17 @@
     }
     function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
-        const audio = node('audio'); audio.preload = 'none'; audio.src = file.url;
-        audio.dataset.source = 'web';
+        const audio = node('audio'); audio.preload = 'none';
+        const sourceStatus = node('small', 'Ověřuji místní kopii…', 'recording-audio-source vz2-attribution');
+        parent.append(sourceStatus);
+        const updateSource = () => { sourceStatus.textContent = audio.dataset.source === 'offline' ? 'Přehrávání ze zařízení' : 'Přehrávání ze sítě'; };
+        const useLocal = blob => {
+            blobs.push(window.Vz2Offline.useBlob(audio, blob, text => message(text, true)));
+            updateSource();
+        };
         const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
         const cache = recordingIconButton('Uložit offline', 'wifi-off', async () => {
+            await sourceReady;
             const current = await idbKeyval.get(cacheKey, store);
             if (current instanceof Blob) {
                 if (!confirm('Odebrat offline kopii pouze z tohoto prohlížeče?')) return;
@@ -356,6 +364,7 @@
                     });
                     setCacheLabel('Ukládám offline…');
                     await idbKeyval.set(cacheKey, file.original_name ? new File([blob], file.original_name, { type: blob.type }) : blob, store);
+                    if (audio.isConnected) useLocal(blob);
                     setCacheLabel('Odebrat offline kopii', true);
                 } catch (error) { setCacheLabel('Uložit offline'); throw error; }
             }
@@ -371,9 +380,15 @@
         };
         cache.setAttribute('aria-pressed', 'false');
         actions.append(cache);
-        idbKeyval.get(cacheKey, store).then(blob => {
-            if (blob instanceof Blob && audio.isConnected && !cache.disabled) { const url = URL.createObjectURL(blob); blobs.push(url); audio.src = url; audio.dataset.source = 'offline'; setCacheLabel('Odebrat offline kopii', true); }
-        }).catch(() => { setCacheLabel('Offline úložiště není dostupné'); cache.disabled = true; });
+        const sourceReady = idbKeyval.get(cacheKey, store).then(blob => {
+            if (!audio.isConnected) return;
+            if (blob instanceof Blob) { useLocal(blob); setCacheLabel('Odebrat offline kopii', true); }
+            else { audio.src = file.url; audio.dataset.source = 'web'; updateSource(); }
+        }).catch(() => {
+            if (!audio.isConnected) return;
+            audio.src = file.url; audio.dataset.source = 'web'; updateSource();
+            setCacheLabel('Offline úložiště není dostupné'); cache.disabled = true;
+        });
         const seek = () => {
             const seconds = Number(qs.get('time_ms') || 0) / 1000;
             if (String(recording.id) === qs.get('recording_id') && Number.isFinite(seconds)) audio.currentTime = Math.min(audio.duration || 0, Math.max(0, seconds));
@@ -383,6 +398,7 @@
         return {
             audio,
             cache,
+            isLoading: () => audio.dataset.sourceSwitching === 'true',
             canPlay: () => audio.isConnected && audio.readyState >= 1 && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
             durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
@@ -1077,12 +1093,26 @@
         try { await api({ action: 'logout' }); window.MultitrackApp?.destroy(); window.Vz2Player.closeLooper(); location.href = 'index.php?v=2'; }
         catch (e) { $('logout-error').textContent = e.message; $('logout-error').hidden = false; confirmButton.disabled = false; }
     });
+    let connectionProbe;
+    const connectionStatus = text => { $('connection-status').textContent = text; $('connection-status').hidden = !text; };
+    window.addEventListener('offline', () => {
+        connectionProbe?.abort(); connectionProbe = null;
+        connectionStatus('Offline · uložené nahrávky můžete dál přehrávat.');
+    });
     window.addEventListener('online', async () => {
-        window.MultitrackApp?.destroy();
-        window.Vz2Player.closeLooper();
-        document.querySelectorAll('#content audio').forEach(a => { a.pause(); a.removeAttribute('src'); a.load(); });
-        try { await refresh(); await window.MultitrackApp?.refreshList(); }
-        catch (e) { $('content').replaceChildren(node('p', 'Před přehráním obnovte přihlášení a seznam.')); message(e.message, true); }
+        connectionProbe?.abort();
+        const probe = new AbortController(); connectionProbe = probe;
+        const timeout = setTimeout(() => probe.abort(), 8000);
+        connectionStatus('Ověřuji připojení k serveru…');
+        try {
+            // Reconnecting must not rebuild the catalog or any mounted player.
+            await api(undefined, 'catalog', probe.signal);
+            if (connectionProbe === probe) connectionStatus('');
+        } catch (e) {
+            if (connectionProbe === probe) connectionStatus(e.status === 401 || e.status === 403
+                ? 'Přihlášení je potřeba obnovit. Načtené nahrávky můžete dál přehrávat.'
+                : 'Server není dostupný. Uložené nahrávky můžete dál přehrávat.');
+        } finally { clearTimeout(timeout); if (connectionProbe === probe) connectionProbe = null; }
     });
     function seekMixerLink() {
         const current = window.MultitrackApp.getState();

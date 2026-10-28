@@ -87,6 +87,7 @@ summary::-webkit-details-marker { display: none; }
 #app-shell { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; width: 100%; max-width: none; margin: 0; padding: 0; overflow: hidden; }
 #message { flex: 0 0 auto; margin: 0; min-height: 0; max-height: 18vh; overflow: auto; padding: 4px 12px; }
 #message:empty { display: none; }
+#connection-status { flex: 0 0 auto; margin: 0; padding: 4px 12px; }
 #app-shell > .notice { margin: 0; padding: 3px 12px; }
 .layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 0; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 #sidebar-slot, #workspace { min-height: 0; min-width: 0; overflow: hidden; }

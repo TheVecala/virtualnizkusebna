@@ -149,6 +149,7 @@
     setInterval(async () => {
         if (!loop || loopBusy) return;
         const current = loop;
+        if (current.adapter.isLoading?.()) return;
         if (!current.adapter.canPlay()) { api.stopLoop(); return; }
         if (current.adapter.currentTimeMs() >= current.end) {
             loopBusy = true;
