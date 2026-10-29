@@ -35,6 +35,7 @@ function vz2_catalog():array {
         $states=array_column($r['files'],'state');
         $r['audio_state']=$states && count(array_unique($states))===1?$states[0]:'partial';
         $r['timestamps']=vz2_timestamp_entries($db,$r);
+        $r['annotation_version']=1;$r['annotations']=vz2_timestamp_annotations($r,$r['timestamps']);
     }unset($r);
     $attachments=vz2_rows($db,'SELECT a.*,u.name author FROM vz2_attachments a JOIN users u ON u.id=a.created_by ORDER BY a.id');
     foreach($attachments as &$a){$a=array_merge($a,vz2_file_public($a,'attachment'));unset($a['relative_path']);

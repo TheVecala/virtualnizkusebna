@@ -38,7 +38,7 @@ názvem.
 
 ## Záměrné hranice první verze
 
-Výběr skladby ani výstřižku se nepřidává do uploadu nebo Looperu. Server audio
+Od migrace 009 lze skladbu vybrat přímo v editoru pokusu v Looperu, Mixéru nebo katalogu; dokončený pokus se zařadí automaticky. Viz [společná vrstva timestampů](timestamp-layer.md). Výběr výstřižku zůstává v Historii. Server audio
 nestříhá a export neposkytuje Edison/CSV automatizaci. Obecný TXT export značek
 zobrazuje čas jako `mm:ss`, stejně jako TXT export úseků. Neúplné značky
 export úseků vypisuje odděleně. Export pro mp3splt zachovává přesné časy.

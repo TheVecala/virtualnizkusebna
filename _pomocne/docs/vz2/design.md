@@ -1,5 +1,8 @@
 # Virtuální zkušebna 2.0 – návrh první etapy
 
+Aktualizace timestampů: pravidla intervalů a přiřazování skladeb níže nahrazuje [společná vrstva timestampů, kontrakt 1](timestamp-layer.md) s migrací 009.
+
+
 Stav: **návrh ke kontrole, bez změny runtime a bez aplikace SQL**, 16. 9. 2026.
 Podklady: [inventura](inventory.md), [SQL návrh](schema-draft.sql),
 [ověření a budoucí scénáře](verification.md).

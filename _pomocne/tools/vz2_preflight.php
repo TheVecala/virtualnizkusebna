@@ -98,6 +98,8 @@ try {
     $details['tables'] = $names;
     vz2_preflight_report($names === $expected, '14 VZ2 tables (migrations 002–006), exact names');
     vz2_preflight_report(count($tables)===count($expected) && !array_filter($tables, static fn($table) => $table['ENGINE'] !== 'InnoDB'), 'All VZ2 tables use InnoDB');
+    $timestampColumns=array_column(vz2_rows($db,'SHOW COLUMNS FROM vz2_timestamps'),'Field');
+    vz2_preflight_report(!array_diff(['end_time_ms','passage_type','note_text','song_collection_id','parent_timestamp_id'],$timestampColumns),'Explicit timestamp intervals (migration 009)');
     $postBody = $db->query("SHOW COLUMNS FROM vz2_discussion_posts WHERE Field='body'")->fetch_assoc();
     vz2_preflight_report($postBody && strtolower($postBody['Type'])==='mediumtext', 'Discussion MEDIUMTEXT (migration 003)');
     $documentKind = $db->query("SHOW COLUMNS FROM vz2_documents WHERE Field='kind'")->fetch_assoc();

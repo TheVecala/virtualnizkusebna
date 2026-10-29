@@ -2,7 +2,7 @@
     'use strict';
     const M = root.Vz2SegmentsModel;
     const el = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
-    const rangeText = s => M.format(s.start_ms) + (s.end_ms === null ? ' · bod' : ' – ' + M.format(s.end_ms));
+    const rangeText = s => M.format(s.start_ms) + (s.end_ms === null ? (s.status === 'open' ? ' · doplnit konec' : ' · bod') : ' – ' + M.format(s.end_ms));
     // Embeddable view: receives data, reports selections; owns neither fetch nor playback.
     function mount(host, config = {}) {
         let models = [], options = { color: 'type', scale: 'shared', wave: false, labels: true, compact: false, zoom: 1, takes: true, passages: true, notes: true, ...config.options };
@@ -80,7 +80,7 @@
                 plot.append(baseline);
                 const cursor = el('div', undefined, 'segment-playhead'); cursor.hidden = true; plot.append(cursor);
                 card.append(plot);
-                if (model.incomplete || model.omitted) card.append(el('p', [model.incomplete ? 'Nespárované hranice: ' + model.incomplete : '', model.omitted ? 'Značky mimo délku nahrávky: ' + model.omitted : ''].filter(Boolean).join(' · '), 'segment-warning'));
+                if (model.incomplete || model.omitted) card.append(el('p', [model.incomplete ? 'Neúplné úseky a hranice: ' + model.incomplete : '', model.omitted ? 'Značky mimo délku nahrávky: ' + model.omitted : ''].filter(Boolean).join(' · '), 'segment-warning'));
                 surface.append(card);
             }
             viewport.scrollLeft = scroll;

@@ -25,7 +25,7 @@ try {
         try { auth_check_csrf(['csrf'=>$_SERVER['HTTP_X_CSRF_TOKEN'] ?? null]); }
         catch (InvalidArgumentException $e) { throw new Vz2Error('Neplatný bezpečnostní token.', 403); }
         $result = vz2_timestamp_write($in);
-        if (($in['action'] ?? '') === 'create') http_response_code(201);
+        if (($in['action'] ?? '') === 'create' || (($in['action'] ?? '') === 'save_interval' && !array_key_exists('id',$in))) http_response_code(201);
     } else { header('Allow: GET, POST'); throw new Vz2Error('Nepodporovaná metoda.', 405); }
     echo json_encode(['ok'=>true]+$result, JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
 } catch (Vz2Error $e) { http_response_code($e->status); echo json_encode(['ok'=>false,'error'=>$e->getMessage()], JSON_UNESCAPED_UNICODE); }

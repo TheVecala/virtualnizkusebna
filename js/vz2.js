@@ -1127,6 +1127,12 @@
         mixerNotes = window.Vz2Timestamps.mount($('mixer-timestamps'), e.detail.id, mixerAdapter(e.detail.id));
         $('mixer-export').disabled = false;
     });
+    document.addEventListener('vz2:timestamps-updated', event => {
+        const list = event.detail, recording = data?.recordings.find(r => Number(r.id) === Number(list.recording_id));
+        if (!recording || Number(recording.timestamps_revision || 0) > list.timestamps_revision) return;
+        Object.assign(recording, { timestamps: list.entries, annotations: list.annotations, annotation_version: list.annotation_version,
+            timestamps_revision: list.timestamps_revision, duration_ms: list.duration_ms });
+    });
     window.Vz2App = {
         getCarContext() { return { collections: data?.collections || [], recordings: data?.recordings || [], selected, kind, player: window.Vz2Player.getState() }; },
         openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'audio', time_ms: '0', listen: '1' }, true); },

@@ -1,12 +1,12 @@
 # Úseky nahrávek
 
-Samostatná přihlášená stránka `useky.php`, dostupná z hlavní nabídky. Alternativní vizuální přehled timestampů pro jednu nahrávku nebo několik nahrávek nad sebou. Databázi nemění, není potřeba migrace.
+Samostatná přihlášená stránka `useky.php`, dostupná z hlavní nabídky. Alternativní vizuální přehled timestampů pro jednu nahrávku nebo několik nahrávek nad sebou. Panel používá společnou vrstvu timestampů; aktuální verze vyžaduje migraci 009 (viz [kontrakt](vz2/timestamp-layer.md)).
 
 ## Společná data a význam pásů
 
-- Čte stejný `php/ajax/vz2.php?action=catalog` jako hlavní aplikace a matice: `recordings[].timestamps`, `collections`, `recording_links`. Kompaktní výpis čte stejné databázové značky. Nevzniká druhá evidence úseků.
+- Čte stejný `php/ajax/vz2.php?action=catalog` jako hlavní aplikace a matice: `recordings[].annotations` (starší cache přes `timestamps`), `collections`, `recording_links`. Kompaktní výpis čte stejné databázové značky. Nevzniká druhá evidence úseků.
 - Pokus vznikne pouze z `song_start` a explicitně spárovaného `song_end`. Neúplné hranice zůstávají body; známou délku nepřekročí.
-- Pasáž končí na nejbližší následující strukturální značce, konci obsahujícího pokusu nebo známém konci nahrávky. Poznámka ji nezkracuje. U vnořených pokusů se použije nejužší obsahující interval. Toto je projekce panelu; stávající `Vz2Timestamps.endOf` a chování looperu se nemění.
+- Pasáž používá výhradně uložený konec. Pasáž bez konce zůstává rozpracovaným bodem bez smyčky. Příslušnost k pokusu je explicitní vazba. Panel, Looper i export používají společný kontrakt `Vz2TimestampModel`.
 - Poznámky jsou body. Shodné časy a překryvy mají oddělené řádky. Pokud délka není známá, osa končí poslední značkou a není vydávána za délku audia.
 - Katalog nově vrací také `recording_links[].start_timestamp_id` a `end_timestamp_id`, aby přiřazení skladby nebylo závislé na shodě časů. Jde pouze o rozšíření odpovědi existujícími sloupci.
 - Barvy: typ, stabilní identita skladby, identita nahrávky, jednotná. Bez přiřazené skladby je šedá. Barva není ukládána do značky.
@@ -14,7 +14,7 @@ Samostatná přihlášená stránka `useky.php`, dostupná z hlavní nabídky. A
 
 ## Rozhraní pro začlenění
 
-Načíst `css/themes.css`, `css/vz2-segments.css`, `js/vz2-segments-model.js`, `js/vz2-segments-panel.js` v tomto pořadí. Obal nemusí používat samostatný controller `js/vz2-segments.js`.
+Načíst `css/themes.css`, `css/vz2-segments.css`, `js/vz2-timestamp-model.js`, `js/vz2-segments-model.js`, `js/vz2-segments-panel.js` v tomto pořadí. Obal nemusí používat samostatný controller `js/vz2-segments.js`.
 
 ```js
 const panel = Vz2SegmentsPanel.mount(container, {

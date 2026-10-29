@@ -2,7 +2,7 @@
 'use strict';
 const $=id=>document.getElementById(id), n=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 let data=null, transposed=false, scroll={x:0,y:0}, cell=null, listCell=null, playsByCell=new Map();
-async function request(body){const r=await fetch('php/ajax/vz2_history.php',{method:body?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json','X-CSRF-Token':window.VZ2.csrf}:{},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||'Historii nelze načíst.');return j;}
+async function request(body){const r=await fetch('php/ajax/vz2_history.php',{method:body?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json','X-CSRF-Token':window.VZ2.csrf}:{},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||'Historii nelze načíst.');if(body){const rid=body.source_recording_id||data?.plays.find(p=>Number(p.id)===Number(body.id))?.source_recording_id;if(rid)window.Vz2Timestamps.reload(rid).catch(()=>{});}return j;}
 function playable(p){return [p.clip,p.source].some(r=>r?.files?.some(f=>f.url));}
 function clock(ms){return Vz2Timestamps.format(ms);}
 function recordingName(r){return (r?.files||[]).map(f=>f.display_name||f.original_name||f.title).filter(Boolean).join(', ')||r?.title||'';}
@@ -196,7 +196,7 @@ function renderCandidates(){
   if(startBody)text.append(n('p',startBody,'history-candidate-note'));
   add.type='button';add.disabled=addBusy;add.onclick=()=>addCandidate(fields,row);row.append(text,add);box.append(row);
  }
- data.unassigned_intervals.filter(i=>i.rehearsal_collection_id==rehearsal.id).forEach(i=>candidate(
+ data.unassigned_intervals.filter(i=>i.rehearsal_collection_id==rehearsal.id && i.can_assign!==false).forEach(i=>candidate(
   'i:'+i.recording_id+':'+i.start_timestamp_id+':'+i.end_timestamp_id,i.recording_title,
   'úsek: '+clock(i.start_ms)+' - '+clock(i.end_ms),i.start_body,
   {source_recording_id:Number(i.recording_id),start_timestamp_id:Number(i.start_timestamp_id),end_timestamp_id:Number(i.end_timestamp_id)}
@@ -249,5 +249,6 @@ $('history-options').addEventListener('toggle',()=>{if($('history-options').open
 document.addEventListener('click',e=>{if(!$('history-filter').contains(e.target))$('history-filter').open=false;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('history-filter').open){$('history-filter').open=false;$('history-filter').querySelector('summary').focus();e.preventDefault();}});
 document.addEventListener('vz2:workspace-changed',e=>{if(e.detail.workspace==='history')loadHistory();else{$('history-filter').open=false;$('history-options').open=false;}});
+document.addEventListener('vz2:timestamps-updated',()=>{if(window.Vz2Layout.getWorkspace()==='history')loadHistory();});
 if(window.Vz2Layout.getWorkspace()==='history')loadHistory();
 })();

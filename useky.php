@@ -22,7 +22,7 @@ try {
 <title>Úseky nahrávek · Zkušebna DK!</title>
 <link rel="stylesheet" href="css/themes.css?v=<?=filemtime(__DIR__.'/css/themes.css')?>">
 <link rel="stylesheet" href="css/vz2-segments.css?v=<?=filemtime(__DIR__.'/css/vz2-segments.css')?>">
-<script src="js/vz2-segments-model.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-model.js')?>" defer></script>
+<script defer src="js/vz2-timestamp-model.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-model.js')?>"></script><script src="js/vz2-segments-model.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-model.js')?>" defer></script>
 <script src="js/vz2-segments-panel.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-panel.js')?>" defer></script>
 <script src="js/vz2-segments.js?v=<?=filemtime(__DIR__.'/js/vz2-segments.js')?>" defer></script>
 </head>

@@ -781,3 +781,18 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
     #looper-timestamps.ts-editor-open > .vz2-timestamps, #mixer-timestamps.ts-editor-open > .vz2-timestamps { grid-column: 1; grid-row: 1; max-height: 100%; overflow: auto; }
     #looper-timestamps.ts-editor-open > .ts-docked, #mixer-timestamps.ts-editor-open > .ts-docked { grid-column: 2; grid-row: 1; align-self: start; width: 100%; max-height: 100%; }
 }
+.vz2-interval-editor{width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid var(--color-dialog-border);border-radius:12px;background:var(--color-dialog-bg);color:var(--color-text);padding:18px;box-sizing:border-box}
+.vz2-interval-editor::backdrop{background:#0008}
+.vz2-interval-editor form{display:flex;flex-direction:column;gap:12px;margin:0}
+.vz2-interval-editor label{display:flex;flex-direction:column;gap:5px;min-width:0;margin:0}
+.vz2-interval-editor p,.vz2-interval-editor h2{margin:0}
+.vz2-interval-editor .interval-return{flex-direction:row;align-items:center}
+.vz2-interval-editor input,.vz2-interval-editor select,.vz2-interval-editor textarea{font:inherit;box-sizing:border-box;max-width:100%;width:100%}
+.vz2-interval-editor input[type=checkbox]{width:auto;align-self:flex-start}
+.vz2-interval-editor .interval-times{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vz2-interval-editor .interval-times span{display:flex;gap:4px;flex-wrap:wrap}
+.vz2-interval-editor .dialog-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.vz2-interval-editor .modal-close{position:static;flex:none}
+.vz2-interval-editor pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.vz2-interval-editor [hidden]{display:none!important}
+@media(max-width:600px){.vz2-interval-editor .interval-times{grid-template-columns:1fr}.vz2-interval-editor{padding:12px}}

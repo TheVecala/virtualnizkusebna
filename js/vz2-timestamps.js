@@ -1,6 +1,7 @@
 (function (root) {
     'use strict';
-    const kinds = { song_start: '♪ Začátek skladby', song_end: '■ Konec skladby', passage: '↔ Pasáž', note: '● Poznámka' };
+    const Model = typeof module !== 'undefined' && module.exports ? require('./vz2-timestamp-model.js') : root.Vz2TimestampModel;
+    const kinds = { song_start: '♪ Pokusy', song_end: '■ Nespárované konce', passage: '↔ Pasáže', note: '● Poznámky' };
     function format(ms) {
         return compactFormat(ms);
     }
@@ -28,29 +29,20 @@
         throw new Error('U pasáže a poznámky vyplňte text.');
     }
     function songIntervalFor(entry, entries) {
-        const time = Number(entry.time_ms);
-        return entries.filter(end => end.kind === 'song_end' && end.paired_timestamp_id).map(end => {
-            const start = entries.find(candidate => candidate.kind === 'song_start' && Number(candidate.id) === Number(end.paired_timestamp_id));
-            return start && Number(end.time_ms) >= Number(start.time_ms) ? { start, end } : null;
-        }).filter(interval => interval && time >= Number(interval.start.time_ms) && time <= Number(interval.end.time_ms))
-            .sort((a, b) => (Number(a.end.time_ms) - Number(a.start.time_ms)) - (Number(b.end.time_ms) - Number(b.start.time_ms)))[0] || null;
+        const items = Model.normalize({ id: 0, entries });
+        const item = items.find(i => i.timestamp_id === Number(entry.id));
+        const own = item?.kind === 'take' ? item : items.find(i => i.id === item?.parent_id && i.kind === 'take');
+        const candidates = own ? [own] : entry.kind === 'note' ? items.filter(i => i.kind === 'take' && i.end_ms !== null && i.start_ms <= entry.time_ms && entry.time_ms < i.end_ms) : [];
+        const take = candidates.length === 1 ? candidates[0] : null;
+        const end = take && entries.find(e => Number(e.id) === take.end_timestamp_id);
+        return end ? { start: take.source, end } : null;
     }
-    function endOf(entry, entries, duration) {
-        if (entry.kind === 'note') return null;
-        if (entry.kind === 'song_start') {
-            const paired = entries.find(t => t.kind === 'song_end' && Number(t.paired_timestamp_id) === Number(entry.id));
-            return paired && Number(paired.time_ms) > Number(entry.time_ms) ? Number(paired.time_ms) : null;
-        }
-        if (entry.kind === 'song_end') return null;
-        const next = entries.filter(t => Number(t.time_ms) > Number(entry.time_ms)
-            && (t.kind === 'song_start' || (entry.kind === 'passage' && t.kind === 'passage')))
-            .sort((a, b) => Number(a.time_ms) - Number(b.time_ms) || Number(a.id) - Number(b.id))[0];
-        const end = next ? Number(next.time_ms) : duration == null ? null : Number(duration);
-        return end > Number(entry.time_ms) ? end : null;
-    }
-    function tabular(entries, selected) {
-        return entries.filter(t => selected.includes(t.kind)).map(t => format(t.time_ms) + '\t'
-            + t.body.replace(/[\t\r\n]+/g, ' ')).join('\n');
+    function endOf(entry, entries, duration) { return Model.endOf(entry, entries, duration); }
+    function tabular(entries, selected, duration = null) {
+        const clean = value => String(value ?? '').replace(/[\t\r\n]+/g, ' ');
+        return Model.normalize({ id: 0, entries, duration_ms: duration }).filter(i => selected.includes(i.source.kind)).map(i => [format(i.start_ms), i.end_ms === null ? '' : format(i.end_ms),
+            i.kind === 'take' ? 'Pokus' : i.kind === 'passage' ? Model.passageTypes[i.passage_type] : i.kind === 'note' ? 'Poznámka' : 'Konec bez začátku',
+            i.label, i.song_title, [i.note_text, i.end_source?.body?.replace(/^[↑↓]$/, '')].filter(Boolean).join(' · '), i.status === 'open' ? 'Doplnit konec' : ''].map(clean).join('\t')).join('\n');
     }
     function filenameBase(filename) {
         const name = String(filename || '').split(/[\\/]/).pop() || 'nahravka';
@@ -59,29 +51,21 @@
     function safeClipName(name) {
         return String(name || '').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
     }
-    function mp3spltLabels(entries, sourceFilename) {
-        const byId = new Map(entries.map(entry => [Number(entry.id), entry]));
-        const pairedStarts = new Set();
-        let incomplete = 0;
-        const clips = [];
-        entries.forEach(end => {
-            if (end.kind !== 'song_end') return;
-            const start = end.paired_timestamp_id == null ? null : byId.get(Number(end.paired_timestamp_id));
-            if (!start || start.kind !== 'song_start' || Number(end.time_ms) <= Number(start.time_ms)) { incomplete++; return; }
-            pairedStarts.add(Number(start.id));
-            const seconds = Math.floor(Math.max(0, Number(start.time_ms) || 0) / 1000);
-            const fallback = filenameBase(sourceFilename) + '_' + [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
-                .map(value => String(value).padStart(2, '0')).join('-');
-            clips.push({ start: Number(start.time_ms), end: Number(end.time_ms), name: safeClipName(start.body) || safeClipName(fallback) });
+    function mp3spltLabels(entries, sourceFilename, duration = null) {
+        const items = Model.normalize({ id: 0, entries, duration_ms: duration });
+        const incomplete = items.filter(i => i.kind === 'boundary' || i.kind === 'take' && i.status === 'open').length;
+        const clips = items.filter(i => i.kind === 'take' && i.status === 'complete').map(item => {
+            const seconds = Math.floor(item.start_ms / 1000);
+            const fallback = filenameBase(sourceFilename) + '_' + [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60].map(value => String(value).padStart(2, '0')).join('-');
+            return { start: item.start_ms, end: item.end_ms, name: safeClipName(item.song_title || item.source.body?.replace(/^[↑↓]$/, '')) || safeClipName(fallback) };
         });
-        entries.forEach(start => { if (start.kind === 'song_start' && !pairedStarts.has(Number(start.id))) incomplete++; });
-        clips.sort((a, b) => a.start - b.start);
         return {
             filename: filenameBase(sourceFilename) + '.txt', incomplete,
             text: clips.map(clip => (clip.start / 1000).toFixed(3) + '\t' + (clip.end / 1000).toFixed(3) + '\t' + clip.name).join('\n')
         };
     }
     const api = { format, compactFormat, parse, adjust, timestampBody, songIntervalFor, endOf, tabular, filenameBase, safeClipName, mp3spltLabels };
+    api.model = Model;
     if (typeof module !== 'undefined') module.exports = api;
     if (!root.document) return;
     root.Vz2Timestamps = api;
@@ -135,6 +119,9 @@
         document.dispatchEvent(new CustomEvent('vz2:timestamps-updated', { detail: list }));
     }
     api.getList = id => request(id);
+    api.reload = async id => { const result = await request(id); publish(result); return result; };
+    api.save = async (id, fields) => { const result = await request(id, fields); publish(result); return result; };
+    api.getItems = async id => Model.items(await request(id));
     api.addQuickNote = async (id, symbol, timeMs) => {
         if (!['👍', '👎'].includes(symbol)) throw new Error('Neplatné hodnocení.');
         const current = await request(id);
@@ -239,7 +226,7 @@
             </div>
             <div class="ts-editor-footer">
                 <div class="ts-simple-actions" hidden><button type="button" class="ts-open-advanced">Otevřít pokročilé možnosti</button><button type="submit" name="kind" value="note" class="ts-save-note">Uložit poznámku</button></div>
-                <div class="ts-advanced-actions"><button type="submit" name="kind" value="song_start">Začátek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="submit" name="kind" value="passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button></div>
+                <div class="ts-advanced-actions"><button type="button" name="kind" value="song_start" class="ts-new-take">Pokus</button><button type="submit" name="kind" value="song_end">Konec</button><button type="button" name="kind" value="passage" class="ts-new-passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button></div>
                 <button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button>
             </div>
             <div class="ts-pair-inline" hidden><h2>Propojit konec se začátkem</h2><label>Začátek skladby<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><div class="toolbar"><button type="button" class="ts-pair-back">Zpět</button><button type="button" class="ts-pair-save">Uložit konec</button></div></div>
@@ -311,6 +298,14 @@
                 editor.querySelector('.ts-rebase').hidden = true;
             } catch (e) { editor.querySelector('.error').textContent = e.message; }
         };
+        for (const [selector, kind] of [['.ts-new-take', 'take'], ['.ts-new-passage', 'passage']]) {
+            editor.querySelector(selector).onclick = () => {
+                try {
+                    const draft = { time_ms: editorTimeMs(), body: form.elements.body.value }, panel = activeEditor.panel;
+                    editor.close(); openIntervalEditor(panel, kind, null, false, draft);
+                } catch(e) { editor.querySelector('.error').textContent = e.message; }
+            };
+        }
         form.addEventListener('submit', async e => {
             e.preventDefault(); const context = activeEditor;
             try {
@@ -333,8 +328,11 @@
         editor.querySelector('.ts-simple-actions').hidden = !simple;
         editor.querySelector('.ts-advanced-actions').hidden = simple;
         editor.querySelector('.ts-back-simple').hidden = simple || !!activeEditor.row;
+        editor.querySelector('[name=kind][value=song_end]').hidden = activeEditor.row?.kind !== 'song_end';
+        editor.querySelector('.ts-new-take').hidden = !!activeEditor.row;
+        editor.querySelector('.ts-new-passage').hidden = !!activeEditor.row;
         editor.querySelectorAll('.ts-simple-actions button').forEach(control => { control.disabled = !simple; });
-        editor.querySelectorAll('.ts-advanced-actions button').forEach(control => { control.disabled = simple; });
+        editor.querySelectorAll('.ts-advanced-actions button').forEach(control => { control.disabled = simple || control.hidden; });
         if (remember) rememberAddView(activeEditor.view);
         const body = editor.querySelector('form').elements.body;
         body.placeholder = simple ? 'Poznámka' : 'Text';
@@ -523,7 +521,7 @@
         copy.addEventListener('click', async () => {
             const status = exportDialog.querySelector('.ts-export-status');
             try {
-                await navigator.clipboard.writeText(tabular(activeExportPanel.list.entries, [...filters.querySelectorAll('input:checked')].map(i => i.value)));
+                await navigator.clipboard.writeText(tabular(activeExportPanel.list.entries, [...filters.querySelectorAll('input:checked')].map(i => i.value), activeExportPanel.list.duration_ms));
                 exportDialog.close(); activeExportPanel.error('Tabulka zkopírována.');
             } catch (e) { status.textContent = 'Kopírování se nezdařilo. Použijte export TXT.'; }
         });
@@ -531,7 +529,7 @@
         exportDialog.querySelector('.ts-export-download').addEventListener('click', () => exportDialog.close());
         exportDialog.querySelector('.ts-export-mp3splt-download').addEventListener('click', () => {
             const status = exportDialog.querySelector('.ts-export-status');
-            const result = mp3spltLabels(activeExportPanel.list.entries, activeExportPanel.list.source_filename);
+            const result = mp3spltLabels(activeExportPanel.list.entries, activeExportPanel.list.source_filename, activeExportPanel.list.duration_ms);
             if (!result.text) { status.textContent = 'Nejsou žádné kompletní výstřižky k exportu.'; return; }
             const url = URL.createObjectURL(new Blob([result.text], { type: 'text/plain;charset=utf-8' }));
             const download = el('a'); download.href = url; download.download = result.filename;
@@ -553,7 +551,119 @@
         exportDialog.querySelector('.ts-export-download').href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(panel.id);
         exportDialog.showModal(); exportDialog.querySelector('.ts-export-copy').focus();
     }
-    window.addEventListener('beforeunload', e => { if (editor?.open) { e.preventDefault(); e.returnValue = ''; } });
+    let intervalDialog;
+    function openIntervalEditor(panel, kind, item = null, finish = false, draft = {}) {
+        if (intervalDialog?.open) return;
+        const dialog = el('dialog'); intervalDialog = dialog; dialog.className = 'vz2-interval-editor';
+        const isTake = kind === 'take';
+        dialog.innerHTML = `<form autocomplete="off">
+            <div class="dialog-header"><h2></h2><button type="button" class="modal-close" aria-label="Zavřít úsek">×</button></div>
+            <p class="interval-context"></p>
+            <label class="interval-existing">Rozpracovaný úsek<select name="existing"><option value="">Nový úsek</option></select></label>
+            <div class="interval-times">
+                <label>Začátek<input name="start" required inputmode="decimal"><span><button type="button" data-edge="start" data-delta="-1000">−1 s</button><button type="button" data-edge="start" data-delta="1000">+1 s</button><button type="button" data-capture="start">Zachytit začátek</button></span></label>
+                <label>Konec<input name="end" inputmode="decimal" placeholder="Doplnit později"><span><button type="button" data-edge="end" data-delta="-1000">−1 s</button><button type="button" data-edge="end" data-delta="1000">+1 s</button><button type="button" data-capture="end">Zachytit konec</button></span></label>
+            </div>
+            <p class="muted">Bez konce zůstane úsek rozpracovaný.</p>
+            <div class="interval-song"><label>Hledat skladbu<input name="song_search" type="search"></label><label>Skladba<select name="song"><option value="">Zatím nepřiřazeno</option></select></label></div>
+            <div class="interval-passage"><label>Typ pasáže<select name="passage_type"></select></label><label>Pokus<select name="parent"><option value="">Samostatná pasáž</option></select></label></div>
+            <label>Název / popis<input name="label" maxlength="4000"></label>
+            <label>Poznámka<textarea name="note_text" maxlength="4000" rows="2"></textarea></label>
+            <p class="error" role="alert"></p><pre class="interval-current" hidden></pre>
+            <button type="button" class="interval-reload" hidden>Načíst aktuální verzi k porovnání</button>
+            <label class="interval-return"><input type="checkbox" name="return_position"> Vrátit na začátek</label>
+            <div class="toolbar"><button type="button" class="interval-cancel">Zrušit</button><button type="submit">Uložit úsek</button></div>
+        </form>`;
+        const form = dialog.querySelector('form'), f = form.elements, error = dialog.querySelector('.error');
+        let selected = item, revision = panel.list.timestamps_revision, busy = false, exact = {};
+        const currentTime = () => Math.round(panel.adapter?.currentTimeMs() ?? 0);
+        const setTime = (edge, ms) => { f[edge].value = ms === null ? '' : format(ms); exact[edge] = { text: f[edge].value, ms }; };
+        const getTime = edge => f[edge].value === '' && edge === 'end' ? null : f[edge].value === exact[edge]?.text ? exact[edge].ms : parse(f[edge].value);
+        const fillSongs = () => {
+            const choice = f.song.value, search = f.song_search.value.toLocaleLowerCase('cs');
+            f.song.replaceChildren(new Option('Zatím nepřiřazeno', ''));
+            (panel.list.songs || []).filter(s => s.lifecycle !== 'archived' || String(s.id) === choice || Number(s.id) === selected?.song_id).forEach(s => {
+                if (!search || s.title.toLocaleLowerCase('cs').includes(search) || String(s.id) === choice) f.song.add(new Option(s.title, String(s.id)));
+            });
+            f.song.value = choice;
+        };
+        const fillParents = () => {
+            const choice = f.parent.value; f.parent.replaceChildren(new Option('Samostatná pasáž', ''));
+            Model.items(panel.list).filter(i => i.kind === 'take').forEach(i => f.parent.add(new Option(format(i.start_ms) + ' · ' + (i.song_title || i.label) + (i.end_ms === null ? ' · chybí konec' : ''), String(i.timestamp_id))));
+            f.parent.value = choice;
+        };
+        Object.entries(Model.passageTypes).forEach(([value, label]) => f.passage_type.add(new Option(label, value)));
+        dialog.querySelector('.interval-song').hidden = !isTake;
+        dialog.querySelector('.interval-passage').hidden = isTake;
+        dialog.querySelector('.interval-context').textContent = panel.list.source_filename || panel.list.title;
+        Model.items(panel.list).filter(i => i.kind === kind && i.status === 'open' && i.can_edit).forEach(i => f.existing.add(new Option(format(i.start_ms) + ' · ' + (i.song_title || i.label), String(i.timestamp_id))));
+        dialog.querySelector('.interval-existing').hidden = !!item || f.existing.options.length === 1;
+        function populate(value) {
+            selected = value;
+            dialog.querySelector('h2').textContent = (value ? 'Upravit ' : 'Nový úsek: ') + (isTake ? 'pokus' : 'pasáž');
+            setTime('start', value?.start_ms ?? draft.time_ms ?? currentTime());
+            const capturedEnd = finish && value && panel.adapter?.canPlay() && currentTime() > value.start_ms ? currentTime() : null;
+            setTime('end', value?.end_ms ?? capturedEnd ?? draft.end_time_ms ?? null);
+            f.label.value = value?.source.body?.replace(/^[↑↓]$/, '') || draft.body || '';
+            f.note_text.value = value?.note_text || '';
+            f.passage_type.value = value?.passage_type || 'custom';
+            fillSongs(); f.song.value = String(value ? value.song_id ?? '' : panel.list.default_song_id ?? '');
+            fillParents();
+            const parents = Model.containingTakes(panel.list, getTime('start'), getTime('end'));
+            f.parent.value = String(value ? value.source.parent_timestamp_id ?? '' : parents.length === 1 ? parents[0].timestamp_id : '');
+        }
+        populate(item);
+        f.existing.onchange = () => populate(Model.items(panel.list).find(i => String(i.timestamp_id) === f.existing.value) || null);
+        f.song_search.oninput = fillSongs;
+        let suggestedLabel = '';
+        const suggestLabel = () => {
+            if (selected || (f.label.value && f.label.value !== suggestedLabel)) return;
+            const type = f.passage_type.value, parent = f.parent.value;
+            const count = Model.items(panel.list).filter(i => i.kind === 'passage' && i.passage_type === type && String(i.source.parent_timestamp_id ?? '') === parent).length;
+            suggestedLabel = type === 'custom' ? '' : Model.passageTypes[type] + (count ? ' ' + (count + 1) : '');
+            f.label.value = suggestedLabel;
+        };
+        f.passage_type.onchange = suggestLabel; f.parent.onchange = suggestLabel;
+        dialog.querySelectorAll('[data-capture]').forEach(b => { b.disabled = !panel.adapter?.canPlay(); b.onclick = () => setTime(b.dataset.capture, currentTime()); });
+        dialog.querySelectorAll('[data-edge]').forEach(b => { b.onclick = () => { try { const at = getTime(b.dataset.edge); if (at === null) throw new Error('Nejprve zadejte čas konce.'); setTime(b.dataset.edge, Math.max(0, at + Number(b.dataset.delta))); } catch(e) { error.textContent = e.message; } }; });
+        f.return_position.disabled = !panel.adapter?.canPlay();
+        const close = () => { if (!busy) dialog.close(); };
+        dialog.querySelector('.modal-close').onclick = close; dialog.querySelector('.interval-cancel').onclick = close;
+        dialog.addEventListener('cancel', e => { if (busy) e.preventDefault(); });
+        dialog.addEventListener('close', () => { dialog.remove(); intervalDialog = null; });
+        dialog.querySelector('.interval-reload').onclick = async () => {
+            try {
+                const latest = await request(panel.id); publish(latest);
+                const now = selected ? Model.items(latest).find(i => i.id === selected.id) : null;
+                const compare = dialog.querySelector('.interval-current'); compare.hidden = false;
+                compare.textContent = now ? JSON.stringify({ název: now.label, začátek_ms: now.start_ms, konec_ms: now.end_ms, skladba: now.song_title, typ: now.passage_type, pokus: now.parent_id, poznámka: now.note_text }, null, 2) : selected ? 'Úsek byl odstraněn.' : 'Aktuální seznam načten. Rozepsané údaje zůstávají.';
+                if (selected && !now) return;
+                if (!confirm('Použít načtenou revizi pro uložení rozepsaných údajů?')) return;
+                selected = now; revision = latest.timestamps_revision; fillParents(); fillSongs();
+                error.textContent = 'Zkontrolujte rozepsané údaje a znovu uložte.';
+                dialog.querySelector('.interval-reload').hidden = true;
+            } catch(e) { error.textContent = e.message; }
+        };
+        form.onsubmit = async event => {
+            event.preventDefault(); if (busy) return;
+            try {
+                const start = getTime('start'), end = getTime('end');
+                if (end !== null && end <= start) throw new Error('Konec musí být po začátku.');
+                const fields = { action: 'save_interval', timestamps_revision: revision, kind: isTake ? 'song_start' : 'passage', time_ms: start, end_time_ms: end,
+                    body: f.label.value, note_text: f.note_text.value, song_collection_id: isTake && f.song.value ? Number(f.song.value) : null,
+                    passage_type: isTake ? null : f.passage_type.value, parent_timestamp_id: !isTake && f.parent.value ? Number(f.parent.value) : null };
+                if (selected) { fields.id = selected.timestamp_id; fields.revision = selected.source.revision; }
+                busy = true; form.querySelector('[type=submit]').disabled = true;
+                const result = await request(panel.id, fields); publish(result);
+                if (f.return_position.checked && panel.adapter?.canPlay()) panel.adapter.seek(start);
+                busy = false; dialog.close();
+            } catch(e) { error.textContent = e.message; dialog.querySelector('.interval-reload').hidden = e.status !== 409; }
+            finally { busy = false; form.querySelector('[type=submit]').disabled = false; }
+        };
+        document.body.append(dialog); dialog.showModal(); (finish ? f.end : f.label).focus();
+    }
+    api.openIntervalEditor = openIntervalEditor;
+    window.addEventListener('beforeunload', e => { if (editor?.open || intervalDialog?.open) { e.preventDefault(); e.returnValue = ''; } });
     api.mount = function (container, id, adapter) {
         const shell = el('details'); shell.className = 'vz2-timestamps';
         const summary = el('summary'), heading = el('span', 'Časové značky'), chevron = el('i');
@@ -646,7 +756,8 @@
                 }
                 if (loop?.panel === this) api.stopLoop();
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));
-                value.entries.forEach(row => {
+                Model.items(value).forEach(annotation => {
+                    const row = annotation.source;
                     const item = el('li'); item.className = 'ts-' + row.kind;
                     const songInterval = songIntervalFor(row, value.entries);
                     if (songInterval) {
@@ -659,14 +770,20 @@
                         try { api.stopLoop(); await this.adapter.playRange(row.time_ms); }
                         catch (e) { status.textContent = e.message; }
                     }); seek.className = 'ts-time'; seek.title = 'Přehrát od ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
-                    const text = el('p', row.body), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
+                    const text = el('p', annotation.label), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
                     const boundary = row.kind === 'song_start' || row.kind === 'song_end' ? boundaryIcon(row.kind) : null;
                     // Older empty boundaries store an arrow as their body; show the type icon once.
-                    if (boundary && row.body.trim() === (row.kind === 'song_start' ? '↑' : '↓')) text.textContent = '';
+                    if (annotation.song_title) text.append(' · ' + annotation.song_title);
+                    if (annotation.passage_type) text.append(' ', el('small', Model.passageTypes[annotation.passage_type]));
+                    if (annotation.note_text) text.append(el('br'), document.createTextNode(annotation.note_text));
+                    const endText = annotation.end_source?.body?.replace(/^[↑↓]$/, '');
+                    if (endText && endText !== annotation.label) text.append(el('br'), document.createTextNode('Konec: ' + endText));
+                    if (annotation.end_source && annotation.end_source.created_by !== row.created_by) authors.append(' · konec: ' + annotation.end_source.author);
                     authors.className = 'ts-author vz2-attribution';
                     authors.title = 'Vytvořeno: ' + new Date(row.created_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ') + ' · upraveno: ' + new Date(row.updated_at.replace(' ', 'T') + 'Z').toLocaleString('cs-CZ');
                     const actions = el('div'); actions.className = 'toolbar';
-                    const end = endOf(row, value.entries, value.duration_ms);
+                    const end = annotation.end_ms;
+                    if (end !== null) seek.textContent += ' – ' + compactFormat(end);
                     if (row.kind !== 'note' && row.kind !== 'song_end') {
                         const repeat = iconButton('Smyčka', 'repeat', async () => {
                             try { api.stopLoop(); const token = loopSerial; await this.adapter.playRange(row.time_ms, end); if (token !== loopSerial || this.dead) return; loop = { panel: this, adapter: this.adapter, start: row.time_ms, end }; this.playback(); }
@@ -675,13 +792,17 @@
                         if (end != null) repeat.dataset.endMs = end;
                         repeat.title = end == null ? 'Konec úseku není známý.' : format(row.time_ms) + ' – ' + format(end); actions.append(repeat);
                     }
-                    if (row.can_edit) actions.append(iconButton('Upravit', 'pencil', () => openEditor(this, row)));
-                    if (row.can_delete) actions.append(iconButton('Smazat', 'trash', async () => {
+                    const interval = ['take', 'passage'].includes(annotation.kind);
+                    if (annotation.can_edit) {
+                        actions.append(iconButton('Upravit', 'pencil', () => interval ? openIntervalEditor(this, annotation.kind, annotation) : openEditor(this, row)));
+                        if (interval && end === null) actions.append(iconButton(annotation.kind === 'take' ? 'Ukončit pokus' : 'Ukončit pasáž', 'flag-check', () => openIntervalEditor(this, annotation.kind, annotation, true)));
+                    }
+                    if (annotation.can_delete) actions.append(iconButton('Smazat', 'trash', async () => {
                         if (!confirm('Smazat tuto časovou značku?\n' + row.body)) return;
-                        try { const result = await request(id, { action: 'delete', id: row.id, revision: row.revision, timestamps_revision: value.timestamps_revision }); publish(result); status.textContent = 'Značka odstraněna.'; }
+                        try { const result = await request(id, { action: interval ? 'delete_interval' : 'delete', id: row.id, revision: row.revision, timestamps_revision: value.timestamps_revision }); publish(result); status.textContent = 'Značka odstraněna.'; }
                         catch (e) { status.textContent = e.message; }
                     }));
-                    if (row.kind === 'song_start' && end == null) text.append(' ', el('small', '— neúplný úsek'));
+                    if (interval && end === null) text.append(' ', el('small', '— Doplnit konec'));
                     if (row.kind === 'song_end' && !row.paired_timestamp_id) text.append(' ', el('small', '— konec bez začátku'));
                     const rowMain = el('div'); rowMain.className = 'ts-row-main';
                     rowMain.append(seek);
