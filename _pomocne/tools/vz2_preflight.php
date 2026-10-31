@@ -37,7 +37,7 @@ try {
     // optional file here: that would hide a broken application bootstrap.
     $optionalConfig = $appRoot.'/config.vz2.php';
     $optionalRealPath = realpath($optionalConfig);
-    $details['preflight_version'] = '2026-10-17.1';
+    $details['preflight_version'] = '2026-10-27.1';
     $details['configuration'] = [
         'app_root'=>$appRoot,
         'config_vz2_exists'=>is_file($optionalConfig),
@@ -68,6 +68,27 @@ try {
     vz2_preflight_report($id && preg_match('/^int(?:\(\d+\))? unsigned$/i',$id['Type']) && $id['Key']==='PRI', 'users.id INT UNSIGNED PRIMARY KEY');
     $engine = $db->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users'")->fetch_assoc();
     vz2_preflight_report($engine && $engine['ENGINE']==='InnoDB', 'users InnoDB');
+    $username = $db->query("SHOW FULL COLUMNS FROM users WHERE Field='username'")->fetch_assoc();
+    vz2_preflight_report($username && strtolower($username['Type']) === 'varchar(32)'
+        && $username['Collation'] === 'ascii_general_ci' && $username['Key'] === 'UNI',
+        'Case-insensitive unique users.username (migration 007)');
+    $generation = $db->query("SHOW COLUMNS FROM users WHERE Field='auth_generation'")->fetch_assoc();
+    vz2_preflight_report($generation && $generation['Null'] === 'NO', 'Account session revocation generation');
+    $settings = auth_settings($db);
+    $details['login'] = [
+        'username_login_finalized' => auth_username_login_finalized($settings),
+        'missing_usernames' => (int) $db->query("SELECT COUNT(*) FROM users WHERE username IS NULL OR username=''")->fetch_row()[0],
+        'failed_attempts_limit' => 50,
+        'window_minutes' => 15,
+    ];
+    vz2_preflight_report(array_key_exists('username_login_finalized', $settings)
+        && array_key_exists('guest_auth_generation', $settings), 'Shared login migration state and guest session revocation');
+    vz2_preflight_report($details['login']['missing_usernames'] === 0, 'All accounts, including inactive ones, have a username');
+    vz2_preflight_report(!$details['login']['username_login_finalized'] || ($username && $username['Null'] === 'NO'),
+        'Finalized login requires non-null usernames (migration 008)');
+    $attempts = $db->query("SHOW COLUMNS FROM auth_login_attempts")->fetch_all(MYSQLI_ASSOC);
+    vz2_preflight_report(array_column($attempts, 'Field') === ['source_key', 'failures', 'expires_at'],
+        'Persistent temporary login attempt limit (migration 007)');
     $expected = ['vz2_collection_orders','vz2_collections','vz2_recordings','vz2_audio_files',
         'vz2_timestamps','vz2_discussion_threads','vz2_discussion_posts','vz2_documents',
         'vz2_document_versions','vz2_attachments','vz2_file_operations','vz2_file_operation_items','vz2_activity_log','vz2_rehearsal_plays'];
@@ -77,6 +98,8 @@ try {
     $details['tables'] = $names;
     vz2_preflight_report($names === $expected, '14 VZ2 tables (migrations 002–006), exact names');
     vz2_preflight_report(count($tables)===count($expected) && !array_filter($tables, static fn($table) => $table['ENGINE'] !== 'InnoDB'), 'All VZ2 tables use InnoDB');
+    $timestampColumns=array_column(vz2_rows($db,'SHOW COLUMNS FROM vz2_timestamps'),'Field');
+    vz2_preflight_report(!array_diff(['end_time_ms','passage_type','note_text','song_collection_id','parent_timestamp_id'],$timestampColumns),'Explicit timestamp intervals (migration 009)');
     $postBody = $db->query("SHOW COLUMNS FROM vz2_discussion_posts WHERE Field='body'")->fetch_assoc();
     vz2_preflight_report($postBody && strtolower($postBody['Type'])==='mediumtext', 'Discussion MEDIUMTEXT (migration 003)');
     $documentKind = $db->query("SHOW COLUMNS FROM vz2_documents WHERE Field='kind'")->fetch_assoc();

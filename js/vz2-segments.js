@@ -175,7 +175,7 @@
     $('segments-select-none').onclick = () => { selectedIds.clear(); clearSelection(); render(); };
     document.addEventListener('vz2:timestamps-updated', e => {
         const r = available().find(item => String(item.id) === String(e.detail.recording_id));
-        if (r) { r.timestamps = e.detail.entries; r.duration_ms = e.detail.duration_ms; if (String(selection?.recording_id) === String(r.id)) clearSelection(); render(); }
+        if (r) { r.timestamps = e.detail.entries; r.annotations = e.detail.annotations; r.annotation_version = e.detail.annotation_version; r.duration_ms = e.detail.duration_ms; if (String(selection?.recording_id) === String(r.id)) clearSelection(); render(); }
     });
     window.addEventListener('pagehide', stop);
     void load();

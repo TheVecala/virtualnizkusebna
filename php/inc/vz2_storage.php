@@ -147,6 +147,7 @@ function vz2_remove(array $in): array {
             $c=vz2_collection($db,$id);
             if($c['kind']!=='song')return false;
             $count=(int)vz2_one($db,'SELECT COUNT(*) n FROM vz2_rehearsal_plays WHERE song_collection_id=?',[$id])['n'];
+            $count+=(int)vz2_one($db,'SELECT COUNT(*) n FROM vz2_timestamps WHERE song_collection_id=?',[$id])['n'];
             if(!$count)return false;
             if(!auth_is_admin())throw new Vz2Error('Archivaci skladby smí provést jen admin.',403);
             vz2_revision($c,$in['revision']??null);
@@ -267,7 +268,7 @@ function vz2_delete_rows(mysqli $db,array $op):void {
     }
     $recordings=$collection?vz2_rows($db,'SELECT * FROM vz2_recordings WHERE collection_id=?',[$id]):[vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$id])];
     foreach($recordings as $r){
-        vz2_query($db,'UPDATE vz2_timestamps SET paired_timestamp_id=NULL WHERE recording_id=? AND paired_timestamp_id IS NOT NULL',[$r['id']]);
+        vz2_query($db,'UPDATE vz2_timestamps SET paired_timestamp_id=NULL,parent_timestamp_id=NULL WHERE recording_id=?',[$r['id']]);
         vz2_query($db,'DELETE FROM vz2_timestamps WHERE recording_id=?',[$r['id']]);
         vz2_query($db,'DELETE FROM vz2_audio_files WHERE recording_id=?',[$r['id']]);
         vz2_query($db,'DELETE FROM vz2_recordings WHERE id=?',[$r['id']]);

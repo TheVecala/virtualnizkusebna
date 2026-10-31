@@ -3,29 +3,33 @@ require_once __DIR__ . '/inc/session.php';
 app_session_start();
 require_once __DIR__ . "/../config.php";
 
-// Zpracování odeslaného formuláře; jediným údajem zůstává heslo.
-$login_unavailable = false;
+header('Cache-Control: no-store');
+$login_username = is_string($_POST['username'] ?? null) ? $_POST['username'] : '';
+$wrong_credentials = false;
+$login_error = '';
 if (isset($_POST['submit_single'])) {
     try {
         $zadani_hesla = is_string($_POST['heslo'] ?? null) ? $_POST['heslo'] : '';
-        if (auth_login($zadani_hesla)) {
+        if (auth_login($login_username, $zadani_hesla)) {
             unset($_SESSION['chyba_prihlaseni_single']);
             $deep_link_query = $_SESSION['deep_link_after_login'] ?? '';
             unset($_SESSION['deep_link_after_login']);
             header('Location: /index.php' . ($deep_link_query !== '' ? '?' . $deep_link_query : ''));
             exit;
         }
-        $_SESSION['chyba_prihlaseni_single'] = "wrong_heslo";
+        $wrong_credentials = true;
+        $login_error = 'Nesprávné uživatelské jméno nebo heslo.';
+    } catch (AuthLoginRateLimited $e) {
+        http_response_code(429);
+        header('Retry-After: ' . $e->retryAfter);
+        $login_error = 'Příliš mnoho neúspěšných pokusů. Zkuste to znovu za '
+            . (int) ceil($e->retryAfter / 60) . ' min.';
     } catch (Throwable $e) {
-        $login_unavailable = true;
         http_response_code(503);
-        unset($_SESSION['chyba_prihlaseni_single']);
+        $login_error = 'Přihlášení nyní není dostupné. Zkuste to později.';
         error_log('Zkušebna: přihlášení není dostupné.');
     }
 }
-$wrong_password = ($_SESSION['chyba_prihlaseni_single'] ?? '') === 'wrong_heslo';
-$login_error = $login_unavailable ? 'Přihlášení nyní není dostupné. Zkuste to později.'
-    : ($wrong_password ? 'Špatné přístupové heslo!' : '');
 ?>
 <!doctype html>
 <html lang="cs" data-theme="<?= site_theme() ?>">
@@ -53,6 +57,7 @@ $login_error = $login_unavailable ? 'Přihlášení nyní není dostupné. Zkust
         .login-subtitle { margin: 20px 0 0; color: var(--color-text-muted); }
         form { width: min(100%, 320px); margin-top: 32px; text-align: left; }
         label { display: block; margin-bottom: 8px; font-weight: 600; }
+        input + label { margin-top: 18px; }
         input { width: 100%; min-width: 0; min-height: 48px; padding: 11px 14px; border: 1px solid var(--color-divider); border-radius: 6px; background: var(--color-login-input-bg); color: var(--color-text); font: 16px/1.5 system-ui, sans-serif; }
         input[aria-invalid="true"] { border-color: var(--color-danger); }
         .login-error { margin: 14px 0 0; color: var(--color-danger); overflow-wrap: anywhere; }
@@ -70,8 +75,10 @@ $login_error = $login_unavailable ? 'Přihlášení nyní není dostupné. Zkust
         <h1 id="login-title">Zkušebna<br><span>DK!</span></h1>
         <p class="login-subtitle">Vstup pro kapelu</p>
         <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>" method="post">
+            <label for="login-username">Uživatelské jméno</label>
+            <input id="login-username" type="text" name="username" value="<?= auth_h(substr($login_username, 0, 128)) ?>" maxlength="32" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus<?php if ($wrong_credentials) echo ' aria-invalid="true"'; ?><?php if ($login_error !== '') echo ' aria-describedby="login-error"'; ?>>
             <label for="login-password">Heslo</label>
-            <input id="login-password" type="password" name="heslo" autocomplete="current-password" required autofocus<?php if ($wrong_password) echo ' aria-invalid="true"'; ?><?php if ($login_error !== '') echo ' aria-describedby="login-error"'; ?>>
+            <input id="login-password" type="password" name="heslo" autocomplete="current-password" required<?php if ($wrong_credentials) echo ' aria-invalid="true"'; ?><?php if ($login_error !== '') echo ' aria-describedby="login-error"'; ?>>
             <?php if ($login_error !== ''): ?>
             <p id="login-error" class="login-error" role="alert"><?php echo htmlspecialchars($login_error, ENT_QUOTES, 'UTF-8'); ?></p>
             <?php endif; ?>

@@ -26,15 +26,15 @@ function vz2_history_data(mysqli $db): array {
         $p['clip']=$clip?['id'=>$clip['id'],'title'=>$clip['title'],'summary'=>$clip['summary'],'audio_state'=>$clip['audio_state'],'files'=>$clip['files']]:null;
         $p['notes']=[];
         if($p['source_recording_id'] && $p['start_ms']!==null && $p['end_ms']!==null)foreach($source['timestamps']??[] as $t)if($t['kind']==='note' && $t['time_ms'] >= $p['start_ms'] && $t['time_ms'] < $p['end_ms'])$p['notes'][]=$t;
-        $p['can_edit']=vz2_history_right();
+        $startOwner=null;if($p['start_timestamp_id'])foreach($source['timestamps']??[] as $t)if($t['id']===$p['start_timestamp_id'])$startOwner=$t['created_by'];
+        $p['can_edit']=vz2_history_right() && ($startOwner===null || vz2_timestamp_right($startOwner));
     } unset($p);
     $usedStarts=array_filter(array_column($plays,'start_timestamp_id'));$usedClips=array_filter(array_column($plays,'clip_recording_id'));
     $intervals=[];
     foreach($catalog['recordings'] as $r){
         $c=$collections[(int)$r['collection_id']]??null;if(!$c || $c['kind']!=='rehearsal')continue;
-        $byId=[];foreach($r['timestamps'] as $t)$byId[$t['id']]=$t;
-        foreach($r['timestamps'] as $end)if($end['kind']==='song_end' && $end['paired_timestamp_id'] && isset($byId[$end['paired_timestamp_id']]) && !in_array($end['paired_timestamp_id'],$usedStarts,true)){
-            $start=$byId[$end['paired_timestamp_id']];$intervals[]=['recording_id'=>(int)$r['id'],'recording_title'=>vz2_recording_display_name($r),'rehearsal_collection_id'=>(int)$r['collection_id'],'rehearsal_title'=>$c['title'],'start_timestamp_id'=>$start['id'],'end_timestamp_id'=>$end['id'],'start_ms'=>$start['time_ms'],'end_ms'=>$end['time_ms'],'start_body'=>$start['body']];
+        foreach($r['annotations'] as $item)if($item['kind']==='take' && $item['status']==='complete' && !in_array($item['timestamp_id'],$usedStarts,true)){
+            $intervals[]=['recording_id'=>(int)$r['id'],'recording_title'=>vz2_recording_display_name($r),'rehearsal_collection_id'=>(int)$r['collection_id'],'rehearsal_title'=>$c['title'],'start_timestamp_id'=>$item['timestamp_id'],'end_timestamp_id'=>$item['end_timestamp_id'],'start_ms'=>$item['start_ms'],'end_ms'=>$item['end_ms'],'start_body'=>$item['label'],'can_assign'=>$item['can_edit']];
         }
     }
     $clips=[];foreach($catalog['recordings'] as $r){$c=$collections[(int)$r['collection_id']]??null;if($c && $c['kind']==='song' && !in_array((int)$r['id'],$usedClips,true))$clips[]=['id'=>(int)$r['id'],'collection_id'=>(int)$r['collection_id'],'collection_title'=>$c['title'],'title'=>vz2_recording_display_name($r),'audio_state'=>$r['audio_state']];}
@@ -50,8 +50,22 @@ function vz2_history_write(array $in): array {
     return vz2_write(function(mysqli $db)use($in):array{
         if(!vz2_history_right())throw new Vz2Error('Historii smí upravovat člen s právem zapisovat poznámky.',403);
         $action=$in['action']??'';
+        // Same lock order as timestamp writes: recording, then history row.
+        if($action==='create' && isset($in['source_recording_id'])){
+            $sourceRecording=vz2_recording($db,vz2_id($in['source_recording_id']));
+            vz2_active($sourceRecording);vz2_idle($db,'recording',(int)$sourceRecording['id']);
+        }
+        if(in_array($action,['update','delete'],true)){
+            $existing=vz2_one($db,'SELECT * FROM vz2_rehearsal_plays WHERE id=?',[vz2_id($in['id']??null)]);
+            if($existing['source_recording_id']){ $r=vz2_recording($db,(int)$existing['source_recording_id']);vz2_active($r);vz2_idle($db,'recording',(int)$r['id']); }
+        }
         if($action==='delete'){
             $p=vz2_one($db,'SELECT * FROM vz2_rehearsal_plays WHERE id=? FOR UPDATE',[vz2_id($in['id']??null)]);vz2_revision($p,$in['revision']??null);
+            if($p['start_timestamp_id']){
+                $startRow=vz2_one($db,'SELECT * FROM vz2_timestamps WHERE id=?',[$p['start_timestamp_id']]);vz2_permission('comment',(int)$startRow['created_by']);
+                vz2_query($db,'UPDATE vz2_timestamps SET song_collection_id=NULL,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[vz2_actor(),$startRow['id']]);
+                vz2_query($db,'UPDATE vz2_recordings SET timestamps_revision=timestamps_revision+1 WHERE id=?',[$p['source_recording_id']]);
+            }
             vz2_query($db,'DELETE FROM vz2_rehearsal_plays WHERE id=?',[$p['id']]);vz2_log($db,'history.deleted','rehearsal_play',(int)$p['id'],$p['song_title_snapshot'],'Pouze historická vazba');
             return vz2_history_data($db);
         }
@@ -62,9 +76,13 @@ function vz2_history_write(array $in): array {
         $start=isset($in['start_timestamp_id']) && $in['start_timestamp_id']!==null?vz2_id($in['start_timestamp_id']):null;
         $end=isset($in['end_timestamp_id']) && $in['end_timestamp_id']!==null?vz2_id($in['end_timestamp_id']):null;
         $clip=isset($in['clip_recording_id']) && $in['clip_recording_id']!==null?vz2_id($in['clip_recording_id']):null;
-        if($action==='create' && $source){$r=vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$source]);vz2_active($r);if((int)$r['collection_id']!==(int)$rehearsal['id'])throw new Vz2Error('Zdroj při zařazení nepatří do vybrané zkoušky.');
+        if($action==='create' && $source){$r=vz2_recording($db,$source);vz2_active($r);vz2_idle($db,'recording',$source);if((int)$r['collection_id']!==(int)$rehearsal['id'])throw new Vz2Error('Zdroj při zařazení nepatří do vybrané zkoušky.');
             $a=vz2_one($db,'SELECT * FROM vz2_timestamps WHERE id=?',[$start]);$b=vz2_one($db,'SELECT * FROM vz2_timestamps WHERE id=?',[$end]);
             if((int)$a['recording_id']!==$source || (int)$b['recording_id']!==$source || $a['kind']!=='song_start' || $b['kind']!=='song_end' || (int)$b['paired_timestamp_id']!==$start || (int)$b['time_ms']<=(int)$a['time_ms'])throw new Vz2Error('Úsek není platná propojená dvojice.');
+            vz2_permission('comment',(int)$a['created_by']);
+            if(vz2_rows($db,'SELECT id FROM vz2_rehearsal_plays WHERE start_timestamp_id=?',[$start]))throw new Vz2Error('Pokus je již přiřazen. Obnovte historii.',409);
+            vz2_query($db,'UPDATE vz2_timestamps SET song_collection_id=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[$song['id'],vz2_actor(),$start]);
+            vz2_query($db,'UPDATE vz2_recordings SET timestamps_revision=timestamps_revision+1 WHERE id=?',[$source]);
         }elseif($action==='create' && ($start || $end))throw new Vz2Error('Časy vyžadují zdrojovou nahrávku.');
         if($clip){$cr=vz2_one($db,'SELECT * FROM vz2_recordings WHERE id=?',[$clip]);vz2_active($cr);if((int)$cr['collection_id']!==(int)$song['id'])throw new Vz2Error('Výstřižek nepatří do vybrané skladby.');}
         if($action==='create' && !$source && !$clip)throw new Vz2Error('Vyberte kompletní úsek nebo výstřižek.');

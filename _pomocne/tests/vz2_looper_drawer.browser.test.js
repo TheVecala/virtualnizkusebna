@@ -39,6 +39,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 const wave = document.getElementById('looper-wave'); wave.height = 90; wave.style.height = '90px';
                 document.getElementById('looper-wave-track').style.height = '90px';
             }, data);
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-model.js') });
             await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamps.js') });
             await page.evaluate(() => {
                 window.notes = Vz2Timestamps.mount(document.getElementById('looper-timestamps'), 1,
@@ -106,7 +107,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 await editor.getByRole('button', { name: 'Zachytit čas', exact: true }).click();
                 assert.equal(await editor.locator('input[name=time]').inputValue(), '00:03');
                 assert.equal(await editor.getByRole('radio').count(), 0);
-                for (const kind of ['Začátek', 'Konec', 'Pasáž', 'Poznámka']) assert(await editor.getByRole('button', { name: kind, exact: true }).isVisible());
+                for (const kind of ['Pokus', 'Pasáž', 'Poznámka']) assert(await editor.getByRole('button', { name: kind, exact: true }).isVisible());
                 assert.equal(await editor.getByRole('button', { name: 'Zrušit', exact: true }).count(), 0);
                 assert.equal(await editor.locator('[name=keep]').count(), 0);
                 assert(await editor.getByRole('checkbox', { name: 'Vrátit na čas', exact: true }).isVisible());
@@ -293,7 +294,8 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 return { ok: true, json: async () => structuredClone(value) };
             };
         }, data);
-        await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamps.js') });
+        await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-model.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamps.js') });
         await page.evaluate(() => {
             window.recordingNotes = Vz2Timestamps.mount(document.getElementById('recording-body-1'), 1,
                 { canPlay: () => true, currentTimeMs: () => 5123, durationMs: () => 100000, seek: () => {}, playRange: async () => {} });
@@ -309,19 +311,16 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
         await recording.locator('#recording-play').click();
         assert.equal(await page.evaluate(() => window.recordingClicks), 1);
         await recordingEditor.getByRole('button', { name: 'Otevřít pokročilé možnosti' }).click();
-        await recordingEditor.locator('[name=body]').fill('Konec testu');
-        await recordingEditor.getByRole('button', { name: 'Konec', exact: true }).click();
-        const pair = recordingEditor.locator('.ts-pair-inline');
-        assert(await pair.isVisible(), 'pairing appears within the nonmodal editor');
-        await recording.locator('#recording-play').click();
-        assert.equal(await page.evaluate(() => window.recordingClicks), 2);
-        await pair.getByRole('button', { name: 'Zpět' }).click();
-        assert.equal(await recordingEditor.locator('[name=body]').inputValue(), 'Konec testu');
-        await recordingEditor.getByRole('button', { name: 'Konec', exact: true }).click();
-        await pair.getByRole('button', { name: 'Uložit konec' }).click();
-        assert.equal(await page.evaluate(() => window.recordingWrite.kind), 'song_end');
-        assert.equal(await recordingEditor.isVisible(), true, 'desktop creation stays open for another timestamp');
-        await recordingEditor.getByRole('button', { name: 'Zavřít časovou značku' }).click();
+        await recordingEditor.locator('[name=body]').fill('Pokus testu');
+        await recordingEditor.getByRole('button', { name: 'Pokus', exact: true }).click();
+        const interval = page.locator('.vz2-interval-editor');
+        assert(await interval.isVisible());
+        assert.equal(await interval.locator('[name=label]').inputValue(), 'Pokus testu');
+        assert.equal(await interval.locator('[name=start]').inputValue(), '00:05');
+        await interval.locator('[name=end]').fill('00:10');
+        await interval.getByRole('button', { name: 'Uložit úsek' }).click();
+        await interval.waitFor({ state: 'hidden' });
+        assert.deepEqual(await page.evaluate(() => [window.recordingWrite.action, window.recordingWrite.kind, window.recordingWrite.time_ms, window.recordingWrite.end_time_ms]), ['save_interval', 'song_start', 5123, 10000]);
         await recording.getByRole('button', { name: 'Upravit', exact: true }).first().click();
         assert.equal(await recordingEditor.evaluate(e => e.matches(':modal')), false);
         assert.equal(await recordingEditor.evaluate(e => e.parentElement.id), 'recording-body-1');
@@ -331,7 +330,7 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
         await page.setViewportSize({ width: 1440, height: 844 });
         await page.waitForFunction(() => document.querySelector('#recording-body-1 > .vz2-timestamp-editor.ts-docked')?.open);
         await recording.locator('#recording-play').click();
-        assert.equal(await page.evaluate(() => window.recordingClicks), 3);
+        assert.equal(await page.evaluate(() => window.recordingClicks), 2);
         await recordingEditor.getByRole('button', { name: 'Zavřít časovou značku' }).click();
         await page.evaluate(() => window.recordingNotes.destroy());
         assert.deepEqual(errors, []);

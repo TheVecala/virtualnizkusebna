@@ -40,4 +40,7 @@ module.exports = async ({ request, clients, db, good, check }) => {
     assert.equal(result.status, 200, result.text);
     check(result.json().document.current_revision === 2 && (await get('guest', { ...documentQuery, revision: 1 })).json().version.body === save.body,
         'rehearsal overview changes only on manual save and preserves earlier versions');
+    // This SQL-only audio fixture has no physical file. Do not leave it marked
+    // available for the subsequent alpha/beta storage preflight checks.
+    db('DELETE FROM vz2_audio_files WHERE recording_id=?', [second]);
 };
