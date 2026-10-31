@@ -164,7 +164,9 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         assert.equal(await page.locator('#looper-audio').count(), 0);
         assert.equal(await page.evaluate(() => Vz2Player.getState()), null);
         assert.deepEqual(errors, []);
-        console.log('PASS: closing during a download leaves no player or unhandled error');
+        await page.waitForFunction(() => Vz2Downloads.snapshot().some(t => t.file.id === 1 && t.state === 'complete'));
+        assert.equal(await page.evaluate(async () => (await Vz2Downloads.inventory()).some(r => r.key.includes('audio:1:'))), true);
+        console.log('PASS: closing during a download preserves queue and saves file without reopening player');
     } catch (error) {
         console.error('Browser errors:', errors);
         console.error(await page.locator('#recording-timestamps-4').textContent());

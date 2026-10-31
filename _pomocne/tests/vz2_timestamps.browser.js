@@ -115,7 +115,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await mixPanel.getByRole('button', { name: 'Vypnout smyčku' }).click();
         assert.equal((await read(mixId)).annotations[0].end_ms, 3000);
         check(true, 'browser: Mixer uses the same passage editor and explicit loop range');
-        await page.goto(base + 'useky.php');
+        await page.goto(base + 'useky.php?recording_id=' + id);
         await page.waitForFunction(() => !!window.Vz2TimestampModel && !!window.Vz2SegmentsModel);
         const segmentEnd = await page.evaluate(async rid => {
             const r = await (await fetch('php/ajax/vz2_timestamps.php?recording_id=' + rid)).json();
@@ -124,6 +124,25 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(segmentEnd, 3000);
         assert.deepEqual(errors, []);
         check(true, 'browser: standalone segments page loads the common model and sees identical range');
+        await page.locator('[data-segment-id="' + chorus.id + '"]').click();
+        await page.locator('#segments-loop').check();
+        await page.locator('#segments-play').click();
+        await page.waitForFunction(() => !document.querySelector('#segments-audio').paused);
+        await page.locator('#segments-edit').click();
+        await interval.locator('[name=label]').fill('Úprava z časové osy');
+        await save();
+        assert.equal(await page.locator('#segments-selected-title').textContent(), 'Úprava z časové osy');
+        assert.equal((await read(id)).annotations.find(i => i.id === chorus.id).label, 'Úprava z časové osy');
+        assert.equal(await page.locator('#segments-audio').evaluate(a => a.paused), false);
+        assert.equal(await page.evaluate(() => window.Vz2Timestamps), undefined, 'standalone editor does not need the list module');
+        await page.locator('#segments-downloads summary').click();
+        await page.locator('#segments-downloads select').selectOption(String(rehearsal.id));
+        await page.getByRole('button', { name: 'Vybrat zobrazené', exact: true }).click();
+        await page.getByRole('button', { name: 'Zařadit vybrané do fronty' }).click();
+        await page.waitForFunction(() => Vz2Downloads.snapshot().length === 3 && Vz2Downloads.snapshot().every(t => t.state === 'complete'));
+        assert.equal(await page.locator('#segments-audio').evaluate(a => a.paused), false);
+        check(true, 'browser: timeline edits without list, preserves looping playback, and downloads entire rehearsal including mixer tracks');
+        assert.deepEqual(errors, []);
         await context.close();
     } finally { await browser.close(); }
 };

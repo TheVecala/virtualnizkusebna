@@ -59,7 +59,7 @@ function vz2_mixer(?int $id=null):array {
         $tracks=[];
         foreach($r['files'] as $f)$tracks[]=['file'=>'a'.$f['id'].'.'.$f['format'],'name'=>$f['display_name'],'originalName'=>$f['original_name'],'order'=>$f['sort_order'],
             'url'=>rtrim(SITE_URL,'/').'/php/ajax/vz2_files.php?type=audio&id='.$f['id'].'&hash='.$f['sha256'],
-            'fileId'=>$f['id'],'sha256'=>$f['sha256'],'unavailable'=>$f['state']!=='available'];
+            'fileId'=>$f['id'],'byteSize'=>$f['byte_size'],'sha256'=>$f['sha256'],'unavailable'=>$f['state']!=='available'];
         $items[]=['id'=>(string)$r['id'],'name'=>vz2_recording_display_name($r),'version'=>1,'created'=>str_replace(' ','T',$r['created_at']).'Z',
             'audioDeleted'=>$r['audio_state']==='deleted','audioUnavailable'=>$r['audio_state']!=='available',
             'audioPartial'=>$r['audio_state']==='partial' && in_array('available',array_column($r['files'],'state'),true),'tracks'=>$tracks,

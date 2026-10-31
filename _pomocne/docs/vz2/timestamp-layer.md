@@ -121,3 +121,74 @@ Pro browser testy lze nastavit `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
 Testy pokrývají společný PHP/JS kontrakt, neúplné i překrývající se pasáže,
 hranice, vazby, oprávnění, konflikt revizí, rollback auditu včetně Historie,
 desktop/mobil, Mixér, starší data, export a přehrávání offline.
+
+## Sdílená obsluha pohledů a stahování
+
+Nad kontraktem 1 jsou samostatné moduly:
+
+- `Vz2TimestampStore` (`js/vz2-timestamp-store.js`): `load/reload`, `peek`,
+  `items`, `subscribe`, `save`, `saveInterval`, `saveNote`, `remove`, `select`.
+  Souběžná čtení stejné nahrávky sdílejí požadavek; starší odpověď nemůže
+  přepsat novější revizi. Ověření oprávnění a zápis zůstávají na serveru.
+  Zápis vrací potvrzená data a aktualizuje odběratele i dosavadní událost
+  `vz2:timestamps-updated`. `select` vyvolá `vz2:timestamp-selected` s dvojicí
+  `recording_id`, `item_id`; samotný výběr nic nepřehrává.
+- `Vz2TimestampEditor.open({recording_id, kind, item_id, adapter, finish, draft})`
+  (`js/vz2-timestamp-editor.js`): společný editor pokusů a pasáží. Nevyžaduje
+  seznam timestampů ani jeho DOM. Nový pohled předá ID nebo nový rozsah
+  `draft.time_ms/end_time_ms`. Načte revizi, oprávnění a nabídky z API.
+  Konflikt zachová formulář a vyžaduje výslovné převzetí aktuální revize.
+  Dosavadní editor bodových poznámek zůstává v modulu seznamu; jeho zápisy
+  používají stejný Store.
+- `Vz2TimestampPlayback` (`js/vz2-timestamp-playback.js`): `play(adapter,item,
+  {repeat,owner,onError})`, `stop`, `state`. Adaptér poskytuje `playRange`,
+  `currentTimeMs`, `canPlay`, volitelně `isLoading` a `pause`. `stop` ruší
+  řízení úseku, nikoli automaticky audio. Seznam/Looper/Mixér i Úseky sdílejí
+  řízení smyčky. Aktualizace názvu nepřeruší smyčku; změna hranic aktualizuje
+  její rozsah a odstranění intervalu smyčku vypne.
+- `Vz2Downloads` (`js/vz2-downloads.js`): `local`, `source`, `enqueue`,
+  `plan`, `enqueueRecordings`, `snapshot`, `subscribe/watch`, `cancel`,
+  `removeKey`, `inventory`, `clear`. Využívá stávající IndexedDB i klíče
+  prostředí/ID/hash, bez migrace či duplikace existujících kopií.
+  `source(file)` vrací místní blob URL nebo síťovou URL a funkci `release`.
+  Funkci uvolnění volá hostitel při výměně či zavření zdroje.
+- `Vz2DownloadsPanel.mount(host,getCatalog)` poskytuje výběr kolekce a nahrávek,
+  plán objemu před stažením, frontu, opakování, rušení, soupis místních souborů,
+  úplnost sad a odhad zbývajícího prostoru. `open()` obnoví katalog a stav.
+
+Úseky (`useky.php`) nyní umějí přímo vytvořit, upravit, dokončit či odstranit
+interval, využít místní audio a spravovat stahování. Nová stránka nepotřebuje
+modul seznamu `vz2-timestamps.js`. Změna dat zachová aktuální výběr a zdroj audia.
+Samostatné karty prohlížeče nadále obnovují timestampy tlačítkem Obnovit data.
+
+### Pravidla stahování
+
+Fronta běží sekvenčně a nezávisí na otevřeném přehrávači. Opakované požadavky
+na stejný soubor sdílejí úlohu; již uložený soubor správné velikosti se přeskočí.
+Kontroluje se úplnost stažení a dokončení zápisu do IndexedDB. Kontrola všech
+souborů v přehledu neprovádí dekódování ani načítání audia do ArrayBufferů.
+Dokončené úlohy nezadržují své audio bloby v paměti fronty.
+
+Chyba jedné stopy ponechá ostatní soubory uložené. Mixér s aktuálními metadaty
+určuje úplnost podle skutečné dostupnosti všech stop, takže rozpozná i sadu
+staženou hromadně mimo Mixér. Starší manifesty a audio se nemažou při zavedení
+služby. Chyba kvóty nabízí odstranění místních kopií, žádné automatické mazání.
+Odstranění místní kopie neovlivňuje server ani právě přehrávanou blob URL.
+
+Fronta je společná uvnitř jedné stránky. Opuštění stránky přeruší nehotový
+přenos; lehké údaje o nehotových úlohách se uchovají v `sessionStorage` stejné
+karty. Po obnovení se nabídne ruční opakování, nic se samo nestahuje. Dokončené
+soubory zůstanou v IndexedDB. Opakování nehotového souboru začíná od začátku;
+pokračování po bajtech ani koordinace front mezi kartami nejsou implementované.
+
+Tato etapa nepřidává úplný offline start aplikace, offline editaci ani další
+SQL migraci. Nadále platí požadavek migrace 009 z předchozí etapy. Mapa skladby
+se nemění. Fronta metadat timestampů pro offline synchronizaci neexistuje.
+
+### Dodatečné ověření
+
+`_pomocne/tests/vz2_shared_services.browser.test.js` ověřuje deduplikaci,
+hromadné ukládání, částečnou sadu, opakování, rušení, místní zdroj, opožděné
+čtení revize a samostatný editor s konfliktem. Integrační browser test timestampů
+ověřuje úpravu přímo v Úsecích bez modulu seznamu, zachování smyčky a stažení
+celé zkoušky. Offline regresní test kontroluje dokončení fronty po zavření Looperu.

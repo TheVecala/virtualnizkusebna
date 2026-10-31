@@ -58,3 +58,7 @@ Pro browser test je potřeba Playwright. Volitelné `PLAYWRIGHT_CHROMIUM_EXECUTA
 V lokálním prostředí byl ověřen model a browser test v Edge. PHP/MySQL runtime zde není k dispozici, proto nebylo provedeno skutečné přihlášení a databázový integrační test. Přístupová brána stránky přebírá postup existujícího `prehled.php`.
 
 K nasazení patří `useky.php`, `css/vz2-segments.css`, tři soubory `js/vz2-segments*.js`, změněný `index.php` a `php/inc/vz2_catalog.php`. Pomocné testy a dokumentace se na web nekopírují.
+
+## Společná obsluha
+
+Stránka nyní nabízí editor pokusů/pasáží, odstranění položek, místní zdroj audia a správu stahování. Podrobnosti rozhraní a omezení fronty popisuje [společná obslužná vrstva](vz2/timestamp-layer.md#sdílená-obsluha-pohledů-a-stahování).

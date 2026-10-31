@@ -9,8 +9,6 @@
     try { const saved = JSON.parse(localStorage.getItem(cfg.cachePrefix + 'workspaces:collections')); for (const k of Object.keys(collectionMemory)) if (saved?.[k] != null) collectionMemory[k] = String(saved[k]); } catch (_) { /* First visit / private storage. */ }
     const surfaceMemory = new Map(), catalogMemory = { song: { scroll: 0 }, rehearsal: { scroll: 0 } };
     const blobs = [];
-    const offlineUrls = [];
-    let offlineViewSerial = 0;
     const timestampPanels = [];
     // Disclosure state lives only in this document; a reload always starts collapsed.
     const expandedRecordings = new Set();
@@ -355,15 +353,11 @@
             const current = await idbKeyval.get(cacheKey, store);
             if (current instanceof Blob) {
                 if (!confirm('Odebrat offline kopii pouze z tohoto prohlížeče?')) return;
-                await idbKeyval.del(cacheKey, store); setCacheLabel('Uložit offline');
+                await window.Vz2Downloads.removeKey(cacheKey); setCacheLabel('Uložit offline');
             } else {
                 setCacheLabel('Stahuji offline…');
                 try {
-                    const blob = await window.Vz2Offline.download(file.url, file.byte_size, percent => {
-                        setCacheLabel(percent === null ? 'Stahuji offline…' : 'Stahuji offline ' + percent + ' %');
-                    });
-                    setCacheLabel('Ukládám offline…');
-                    await idbKeyval.set(cacheKey, file.original_name ? new File([blob], file.original_name, { type: blob.type }) : blob, store);
+                    const blob = await window.Vz2Downloads.enqueue(file);
                     if (audio.isConnected) useLocal(blob);
                     setCacheLabel('Odebrat offline kopii', true);
                 } catch (error) { setCacheLabel('Uložit offline'); throw error; }
@@ -378,6 +372,7 @@
             else delete cache.dataset.progress;
             cache.replaceChildren(window.Vz2Audio.icon(saved ? 'device-floppy' : 'wifi-off'));
         };
+        window.Vz2Downloads.watch(file, audio, saved => setCacheLabel(saved ? 'Odebrat offline kopii' : 'Uložit offline', saved));
         cache.setAttribute('aria-pressed', 'false');
         actions.append(cache);
         const sourceReady = idbKeyval.get(cacheKey, store).then(blob => {
@@ -1011,73 +1006,19 @@
     }
     $('show-log')?.addEventListener('click', () => loadLog(true).catch(e => message(e.message, true)));
     $('log-more').addEventListener('click', () => loadLog(false).catch(e => message(e.message, true)));
+    let downloadsPanel;
     async function showOffline() {
-        const serial = ++offlineViewSerial;
-        offlineUrls.splice(0).forEach(URL.revokeObjectURL);
-        const panel = $('offline-files'), list = panel.querySelector('.offline-files-list');
-        panel.hidden = false; list.replaceChildren(node('p', 'Načítám offline soubory…', 'offline-summary'));
-        const keys = (await idbKeyval.keys(store)).filter(k => typeof k === 'string' && k.startsWith(cfg.cachePrefix));
-        if (serial !== offlineViewSerial) return;
-        let total = 0, count = 0;
-        const summary = node('p', undefined, 'offline-summary'); list.append(summary);
-        for (const k of keys) {
-            if (!k.startsWith(cfg.cachePrefix + 'audio:')) continue;
-            const blob = await idbKeyval.get(k, store); if (!(blob instanceof Blob)) continue;
-            if (serial !== offlineViewSerial) return;
-            total += blob.size; count++;
-            summary.textContent = count + ' ' + (count === 1 ? 'soubor' : count < 5 ? 'soubory' : 'souborů') + ' · ' + (total / 1048576).toFixed(2) + ' MB';
-            const [id, expectedHash] = k.slice((cfg.cachePrefix + 'audio:').length).split(':');
-            const file = data?.recordings.flatMap(r => r.files).find(f => String(f.id) === id && f.sha256 === expectedHash);
-            const extension = ({'audio/wav':'wav','audio/mpeg':'mp3','audio/flac':'flac','audio/ogg':'ogg','audio/aac':'aac'})[blob.type] || 'bin';
-            const originalName = file?.original_name || (blob instanceof File ? blob.name : '');
-            const fallbackName = 'audio-' + id + '.' + extension;
-            const row = node('article', undefined, 'offline-file');
-            const details = node('div', undefined, 'offline-file-details');
-            details.append(node('strong', originalName || fileName(file) || 'Soubor #' + id),
-                node('small', (blob.size / 1048576).toFixed(2) + ' MB', 'vz2-attribution'));
-            const status = node('small', 'Ověřuji shodu souboru…', 'offline-file-status'); details.append(status);
-            const actions = node('div', undefined, 'offline-file-actions');
-            const link = node('a', 'Stáhnout'), url = URL.createObjectURL(blob); offlineUrls.push(url);
-            link.setAttribute('aria-label', 'Stáhnout ' + (originalName || fileName(file) || 'soubor #' + id));
-            link.href = url; link.download = fallbackName; link.setAttribute('aria-disabled', 'true');
-            link.addEventListener('click', e => { if (link.getAttribute('aria-disabled') === 'true') e.preventDefault(); });
-            const removeCopy = button('Odebrat', async () => {
-                if (!confirm('Odebrat tuto kopii pouze z prohlížeče?')) return;
-                window.MultitrackApp?.destroy();
-                await idbKeyval.del(k, store); await showOffline(); if (data) render();
-            }, 'danger');
-            removeCopy.setAttribute('aria-label', 'Odebrat ' + (originalName || fileName(file) || 'soubor #' + id));
-            actions.append(link, removeCopy);
-            row.append(details, actions); list.append(row);
-            try {
-                if (!/^[a-f0-9]{64}$/i.test(expectedHash) || !crypto.subtle) throw new Error('Kontrolní součet není dostupný.');
-                const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
-                if (serial !== offlineViewSerial) return;
-                const actualHash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
-                if (actualHash === expectedHash.toLowerCase()) {
-                    link.download = originalName || fallbackName;
-                    status.textContent = originalName ? 'Ověřeno · původní název' : 'Ověřeno · původní název není dostupný';
-                } else {
-                    status.textContent = 'Kopie se liší od původního souboru · náhradní název';
-                    status.classList.add('error');
-                }
-            } catch (error) {
-                if (serial !== offlineViewSerial) return;
-                status.textContent = 'Shodu nelze ověřit · náhradní název';
-                status.classList.add('error');
-            }
-            link.removeAttribute('aria-disabled');
-        }
-        if (!count) summary.textContent = 'Žádné uložené soubory.';
-        $('offline-clear').disabled = !count;
+        const panel = $('offline-files'); panel.hidden = false;
+        downloadsPanel ||= window.Vz2DownloadsPanel.mount(panel.querySelector('.offline-files-list'), () => data);
+        downloadsPanel.open();
+        $('offline-clear').disabled = false;
     }
     $('show-offline').addEventListener('click', () => showOffline().catch(e => message(e.message, true)));
     $('offline-clear').addEventListener('click', async () => {
         if (!confirm('Odebrat všechny offline kopie tohoto prostředí z prohlížeče?')) return;
         try {
-            window.MultitrackApp?.destroy();
-            for (const k of await idbKeyval.keys(store)) if (typeof k === 'string' && k.startsWith(cfg.cachePrefix)) await idbKeyval.del(k, store);
-            await showOffline(); if (data) render();
+            await window.Vz2Downloads.clear();
+            await showOffline();
         } catch (e) { message(e.message, true); }
     });
     $('logout').addEventListener('click', () => {
