@@ -33,7 +33,7 @@
     }
     function offlineLabel(cached) {
         $('looper-offline-label').textContent = cached ? 'Odebrat offline kopii' : 'Uložit pro offline';
-        $('looper-offline-status').textContent = cached ? 'uloženo v zařízení · přehrávání ze zařízení'
+        $('looper-offline-status').textContent = cached ? 'uloženo v zařízení · ' + (looper?.source === 'offline' ? 'přehrávání ze zařízení' : 'přehrávání z původního zdroje')
             : looper?.url ? 'přehrávání z načteného souboru · kopie není uložená' : 'přehrávání ze sítě';
         $('looper-offline-icon').className = cached ? 'ti ti-trash' : 'ti ti-wifi-off';
     }
@@ -200,6 +200,10 @@
         audio.addEventListener('loadedmetadata', () => { if (live()) audio.currentTime = Math.max(0, Math.min(audio.duration || 0, seconds)); }, { once: true });
         audio.addEventListener('loadedmetadata', () => { if (live()) { current.phase = 'ready'; update(); } });
         audio.addEventListener('error', () => { if (live()) { current.phase = 'error'; error('Audio nelze přehrát. Zavřete Looper a obnovte seznam.'); update(); } });
+        window.Vz2Downloads.watch(file, audio, saved => {
+            if (looper !== current) return;
+            current.cached = saved; offlineLabel(saved);
+        });
         current.cacheKey = window.VZ2.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
         current.peakCacheKey = window.VZ2.cachePrefix + 'peaks:' + file.id + ':' + file.sha256;
         download.href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(recording.id);
@@ -271,9 +275,9 @@
     function renderWaveTimestamps(current, width, durationMs) {
         const markers = document.createDocumentFragment();
         const entries = window.Vz2TimestampModel.items({ id: current.recording.id, entries: current.timestamps || [], duration_ms: Math.round(durationMs) }).flatMap(item => {
-            const start = { ...item.source, body: item.label };
+            const start = { ...item.source, body: item.label, annotationId: item.id };
             if (item.end_ms === null) return [start];
-            return [start, { id: item.end_timestamp_id || item.timestamp_id, kind: item.kind === 'take' ? 'song_end' : 'passage_end', time_ms: item.end_ms,
+            return [start, { annotationId: item.id, id: item.end_timestamp_id || item.timestamp_id, kind: item.kind === 'take' ? 'song_end' : 'passage_end', time_ms: item.end_ms,
                 body: item.end_source?.body?.replace(/^[↑↓]$/, '') || item.label }];
         }).sort((a, b) => a.time_ms - b.time_ms || Number(a.id) - Number(b.id));
         const visuals = {
@@ -291,6 +295,9 @@
             const labelOnLeft = entry.kind === 'song_end' ? x >= 155 : x > width - 155;
             marker.className = 'looper-wave-marker' + (labelOnLeft ? ' is-label-left' : '');
             marker.dataset.timestampId = entry.id;
+            marker.dataset.annotationId = entry.annotationId;
+            const selected = window.Vz2TimestampStore.selection();
+            marker.setAttribute('aria-pressed', String(selected?.recording_id === Number(current.recording.id) && selected?.item_id === entry.annotationId));
             marker.dataset.kind = entry.kind;
             marker.style.left = x + 'px';
             const description = visual.name + ': ' + entry.body + ' (' + window.Vz2Timestamps.format(ms) + ')';
@@ -305,7 +312,7 @@
             const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
             const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
             label.append(text); marker.append(label);
-            marker.onclick = event => { event.stopPropagation(); seek(ms / 1000); };
+            marker.onclick = event => { event.stopPropagation(); window.Vz2TimestampStore.select({ recording_id: current.recording.id, item_id: entry.annotationId }); seek(ms / 1000); };
             markers.append(marker);
         });
         $('looper-wave-markers').replaceChildren(markers);
@@ -406,30 +413,26 @@
         const current = looper; if (!current) return;
         if (current.cached && !confirm('Odebrat tuto offline kopii pouze z prohlížeče?')) return;
         offline.disabled = true;
+        const wasCached = current.cached;
         try {
-            if (current.cached) await window.idbKeyval.del(current.cacheKey, store);
+            if (wasCached) await window.Vz2Downloads.removeKey(current.cacheKey);
             else {
-                if (!current.blob) {
-                    $('looper-offline-status').textContent = 'stahuji audio…';
-                    current.blob = await window.Vz2Offline.download(current.file.url, current.file.byte_size, percent => {
-                        if (looper === current) $('looper-offline-status').textContent = percent === null ? 'stahuji audio…' : 'stahuji audio ' + percent + ' %';
-                    }, current.abort.signal);
-                }
-                if (looper !== current) return;
                 $('looper-offline-status').textContent = 'ukládám do zařízení…';
-                const saved = current.file.original_name
-                    ? new File([current.blob], current.file.original_name, { type: current.blob.type }) : current.blob;
-                await window.idbKeyval.set(current.cacheKey, saved, store);
+                current.blob = await window.Vz2Downloads.enqueue(current.file, { blob: current.blob });
                 if (looper !== current) return;
                 if (!current.url) current.url = window.Vz2Offline.useBlob(current.audio, current.blob, error);
                 current.source = 'offline';
             }
-            current.cached = !current.cached;
+            current.cached = !wasCached;
             if (looper === current) offlineLabel(current.cached);
         }
         catch (e) { if (looper === current) { offlineLabel(current.cached); error(e.message); } }
         finally { if (looper === current) offline.disabled = false; }
     };
+    document.addEventListener('vz2:timestamp-selected', e => {
+        $('looper-wave-markers').querySelectorAll('[data-annotation-id]').forEach(marker => marker.setAttribute('aria-pressed',
+            String(e.detail?.recording_id === Number(looper?.recording.id) && e.detail?.item_id === marker.dataset.annotationId)));
+    });
     document.addEventListener('multitrack:selected', () => { mixerPending = false; });
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && looperMenu.open) { looperMenu.open = false; e.preventDefault(); return; }

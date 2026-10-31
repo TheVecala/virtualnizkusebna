@@ -73,7 +73,7 @@
                 xhr.onload = () => {
                     cleanup();
                     if (xhr.status < 200 || xhr.status >= 300) return reject(new Error('Audio už není dostupné. Obnovte seznam.'));
-                    if (!(xhr.response instanceof Blob) || xhr.response.size !== Number(expectedSize)) return reject(new Error('Audio se nestáhlo celé.'));
+                    if (!(xhr.response instanceof Blob) || (expectedSize != null && xhr.response.size !== Number(expectedSize))) return reject(new Error('Audio se nestáhlo celé.'));
                     resolve(xhr.response);
                 };
                 xhr.onerror = () => { cleanup(); reject(new Error('Stažení audia selhalo.')); };

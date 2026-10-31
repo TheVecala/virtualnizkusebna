@@ -483,6 +483,7 @@
             return {
                 file: file,
                 fileId: rawTrack.fileId,
+                byteSize: rawTrack.byteSize,
                 sha256: rawTrack.sha256,
                 unavailable: rawTrack.unavailable === true,
                 name: name,
@@ -1237,7 +1238,14 @@
         });
     }
 
+    function downloadFile(track) {
+        return { id: track.fileId, sha256: track.sha256, url: track.url, byte_size: track.byteSize, original_name: track.originalName || track.file };
+    }
     function inspectOfflineState(set) {
+        if (config.cachePrefix && window.Vz2Downloads && set) {
+            return Promise.all(set.tracks.map(function(track) { return window.Vz2Downloads.local(downloadFile(track)); }))
+                .then(function(blobs) { return blobs.length > 0 && blobs.every(Boolean); }).catch(function() { return false; });
+        }
         var store = getCacheStore();
         if (!store || !set || !set.cacheId) return Promise.resolve(false);
         return window.idbKeyval.get(manifestCacheKey(set), store).then(function(manifest) {
@@ -1280,6 +1288,18 @@
     }
 
     function saveSetOffline(set) {
+        if (config.cachePrefix && window.Vz2Downloads && set) {
+            setOfflineUi(false, 'Zařazeno do společné fronty stahování', true);
+            return Promise.allSettled(set.tracks.map(function(track) {
+                return track.unavailable ? Promise.reject(Error('Stopa není dostupná.')) : window.Vz2Downloads.enqueue(downloadFile(track), { blob: track.blob });
+            })).then(function(results) {
+                if (set === currentSet) {
+                    refreshOfflineState(set);
+                    if (results.some(function(r) { return r.status === 'rejected'; })) showNotice('Některé stopy nejsou uložené. Hotové soubory zůstaly v zařízení; podrobnosti jsou ve frontě stahování.', 'error');
+                }
+                return results.every(function(r) { return r.status === 'fulfilled'; });
+            });
+        }
         var store = getCacheStore();
         if (!store || !set || set !== currentSet) return Promise.resolve(false);
         var token = ++offlineSerial;
@@ -1376,6 +1396,11 @@
     }
 
     function removeSetOffline(set) {
+        if (config.cachePrefix && window.Vz2Downloads && set) {
+            return Promise.all(set.tracks.map(function(track) { return window.Vz2Downloads.removeKey(track.cacheKey); }))
+                .then(function() { if (set === currentSet) refreshOfflineState(set); return true; })
+                .catch(function(error) { if (set === currentSet) showNotice(errorMessage(error), 'error'); return false; });
+        }
         var store = getCacheStore();
         if (!store || !set || set !== currentSet) return Promise.resolve(false);
         var token = ++offlineSerial;
@@ -1400,6 +1425,9 @@
         });
     }
 
+    document.addEventListener('vz2:downloads-updated', function() {
+        if (currentSet && !window.Vz2Downloads.snapshot().some(function(t) { return ['queued', 'checking', 'downloading', 'saving'].includes(t.state); })) refreshOfflineState(currentSet);
+    });
     function requestOfflineChange() {
         var set = currentSet;
         if (!set || !getCacheStore() || dom.offline.disabled) return;
