@@ -796,3 +796,14 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 .vz2-interval-editor pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .vz2-interval-editor [hidden]{display:none!important}
 @media(max-width:600px){.vz2-interval-editor .interval-times{grid-template-columns:1fr}.vz2-interval-editor{padding:12px}}
+
+/* Shared timestamp selection and the download manager. */
+.vz2-timestamps li.ts-selected { box-shadow: inset 3px 0 var(--color-primary); }
+.download-manager { display: grid; gap: 10px; min-width: 0; }
+.download-manager > div > label { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+.download-manager > div:has(> label) { max-height: 240px; overflow: auto; }
+.download-task { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--color-border); }
+.download-task > span { flex: 1 1 220px; overflow-wrap: anywhere; }
+.download-manager select { max-width: 100%; }
+
+.looper-wave-marker[aria-pressed="true"] .looper-wave-marker-label { outline: 2px solid var(--color-primary); }

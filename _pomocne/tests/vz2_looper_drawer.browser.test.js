@@ -40,6 +40,10 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
                 document.getElementById('looper-wave-track').style.height = '90px';
             }, data);
             await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-model.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-store.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-playback.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-note-editor.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-editor.js') });
             await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamps.js') });
             await page.evaluate(() => {
                 window.notes = Vz2Timestamps.mount(document.getElementById('looper-timestamps'), 1,
@@ -295,6 +299,10 @@ const data = { ok: true, recording_id: 1, title: 'Zkouška', can_create: true, t
             };
         }, data);
         await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-model.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-store.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-playback.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-note-editor.js') });
+            await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamp-editor.js') });
             await page.addScriptTag({ path: path.join(root, 'js/vz2-timestamps.js') });
         await page.evaluate(() => {
             window.recordingNotes = Vz2Timestamps.mount(document.getElementById('recording-body-1'), 1,

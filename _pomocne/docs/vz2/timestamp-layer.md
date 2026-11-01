@@ -121,3 +121,164 @@ Pro browser testy lze nastavit `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
 Testy pokrývají společný PHP/JS kontrakt, neúplné i překrývající se pasáže,
 hranice, vazby, oprávnění, konflikt revizí, rollback auditu včetně Historie,
 desktop/mobil, Mixér, starší data, export a přehrávání offline.
+
+## Sdílená obsluha pohledů a stahování
+
+Nad kontraktem 1 jsou samostatné moduly:
+
+- `Vz2TimestampStore` (`js/vz2-timestamp-store.js`): `load/reload`, `peek`,
+  `items`, `subscribe`, `save`, `saveInterval`, `saveNote`, `remove`, `select`.
+  Souběžná čtení stejné nahrávky sdílejí požadavek; starší odpověď nemůže
+  přepsat novější revizi. Ověření oprávnění a zápis zůstávají na serveru.
+  Zápis vrací potvrzená data a aktualizuje odběratele i dosavadní událost
+  `vz2:timestamps-updated`. `select` vyvolá `vz2:timestamp-selected` s dvojicí
+  `recording_id`, `item_id`; samotný výběr nic nepřehrává.
+- `Vz2TimestampEditor.open({recording_id, kind, item_id, adapter, finish, draft})`
+  (`js/vz2-timestamp-editor.js`): společný editor pokusů a pasáží. Nevyžaduje
+  seznam timestampů ani jeho DOM. Nový pohled předá ID nebo nový rozsah
+  `draft.time_ms/end_time_ms`. Načte revizi, oprávnění a nabídky z API.
+  Konflikt zachová formulář a vyžaduje výslovné převzetí aktuální revize.
+  Bodové poznámky zpracuje tentýž vstup s `kind: 'note'` nebo `item_id` poznámky.
+  Samostatný `Vz2NoteEditor` (`js/vz2-note-editor.js`) zajišťuje jejich formulář,
+  kontrolu revize, přesnost času a konflikty. Volitelné připojení k hostiteli
+  zachovává dokované a mobilní ovládání seznamu; pro otevření z jiného pohledu
+  žádný seznam ani jeho DOM nepotřebuje.
+- `Vz2TimestampPlayback` (`js/vz2-timestamp-playback.js`): `play(adapter,item,
+  {repeat,owner,onError})`, `stop`, `state`. Adaptér poskytuje `playRange`,
+  `currentTimeMs`, `canPlay`, volitelně `isLoading` a `pause`. `stop` ruší
+  řízení úseku, nikoli automaticky audio. Seznam/Looper/Mixér i Úseky sdílejí
+  řízení smyčky. Aktualizace názvu nepřeruší smyčku; změna hranic aktualizuje
+  její rozsah a odstranění intervalu smyčku vypne.
+- `Vz2Downloads` (`js/vz2-downloads.js`): `local`, `read`, `source`, `enqueue`,
+  `plan`, `enqueueRecordings`, `snapshot`, `subscribe/watch`, `cancel`,
+  `removeKey`, `inventory`, `clear`. Využívá stávající IndexedDB i klíče
+  prostředí/ID/hash, bez migrace či duplikace existujících kopií.
+  Získávání audia pro přehrávače popisuje kontrakt níže.
+- `Vz2DownloadsPanel.mount(host,getCatalog)` poskytuje výběr kolekce a nahrávek,
+  plán objemu před stažením, frontu, opakování, rušení, soupis místních souborů,
+  úplnost sad a odhad zbývajícího prostoru. `open()` obnoví katalog a stav.
+
+Úseky (`useky.php`) nyní umějí přímo vytvořit, upravit, dokončit či odstranit
+interval, vytvořit/upravit bodovou poznámku, využít místní audio a spravovat stahování. Nová stránka nepotřebuje
+modul seznamu `vz2-timestamps.js`. Změna dat zachová aktuální výběr a zdroj audia.
+Samostatné karty prohlížeče nadále obnovují timestampy tlačítkem Obnovit data.
+
+### Společné získávání audia
+
+Karty nahrávek včetně propojených karet, detail Matice, Looper, Mixér, režim Auto i Úseky vybírají zdroj přes
+`Vz2Downloads`. Pohledy nepřistupují přímo k uloženému audiu. Looper si nadále
+samostatně spravuje pomocné waveform peaks; starší samostatné použití Mixéru
+bez VZ2 zachovává původní formát úložiště.
+
+- Vstup `file` odpovídá souboru z katalogu: `id`, `sha256`, `url`, `byte_size`.
+  Mixér převádí svůj popis stopy na tentýž formát. Místní kopie se hledá podle
+  prostředí, ID a hashe verze. Při známé velikosti musí počet bajtů odpovídat;
+  neúplná kopie se pro přehrávání přeskočí. Starší metadata bez velikosti
+  zůstávají podporovaná. Obsah velkých souborů se při kontrole znovu nehashuje.
+- `local(file)` vrací platný místní `Blob` nebo `null`; chybu IndexedDB
+  předává volajícímu. Používá se při ukládání a zjišťování dostupnosti.
+- `read(file, {download, signal, onProgress})` vrací `{blob, local,
+  storageError}`. Výchozí `download: false` pouze ověří místní kopii.
+  `download: true` při chybějící kopii načte celý soubor do paměti a ověří
+  velikost, jak potřebuje Mixér pro dekódování. Samotné čtení nic neukládá.
+  Chyba úložiště neblokuje síťový zdroj; `storageError` je příznak pro UI.
+- `source(file, options)` přidává `url` a idempotentní `release()`.
+  Pro místní blob vytvoří objektovou URL; jinak vrací původní síťovou URL,
+  ze které si audio element načítá podle potřeby. Looper si při chybějících
+  peaks vyžádá `download: true` a dostane URL i blob načtený do paměti.
+  `local` znamená původ z IndexedDB, nikoli pouze existenci blob URL.
+- Hostitel uvolňuje zdroj při výměně nebo zavření přehrávače. Opožděný
+  výsledek po změně výběru také uvolní. `AbortSignal` zastaví plný síťový
+  přenos a zabrání zahájení přenosu po opožděném čtení z úložiště.
+  Tento signál neovlivňuje samostatnou frontu `enqueue`.
+
+`Vz2Audio.mountFile(file, options)` spravuje vložené přehrávače Matice a
+propojených karet nad `Vz2Downloads.source`. Vrací `root`, `audio`,
+`prepare()` a idempotentní `destroy()`. Podporuje počáteční pozici
+`initialTime` a omezený rozsah `start/end` v sekundách. Sbalené propojené
+karty zdroj získají až při rozbalení; přehrání počká na výběr zdroje.
+Hostitel při odstranění karty nebo zavření detailu volá `destroy()`:
+zastaví audio, zruší čekající čtení a uvolní objektovou URL. Opožděná odpověď
+už nemůže zavřený přehrávač obnovit. `Vz2Audio` zachytává spuštění všech HTML
+audio přehrávačů včetně Looperu a režimu Auto a pozastaví ostatní audio i Mixér.
+Mixér při skutečném spuštění vysílá `multitrack:play`, které naopak pozastaví
+HTML audio. Pravidlo platí i při spuštění přes API nebo klávesnici.
+
+Matice pro multitrack používá `Vz2App.openRecording(id, timeMs)` a existující
+Mixér se všemi stopami, výběrem místních kopií a kontrolou opuštění aktuálního
+poslechu. Zdrojový pokus otevře na jeho začátku, samostatný výstřižek od nuly.
+Historie předává `kind`, `collection_id` a `duration_ms` u zdroje i výstřižku;
+typ se neurčuje počtem souborů, takže i jednostopý multitrack otevře Mixér.
+
+Přepnutí již běžícího poslechu na právě uložený blob dál zajišťuje
+`Vz2Offline.useBlob`: zachovává pozici, přehrávání/pauzu i rychlost.
+Obnovení připojení samo nepřepíná zdroj rozehraného audia. Stávající kopie
+se nemigrují ani automaticky nemažou; nové vizualizace použijí stejné API.
+
+### Pravidla stahování
+
+Fronta běží sekvenčně a nezávisí na otevřeném přehrávači. Opakované požadavky
+na stejný soubor sdílejí úlohu; již uložený soubor správné velikosti se přeskočí.
+Kontroluje se úplnost stažení a dokončení zápisu do IndexedDB. Kontrola všech
+souborů v přehledu neprovádí dekódování ani načítání audia do ArrayBufferů.
+Dokončené úlohy nezadržují své audio bloby v paměti fronty.
+
+Chyba jedné stopy ponechá ostatní soubory uložené. Mixér s aktuálními metadaty
+určuje úplnost podle skutečné dostupnosti všech stop, takže rozpozná i sadu
+staženou hromadně mimo Mixér. Starší manifesty a audio se nemažou při zavedení
+služby. Chyba kvóty nabízí odstranění místních kopií, žádné automatické mazání.
+Odstranění místní kopie neovlivňuje server ani právě přehrávanou blob URL.
+
+Fronta je společná uvnitř jedné stránky. Opuštění stránky přeruší nehotový
+přenos; lehké údaje o nehotových úlohách se uchovají v `sessionStorage` stejné
+karty. Po obnovení se nabídne ruční opakování, nic se samo nestahuje. Dokončené
+soubory zůstanou v IndexedDB. Opakování nehotového souboru začíná od začátku;
+pokračování po bajtech ani koordinace front mezi kartami nejsou implementované.
+
+Tato etapa nepřidává úplný offline start aplikace, offline editaci ani další
+SQL migraci. Nadále platí požadavek migrace 009 z předchozí etapy. Mapa skladby
+se nemění. Fronta metadat timestampů pro offline synchronizaci neexistuje.
+
+### Dodatečné ověření
+
+`_pomocne/tests/vz2_shared_services.browser.test.js` ověřuje deduplikaci,
+hromadné ukládání, částečnou sadu, opakování, rušení, místní zdroj, opožděné
+čtení revize a samostatný editor s konfliktem. Integrační browser test timestampů
+ověřuje úpravu přímo v Úsecích bez modulu seznamu, zachování smyčky a stažení
+celé zkoušky. Offline regresní test kontroluje dokončení fronty po zavření Looperu.
+
+`_pomocne/tests/vz2_audio_sources.browser.test.js` ověřuje zdroj podle verze
+a prostředí, neúplnou kopii, chybu úložiště, načtení bez automatického zápisu,
+chyby HTTP i přerušeného přenosu, zrušení po opožděném čtení a uvolnění URL.
+`vz2_offline.browser.test.js` navíc ověřuje místní zdroj a neúplné kopie
+v reálných přehrávačích, rušení načítání Mixéru a tvorbu peaks z paměti Looperu.
+
+`vz2_listening.browser.test.js` ověřuje místní poslech z Matice a propojených
+karet bez síťového audia, hranice úseku, úklid při zavření a navigaci, opožděné
+čtení úložiště, síťovou náhradu chybné kopie, multitrack s jednou i více stopami,
+zachování hlasitosti rozehraného mixu, odmítnutí změny přehrávače a mobilní detail.
+
+
+### Přehled a režim Auto
+
+Kompaktní Přehled používá `vz2_timestamp_annotations` pro každou nahrávku.
+Jeho položky typu `marker` nesou normalizované druhy `take/passage/note/boundary`,
+ID, skutečný začátek/konec, stav, typ pasáže, rodiče a skladbu. Zachovává `time_ms`
+jako alias začátku pro kompatibilitu textového výstupu. Syrové SQL zdroje se
+neposílají; poznámka a autorství konce jsou v `end_body/end_author/end_at`.
+Párovaný pokus je jeden řádek. Otevřené pasáže mají „Doplnit konec“ a staré
+nespárované konce zůstávají viditelné. Filtry `*_marker_song_start/song_end`
+zůstaly pod původními klíči, ale nyní znamenají pokusy / nespárované konce.
+Přehled zůstává pouze pro čtení, bez audia a mediálních URL; Mapa se nemění.
+
+Režim Auto načítá timestampy přes Store a vykresluje pokusy z Model.items.
+Ukazuje oba známé časy a přiřazenou skladbu. `Model.activeTakes(recording,ms)`
+vrací dokončené pokusy v intervalu `[start_ms,end_ms)`. Mezera neoznačuje žádný
+pokus, překryv označí všechny odpovídající pokusy, otevřený pokus se nikdy
+nepovažuje za nekonečný interval. Zůstává kliknutelný a označený „bez konce“.
+Aktualizace názvu či hranic neznovunačítá audio. Rychlá hodnocení používají
+Store.addQuickNote; změna se nedotýká ukládání ani výběru místního audia.
+
+Doplňkové testy: `vz2_note_editor.browser.test.js` (samostatný formulář,
+revize, oprávnění, výpadek, mobil), `vz2_overview_intervals.browser.js` (volá
+integrační sada overview) a scénáře režimu Auto v `vz2_offline.browser.test.js`.

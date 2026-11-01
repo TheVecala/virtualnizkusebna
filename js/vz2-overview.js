@@ -19,11 +19,8 @@
             dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Prague'
         }).format(parsed);
     };
-    const time = milliseconds => {
-        const seconds = Math.floor(Number(milliseconds) / 1000);
-        return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-    };
-    const markerNames = { song_start: 'Začátek skladby', song_end: 'Konec skladby', passage: 'Pasáž', note: 'Poznámka' };
+    const time = window.Vz2TimestampModel.format;
+    const markerNames = { take: 'Pokus', boundary: 'Konec bez začátku', passage: 'Pasáž', note: 'Poznámka' };
     const presets = {
         lyrics: ['songs', 'song_lyrics'],
         starts_notes: ['rehearsals', 'rehearsal_starts', 'rehearsal_notes'],
@@ -82,14 +79,24 @@
         if (entry.type === 'marker') {
             const kind = markerNames[entry.kind] || 'Značka';
             const markerText = entry.body || kind;
-            row.append(make('span', time(entry.time_ms), 'overview-marker-time'));
+            const range = make('span', time(entry.start_ms), 'overview-marker-time');
+            if (entry.end_ms !== null) { range.append(document.createElement('br'), document.createTextNode('– ' + time(entry.end_ms))); }
+            row.append(range);
             content.append(make('span', `${kind}: `, 'overview-visually-hidden'));
             content.append(make('span', markerText, 'overview-entry-body'));
+            if (entry.song_title) content.append(make('small', ' · ' + entry.song_title, 'overview-entry-meta'));
+            if (entry.passage_type) content.append(make('small', ' · ' + (window.Vz2TimestampModel.passageTypes[entry.passage_type] || entry.passage_type), 'overview-entry-meta'));
+            if (entry.status === 'open') content.append(make('small', ' · Doplnit konec', 'overview-entry-meta'));
+            if (entry.note_text) content.append(make('div', entry.note_text, 'overview-annotation-note'));
             if (attribution) content.append(make('small', ` · ${attribution}`, 'overview-entry-meta'));
+            if (entry.end_body || entry.end_author && entry.end_author !== entry.author) {
+                const endMeta = [filters.show_author ? entry.end_author : '', filters.show_entry_date ? date(entry.end_at) : ''].filter(Boolean).join(' · ');
+                content.append(make('div', ['Konec: ' + (entry.end_body || time(entry.end_ms)), endMeta].filter(Boolean).join(' · '), 'overview-annotation-note'));
+            }
             row.append(content);
-            if (entry.kind === 'song_start' || entry.kind === 'song_end') {
-                const icon = make('span', entry.kind === 'song_start' ? '↑' : '↓',
-                    `overview-marker-icon${entry.kind === 'song_end' ? ' overview-marker-icon-end' : ''}`);
+            if (entry.kind === 'take' || entry.kind === 'boundary') {
+                const icon = make('span', entry.kind === 'take' ? '↔' : '↓',
+                    `overview-marker-icon${entry.kind === 'boundary' ? ' overview-marker-icon-end' : ''}`);
                 icon.title = kind; icon.setAttribute('aria-hidden', 'true'); row.append(icon);
             }
             return row;

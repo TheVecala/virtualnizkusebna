@@ -7,6 +7,13 @@ function vz2_history_right(): bool {
         && ($_SESSION['role'] ?? '') !== 'host' && (auth_is_admin() || ma_pravo('comment'));
 }
 
+function vz2_history_recording(?array $r): ?array {
+    if (!$r) return null;
+    return ['id'=>(int)$r['id'], 'collection_id'=>(int)$r['collection_id'], 'kind'=>$r['kind'],
+        'duration_ms'=>$r['duration_ms']===null?null:(int)$r['duration_ms'], 'title'=>$r['title'],
+        'summary'=>$r['summary'], 'audio_state'=>$r['audio_state'], 'files'=>$r['files']];
+}
+
 function vz2_history_data(mysqli $db): array {
     $catalog=vz2_catalog();
     $collections=[]; foreach($catalog['collections'] as $c)$collections[(int)$c['id']]=$c;
@@ -22,8 +29,8 @@ function vz2_history_data(mysqli $db): array {
         foreach(['source_recording_id','start_timestamp_id','end_timestamp_id','clip_recording_id','start_ms','end_ms'] as $k)$p[$k]=$p[$k]===null?null:(int)$p[$k];
         $source=$p['source_recording_id']?($recordings[$p['source_recording_id']]??null):null;
         $clip=$p['clip_recording_id']?($recordings[$p['clip_recording_id']]??null):null;
-        $p['source']=$source?['id'=>$source['id'],'title'=>$source['title'],'summary'=>$source['summary'],'audio_state'=>$source['audio_state'],'files'=>$source['files']]:null;
-        $p['clip']=$clip?['id'=>$clip['id'],'title'=>$clip['title'],'summary'=>$clip['summary'],'audio_state'=>$clip['audio_state'],'files'=>$clip['files']]:null;
+        $p['source']=vz2_history_recording($source);
+        $p['clip']=vz2_history_recording($clip);
         $p['notes']=[];
         if($p['source_recording_id'] && $p['start_ms']!==null && $p['end_ms']!==null)foreach($source['timestamps']??[] as $t)if($t['kind']==='note' && $t['time_ms'] >= $p['start_ms'] && $t['time_ms'] < $p['end_ms'])$p['notes'][]=$t;
         $startOwner=null;if($p['start_timestamp_id'])foreach($source['timestamps']??[] as $t)if($t['id']===$p['start_timestamp_id'])$startOwner=$t['created_by'];

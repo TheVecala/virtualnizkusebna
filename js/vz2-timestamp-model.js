@@ -51,10 +51,26 @@
     function endOf(entry, entries, duration) {
         return normalize({ id: entry.recording_id || 0, entries, duration_ms: duration }).find(i => i.timestamp_id === Number(entry.id))?.end_ms ?? null;
     }
+    function activeTakes(recording, at) {
+        return items(recording).filter(i => i.kind === 'take' && i.status === 'complete' && i.start_ms <= at && at < i.end_ms);
+    }
     function containingTakes(recording, start, end = null) {
         return items(recording).filter(i => i.kind === 'take' && i.start_ms <= start && (i.end_ms === null || (start < i.end_ms && (end === null || end <= i.end_ms))));
     }
-    const api = { version, passageTypes, time, normalize, items, endOf, containingTakes };
+    function parse(text) {
+        const m = /^(?:(\d+):)?(\d+):(\d{2})(?:[.,](\d{1,3}))?$/.exec(text.trim());
+        const hasHours = !!m?.[1];
+        if (!m || Number(m[3]) > 59 || (hasHours && Number(m[2]) > 59)) throw new Error('Čas zadejte jako mm:ss.');
+        const minutes = Number(m[2]) + (hasHours ? Number(m[1]) * 60 : 0);
+        const ms = (minutes * 60 + Number(m[3])) * 1000 + Number((m[4] || '').padEnd(3, '0'));
+        if (!Number.isSafeInteger(ms) || ms > 604800000) throw new Error('Nejvyšší čas je 7 dní.');
+        return ms;
+    }
+    function compactFormat(ms) {
+        const seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
+        return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+    }
+    const api = { format: compactFormat, parse, version, passageTypes, time, normalize, items, endOf, containingTakes, activeTakes };
     if (typeof module !== 'undefined') module.exports = api;
     root.Vz2TimestampModel = api;
 })(typeof window === 'undefined' ? globalThis : window);

@@ -3,6 +3,7 @@
     const $ = id => document.getElementById(id), M = window.Vz2SegmentsModel;
     const make = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     let catalog = null, selectedIds = new Set(), selection = null, loadedAudio = null, loadSerial = 0, playSerial = 0, animation = null;
+    let audioSource = null;
     const audio = $('segments-audio'), waveCache = new Map();
     const panel = window.Vz2SegmentsPanel.mount($('segments-panel'), {
         onSelect: select,
@@ -24,9 +25,9 @@
         return (!$('segments-collection').value || String(r.collection_id) === $('segments-collection').value)
             && (!query || (M.name(r) + ' ' + r.title + ' ' + collectionName(r)).toLocaleLowerCase('cs').includes(query));
     }
-    function stop() { ++playSerial; audio.pause(); cancelAnimationFrame(animation); animation = null; }
+    function stop() { window.Vz2TimestampPlayback.stop(); ++playSerial; audio.pause(); cancelAnimationFrame(animation); animation = null; }
     function clearSelection() {
-        stop(); selection = null; loadedAudio = null; audio.removeAttribute('src'); audio.load();
+        stop(); selection = null; loadedAudio = null; audioSource?.release(); audioSource = null; audio.removeAttribute('src'); audio.load();
         $('segments-selection').hidden = true; panel.clearSelection();
     }
     function list() {
@@ -91,11 +92,11 @@
         if ($('segments-wave').checked) void loadWaves(recordings);
     }
     function selectedFile() { return selection?.recording.kind === 'single' ? selection.recording.files?.[0] : null; }
-    function select(value) {
-        stop(); selection = value; const { recording: r, segment: s } = value;
+    function select(value, refresh = false) {
+        if (!refresh) stop(); selection = value; const { recording: r, segment: s } = value;
         const file = selectedFile();
-        if (loadedAudio !== file?.url) { audio.removeAttribute('src'); audio.load(); loadedAudio = null; }
-        else if (audio.readyState > 0) audio.currentTime = s.start_ms / 1000;
+        if (!refresh && loadedAudio !== file?.url) { audio.removeAttribute('src'); audio.load(); audioSource?.release(); audioSource = null; loadedAudio = null; }
+        else if (!refresh && audio.readyState > 0) audio.currentTime = s.start_ms / 1000;
         $('segments-selection').hidden = false;
         $('segments-selected-title').textContent = s.label;
         $('segments-selected-info').textContent = [M.name(r), s.song_title].filter(Boolean).join(' · ');
@@ -107,22 +108,18 @@
         $('segments-open').href = 'index.php?' + params;
         $('segments-open').textContent = r.kind === 'multitrack' ? 'Otevřít v mixéru' : 'Otevřít v looperu';
         $('segments-audio-status').textContent = r.kind === 'multitrack' ? 'Vícestopou nahrávku přehrajete v mixéru.' : file?.url ? loadedAudio ? 'Připraveno k přehrávání od vybrané značky.' : 'Audio se načte až po spuštění přehrávání.' : 'Audio není dostupné; značky zůstávají zobrazené.';
-        panel.setPlayhead(r.id, s.start_ms);
-    }
-    function endTime() {
-        const end = selection?.segment.end_ms;
-        return Math.min(end === null || end === undefined ? Infinity : end / 1000, Number.isFinite(audio.duration) ? audio.duration : Infinity);
+        $('segments-edit').textContent = s.kind === 'note' ? 'Upravit poznámku' : 'Upravit úsek';
+        $('segments-edit').hidden = !s.can_edit || !['take', 'passage', 'note'].includes(s.kind);
+        $('segments-finish').hidden = $('segments-edit').hidden || s.kind === 'note' || s.end_ms !== null;
+        $('segments-delete').hidden = !s.can_delete;
+        $('segments-new-take').hidden = $('segments-new-passage').hidden = $('segments-new-note').hidden = !window.VZ2.write;
+        if (!refresh) {
+            panel.setPlayhead(r.id, s.start_ms);
+            window.Vz2TimestampStore.select({ recording_id: r.id, item_id: s.id });
+        }
     }
     function atBoundary() {
-        if (!selection || !loadedAudio || audio.readyState === 0) return;
-        const end = endTime();
-        if (audio.currentTime >= end || audio.ended) {
-            if ($('segments-loop').checked && selection.segment.end_ms !== null && end > selection.segment.start_ms / 1000) {
-                audio.currentTime = selection.segment.start_ms / 1000;
-                if (audio.paused) audio.play().catch(e => { $('segments-audio-status').textContent = 'Přehrávání nelze spustit: ' + e.message; });
-            } else { audio.pause(); if (Number.isFinite(end) && Math.abs(audio.currentTime - end) > .002) audio.currentTime = end; }
-        }
-        panel.setPlayhead(selection.recording_id, audio.currentTime * 1000);
+        if (selection) panel.setPlayhead(selection.recording_id, audio.currentTime * 1000);
     }
     function tick() { atBoundary(); if (!audio.paused) animation = requestAnimationFrame(tick); }
     async function play() {
@@ -130,11 +127,18 @@
         if (!audio.paused) { stop(); return; }
         const token = ++playSerial, value = selection, file = selectedFile();
         try {
-            if (loadedAudio !== file.url) { audio.src = file.url; loadedAudio = file.url; audio.load(); }
-            audio.currentTime = value.segment.start_ms / 1000;
-            await audio.play();
+            if (loadedAudio !== file.url) {
+                const source = await window.Vz2Downloads.source(file);
+                if (token !== playSerial) { source.release(); return; }
+                audioSource?.release(); audioSource = source;
+                audio.src = source.url; loadedAudio = file.url; audio.load();
+            }
+            await window.Vz2TimestampPlayback.play(adapter, { ...value.segment, recording_id: value.recording_id }, {
+                repeat: $('segments-loop').checked, onError: text => { $('segments-audio-status').textContent = text; }
+            });
             if (token !== playSerial) return;
             $('segments-audio-status').textContent = value.segment.end_ms === null ? 'Přehrávání od vybrané značky.' : 'Přehrávání vybraného úseku.';
+            $('segments-audio-status').textContent += audioSource?.local ? ' Ze zařízení.' : ' Ze sítě.';
         } catch (e) { if (token === playSerial) $('segments-audio-status').textContent = 'Audio nelze přehrát. ' + e.message; }
     }
     audio.addEventListener('play', () => { $('segments-play').textContent = '❚❚ Pozastavit'; cancelAnimationFrame(animation); animation = requestAnimationFrame(tick); });
@@ -160,7 +164,7 @@
             const filter = $('segments-collection'), old = filter.value; filter.replaceChildren(new Option('Všechny', ''));
             catalog.collections.filter(c => rows.some(r => String(r.collection_id) === String(c.id))).forEach(c => filter.append(new Option(c.title, c.id)));
             filter.value = [...filter.options].some(o => o.value === old) ? old : '';
-            render(); status(rows.length ? 'Společné časové značky · ' + rows.length + ' nahrávek · zobrazení pouze pro čtení' : 'Zatím nejsou žádné nahrávky.');
+            render(); status(rows.length ? 'Společné časové značky · ' + rows.length + ' nahrávek' : 'Zatím nejsou žádné nahrávky.');
         } catch (e) { if (serial === loadSerial) status(e.message + (catalog ? ' Zobrazená data jsou z předchozího načtení.' : ' Zkuste Obnovit data.'), true); }
         finally { if (serial === loadSerial) $('segments-reload').disabled = false; }
     }
@@ -175,8 +179,52 @@
     $('segments-select-none').onclick = () => { selectedIds.clear(); clearSelection(); render(); };
     document.addEventListener('vz2:timestamps-updated', e => {
         const r = available().find(item => String(item.id) === String(e.detail.recording_id));
-        if (r) { r.timestamps = e.detail.entries; r.annotations = e.detail.annotations; r.annotation_version = e.detail.annotation_version; r.duration_ms = e.detail.duration_ms; if (String(selection?.recording_id) === String(r.id)) clearSelection(); render(); }
+        if (r) { r.timestamps = e.detail.entries; r.annotations = e.detail.annotations; r.annotation_version = e.detail.annotation_version; r.duration_ms = e.detail.duration_ms; if (String(selection?.recording_id) === String(r.id)) {
+                const item = M.build(r, catalog).segments.find(i => i.id === selection.segment.id);
+                if (item) select({ ...selection, recording: r, segment: item }, true);
+                else if (selection.segment.kind !== 'recording') clearSelection();
+            } render(); }
     });
-    window.addEventListener('pagehide', stop);
+    const adapter = {
+        canPlay: () => !!loadedAudio,
+        isLoading: () => audio.readyState === 0 || audio.seeking,
+        pause: () => { audio.pause(); const end = selection?.segment.end_ms; if (end != null) audio.currentTime = end / 1000; },
+        playRange: async start => { audio.currentTime = start / 1000; await audio.play(); },
+        currentTimeMs: () => Math.round(audio.currentTime * 1000),
+        seek: ms => { audio.currentTime = ms / 1000; }
+    };
+    const edit = async (kind, existing = false, finish = false) => {
+        if (!selection) return;
+        try { await window.Vz2TimestampEditor.open({ recording_id: selection.recording_id, kind,
+            item_id: existing ? selection.segment.id : null, finish, adapter,
+            draft: { time_ms: selection.segment.start_ms, end_time_ms: selection.segment.end_ms } }); }
+        catch (e) { status(e.message, true); }
+    };
+    $('segments-loop').onchange = () => {
+        const state = window.Vz2TimestampPlayback.state();
+        if (state && selection) state.repeat = $('segments-loop').checked && selection.segment.end_ms !== null;
+    };
+    $('segments-edit').onclick = () => edit(selection?.segment.kind, true);
+    $('segments-finish').onclick = () => edit(selection?.segment.kind, true, true);
+    $('segments-new-take').onclick = () => edit('take');
+    $('segments-new-passage').onclick = () => edit('passage');
+    $('segments-new-note').onclick = () => edit('note');
+    $('segments-delete').onclick = async () => {
+        if (!selection || !confirm('Smazat vybraný úsek?')) return;
+        const chosen = selection;
+        try {
+            const list = await window.Vz2TimestampStore.load(chosen.recording_id);
+            const current = window.Vz2TimestampModel.items(list).find(i => i.id === chosen.segment.id);
+            if (!current || current.source.revision !== chosen.segment.source.revision) throw Error('Úsek byl změněn. Zkontrolujte aktuální údaje.');
+            await window.Vz2TimestampStore.remove(chosen.recording_id, current, list.timestamps_revision);
+        } catch (e) { status(e.message, true); }
+    };
+    document.addEventListener('vz2:timestamp-selected', e => {
+        if (!e.detail || (selection?.recording_id === e.detail.recording_id && selection?.segment.id === e.detail.item_id)) return;
+        panel.select(e.detail.recording_id, e.detail.item_id);
+    });
+    const downloads = window.Vz2DownloadsPanel.mount($('segments-downloads').querySelector('div'), () => catalog);
+    $('segments-downloads').addEventListener('toggle', () => { if ($('segments-downloads').open) downloads.open(); });
+    window.addEventListener('pagehide', () => { stop(); audioSource?.release(); });
     void load();
 })();

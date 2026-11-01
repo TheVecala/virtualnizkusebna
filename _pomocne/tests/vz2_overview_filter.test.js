@@ -45,10 +45,13 @@ for (const scope of ['rehearsal', 'song']) {
     for (const entry of [
         { type: 'document', kind: 'lyrics_chords' },
         { type: 'summary' }, { type: 'attachment_note' }, { type: 'discussion' },
-        ...['song_start', 'song_end', 'passage', 'note'].map(kind => ({ type: 'marker', kind }))
+        ...['take', 'boundary', 'song_start', 'song_end', 'passage', 'note'].map(kind => ({ type: 'marker', kind }))
     ]) assert(controls.has(entryKey(scope, entry)), `missing checkbox for ${scope} ${entry.type} ${entry.kind || ''}`);
 }
 for (const key of ['rehearsal_starts', 'song_tablature', 'song_map_sections', 'song_map_details']) {
     assert(controls.has(key), `missing checkbox ${key}`);
 }
 console.log('PASS overview checkbox filter model');
+
+assert.equal(entryKey('rehearsal', { type: 'marker', kind: 'take' }), 'rehearsal_marker_song_start');
+assert.equal(entryKey('song', { type: 'marker', kind: 'boundary' }), 'song_marker_song_end');

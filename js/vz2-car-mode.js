@@ -1,14 +1,14 @@
 (function () {
     'use strict';
+    const Model = window.Vz2TimestampModel, Store = window.Vz2TimestampStore;
     const $ = id => document.getElementById(id);
     const mode = $('car-mode'), picker = $('car-picker'), linkDialog = $('time-link-dialog'), audio = $('car-audio');
     const mobile = matchMedia('(max-width: 767px)');
-    const audioStore = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     let context, browseCollectionId, browseKind = 'song', pickerLevel = 'recordings';
     let timestampList = null, timestampId = null, timestampSerial = 0, activeChapter = null;
     let previousFocus = null, pendingSelection = null, linkTarget = null, ratingBusy = false;
     let single = null, audioSerial = 0;
-    const format = seconds => window.Vz2Timestamps.format(Math.max(0, Number(seconds) || 0) * 1000);
+    const format = seconds => Model.format(Math.max(0, Number(seconds) || 0) * 1000);
     const text = (tag, content, className) => {
         const node = document.createElement(tag);
         node.textContent = content;
@@ -45,23 +45,21 @@
         const previous = single;
         single = null;
         audio.pause(); audio.removeAttribute('src'); audio.load();
-        if (previous?.url) URL.revokeObjectURL(previous.url);
+        previous?.abort.abort(); previous?.audioSource?.release();
     }
     async function openSingle(recording, seconds = 0) {
         const file = recording.files.find(item => item.url);
         if (!file) { setStatus('Audio není dostupné.', true); return; }
         releaseSingle();
-        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), url: null };
+        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), abort: new AbortController(), audioSource: null };
         single = current;
         const serial = audioSerial;
         audio.loop = false;
         tick();
         try {
-            const key = window.VZ2.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
-            const cached = await window.idbKeyval.get(key, audioStore).catch(() => null);
-            if (serial !== audioSerial || single !== current) return;
-            if (cached instanceof Blob) { current.url = URL.createObjectURL(cached); audio.src = current.url; }
-            else audio.src = file.url;
+            const source = await window.Vz2Downloads.source(file, { signal: current.abort.signal });
+            if (serial !== audioSerial || single !== current) { source.release(); return; }
+            current.audioSource = source; audio.src = source.url;
             audio.load();
         } catch (error) { if (single === current) { current.phase = 'error'; setStatus(error.message, true); tick(); } }
     }
@@ -98,7 +96,7 @@
         } else if (single && routeRecording?.kind === 'multitrack') releaseSingle();
     }
     function seek(seconds) {
-        window.Vz2Timestamps.stopLoop();
+        window.Vz2TimestampPlayback.stop();
         if (!single) return window.Vz2Player.seek(seconds);
         const duration = Number.isFinite(audio.duration) ? audio.duration : Number(single.file.duration_ms || 0) / 1000;
         const position = Math.max(0, Math.min(duration || 0, Number(seconds) || 0));
@@ -107,7 +105,7 @@
         tick();
     }
     async function play() {
-        window.Vz2Timestamps.stopLoop();
+        window.Vz2TimestampPlayback.stop();
         if (single) { if (single.phase === 'ready') await audio.play(); }
         else await window.Vz2Player.play();
         tick();
@@ -145,7 +143,7 @@
         renderChapters();
         if (!id) return;
         try {
-            const result = await window.Vz2Timestamps.getList(id);
+            const result = await Store.load(id);
             if (serial !== timestampSerial || String(timestampId) !== String(id)) return;
             timestampList = result;
             renderChapters();
@@ -153,24 +151,25 @@
     }
     function renderChapters() {
         const host = $('car-chapter-list');
-        host.replaceChildren();
-        const starts = (timestampList?.entries || []).filter(row => row.kind === 'song_start')
-            .sort((a, b) => Number(a.time_ms) - Number(b.time_ms) || Number(a.id) - Number(b.id));
+        host.replaceChildren(); activeChapter = null;
+        const starts = timestampList ? Model.items(timestampList).filter(item => item.kind === 'take') : [];
         if (!starts.length) {
-            host.append(text('p', timestampId ? timestampList ? 'Žádné začátky skladeb.' : 'Načítám začátky skladeb…' : 'Po výběru nahrávky se zobrazí začátky skladeb.', 'car-empty'));
+            host.append(text('p', timestampId ? timestampList ? 'Žádné pokusy.' : 'Načítám pokusy…' : 'Po výběru nahrávky se zobrazí pokusy.', 'car-empty'));
             return;
         }
         for (const row of starts) {
             const button = text('button', '', 'car-chapter');
             button.type = 'button'; button.dataset.chapterId = row.id;
-            button.append(text('span', format(Number(row.time_ms) / 1000), 'car-chapter-time'),
-                text('span', row.body.trim() === '↑' ? 'Začátek skladby' : row.body || 'Začátek skladby', 'car-chapter-name'),
+            button.append(text('span', format(row.start_ms / 1000) + (row.end_ms === null ? '\nbez konce' : '\n– ' + format(row.end_ms / 1000)), 'car-chapter-time'),
+                text('span', [row.song_title, row.label].filter((value, i, values) => value && values.indexOf(value) === i).join(' · '), 'car-chapter-name'),
                 text('span', '', 'car-chapter-play'));
+            if (row.end_ms === null) button.title = 'Konec pokusu není doplněný.';
             button.lastElementChild.setAttribute('aria-hidden', 'true');
             button.addEventListener('click', async () => {
                 if (context?.player?.phase !== 'ready') return;
                 try {
-                    seek(Number(row.time_ms) / 1000);
+                    Store.select({ recording_id: timestampId, item_id: row.id });
+                    seek(row.start_ms / 1000);
                     await play();
                     setStatus('');
                     tick();
@@ -196,16 +195,15 @@
         $('car-chapter-list').querySelectorAll('.car-chapter').forEach(button => { button.disabled = !ready; });
         $('car-play').querySelector('span').classList.toggle('is-playing', !!player?.playing);
         $('car-play').setAttribute('aria-label', player?.playing ? 'Pozastavit' : 'Přehrát');
-        const starts = (timestampList?.entries || []).filter(row => row.kind === 'song_start' && Number(row.time_ms) <= position * 1000)
-            .sort((a, b) => Number(b.time_ms) - Number(a.time_ms) || Number(b.id) - Number(a.id));
-        const nextActive = starts[0]?.id || null;
-        if (String(nextActive) !== String(activeChapter)) {
+        const current = timestampList ? Model.activeTakes(timestampList, position * 1000) : [];
+        const ids = new Set(current.map(item => item.id)), nextActive = [...ids].join(',');
+        if (nextActive !== activeChapter) {
             activeChapter = nextActive;
             $('car-chapter-list').querySelectorAll('.car-chapter').forEach(button => {
-                const isCurrent = String(button.dataset.chapterId) === String(nextActive);
+                const isCurrent = ids.has(button.dataset.chapterId);
                 button.classList.toggle('is-current', isCurrent);
                 if (isCurrent) button.setAttribute('aria-current', 'true'); else button.removeAttribute('aria-current');
-                if (isCurrent && picker.hidden) button.scrollIntoView({ block: 'nearest' });
+                if (isCurrent && button.dataset.chapterId === current[0]?.id && picker.hidden) button.scrollIntoView({ block: 'nearest' });
             });
         }
         if (String(player?.id || '') !== String(timestampId || '')) refreshContext();
@@ -272,7 +270,7 @@
         if (!mobile.matches) return;
         if (mode.hidden) {
             previousFocus = document.activeElement;
-            window.Vz2Timestamps?.stopLoop();
+            window.Vz2TimestampPlayback.stop();
             document.querySelectorAll('audio').forEach(other => other.pause());
             window.Vz2Player.pause();
         }
@@ -302,7 +300,7 @@
         $('car-up').disabled = $('car-down').disabled = true;
         setStatus('Ukládám hodnocení…');
         try {
-            await window.Vz2Timestamps.addQuickNote(player.id, symbol, Math.round(player.position * 1000));
+            await Store.addQuickNote(player.id, symbol, Math.round(player.position * 1000));
             setStatus('Hodnocení uloženo jako poznámka.');
         } catch (error) { setStatus(error.message, true); }
         finally { ratingBusy = false; tick(); }
