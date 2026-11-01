@@ -709,9 +709,9 @@
                 toggle.append(node('span', name, 'recording-title'), node('small', hasRange ? time(link.end_ms - link.start_ms) : recording.duration_ms == null ? 'délka nezjištěna' : time(recording.duration_ms), 'recording-duration'));
             }
             toggle.setAttribute('aria-controls', body.id);
-            let audio;
+            let audio, player;
             const prepareAudio = () => {
-                if (audio?.preload === 'none') { audio.preload = 'metadata'; audio.load(); }
+                if (audio?.preload === 'none') { audio.preload = 'metadata'; void player.prepare(); }
             };
             const setExpanded = open => {
                 body.hidden = !open; toggle.setAttribute('aria-expanded', String(open));
@@ -735,35 +735,15 @@
             const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
             const file = recording.kind === 'single' ? recording.files[0] : null;
             if (playable && file?.url) {
-                audio = node('audio'); audio.preload = 'none'; audio.src = file.url;
-                audio.dataset.source = 'web';
-                audio.setAttribute('aria-label', (hasRange ? 'Přehrát úsek ' : 'Přehrát nahrávku ') + name);
-                if (hasRange) {
-                    const start = link.start_ms / 1000, end = link.end_ms / 1000;
-                    const endTime = () => Number.isFinite(audio.duration) ? Math.min(end, audio.duration) : end;
-                    audio.addEventListener('loadedmetadata', () => { audio.currentTime = start; });
-                    audio.addEventListener('seeking', () => {
-                        if (audio.currentTime < start) audio.currentTime = start;
-                        else if (audio.currentTime > endTime()) { audio.currentTime = endTime(); audio.pause(); }
-                    });
-                    audio.addEventListener('timeupdate', () => {
-                        if (!audio.paused && audio.currentTime >= endTime()) { audio.pause(); audio.currentTime = endTime(); }
-                    });
-                    audio.addEventListener('play', () => {
-                        if (audio.currentTime >= endTime() - 0.05 || audio.currentTime < start) audio.currentTime = start;
-                    });
-                }
-                audio.addEventListener('play', () => {
-                    document.querySelectorAll('#content audio').forEach(other => { if (other !== audio) other.pause(); });
-                    document.getElementById('looper-audio')?.pause();
-                    window.MultitrackApp?.pause();
-                });
-                body.append(window.Vz2Audio.mount(audio, {
+                player = window.Vz2Audio.mountFile(file, {
                     start: hasRange ? link.start_ms / 1000 : 0,
                     end: hasRange ? link.end_ms / 1000 : undefined,
-                    knownDurationMs: hasRange ? link.end_ms - link.start_ms : recording.duration_ms,
+                    knownDurationMs: recording.duration_ms,
                     label: name, inlineControls: true
-                }).root);
+                });
+                audio = player.audio;
+                audio.setAttribute('aria-label', (hasRange ? 'Přehrát úsek ' : 'Přehrát nahrávku ') + name);
+                audioSources.push(player.destroy); body.append(player.root);
             } else if (playable && recording.kind === 'multitrack') {
                 body.append(node('p', 'Přehrávání vícestopé nahrávky je v mixéru.', 'linked-recording-context'));
             }
@@ -1074,6 +1054,12 @@
             timestamps_revision: list.timestamps_revision, duration_ms: list.duration_ms });
     });
     window.Vz2App = {
+        openRecording(recordingId, timeMs = 0) {
+            const recording = data?.recordings.find(r => String(r.id) === String(recordingId));
+            if (!recording) throw new Error('Nahrávka není v aktuálním seznamu. Obnovte stránku.');
+            return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id),
+                view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(Math.max(0, Number(timeMs) || 0)) });
+        },
         getCarContext() { return { collections: data?.collections || [], recordings: data?.recordings || [], selected, kind, player: window.Vz2Player.getState() }; },
         openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'audio', time_ms: '0', listen: '1' }, true); },
         setCarRoute(enabled, player = null) {

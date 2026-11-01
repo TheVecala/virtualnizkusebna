@@ -165,7 +165,7 @@ Samostatné karty prohlížeče nadále obnovují timestampy tlačítkem Obnovit
 
 ### Společné získávání audia
 
-Karty nahrávek, Looper, Mixér, režim Auto i Úseky vybírají zdroj přes
+Karty nahrávek včetně propojených karet, detail Matice, Looper, Mixér, režim Auto i Úseky vybírají zdroj přes
 `Vz2Downloads`. Pohledy nepřistupují přímo k uloženému audiu. Looper si nadále
 samostatně spravuje pomocné waveform peaks; starší samostatné použití Mixéru
 bez VZ2 zachovává původní formát úložiště.
@@ -191,6 +191,24 @@ bez VZ2 zachovává původní formát úložiště.
   výsledek po změně výběru také uvolní. `AbortSignal` zastaví plný síťový
   přenos a zabrání zahájení přenosu po opožděném čtení z úložiště.
   Tento signál neovlivňuje samostatnou frontu `enqueue`.
+
+`Vz2Audio.mountFile(file, options)` spravuje vložené přehrávače Matice a
+propojených karet nad `Vz2Downloads.source`. Vrací `root`, `audio`,
+`prepare()` a idempotentní `destroy()`. Podporuje počáteční pozici
+`initialTime` a omezený rozsah `start/end` v sekundách. Sbalené propojené
+karty zdroj získají až při rozbalení; přehrání počká na výběr zdroje.
+Hostitel při odstranění karty nebo zavření detailu volá `destroy()`:
+zastaví audio, zruší čekající čtení a uvolní objektovou URL. Opožděná odpověď
+už nemůže zavřený přehrávač obnovit. `Vz2Audio` zachytává spuštění všech HTML
+audio přehrávačů včetně Looperu a režimu Auto a pozastaví ostatní audio i Mixér.
+Mixér při skutečném spuštění vysílá `multitrack:play`, které naopak pozastaví
+HTML audio. Pravidlo platí i při spuštění přes API nebo klávesnici.
+
+Matice pro multitrack používá `Vz2App.openRecording(id, timeMs)` a existující
+Mixér se všemi stopami, výběrem místních kopií a kontrolou opuštění aktuálního
+poslechu. Zdrojový pokus otevře na jeho začátku, samostatný výstřižek od nuly.
+Historie předává `kind`, `collection_id` a `duration_ms` u zdroje i výstřižku;
+typ se neurčuje počtem souborů, takže i jednostopý multitrack otevře Mixér.
 
 Přepnutí již běžícího poslechu na právě uložený blob dál zajišťuje
 `Vz2Offline.useBlob`: zachovává pozici, přehrávání/pauzu i rychlost.
@@ -234,6 +252,11 @@ a prostředí, neúplnou kopii, chybu úložiště, načtení bez automatického
 chyby HTTP i přerušeného přenosu, zrušení po opožděném čtení a uvolnění URL.
 `vz2_offline.browser.test.js` navíc ověřuje místní zdroj a neúplné kopie
 v reálných přehrávačích, rušení načítání Mixéru a tvorbu peaks z paměti Looperu.
+
+`vz2_listening.browser.test.js` ověřuje místní poslech z Matice a propojených
+karet bez síťového audia, hranice úseku, úklid při zavření a navigaci, opožděné
+čtení úložiště, síťovou náhradu chybné kopie, multitrack s jednou i více stopami,
+zachování hlasitosti rozehraného mixu, odmítnutí změny přehrávače a mobilní detail.
 
 
 ### Přehled a režim Auto

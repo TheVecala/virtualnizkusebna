@@ -1174,6 +1174,7 @@
             // Jeden společný okamžik je autorita času pro všechny source nodes.
             intendedSet.startedAt = when;
             intendedSet.playing = true;
+            if (typeof CustomEvent === 'function') document.dispatchEvent(new CustomEvent('multitrack:play'));
             updatePlaybackUi(true);
             renderClock(intendedSet, intendedSet.offset);
             animateClock();
