@@ -1,0 +1,4 @@
+# Apache 2.4: upload as _vz2_storage/.htaccess, never into the public root.
+# Must be honored by the server (AllowOverride AuthConfig or AllowOverrideList Require).
+# No IfModule: a missing module must not silently remove protection.
+Require all denied

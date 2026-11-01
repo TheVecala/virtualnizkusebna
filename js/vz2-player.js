@@ -1,0 +1,449 @@
+(function () {
+    'use strict';
+    const $ = id => document.getElementById(id), shell = $('player-shell'), body = $('player-body');
+    const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+    let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, mixerVolumeBeforeMute = 1;
+    let waveColors;
+    function waveformColors() {
+        if (waveColors) return waveColors;
+        const styles = getComputedStyle(document.documentElement);
+        waveColors = {
+            idle: styles.getPropertyValue('--color-waveform-idle').trim(),
+            played: styles.getPropertyValue('--color-waveform-played').trim(),
+            playhead: styles.getPropertyValue('--color-waveform-playhead').trim()
+        };
+        return waveColors;
+    }
+    const mixer = $('mixer-panel'); body.append(mixer);
+    function fileName(file) {
+        const name = file?.title || file?.display_name || file?.original_name || '';
+        const extension = file?.format || /\.([^.]+)$/.exec(file?.original_name || file?.display_name || '')?.[1];
+        return name && extension && !name.toLowerCase().endsWith('.' + extension.toLowerCase()) ? name + '.' + extension : name;
+    }
+    // Retain Mixer handlers while showing secondary actions in the shared menu.
+    $('mixer-menu-actions').prepend($('mt-offline'), $('mixer-copy-link'));
+    const copy = $('looper-copy-link'), offline = $('looper-offline'), download = $('looper-export');
+    const looperMenu = $('looper-options');
+    const mixerMedia = matchMedia('(max-width: 767px)');
+    function positionMixerDrawer() {
+        if (mode !== 'mixer' || !mixerMedia.matches || $('mt-mixer').hidden) return;
+        const notesActions = mixer.querySelector('.looper-timestamp-actions');
+        const anchor = notesActions?.getBoundingClientRect().height ? notesActions : $('mt-mixer-toggle');
+        mixer.style.setProperty('--mt-drawer-top', Math.max(0, anchor.getBoundingClientRect().bottom + 8) + 'px');
+    }
+    function offlineLabel(cached) {
+        $('looper-offline-label').textContent = cached ? 'Odebrat offline kopii' : 'Uložit pro offline';
+        $('looper-offline-status').textContent = cached ? 'uloženo v tomto prohlížeči' : 'přehrávám ze sítě';
+        $('looper-offline-icon').className = cached ? 'ti ti-trash' : 'ti ti-wifi-off';
+    }
+    function getState() {
+        if (mode === 'looper' && looper) return { mode, id, phase: looper.phase, loading: looper.phase === 'loading' || looper.decoding, playing: !looper.audio.paused, position: looper.audio.currentTime, duration: looper.audio.duration, collapsed, fullscreen: !!fullscreen };
+        if (mode === 'mixer') { const s = window.MultitrackApp.getState(); return { ...s, mode, id, loading: mixerPending || ['metadata', 'loading', 'awaiting-confirmation'].includes(s?.phase), collapsed, fullscreen: !!fullscreen }; }
+        return null;
+    }
+    function clock(value) { return window.Vz2Timestamps.format(Number.isFinite(value) ? value * 1000 : 0); }
+    function validPeaks(data, file) {
+        return data && Array.isArray(data.peaks) && data.peaks.length > 0 && data.peaks.length <= 4096
+            && Number(data.duration_ms) === Number(file.duration_ms)
+            && data.peaks.every(value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1);
+    }
+    function error(text) { if (mode === 'looper') $('looper-status').textContent = text; else { $('mt-notice').hidden = false; $('mt-notice').textContent = text; } }
+    function update() {
+        const s = getState();
+        shell.dataset.source = mode === 'looper' ? looper?.source || '' : mode === 'mixer' ? s?.source || '' : '';
+        $('player-play').disabled = !s || s.phase !== 'ready';
+        $('player-play').textContent = s?.playing ? '❚❚' : '▶';
+        $('player-play').setAttribute('aria-label', s?.playing ? 'Pozastavit' : 'Přehrát');
+        if (mode === 'mixer') {
+            const ready = s?.phase === 'ready', volume = Number($('mt-master-volume').value) / 100;
+            for (const name of ['looper-restart', 'looper-back', 'looper-play', 'looper-forward', 'looper-volume', 'looper-mute']) $(name).disabled = !ready;
+            $('looper-play').firstElementChild.className = s?.playing ? 'ti ti-player-pause-filled' : 'ti ti-player-play-filled';
+            $('looper-play').setAttribute('aria-label', s?.playing ? 'Pozastavit' : 'Přehrát');
+            $('looper-play').title = s?.playing ? 'Pozastavit' : 'Přehrát';
+            if (document.activeElement !== $('looper-volume')) $('looper-volume').value = volume;
+            $('looper-volume-value').textContent = Math.round(volume * 100) + '%';
+            $('looper-mute').setAttribute('aria-pressed', String(volume === 0));
+            $('looper-mute').firstElementChild.className = volume === 0 ? 'ti ti-volume-off' : 'ti ti-volume';
+            $('looper-mute').setAttribute('aria-label', volume === 0 ? 'Zapnout zvuk' : 'Ztlumit zvuk');
+            $('looper-mute').title = volume === 0 ? 'Zapnout zvuk' : 'Ztlumit zvuk';
+            return;
+        }
+        if (mode !== 'looper' || !looper) return;
+        const a = looper.audio, ready = looper.phase === 'ready';
+        for (const control of ['looper-restart', 'looper-back', 'looper-play', 'looper-forward', 'looper-loop', 'looper-seek']) $(control).disabled = !ready;
+        $('looper-play').firstElementChild.className = s.playing ? 'ti ti-player-pause-filled' : 'ti ti-player-play-filled';
+        $('looper-play').setAttribute('aria-label', s.playing ? 'Pozastavit' : 'Přehrát');
+        $('looper-play').title = s.playing ? 'Pozastavit' : 'Přehrát';
+        $('looper-seek').max = Number.isFinite(a.duration) ? a.duration : 0;
+        if (document.activeElement !== $('looper-seek')) $('looper-seek').value = a.currentTime;
+        $('looper-time').textContent = clock(a.currentTime); $('looper-duration').textContent = clock(a.duration);
+        $('looper-loop').setAttribute('aria-pressed', String(a.loop));
+        $('looper-mute').setAttribute('aria-pressed', String(a.muted));
+        $('looper-mute').firstElementChild.className = a.muted || a.volume === 0 ? 'ti ti-volume-off' : 'ti ti-volume';
+        $('looper-mute').setAttribute('aria-label', a.muted ? 'Zapnout zvuk' : 'Ztlumit zvuk');
+        $('looper-mute').title = a.muted ? 'Zapnout zvuk' : 'Ztlumit zvuk';
+        $('looper-volume-value').textContent = Math.round(a.volume * 100) + '%';
+        if (!collapsed) draw();
+    }
+    function layout() {
+        shell.dataset.mode = mode; shell.classList.toggle('player-collapsed', collapsed);
+        for (const name of ['looper-restart', 'looper-back', 'looper-play', 'looper-forward', 'looper-loop']) {
+            const control = $(name);
+            if (mode === 'empty') {
+                // Keep help reachable by mouse and keyboard; playback is blocked below.
+                control.disabled = false;
+                control.setAttribute('aria-disabled', 'true');
+                control.setAttribute('aria-haspopup', 'dialog');
+                control.setAttribute('aria-controls', 'player-help-dialog');
+            } else {
+                control.removeAttribute('aria-disabled');
+                control.removeAttribute('aria-haspopup');
+                control.removeAttribute('aria-controls');
+            }
+        }
+        if (mode === 'empty') {
+            $('looper-play').firstElementChild.className = 'ti ti-player-play-filled';
+            $('looper-play').setAttribute('aria-label', 'Přehrát'); $('looper-play').title = 'Přehrát';
+            $('looper-loop').setAttribute('aria-pressed', 'false');
+        }
+        body.hidden = mode === 'empty' || collapsed;
+        $('looper-panel').hidden = mode !== 'looper'; mixer.hidden = mode !== 'mixer';
+        $('player-mode').textContent = mode === 'mixer' ? 'Mixér' : mode === 'looper' ? 'Looper' : 'Přehrávač';
+        for (const name of ['player-collapse', 'player-fullscreen', 'player-close']) $(name).disabled = mode === 'empty';
+        $('player-collapse').disabled = mode === 'empty' || !!fullscreen;
+        $('player-collapse').setAttribute('aria-expanded', String(!collapsed));
+        $('player-collapse').setAttribute('aria-label', collapsed ? 'Rozbalit přehrávač' : 'Sbalit přehrávač');
+        $('player-collapse').firstElementChild.className = collapsed ? 'ti ti-chevron-down' : 'ti ti-chevron-up';
+        $('looper-menu-actions').hidden = mode !== 'looper';
+        $('mixer-menu-actions').hidden = mode !== 'mixer';
+        looperMenu.querySelector('summary').setAttribute('aria-label', mode === 'mixer' ? 'Otevřít menu Mixéru' : 'Otevřít menu Looperu');
+        $('looper-close').querySelector('span').textContent = mode === 'mixer' ? 'Zavřít mixér' : 'Zavřít looper';
+        $('mixer-copy-link').hidden = $('mt-offline').hidden = mode !== 'mixer';
+        if (mode === 'empty') looperMenu.open = false;
+        positionMixerDrawer();
+        update();
+    }
+    function exitFullscreen() { window.Vz2Layout.exitFullscreen(shell); }
+    function restoreFullscreen() {
+        if (!fullscreen) return;
+        const previous = fullscreen; fullscreen = null;
+        shell.classList.remove('player-fullscreen'); collapsed = previous.collapsed;
+        layout(); body.scrollTop = previous.scroll; $('looper-wave-scroll').scrollLeft = previous.waveScroll;
+    }
+    function resetShell() {
+        exitFullscreen(); mode = 'empty'; id = null; collapsed = false; mixerPending = false;
+        $('player-title').disabled = true; $('player-title-full').textContent = ''; $('player-title-mobile').textContent = ''; $('player-title').title = ''; $('looper-wave-name').textContent = '';
+        looperMenu.open = false; layout();
+    }
+    function closeLooper() {
+        const old = looper; looper = null;
+        if (old) {
+            old.abort.abort(); old.notes?.destroy(); old.audio.pause(); old.audio.removeAttribute('src'); old.audio.load(); old.audio.remove();
+            if (old.url) URL.revokeObjectURL(old.url);
+            if (old.context) old.context.close().catch(() => {});
+            old.peaks = null;
+        }
+        $('looper-wave-markers').replaceChildren();
+        if (mode === 'looper') resetShell();
+    }
+    function select(nextMode, recording) {
+        if (mode !== nextMode || id !== String(recording.id)) { exitFullscreen(); collapsed = false; looperMenu.open = false; }
+        mode = nextMode; id = String(recording.id);
+        const names = (recording.files || []).map(fileName).filter(Boolean);
+        const title = nextMode === 'looper' ? (fileName(looper?.file) || recording.title) : (names.join(', ') || recording.title);
+        const sourceTitle = recording.collection_title ? recording.collection_title + ' · ' + title : title;
+        $('player-title-full').textContent = sourceTitle;
+        const firstFile = recording.files?.[0];
+        $('player-title-mobile').textContent = nextMode === 'mixer'
+            ? (fileName(firstFile) || recording.title)
+            : sourceTitle;
+        $('player-title').title = 'Přejít k nahrávce: ' + sourceTitle; $('player-title').disabled = false;
+        $('looper-wave-name').textContent = nextMode === 'looper' ? title : '';
+        layout();
+    }
+    async function openLooper(recording, file, seconds = 0, seekRequested = false) {
+        if (mode === 'looper' && id === String(recording.id) && looper) { select('looper', recording); if (seekRequested && looper.phase === 'ready') looper.audio.currentTime = Math.max(0, Math.min(looper.audio.duration || 0, seconds)); return; }
+        closeLooper();
+        const audio = document.createElement('audio'); audio.id = 'looper-audio'; audio.preload = 'auto'; audio.setAttribute('playsinline', ''); audio.hidden = true;
+        const current = { audio, abort: new AbortController(), phase: 'loading', decoding: false, file, recording, peaks: null, url: null, context: null, blob: null, timestamps: [], markersDirty: true };
+        looper = current; $('looper-panel').append(audio); select('looper', recording);
+        $('looper-status').textContent = 'Načítám audio…'; $('looper-zoom').value = 1; $('looper-wave-scroll').scrollLeft = 0; offlineLabel(false);
+        audio.volume = Number($('looper-volume').value);
+        const live = () => looper === current;
+        const uploadPeaks = peakValues => {
+            if (!window.VZ2.write) return;
+            fetch('php/ajax/vz2_peaks.php', {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.VZ2.csrf },
+                body: JSON.stringify({ file_id: file.id, sha256: file.sha256, peaks: peakValues })
+            }).then(async response => {
+                if (response.ok || !live()) return;
+                let reason = 'HTTP ' + response.status;
+                try { const data = await response.json(); if (typeof data.error === 'string' && data.error) reason = data.error; } catch (_) { /* HTTP status remains available. */ }
+                if (live()) $('looper-status').textContent = 'Průběh se nepodařilo uložit na server: ' + reason;
+            }).catch(() => {
+                if (live()) $('looper-status').textContent = 'Průběh se nepodařilo uložit na server: chyba spojení.';
+            });
+        };
+        const adapter = {
+            canPlay: () => live() && current.phase === 'ready' && !audio.error,
+            currentTimeMs: () => Math.round(audio.currentTime * 1000),
+            durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
+            seek: ms => { if (live()) audio.currentTime = Math.max(0, Math.min(audio.duration || 0, ms / 1000)); },
+            timestampsChanged: entries => { if (live()) { current.timestamps = entries; current.markersDirty = true; if (!collapsed) draw(); } },
+            playRange: async (start) => { if (!live() || current.phase !== 'ready') throw new Error('Looper není připravený.'); audio.loop = false; audio.currentTime = start / 1000; await audio.play(); }
+        };
+        current.notes = window.Vz2Timestamps.mount($('looper-timestamps'), recording.id, adapter);
+        audio.addEventListener('play', () => { if (live()) document.querySelectorAll('#content audio').forEach(a => a.pause()); });
+        audio.addEventListener('loadedmetadata', () => { if (live()) { audio.currentTime = Math.max(0, Math.min(audio.duration || 0, seconds)); current.phase = 'ready'; update(); } }, { once: true });
+        audio.addEventListener('error', () => { if (live()) { current.phase = 'error'; error('Audio nelze přehrát. Zavřete Looper a obnovte seznam.'); update(); } });
+        current.cacheKey = window.VZ2.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
+        current.peakCacheKey = window.VZ2.cachePrefix + 'peaks:' + file.id + ':' + file.sha256;
+        download.href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(recording.id);
+        offline.disabled = true;
+        try {
+            const peaksUrl = 'php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256);
+            const [offlineResult, peaksResult, localPeaksResult] = await Promise.allSettled([
+                window.idbKeyval.get(current.cacheKey, store),
+                fetch(peaksUrl, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal }),
+                window.idbKeyval.get(current.peakCacheKey, store)
+            ]);
+            if (!live()) return;
+            let blob = offlineResult.status === 'fulfilled' ? offlineResult.value : null;
+            current.cached = blob instanceof Blob;
+            let peakData = null;
+            if (peaksResult.status === 'fulfilled' && peaksResult.value.ok) {
+                try {
+                    const data = await peaksResult.value.json();
+                    if (data.ok && validPeaks(data, file)) peakData = data;
+                } catch (_) { /* A missing or damaged peaks file can be rebuilt. */ }
+            }
+            const serverPeaks = !!peakData;
+            if (!peakData && localPeaksResult.status === 'fulfilled' && validPeaks(localPeaksResult.value, file)) peakData = localPeaksResult.value;
+            if (peakData) {
+                if (!live()) return;
+                current.peaks = Float32Array.from(peakData.peaks);
+                current.blob = current.cached ? blob : null;
+                if (current.cached) { current.url = URL.createObjectURL(blob); audio.src = current.url; current.source = 'offline'; }
+                else { audio.src = file.url; current.source = 'web'; }
+                offlineLabel(current.cached); offline.disabled = false;
+                $('looper-status').textContent = ''; update();
+                if (!serverPeaks) uploadPeaks(peakData.peaks);
+                return;
+            }
+            if (!current.cached) {
+                const response = await fetch(file.url, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal });
+                if (!response.ok) throw new Error('Audio nelze načíst. Obnovte přihlášení a seznam.');
+                blob = await response.blob();
+                if (blob.size !== Number(file.byte_size)) throw new Error('Audio se nestáhlo celé.');
+            }
+            if (!live()) return;
+            current.blob = blob; current.url = URL.createObjectURL(blob); audio.src = current.url;
+            current.source = current.cached ? 'offline' : 'web';
+            offlineLabel(current.cached); offline.disabled = false;
+            $('looper-status').textContent = 'Připravuji průběh…'; current.decoding = true;
+            try {
+                const context = new (window.AudioContext || window.webkitAudioContext)(); current.context = context;
+                const buffer = await context.decodeAudioData(await blob.arrayBuffer());
+                if (!live()) return;
+                const count = Math.min(4096, buffer.length), peaks = new Float32Array(count);
+                for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                    const samples = buffer.getChannelData(channel);
+                    for (let i = 0; i < count; i++) {
+                        const start = Math.floor(i * samples.length / count), end = Math.floor((i + 1) * samples.length / count);
+                        for (let j = start; j < end; j++) {
+                            const sample = Math.abs(samples[j]);
+                            if (Number.isFinite(sample)) peaks[i] = Math.max(peaks[i], Math.min(1, sample));
+                        }
+                    }
+                }
+                current.peaks = peaks; $('looper-status').textContent = '';
+                const peakValues = Array.from(peaks);
+                window.idbKeyval.set(current.peakCacheKey, { peaks: peakValues, duration_ms: file.duration_ms }, store).catch(() => {});
+                uploadPeaks(peakValues);
+            } catch (_) { if (live()) $('looper-status').textContent = 'Průběh není dostupný; audio a časový posuvník lze dál používat.'; }
+            finally { if (current.context) { const context = current.context; current.context = null; if (context.state !== 'closed') await context.close().catch(() => {}); } current.decoding = false; }
+            if (live()) update();
+        } catch (e) { if (live()) { current.phase = 'error'; error(e.message); update(); } }
+    }
+    function renderWaveTimestamps(current, width, durationMs) {
+        const markers = document.createDocumentFragment();
+        const entries = current.timestamps || [];
+        const visuals = {
+            song_start: { arrow: 'M1 1V9H15 M10 4L15 9L10 14', name: 'Začátek skladby' },
+            song_end: { arrow: 'M19 1V9H5 M10 4L5 9L10 14', name: 'Konec skladby' },
+            passage: { name: 'Pasáž' },
+            note: { name: 'Poznámka' }
+        };
+        if (durationMs > 0) entries.forEach(entry => {
+            const ms = Number(entry.time_ms), visual = visuals[entry.kind];
+            if (!visual || !Number.isFinite(ms) || ms < 0 || ms > durationMs) return;
+            const x = Math.min(width - 1, ms / durationMs * width);
+            const marker = document.createElement('button'); marker.type = 'button';
+            const labelOnLeft = entry.kind === 'song_end' ? x >= 155 : x > width - 155;
+            marker.className = 'looper-wave-marker' + (labelOnLeft ? ' is-label-left' : '');
+            marker.dataset.timestampId = entry.id;
+            marker.dataset.kind = entry.kind;
+            marker.style.left = x + 'px';
+            const description = visual.name + ': ' + entry.body + ' (' + window.Vz2Timestamps.format(ms) + ')';
+            marker.title = description; marker.setAttribute('aria-label', description);
+            if (visual.arrow) {
+                const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                arrow.classList.add('looper-wave-boundary'); arrow.setAttribute('viewBox', '0 0 20 16');
+                arrow.setAttribute('aria-hidden', 'true');
+                const path = document.createElementNS(arrow.namespaceURI, 'path'); path.setAttribute('d', visual.arrow);
+                arrow.append(path); marker.append(arrow);
+            }
+            const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
+            const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
+            label.append(text); marker.append(label);
+            marker.onclick = event => { event.stopPropagation(); seek(ms / 1000); };
+            markers.append(marker);
+        });
+        $('looper-wave-markers').replaceChildren(markers);
+        current.markerWidth = width; current.markerDuration = durationMs; current.markersDirty = false;
+    }
+    function draw() {
+        const canvas = $('looper-wave'), width = Math.max(1, Math.min(16384, $('looper-wave-scroll').clientWidth * Number($('looper-zoom').value))), height = fullscreen && !matchMedia('(max-width: 767px)').matches ? 180 : 90;
+        if (!looper || !width) return;
+        $('looper-wave-track').style.width = width + 'px'; $('looper-wave-track').style.height = height + 'px';
+        canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
+        if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+        const durationMs = Number.isFinite(looper.audio.duration) ? looper.audio.duration * 1000 : 0;
+        if (looper.markersDirty || looper.markerWidth !== width || looper.markerDuration !== durationMs) renderWaveTimestamps(looper, width, durationMs);
+        const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, width, height);
+        const colors = waveformColors();
+        const peaks = looper.peaks;
+        const x = (looper.audio.currentTime / (looper.audio.duration || 1)) * width;
+        if (peaks) {
+            for (const played of [false, true]) {
+                ctx.strokeStyle = played ? colors.played : colors.idle; ctx.beginPath();
+                for (let i = 0; i < peaks.length; i++) {
+                    const px = i / peaks.length * width;
+                    if ((px <= x) !== played) continue;
+                    const h = Math.max(1, peaks[i] * (height / 2 - 3));
+                    ctx.moveTo(px, height / 2 - h); ctx.lineTo(px, height / 2 + h);
+                }
+                ctx.stroke();
+            }
+        }
+        ctx.strokeStyle = colors.playhead; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+    }
+    shell.addEventListener('click', e => {
+        if (mode !== 'empty') return;
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (!$('player-help-dialog').open) $('player-help-dialog').showModal();
+    }, true);
+    $('player-help-close').onclick = () => $('player-help-dialog').close();
+    $('player-collapse').onclick = () => { collapsed = !collapsed; layout(); };
+    window.Vz2Layout.registerFullscreen(shell, {
+        enter() {
+            fullscreen = { collapsed, scroll: body.scrollTop, waveScroll: $('looper-wave-scroll').scrollLeft };
+            collapsed = false; shell.classList.add('player-fullscreen');
+            layout();
+        },
+        exit: restoreFullscreen
+    });
+    $('looper-close').onclick = () => { looperMenu.open = false; $('player-close').click(); };
+    $('player-close').onclick = () => document.dispatchEvent(new Event('vz2:player-close'));
+    $('mt-mixer-toggle').addEventListener('click', () => queueMicrotask(() => {
+        if ($('mt-mixer-toggle').getAttribute('aria-expanded') !== 'true') return;
+        const notesToggle = mixer.querySelector('.looper-timestamp-actions > button:first-child');
+        if (notesToggle?.getAttribute('aria-expanded') === 'true') notesToggle.click();
+        positionMixerDrawer();
+    }));
+    document.addEventListener('vz2:timestamp-actions-changed', positionMixerDrawer);
+    window.addEventListener('resize', positionMixerDrawer);
+    new ResizeObserver(positionMixerDrawer).observe(mixer);
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || mode !== 'mixer' || !mixerMedia.matches || $('mt-mixer').hidden || document.querySelector('dialog[open]')) return;
+        $('mt-mixer-toggle').click(); $('mt-mixer-toggle').focus(); e.preventDefault(); e.stopPropagation();
+    }, true);
+    $('player-title').onclick = () => document.dispatchEvent(new Event('vz2:player-source'));
+    $('player-play').onclick = async () => {
+        window.Vz2Timestamps?.stopLoop();
+        try { if (mode === 'looper') { if (looper.audio.paused) await looper.audio.play(); else looper.audio.pause(); } else if (mode === 'mixer') { if (window.MultitrackApp.getState()?.playing) window.MultitrackApp.pause(); else { document.querySelectorAll('#content audio').forEach(a => a.pause()); await window.MultitrackApp.play(); } } update(); }
+        catch (e) { error(e.message); }
+    };
+    $('looper-play').onclick = () => $('player-play').click();
+    const seek = seconds => { if (!looper || looper.phase !== 'ready') return; window.Vz2Timestamps.stopLoop(); looper.audio.currentTime = Math.max(0, Math.min(looper.audio.duration || 0, seconds)); update(); };
+    $('looper-restart').onclick = () => mode === 'mixer' ? $('mt-restart').click() : seek(0);
+    $('looper-back').onclick = () => mode === 'mixer' ? $('mt-backward').click() : seek((looper?.audio.currentTime || 0) - 5);
+    $('looper-forward').onclick = () => mode === 'mixer' ? $('mt-forward').click() : seek((looper?.audio.currentTime || 0) + 5);
+    $('looper-seek').oninput = e => seek(Number(e.target.value)); $('looper-zoom').oninput = draw;
+    $('looper-zoom-out').onclick = () => { $('looper-zoom').value = Math.max(1, Number($('looper-zoom').value) - 1); draw(); };
+    $('looper-zoom-in').onclick = () => { $('looper-zoom').value = Math.min(16, Number($('looper-zoom').value) + 1); draw(); };
+    $('looper-wave').onclick = e => { if (looper) seek(e.offsetX / $('looper-wave').clientWidth * looper.audio.duration); };
+    $('looper-volume').oninput = e => {
+        if (mode === 'mixer') {
+            $('mt-master-volume').value = Math.round(Number(e.target.value) * 100);
+            $('mt-master-volume').dispatchEvent(new Event('input', { bubbles: true }));
+            if (Number(e.target.value) > 0) mixerVolumeBeforeMute = Number(e.target.value);
+            update();
+        } else if (looper) { looper.audio.volume = Number(e.target.value); looper.audio.muted = false; update(); }
+    };
+    $('looper-mute').onclick = () => {
+        if (mode === 'mixer') {
+            const current = Number($('mt-master-volume').value) / 100;
+            if (current > 0) mixerVolumeBeforeMute = current;
+            $('mt-master-volume').value = Math.round((current === 0 ? mixerVolumeBeforeMute : 0) * 100);
+            $('mt-master-volume').dispatchEvent(new Event('input', { bubbles: true }));
+            update();
+        } else if (looper) { looper.audio.muted = !looper.audio.muted; update(); }
+    };
+    $('looper-loop').onclick = () => { if (looper) { window.Vz2Timestamps.stopLoop(); looper.audio.loop = !looper.audio.loop; update(); } };
+    copy.onclick = () => { if (!looper) return; looperMenu.open = false; window.Vz2CarMode.openShare(id, 'looper', Math.round(looper.audio.currentTime * 1000)); };
+    download.onclick = () => { looperMenu.open = false; };
+    offline.onclick = async () => {
+        const current = looper; if (!current) return;
+        if (current.cached && !confirm('Odebrat tuto offline kopii pouze z prohlížeče?')) return;
+        offline.disabled = true;
+        try {
+            if (current.cached) await window.idbKeyval.del(current.cacheKey, store);
+            else {
+                if (!current.blob) {
+                    $('looper-offline-status').textContent = 'stahuji audio…';
+                    current.blob = await window.Vz2Offline.download(current.file.url, current.file.byte_size, percent => {
+                        if (looper === current) $('looper-offline-status').textContent = percent === null ? 'stahuji audio…' : 'stahuji audio ' + percent + ' %';
+                    }, current.abort.signal);
+                }
+                if (looper !== current) return;
+                $('looper-offline-status').textContent = 'ukládám do zařízení…';
+                const saved = current.file.original_name
+                    ? new File([current.blob], current.file.original_name, { type: current.blob.type }) : current.blob;
+                await window.idbKeyval.set(current.cacheKey, saved, store);
+            }
+            current.cached = !current.cached;
+            if (looper === current) offlineLabel(current.cached);
+        }
+        catch (e) { if (looper === current) { offlineLabel(current.cached); error(e.message); } }
+        finally { if (looper === current) offline.disabled = false; }
+    };
+    document.addEventListener('multitrack:selected', () => { mixerPending = false; });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && looperMenu.open) { looperMenu.open = false; e.preventDefault(); return; }
+    });
+    document.addEventListener('click', e => { if (looperMenu.open && !looperMenu.contains(e.target)) looperMenu.open = false; });
+    new ResizeObserver(() => { if (looper && !collapsed) draw(); }).observe($('looper-wave-scroll'));
+    setInterval(update, 100);
+    window.Vz2Player = {
+        getState, openLooper, closeLooper,
+        seek(seconds) {
+            window.Vz2Timestamps.stopLoop();
+            if (mode === 'looper') seek(seconds);
+            else if (mode === 'mixer') window.MultitrackApp.seek(seconds);
+        },
+        async play() {
+            window.Vz2Timestamps.stopLoop();
+            if (mode === 'looper' && looper?.phase === 'ready') await looper.audio.play();
+            else if (mode === 'mixer' && getState()?.phase === 'ready') await window.MultitrackApp.play();
+            update();
+        },
+        pause() { if (mode === 'looper') looper?.audio.pause(); else if (mode === 'mixer') window.MultitrackApp.pause(); update(); },
+        showMixer(recording) { closeLooper(); if (mode !== 'mixer' || id !== String(recording.id)) mixerPending = true; select('mixer', recording); },
+        hideMixer() { if (mode === 'mixer') resetShell(); },
+        mixerFailed() { mixerPending = false; },
+        canLeave(nextId, nextMode) { const current = getState(); if (!current || (String(nextId) === id && nextMode === mode)) return true; return (!current.playing && !current.loading) || confirm('Přehrávač hraje nebo načítá audio. Zastavit jej a přejít jinam?'); }
+    };
+    layout();
+}());

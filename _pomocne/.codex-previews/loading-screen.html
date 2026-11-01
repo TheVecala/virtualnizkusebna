@@ -1,0 +1,122 @@
+<style>
+  #rehearsal-loading-design .loading-stage { display: flex; justify-content: center; padding: 18px 12px 24px; }
+  #rehearsal-loading-design .loading-screen {
+    --load-bg: #111416; --load-text: #e9ebe6; --load-muted: #a2a8aa; --load-accent: #b5bb51;
+    box-sizing: border-box; position: relative; display: flex; flex-direction: column;
+    width: min(100%, 360px); height: 550px; overflow: hidden; padding: 28px;
+    color-scheme: dark; color: var(--load-text); background: var(--load-bg);
+    border: 1px solid #303638; border-radius: 20px; font-family: system-ui, sans-serif;
+  }
+  #rehearsal-loading-design .loading-screen * { box-sizing: border-box; }
+  #rehearsal-loading-design .load-brand { display: flex; align-items: center; gap: 10px; color: var(--load-muted); font-size: 11px; font-weight: 650; letter-spacing: .12em; }
+  #rehearsal-loading-design .load-band { color: var(--load-accent); font-size: 13px; letter-spacing: .03em; }
+  #rehearsal-loading-design .load-separator { width: 1px; height: 13px; background: #42484b; }
+  #rehearsal-loading-design .load-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 24px; text-align: center; }
+  #rehearsal-loading-design .load-wave { display: flex; align-items: center; justify-content: center; gap: 6px; height: 52px; margin-bottom: 29px; color: var(--load-accent); }
+  #rehearsal-loading-design .load-wave span { width: 5px; height: var(--wave-height); border-radius: 4px; background: currentColor; animation: rehearsal-pulse 1.8s ease-in-out infinite; animation-delay: var(--wave-delay); }
+  #rehearsal-loading-design h2 { margin: 0; color: var(--load-text); font: 700 40px/1.12 system-ui, sans-serif; letter-spacing: -.045em; }
+  #rehearsal-loading-design h2 em { color: var(--load-accent); font-style: normal; }
+  #rehearsal-loading-design .load-subtitle { margin: 20px 0 0; color: var(--load-muted); font-size: 13px; line-height: 1.7; font-weight: 400; }
+  #rehearsal-loading-design .load-status { min-height: 42px; margin: 0; color: var(--load-muted); font-size: 12px; line-height: 1.65; font-weight: 400; }
+  #rehearsal-loading-design .load-status-center { text-align: center; }
+  #rehearsal-loading-design .load-status-dot { display: inline-block; width: 5px; height: 5px; margin: 0 6px 2px 0; border-radius: 50%; background: var(--load-accent); }
+  #rehearsal-loading-design .load-editorial { padding: 28px 27px; }
+  #rehearsal-loading-design .load-editorial-main { flex: 1; padding-top: 74px; }
+  #rehearsal-loading-design .load-editorial h2 { font-size: 48px; line-height: 1.08; }
+  #rehearsal-loading-design .load-editorial .load-subtitle { margin-top: 22px; }
+  #rehearsal-loading-design .load-track { height: 2px; overflow: hidden; margin-bottom: 18px; background: #30352b; }
+  #rehearsal-loading-design .load-track span { display: block; width: 32%; height: 100%; background: var(--load-accent); animation: rehearsal-scan 2.6s ease-in-out infinite; }
+  #rehearsal-loading-design [data-motion="false"] .load-wave span,
+  #rehearsal-loading-design [data-motion="false"] .load-track span { animation: none; }
+  @keyframes rehearsal-pulse { 0%, 100% { transform: scaleY(.55); opacity: .6; } 50% { transform: scaleY(1); opacity: 1; } }
+  @keyframes rehearsal-scan { 0%, 100% { transform: translateX(0); opacity: .55; } 50% { transform: translateX(212%); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    #rehearsal-loading-design .load-wave span, #rehearsal-loading-design .load-track span { animation: none; }
+  }
+  @media (max-width: 350px) {
+    #rehearsal-loading-design .loading-screen { padding: 25px 20px; }
+    #rehearsal-loading-design h2 { font-size: 36px; }
+    #rehearsal-loading-design .load-editorial h2 { font-size: 43px; }
+  }
+</style>
+<div id="rehearsal-loading-design" class="viz-carousel viz-dotted-background" aria-label="Návrhy úvodní plochy zkušebny" data-previous-label="Předchozí návrh" data-next-label="Další návrh">
+  <section data-variant="Dušanova zkušebna" aria-label="Dušanova zkušebna">
+    <div class="loading-stage">
+      <div class="loading-screen" data-design="friendly" aria-label="Dušanova zkušebna – vzhled" data-motion="true">
+        <div class="load-brand"><span class="load-band">DK</span><span class="load-separator" aria-hidden="true"></span>VIRTUÁLNÍ ZKUŠEBNA</div>
+        <div class="load-center">
+          <div class="load-wave" aria-hidden="true">
+            <span style="--wave-height: 12px; --wave-delay: -.6s"></span>
+            <span style="--wave-height: 24px; --wave-delay: -.4s"></span>
+            <span style="--wave-height: 38px; --wave-delay: -.2s"></span>
+            <span style="--wave-height: 50px; --wave-delay: 0s"></span>
+            <span style="--wave-height: 34px; --wave-delay: -.3s"></span>
+            <span style="--wave-height: 22px; --wave-delay: -.5s"></span>
+            <span style="--wave-height: 12px; --wave-delay: -.7s"></span>
+          </div>
+          <h2>Dušanova<br><em>zkušebna</em></h2>
+          <p class="load-subtitle">Připravujeme vše na hraní.</p>
+        </div>
+        <p class="load-status load-status-center" role="status"><span class="load-status-dot" aria-hidden="true"></span><span data-status>Chvíli to trvá. Stále načítáme…</span></p>
+      </div>
+    </div>
+  </section>
+  <section data-variant="Velký nápis" aria-label="Velký nápis" hidden>
+    <div class="loading-stage">
+      <div class="loading-screen load-editorial" data-design="editorial" aria-label="Velký nápis – vzhled" data-motion="true">
+        <div class="load-brand"><span class="load-band">DK</span><span class="load-separator" aria-hidden="true"></span>PROSTOR PRO HUDBU</div>
+        <div class="load-editorial-main">
+          <h2>Dušanova<br><em>zkušebna</em></h2>
+          <p class="load-subtitle">Skladby. Nahrávky. Nápady.</p>
+        </div>
+        <div class="load-track" aria-hidden="true"><span></span></div>
+        <p class="load-status" role="status"><span data-status>Otevíráme zkušebnu…</span></p>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('rehearsal-loading-design');
+  const settings = {
+    friendly: { motion: true, slow: true },
+    editorial: { motion: true, slow: false }
+  };
+  function restore(snapshot) {
+    const saved = snapshot?.modelContent?.loadingDesigns;
+    for (const key of Object.keys(settings)) {
+      for (const prop of ['motion', 'slow']) {
+        if (typeof saved?.[key]?.[prop] === 'boolean') settings[key][prop] = saved[key][prop];
+      }
+    }
+  }
+  function render() {
+    for (const [key, state] of Object.entries(settings)) {
+      const screen = root.querySelector('[data-design="' + key + '"]');
+      screen.dataset.motion = String(state.motion);
+      screen.querySelector('[data-status]').textContent = state.slow
+        ? 'Chvíli to trvá. Stále načítáme…'
+        : (key === 'friendly' ? 'Načítáme skladby a nahrávky…' : 'Otevíráme zkušebnu…');
+    }
+  }
+  restore(window.openai?.widgetState);
+  render();
+  window.addEventListener('openai:set_globals', event => {
+    if (event.detail?.globals?.widgetState) { restore(event.detail.globals.widgetState); render(); }
+  });
+  if (globalThis.Tweak) {
+    for (const [key, state] of Object.entries(settings)) {
+      const tweak = new Tweak({
+        container: root.querySelector('[data-design="' + key + '"]'),
+        onChange: () => {
+          render();
+          const result = window.openai?.setWidgetState?.({ modelContent: { loadingDesigns: settings }, privateContent: null });
+          result?.catch?.(() => {});
+        }
+      });
+      tweak.addToggle(state, 'motion', { label: 'Jemná animace' });
+      tweak.addToggle(state, 'slow', { label: 'Delší načítání' });
+    }
+  }
+})();
+</script>
