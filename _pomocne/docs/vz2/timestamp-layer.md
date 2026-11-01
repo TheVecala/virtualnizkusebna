@@ -149,12 +149,11 @@ Nad kontraktem 1 jsou samostatné moduly:
   řízení úseku, nikoli automaticky audio. Seznam/Looper/Mixér i Úseky sdílejí
   řízení smyčky. Aktualizace názvu nepřeruší smyčku; změna hranic aktualizuje
   její rozsah a odstranění intervalu smyčku vypne.
-- `Vz2Downloads` (`js/vz2-downloads.js`): `local`, `source`, `enqueue`,
+- `Vz2Downloads` (`js/vz2-downloads.js`): `local`, `read`, `source`, `enqueue`,
   `plan`, `enqueueRecordings`, `snapshot`, `subscribe/watch`, `cancel`,
   `removeKey`, `inventory`, `clear`. Využívá stávající IndexedDB i klíče
   prostředí/ID/hash, bez migrace či duplikace existujících kopií.
-  `source(file)` vrací místní blob URL nebo síťovou URL a funkci `release`.
-  Funkci uvolnění volá hostitel při výměně či zavření zdroje.
+  Získávání audia pro přehrávače popisuje kontrakt níže.
 - `Vz2DownloadsPanel.mount(host,getCatalog)` poskytuje výběr kolekce a nahrávek,
   plán objemu před stažením, frontu, opakování, rušení, soupis místních souborů,
   úplnost sad a odhad zbývajícího prostoru. `open()` obnoví katalog a stav.
@@ -163,6 +162,40 @@ Nad kontraktem 1 jsou samostatné moduly:
 interval, vytvořit/upravit bodovou poznámku, využít místní audio a spravovat stahování. Nová stránka nepotřebuje
 modul seznamu `vz2-timestamps.js`. Změna dat zachová aktuální výběr a zdroj audia.
 Samostatné karty prohlížeče nadále obnovují timestampy tlačítkem Obnovit data.
+
+### Společné získávání audia
+
+Karty nahrávek, Looper, Mixér, režim Auto i Úseky vybírají zdroj přes
+`Vz2Downloads`. Pohledy nepřistupují přímo k uloženému audiu. Looper si nadále
+samostatně spravuje pomocné waveform peaks; starší samostatné použití Mixéru
+bez VZ2 zachovává původní formát úložiště.
+
+- Vstup `file` odpovídá souboru z katalogu: `id`, `sha256`, `url`, `byte_size`.
+  Mixér převádí svůj popis stopy na tentýž formát. Místní kopie se hledá podle
+  prostředí, ID a hashe verze. Při známé velikosti musí počet bajtů odpovídat;
+  neúplná kopie se pro přehrávání přeskočí. Starší metadata bez velikosti
+  zůstávají podporovaná. Obsah velkých souborů se při kontrole znovu nehashuje.
+- `local(file)` vrací platný místní `Blob` nebo `null`; chybu IndexedDB
+  předává volajícímu. Používá se při ukládání a zjišťování dostupnosti.
+- `read(file, {download, signal, onProgress})` vrací `{blob, local,
+  storageError}`. Výchozí `download: false` pouze ověří místní kopii.
+  `download: true` při chybějící kopii načte celý soubor do paměti a ověří
+  velikost, jak potřebuje Mixér pro dekódování. Samotné čtení nic neukládá.
+  Chyba úložiště neblokuje síťový zdroj; `storageError` je příznak pro UI.
+- `source(file, options)` přidává `url` a idempotentní `release()`.
+  Pro místní blob vytvoří objektovou URL; jinak vrací původní síťovou URL,
+  ze které si audio element načítá podle potřeby. Looper si při chybějících
+  peaks vyžádá `download: true` a dostane URL i blob načtený do paměti.
+  `local` znamená původ z IndexedDB, nikoli pouze existenci blob URL.
+- Hostitel uvolňuje zdroj při výměně nebo zavření přehrávače. Opožděný
+  výsledek po změně výběru také uvolní. `AbortSignal` zastaví plný síťový
+  přenos a zabrání zahájení přenosu po opožděném čtení z úložiště.
+  Tento signál neovlivňuje samostatnou frontu `enqueue`.
+
+Přepnutí již běžícího poslechu na právě uložený blob dál zajišťuje
+`Vz2Offline.useBlob`: zachovává pozici, přehrávání/pauzu i rychlost.
+Obnovení připojení samo nepřepíná zdroj rozehraného audia. Stávající kopie
+se nemigrují ani automaticky nemažou; nové vizualizace použijí stejné API.
 
 ### Pravidla stahování
 
@@ -195,6 +228,12 @@ hromadné ukládání, částečnou sadu, opakování, rušení, místní zdroj,
 čtení revize a samostatný editor s konfliktem. Integrační browser test timestampů
 ověřuje úpravu přímo v Úsecích bez modulu seznamu, zachování smyčky a stažení
 celé zkoušky. Offline regresní test kontroluje dokončení fronty po zavření Looperu.
+
+`_pomocne/tests/vz2_audio_sources.browser.test.js` ověřuje zdroj podle verze
+a prostředí, neúplnou kopii, chybu úložiště, načtení bez automatického zápisu,
+chyby HTTP i přerušeného přenosu, zrušení po opožděném čtení a uvolnění URL.
+`vz2_offline.browser.test.js` navíc ověřuje místní zdroj a neúplné kopie
+v reálných přehrávačích, rušení načítání Mixéru a tvorbu peaks z paměti Looperu.
 
 
 ### Přehled a režim Auto

@@ -46,7 +46,7 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         }
         if (url.pathname === '/php/ajax/vz2.php') {
             if (url.searchParams.get('action') === 'mixer') return route.fulfill({ json: url.searchParams.has('id')
-                ? { ok: true, multitrack: { version: 1, id: 9, name: 'Mix', created: '2026-10-28', tracks: [{ file: 'sample9.wav', fileId: 9, sha256: hash, name: 'Stopa', order: 1, url: '/sample9.wav' }] } }
+                ? { ok: true, multitrack: { version: 1, id: 9, name: 'Mix', created: '2026-10-28', tracks: [{ file: 'sample9.wav', fileId: 9, sha256: hash, byteSize: wav.length, name: 'Stopa', order: 1, url: '/sample9.wav' }] } }
                 : { ok: true, multitracks: [{ id: 9, name: 'Mix' }] } });
             catalogRequests++;
             if (responseMode === 'network') return route.abort();
@@ -150,6 +150,80 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         console.log('PASS: reconnect preserves the running mixer and its volume');
         await page.evaluate(() => MultitrackApp.destroy()); responseMode = 'ok';
 
+        await page.evaluate(file => Vz2Downloads.enqueue(file), recordings[4].files[0]);
+        const beforeLocalMixer = audioRequests;
+        await page.evaluate(() => MultitrackApp.load(9));
+        await page.waitForFunction(() => MultitrackApp.getState()?.phase === 'ready');
+        assert.equal(await page.evaluate(() => MultitrackApp.getState().source), 'offline');
+        assert.equal(audioRequests, beforeLocalMixer, 'mixer uses the same copy as bulk downloads without HTTP');
+        await page.evaluate(async file => {
+            MultitrackApp.destroy();
+            const db = idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+            await idbKeyval.set(Vz2Downloads.key(file), new Blob(['incomplete']), db);
+            MultitrackApp.load(9);
+        }, recordings[4].files[0]);
+        await page.waitForFunction(() => MultitrackApp.getState()?.phase === 'ready');
+        assert.equal(await page.evaluate(() => MultitrackApp.getState().source), 'web');
+        assert.equal(audioRequests, beforeLocalMixer + 1, 'incomplete local track falls back to a complete network download');
+        await page.evaluate(() => MultitrackApp.destroy());
+
+        // The shared full-file read must be cancelled along with the active mixer.
+        let mixerRelease, mixerDone, mixerReached = false;
+        const mixerWaiting = page.waitForRequest('**/sample9.wav');
+        const mixerHeld = new Promise(resolve => { mixerRelease = resolve; });
+        const mixerHandled = new Promise(resolve => { mixerDone = resolve; });
+        await page.route('**/sample9.wav', async route => {
+            mixerReached = true;
+            try {
+                await mixerHeld;
+                if (!route.request().failure()) await route.fulfill({ contentType: 'audio/wav', body: wav });
+            } finally { mixerDone(); }
+        });
+        try {
+            await page.evaluate(() => MultitrackApp.load(9));
+            await mixerWaiting;
+            const aborted = page.waitForEvent('requestfailed', request => request.url().endsWith('/sample9.wav'));
+            await page.evaluate(() => MultitrackApp.destroy());
+            await aborted;
+        } finally { mixerRelease(); if (mixerReached) await mixerHandled; await page.unroute('**/sample9.wav'); }
+        assert.equal(await page.evaluate(() => MultitrackApp.getState()), null);
+        console.log('PASS: mixer prefers saved complete tracks, rejects incomplete copies and cancels playback downloads');
+
+        // Missing peaks require full audio in memory, but opening a Looper does not save it.
+        await page.evaluate(async file => {
+            await Vz2Downloads.removeKey(Vz2Downloads.key(file));
+            const db = idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+            await idbKeyval.del(VZ2.cachePrefix + 'peaks:' + file.id + ':' + file.sha256, db);
+        }, recordings[1].files[0]);
+        await page.route('**/vz2_peaks.php?*', route => route.fulfill({ status: 404, json: { ok: false } }));
+        await page.evaluate(r => Vz2Player.openLooper(r, r.files[0]), recordings[1]);
+        await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready' && !Vz2Player.getState().loading);
+        const memoryUrl = await page.locator('#looper-audio').getAttribute('src');
+        assert.match(memoryUrl, /^blob:/);
+        assert.equal(await page.locator('#player-shell').getAttribute('data-source'), 'memory');
+        assert.equal(await page.evaluate(async file => !!await Vz2Downloads.local(file), recordings[1].files[0]), false);
+        await page.evaluate(() => Vz2Player.closeLooper());
+        assert.equal(await page.evaluate(url => fetch(url).then(() => true, () => false), memoryUrl), false, 'closing Looper releases its memory URL');
+        await page.unroute('**/vz2_peaks.php?*');
+        console.log('PASS: Looper builds missing peaks from the shared memory source, does not save implicitly and releases its URL');
+
+        // A source may arrive before its accompanying peaks read. Closing must still release it.
+        await page.evaluate(async r => {
+            await Vz2Downloads.enqueue(r.files[0]);
+            window.originalGet = idbKeyval.get; window.originalCreateUrl = URL.createObjectURL; window.createdAudioUrls = [];
+            idbKeyval.get = (key, db) => key.includes('peaks:2:') ? new Promise(resolve => { window.finishPeaksRead = resolve; }) : originalGet(key, db);
+            URL.createObjectURL = blob => { const url = originalCreateUrl(blob); createdAudioUrls.push(url); return url; };
+            window.pendingLooper = Vz2Player.openLooper(r, r.files[0]);
+        }, recordings[1]);
+        await page.waitForFunction(() => createdAudioUrls.length > 0);
+        const lateSource = await page.evaluate(async () => {
+            Vz2Player.closeLooper(); finishPeaksRead(null); await pendingLooper;
+            idbKeyval.get = originalGet; URL.createObjectURL = originalCreateUrl;
+            return { state: Vz2Player.getState(), alive: await fetch(createdAudioUrls[0]).then(() => true, () => false) };
+        });
+        assert.deepEqual(lateSource, { state: null, alive: false });
+        console.log('PASS: closing during a delayed peaks read releases the already acquired local source');
+
         // A download finishing after the player is closed must not reopen or resume it.
         await page.evaluate(r => Vz2Player.openLooper(r, r.files[0]), recordings[0]);
         await page.locator('#looper-offline').evaluate(b => b.click()); // Remove the previously saved copy.
@@ -196,9 +270,26 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         assert.deepEqual(errors, []);
         console.log('PASS: car mode uses shared annotations, exact ends, gaps, overlaps, song names and local audio; refresh preserves playback');
 
+        await page.evaluate(async file => {
+            const db = idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+            await idbKeyval.set(Vz2Downloads.key(file), new Blob(['incomplete']), db);
+        }, recordings[2].files[0]);
+        await page.reload();
+        await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready');
+        assert.match(await page.locator('#car-audio').getAttribute('src'), /sample3\.wav$/);
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto('http://offline.test/index.php?collection_id=1');
+        await page.waitForFunction(() => document.querySelector('#recording-3 audio')?.dataset.source === 'web');
+        assert.match(await page.locator(single(3)).getAttribute('src'), /sample3\.wav$/);
+        await page.evaluate(r => Vz2Player.openLooper(r, r.files[0]), recordings[2]);
+        await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready');
+        assert.match(await page.locator('#looper-audio').getAttribute('src'), /sample3\.wav$/);
+        assert.deepEqual(errors, []);
+        console.log('PASS: card, car mode and Looper consistently ignore an incomplete local copy');
+
     } catch (error) {
         console.error('Browser errors:', errors);
-        console.error(await page.locator('#recording-timestamps-4').textContent());
+        console.error(await page.locator('#recording-timestamps-4').textContent({ timeout: 1000 }).catch(() => 'Timestamp panel is not mounted'));
         throw error;
     } finally { releaseDownload(); await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -138,6 +138,7 @@
     }
 
     function trackCacheKey(set, track) {
+        if (config.cachePrefix && window.Vz2Downloads) return window.Vz2Downloads.key(downloadFile(track));
         if (config.cachePrefix && track.fileId && track.sha256) {
             return CACHE_PREFIX + 'audio:' + track.fileId + ':' + track.sha256;
         }
@@ -720,7 +721,7 @@
         });
     }
 
-    function cachedTrackBlob(track) {
+    function legacyCachedTrackBlob(track) {
         var store = getCacheStore();
         if (!store) return Promise.resolve(null);
         return window.idbKeyval.get(track.cacheKey, store).then(function(value) {
@@ -731,21 +732,26 @@
     function loadTracksSequentially(set, token) {
         var decodeJobs = [];
         var sequence = Promise.resolve();
+        var signal = loadAbortController ? loadAbortController.signal : undefined;
         set.tracks.forEach(function(track) {
             sequence = sequence.then(function() {
                 if (token !== loadSerial || set !== currentSet) throw cancelledError();
                 if (track.unavailable) { updateTrackStatus(track, 'error', null, 'Audio na serveru chybí nebo bylo odstraněno.'); return; }
-                return cachedTrackBlob(track).then(function(cachedBlob) {
-                    if (token !== loadSerial || set !== currentSet) throw cancelledError();
-                    if (cachedBlob) { track.source = 'offline'; return cachedBlob; }
-                    track.source = 'web';
-                    updateTrackStatus(track, 'downloading', 0, '');
-                    return downloadBlob(track.url, function(percent) {
-                        if (token === loadSerial && set === currentSet) {
-                            updateTrackStatus(track, 'downloading', percent, '');
-                        }
+                var progress = function(percent) {
+                    if (token === loadSerial && set === currentSet) updateTrackStatus(track, 'downloading', percent, '');
+                };
+                var audio = config.cachePrefix && window.Vz2Downloads
+                    ? window.Vz2Downloads.read(downloadFile(track), { download: true, signal: signal, onProgress: progress }).then(function(result) {
+                        track.source = result.local ? 'offline' : 'web'; return result.blob;
+                    })
+                    : legacyCachedTrackBlob(track).then(function(cachedBlob) {
+                        if (token !== loadSerial || set !== currentSet) throw cancelledError();
+                        if (cachedBlob) { track.source = 'offline'; return cachedBlob; }
+                        track.source = 'web';
+                        updateTrackStatus(track, 'downloading', 0, '');
+                        return downloadBlob(track.url, progress);
                     });
-                }).then(function(blob) {
+                return audio.then(function(blob) {
                     if (token !== loadSerial || set !== currentSet) throw cancelledError();
                     track.blob = blob;
                     // Dekódování se spustí hned; další síťové stahování už na něj nečeká.

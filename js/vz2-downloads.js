@@ -5,12 +5,28 @@
     const prefix = () => root.VZ2.cachePrefix;
     const key = f => prefix() + 'audio:' + f.id + ':' + f.sha256;
     const valid = (blob, f) => blob instanceof Blob && (f.byte_size == null || blob.size === Number(f.byte_size));
+    const checkAbort = signal => { if (signal?.aborted) throw new DOMException('Načítání audia bylo zrušeno.', 'AbortError'); };
     let running = false;
     const notify = () => {
         try { sessionStorage.setItem(prefix() + 'downloads:pending', JSON.stringify(snapshot().filter(t => !['complete', 'cancelled'].includes(t.state)).map(t => t.file))); } catch (_) { /* Queue can still run when session storage is full. */ }
         listeners.forEach(fn => fn()); document.dispatchEvent(new Event('vz2:downloads-updated'));
     };
     async function local(file) { const blob = await root.idbKeyval.get(key(file), db); return valid(blob, file) ? blob : null; }
+    // Playback never saves implicitly. Only decoders request a full download;
+    // media elements can stream the URL when no complete local copy exists.
+    async function read(file, { download = false, signal, onProgress = () => {} } = {}) {
+        checkAbort(signal);
+        let blob = null, storageError = false;
+        try { blob = await local(file); } catch (_) { storageError = true; }
+        checkAbort(signal);
+        const saved = !!blob;
+        if (!blob && download) {
+            onProgress(0);
+            blob = await root.Vz2Offline.download(file.url, file.byte_size, onProgress, signal);
+            checkAbort(signal);
+        }
+        return { blob, local: saved, storageError };
+    }
     function snapshot() { return [...tasks.values()].map(t => ({ key: t.key, file: t.file, state: t.state, progress: t.progress, error: t.error })); }
     async function pump() {
         if (running) return;
@@ -74,7 +90,7 @@
         return rows;
     }
     const api = root.Vz2Downloads = {
-        key, local, enqueue, cancel, removeKey, snapshot, inventory,
+        key, local, read, enqueue, cancel, removeKey, snapshot, inventory,
         subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
         watch(file, element, fn) {
             let previous = null, serial = 0;
@@ -89,11 +105,12 @@
             };
             listeners.add(listener); return () => listeners.delete(listener);
         },
-        async source(file) {
-            let blob = null;
-            try { blob = await local(file); } catch (_) { /* Streaming remains available if storage is unavailable. */ }
-            const url = blob ? URL.createObjectURL(blob) : file.url;
-            return { url, local: !!blob, release() { if (blob) URL.revokeObjectURL(url); } };
+        async source(file, options) {
+            const result = await read(file, options);
+            checkAbort(options?.signal);
+            const url = result.blob ? URL.createObjectURL(result.blob) : file.url;
+            let released = false;
+            return { ...result, url, release() { if (!released && result.blob) URL.revokeObjectURL(url); released = true; } };
         },
         async clear() {
             await Promise.all([...tasks.keys()].map(cancel));

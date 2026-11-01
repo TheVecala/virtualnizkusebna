@@ -4,7 +4,6 @@
     const $ = id => document.getElementById(id);
     const mode = $('car-mode'), picker = $('car-picker'), linkDialog = $('time-link-dialog'), audio = $('car-audio');
     const mobile = matchMedia('(max-width: 767px)');
-    const audioStore = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     let context, browseCollectionId, browseKind = 'song', pickerLevel = 'recordings';
     let timestampList = null, timestampId = null, timestampSerial = 0, activeChapter = null;
     let previousFocus = null, pendingSelection = null, linkTarget = null, ratingBusy = false;
@@ -46,23 +45,21 @@
         const previous = single;
         single = null;
         audio.pause(); audio.removeAttribute('src'); audio.load();
-        if (previous?.url) URL.revokeObjectURL(previous.url);
+        previous?.abort.abort(); previous?.audioSource?.release();
     }
     async function openSingle(recording, seconds = 0) {
         const file = recording.files.find(item => item.url);
         if (!file) { setStatus('Audio není dostupné.', true); return; }
         releaseSingle();
-        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), url: null };
+        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), abort: new AbortController(), audioSource: null };
         single = current;
         const serial = audioSerial;
         audio.loop = false;
         tick();
         try {
-            const key = window.VZ2.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
-            const cached = await window.idbKeyval.get(key, audioStore).catch(() => null);
-            if (serial !== audioSerial || single !== current) return;
-            if (cached instanceof Blob) { current.url = URL.createObjectURL(cached); audio.src = current.url; }
-            else audio.src = file.url;
+            const source = await window.Vz2Downloads.source(file, { signal: current.abort.signal });
+            if (serial !== audioSerial || single !== current) { source.release(); return; }
+            current.audioSource = source; audio.src = source.url;
             audio.load();
         } catch (error) { if (single === current) { current.phase = 'error'; setStatus(error.message, true); tick(); } }
     }

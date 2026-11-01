@@ -8,7 +8,7 @@
     const collectionMemory = { song: null, rehearsal: null };
     try { const saved = JSON.parse(localStorage.getItem(cfg.cachePrefix + 'workspaces:collections')); for (const k of Object.keys(collectionMemory)) if (saved?.[k] != null) collectionMemory[k] = String(saved[k]); } catch (_) { /* First visit / private storage. */ }
     const surfaceMemory = new Map(), catalogMemory = { song: { scroll: 0 }, rehearsal: { scroll: 0 } };
-    const blobs = [];
+    const audioSources = [];
     const timestampPanels = [];
     // Disclosure state lives only in this document; a reload always starts collapsed.
     const expandedRecordings = new Set();
@@ -16,7 +16,6 @@
     const expandedLinkedRecordings = new Set();
     const expandedAttachments = new Set();
     let mixerNotes;
-    const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     const $ = id => document.getElementById(id);
     const mixerPanel = $('mixer-panel');
     function node(tag, text, cls) {
@@ -340,20 +339,23 @@
     function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
         const audio = node('audio'); audio.preload = 'none';
+        let source;
+        audioSources.push(() => { unwatch(); source?.release(); source = null; });
         const sourceStatus = node('small', 'Ověřuji místní kopii…', 'recording-audio-source vz2-attribution');
         parent.append(sourceStatus);
         const updateSource = () => { sourceStatus.textContent = audio.dataset.source === 'offline' ? 'Přehrávání ze zařízení' : 'Přehrávání ze sítě'; };
         const useLocal = blob => {
-            blobs.push(window.Vz2Offline.useBlob(audio, blob, text => message(text, true)));
+            const url = window.Vz2Offline.useBlob(audio, blob, text => message(text, true));
+            source?.release();
+            source = { release: () => URL.revokeObjectURL(url) };
             updateSource();
         };
-        const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
         const cache = recordingIconButton('Uložit offline', 'wifi-off', async () => {
             await sourceReady;
-            const current = await idbKeyval.get(cacheKey, store);
-            if (current instanceof Blob) {
+            const current = await window.Vz2Downloads.local(file);
+            if (current) {
                 if (!confirm('Odebrat offline kopii pouze z tohoto prohlížeče?')) return;
-                await window.Vz2Downloads.removeKey(cacheKey); setCacheLabel('Uložit offline');
+                await window.Vz2Downloads.removeKey(window.Vz2Downloads.key(file)); setCacheLabel('Uložit offline');
             } else {
                 setCacheLabel('Stahuji offline…');
                 try {
@@ -372,17 +374,14 @@
             else delete cache.dataset.progress;
             cache.replaceChildren(window.Vz2Audio.icon(saved ? 'device-floppy' : 'wifi-off'));
         };
-        window.Vz2Downloads.watch(file, audio, saved => setCacheLabel(saved ? 'Odebrat offline kopii' : 'Uložit offline', saved));
+        const unwatch = window.Vz2Downloads.watch(file, audio, saved => setCacheLabel(saved ? 'Odebrat offline kopii' : 'Uložit offline', saved));
         cache.setAttribute('aria-pressed', 'false');
         actions.append(cache);
-        const sourceReady = idbKeyval.get(cacheKey, store).then(blob => {
-            if (!audio.isConnected) return;
-            if (blob instanceof Blob) { useLocal(blob); setCacheLabel('Odebrat offline kopii', true); }
-            else { audio.src = file.url; audio.dataset.source = 'web'; updateSource(); }
-        }).catch(() => {
-            if (!audio.isConnected) return;
-            audio.src = file.url; audio.dataset.source = 'web'; updateSource();
-            setCacheLabel('Offline úložiště není dostupné'); cache.disabled = true;
+        const sourceReady = window.Vz2Downloads.source(file).then(next => {
+            if (!audio.isConnected) { next.release(); return; }
+            source = next; audio.src = next.url; audio.dataset.source = next.local ? 'offline' : 'web'; updateSource();
+            if (next.local) setCacheLabel('Odebrat offline kopii', true);
+            if (next.storageError) { setCacheLabel('Offline úložiště není dostupné'); cache.disabled = true; }
         });
         const seek = () => {
             const seconds = Number(qs.get('time_ms') || 0) / 1000;
@@ -826,7 +825,7 @@
         for (const id of expandedAttachments) if (!liveAttachmentIds.has(id)) expandedAttachments.delete(id);
         timestampPanels.splice(0).forEach(p => p.destroy());
         document.querySelectorAll('.recording-actions-dialog').forEach(dialog => dialog.remove());
-        document.querySelectorAll('#content audio').forEach(a => a.pause()); blobs.splice(0).forEach(URL.revokeObjectURL);
+        document.querySelectorAll('#content audio').forEach(a => a.pause()); audioSources.splice(0).forEach(release => release());
         const list = data.collections.filter(c => c.kind === kind && c.lifecycle === 'active'); $('collections').replaceChildren();
         list.forEach(c => {
             const row = node('div', undefined, 'collection');
