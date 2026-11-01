@@ -167,6 +167,35 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         await page.waitForFunction(() => Vz2Downloads.snapshot().some(t => t.file.id === 1 && t.state === 'complete'));
         assert.equal(await page.evaluate(async () => (await Vz2Downloads.inventory()).some(r => r.key.includes('audio:1:'))), true);
         console.log('PASS: closing during a download preserves queue and saves file without reopening player');
+        holdDownload = false;
+        await page.setViewportSize({ width: 320, height: 780 });
+        await page.goto('http://offline.test/index.php?collection_id=1&recording_id=3&listen=1&view=audio&time_ms=2');
+        await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready');
+        const carItems = [
+            { id: 't1', timestamp_id: 1, recording_id: 3, kind: 'take', status: 'complete', start_ms: 0, end_ms: 4000, label: 'Pokus A', song_title: 'Skladba A' },
+            { id: 't2', timestamp_id: 2, recording_id: 3, kind: 'take', status: 'complete', start_ms: 6000, end_ms: 9000, label: 'Pokus B' },
+            { id: 't3', timestamp_id: 3, recording_id: 3, kind: 'take', status: 'open', start_ms: 10000, end_ms: null, label: 'Otevřený' },
+            { id: 't4', timestamp_id: 4, recording_id: 3, kind: 'take', status: 'complete', start_ms: 3000, end_ms: 5000, label: 'Překryv' },
+            { id: 't5', kind: 'note', status: 'point', start_ms: 2000, end_ms: null, label: 'Bod' }
+        ];
+        await page.evaluate(items => Vz2TimestampStore.accept({ recording_id: 3, annotation_version: 1, annotations: items, timestamps_revision: 2, entries: [] }), carItems);
+        assert.equal(await page.locator('.car-chapter').count(), 4);
+        assert.match(await page.locator('[data-chapter-id="t1"]').textContent(), /Skladba A/);
+        assert.match(await page.locator('[data-chapter-id="t3"]').textContent(), /bez konce/);
+        for (const [time, ids] of [[2, ['t1']], [3.5, ['t1', 't4']], [4, ['t4']], [5.5, []], [6, ['t2']], [9, []], [12, []]]) {
+            await page.locator('#car-audio').evaluate((a, time) => { a.pause(); a.currentTime = time; }, time);
+            await page.waitForFunction(ids => JSON.stringify([...document.querySelectorAll('.car-chapter.is-current')].map(b => b.dataset.chapterId)) === JSON.stringify(ids), ids);
+        }
+        await page.locator('[data-chapter-id="t2"]').click();
+        await page.waitForFunction(() => !document.querySelector('#car-audio').paused && document.querySelector('#car-audio').currentTime >= 6);
+        assert(await page.locator('#car-audio').evaluate(a => a.currentSrc.startsWith('blob:')));
+        assert(await page.evaluate(() => document.querySelector('#car-mode').scrollWidth <= innerWidth + 1));
+        await page.evaluate(items => Vz2TimestampStore.accept({ recording_id: 3, annotation_version: 1, annotations: items.map(i => i.id === 't2' ? { ...i, label: 'Nový název' } : i), timestamps_revision: 3, entries: [] }), carItems);
+        await page.waitForFunction(() => document.querySelector('[data-chapter-id="t2"]').classList.contains('is-current'));
+        assert.equal(await page.locator('#car-audio').evaluate(a => a.paused), false);
+        assert.deepEqual(errors, []);
+        console.log('PASS: car mode uses shared annotations, exact ends, gaps, overlaps, song names and local audio; refresh preserves playback');
+
     } catch (error) {
         console.error('Browser errors:', errors);
         console.error(await page.locator('#recording-timestamps-4').textContent());

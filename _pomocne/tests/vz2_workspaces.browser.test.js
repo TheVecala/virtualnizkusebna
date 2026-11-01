@@ -824,6 +824,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             author: 'Petr', editor: 'Petr', created_by: 1, updated_by: 1, revision: 1, can_edit: false, can_delete: false,
             created_at: '2026-10-23 10:00:00', updated_at: '2026-10-23 10:00:00'
         })));
+        timestampRows.push(...[5000, 10000, 20000, 30000, 40000, 50000].map((timeMs, index) => ({
+            id: 310 + index, time_ms: timeMs + 9000, kind: 'song_end', paired_timestamp_id: 110 + index, body: '↓',
+            author: 'Petr', editor: 'Petr', created_by: 1, updated_by: 1, revision: 1, can_edit: false, can_delete: false,
+            created_at: '2026-10-23 10:00:00', updated_at: '2026-10-23 10:00:00'
+        })));
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.goto('http://vz2-workspaces.test/index.php?v=2&recording_id=11&view=looper&time_ms=15000');
         await ready();

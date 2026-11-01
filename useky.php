@@ -30,7 +30,7 @@ $config = ['csrf'=>auth_csrf_token(),'write'=>defined('VZ2_WRITES_ENABLED') && V
 <script defer src="js/vz2-downloads-panel.js?v=<?=filemtime(__DIR__.'/js/vz2-downloads-panel.js')?>"></script>
 <script defer src="js/vz2-timestamp-model.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-model.js')?>"></script><script src="js/vz2-segments-model.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-model.js')?>" defer></script>
 <script defer src="js/vz2-timestamp-store.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-store.js')?>"></script>
-<script defer src="js/vz2-timestamp-playback.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-playback.js')?>"></script><script defer src="js/vz2-timestamp-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-editor.js')?>"></script>
+<script defer src="js/vz2-timestamp-playback.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-playback.js')?>"></script><script defer src="js/vz2-note-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-note-editor.js')?>"></script><script defer src="js/vz2-timestamp-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-editor.js')?>"></script>
 <script src="js/vz2-segments-panel.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-panel.js')?>" defer></script>
 <script src="js/vz2-segments.js?v=<?=filemtime(__DIR__.'/js/vz2-segments.js')?>" defer></script>
 </head>
@@ -55,7 +55,7 @@ $config = ['csrf'=>auth_csrf_token(),'write'=>defined('VZ2_WRITES_ENABLED') && V
 <section class="segments-selection" id="segments-selection" aria-label="Vybraný úsek" hidden>
 <div class="segments-selection-heading"><div><p class="segments-kicker">VYBRANÝ ÚSEK</p><h2 id="segments-selected-title"></h2><p id="segments-selected-info"></p></div><span id="segments-selected-time"></span></div>
 <p id="segments-selected-body"></p>
-<div class="segments-player-actions"><button id="segments-edit" type="button">Upravit úsek</button><button id="segments-finish" type="button">Doplnit konec</button><button id="segments-delete" type="button">Smazat úsek</button><button id="segments-new-take" type="button">Nový pokus</button><button id="segments-new-passage" type="button">Nová pasáž</button><button id="segments-play" type="button">▶ Přehrát úsek</button><label><input id="segments-loop" type="checkbox">Opakovat úsek</label><a id="segments-open">Otevřít v looperu</a></div>
+<div class="segments-player-actions"><button id="segments-edit" type="button">Upravit úsek</button><button id="segments-finish" type="button">Doplnit konec</button><button id="segments-delete" type="button">Smazat úsek</button><button id="segments-new-take" type="button">Nový pokus</button><button id="segments-new-note" type="button">Nová poznámka</button><button id="segments-new-passage" type="button">Nová pasáž</button><button id="segments-play" type="button">▶ Přehrát úsek</button><label><input id="segments-loop" type="checkbox">Opakovat úsek</label><a id="segments-open">Otevřít v looperu</a></div>
 <audio id="segments-audio" controls preload="none" hidden></audio><p id="segments-audio-status" role="status"></p>
 </section>
 <noscript>Pro zobrazení úseků je potřeba JavaScript.</noscript>

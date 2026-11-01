@@ -138,8 +138,11 @@ Nad kontraktem 1 jsou samostatné moduly:
   seznam timestampů ani jeho DOM. Nový pohled předá ID nebo nový rozsah
   `draft.time_ms/end_time_ms`. Načte revizi, oprávnění a nabídky z API.
   Konflikt zachová formulář a vyžaduje výslovné převzetí aktuální revize.
-  Dosavadní editor bodových poznámek zůstává v modulu seznamu; jeho zápisy
-  používají stejný Store.
+  Bodové poznámky zpracuje tentýž vstup s `kind: 'note'` nebo `item_id` poznámky.
+  Samostatný `Vz2NoteEditor` (`js/vz2-note-editor.js`) zajišťuje jejich formulář,
+  kontrolu revize, přesnost času a konflikty. Volitelné připojení k hostiteli
+  zachovává dokované a mobilní ovládání seznamu; pro otevření z jiného pohledu
+  žádný seznam ani jeho DOM nepotřebuje.
 - `Vz2TimestampPlayback` (`js/vz2-timestamp-playback.js`): `play(adapter,item,
   {repeat,owner,onError})`, `stop`, `state`. Adaptér poskytuje `playRange`,
   `currentTimeMs`, `canPlay`, volitelně `isLoading` a `pause`. `stop` ruší
@@ -157,7 +160,7 @@ Nad kontraktem 1 jsou samostatné moduly:
   úplnost sad a odhad zbývajícího prostoru. `open()` obnoví katalog a stav.
 
 Úseky (`useky.php`) nyní umějí přímo vytvořit, upravit, dokončit či odstranit
-interval, využít místní audio a spravovat stahování. Nová stránka nepotřebuje
+interval, vytvořit/upravit bodovou poznámku, využít místní audio a spravovat stahování. Nová stránka nepotřebuje
 modul seznamu `vz2-timestamps.js`. Změna dat zachová aktuální výběr a zdroj audia.
 Samostatné karty prohlížeče nadále obnovují timestampy tlačítkem Obnovit data.
 
@@ -192,3 +195,28 @@ hromadné ukládání, částečnou sadu, opakování, rušení, místní zdroj,
 čtení revize a samostatný editor s konfliktem. Integrační browser test timestampů
 ověřuje úpravu přímo v Úsecích bez modulu seznamu, zachování smyčky a stažení
 celé zkoušky. Offline regresní test kontroluje dokončení fronty po zavření Looperu.
+
+
+### Přehled a režim Auto
+
+Kompaktní Přehled používá `vz2_timestamp_annotations` pro každou nahrávku.
+Jeho položky typu `marker` nesou normalizované druhy `take/passage/note/boundary`,
+ID, skutečný začátek/konec, stav, typ pasáže, rodiče a skladbu. Zachovává `time_ms`
+jako alias začátku pro kompatibilitu textového výstupu. Syrové SQL zdroje se
+neposílají; poznámka a autorství konce jsou v `end_body/end_author/end_at`.
+Párovaný pokus je jeden řádek. Otevřené pasáže mají „Doplnit konec“ a staré
+nespárované konce zůstávají viditelné. Filtry `*_marker_song_start/song_end`
+zůstaly pod původními klíči, ale nyní znamenají pokusy / nespárované konce.
+Přehled zůstává pouze pro čtení, bez audia a mediálních URL; Mapa se nemění.
+
+Režim Auto načítá timestampy přes Store a vykresluje pokusy z Model.items.
+Ukazuje oba známé časy a přiřazenou skladbu. `Model.activeTakes(recording,ms)`
+vrací dokončené pokusy v intervalu `[start_ms,end_ms)`. Mezera neoznačuje žádný
+pokus, překryv označí všechny odpovídající pokusy, otevřený pokus se nikdy
+nepovažuje za nekonečný interval. Zůstává kliknutelný a označený „bez konce“.
+Aktualizace názvu či hranic neznovunačítá audio. Rychlá hodnocení používají
+Store.addQuickNote; změna se nedotýká ukládání ani výběru místního audia.
+
+Doplňkové testy: `vz2_note_editor.browser.test.js` (samostatný formulář,
+revize, oprávnění, výpadek, mobil), `vz2_overview_intervals.browser.js` (volá
+integrační sada overview) a scénáře režimu Auto v `vz2_offline.browser.test.js`.

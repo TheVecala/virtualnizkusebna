@@ -43,6 +43,12 @@
             return request(id, { action: ['take', 'passage'].includes(item.kind) ? 'delete_interval' : 'delete',
                 id: item.timestamp_id, revision: item.source.revision, timestamps_revision: revision });
         },
+        async addQuickNote(id, symbol, timeMs) {
+            if (!['👍', '👎'].includes(symbol)) throw Error('Neplatné hodnocení.');
+            const list = await load(id);
+            if (!list.can_create) throw Error('K této nahrávce nelze přidat poznámku.');
+            return api.saveNote(id, { timestamps_revision: list.timestamps_revision, time_ms: Math.max(0, Math.round(timeMs)), body: symbol });
+        },
         saveInterval(id, fields) { return request(id, { ...fields, action: 'save_interval' }); },
         saveNote(id, fields) { return request(id, { ...fields, kind: 'note', action: fields.id ? 'update' : 'create' }); }
     };

@@ -51,6 +51,9 @@
     function endOf(entry, entries, duration) {
         return normalize({ id: entry.recording_id || 0, entries, duration_ms: duration }).find(i => i.timestamp_id === Number(entry.id))?.end_ms ?? null;
     }
+    function activeTakes(recording, at) {
+        return items(recording).filter(i => i.kind === 'take' && i.status === 'complete' && i.start_ms <= at && at < i.end_ms);
+    }
     function containingTakes(recording, start, end = null) {
         return items(recording).filter(i => i.kind === 'take' && i.start_ms <= start && (i.end_ms === null || (start < i.end_ms && (end === null || end <= i.end_ms))));
     }
@@ -67,7 +70,7 @@
         const seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
         return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
     }
-    const api = { format: compactFormat, parse, version, passageTypes, time, normalize, items, endOf, containingTakes };
+    const api = { format: compactFormat, parse, version, passageTypes, time, normalize, items, endOf, containingTakes, activeTakes };
     if (typeof module !== 'undefined') module.exports = api;
     root.Vz2TimestampModel = api;
 })(typeof window === 'undefined' ? globalThis : window);

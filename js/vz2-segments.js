@@ -108,10 +108,11 @@
         $('segments-open').href = 'index.php?' + params;
         $('segments-open').textContent = r.kind === 'multitrack' ? 'Otevřít v mixéru' : 'Otevřít v looperu';
         $('segments-audio-status').textContent = r.kind === 'multitrack' ? 'Vícestopou nahrávku přehrajete v mixéru.' : file?.url ? loadedAudio ? 'Připraveno k přehrávání od vybrané značky.' : 'Audio se načte až po spuštění přehrávání.' : 'Audio není dostupné; značky zůstávají zobrazené.';
-        $('segments-edit').hidden = !s.can_edit || !['take', 'passage'].includes(s.kind);
-        $('segments-finish').hidden = $('segments-edit').hidden || s.end_ms !== null;
+        $('segments-edit').textContent = s.kind === 'note' ? 'Upravit poznámku' : 'Upravit úsek';
+        $('segments-edit').hidden = !s.can_edit || !['take', 'passage', 'note'].includes(s.kind);
+        $('segments-finish').hidden = $('segments-edit').hidden || s.kind === 'note' || s.end_ms !== null;
         $('segments-delete').hidden = !s.can_delete;
-        $('segments-new-take').hidden = $('segments-new-passage').hidden = !window.VZ2.write;
+        $('segments-new-take').hidden = $('segments-new-passage').hidden = $('segments-new-note').hidden = !window.VZ2.write;
         if (!refresh) {
             panel.setPlayhead(r.id, s.start_ms);
             window.Vz2TimestampStore.select({ recording_id: r.id, item_id: s.id });
@@ -207,6 +208,7 @@
     $('segments-finish').onclick = () => edit(selection?.segment.kind, true, true);
     $('segments-new-take').onclick = () => edit('take');
     $('segments-new-passage').onclick = () => edit('passage');
+    $('segments-new-note').onclick = () => edit('note');
     $('segments-delete').onclick = async () => {
         if (!selection || !confirm('Smazat vybraný úsek?')) return;
         const chosen = selection;

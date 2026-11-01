@@ -35,7 +35,7 @@ const root = path.resolve(__dirname, '../..');
     });
     try {
         await page.goto('http://shared.test/');
-        for (const name of ['vz2-cache', 'vz2-downloads', 'vz2-downloads-panel', 'vz2-timestamp-model', 'vz2-timestamp-store', 'vz2-timestamp-playback', 'vz2-timestamp-editor', 'vz2-timestamps']) await page.addScriptTag({ path: path.join(root, 'js/' + name + '.js') });
+        for (const name of ['vz2-cache', 'vz2-downloads', 'vz2-downloads-panel', 'vz2-timestamp-model', 'vz2-timestamp-store', 'vz2-timestamp-playback', 'vz2-note-editor', 'vz2-timestamp-editor', 'vz2-timestamps']) await page.addScriptTag({ path: path.join(root, 'js/' + name + '.js') });
         await page.evaluate(() => {
             window.files = [1,2,3,4,5].map(id => ({ id, sha256: 'a'.repeat(64), byte_size: 5, original_name: 'Track ' + id, url: '/file' + id }));
             window.catalog = { collections: [{ id: 1, title: 'Zkouška' }], recordings: [{ id: 1, collection_id: 1, title: 'Mix', lifecycle: 'active', kind: 'multitrack', files: files.slice(0,3) }] };

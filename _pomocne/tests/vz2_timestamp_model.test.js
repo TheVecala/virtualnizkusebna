@@ -33,3 +33,10 @@ assert.equal(items.find(i => i.id === 't8').status, 'orphan');
 assert.equal(M.items({ annotation_version: 1, annotations: items }), items);
 assert.equal(M.endOf(entries[2], entries, 12000), 2500);
 console.log('PASS universal timestamp contract: PHP/JS conformance, explicit bounds, parents, overlaps, incomplete data');
+
+const activeRecording = { annotation_version: 1, annotations: [...items, { id: 'overlap', kind: 'take', status: 'complete', start_ms: 5000, end_ms: 8000 }] };
+assert.deepEqual(M.activeTakes(activeRecording, 122).map(i => i.id), []);
+assert.deepEqual(M.activeTakes(activeRecording, 123).map(i => i.id), ['t1']);
+assert.deepEqual(M.activeTakes(activeRecording, 5000).map(i => i.id), ['t1', 'overlap']);
+assert.deepEqual(M.activeTakes(activeRecording, 9000).map(i => i.id), []);
+assert.deepEqual(M.activeTakes(activeRecording, 9600).map(i => i.id), [], 'unknown ends are not treated as infinite playback ranges');

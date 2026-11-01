@@ -15,7 +15,8 @@
         if (entry.type === 'map') return scope === 'song' ? 'song_map_sections' : 'rehearsal_other';
         if (entry.type === 'map_detail') return scope === 'song' ? 'song_map_details' : 'rehearsal_other';
         if (entry.type === 'marker') {
-            if (['song_start', 'song_end', 'passage', 'note'].includes(entry.kind)) return `${scope}_marker_${entry.kind}`;
+            const kind = ({ take: 'song_start', boundary: 'song_end' })[entry.kind] || entry.kind;
+            if (['song_start', 'song_end', 'passage', 'note'].includes(kind)) return `${scope}_marker_${kind}`;
         }
         return `${scope}_other`;
     }

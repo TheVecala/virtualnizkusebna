@@ -142,6 +142,25 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await page.waitForFunction(() => Vz2Downloads.snapshot().length === 3 && Vz2Downloads.snapshot().every(t => t.state === 'complete'));
         assert.equal(await page.locator('#segments-audio').evaluate(a => a.paused), false);
         check(true, 'browser: timeline edits without list, preserves looping playback, and downloads entire rehearsal including mixer tracks');
+        await page.locator('#segments-new-note').click();
+        const point = page.locator('.vz2-timestamp-editor');
+        await point.locator('[name=body]').fill('Bod z časové osy');
+        if (await point.locator('.ts-open-advanced').isVisible()) await point.locator('.ts-open-advanced').click();
+        await point.locator('[name=time]').fill('00:03.789');
+        await point.getByRole('button', { name: 'Poznámka', exact: true }).click();
+        await point.waitFor({ state: 'hidden' });
+        const note = (await read(id)).annotations.find(i => i.label === 'Bod z časové osy');
+        assert.equal(note.start_ms, 3789);
+        await page.locator('[data-segment-id="' + note.id + '"]').click();
+        await page.locator('#segments-edit').click();
+        await point.locator('[name=body]').fill('Upravený bod z osy');
+        await point.getByRole('button', { name: 'Poznámka', exact: true }).click();
+        await point.waitFor({ state: 'hidden' });
+        assert.equal((await read(id)).annotations.find(i => i.id === note.id).start_ms, 3789);
+        assert.equal(await page.locator('#segments-selected-title').textContent(), 'Upravený bod z osy');
+        assert.equal(await page.locator('#segments-finish').isVisible(), false);
+        check(true, 'browser: timeline creates and edits point notes through standalone editor with exact milliseconds');
+
         assert.deepEqual(errors, []);
         await context.close();
     } finally { await browser.close(); }

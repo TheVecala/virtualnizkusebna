@@ -118,12 +118,13 @@
     }
 
     root.Vz2TimestampEditor = {
-        isOpen: () => !!intervalDialog?.open,
+        isOpen: () => !!intervalDialog?.open || !!root.Vz2NoteEditor?.isOpen(),
         async open({ recording_id, kind, item_id = null, adapter = null, finish = false, draft = {}, list = null }) {
             list = list || await Store.load(recording_id);
             const item = item_id ? Model.items(list).find(i => i.id === item_id) : null;
             if (item_id && !item) throw Error('Úsek již neexistuje.');
             if (item ? !item.can_edit : !list.can_create) throw Error('K úpravě nemáte oprávnění.');
+            if ((item?.kind || kind) === 'note') return root.Vz2NoteEditor.open({ recording_id, item_id, adapter, draft, list });
             if (!['take', 'passage'].includes(item?.kind || kind)) throw Error('Vyberte pokus nebo pasáž.');
             openIntervalEditor({ id: recording_id, list, adapter }, item?.kind || kind, item, finish, draft);
         }
