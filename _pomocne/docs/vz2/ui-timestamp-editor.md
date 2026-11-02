@@ -20,7 +20,10 @@ Uživatelem schválené rozmístění z 2. 11. 2026, cílová větev
   mimo záběr. Na krajích nahrávky se okno přiblížení omezí na její délku.
   Klepnutí do křivky posune přehrávání, tažení posouvá přiblížený výřez.
   Šipky na klávesnici posouvají o sekundu; Home/End na kraj nahrávky.
-- Nastavit sem zachytí aktuální pozici jako hranici. Klepnutí na čas hranice
+- Hranice mají společný řádek: čas začátku, Nastavit, čas konce, Nastavit,
+  ikona jemného doladění. Nenastavený konec zobrazuje pomlčku. Nadpis editoru
+  zůstává jen pro čtečky obrazovky; v hlavičce je název nahrávky a zavření.
+- Nastavit zachytí aktuální pozici jako hranici. Klepnutí na čas hranice
   tam přesune přehrávač. Otevření a uložení samo o sobě přehrávání ani pozici
   nemění. Počáteční čas a dokončení otevřeného úseku se zachytí před načítáním
   seznamu. Změna textu neovlivní skryté milisekundy.

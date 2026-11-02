@@ -37,12 +37,19 @@
 .vz2-annotation-editor .annotation-kinds button[aria-pressed=true] { background: var(--color-primary); color: var(--color-on-primary, white); border-color: var(--color-primary); opacity: 1; }
 .annotation-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px 8px; }
 .annotation-times, .annotation-fields { border: 1px solid var(--color-border); border-radius: 7px; padding: 4px 8px; margin-bottom: 8px; }
-.annotation-time-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; align-items: center; gap: 6px; min-height: 46px; border-bottom: 1px solid var(--color-border); }
-.annotation-time-row > span { font-size: 14px; font-weight: 600; }
-.vz2-annotation-editor .annotation-time { color: var(--color-primary); font-variant-numeric: tabular-nums; font-weight: 700; border-color: transparent; text-align: left; padding-inline: 0; }
-.vz2-annotation-editor [data-capture] { font-size: 13px; padding-inline: 8px; }
+.annotation-times { position: relative; }
+.annotation-boundaries { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 6px; padding-right: 40px; min-height: 42px; }
+.annotation-time-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px; min-width: 0; }
+.annotation-boundaries.annotation-point { grid-template-columns: minmax(0, 1fr); }
+.vz2-annotation-editor .annotation-time { color: var(--color-primary); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; white-space: nowrap; min-width: 0; border-color: transparent; text-align: center; padding-inline: 0; }
+.vz2-annotation-editor [data-capture] { font-size: 12px; padding-inline: 6px; white-space: nowrap; }
 .vz2-annotation-editor .annotation-fine { border: 0; padding: 0; }
-.annotation-fine summary { padding: 8px 0; font-size: 13px; color: var(--color-text-muted); cursor: pointer; }
+.vz2-annotation-editor .annotation-fine summary { position: absolute; top: 4px; right: 4px; display: flex; align-items: center; justify-content: center; width: 36px; height: 42px; min-height: 42px; padding: 0; border: 1px solid var(--color-control-border); border-radius: 4px; background: var(--color-control-bg); color: var(--color-control-text); list-style: none; cursor: pointer; }
+.annotation-fine summary::-webkit-details-marker { display: none; }
+.annotation-fine summary::marker { content: ''; }
+.annotation-fine summary svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.vz2-annotation-editor .annotation-fine[open] summary { border-color: var(--color-primary); color: var(--color-primary); }
+.annotation-fine[open] .annotation-fine-rows { padding-top: 8px; }
 .annotation-fine-row { display: flex; flex-wrap: wrap; align-items: end; gap: 4px; margin-bottom: 8px; }
 .vz2-annotation-editor .annotation-fine-row label { flex: 1 1 100%; font-size: 13px; gap: 3px; }
 .vz2-annotation-editor .annotation-fine-row input { max-width: 180px; }
@@ -97,7 +104,6 @@
 }
 @media (max-height: 420px) {
     .annotation-wave { height: 48px; }
-    .annotation-header .interval-context { display: none; }
     .vz2-annotation-editor .annotation-header h2 { font-size: 15px; }
     .vz2-annotation-editor .annotation-header button { min-height: 32px; }
     .annotation-kinds button { min-height: 34px; }
@@ -116,9 +122,7 @@
 .annotation-small .annotation-transport { padding-block: 3px; }
 .annotation-small .annotation-kinds { margin-bottom: 3px; }
 .annotation-tiny .annotation-wave { height: 48px; }
-.annotation-tiny .annotation-header .interval-context { display: none; }
 .vz2-annotation-editor.annotation-tiny .annotation-header h2 { font-size: 15px; }
 .vz2-annotation-editor.annotation-tiny .annotation-header button { min-height: 32px; }
 .annotation-tiny .annotation-kinds button { min-height: 34px; }
 .annotation-note-dialog { position: fixed; left: 50%; right: auto; bottom: auto; transform: translateX(-50%); margin: 0; }
-.vz2-annotation-editor .annotation-fine summary { min-height: 36px; border: 0; border-radius: 0; background: none; text-align: left; }

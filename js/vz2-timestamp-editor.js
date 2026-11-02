@@ -10,16 +10,18 @@
         const dialog = make('dialog', null, 'vz2-annotation-editor vz2-interval-editor');
         dialog.setAttribute('aria-labelledby', 'annotation-title');
         dialog.innerHTML = `<form autocomplete="off" novalidate>
-            <div class="annotation-header"><div><h2 id="annotation-title"></h2><p class="interval-context"></p></div><button type="button" class="annotation-close" aria-label="Zavřít editor">×</button></div>
+            <div class="annotation-header"><div><h2 id="annotation-title" class="visually-hidden"></h2><p class="interval-context"></p></div><button type="button" class="annotation-close" aria-label="Zavřít editor">×</button></div>
             <div class="annotation-player"></div>
             <div class="annotation-kinds" role="group" aria-label="Typ časové značky"><button type="button" data-kind="take">Pokus</button><button type="button" data-kind="passage">Pasáž</button><button type="button" data-kind="note">Poznámka</button></div>
             <div class="annotation-scroll">
                 <div class="annotation-existing"><span>Rozpracovaný úsek</span><div data-choice="existing"></div></div>
                 <div class="annotation-times">
-                    <div class="annotation-time-row"><span class="annotation-start-label">Začátek</span><button type="button" class="annotation-time" data-goto="start"></button><button type="button" data-capture="start">Nastavit sem</button></div>
-                    <div class="annotation-time-row annotation-end"><span>Konec</span><button type="button" class="annotation-time" data-goto="end"></button><button type="button" data-capture="end">Nastavit sem</button></div>
+                    <div class="annotation-boundaries">
+                        <div class="annotation-time-row" role="group" aria-label="Začátek"><button type="button" class="annotation-time" data-goto="start"></button><button type="button" data-capture="start" aria-label="Nastavit začátek" title="Nastavit začátek podle přehrávače">Nastavit</button></div>
+                        <div class="annotation-time-row annotation-end" role="group" aria-label="Konec"><button type="button" class="annotation-time" data-goto="end"></button><button type="button" data-capture="end" aria-label="Nastavit konec" title="Nastavit konec podle přehrávače">Nastavit</button></div>
+                    </div>
                     <p class="annotation-time-error error" role="alert"></p>
-                    <details class="annotation-fine"><summary>Jemné doladění</summary><div class="annotation-fine-rows"></div><button type="button" class="annotation-clear-end">Doplnit konec později</button></details>
+                    <details class="annotation-fine"><summary aria-label="Jemné doladění" title="Jemné doladění"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg></summary><div class="annotation-fine-rows"></div><button type="button" class="annotation-clear-end">Doplnit konec později</button></details>
                 </div>
                 <div class="annotation-fields">
                     <div class="annotation-song annotation-field"><span>Skladba</span><div data-choice="song"></div></div>
@@ -74,11 +76,14 @@
             dialog.querySelector('#annotation-title').textContent = selected ? 'Upravit ' + names[kind] : kind === 'take' ? 'Nový pokus' : kind === 'passage' ? 'Nová pasáž' : 'Nová poznámka';
             dialog.querySelectorAll('[data-kind]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.kind === kind)); b.disabled = !!selected || busy; });
             dialog.querySelector('.annotation-end').hidden = point;
-            dialog.querySelector('.annotation-start-label').textContent = point ? 'Čas' : 'Začátek';
+            dialog.querySelector('.annotation-boundaries').classList.toggle('annotation-point', point);
+            dialog.querySelector('.annotation-time-row').setAttribute('aria-label', point ? 'Čas poznámky' : 'Začátek');
+            dialog.querySelector('[data-capture=start]').setAttribute('aria-label', point ? 'Nastavit čas poznámky' : 'Nastavit začátek');
+            dialog.querySelector('[data-capture=start]').title = point ? 'Nastavit čas poznámky podle přehrávače' : 'Nastavit začátek podle přehrávače';
             dialog.querySelector('[data-goto=start]').textContent = format(start);
-            dialog.querySelector('[data-goto=end]').textContent = end == null ? 'Doplnit později' : format(end);
-            dialog.querySelector('[data-goto=start]').setAttribute('aria-label', 'Přejít na ' + format(start));
-            dialog.querySelector('[data-goto=end]').setAttribute('aria-label', end == null ? 'Konec zatím není nastavený' : 'Přejít na ' + format(end));
+            dialog.querySelector('[data-goto=end]').textContent = end == null ? '—' : format(end);
+            dialog.querySelector('[data-goto=start]').setAttribute('aria-label', (point ? 'Přejít na čas poznámky ' : 'Přejít na začátek ') + format(start));
+            dialog.querySelector('[data-goto=end]').setAttribute('aria-label', end == null ? 'Konec zatím není nastavený' : 'Přejít na konec ' + format(end));
             dialog.querySelector('.annotation-song').hidden = kind !== 'take';
             dialog.querySelector('.annotation-passage').hidden = dialog.querySelector('.annotation-parent').hidden = kind !== 'passage';
             dialog.querySelector('label[for=annotation-label]').textContent = point ? 'Text' : 'Název';
