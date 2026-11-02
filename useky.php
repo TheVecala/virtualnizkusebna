@@ -30,9 +30,10 @@ $config = ['csrf'=>auth_csrf_token(),'write'=>defined('VZ2_WRITES_ENABLED') && V
 <script defer src="js/vz2-downloads-panel.js?v=<?=filemtime(__DIR__.'/js/vz2-downloads-panel.js')?>"></script>
 <script defer src="js/vz2-timestamp-model.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-model.js')?>"></script><script src="js/vz2-segments-model.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-model.js')?>" defer></script>
 <script defer src="js/vz2-timestamp-store.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-store.js')?>"></script>
-<script defer src="js/vz2-timestamp-playback.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-playback.js')?>"></script><script defer src="js/vz2-note-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-note-editor.js')?>"></script><script defer src="js/vz2-timestamp-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-editor.js')?>"></script>
+<script defer src="js/vz2-timestamp-playback.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-playback.js')?>"></script><script defer src="js/vz2-note-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-note-editor.js')?>"></script><script defer src="js/vz2-timestamp-controls.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-controls.js')?>"></script><script defer src="js/vz2-timestamp-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-editor.js')?>"></script>
 <script src="js/vz2-segments-panel.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-panel.js')?>" defer></script>
 <script src="js/vz2-segments.js?v=<?=filemtime(__DIR__.'/js/vz2-segments.js')?>" defer></script>
+<link rel="stylesheet" href="css/vz2-timestamp-editor.css?v=<?=filemtime(__DIR__.'/css/vz2-timestamp-editor.css')?>">
 </head>
 <body class="segments-page">
 <header class="segments-topbar"><a class="segments-brand" href="index.php?v=2">ZKUŠEBNA DK!</a><nav aria-label="Navigace"><a href="prehled.php">Kompaktní přehled</a><a href="index.php?v=2">← Zpět do zkušebny</a></nav></header>

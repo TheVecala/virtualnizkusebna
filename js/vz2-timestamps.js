@@ -65,7 +65,12 @@
     }));
     let exportDialog, activeExportPanel;
     const Notes = root.Vz2NoteEditor;
-    const openEditor = (panel, row) => Notes.openPanel(panel, row);
+    const openEditor = (panel, row) => {
+        // Orphaned legacy ends keep their explicit repair flow; all normal annotations share A5.
+        if (row?.kind === 'song_end') return Notes.openPanel(panel, row);
+        return root.Vz2TimestampEditor.open({ recording_id: panel.id, kind: row ? 'note' : 'take',
+            item_id: row ? 't' + row.id : null, adapter: panel.adapter, list: panel.list }).catch(e => panel.error(e.message));
+    };
     const quickNote = (panel, symbol) => Notes.quickNote(panel, symbol);
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     const boundaryIcon = kind => {
@@ -199,7 +204,7 @@
             if (open) { shell.open = true; positionDrawer(); }
         };
         const onDrawerKey = e => {
-            if (e.key === 'Escape' && !pinnedOpen() && container.classList.contains('ts-drawer-open') && !Notes.isOpen() && !exportDialog?.open) {
+            if (e.key === 'Escape' && !pinnedOpen() && container.classList.contains('ts-drawer-open') && !Notes.isOpen() && !root.Vz2TimestampEditor.isOpen() && !exportDialog?.open) {
                 toggleDrawer(false); mobileToggle.focus();
             }
         };

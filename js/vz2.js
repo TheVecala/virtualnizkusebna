@@ -392,6 +392,11 @@
         return {
             audio,
             cache,
+            file,
+            prepare: async () => { await sourceReady; if (audio.preload === 'none') { audio.preload = 'metadata'; audio.load(); } },
+            isPlaying: () => !audio.paused && !audio.ended,
+            pause: () => audio.pause(),
+            play: async () => { await sourceReady; if (!audio.isConnected) throw Error('Přehrávač již není otevřený.'); await audio.play(); },
             isLoading: () => audio.dataset.sourceSwitching === 'true',
             canPlay: () => audio.isConnected && audio.readyState >= 1 && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
@@ -409,6 +414,17 @@
         const current = () => { const s = window.MultitrackApp?.getState(); return String(s?.id) === String(id) ? s : null; };
         return {
             canPlay: () => current()?.phase === 'ready',
+            isPlaying: () => !!current()?.playing,
+            pause: () => { if (current()) window.MultitrackApp.pause(); },
+            play: () => { if (current()?.phase !== 'ready') throw Error('Mixér není připravený.'); return window.MultitrackApp.play(); },
+            waveform: () => current()?.phase === 'ready' ? window.MultitrackApp.getWaveform() : null,
+            prepare: async () => {
+                if (!current()) window.MultitrackApp.load(String(id));
+                for (let n = 0; n < 100 && current()?.phase !== 'ready'; n++) {
+                    if (!current() || current().phase === 'error') break;
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            },
             currentTimeMs: () => Math.round((current()?.position || 0) * 1000),
             durationMs: () => current()?.duration == null ? null : Math.round(current().duration * 1000),
             seek: ms => { if (current()?.phase === 'ready') window.MultitrackApp.seek(ms / 1000); },
