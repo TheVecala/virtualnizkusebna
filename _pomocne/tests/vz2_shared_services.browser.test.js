@@ -91,6 +91,8 @@ const root = path.resolve(__dirname, '../..');
         await page.locator('.interval-reload').click();
         await page.locator('.annotation-rebase').click();
         await page.locator('.vz2-interval-editor [type=submit]').click();
+        await page.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
+        await page.locator('.annotation-close').click();
         await page.waitForFunction(() => !document.querySelector('.vz2-interval-editor'));
         assert.equal(await page.evaluate(() => Vz2TimestampStore.peek(1).timestamps_revision), 4);
         console.log('PASS timestamp service: stale reads, shared editor without list, conflict and explicit rebase');

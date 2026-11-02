@@ -29,6 +29,8 @@ const root = path.resolve(__dirname, '../..');
         const editor = page.locator('.vz2-annotation-editor');
         await page.evaluate(() => Vz2TimestampEditor.open({ recording_id: 1, kind: 'note', draft: { time_ms: 1234, body: 'Nástup' } }));
         await editor.getByRole('button', { name: 'Uložit poznámku', exact: true }).click();
+        await editor.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
+        await editor.locator('.annotation-close').click();
         await editor.waitFor({ state: 'hidden' });
         assert.equal(lastWrite.time_ms, 1234); assert.equal(lastWrite.kind, 'note');
         assert.equal(await page.evaluate(() => typeof window.Vz2Timestamps), 'undefined');
@@ -43,6 +45,8 @@ const root = path.resolve(__dirname, '../..');
         assert.equal(await editor.locator('img').count(), 0);
         await editor.locator('.annotation-rebase').click();
         await editor.getByRole('button', { name: 'Uložit poznámku', exact: true }).click();
+        await editor.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
+        await editor.locator('.annotation-close').click();
         await editor.waitFor({ state: 'hidden' });
         assert.equal(lastWrite.time_ms, 1234, 'text edits preserve exact milliseconds');
         for (const width of [320, 390, 1440]) {

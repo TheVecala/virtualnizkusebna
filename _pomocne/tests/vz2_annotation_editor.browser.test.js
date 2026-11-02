@@ -7,7 +7,7 @@ const root = path.resolve(__dirname, '../..');
 (async () => {
     const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/chromium', headless: true });
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    let revision = 1, writes = [], fail = false, delayRead = false;
+    let revision = 1, writes = [], fail = false, delayRead = false, nextNoteId = 50;
     let entries = [{ id: 1, recording_id: 1, kind: 'song_start', time_ms: 25000, body: 'Pokus 1', revision: 1, can_edit: true, can_delete: true },
         { id: 2, recording_id: 1, kind: 'song_end', time_ms: 190000, paired_timestamp_id: 1, body: '↓', revision: 1, can_edit: true, can_delete: true },
         { id: 3, recording_id: 1, kind: 'passage', time_ms: 72000, end_time_ms: 96000, parent_timestamp_id: 1, body: 'Refrén', passage_type: 'chorus', revision: 1, can_edit: true, can_delete: true },
@@ -22,7 +22,7 @@ const root = path.resolve(__dirname, '../..');
             if (f.timestamps_revision !== revision) return route.fulfill({ status: 409, json: { ok: false, error: 'Značky se mezitím změnily.' } });
             writes.push(f); revision++;
             if (f.kind === 'note') {
-                const entry = { id: f.id || 50, recording_id: 1, ...f, revision, can_edit: true, can_delete: true };
+                const entry = { id: f.id || nextNoteId++, recording_id: 1, ...f, revision, can_edit: true, can_delete: true };
                 entries = [...entries.filter(e => e.id !== entry.id), entry];
             }
         } else if (delayRead) await new Promise(r => setTimeout(r, 250));
@@ -31,6 +31,11 @@ const root = path.resolve(__dirname, '../..');
     });
     const editor = page.locator('.vz2-annotation-editor');
     const open = async (options = {}) => page.evaluate(options => Vz2TimestampEditor.open({ recording_id: 1, adapter: window.adapter, ...options }), options);
+    const save = async () => {
+        await editor.locator('.annotation-save').click();
+        await editor.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
+        assert(await editor.isVisible(), 'saving keeps the editor open');
+    };
     const close = async () => { await editor.locator('.annotation-close').click(); await editor.waitFor({ state: 'hidden' }); };
     const choose = async (name, text) => {
         await editor.locator('[data-choice="' + name + '"] > button').click();
@@ -83,9 +88,30 @@ const root = path.resolve(__dirname, '../..');
         await page.evaluate(() => document.documentElement.dataset.theme = 'dark');
         await page.screenshot({ path: path.join(previewDir, 'mobile-dark.png') });
         await page.evaluate(() => document.documentElement.dataset.theme = 'light');
-        await editor.getByRole('button', { name: 'Uložit pokus', exact: true }).click(); await editor.waitFor({ state: 'hidden' });
+        await page.evaluate(() => { window.originalDialog = document.querySelector('.vz2-annotation-editor'); window.originalWave = document.querySelector('.annotation-wave'); });
+        const savedViewport = await editor.locator('.annotation-wave').evaluate(w => [Number(w.dataset.viewStart), Number(w.dataset.viewEnd)]);
+        await save();
         assert.deepEqual([writes.at(-1).time_ms, writes.at(-1).end_time_ms, writes.at(-1).song_collection_id], [734567, 745000, 12]);
         assert.equal(writes.at(-1).note_text, 'Doplňující <img src=x> poznámka');
+        assert.equal(await editor.locator('[name=label]').inputValue(), '');
+        assert.equal(await editor.locator('[data-goto=start]').textContent(), '12:25');
+        assert.equal(await editor.locator('[data-goto=end]').textContent(), '—');
+        assert.equal(await editor.locator('.annotation-note-open.has-note').count(), 0);
+        assert.match(await editor.locator('[data-choice=song] > button').textContent(), /Skladba 12/);
+        assert(await page.evaluate(() => originalDialog === document.querySelector('.vz2-annotation-editor') && originalWave === document.querySelector('.annotation-wave')));
+        assert.deepEqual(await editor.locator('.annotation-wave').evaluate(w => [Number(w.dataset.viewStart), Number(w.dataset.viewEnd)]), savedViewport, 'saving preserves zoom');
+        assert.deepEqual(await page.evaluate(() => [position, playing]), [745000, false], 'saving preserves playback');
+        await editor.locator('[name=label]').fill('Pokus 3');
+        await save();
+        assert.equal(writes.at(-1).timestamps_revision, writes.at(-2).timestamps_revision + 1);
+        assert.equal(writes.at(-1).id, undefined);
+        assert.deepEqual([writes.at(-1).time_ms, writes.at(-1).end_time_ms, writes.at(-1).note_text], [745000, null, '']);
+        assert.equal(writes.at(-1).song_collection_id, 12);
+        let closePrompts = 0;
+        const trackPrompt = () => closePrompts++;
+        page.on('dialog', trackPrompt); await close(); page.off('dialog', trackPrompt);
+        assert.equal(closePrompts, 0, 'fresh form after save closes without discarding prompt');
+        console.log('PASS consecutive saves, current revision, clean draft, same waveform, zoom and playback');
         console.log('PASS capture before async load, same player, zoom anchor, custom selector, note dialog, timestamp reference, exact save');
         await open({ kind: 'passage' });
         await editor.locator('.annotation-fine').evaluate(e => e.open = true);
@@ -106,7 +132,7 @@ const root = path.resolve(__dirname, '../..');
         const draft = await editor.locator('[name=label]').inputValue();
         await editor.locator('.interval-reload').click(); await editor.locator('.annotation-rebase').click();
         assert.equal(await editor.locator('[name=label]').inputValue(), draft);
-        await editor.locator('.annotation-save').click(); await editor.waitFor({ state: 'hidden' });
+        await save(); await close();
         assert.equal(writes.at(-1).parent_timestamp_id, 1);
         assert.equal(writes.at(-1).passage_type, 'chorus');
         console.log('PASS invalid interval, conflict comparison and explicit rebase preserve draft and parent');
@@ -114,11 +140,25 @@ const root = path.resolve(__dirname, '../..');
         await editor.locator('[name=label]').fill('Bodová poznámka');
         fail = true; await editor.locator('.annotation-save').click(); await editor.locator('.annotation-error').filter({ hasText: /fetch/i }).waitFor();
         assert.equal(await editor.locator('[name=label]').inputValue(), 'Bodová poznámka'); fail = false;
-        await editor.locator('.annotation-save').click(); await editor.waitFor({ state: 'hidden' });
+        await save(); await close();
         const noteTime = writes.at(-1).time_ms;
         await open({ item_id: 't50' }); await editor.locator('[name=label]').fill('Upravená poznámka');
-        await editor.locator('.annotation-save').click(); await editor.waitFor({ state: 'hidden' });
+        await page.evaluate(() => { position = 81000; playing = true; });
+        await save();
         assert.equal(writes.at(-1).time_ms, noteTime);
+        assert.equal(writes.at(-1).id, 50);
+        assert.equal(await editor.locator('[name=label]').inputValue(), '');
+        assert.equal(await editor.locator('[data-goto=start]').textContent(), '01:21');
+        await editor.locator('[name=label]').fill('Další bod');
+        await save();
+        assert.equal(writes.at(-1).action, 'create', 'saving after an edit creates a new timestamp');
+        assert.equal(writes.at(-1).id, undefined);
+        assert.equal(writes.at(-1).time_ms, 81000);
+        assert.equal(writes.at(-1).timestamps_revision, writes.at(-2).timestamps_revision + 1);
+        assert.match(await editor.locator('.annotation-reference').textContent(), /Upravená poznámka/);
+        assert.match(await editor.locator('.annotation-reference').textContent(), /Další bod/);
+        assert.equal(await page.evaluate(() => playing), true);
+        await close();
         console.log('PASS note creates/edits with exact time and retains text after network failure');
         for (const [width, height] of [[320, 568], [390, 844], [390, 420], [390, 320], [844, 390], [1440, 1000]]) {
             await page.setViewportSize({ width, height }); await open();

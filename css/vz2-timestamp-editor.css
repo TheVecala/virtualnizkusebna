@@ -70,6 +70,8 @@
 .annotation-reference .annotation-selected { background: var(--color-primary-bg); }
 .annotation-footer { flex: 0 0 auto; padding: 7px 10px max(8px, env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border); background: var(--color-panel); }
 .annotation-summary { display: block; font-size: 13px; padding-bottom: 6px; }
+.annotation-summary-row { justify-content: space-between; flex-wrap: wrap; }
+.annotation-save-status { font-size: 13px; }
 .annotation-footer > div { display: flex; gap: 8px; }
 .annotation-footer button { flex: 1; }
 .annotation-footer .annotation-save { flex: 1.5; }

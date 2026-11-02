@@ -33,7 +33,7 @@
                 <p class="error annotation-error" role="alert"></p>
                 <div class="interval-current" hidden></div><button type="button" class="interval-reload" hidden>Načíst aktuální verzi k porovnání</button><button type="button" class="annotation-rebase" hidden>Použít aktuální revizi</button>
             </div>
-            <div class="annotation-footer"><output class="annotation-summary"></output><div><button type="button" class="interval-cancel">Zrušit</button><button type="submit" class="annotation-save">Uložit úsek</button></div></div>
+            <div class="annotation-footer"><div class="annotation-summary-row"><output class="annotation-summary"></output><span class="annotation-save-status" role="status"></span></div><div><button type="button" class="interval-cancel">Zrušit</button><button type="submit" class="annotation-save">Uložit úsek</button></div></div>
         </form>`;
         document.body.append(dialog);
         const form = dialog.querySelector('form'), error = dialog.querySelector('.annotation-error'), timeError = dialog.querySelector('.annotation-time-error');
@@ -213,7 +213,9 @@
         };
         form.onsubmit = async e => {
             e.preventDefault(); if (busy) return;
+            const status = dialog.querySelector('.annotation-save-status'); status.textContent = '';
             timeError.textContent = ''; report('');
+            if (!selected && !latestList.can_create) { report('K přidání značky již nemáte oprávnění.'); return; }
             if (invalidTimes.size) { timeError.textContent = [...invalidTimes.values()][0]; dialog.querySelector('.annotation-fine').open = true; return; }
             if (kind !== 'note' && end != null && end <= start) { timeError.textContent = 'Konec musí být po začátku.'; dialog.querySelector('[data-goto=end]').focus(); return; }
             if (kind === 'note' && !label.value.trim()) { report('U poznámky vyplňte text.'); label.focus(); return; }
@@ -224,7 +226,18 @@
                 passage_type: kind === 'passage' ? choices.passage_type.value : null,
                 parent_timestamp_id: kind === 'passage' && choices.parent.value ? Number(choices.parent.value) : null });
             busy = true; const buttons = [...form.querySelectorAll('button,input')]; buttons.forEach(b => b.disabled = true);
-            try { await (kind === 'note' ? Store.saveNote(recording_id, fields) : Store.saveInterval(recording_id, fields)); dialog.close(); }
+            try {
+                latestList = await (kind === 'note' ? Store.saveNote(recording_id, fields) : Store.saveInterval(recording_id, fields));
+                revision = latestList.timestamps_revision;
+                const song = choices.song.value, passageType = choices.passage_type.value;
+                // Each successful save starts a fresh annotation in the same player session.
+                item = null; finish = false; draft = { time_ms: currentTime() }; typeDrafts = {}; pendingLatest = null;
+                populate(null);
+                choices.song.value = song; choices.passage_type.value = passageType; choices.existing.value = '';
+                baseline = state();
+                dialog.querySelector('.interval-current').hidden = dialog.querySelector('.interval-reload').hidden = dialog.querySelector('.annotation-rebase').hidden = true;
+                status.textContent = 'Uloženo';
+            }
             catch (err) { report(err.message); dialog.querySelector('.interval-reload').hidden = err.status !== 409; error.scrollIntoView({ block: 'nearest' }); }
             finally { busy = false; buttons.forEach(b => b.disabled = false); update(); }
         };

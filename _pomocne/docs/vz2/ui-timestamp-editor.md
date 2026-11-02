@@ -39,6 +39,12 @@ Uživatelem schválené rozmístění z 2. 11. 2026, cílová větev
   o další editor. Příslušnost pasáže určuje explicitní rodič, nikoli čas.
 - Konflikt revizí zachová koncept a nabídne načtení aktuální verze a její
   výslovné převzetí. Chyba spojení zachová vyplněná pole.
+- Úspěšné uložení nechá editor otevřený a zobrazí „Uloženo“. Další značka
+  stejného typu začíná na aktuální pozici přehrávače, bez názvu, poznámky a konce.
+  Skladba a typ pasáže zůstávají vybrané; rodič pasáže se určí podle nového času.
+  Seznam značek se obnoví a další zápis použije novou revizi. To platí i po
+  úpravě existující značky. Přehrávání a zoom pokračují beze změny; editor
+  uživatel zavře křížkem.
 
 ## Zapojení
 
