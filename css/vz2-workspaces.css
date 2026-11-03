@@ -267,4 +267,5 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 .song-details-dialog .annotation-choice-trigger { font-size: 13px; }
 @media (min-width: 1200px) {
     body[data-collection-kind=song] #collection-header:not([hidden]) { display: flex; padding-bottom: 6px; }
+    #collection-header .collection-heading-row { display: none; }
 }

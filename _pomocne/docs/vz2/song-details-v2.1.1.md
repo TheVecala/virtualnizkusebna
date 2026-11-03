@@ -5,6 +5,8 @@
 - Údaje patří celé skladbě, nezávisle na nahrávkách, mapě a timestampech.
 - Pod názvem jsou všechna tempa a takty, vedle nich tužka pro společnou úpravu.
   Nevyplněná skladba nabízí pouze `+ Popisek` oprávněným uživatelům.
+- Na desktopu zůstává výběr skladby pouze v levém katalogu. Nad panely jsou
+  jen údaje skladby; výběr nad nimi je viditelný na mobilu a tabletu.
 - Popisek zobrazuje dva řádky s možností rozbalení. Text je prostý, bez HTML.
 - Tempo podporuje pořadí i opakování: `120 / 132,5 / 120`. Povolen je rozsah
   1–999 BPM a nejvýše dvě desetinná místa. Hodnoty odděluje lomítko.
