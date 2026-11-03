@@ -9,6 +9,7 @@
             if (entry.kind === 'tablature') return scope === 'song' ? 'song_tablature' : 'rehearsal_other';
             return `${scope}_other`;
         }
+        if (entry.type === 'song_details') return 'song_details';
         if (entry.type === 'summary') return `${scope}_summary`;
         if (entry.type === 'attachment_note') return `${scope}_attachment`;
         if (entry.type === 'discussion') return `${scope}_discussion`;

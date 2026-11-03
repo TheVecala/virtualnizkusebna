@@ -39,10 +39,13 @@ $command=json_decode(stream_get_contents(STDIN),true,32,JSON_THROW_ON_ERROR);
 if($command['action']==='init'){
  $db->query('CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');$db->select_db('${database}');
  $db->query("SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE'");
- foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql','006_vz2_rehearsal_starts.sql','007_login_usernames.sql','008_login_usernames_finalize.sql','009_timestamp_intervals.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
+ foreach(['001_personal_accounts.sql','002_vz2.sql','003_vz2_discussion_body.sql','004_vz2_song_map.sql','005_vz2_rehearsal_history.sql','006_vz2_rehearsal_starts.sql','007_login_usernames.sql','008_login_usernames_finalize.sql','009_timestamp_intervals.sql','010_vz2_song_details.sql'] as $file){$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations') + '/')}.$file));do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());}
  foreach([['Admin','admin','admin-test'],['Alice','muzikant','alice-test'],['Bob','muzikant','bob-test']] as $u){$s=$db->prepare('INSERT INTO users(username,name,role,password_hash) VALUES (?,?,?,?)');$s->execute([strtolower($u[0]),$u[0],$u[1],password_hash($u[2],PASSWORD_DEFAULT)]);}
  $s=$db->prepare('UPDATE auth_settings SET guest_enabled=1,guest_password_hash=? WHERE id=1');$s->execute([password_hash('guest-test',PASSWORD_DEFAULT)]);
  echo json_encode(['version'=>$db->server_info,'mode'=>$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0]]);
+}elseif($command['action']==='migrate_song_details'){
+ $db->select_db('${database}');$db->multi_query(file_get_contents(${phpString(path.join(web, 'migrations', '010_vz2_song_details.sql'))}));
+ do{if($r=$db->store_result())$r->free();}while($db->more_results()&&$db->next_result());echo '{}';
 }elseif($command['action']==='drop'){$db->query('DROP DATABASE ${database}');echo '{}';}
 elseif($command['action']==='runtime_mode'){
  $defaultMode=$db->query('SELECT @@SESSION.sql_mode')->fetch_row()[0];
@@ -151,6 +154,11 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
             check((await request(clients.anon, 'maintenance.html')).status === 200, 'maintenance target exists');
         } finally { write(entryPath, normalEntry); }
         check((await request(clients.admin, 'index.php?v=2')).status === 200, 'application resumes after maintenance switch is disabled');
+        if (process.env.VZ2_TEST_SUITE === 'song-details') {
+            await require('./vz2_song_details.integration')({ base, clients, request, good, db, check,
+                migrate: () => dbAction('migrate_song_details') });
+            console.log('PASS song details suite: ' + checks + ' checks'); return;
+        }
         if (process.env.VZ2_TEST_SUITE === 'timestamp-intervals') {
             await require('./vz2_timestamp_intervals.integration')({ request, clients, good, upload, wav, db, check });
             if (process.env.VZ2_TEST_BROWSER === 'timestamps') await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });

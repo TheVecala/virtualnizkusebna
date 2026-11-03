@@ -7,7 +7,7 @@ require_once __DIR__.'/vz2_timestamp_model.php';
 function vz2_overview_data(mysqli $db): array {
     $groups = ['rehearsal'=>[], 'song'=>[]];
     $kindById = [];
-    $collections = vz2_rows($db, "SELECT id,kind,title,lifecycle,created_at FROM vz2_collections WHERE lifecycle IN ('active','archived') ORDER BY kind,sort_order,id");
+    $collections = vz2_rows($db, "SELECT id,kind,title,lifecycle,created_at,song_description,song_tempos,song_meters FROM vz2_collections WHERE lifecycle IN ('active','archived') ORDER BY kind,sort_order,id");
     foreach ($collections as $collection) {
         $kind = $collection['kind'];
         $id = (int)$collection['id'];
@@ -20,6 +20,14 @@ function vz2_overview_data(mysqli $db): array {
     $append = static function(int $id, array $entry) use (&$groups, $kindById): void {
         if (isset($kindById[$id])) $groups[$kindById[$id]][$id]['entries'][] = $entry;
     };
+
+    foreach ($collections as $collection) {
+        if ($collection['kind'] !== 'song') continue;
+        $details = vz2_song_details_decode($collection);
+        if ($details['song_description'] === '' && !$details['song_tempos'] && !$details['song_meters']) continue;
+        $append((int)$collection['id'], ['type'=>'song_details', 'label'=>'Popisek, tempo a takt',
+            'body'=>$details['song_description'], 'tempos'=>$details['song_tempos'], 'meters'=>$details['song_meters']]);
+    }
 
     $documents = vz2_rows($db, 'SELECT d.collection_id,d.kind,d.title,d.updated_at,v.body,u.name author
         FROM vz2_documents d JOIN vz2_document_versions v ON v.document_id=d.id AND v.revision=d.current_revision

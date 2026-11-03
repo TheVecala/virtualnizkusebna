@@ -23,7 +23,7 @@ function vz2_recording_display_name(array $recording):string {
 function vz2_catalog():array {
     $db=vz2_db();vz2_root();
     $collections=vz2_rows($db,'SELECT c.*,u.name author FROM vz2_collections c JOIN users u ON u.id=c.created_by ORDER BY c.kind,c.sort_order,c.id');
-    foreach($collections as &$c){unset($c['storage_slug']);$c['can_edit']=auth_is_admin() || (ma_pravo('rename_val') && (int)$c['created_by']===(int)($_SESSION['user_id']??0));}unset($c);
+    foreach($collections as &$c){$c=array_replace($c,vz2_song_details_decode($c));unset($c['storage_slug']);$c['can_edit']=auth_is_admin() || (ma_pravo('rename_val') && (int)$c['created_by']===(int)($_SESSION['user_id']??0));}unset($c);
     $recordings=vz2_rows($db,'SELECT r.*,u.name author,s.name summary_author,e.name summary_editor FROM vz2_recordings r JOIN users u ON u.id=r.created_by LEFT JOIN users s ON s.id=r.summary_created_by LEFT JOIN users e ON e.id=r.summary_updated_by ORDER BY r.collection_id,r.sort_order,r.id');
     $allFiles=vz2_rows($db,'SELECT * FROM vz2_audio_files ORDER BY recording_id,sort_order,id');$byRecording=[];
     foreach($allFiles as $f)$byRecording[$f['recording_id']][]=vz2_file_public($f,'audio');

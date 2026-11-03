@@ -87,4 +87,10 @@ pre.overview-entry-body { display: block; margin: 0; font-family: ui-monospace, 
 .overview-empty { margin: 5px 0 0; color: var(--color-text-muted); font-size: 12px; }
 @media (max-width: 740px) { .overview-filter-grid { grid-template-columns: 1fr; } .overview-collection-filters .overview-filter-grid { grid-template-columns: 1fr; } }
 @media (max-width: 580px) { main { padding: 20px 10px 48px; } #overview-output { width: calc(100vw - 20px); } .overview-topbar { padding: 10px; } .overview-collection { padding: 8px 9px; } .overview-entry { grid-template-columns: minmax(82px, 105px) minmax(0, 1fr); gap: 6px; } .overview-entry-marker { grid-template-columns: 54px minmax(0, 1fr) auto; } }
-@media print { body { background: #fff; color: #111; } .overview-topbar, .overview-filters, .overview-actions, .overview-jump { display: none; } main { max-width: none; padding: 0; } #overview-output { left: auto; width: auto; transform: none; } .overview-collection { break-inside: avoid; border-color: #bbb; background: #fff; } .overview-entry-body, .overview-collection-heading a { color: #111; } }
+@media print { body { background: #fff; color: #111; } .overview-topbar, .overview-presets, .overview-filters, .overview-actions, .overview-jump { display: none; } main { max-width: none; padding: 0; } #overview-output { left: auto; width: auto; transform: none; } .overview-collection { break-inside: avoid; border-color: #bbb; background: #fff; } .overview-entry-body, .overview-collection-heading a { color: #111; } }
+
+.overview-presets { margin-top: 14px; }
+.overview-presets .overview-filter-actions { gap: 6px; }
+.overview-presets button { min-height: 36px; font-size: 12px; }
+.overview-presets button[aria-pressed=true] { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
+.overview-song-music { display: block; margin-bottom: 3px; font-size: 12px; font-variant-numeric: tabular-nums; }

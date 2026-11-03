@@ -1,7 +1,16 @@
-# Úplný balíček aktuální zkušebny VZ2
+# Úplný balíček zkušebny VZ2.1.1
 
 Zdrojový commit a přesný obsah tohoto konkrétního balíčku jsou v manifest.json.
 Jde o aktualizaci existující instalace VZ2, nikoli automatickou migraci staré VZ1.
+
+## Migrace pro VZ2.1.1
+
+Před nahráním aplikace proveďte `2_migrace/010_vz2_song_details.sql` nad
+společnou databází, která již má migrace 001–009. Přidává popisek celé skladby,
+seznam BPM a taktů bez změny existujících dat. SQL a návod v `2_migrace/`
+nepatří do veřejného webu. Podrobný postup pro alfu je v
+`2_migrace/song-details-v2.1.1.md`. Již provedenou 010 na společné DB není
+potřeba opakovat pro druhou instalaci.
 
 ## Soubory
 

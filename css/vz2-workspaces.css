@@ -244,3 +244,27 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #collection-header { padding-top: 2px; }
 }
 @media (max-width: 360px) { #mobile-panels button .section-button-label { font-size: 9px; } }
+
+/* Metadata belongs to the whole song, above its panels. */
+.song-details { max-width: 680px; font-size: 13px; margin-top: 3px; }
+.song-details-line { display: flex; align-items: center; gap: 8px; }
+.song-details-music { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.song-details-edit, .song-details-more { min-height: 32px; padding: 3px 7px; font-size: 12px; }
+.song-details-edit { flex: 0 0 auto; }
+.song-details-description { margin: 2px 0; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.song-details-description.is-expanded { display: block; }
+.song-details-more { color: var(--color-text-muted); }
+.collection-bpm { margin-left: auto; max-width: 38%; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.song-details-dialog { width: min(520px, calc(100vw - 20px)); max-height: calc(100dvh - 20px); overflow-y: auto; }
+.song-details-dialog form { display: grid; gap: 8px; min-width: 0; }
+.song-details-dialog label { display: grid; gap: 4px; }
+.song-details-dialog input, .song-details-dialog textarea { width: 100%; min-width: 0; box-sizing: border-box; font-size: 16px; }
+.song-details-dialog textarea { resize: vertical; }
+.song-details-dialog small, .song-details-context { color: var(--color-text-muted); }
+.song-details-context, .song-details-dialog .error { margin: 0; }
+.song-details-dialog .error:empty { display: none; }
+.song-details-comparison { padding: 8px; border: 1px solid var(--color-border); white-space: pre-wrap; overflow-wrap: anywhere; }
+.song-details-dialog .annotation-choice-trigger { font-size: 13px; }
+@media (min-width: 1200px) {
+    body[data-collection-kind=song] #collection-header:not([hidden]) { display: flex; padding-bottom: 6px; }
+}
