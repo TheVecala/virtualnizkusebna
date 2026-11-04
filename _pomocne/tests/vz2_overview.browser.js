@@ -123,7 +123,7 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
             'playing map keeps the four-plus-four bar grouping');
         check(true, 'browser: playing map shows bar symbols and section order');
 
-        await page.locator('#overview-filters > summary').click();
+        assert.equal(await page.locator('#overview-filters').evaluate(e => e.open), false);
         const presets = [
             ['lyrics', ['songs', 'song_lyrics']],
             ['starts_notes', ['rehearsals', 'rehearsal_starts', 'rehearsal_notes']],
@@ -154,8 +154,7 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
                     'bar details preset hides other song content');
             }
         }
-        await page.locator('#overview-filter-all').click();
-        await page.locator('#overview-filters > summary').click();
+        await page.locator('[data-overview-preset=all]').click();
         assert.equal(overviewRequests, 1, 'presets filter the existing snapshot without a new request');
         check(true, 'browser: content presets select the requested checkboxes');
 

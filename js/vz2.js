@@ -392,6 +392,11 @@
         return {
             audio,
             cache,
+            file,
+            prepare: async () => { await sourceReady; if (audio.preload === 'none') { audio.preload = 'metadata'; audio.load(); } },
+            isPlaying: () => !audio.paused && !audio.ended,
+            pause: () => audio.pause(),
+            play: async () => { await sourceReady; if (!audio.isConnected) throw Error('Přehrávač již není otevřený.'); await audio.play(); },
             isLoading: () => audio.dataset.sourceSwitching === 'true',
             canPlay: () => audio.isConnected && audio.readyState >= 1 && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
@@ -409,6 +414,17 @@
         const current = () => { const s = window.MultitrackApp?.getState(); return String(s?.id) === String(id) ? s : null; };
         return {
             canPlay: () => current()?.phase === 'ready',
+            isPlaying: () => !!current()?.playing,
+            pause: () => { if (current()) window.MultitrackApp.pause(); },
+            play: () => { if (current()?.phase !== 'ready') throw Error('Mixér není připravený.'); return window.MultitrackApp.play(); },
+            waveform: () => current()?.phase === 'ready' ? window.MultitrackApp.getWaveform() : null,
+            prepare: async () => {
+                if (!current()) window.MultitrackApp.load(String(id));
+                for (let n = 0; n < 100 && current()?.phase !== 'ready'; n++) {
+                    if (!current() || current().phase === 'error') break;
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            },
             currentTimeMs: () => Math.round((current()?.position || 0) * 1000),
             durationMs: () => current()?.duration == null ? null : Math.round(current().duration * 1000),
             seek: ms => { if (current()?.phase === 'ready') window.MultitrackApp.seek(ms / 1000); },
@@ -812,6 +828,10 @@
             const select = button('', async () => { await navigate({ collection_id: String(c.id) }); window.Vz2Layout.closeCatalog(); });
             const icon = document.createElement('img'); icon.src = 'meat/ikona_kombo.png'; icon.alt = ''; icon.className = 'collection-icon';
             select.append(icon, node('span', c.title, 'collection-name'));
+            if (c.kind === 'song' && c.song_tempos?.length) {
+                const bpm = node('small', window.Vz2SongDetails.temposText(c.song_tempos), 'collection-bpm');
+                bpm.title = bpm.textContent + ' BPM'; bpm.setAttribute('aria-label', bpm.title); select.append(bpm);
+            }
             select.title = c.title; select.setAttribute('aria-pressed', String(String(selected) === String(c.id))); row.append(select);
             const menu = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Možnosti: ' + c.title); menu.append(summary);
             menu.dataset.collectionId = c.id;
@@ -843,6 +863,11 @@
         }
         $('collection-title-name').textContent = c?.title || 'Zatím tu nic není';
         $('collection-title').title = c?.title || '';
+        window.Vz2SongDetails.mount($('song-details'), c, {
+            canWrite: cfg.write, save: api,
+            reload: async id => { await refresh(); return data.collections.find(row => String(row.id) === String(id)); },
+            onSaved: () => { message('Uloženo.'); refresh().catch(err => message(err.message, true)); }
+        });
         if ($('create-collection-open')) $('create-collection-open').textContent = kind === 'rehearsal' ? '+ Nová zkouška' : '+ Nová skladba';
         window.Vz2Layout.setCollectionKind(c?.kind || kind);
         const savedScroll = surfaceMemory.get(String(selected)) || {};

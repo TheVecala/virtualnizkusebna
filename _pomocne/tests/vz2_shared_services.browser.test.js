@@ -35,7 +35,8 @@ const root = path.resolve(__dirname, '../..');
     });
     try {
         await page.goto('http://shared.test/');
-        for (const name of ['vz2-cache', 'vz2-downloads', 'vz2-downloads-panel', 'vz2-timestamp-model', 'vz2-timestamp-store', 'vz2-timestamp-playback', 'vz2-note-editor', 'vz2-timestamp-editor', 'vz2-timestamps']) await page.addScriptTag({ path: path.join(root, 'js/' + name + '.js') });
+        for (const name of ['themes', 'vz2', 'vz2-timestamp-editor']) await page.addStyleTag({ path: path.join(root, 'css/' + name + '.css') });
+        for (const name of ['vz2-cache', 'vz2-downloads', 'vz2-downloads-panel', 'vz2-timestamp-model', 'vz2-timestamp-store', 'vz2-timestamp-playback', 'vz2-note-editor', 'vz2-timestamp-controls', 'vz2-timestamp-editor', 'vz2-timestamps']) await page.addScriptTag({ path: path.join(root, 'js/' + name + '.js') });
         await page.evaluate(() => {
             window.files = [1,2,3,4,5].map(id => ({ id, sha256: 'a'.repeat(64), byte_size: 5, original_name: 'Track ' + id, url: '/file' + id }));
             window.catalog = { collections: [{ id: 1, title: 'Zkouška' }], recordings: [{ id: 1, collection_id: 1, title: 'Mix', lifecycle: 'active', kind: 'multitrack', files: files.slice(0,3) }] };
@@ -85,10 +86,13 @@ const root = path.resolve(__dirname, '../..');
         await page.locator('[name=label]').fill('Rozepsaný refrén');
         revision++;
         await page.locator('.vz2-interval-editor [type=submit]').click();
-        await page.waitForFunction(() => document.querySelector('.vz2-interval-editor .error').textContent.includes('Konflikt'));
+        await page.waitForFunction(() => document.querySelector('.vz2-interval-editor .annotation-error').textContent.includes('Konflikt'));
         assert.equal(await page.locator('[name=label]').inputValue(), 'Rozepsaný refrén');
         await page.locator('.interval-reload').click();
+        await page.locator('.annotation-rebase').click();
         await page.locator('.vz2-interval-editor [type=submit]').click();
+        await page.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
+        await page.locator('.annotation-close').click();
         await page.waitForFunction(() => !document.querySelector('.vz2-interval-editor'));
         assert.equal(await page.evaluate(() => Vz2TimestampStore.peek(1).timestamps_revision), 4);
         console.log('PASS timestamp service: stale reads, shared editor without list, conflict and explicit rebase');

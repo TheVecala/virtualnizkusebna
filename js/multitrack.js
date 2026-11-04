@@ -1585,6 +1585,26 @@
         seek: function(seconds) { seekTo(seconds, true); },
         destroy: cleanupCurrentSet,
         detectSourceSampleRate: detectSourceSampleRate,
+        getWaveform: function() {
+            if (!currentSet || currentSet.phase !== 'ready') return null;
+            if (currentSet.editorWaveform) return currentSet.editorWaveform;
+            var peaks = new Array(4096).fill(0), duration = currentSet.duration;
+            currentSet.activeTracks.forEach(function(track) {
+                var buffer = track.buffer;
+                for (var channel = 0; channel < buffer.numberOfChannels; channel++) {
+                    var samples = buffer.getChannelData(channel);
+                    for (var i = 0; i < peaks.length; i++) {
+                        var from = Math.floor(i / peaks.length * duration * buffer.sampleRate);
+                        var to = Math.min(samples.length, Math.ceil((i + 1) / peaks.length * duration * buffer.sampleRate));
+                        // Bounded sampling of long decoded tracks; no extra audio download.
+                        var step = Math.max(1, Math.floor((to - from) / 64));
+                        for (var j = from; j < to; j += step) peaks[i] = Math.max(peaks[i], Math.min(1, Math.abs(samples[j]) || 0));
+                    }
+                }
+            });
+            currentSet.editorWaveform = { peaks: peaks, duration_ms: Math.round(duration * 1000) };
+            return currentSet.editorWaveform;
+        },
         getState: function() {
             if (!currentSet) return null;
             return {

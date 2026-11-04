@@ -188,6 +188,11 @@
             });
         };
         const adapter = {
+            file,
+            isPlaying: () => live() && !audio.paused && !audio.ended,
+            pause: () => { if (live()) audio.pause(); },
+            play: () => { if (!live()) throw Error('Looper již není otevřený.'); return audio.play(); },
+            waveform: () => current.peaks ? { peaks: current.peaks, duration_ms: file.duration_ms || Math.round(audio.duration * 1000) } : null,
             isLoading: () => audio.dataset.sourceSwitching === 'true',
             canPlay: () => live() && current.phase === 'ready' && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),

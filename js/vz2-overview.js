@@ -22,6 +22,7 @@
     const time = window.Vz2TimestampModel.format;
     const markerNames = { take: 'Pokus', boundary: 'Konec bez začátku', passage: 'Pasáž', note: 'Poznámka' };
     const presets = {
+        song_details: ['songs', 'song_details'],
         lyrics: ['songs', 'song_lyrics'],
         starts_notes: ['rehearsals', 'rehearsal_starts', 'rehearsal_notes'],
         bar_details: ['songs', 'song_map_details'],
@@ -37,6 +38,16 @@
     const currentFilters = () => Object.fromEntries(fixedInputs().map(input => [input.dataset.filter, input.checked]));
     const selectedSets = () => Object.fromEntries(['rehearsal', 'song'].map(kind => [kind,
         new Set([...selected[kind]].filter(([, checked]) => checked).map(([id]) => id))]));
+
+    function setActivePreset(name) {
+        let label = 'Vlastní';
+        document.querySelectorAll('[data-overview-preset]').forEach(button => {
+            const active = button.dataset.overviewPreset === name;
+            button.setAttribute('aria-pressed', String(active));
+            if (active) label = 'Předvolba: ' + button.textContent;
+        });
+        $('overview-preset-status').textContent = label;
+    }
 
     function updateFilterCount() {
         const inputs = fixedInputs();
@@ -76,6 +87,14 @@
         const row = make('div', undefined, `overview-entry${entry.type === 'marker' ? ' overview-entry-marker' : ''}${wide ? ' overview-entry-wide' : ''}${entry.type === 'map_detail' ? ' overview-entry-map-detail' : ''}`);
         const attribution = [filters.show_author ? entry.author : '', filters.show_entry_date ? date(entry.at) : ''].filter(Boolean).join(' · ');
         const content = make('div', undefined, 'overview-entry-content');
+        if (entry.type === 'song_details') {
+            row.classList.add('overview-entry-wide', 'overview-song-details');
+            const tempos = (entry.tempos || []).map(n => Number(n).toLocaleString('cs-CZ', { maximumFractionDigits: 2, useGrouping: false })).join(' / ');
+            const music = [tempos ? tempos + ' BPM' : '', (entry.meters || []).join(' + ')].filter(Boolean).join(' · ');
+            if (music) content.append(make('strong', music, 'overview-song-music'));
+            if (body) content.append(make('div', body, 'overview-entry-body'));
+            row.append(content); return row;
+        }
         if (entry.type === 'marker') {
             const kind = markerNames[entry.kind] || 'Značka';
             const markerText = entry.body || kind;
@@ -223,7 +242,7 @@
         const input = event.target;
         if (input.matches('input[data-collection-id]')) selected[input.dataset.collectionKind].set(Number(input.dataset.collectionId), input.checked);
         if (!input.matches('input[data-filter], input[data-collection-id]')) return;
-        updateFilterCount(); renderSnapshot();
+        setActivePreset(null); updateFilterCount(); renderSnapshot();
     });
     $('overview-filter-all').addEventListener('click', () => {
         for (const input of fixedInputs()) input.checked = true;
@@ -232,23 +251,24 @@
             for (const id of selected[kind].keys()) selected[kind].set(id, true);
         }
         for (const input of document.querySelectorAll('input[data-collection-id]')) input.checked = true;
-        updateFilterCount(); renderSnapshot();
+        setActivePreset(null); updateFilterCount(); renderSnapshot();
     });
     $('overview-filter-none').addEventListener('click', () => {
         const keep = new Set(['rehearsals', 'songs', 'show_created', 'show_author', 'show_entry_date']);
         for (const input of fixedInputs()) input.checked = keep.has(input.dataset.filter);
-        updateFilterCount(); renderSnapshot();
+        setActivePreset(null); updateFilterCount(); renderSnapshot();
     });
-    $('overview-filters').addEventListener('click', event => {
+    $('overview-presets').addEventListener('click', event => {
         const button = event.target.closest('button[data-overview-preset]');
         if (!button) return;
-        const keys = presets[button.dataset.overviewPreset];
+        const name = button.dataset.overviewPreset;
+        const keys = name === 'all' ? fixedInputs().map(input => input.dataset.filter) : presets[name];
         if (!keys) return;
         const enabled = new Set(keys);
         for (const input of fixedInputs()) {
-            if (!metadataFilters.has(input.dataset.filter)) input.checked = enabled.has(input.dataset.filter);
+            if (name === 'all' || !metadataFilters.has(input.dataset.filter)) input.checked = enabled.has(input.dataset.filter);
         }
-        updateFilterCount(); renderSnapshot();
+        setActivePreset(name); updateFilterCount(); renderSnapshot();
     });
     $('overview-collection-filters').addEventListener('click', event => {
         const button = event.target.closest('button[data-select-kind]');
@@ -257,7 +277,7 @@
         defaultSelected[kind] = checked;
         for (const id of selected[kind].keys()) selected[kind].set(id, checked);
         for (const input of document.querySelectorAll(`input[data-collection-kind="${kind}"]`)) input.checked = checked;
-        updateFilterCount(); renderSnapshot();
+        setActivePreset(null); updateFilterCount(); renderSnapshot();
     });
 
     $('overview-generate').addEventListener('click', async () => {

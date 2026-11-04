@@ -188,7 +188,18 @@
     const adapter = {
         canPlay: () => !!loadedAudio,
         isLoading: () => audio.readyState === 0 || audio.seeking,
-        pause: () => { audio.pause(); const end = selection?.segment.end_ms; if (end != null) audio.currentTime = end / 1000; },
+        pause: () => audio.pause(),
+        isPlaying: () => !audio.paused && !audio.ended,
+        durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : selection?.recording.duration_ms,
+        get file() { return selectedFile(); },
+        prepare: async () => {
+            const file = selectedFile(), owner = selection;
+            if (!file?.url || loadedAudio === file.url) return;
+            const source = await window.Vz2Downloads.source(file);
+            if (selection !== owner) { source.release(); return; }
+            audioSource?.release(); audioSource = source; audio.src = source.url; loadedAudio = file.url; audio.load();
+        },
+        play: () => audio.play(),
         playRange: async start => { audio.currentTime = start / 1000; await audio.play(); },
         currentTimeMs: () => Math.round(audio.currentTime * 1000),
         seek: ms => { audio.currentTime = ms / 1000; }

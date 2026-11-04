@@ -407,18 +407,8 @@
                 dockEditor(panel);
             }
         },
-        async open({ recording_id, item_id = null, adapter = null, draft = {}, list = null }) {
-            list = list || await Store.load(recording_id);
-            const item = item_id ? Model.items(list).find(i => i.id === item_id) : null;
-            if (item_id && !item) throw Error('Poznámka již neexistuje.');
-            if (item && item.kind !== 'note') throw Error('Vyberte bodovou poznámku.');
-            if (item ? !item.can_edit : !list.can_create) throw Error('K úpravě nemáte oprávnění.');
-            const context = { id: recording_id, list, adapter, quickButtons: [], error: text => { editor.querySelector('.error').textContent = text; } };
-            if (!openEditor(context, item?.source || null)) return;
-            if (!item) {
-                setEditorTime(draft.time_ms ?? adapter?.currentTimeMs() ?? 0);
-                editor.querySelector('form').elements.body.value = draft.body || '';
-            }
+        async open(options) {
+            return root.Vz2TimestampEditor.open({ ...options, kind: 'note' });
         }
     };
     Store.subscribe(value => { if (activeEditor && Number(activeEditor.panel.id) === Number(value.recording_id)) activeEditor.panel.list = value; });
