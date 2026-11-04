@@ -7,6 +7,10 @@
   Nevyplněná skladba nabízí pouze `+ Popisek` oprávněným uživatelům.
 - Na desktopu zůstává výběr skladby pouze v levém katalogu. Nad panely jsou
   jen údaje skladby; výběr nad nimi je viditelný na mobilu a tabletu.
+- Mobilní hlavička Nahrávek má výběr skladby vlevo a celou obrazovku vpravo.
+  Pod nimi je BPM/takt/tužka vlevo a Vložit vpravo; popisek pokračuje pod nimi.
+  Ikonka auta vedle výběru byla odstraněna, vstup do poslechu v autě zůstává
+  v horní liště aplikace.
 - Popisek zobrazuje dva řádky s možností rozbalení. Text je prostý, bez HTML.
 - Tempo podporuje pořadí i opakování: `120 / 132,5 / 120`. Povolen je rozsah
   1–999 BPM a nejvýše dvě desetinná místa. Hodnoty odděluje lomítko.

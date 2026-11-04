@@ -80,6 +80,5 @@ body.car-mode-open { overflow: hidden; }
     .collection-heading-row { min-width: 0; }
     .collection-heading-row #catalog-picker { min-width: 0; }
     .collection-heading-row #collection-title-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    #car-mode-collection-open { align-self: stretch; min-height: 40px; }
 }
 @media (max-width: 375px) { .car-screen { gap: 7px; } .car-controls button { min-height: 56px; } .car-chapter { min-height: 49px; } }

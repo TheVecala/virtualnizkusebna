@@ -312,7 +312,6 @@
         linkDialog.showModal(); $('time-link-car').focus();
     }
     $('car-mode-menu-open').onclick = () => open(true);
-    $('car-mode-collection-open').onclick = () => open(true, 'recordings');
     $('car-close').onclick = () => close(true);
     $('car-folder').onclick = () => showPicker('folders');
     $('car-recording').onclick = () => showPicker();

@@ -269,3 +269,17 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     body[data-collection-kind=song] #collection-header:not([hidden]) { display: flex; padding-bottom: 6px; }
     #collection-header .collection-heading-row { display: none; }
 }
+
+@media (max-width: 767px) {
+    #panel-recordings > .panel-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 8px; }
+    #panel-recordings > .panel-header > .workspace-heading,
+    #panel-recordings #song-details { display: contents; }
+    #panel-recordings .collection-heading-row { grid-row: 1; grid-column: 1; }
+    #panel-recordings .collection-heading-row #collection-title { flex: 1 1 auto; width: 100%; }
+    #panel-recordings > .panel-header > .panel-fullscreen-button { grid-row: 1; grid-column: 2; justify-self: end; }
+    #panel-recordings .song-details-line { grid-row: 2; grid-column: 1; min-width: 0; }
+    #panel-recordings .song-details-music { min-width: 0; }
+    #panel-recordings > .panel-header > .panel-header-actions { grid-row: 2; grid-column: 2; justify-self: end; max-width: none; margin-left: 0; }
+    #panel-recordings .song-details-description { grid-row: 3; grid-column: 1 / -1; }
+    #panel-recordings .song-details-more { grid-row: 4; grid-column: 1 / -1; justify-self: start; }
+}

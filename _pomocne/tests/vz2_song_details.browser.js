@@ -59,8 +59,32 @@ module.exports = async ({ base, clients, request, good, check, song, empty, rehe
         await header.locator('.song-details-music').filter({ hasText: '124' }).waitFor();
         for (const width of [320,390,1440]) {
             await page.setViewportSize({ width, height: 844 });
-            await header.waitFor({ state: 'visible' });
-            assert(await header.isVisible(), 'metadata visible at ' + width);
+            await header.locator('.song-details-music').waitFor({ state: 'visible' });
+            assert(await header.locator('.song-details-music').isVisible(), 'metadata visible at ' + width);
+            assert.equal(await page.locator('#car-mode-collection-open').count(), 0);
+            assert.equal(await page.locator('#catalog-picker').isVisible(), width < 1200);
+            if (width < 768) {
+                const checkRows = async () => {
+                    const boxes = await page.evaluate(() => {
+                        const rect = selector => { const r = document.querySelector(selector).getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, center: (r.top + r.bottom) / 2 }; };
+                        return { picker: rect('#catalog-picker'), fullscreen: rect('#panel-recordings .panel-fullscreen-button'), music: rect('.song-details-line'), upload: rect('#upload-open') };
+                    });
+                    assert(Math.abs(boxes.picker.center - boxes.fullscreen.center) < 2, 'picker and fullscreen share the top row');
+                    assert(boxes.picker.right <= boxes.fullscreen.left, 'top controls do not overlap');
+                    assert(Math.abs(boxes.music.center - boxes.upload.center) < 2, 'metadata and upload share the second row');
+                    assert(boxes.music.right <= boxes.upload.left, 'second-row controls do not overlap');
+                    assert(boxes.music.top >= boxes.picker.bottom, 'metadata follows picker');
+                };
+                await checkRows();
+                await page.locator('#panel-recordings .panel-fullscreen-button').click();
+                assert(await page.locator('#panel-recordings').evaluate(e => e.classList.contains('panel-fullscreen')));
+                await checkRows();
+                await page.locator('#panel-recordings .panel-fullscreen-button').click();
+                await page.locator('[data-mobile-panel=lyrics]').click();
+                await header.locator('.song-details-music').waitFor({ state: 'visible' });
+                await page.locator('[data-mobile-panel=recordings]').click();
+                await checkRows();
+            }
             assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
             await page.screenshot({ path: path.join(screenshots, 'song-' + width + '.png') });
             await header.locator('.song-details-edit').click();
