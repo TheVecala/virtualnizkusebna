@@ -14,10 +14,10 @@ const timestamps = [
     { id: 6, kind: 'song_end', time_ms: 215000, paired_timestamp_id: 5, body: '↓' },
     { id: 7, kind: 'song_start', time_ms: 230000, body: 'Pokus 4 · celý průchod' },
     { id: 8, kind: 'song_end', time_ms: 365000, paired_timestamp_id: 7, body: '↓' },
-    { id: 9, kind: 'passage', time_ms: 238000, body: 'Sloka' },
-    { id: 10, kind: 'passage', time_ms: 270000, body: 'Refrén' },
-    { id: 11, kind: 'passage', time_ms: 300000, body: 'Sloka 2' },
-    { id: 12, kind: 'passage', time_ms: 330000, body: 'Refrén + závěr' },
+    { id: 9, kind: 'passage', end_time_ms: 270000, parent_timestamp_id: 7, time_ms: 238000, body: 'Sloka' },
+    { id: 10, kind: 'passage', end_time_ms: 300000, parent_timestamp_id: 7, time_ms: 270000, body: 'Refrén' },
+    { id: 11, kind: 'passage', end_time_ms: 330000, parent_timestamp_id: 7, time_ms: 300000, body: 'Sloka 2' },
+    { id: 12, kind: 'passage', end_time_ms: 365000, parent_timestamp_id: 7, time_ms: 330000, body: 'Refrén + závěr' },
     { id: 13, kind: 'note', time_ms: 282000, body: '👍 Tohle tempo sedí' },
     { id: 14, kind: 'note', time_ms: 188000, body: 'Zkusit pomalejší nástup' }
 ];

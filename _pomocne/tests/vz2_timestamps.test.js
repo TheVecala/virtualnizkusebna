@@ -5,20 +5,20 @@ assert.equal(compactFormat(83123), '01:23');
 assert.equal(compactFormat(3660000), '61:00');
 const entries = [
     { id: 1, time_ms: 1000, kind: 'song_start', body: 'Začátek' },
-    { id: 2, time_ms: 1000, kind: 'passage', body: 'Stejný čas' },
+    { id: 2, time_ms: 1000, kind: 'passage', end_time_ms: 1800, parent_timestamp_id: 1, body: 'Stejný čas' },
     { id: 3, time_ms: 1100, kind: 'note', body: 'Nevymezuje úsek' },
-    { id: 4, time_ms: 2000, kind: 'passage', body: 'Pasáž\nse dvěma řádky\ta tabulátorem' },
+    { id: 4, time_ms: 2000, kind: 'passage', parent_timestamp_id: 1, body: 'Pasáž\nse dvěma řádky\ta tabulátorem' },
     { id: 5, time_ms: 3000, kind: 'song_start', body: 'Další skladba' },
     { id: 6, time_ms: 2500, kind: 'song_end', paired_timestamp_id: 1, body: 'Přesný konec' }
 ];
 assert.equal(endOf(entries[0], entries, 4000), 2500);
-assert.equal(endOf(entries[1], entries, 4000), 2000);
+assert.equal(endOf(entries[1], entries, 4000), 1800);
 assert.equal(endOf(entries[2], entries, 4000), null);
-assert.equal(endOf(entries[3], entries, 4000), 3000);
+assert.equal(endOf(entries[3], entries, 4000), null);
 assert.equal(endOf(entries[4], entries, 4000), null);
 assert.equal(endOf(entries[4], entries, null), null);
 assert.equal(endOf(entries[4], entries, 3000), null);
-assert.equal(endOf(entries[1], [...entries].reverse(), 4000), 2000);
+assert.equal(endOf(entries[1], [...entries].reverse(), 4000), 1800);
 assert.equal(endOf(entries[5], entries, 4000), null);
 assert.equal(songIntervalFor(entries[0], entries).end.id, 6);
 assert.equal(songIntervalFor(entries[2], entries).start.id, 1);
@@ -37,7 +37,7 @@ assert.equal(timestampBody('song_start', '  '), '↑');
 assert.equal(timestampBody('song_end', ''), '↓');
 assert.throws(() => timestampBody('note', ''), /vyplňte text/);
 for (const text of ['-1', 'NaN', '00:60', '01:99:00', '169:00:00', '00:01.0001']) assert.throws(() => parse(text));
-assert.equal(tabular(entries, ['passage']), '00:01\tStejný čas\n00:02\tPasáž se dvěma řádky a tabulátorem');
+assert.equal(tabular(entries, ['passage']), '00:01\t00:01\tVlastní\tStejný čas\t\t\t\n00:02\t\tVlastní\tPasáž se dvěma řádky a tabulátorem\t\t\tDoplnit konec');
 assert.equal(tabular(entries, []), '');
 const labels = mp3spltLabels([
     { id: 9, time_ms: 135000, kind: 'song_end', paired_timestamp_id: 8, body: 'nepoužitý konec' },

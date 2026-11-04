@@ -8,9 +8,7 @@
     const collectionMemory = { song: null, rehearsal: null };
     try { const saved = JSON.parse(localStorage.getItem(cfg.cachePrefix + 'workspaces:collections')); for (const k of Object.keys(collectionMemory)) if (saved?.[k] != null) collectionMemory[k] = String(saved[k]); } catch (_) { /* First visit / private storage. */ }
     const surfaceMemory = new Map(), catalogMemory = { song: { scroll: 0 }, rehearsal: { scroll: 0 } };
-    const blobs = [];
-    const offlineUrls = [];
-    let offlineViewSerial = 0;
+    const audioSources = [];
     const timestampPanels = [];
     // Disclosure state lives only in this document; a reload always starts collapsed.
     const expandedRecordings = new Set();
@@ -18,7 +16,6 @@
     const expandedLinkedRecordings = new Set();
     const expandedAttachments = new Set();
     let mixerNotes;
-    const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     const $ = id => document.getElementById(id);
     const mixerPanel = $('mixer-panel');
     function node(tag, text, cls) {
@@ -108,9 +105,10 @@
             }
         };
     }
-    async function api(fields, action = 'catalog') {
+    async function api(fields, action = 'catalog', signal) {
         const response = await fetch('php/ajax/vz2.php' + (fields ? '' : '?action=' + action), {
             method: fields ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
+            signal,
             headers: fields ? { 'Content-Type': 'application/json', 'X-CSRF-Token': cfg.csrf } : {},
             body: fields ? JSON.stringify(fields) : undefined
         });
@@ -340,22 +338,29 @@
     }
     function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
-        const audio = node('audio'); audio.preload = 'none'; audio.src = file.url;
-        audio.dataset.source = 'web';
-        const cacheKey = cfg.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
+        const audio = node('audio'); audio.preload = 'none';
+        let source;
+        audioSources.push(() => { unwatch(); source?.release(); source = null; });
+        const sourceStatus = node('small', 'Ověřuji místní kopii…', 'recording-audio-source vz2-attribution');
+        parent.append(sourceStatus);
+        const updateSource = () => { sourceStatus.textContent = audio.dataset.source === 'offline' ? 'Přehrávání ze zařízení' : 'Přehrávání ze sítě'; };
+        const useLocal = blob => {
+            const url = window.Vz2Offline.useBlob(audio, blob, text => message(text, true));
+            source?.release();
+            source = { release: () => URL.revokeObjectURL(url) };
+            updateSource();
+        };
         const cache = recordingIconButton('Uložit offline', 'wifi-off', async () => {
-            const current = await idbKeyval.get(cacheKey, store);
-            if (current instanceof Blob) {
+            await sourceReady;
+            const current = await window.Vz2Downloads.local(file);
+            if (current) {
                 if (!confirm('Odebrat offline kopii pouze z tohoto prohlížeče?')) return;
-                await idbKeyval.del(cacheKey, store); setCacheLabel('Uložit offline');
+                await window.Vz2Downloads.removeKey(window.Vz2Downloads.key(file)); setCacheLabel('Uložit offline');
             } else {
                 setCacheLabel('Stahuji offline…');
                 try {
-                    const blob = await window.Vz2Offline.download(file.url, file.byte_size, percent => {
-                        setCacheLabel(percent === null ? 'Stahuji offline…' : 'Stahuji offline ' + percent + ' %');
-                    });
-                    setCacheLabel('Ukládám offline…');
-                    await idbKeyval.set(cacheKey, file.original_name ? new File([blob], file.original_name, { type: blob.type }) : blob, store);
+                    const blob = await window.Vz2Downloads.enqueue(file);
+                    if (audio.isConnected) useLocal(blob);
                     setCacheLabel('Odebrat offline kopii', true);
                 } catch (error) { setCacheLabel('Uložit offline'); throw error; }
             }
@@ -369,11 +374,15 @@
             else delete cache.dataset.progress;
             cache.replaceChildren(window.Vz2Audio.icon(saved ? 'device-floppy' : 'wifi-off'));
         };
+        const unwatch = window.Vz2Downloads.watch(file, audio, saved => setCacheLabel(saved ? 'Odebrat offline kopii' : 'Uložit offline', saved));
         cache.setAttribute('aria-pressed', 'false');
         actions.append(cache);
-        idbKeyval.get(cacheKey, store).then(blob => {
-            if (blob instanceof Blob && audio.isConnected && !cache.disabled) { const url = URL.createObjectURL(blob); blobs.push(url); audio.src = url; audio.dataset.source = 'offline'; setCacheLabel('Odebrat offline kopii', true); }
-        }).catch(() => { setCacheLabel('Offline úložiště není dostupné'); cache.disabled = true; });
+        const sourceReady = window.Vz2Downloads.source(file).then(next => {
+            if (!audio.isConnected) { next.release(); return; }
+            source = next; audio.src = next.url; audio.dataset.source = next.local ? 'offline' : 'web'; updateSource();
+            if (next.local) setCacheLabel('Odebrat offline kopii', true);
+            if (next.storageError) { setCacheLabel('Offline úložiště není dostupné'); cache.disabled = true; }
+        });
         const seek = () => {
             const seconds = Number(qs.get('time_ms') || 0) / 1000;
             if (String(recording.id) === qs.get('recording_id') && Number.isFinite(seconds)) audio.currentTime = Math.min(audio.duration || 0, Math.max(0, seconds));
@@ -383,6 +392,12 @@
         return {
             audio,
             cache,
+            file,
+            prepare: async () => { await sourceReady; if (audio.preload === 'none') { audio.preload = 'metadata'; audio.load(); } },
+            isPlaying: () => !audio.paused && !audio.ended,
+            pause: () => audio.pause(),
+            play: async () => { await sourceReady; if (!audio.isConnected) throw Error('Přehrávač již není otevřený.'); await audio.play(); },
+            isLoading: () => audio.dataset.sourceSwitching === 'true',
             canPlay: () => audio.isConnected && audio.readyState >= 1 && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
             durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
@@ -399,6 +414,17 @@
         const current = () => { const s = window.MultitrackApp?.getState(); return String(s?.id) === String(id) ? s : null; };
         return {
             canPlay: () => current()?.phase === 'ready',
+            isPlaying: () => !!current()?.playing,
+            pause: () => { if (current()) window.MultitrackApp.pause(); },
+            play: () => { if (current()?.phase !== 'ready') throw Error('Mixér není připravený.'); return window.MultitrackApp.play(); },
+            waveform: () => current()?.phase === 'ready' ? window.MultitrackApp.getWaveform() : null,
+            prepare: async () => {
+                if (!current()) window.MultitrackApp.load(String(id));
+                for (let n = 0; n < 100 && current()?.phase !== 'ready'; n++) {
+                    if (!current() || current().phase === 'error') break;
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            },
             currentTimeMs: () => Math.round((current()?.position || 0) * 1000),
             durationMs: () => current()?.duration == null ? null : Math.round(current().duration * 1000),
             seek: ms => { if (current()?.phase === 'ready') window.MultitrackApp.seek(ms / 1000); },
@@ -699,9 +725,9 @@
                 toggle.append(node('span', name, 'recording-title'), node('small', hasRange ? time(link.end_ms - link.start_ms) : recording.duration_ms == null ? 'délka nezjištěna' : time(recording.duration_ms), 'recording-duration'));
             }
             toggle.setAttribute('aria-controls', body.id);
-            let audio;
+            let audio, player;
             const prepareAudio = () => {
-                if (audio?.preload === 'none') { audio.preload = 'metadata'; audio.load(); }
+                if (audio?.preload === 'none') { audio.preload = 'metadata'; void player.prepare(); }
             };
             const setExpanded = open => {
                 body.hidden = !open; toggle.setAttribute('aria-expanded', String(open));
@@ -725,35 +751,15 @@
             const playable = recording.lifecycle === 'active' && recording.files.some(file => file.url);
             const file = recording.kind === 'single' ? recording.files[0] : null;
             if (playable && file?.url) {
-                audio = node('audio'); audio.preload = 'none'; audio.src = file.url;
-                audio.dataset.source = 'web';
-                audio.setAttribute('aria-label', (hasRange ? 'Přehrát úsek ' : 'Přehrát nahrávku ') + name);
-                if (hasRange) {
-                    const start = link.start_ms / 1000, end = link.end_ms / 1000;
-                    const endTime = () => Number.isFinite(audio.duration) ? Math.min(end, audio.duration) : end;
-                    audio.addEventListener('loadedmetadata', () => { audio.currentTime = start; });
-                    audio.addEventListener('seeking', () => {
-                        if (audio.currentTime < start) audio.currentTime = start;
-                        else if (audio.currentTime > endTime()) { audio.currentTime = endTime(); audio.pause(); }
-                    });
-                    audio.addEventListener('timeupdate', () => {
-                        if (!audio.paused && audio.currentTime >= endTime()) { audio.pause(); audio.currentTime = endTime(); }
-                    });
-                    audio.addEventListener('play', () => {
-                        if (audio.currentTime >= endTime() - 0.05 || audio.currentTime < start) audio.currentTime = start;
-                    });
-                }
-                audio.addEventListener('play', () => {
-                    document.querySelectorAll('#content audio').forEach(other => { if (other !== audio) other.pause(); });
-                    document.getElementById('looper-audio')?.pause();
-                    window.MultitrackApp?.pause();
-                });
-                body.append(window.Vz2Audio.mount(audio, {
+                player = window.Vz2Audio.mountFile(file, {
                     start: hasRange ? link.start_ms / 1000 : 0,
                     end: hasRange ? link.end_ms / 1000 : undefined,
-                    knownDurationMs: hasRange ? link.end_ms - link.start_ms : recording.duration_ms,
+                    knownDurationMs: recording.duration_ms,
                     label: name, inlineControls: true
-                }).root);
+                });
+                audio = player.audio;
+                audio.setAttribute('aria-label', (hasRange ? 'Přehrát úsek ' : 'Přehrát nahrávku ') + name);
+                audioSources.push(player.destroy); body.append(player.root);
             } else if (playable && recording.kind === 'multitrack') {
                 body.append(node('p', 'Přehrávání vícestopé nahrávky je v mixéru.', 'linked-recording-context'));
             }
@@ -815,13 +821,17 @@
         for (const id of expandedAttachments) if (!liveAttachmentIds.has(id)) expandedAttachments.delete(id);
         timestampPanels.splice(0).forEach(p => p.destroy());
         document.querySelectorAll('.recording-actions-dialog').forEach(dialog => dialog.remove());
-        document.querySelectorAll('#content audio').forEach(a => a.pause()); blobs.splice(0).forEach(URL.revokeObjectURL);
+        document.querySelectorAll('#content audio').forEach(a => a.pause()); audioSources.splice(0).forEach(release => release());
         const list = data.collections.filter(c => c.kind === kind && c.lifecycle === 'active'); $('collections').replaceChildren();
         list.forEach(c => {
             const row = node('div', undefined, 'collection');
             const select = button('', async () => { await navigate({ collection_id: String(c.id) }); window.Vz2Layout.closeCatalog(); });
             const icon = document.createElement('img'); icon.src = 'meat/ikona_kombo.png'; icon.alt = ''; icon.className = 'collection-icon';
             select.append(icon, node('span', c.title, 'collection-name'));
+            if (c.kind === 'song' && c.song_tempos?.length) {
+                const bpm = node('small', window.Vz2SongDetails.temposText(c.song_tempos), 'collection-bpm');
+                bpm.title = bpm.textContent + ' BPM'; bpm.setAttribute('aria-label', bpm.title); select.append(bpm);
+            }
             select.title = c.title; select.setAttribute('aria-pressed', String(String(selected) === String(c.id))); row.append(select);
             const menu = node('details', undefined, 'collection-menu'), summary = node('summary', '⋮'); summary.setAttribute('aria-label', 'Možnosti: ' + c.title); menu.append(summary);
             menu.dataset.collectionId = c.id;
@@ -853,6 +863,11 @@
         }
         $('collection-title-name').textContent = c?.title || 'Zatím tu nic není';
         $('collection-title').title = c?.title || '';
+        window.Vz2SongDetails.mount($('song-details'), c, {
+            canWrite: cfg.write, save: api,
+            reload: async id => { await refresh(); return data.collections.find(row => String(row.id) === String(id)); },
+            onSaved: () => { message('Uloženo.'); refresh().catch(err => message(err.message, true)); }
+        });
         if ($('create-collection-open')) $('create-collection-open').textContent = kind === 'rehearsal' ? '+ Nová zkouška' : '+ Nová skladba';
         window.Vz2Layout.setCollectionKind(c?.kind || kind);
         const savedScroll = surfaceMemory.get(String(selected)) || {};
@@ -995,73 +1010,19 @@
     }
     $('show-log')?.addEventListener('click', () => loadLog(true).catch(e => message(e.message, true)));
     $('log-more').addEventListener('click', () => loadLog(false).catch(e => message(e.message, true)));
+    let downloadsPanel;
     async function showOffline() {
-        const serial = ++offlineViewSerial;
-        offlineUrls.splice(0).forEach(URL.revokeObjectURL);
-        const panel = $('offline-files'), list = panel.querySelector('.offline-files-list');
-        panel.hidden = false; list.replaceChildren(node('p', 'Načítám offline soubory…', 'offline-summary'));
-        const keys = (await idbKeyval.keys(store)).filter(k => typeof k === 'string' && k.startsWith(cfg.cachePrefix));
-        if (serial !== offlineViewSerial) return;
-        let total = 0, count = 0;
-        const summary = node('p', undefined, 'offline-summary'); list.append(summary);
-        for (const k of keys) {
-            if (!k.startsWith(cfg.cachePrefix + 'audio:')) continue;
-            const blob = await idbKeyval.get(k, store); if (!(blob instanceof Blob)) continue;
-            if (serial !== offlineViewSerial) return;
-            total += blob.size; count++;
-            summary.textContent = count + ' ' + (count === 1 ? 'soubor' : count < 5 ? 'soubory' : 'souborů') + ' · ' + (total / 1048576).toFixed(2) + ' MB';
-            const [id, expectedHash] = k.slice((cfg.cachePrefix + 'audio:').length).split(':');
-            const file = data?.recordings.flatMap(r => r.files).find(f => String(f.id) === id && f.sha256 === expectedHash);
-            const extension = ({'audio/wav':'wav','audio/mpeg':'mp3','audio/flac':'flac','audio/ogg':'ogg','audio/aac':'aac'})[blob.type] || 'bin';
-            const originalName = file?.original_name || (blob instanceof File ? blob.name : '');
-            const fallbackName = 'audio-' + id + '.' + extension;
-            const row = node('article', undefined, 'offline-file');
-            const details = node('div', undefined, 'offline-file-details');
-            details.append(node('strong', originalName || fileName(file) || 'Soubor #' + id),
-                node('small', (blob.size / 1048576).toFixed(2) + ' MB', 'vz2-attribution'));
-            const status = node('small', 'Ověřuji shodu souboru…', 'offline-file-status'); details.append(status);
-            const actions = node('div', undefined, 'offline-file-actions');
-            const link = node('a', 'Stáhnout'), url = URL.createObjectURL(blob); offlineUrls.push(url);
-            link.setAttribute('aria-label', 'Stáhnout ' + (originalName || fileName(file) || 'soubor #' + id));
-            link.href = url; link.download = fallbackName; link.setAttribute('aria-disabled', 'true');
-            link.addEventListener('click', e => { if (link.getAttribute('aria-disabled') === 'true') e.preventDefault(); });
-            const removeCopy = button('Odebrat', async () => {
-                if (!confirm('Odebrat tuto kopii pouze z prohlížeče?')) return;
-                window.MultitrackApp?.destroy();
-                await idbKeyval.del(k, store); await showOffline(); if (data) render();
-            }, 'danger');
-            removeCopy.setAttribute('aria-label', 'Odebrat ' + (originalName || fileName(file) || 'soubor #' + id));
-            actions.append(link, removeCopy);
-            row.append(details, actions); list.append(row);
-            try {
-                if (!/^[a-f0-9]{64}$/i.test(expectedHash) || !crypto.subtle) throw new Error('Kontrolní součet není dostupný.');
-                const digest = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
-                if (serial !== offlineViewSerial) return;
-                const actualHash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
-                if (actualHash === expectedHash.toLowerCase()) {
-                    link.download = originalName || fallbackName;
-                    status.textContent = originalName ? 'Ověřeno · původní název' : 'Ověřeno · původní název není dostupný';
-                } else {
-                    status.textContent = 'Kopie se liší od původního souboru · náhradní název';
-                    status.classList.add('error');
-                }
-            } catch (error) {
-                if (serial !== offlineViewSerial) return;
-                status.textContent = 'Shodu nelze ověřit · náhradní název';
-                status.classList.add('error');
-            }
-            link.removeAttribute('aria-disabled');
-        }
-        if (!count) summary.textContent = 'Žádné uložené soubory.';
-        $('offline-clear').disabled = !count;
+        const panel = $('offline-files'); panel.hidden = false;
+        downloadsPanel ||= window.Vz2DownloadsPanel.mount(panel.querySelector('.offline-files-list'), () => data);
+        downloadsPanel.open();
+        $('offline-clear').disabled = false;
     }
     $('show-offline').addEventListener('click', () => showOffline().catch(e => message(e.message, true)));
     $('offline-clear').addEventListener('click', async () => {
         if (!confirm('Odebrat všechny offline kopie tohoto prostředí z prohlížeče?')) return;
         try {
-            window.MultitrackApp?.destroy();
-            for (const k of await idbKeyval.keys(store)) if (typeof k === 'string' && k.startsWith(cfg.cachePrefix)) await idbKeyval.del(k, store);
-            await showOffline(); if (data) render();
+            await window.Vz2Downloads.clear();
+            await showOffline();
         } catch (e) { message(e.message, true); }
     });
     $('logout').addEventListener('click', () => {
@@ -1077,12 +1038,26 @@
         try { await api({ action: 'logout' }); window.MultitrackApp?.destroy(); window.Vz2Player.closeLooper(); location.href = 'index.php?v=2'; }
         catch (e) { $('logout-error').textContent = e.message; $('logout-error').hidden = false; confirmButton.disabled = false; }
     });
+    let connectionProbe;
+    const connectionStatus = text => { $('connection-status').textContent = text; $('connection-status').hidden = !text; };
+    window.addEventListener('offline', () => {
+        connectionProbe?.abort(); connectionProbe = null;
+        connectionStatus('Offline · uložené nahrávky můžete dál přehrávat.');
+    });
     window.addEventListener('online', async () => {
-        window.MultitrackApp?.destroy();
-        window.Vz2Player.closeLooper();
-        document.querySelectorAll('#content audio').forEach(a => { a.pause(); a.removeAttribute('src'); a.load(); });
-        try { await refresh(); await window.MultitrackApp?.refreshList(); }
-        catch (e) { $('content').replaceChildren(node('p', 'Před přehráním obnovte přihlášení a seznam.')); message(e.message, true); }
+        connectionProbe?.abort();
+        const probe = new AbortController(); connectionProbe = probe;
+        const timeout = setTimeout(() => probe.abort(), 8000);
+        connectionStatus('Ověřuji připojení k serveru…');
+        try {
+            // Reconnecting must not rebuild the catalog or any mounted player.
+            await api(undefined, 'catalog', probe.signal);
+            if (connectionProbe === probe) connectionStatus('');
+        } catch (e) {
+            if (connectionProbe === probe) connectionStatus(e.status === 401 || e.status === 403
+                ? 'Přihlášení je potřeba obnovit. Načtené nahrávky můžete dál přehrávat.'
+                : 'Server není dostupný. Uložené nahrávky můžete dál přehrávat.');
+        } finally { clearTimeout(timeout); if (connectionProbe === probe) connectionProbe = null; }
     });
     function seekMixerLink() {
         const current = window.MultitrackApp.getState();
@@ -1097,7 +1072,19 @@
         mixerNotes = window.Vz2Timestamps.mount($('mixer-timestamps'), e.detail.id, mixerAdapter(e.detail.id));
         $('mixer-export').disabled = false;
     });
+    document.addEventListener('vz2:timestamps-updated', event => {
+        const list = event.detail, recording = data?.recordings.find(r => Number(r.id) === Number(list.recording_id));
+        if (!recording || Number(recording.timestamps_revision || 0) > list.timestamps_revision) return;
+        Object.assign(recording, { timestamps: list.entries, annotations: list.annotations, annotation_version: list.annotation_version,
+            timestamps_revision: list.timestamps_revision, duration_ms: list.duration_ms });
+    });
     window.Vz2App = {
+        openRecording(recordingId, timeMs = 0) {
+            const recording = data?.recordings.find(r => String(r.id) === String(recordingId));
+            if (!recording) throw new Error('Nahrávka není v aktuálním seznamu. Obnovte stránku.');
+            return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id),
+                view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(Math.max(0, Number(timeMs) || 0)) });
+        },
         getCarContext() { return { collections: data?.collections || [], recordings: data?.recordings || [], selected, kind, player: window.Vz2Player.getState() }; },
         openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'audio', time_ms: '0', listen: '1' }, true); },
         setCarRoute(enabled, player = null) {

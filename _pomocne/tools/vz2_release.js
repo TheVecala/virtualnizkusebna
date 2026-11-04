@@ -45,9 +45,19 @@ for (const entry of entries) {
     const target=path.join(out,'1_soubory',entry.path);
     fs.mkdirSync(path.dirname(target),{recursive:true}); fs.writeFileSync(target,entry.content);
 }
+const support = [
+    ['_pomocne/migrations/010_vz2_song_details.sql', '2_migrace/010_vz2_song_details.sql'],
+    ['_pomocne/docs/vz2/song-details-v2.1.1.md', '2_migrace/song-details-v2.1.1.md']
+].map(([source, name]) => {
+    const content = fs.readFileSync(path.join(root, source));
+    fs.mkdirSync(path.dirname(path.join(out, name)), { recursive: true });
+    fs.writeFileSync(path.join(out, name), content);
+    return { path: name, bytes: content.length, sha256: crypto.createHash('sha256').update(content).digest('hex') };
+});
 fs.copyFileSync(path.join(root,'_pomocne/deploy/current/README.cs.md'),path.join(out,'README.cs.md'));
 fs.writeFileSync(path.join(out,'removed-files.txt'),removed.join('\n')+'\n');
 fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({
+    version:'VZ2.1.1', required_migration:'010', support_files:support,
     mode:'full', source_commit:git('rev-parse','HEAD'), working_tree_changes:git('status','--porcelain'),
     note:'Hashes identify working-tree content. Files outside _pomocne are included automatically, except Git metadata and preserved server configuration. removed-files.txt applies only to this installation.',
     preserved_server_files:serverConfiguration,

@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/vz2_core.php';
+require_once __DIR__.'/vz2_timestamp_model.php';
 
 /** Text-only, current snapshot for the standalone overview. No audio files or URLs. */
 function vz2_overview_data(mysqli $db): array {
     $groups = ['rehearsal'=>[], 'song'=>[]];
     $kindById = [];
-    $collections = vz2_rows($db, "SELECT id,kind,title,lifecycle,created_at FROM vz2_collections WHERE lifecycle IN ('active','archived') ORDER BY kind,sort_order,id");
+    $collections = vz2_rows($db, "SELECT id,kind,title,lifecycle,created_at,song_description,song_tempos,song_meters FROM vz2_collections WHERE lifecycle IN ('active','archived') ORDER BY kind,sort_order,id");
     foreach ($collections as $collection) {
         $kind = $collection['kind'];
         $id = (int)$collection['id'];
@@ -19,6 +20,14 @@ function vz2_overview_data(mysqli $db): array {
     $append = static function(int $id, array $entry) use (&$groups, $kindById): void {
         if (isset($kindById[$id])) $groups[$kindById[$id]][$id]['entries'][] = $entry;
     };
+
+    foreach ($collections as $collection) {
+        if ($collection['kind'] !== 'song') continue;
+        $details = vz2_song_details_decode($collection);
+        if ($details['song_description'] === '' && !$details['song_tempos'] && !$details['song_meters']) continue;
+        $append((int)$collection['id'], ['type'=>'song_details', 'label'=>'Popisek, tempo a takt',
+            'body'=>$details['song_description'], 'tempos'=>$details['song_tempos'], 'meters'=>$details['song_meters']]);
+    }
 
     $documents = vz2_rows($db, 'SELECT d.collection_id,d.kind,d.title,d.updated_at,v.body,u.name author
         FROM vz2_documents d JOIN vz2_document_versions v ON v.document_id=d.id AND v.revision=d.current_revision
@@ -84,8 +93,8 @@ function vz2_overview_data(mysqli $db): array {
     }
 
     $markers = vz2_rows($db, "SELECT r.id recording_id,r.collection_id,r.kind recording_kind,r.title recording_title,
-            t.kind,t.time_ms,t.body,t.created_at,u.name author
-        FROM vz2_timestamps t JOIN vz2_recordings r ON r.id=t.recording_id JOIN users u ON u.id=t.created_by
+            r.duration_ms,t.*,u.name author,s.title song_title
+        FROM vz2_timestamps t JOIN vz2_recordings r ON r.id=t.recording_id JOIN users u ON u.id=t.created_by LEFT JOIN vz2_collections s ON s.id=t.song_collection_id
         WHERE r.lifecycle='active' ORDER BY r.collection_id,r.sort_order,r.id,t.time_ms,t.id");
     $recordingFiles = [];
     if ($markers) {
@@ -95,21 +104,28 @@ function vz2_overview_data(mysqli $db): array {
             WHERE recording_id IN ($placeholders) ORDER BY recording_id,sort_order,id", $recordingIds);
         foreach ($files as $file) $recordingFiles[(int)$file['recording_id']][] = $file;
     }
-    foreach ($markers as $marker) {
-        $body = trim($marker['body']);
-        if ($marker['kind'] === 'song_end' && ($body === '' || $body === '↓')) continue;
-        if ($body === '↑' || $body === '↓') $body = '';
-        $id = (int)$marker['recording_id'];
+    $byRecording = [];
+    foreach ($markers as $marker) $byRecording[(int)$marker['recording_id']][] = $marker;
+    foreach ($byRecording as $id => $rows) {
+        $recording = $rows[0];
         $files = $recordingFiles[$id] ?? [];
         $name = $files ? (trim($files[0]['title']) ?: $files[0]['original_name']) : '';
         if ($name !== '' && $files[0]['format'] !== '' && !str_ends_with(strtolower($name), '.'.strtolower($files[0]['format']))) {
             $name .= '.'.$files[0]['format'];
         }
-        if ($name === '') $name = trim($marker['recording_title']) ?: 'Nahrávka #'.$id;
-        if ($marker['recording_kind'] === 'multitrack' && count($files) > 1) $name .= ' +'.(count($files)-1);
-        $append((int)$marker['collection_id'], ['type'=>'marker','kind'=>$marker['kind'],
-            'body'=>$body, 'time_ms'=>(int)$marker['time_ms'], 'recording_id'=>$id, 'recording_name'=>$name,
-            'at'=>$marker['created_at'], 'author'=>$marker['author']]);
+        if ($name === '') $name = trim($recording['recording_title']) ?: 'Nahrávka #'.$id;
+        if ($recording['recording_kind'] === 'multitrack' && count($files) > 1) $name .= ' +'.(count($files)-1);
+        foreach (vz2_timestamp_annotations(['id'=>$id,'duration_ms'=>$recording['duration_ms']], $rows) as $item) {
+            $source = $item['source']; $end = $item['end_source'];
+            // Read-only projection: keep the shared interval contract without raw SQL rows.
+            unset($item['source'], $item['end_source']);
+            $append((int)$recording['collection_id'], array_merge($item, [
+                'type'=>'marker', 'body'=>$item['label'], 'time_ms'=>$item['start_ms'],
+                'recording_name'=>$name, 'at'=>$source['created_at'], 'author'=>$source['author'],
+                'end_body'=>$end && !in_array(trim($end['body']), ['↑','↓'], true) ? $end['body'] : '',
+                'end_author'=>$end['author'] ?? '', 'end_at'=>$end['created_at'] ?? null
+            ]));
+        }
     }
 
     $posts = vz2_rows($db, 'SELECT t.collection_id,p.body,p.created_at,u.name author
@@ -133,6 +149,6 @@ function vz2_overview_data(mysqli $db): array {
         ];
     }
 
-    return ['generated_at'=>gmdate('Y-m-d\TH:i:s\Z'),
+    return ['annotation_version'=>1, 'generated_at'=>gmdate('Y-m-d\TH:i:s\Z'),
         'rehearsals'=>array_values($groups['rehearsal']), 'songs'=>array_values($groups['song'])];
 }

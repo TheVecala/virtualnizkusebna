@@ -27,6 +27,17 @@
     }
     function changeIcon(svg, name) { svg.innerHTML = iconPaths[name]; }
 
+    function pauseOtherAudio(current) {
+        document.querySelectorAll('audio').forEach(audio => { if (audio !== current) audio.pause(); });
+    }
+    // Capture native media events too, including Looper and car-mode playback.
+    document.addEventListener('play', event => {
+        if (!(event.target instanceof HTMLAudioElement)) return;
+        pauseOtherAudio(event.target);
+        window.MultitrackApp?.pause();
+    }, true);
+    document.addEventListener('multitrack:play', () => pauseOtherAudio());
+
     function clock(seconds) {
         if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
         const total = Math.floor(seconds);
@@ -133,8 +144,11 @@
             if (loop) loop.setAttribute('aria-pressed', String(audio.loop));
         }
         async function startPlayback() {
-            if (start && (audio.currentTime < start || audio.currentTime >= start + length() - 0.05)) audio.currentTime = start;
-            try { await audio.play(); }
+            try {
+                if (options.prepare && (!await options.prepare() || !audio.isConnected || !audio.hasAttribute('src'))) return;
+                if (start && (audio.currentTime < start || audio.currentTime >= start + length() - 0.05)) audio.currentTime = start;
+                await audio.play();
+            }
             catch (_) { if (audio.paused) setOpen(false); }
         }
         trigger.addEventListener('click', () => {
@@ -155,15 +169,56 @@
         }
         mute.addEventListener('click', () => { audio.muted = !audio.muted; refresh(); });
         collapse.addEventListener('click', () => { window.Vz2Timestamps?.stopLoop(); setOpen(false); trigger.focus(); });
-        audio.addEventListener('play', () => {
-            document.querySelectorAll('audio').forEach(other => { if (other !== audio) other.pause(); });
-            window.MultitrackApp?.pause();
-            setOpen(true);
-        });
+        audio.addEventListener('play', () => setOpen(true));
         ['pause', 'ended', 'timeupdate', 'durationchange', 'loadedmetadata', 'volumechange', 'seeked'].forEach(event => audio.addEventListener(event, refresh));
         refresh();
         return { root, trigger };
     }
 
-    window.Vz2Audio = { mount, icon };
+    // Inline players share source selection and own their source until destroyed.
+    // A closed dialog remains connected, so disposal must also cancel pending reads.
+    function mountFile(file, options = {}) {
+        const audio = document.createElement('audio'), abort = new AbortController();
+        audio.preload = options.preload || 'none';
+        const status = document.createElement('small'); status.className = 'recording-audio-source vz2-attribution';
+        let source = null, pending = null, disposed = false;
+        const start = Math.max(0, Number(options.start) || 0), end = Number(options.end);
+        const initial = Math.max(0, Number(options.initialTime ?? start) || 0);
+        audio.addEventListener('loadedmetadata', () => { audio.currentTime = Math.min(initial, Number.isFinite(audio.duration) ? audio.duration : initial); });
+        if (Number.isFinite(end) && end > start) {
+            const finish = () => Number.isFinite(audio.duration) ? Math.min(end, audio.duration) : end;
+            audio.addEventListener('seeking', () => {
+                if (audio.currentTime < start) audio.currentTime = start;
+                else if (audio.currentTime > finish()) { audio.currentTime = finish(); audio.pause(); }
+            });
+            audio.addEventListener('timeupdate', () => {
+                if (!audio.paused && audio.currentTime >= finish()) { audio.pause(); audio.currentTime = finish(); }
+            });
+            audio.addEventListener('play', () => {
+                if (audio.currentTime >= finish() - 0.05 || audio.currentTime < start) audio.currentTime = start;
+            });
+        }
+        audio.addEventListener('error', () => { if (!disposed) status.textContent = 'Audio nelze přehrát. Zkuste obnovit seznam.'; });
+        function prepare() {
+            if (disposed) return Promise.resolve(false);
+            if (pending) return pending;
+            status.textContent = 'Ověřuji místní kopii…';
+            pending = window.Vz2Downloads.source(file, { signal: abort.signal }).then(next => {
+                if (disposed || !audio.isConnected) { next.release(); return false; }
+                source = next; audio.src = next.url; audio.dataset.source = next.local ? 'offline' : 'web';
+                status.textContent = next.local ? 'Přehrávání ze zařízení' : 'Přehrávání ze sítě';
+                return true;
+            }).catch(error => { if (!disposed) status.textContent = error.message; return false; });
+            return pending;
+        }
+        const view = mount(audio, { ...options, prepare }); view.root.append(status);
+        if (audio.preload !== 'none') void prepare();
+        return { ...view, audio, prepare, destroy() {
+            if (disposed) return;
+            disposed = true; abort.abort(); audio.pause(); audio.removeAttribute('src'); audio.load();
+            source?.release(); source = null;
+        } };
+    }
+
+    window.Vz2Audio = { mount, mountFile, icon };
 }());

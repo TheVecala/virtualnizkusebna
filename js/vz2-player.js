@@ -33,7 +33,8 @@
     }
     function offlineLabel(cached) {
         $('looper-offline-label').textContent = cached ? 'Odebrat offline kopii' : 'Uložit pro offline';
-        $('looper-offline-status').textContent = cached ? 'uloženo v tomto prohlížeči' : 'přehrávám ze sítě';
+        $('looper-offline-status').textContent = cached ? 'uloženo v zařízení · ' + (looper?.source === 'offline' ? 'přehrávání ze zařízení' : 'přehrávání z původního zdroje')
+            : looper?.blob ? 'přehrávání z načteného souboru · kopie není uložená' : 'přehrávání ze sítě';
         $('looper-offline-icon').className = cached ? 'ti ti-trash' : 'ti ti-wifi-off';
     }
     function getState() {
@@ -138,7 +139,8 @@
     function closeLooper() {
         const old = looper; looper = null;
         if (old) {
-            old.abort.abort(); old.notes?.destroy(); old.audio.pause(); old.audio.removeAttribute('src'); old.audio.load(); old.audio.remove();
+            old.abort.abort(); old.unwatch?.(); old.notes?.destroy(); old.audio.pause(); old.audio.removeAttribute('src'); old.audio.load(); old.audio.remove();
+            old.audioSource?.release();
             if (old.url) URL.revokeObjectURL(old.url);
             if (old.context) old.context.close().catch(() => {});
             old.peaks = null;
@@ -186,6 +188,12 @@
             });
         };
         const adapter = {
+            file,
+            isPlaying: () => live() && !audio.paused && !audio.ended,
+            pause: () => { if (live()) audio.pause(); },
+            play: () => { if (!live()) throw Error('Looper již není otevřený.'); return audio.play(); },
+            waveform: () => current.peaks ? { peaks: current.peaks, duration_ms: file.duration_ms || Math.round(audio.duration * 1000) } : null,
+            isLoading: () => audio.dataset.sourceSwitching === 'true',
             canPlay: () => live() && current.phase === 'ready' && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
             durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
@@ -195,51 +203,56 @@
         };
         current.notes = window.Vz2Timestamps.mount($('looper-timestamps'), recording.id, adapter);
         audio.addEventListener('play', () => { if (live()) document.querySelectorAll('#content audio').forEach(a => a.pause()); });
-        audio.addEventListener('loadedmetadata', () => { if (live()) { audio.currentTime = Math.max(0, Math.min(audio.duration || 0, seconds)); current.phase = 'ready'; update(); } }, { once: true });
+        audio.addEventListener('loadedmetadata', () => { if (live()) audio.currentTime = Math.max(0, Math.min(audio.duration || 0, seconds)); }, { once: true });
+        audio.addEventListener('loadedmetadata', () => { if (live()) { current.phase = 'ready'; update(); } });
         audio.addEventListener('error', () => { if (live()) { current.phase = 'error'; error('Audio nelze přehrát. Zavřete Looper a obnovte seznam.'); update(); } });
-        current.cacheKey = window.VZ2.cachePrefix + 'audio:' + file.id + ':' + file.sha256;
+        current.unwatch = window.Vz2Downloads.watch(file, audio, saved => {
+            if (looper !== current) return;
+            current.cached = saved; offlineLabel(saved);
+        });
+        current.cacheKey = window.Vz2Downloads.key(file);
         current.peakCacheKey = window.VZ2.cachePrefix + 'peaks:' + file.id + ':' + file.sha256;
         download.href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(recording.id);
         offline.disabled = true;
         try {
             const peaksUrl = 'php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256);
-            const [offlineResult, peaksResult, localPeaksResult] = await Promise.allSettled([
-                window.idbKeyval.get(current.cacheKey, store),
-                fetch(peaksUrl, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal }),
-                window.idbKeyval.get(current.peakCacheKey, store)
+            const [initialSource, localPeaks] = await Promise.all([
+                window.Vz2Downloads.source(file, { signal: current.abort.signal }).then(source => {
+                    if (!live()) { source.release(); return source; }
+                    // Own the URL immediately, even if the peaks read is still pending.
+                    current.audioSource = source; return source;
+                }),
+                window.idbKeyval.get(current.peakCacheKey, store).catch(() => null)
             ]);
             if (!live()) return;
-            let blob = offlineResult.status === 'fulfilled' ? offlineResult.value : null;
-            current.cached = blob instanceof Blob;
-            let peakData = null;
-            if (peaksResult.status === 'fulfilled' && peaksResult.value.ok) {
+            current.cached = initialSource.local;
+            let peakData = validPeaks(localPeaks, file) ? localPeaks : null;
+            // Local audio must be playable even while a network request is hanging.
+            if (!peakData && !current.cached) {
                 try {
-                    const data = await peaksResult.value.json();
-                    if (data.ok && validPeaks(data, file)) peakData = data;
+                    const response = await fetch(peaksUrl, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal });
+                    const data = response.ok ? await response.json() : null;
+                    if (data?.ok && validPeaks(data, file)) peakData = data;
                 } catch (_) { /* A missing or damaged peaks file can be rebuilt. */ }
             }
-            const serverPeaks = !!peakData;
-            if (!peakData && localPeaksResult.status === 'fulfilled' && validPeaks(localPeaksResult.value, file)) peakData = localPeaksResult.value;
+            if (!live()) return;
             if (peakData) {
-                if (!live()) return;
                 current.peaks = Float32Array.from(peakData.peaks);
-                current.blob = current.cached ? blob : null;
-                if (current.cached) { current.url = URL.createObjectURL(blob); audio.src = current.url; current.source = 'offline'; }
-                else { audio.src = file.url; current.source = 'web'; }
+                current.blob = initialSource.blob; audio.src = initialSource.url;
+                current.source = initialSource.local ? 'offline' : 'web';
                 offlineLabel(current.cached); offline.disabled = false;
                 $('looper-status').textContent = ''; update();
-                if (!serverPeaks) uploadPeaks(peakData.peaks);
                 return;
             }
-            if (!current.cached) {
-                const response = await fetch(file.url, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal });
-                if (!response.ok) throw new Error('Audio nelze načíst. Obnovte přihlášení a seznam.');
-                blob = await response.blob();
-                if (blob.size !== Number(file.byte_size)) throw new Error('Audio se nestáhlo celé.');
+            if (!initialSource.blob) {
+                const source = await window.Vz2Downloads.source(file, { download: true, signal: current.abort.signal });
+                if (!live()) { source.release(); return; }
+                current.audioSource.release(); current.audioSource = source; current.cached = source.local;
             }
             if (!live()) return;
-            current.blob = blob; current.url = URL.createObjectURL(blob); audio.src = current.url;
-            current.source = current.cached ? 'offline' : 'web';
+            const blob = current.audioSource.blob;
+            current.blob = blob; audio.src = current.audioSource.url;
+            current.source = current.cached ? 'offline' : 'memory';
             offlineLabel(current.cached); offline.disabled = false;
             $('looper-status').textContent = 'Připravuji průběh…'; current.decoding = true;
             try {
@@ -260,7 +273,7 @@
                 current.peaks = peaks; $('looper-status').textContent = '';
                 const peakValues = Array.from(peaks);
                 window.idbKeyval.set(current.peakCacheKey, { peaks: peakValues, duration_ms: file.duration_ms }, store).catch(() => {});
-                uploadPeaks(peakValues);
+                if (!current.cached) uploadPeaks(peakValues);
             } catch (_) { if (live()) $('looper-status').textContent = 'Průběh není dostupný; audio a časový posuvník lze dál používat.'; }
             finally { if (current.context) { const context = current.context; current.context = null; if (context.state !== 'closed') await context.close().catch(() => {}); } current.decoding = false; }
             if (live()) update();
@@ -268,11 +281,17 @@
     }
     function renderWaveTimestamps(current, width, durationMs) {
         const markers = document.createDocumentFragment();
-        const entries = current.timestamps || [];
+        const entries = window.Vz2TimestampModel.items({ id: current.recording.id, entries: current.timestamps || [], duration_ms: Math.round(durationMs) }).flatMap(item => {
+            const start = { ...item.source, body: item.label, annotationId: item.id };
+            if (item.end_ms === null) return [start];
+            return [start, { annotationId: item.id, id: item.end_timestamp_id || item.timestamp_id, kind: item.kind === 'take' ? 'song_end' : 'passage_end', time_ms: item.end_ms,
+                body: item.end_source?.body?.replace(/^[↑↓]$/, '') || item.label }];
+        }).sort((a, b) => a.time_ms - b.time_ms || Number(a.id) - Number(b.id));
         const visuals = {
             song_start: { arrow: 'M1 1V9H15 M10 4L15 9L10 14', name: 'Začátek skladby' },
             song_end: { arrow: 'M19 1V9H5 M10 4L5 9L10 14', name: 'Konec skladby' },
-            passage: { name: 'Pasáž' },
+            passage: { name: 'Začátek pasáže' },
+            passage_end: { name: 'Konec pasáže' },
             note: { name: 'Poznámka' }
         };
         if (durationMs > 0) entries.forEach(entry => {
@@ -283,6 +302,9 @@
             const labelOnLeft = entry.kind === 'song_end' ? x >= 155 : x > width - 155;
             marker.className = 'looper-wave-marker' + (labelOnLeft ? ' is-label-left' : '');
             marker.dataset.timestampId = entry.id;
+            marker.dataset.annotationId = entry.annotationId;
+            const selected = window.Vz2TimestampStore.selection();
+            marker.setAttribute('aria-pressed', String(selected?.recording_id === Number(current.recording.id) && selected?.item_id === entry.annotationId));
             marker.dataset.kind = entry.kind;
             marker.style.left = x + 'px';
             const description = visual.name + ': ' + entry.body + ' (' + window.Vz2Timestamps.format(ms) + ')';
@@ -297,7 +319,7 @@
             const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
             const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
             label.append(text); marker.append(label);
-            marker.onclick = event => { event.stopPropagation(); seek(ms / 1000); };
+            marker.onclick = event => { event.stopPropagation(); window.Vz2TimestampStore.select({ recording_id: current.recording.id, item_id: entry.annotationId }); seek(ms / 1000); };
             markers.append(marker);
         });
         $('looper-wave-markers').replaceChildren(markers);
@@ -398,27 +420,29 @@
         const current = looper; if (!current) return;
         if (current.cached && !confirm('Odebrat tuto offline kopii pouze z prohlížeče?')) return;
         offline.disabled = true;
+        const wasCached = current.cached;
         try {
-            if (current.cached) await window.idbKeyval.del(current.cacheKey, store);
+            if (wasCached) await window.Vz2Downloads.removeKey(current.cacheKey);
             else {
-                if (!current.blob) {
-                    $('looper-offline-status').textContent = 'stahuji audio…';
-                    current.blob = await window.Vz2Offline.download(current.file.url, current.file.byte_size, percent => {
-                        if (looper === current) $('looper-offline-status').textContent = percent === null ? 'stahuji audio…' : 'stahuji audio ' + percent + ' %';
-                    }, current.abort.signal);
-                }
-                if (looper !== current) return;
                 $('looper-offline-status').textContent = 'ukládám do zařízení…';
-                const saved = current.file.original_name
-                    ? new File([current.blob], current.file.original_name, { type: current.blob.type }) : current.blob;
-                await window.idbKeyval.set(current.cacheKey, saved, store);
+                current.blob = await window.Vz2Downloads.enqueue(current.file, { blob: current.blob });
+                if (looper !== current) return;
+                if (!current.audioSource?.blob && !current.url) {
+                    current.url = window.Vz2Offline.useBlob(current.audio, current.blob, error);
+                    current.audioSource?.release();
+                }
+                current.source = 'offline';
             }
-            current.cached = !current.cached;
+            current.cached = !wasCached;
             if (looper === current) offlineLabel(current.cached);
         }
         catch (e) { if (looper === current) { offlineLabel(current.cached); error(e.message); } }
         finally { if (looper === current) offline.disabled = false; }
     };
+    document.addEventListener('vz2:timestamp-selected', e => {
+        $('looper-wave-markers').querySelectorAll('[data-annotation-id]').forEach(marker => marker.setAttribute('aria-pressed',
+            String(e.detail?.recording_id === Number(looper?.recording.id) && e.detail?.item_id === marker.dataset.annotationId)));
+    });
     document.addEventListener('multitrack:selected', () => { mixerPending = false; });
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && looperMenu.open) { looperMenu.open = false; e.preventDefault(); return; }

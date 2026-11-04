@@ -57,6 +57,8 @@
         <div class="feature-grid">
           <article><i class="ti ti-square-rounded-plus"></i><h3>Novej vál</h3><p>V katalogu klikněte na <b>+ Nová skladba</b> nebo na vytvoření zkoušky, zadejte název a potvrďte. Vál dostane vlastní prostor pro všechny materiály.</p></article>
           <article><i class="ti ti-arrows-sort"></i><h3>Pořadí</h3><p>Vály můžete v seznamu přetáhnout. Nové pořadí se automaticky uloží celé kapele.</p></article>
+          <article><i class="ti ti-metronome"></i><h3>Popisek, tempo a takt</h3><p>Pod názvem skladby zvolte <b>+ Popisek</b> nebo tužku. Uložíte společné poznámky, více temp (např. <b>120 / 132 / 120</b>) a taktů (<b>4/4 + 3/4</b>). Delší popisek lze rozbalit; v katalogu jsou jen drobná BPM.</p></article>
+          <article><i class="ti ti-list-details"></i><h3>Kompaktní přehled</h3><p>V hlavním menu otevřete <b>Kompaktní přehled</b>, zvolte předvolbu a <b>Vytvořit výpis</b>. Předvolba <b>Popisky skladeb</b> vypíše popisky, BPM a takty. Další možnosti jsou ve sbaleném <b>Vlastním výběru</b>.</p></article>
           <article><i class="ti ti-pencil"></i><h3>Přejmenování</h3><p>V nabídce skladby zvolte <b>Přejmenovat</b>. Obsah válu zůstane zachován.</p></article>
           <article><i class="ti ti-trash"></i><h3>Smazání</h3><p>Správce může v nabídce zvolit <b>Úplně smazat celek</b>. Mazání je nevratné a odstraní také související soubory.</p></article>
         </div>

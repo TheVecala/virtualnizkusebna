@@ -89,4 +89,21 @@ module.exports = async ({ base, clients, request, good, db, check, browser }) =>
     const deniedPost = await request(clients.guest, 'php/ajax/vz2_overview.php', { action: 'generate' });
     check(deniedPost.status === 405, 'overview endpoint is read only');
     if (browser) await require('./vz2_overview.browser')({ base, clients, db, check, rehearsalRecordingId });
+    const takeId = Number(db("SELECT id FROM vz2_timestamps WHERE recording_id=? AND kind='song_start'", [rehearsalRecordingId])[0].id);
+    db('UPDATE vz2_timestamps SET song_collection_id=? WHERE id=?', [song.id, takeId]);
+    db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,paired_timestamp_id,created_by,updated_by,created_at,updated_at) VALUES (?,'song_end',180000,'Poznámka na konci',?,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsalRecordingId, takeId]);
+    db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,end_time_ms,body,note_text,passage_type,parent_timestamp_id,created_by,updated_by,created_at,updated_at) VALUES (?,'passage',130123,145456,'Refrén přehledu','Tichý nástup','chorus',?,1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsalRecordingId,takeId]);
+    db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,created_by,updated_by,created_at,updated_at) VALUES (?,'passage',190000,'Otevřená pasáž přehledu',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsalRecordingId]);
+    db("INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,created_by,updated_by,created_at,updated_at) VALUES (?,'song_end',200000,'↓',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())", [rehearsalRecordingId]);
+    const normalized = (await request(clients.guest, 'php/ajax/vz2_overview.php')).json();
+    const annotations = normalized.rehearsals.find(c => c.id === rehearsal.id).entries.filter(e => e.type === 'marker');
+    const take = annotations.find(e => e.id === 't' + takeId), passage = annotations.find(e => e.label === 'Refrén přehledu');
+    assert.deepEqual([take.kind,take.start_ms,take.end_ms,take.end_body], ['take',120000,180000,'Poznámka na konci']);
+    assert.deepEqual([passage.start_ms,passage.end_ms,passage.parent_id,passage.song_id,passage.passage_type,passage.note_text], [130123,145456,take.id,song.id,'chorus','Tichý nástup']);
+    assert.equal(annotations.find(e => e.label === 'Otevřená pasáž přehledu').end_ms, null);
+    assert(annotations.some(e => e.kind === 'boundary' && e.start_ms === 200000));
+    assert.equal(annotations.filter(e => e.kind === 'song_end').length, 0);
+    check(true, 'overview uses shared intervals: paired take once, explicit passage end, parent/song, notes and incomplete boundaries');
+    if (browser) await require('./vz2_overview_intervals.browser')({ base, clients, check });
+
 };

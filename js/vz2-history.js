@@ -2,7 +2,9 @@
 'use strict';
 const $=id=>document.getElementById(id), n=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 let data=null, transposed=false, scroll={x:0,y:0}, cell=null, listCell=null, playsByCell=new Map();
-async function request(body){const r=await fetch('php/ajax/vz2_history.php',{method:body?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json','X-CSRF-Token':window.VZ2.csrf}:{},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||'Historii nelze načíst.');return j;}
+const detailPlayers=[];
+function releaseDetailPlayers(){detailPlayers.splice(0).forEach(player=>player.destroy());}
+async function request(body){const r=await fetch('php/ajax/vz2_history.php',{method:body?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json','X-CSRF-Token':window.VZ2.csrf}:{},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||'Historii nelze načíst.');if(body){const rid=body.source_recording_id||data?.plays.find(p=>Number(p.id)===Number(body.id))?.source_recording_id;if(rid)window.Vz2Timestamps.reload(rid).catch(()=>{});}return j;}
 function playable(p){return [p.clip,p.source].some(r=>r?.files?.some(f=>f.url));}
 function clock(ms){return Vz2Timestamps.format(ms);}
 function recordingName(r){return (r?.files||[]).map(f=>f.display_name||f.original_name||f.title).filter(Boolean).join(', ')||r?.title||'';}
@@ -119,13 +121,34 @@ $('history-unassigned-open').onclick=async()=>{
 };
 function returnToList(){if(listCell && !$('history-workspace').hidden)openList(listCell.song,listCell.rehearsal);}
 $('history-list-add').onclick=()=>{const {song,rehearsal}=listCell;$('history-list').close();openAdd(song,rehearsal);};
-$('history-detail').addEventListener('close',()=>{ $('history-detail').querySelectorAll('audio').forEach(audio=>audio.pause());returnToList(); });
+$('history-detail').addEventListener('close',()=>{if($('history-detail').open)return;releaseDetailPlayers();returnToList();});
+window.addEventListener('pagehide',releaseDetailPlayers);
 document.querySelectorAll('[data-history-back]').forEach(b=>b.onclick=()=>{$('history-add').close();returnToList();});
-function audioButton(recording,label,start=0){const f=recording?.files?.find(x=>x.url);if(!f)return null;const a=n('audio');a.preload='metadata';a.src=f.url;a.addEventListener('loadedmetadata',()=>{a.currentTime=start/1000;},{once:true});const box=n('div',undefined,'history-card-audio');box.append(Vz2Audio.mount(a,{knownDurationMs:recording.duration_ms,label,inlineControls:true}).root);return box;}
+function audioButton(recording,label,start=0){
+ const file=recording?.files?.find(f=>f.url);if(!file)return null;
+ const box=n('div',undefined,'history-card-audio');
+ // The explicit kind also identifies a multitrack containing just one track.
+ if(recording.kind==='multitrack'||recording.files.length>1){
+  const open=n('button','Otevřít v mixéru','history-open-mixer'),status=n('p','','error');open.type='button';
+  open.setAttribute('aria-label','Otevřít v mixéru: '+label);
+  open.onclick=async()=>{
+   open.disabled=true;status.textContent='';
+   try{if(await window.Vz2App.openRecording(recording.id,start))$('history-detail').close();}
+   catch(error){status.textContent=error.message;}
+   finally{open.disabled=false;}
+  };
+  box.append(open,status);
+ }else{
+  const player=Vz2Audio.mountFile(file,{preload:'metadata',initialTime:start/1000,knownDurationMs:recording.duration_ms,label,inlineControls:true});
+  detailPlayers.push(player);box.append(player.root);
+ }
+ return box;
+}
 function details(label,contents){const d=n('details'),s=n('summary',label);d.append(s,...contents);return d;}
 function historyCard(label,contents,open=false){const card=details(label,contents);card.className='history-detail-card';card.open=open;card.addEventListener('toggle',()=>{if(!card.open)card.querySelectorAll('audio').forEach(audio=>audio.pause());});return card;}
 function detail(p){
  const dialog=$('history-detail'),body=dialog.querySelector('.history-detail-body'),context=dialog.querySelector('.history-detail-context');
+ releaseDetailPlayers();
  context.replaceChildren(n('span','zkouška: ','history-context-label'),n('strong',p.rehearsal_title),n('span',' × ','history-context-cross'),n('span','skladba: ','history-context-label'),n('strong',p.song_title));
  $('history-detail-title').textContent=p.start_body?.trim()||title(p);
  body.replaceChildren();
@@ -140,7 +163,7 @@ function detail(p){
     if(player){
      const jump=n('button',range,'history-card-range history-range-jump');jump.type='button';jump.title='Přejít na začátek úseku';
      jump.setAttribute('aria-label','Přejít na začátek úseku '+clock(p.start_ms));
-     jump.onclick=()=>{window.Vz2Timestamps?.stopLoop();const audio=player.querySelector('audio'),time=p.start_ms/1000;if(audio.readyState>=1)audio.currentTime=time;else{audio.addEventListener('loadedmetadata',()=>{audio.currentTime=time;},{once:true});audio.load();}};
+     jump.onclick=()=>{window.Vz2Timestamps?.stopLoop();const audio=player.querySelector('audio'),time=p.start_ms/1000;if(!audio){player.querySelector('.history-open-mixer').click();return;}if(audio.readyState>=1)audio.currentTime=time;else{audio.addEventListener('loadedmetadata',()=>{audio.currentTime=time;},{once:true});audio.load();}};
      line.append(jump);
     }else line.append(n('small',range,'history-card-range'));
    }
@@ -196,7 +219,7 @@ function renderCandidates(){
   if(startBody)text.append(n('p',startBody,'history-candidate-note'));
   add.type='button';add.disabled=addBusy;add.onclick=()=>addCandidate(fields,row);row.append(text,add);box.append(row);
  }
- data.unassigned_intervals.filter(i=>i.rehearsal_collection_id==rehearsal.id).forEach(i=>candidate(
+ data.unassigned_intervals.filter(i=>i.rehearsal_collection_id==rehearsal.id && i.can_assign!==false).forEach(i=>candidate(
   'i:'+i.recording_id+':'+i.start_timestamp_id+':'+i.end_timestamp_id,i.recording_title,
   'úsek: '+clock(i.start_ms)+' - '+clock(i.end_ms),i.start_body,
   {source_recording_id:Number(i.recording_id),start_timestamp_id:Number(i.start_timestamp_id),end_timestamp_id:Number(i.end_timestamp_id)}
@@ -249,5 +272,6 @@ $('history-options').addEventListener('toggle',()=>{if($('history-options').open
 document.addEventListener('click',e=>{if(!$('history-filter').contains(e.target))$('history-filter').open=false;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('history-filter').open){$('history-filter').open=false;$('history-filter').querySelector('summary').focus();e.preventDefault();}});
 document.addEventListener('vz2:workspace-changed',e=>{if(e.detail.workspace==='history')loadHistory();else{$('history-filter').open=false;$('history-options').open=false;}});
+document.addEventListener('vz2:timestamps-updated',()=>{if(window.Vz2Layout.getWorkspace()==='history')loadHistory();});
 if(window.Vz2Layout.getWorkspace()==='history')loadHistory();
 })();

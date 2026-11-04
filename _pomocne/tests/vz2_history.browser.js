@@ -92,7 +92,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await page.locator('#history-filter summary').click();
         await page.locator('#history-song-filter').selectOption('');
         assert.equal(await page.locator('#app-shell').isVisible(), true);
-        assert.equal(await page.locator('#sidebar-slot #sidebar').isVisible(), true);
+        assert.equal(await page.locator('#sidebar-slot #sidebar').isVisible(), false, 'matrix uses the catalogue dialog instead of a persistent sidebar');
         assert.equal(await page.locator('#song-workspace').isVisible(), false);
         assert.equal(await page.locator('#player-shell').isVisible(), true);
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
@@ -111,7 +111,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await history.locator('.panel-fullscreen-button').getAttribute('aria-pressed'), 'false');
         assert.equal(await page.locator('#player-fullscreen').isVisible(), true);
         assert.equal(await page.locator('#looper-fullscreen').count(), 0);
-        check(true, 'browser history: workspace retains sidebar and playing Looper; shared header fullscreen restores on Escape');
+        check(true, 'browser history: workspace retains playing Looper and hides catalogue sidebar; shared header fullscreen restores on Escape');
         await openList();
         await page.locator('#history-list-add').click();
         const back = add.getByRole('button', { name: 'Zpět', exact: true });
@@ -243,7 +243,6 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await guestPage.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ contentType: 'text/css', body: '' }));
         await guestPage.goto(base + 'index.php?v=2');
         await guestPage.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'));
-        await guestPage.locator('.shell-menu > summary').click();
         await guestPage.locator('[data-workspace-target=history]:visible').click();
         await guestPage.locator('#history-matrix .history-table').waitFor();
         await guestPage.locator('#history-options > summary').click();

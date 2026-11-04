@@ -58,6 +58,8 @@ module.exports = async function ({ base, clients, request, good, upload, wav, db
     play = data.plays.find(p => p.id === play.id);
     assert.equal(play.source.files[0].original_name, 'cela-zkouska.wav');
     assert.equal(play.clip.files[0].original_name, 'vystrizek.wav');
+    assert.deepEqual([play.source.kind, play.source.collection_id, play.source.duration_ms], ['single', rehearsal.id, 10000]);
+    assert.deepEqual([play.clip.kind, play.clip.collection_id, play.clip.duration_ms], ['single', song.id, 10000]);
     assert(!data.unassigned_clips.some(c => c.id === clip));
     for (const file of [play.source.files[0], play.clip.files[0]]) {
         const r = await request(clients.admin, file.url, undefined, { headers: { Range: 'bytes=0-43' } });
@@ -132,4 +134,12 @@ module.exports = async function ({ base, clients, request, good, upload, wav, db
     try { assert.equal((await request(clients.admin, archivedFile.url)).status, 410); }
     finally { db("UPDATE vz2_collections SET lifecycle='archived' WHERE id=?", [song.id]); }
     check(true, 'history: multiple attempts, deleted source audio and archived songs retain history, notes and playable clips');
+    const multi = await upload('admin', otherSong.id, 'Jednostopý multitrack', 'multitrack', ['jedina-stopa.wav'], [wav(10)]);
+    assert.equal(multi.status, 201, multi.text);
+    const multiId = multi.json().id;
+    data = await save({ action: 'create', song_collection_id: otherSong.id, rehearsal_collection_id: otherRehearsal.id, clip_recording_id: multiId });
+    const multiClip = data.plays.find(p => p.clip_recording_id === multiId).clip;
+    assert.equal(multiClip.files.length, 1);
+    assert.deepEqual([multiClip.kind, multiClip.collection_id, multiClip.duration_ms], ['multitrack', otherSong.id, 10000]);
+    check(true, 'history: playback metadata distinguishes a multitrack even when it has only one track');
 };

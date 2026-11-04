@@ -9,13 +9,15 @@
             if (entry.kind === 'tablature') return scope === 'song' ? 'song_tablature' : 'rehearsal_other';
             return `${scope}_other`;
         }
+        if (entry.type === 'song_details') return 'song_details';
         if (entry.type === 'summary') return `${scope}_summary`;
         if (entry.type === 'attachment_note') return `${scope}_attachment`;
         if (entry.type === 'discussion') return `${scope}_discussion`;
         if (entry.type === 'map') return scope === 'song' ? 'song_map_sections' : 'rehearsal_other';
         if (entry.type === 'map_detail') return scope === 'song' ? 'song_map_details' : 'rehearsal_other';
         if (entry.type === 'marker') {
-            if (['song_start', 'song_end', 'passage', 'note'].includes(entry.kind)) return `${scope}_marker_${entry.kind}`;
+            const kind = ({ take: 'song_start', boundary: 'song_end' })[entry.kind] || entry.kind;
+            if (['song_start', 'song_end', 'passage', 'note'].includes(kind)) return `${scope}_marker_${kind}`;
         }
         return `${scope}_other`;
     }

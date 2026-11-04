@@ -138,6 +138,7 @@
     }
 
     function trackCacheKey(set, track) {
+        if (config.cachePrefix && window.Vz2Downloads) return window.Vz2Downloads.key(downloadFile(track));
         if (config.cachePrefix && track.fileId && track.sha256) {
             return CACHE_PREFIX + 'audio:' + track.fileId + ':' + track.sha256;
         }
@@ -483,6 +484,7 @@
             return {
                 file: file,
                 fileId: rawTrack.fileId,
+                byteSize: rawTrack.byteSize,
                 sha256: rawTrack.sha256,
                 unavailable: rawTrack.unavailable === true,
                 name: name,
@@ -719,7 +721,7 @@
         });
     }
 
-    function cachedTrackBlob(track) {
+    function legacyCachedTrackBlob(track) {
         var store = getCacheStore();
         if (!store) return Promise.resolve(null);
         return window.idbKeyval.get(track.cacheKey, store).then(function(value) {
@@ -730,21 +732,26 @@
     function loadTracksSequentially(set, token) {
         var decodeJobs = [];
         var sequence = Promise.resolve();
+        var signal = loadAbortController ? loadAbortController.signal : undefined;
         set.tracks.forEach(function(track) {
             sequence = sequence.then(function() {
                 if (token !== loadSerial || set !== currentSet) throw cancelledError();
                 if (track.unavailable) { updateTrackStatus(track, 'error', null, 'Audio na serveru chybí nebo bylo odstraněno.'); return; }
-                return cachedTrackBlob(track).then(function(cachedBlob) {
-                    if (token !== loadSerial || set !== currentSet) throw cancelledError();
-                    if (cachedBlob) { track.source = 'offline'; return cachedBlob; }
-                    track.source = 'web';
-                    updateTrackStatus(track, 'downloading', 0, '');
-                    return downloadBlob(track.url, function(percent) {
-                        if (token === loadSerial && set === currentSet) {
-                            updateTrackStatus(track, 'downloading', percent, '');
-                        }
+                var progress = function(percent) {
+                    if (token === loadSerial && set === currentSet) updateTrackStatus(track, 'downloading', percent, '');
+                };
+                var audio = config.cachePrefix && window.Vz2Downloads
+                    ? window.Vz2Downloads.read(downloadFile(track), { download: true, signal: signal, onProgress: progress }).then(function(result) {
+                        track.source = result.local ? 'offline' : 'web'; return result.blob;
+                    })
+                    : legacyCachedTrackBlob(track).then(function(cachedBlob) {
+                        if (token !== loadSerial || set !== currentSet) throw cancelledError();
+                        if (cachedBlob) { track.source = 'offline'; return cachedBlob; }
+                        track.source = 'web';
+                        updateTrackStatus(track, 'downloading', 0, '');
+                        return downloadBlob(track.url, progress);
                     });
-                }).then(function(blob) {
+                return audio.then(function(blob) {
                     if (token !== loadSerial || set !== currentSet) throw cancelledError();
                     track.blob = blob;
                     // Dekódování se spustí hned; další síťové stahování už na něj nečeká.
@@ -1167,6 +1174,7 @@
             // Jeden společný okamžik je autorita času pro všechny source nodes.
             intendedSet.startedAt = when;
             intendedSet.playing = true;
+            if (typeof CustomEvent === 'function') document.dispatchEvent(new CustomEvent('multitrack:play'));
             updatePlaybackUi(true);
             renderClock(intendedSet, intendedSet.offset);
             animateClock();
@@ -1237,7 +1245,14 @@
         });
     }
 
+    function downloadFile(track) {
+        return { id: track.fileId, sha256: track.sha256, url: track.url, byte_size: track.byteSize, original_name: track.originalName || track.file };
+    }
     function inspectOfflineState(set) {
+        if (config.cachePrefix && window.Vz2Downloads && set) {
+            return Promise.all(set.tracks.map(function(track) { return window.Vz2Downloads.local(downloadFile(track)); }))
+                .then(function(blobs) { return blobs.length > 0 && blobs.every(Boolean); }).catch(function() { return false; });
+        }
         var store = getCacheStore();
         if (!store || !set || !set.cacheId) return Promise.resolve(false);
         return window.idbKeyval.get(manifestCacheKey(set), store).then(function(manifest) {
@@ -1280,6 +1295,18 @@
     }
 
     function saveSetOffline(set) {
+        if (config.cachePrefix && window.Vz2Downloads && set) {
+            setOfflineUi(false, 'Zařazeno do společné fronty stahování', true);
+            return Promise.allSettled(set.tracks.map(function(track) {
+                return track.unavailable ? Promise.reject(Error('Stopa není dostupná.')) : window.Vz2Downloads.enqueue(downloadFile(track), { blob: track.blob });
+            })).then(function(results) {
+                if (set === currentSet) {
+                    refreshOfflineState(set);
+                    if (results.some(function(r) { return r.status === 'rejected'; })) showNotice('Některé stopy nejsou uložené. Hotové soubory zůstaly v zařízení; podrobnosti jsou ve frontě stahování.', 'error');
+                }
+                return results.every(function(r) { return r.status === 'fulfilled'; });
+            });
+        }
         var store = getCacheStore();
         if (!store || !set || set !== currentSet) return Promise.resolve(false);
         var token = ++offlineSerial;
@@ -1376,6 +1403,11 @@
     }
 
     function removeSetOffline(set) {
+        if (config.cachePrefix && window.Vz2Downloads && set) {
+            return Promise.all(set.tracks.map(function(track) { return window.Vz2Downloads.removeKey(track.cacheKey); }))
+                .then(function() { if (set === currentSet) refreshOfflineState(set); return true; })
+                .catch(function(error) { if (set === currentSet) showNotice(errorMessage(error), 'error'); return false; });
+        }
         var store = getCacheStore();
         if (!store || !set || set !== currentSet) return Promise.resolve(false);
         var token = ++offlineSerial;
@@ -1400,6 +1432,9 @@
         });
     }
 
+    document.addEventListener('vz2:downloads-updated', function() {
+        if (currentSet && !window.Vz2Downloads.snapshot().some(function(t) { return ['queued', 'checking', 'downloading', 'saving'].includes(t.state); })) refreshOfflineState(currentSet);
+    });
     function requestOfflineChange() {
         var set = currentSet;
         if (!set || !getCacheStore() || dom.offline.disabled) return;
@@ -1550,6 +1585,26 @@
         seek: function(seconds) { seekTo(seconds, true); },
         destroy: cleanupCurrentSet,
         detectSourceSampleRate: detectSourceSampleRate,
+        getWaveform: function() {
+            if (!currentSet || currentSet.phase !== 'ready') return null;
+            if (currentSet.editorWaveform) return currentSet.editorWaveform;
+            var peaks = new Array(4096).fill(0), duration = currentSet.duration;
+            currentSet.activeTracks.forEach(function(track) {
+                var buffer = track.buffer;
+                for (var channel = 0; channel < buffer.numberOfChannels; channel++) {
+                    var samples = buffer.getChannelData(channel);
+                    for (var i = 0; i < peaks.length; i++) {
+                        var from = Math.floor(i / peaks.length * duration * buffer.sampleRate);
+                        var to = Math.min(samples.length, Math.ceil((i + 1) / peaks.length * duration * buffer.sampleRate));
+                        // Bounded sampling of long decoded tracks; no extra audio download.
+                        var step = Math.max(1, Math.floor((to - from) / 64));
+                        for (var j = from; j < to; j += step) peaks[i] = Math.max(peaks[i], Math.min(1, Math.abs(samples[j]) || 0));
+                    }
+                }
+            });
+            currentSet.editorWaveform = { peaks: peaks, duration_ms: Math.round(duration * 1000) };
+            return currentSet.editorWaveform;
+        },
         getState: function() {
             if (!currentSet) return null;
             return {

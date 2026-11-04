@@ -38,7 +38,7 @@ názvem.
 
 ## Záměrné hranice první verze
 
-Výběr skladby ani výstřižku se nepřidává do uploadu nebo Looperu. Server audio
+Od migrace 009 lze skladbu vybrat přímo v editoru pokusu v Looperu, Mixéru nebo katalogu; dokončený pokus se zařadí automaticky. Viz [společná vrstva timestampů](timestamp-layer.md). Výběr výstřižku zůstává v Historii. Server audio
 nestříhá a export neposkytuje Edison/CSV automatizaci. Obecný TXT export značek
 zobrazuje čas jako `mm:ss`, stejně jako TXT export úseků. Neúplné značky
 export úseků vypisuje odděleně. Export pro mp3splt zachovává přesné časy.
@@ -66,6 +66,14 @@ Teprve výběr položky otevře `#history-detail` včetně přehrávačů. Kří
 obnoví seznam. Přidávání je dostupné ze seznamu i u prázdné
 buňky; host má u prázdné buňky pouze pomlčku. Propojený úsek a jeho výstřižek
 se počítají jako jeden pokus.
+
+Jednostopé audio v detailu vybírá společný zdroj přes `Vz2Audio.mountFile`:
+úplnou místní kopii, případně síť. Původní nahrávka začíná na začátku pokusu,
+ale dovoluje poslech i za jeho koncem; propojená karta úseku v katalogu naopak
+dodržuje obě hranice. Multitrack, včetně sady s jedinou stopou, nabízí otevření
+celého Mixéru na odpovídající pozici. Přechod zachovává stávající kontrolu
+opuštění rozehraného přehrávače. Zavření detailu zastaví vložené audio,
+uvolní jeho místní URL a zruší čekající načítání; fronta stahování pokračuje.
 
 
 V dialogu Přidat pokus má každý dostupný úsek či výstřižek vlastní tlačítko
