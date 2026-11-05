@@ -154,7 +154,7 @@
         host.replaceChildren(); activeChapter = null;
         const starts = timestampList ? Model.items(timestampList).filter(item => item.kind === 'take') : [];
         if (!starts.length) {
-            host.append(text('p', timestampId ? timestampList ? 'Žádné pokusy.' : 'Načítám pokusy…' : 'Po výběru nahrávky se zobrazí pokusy.', 'car-empty'));
+            host.append(text('p', timestampId ? timestampList ? 'Žádné úseky.' : 'Načítám úseky…' : 'Po výběru nahrávky se zobrazí úseky.', 'car-empty'));
             return;
         }
         for (const row of starts) {
@@ -163,7 +163,7 @@
             button.append(text('span', format(row.start_ms / 1000) + (row.end_ms === null ? '\nbez konce' : '\n– ' + format(row.end_ms / 1000)), 'car-chapter-time'),
                 text('span', [row.song_title, row.label].filter((value, i, values) => value && values.indexOf(value) === i).join(' · '), 'car-chapter-name'),
                 text('span', '', 'car-chapter-play'));
-            if (row.end_ms === null) button.title = 'Konec pokusu není doplněný.';
+            if (row.end_ms === null) button.title = 'Konec úseku není doplněný.';
             button.lastElementChild.setAttribute('aria-hidden', 'true');
             button.addEventListener('click', async () => {
                 if (context?.player?.phase !== 'ready') return;
@@ -208,6 +208,18 @@
         }
         if (String(player?.id || '') !== String(timestampId || '')) refreshContext();
     }
+    function folderRecordings(id) {
+        const linked = new Set((context?.linkedRecordings?.[String(id)] || []).map(String));
+        return (context?.recordings || []).filter(row => row.lifecycle === 'active' && (String(row.collection_id) === String(id) || linked.has(String(row.id))));
+    }
+    function nameParts(value) {
+        const name = text('strong', '', 'car-name');
+        const chars = Array.from(value);
+        const split = Math.ceil(chars.length * .65);
+        name.append(text('span', chars.slice(0, split).join(''), 'car-name-start'), text('span', chars.slice(split).join(''), 'car-name-end'));
+        name.title = value;
+        return name;
+    }
     function renderPicker() {
         const folder = collection(browseCollectionId);
         $('car-picker-folder').querySelector('strong').textContent = folder?.title || 'Vybrat složku';
@@ -221,19 +233,22 @@
             if (!folders.length) host.append(text('p', 'Žádné složky.', 'car-empty'));
             folders.forEach(row => {
                 const button = text('button', '', 'car-picker-row'); button.type = 'button';
-                button.append(text('strong', row.title), text('small', context.recordings.filter(r => String(r.collection_id) === String(row.id) && available(r)).length + ' nahrávek'));
+                const count = folderRecordings(row.id).filter(available).length + ' nahrávek';
+                button.setAttribute('aria-label', row.title + ' · ' + count);
+                button.append(nameParts(row.title), text('small', count));
                 button.addEventListener('click', () => { browseCollectionId = row.id; pickerLevel = 'recordings'; renderPicker(); });
                 host.append(button);
             });
         } else {
             const host = $('car-picker-recordings'); host.replaceChildren();
-            const recordings = (context?.recordings || []).filter(row => String(row.collection_id) === String(browseCollectionId) && row.lifecycle === 'active');
+            const recordings = folderRecordings(browseCollectionId);
             if (!recordings.length) host.append(text('p', 'V této složce nejsou nahrávky.', 'car-empty'));
             recordings.forEach(row => {
                 const button = text('button', '', 'car-picker-row'); button.type = 'button';
                 button.disabled = !available(row);
+                button.setAttribute('aria-label', recordingName(row));
                 button.append(text('span', row.kind === 'multitrack' ? '≋' : '♪', 'car-picker-icon'),
-                    text('strong', recordingName(row)), text('small', button.disabled ? 'Audio není dostupné' : row.kind === 'multitrack' ? 'Mixér' : format(Number(row.files?.[0]?.duration_ms || 0) / 1000)));
+                    nameParts(recordingName(row)), text('small', button.disabled ? 'Audio není dostupné' : row.kind === 'multitrack' ? 'Mixér' : format(Number(row.files?.[0]?.duration_ms || 0) / 1000)));
                 if (String(row.id) === String(context?.player?.id)) button.classList.add('is-selected');
                 button.addEventListener('click', () => chooseRecording(row));
                 host.append(button);

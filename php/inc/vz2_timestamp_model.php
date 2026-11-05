@@ -23,7 +23,7 @@ function vz2_timestamp_annotations(array $recording, array $entries): array {
         $items[]=['id'=>'t'.$entry['id'],'recording_id'=>(int)($recording['id']??$recording['recording_id']),'timestamp_id'=>(int)$entry['id'],'end_timestamp_id'=>$end?(int)$end['id']:null,
             'kind'=>$take?'take':$entry['kind'],'start_ms'=>(int)$entry['time_ms'],'end_ms'=>$endMs,
             'status'=>$entry['kind']==='note'?'point':($endMs===null?'open':'complete'),
-            'label'=>$label!==''?$label:($take?'Pokus '.$number:(vz2_passage_types()[$entry['passage_type']??'']??'Poznámka')),
+            'label'=>$label!==''?$label:($take?'Úsek '.$number:(vz2_passage_types()[$entry['passage_type']??'']??'Poznámka')),
             'passage_type'=>$entry['kind']==='passage'?(($entry['passage_type']??null)?:'custom'):null,'note_text'=>$entry['note_text']??'',
             'parent_id'=>empty($entry['parent_timestamp_id'])?null:'t'.$entry['parent_timestamp_id'],
             'song_id'=>$take && isset($entry['song_collection_id'])?(int)$entry['song_collection_id']:null,'song_title'=>$entry['song_title']??$entry['history_song_title']??'',

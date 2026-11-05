@@ -20,7 +20,7 @@
         }).format(parsed);
     };
     const time = window.Vz2TimestampModel.format;
-    const markerNames = { take: 'Pokus', boundary: 'Konec bez začátku', passage: 'Pasáž', note: 'Poznámka' };
+    const markerNames = { take: 'Úsek', boundary: 'Konec bez začátku', passage: 'Pasáž', note: 'Poznámka' };
     const presets = {
         song_details: ['songs', 'song_details'],
         lyrics: ['songs', 'song_lyrics'],

@@ -65,7 +65,7 @@ try {
 <label><input type="checkbox" data-filter="rehearsal_played" checked> Hrané skladby</label>
 <label><input type="checkbox" data-filter="rehearsal_summary" checked> Souhrny</label>
 <label><input type="checkbox" data-filter="rehearsal_attachment" checked> Poznámky k přílohám</label>
-<label><input type="checkbox" data-filter="rehearsal_marker_song_start" checked> Pokusy</label>
+<label><input type="checkbox" data-filter="rehearsal_marker_song_start" checked> Úseky</label>
 <label><input type="checkbox" data-filter="rehearsal_marker_song_end" checked> Nespárované konce</label>
 <label><input type="checkbox" data-filter="rehearsal_marker_passage" checked> Značky pasáží</label>
 <label><input type="checkbox" data-filter="rehearsal_marker_note" checked> Časové poznámky</label>
@@ -80,7 +80,7 @@ try {
 <label><input type="checkbox" data-filter="song_map_details" checked> Detaily taktů</label>
 <label><input type="checkbox" data-filter="song_summary" checked> Souhrny</label>
 <label><input type="checkbox" data-filter="song_attachment" checked> Poznámky k přílohám</label>
-<label><input type="checkbox" data-filter="song_marker_song_start" checked> Pokusy</label>
+<label><input type="checkbox" data-filter="song_marker_song_start" checked> Úseky</label>
 <label><input type="checkbox" data-filter="song_marker_song_end" checked> Nespárované konce</label>
 <label><input type="checkbox" data-filter="song_marker_passage" checked> Značky pasáží</label>
 <label><input type="checkbox" data-filter="song_marker_note" checked> Časové poznámky</label>

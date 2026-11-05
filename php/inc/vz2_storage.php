@@ -154,7 +154,7 @@ function vz2_remove(array $in): array {
             if(($in['confirm']??null)!==$c['title'])throw new Vz2Error('Potvrďte název mazané položky.');
             vz2_query($db,"UPDATE vz2_collections SET lifecycle='archived',revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?",[vz2_actor(),$id]);
             vz2_query($db,"UPDATE vz2_collection_orders SET revision=revision+1 WHERE kind='song'");
-            vz2_log($db,'collection.archived','collection',$id,$c['title'],'Skladba zůstává v historii; pokusy: '.$count);
+            vz2_log($db,'collection.archived','collection',$id,$c['title'],'Skladba zůstává v historii; úseky: '.$count);
             return true;
         });
         if($archive)return ['id'=>$id,'archived'=>true,'completed'=>true];

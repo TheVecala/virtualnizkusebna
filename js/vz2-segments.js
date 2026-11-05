@@ -57,7 +57,7 @@
     function legend(recordings) {
         const host = $('segments-legend'); host.replaceChildren(); const mode = $('segments-color').value;
         const entries = new Map();
-        if (mode === 'type') for (const [kind, title] of [['recording', 'Celá nahrávka'], ['take', 'Pokus / skladba'], ['passage', 'Pasáž'], ['note', 'Poznámka'], ['boundary', 'Nespárovaný konec']]) entries.set(title, M.color({ kind }, 0, mode));
+        if (mode === 'type') for (const [kind, title] of [['recording', 'Celá nahrávka'], ['take', 'Úsek / skladba'], ['passage', 'Pasáž'], ['note', 'Poznámka'], ['boundary', 'Nespárovaný konec']]) entries.set(title, M.color({ kind }, 0, mode));
         else if (mode === 'mono') entries.set('Jednotná barva · význam určuje popisek a řádek', M.color({}, 0, mode));
         else for (const r of recordings) {
             if (mode === 'recording') entries.set(M.name(r), M.color({}, r.id, mode));
@@ -101,7 +101,7 @@
         $('segments-selected-title').textContent = s.label;
         $('segments-selected-info').textContent = [M.name(r), s.song_title].filter(Boolean).join(' · ');
         $('segments-selected-time').textContent = M.format(s.start_ms) + (s.end_ms === null ? ' · bod' : ' – ' + M.format(s.end_ms));
-        $('segments-selected-body').textContent = s.boundary === 'derived' ? 'Pasáž končí na následující hranici nebo na konci pokusu či nahrávky.' : s.boundary === 'open' ? 'Začátek zatím nemá spárovaný konec.' : '';
+        $('segments-selected-body').textContent = s.boundary === 'derived' ? 'Pasáž končí na následující hranici nebo na konci úseku či nahrávky.' : s.boundary === 'open' ? 'Začátek zatím nemá spárovaný konec.' : '';
         $('segments-play').disabled = !file?.url; audio.hidden = !file?.url;
         $('segments-loop').disabled = s.end_ms === null; if (s.end_ms === null) $('segments-loop').checked = false;
         const params = new URLSearchParams({ v: '2', collection_id: r.collection_id, recording_id: r.id, view: r.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: Math.round(s.start_ms) });

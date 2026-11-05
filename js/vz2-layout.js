@@ -147,6 +147,7 @@
         $('catalog-heading').textContent = $('collection-kind-label').textContent = label;
         $('catalog-heading-mobile').textContent = label;
         $('collection-kind-inline').textContent = collectionKind === 'rehearsal' ? 'Zkouška:' : 'Skladba:';
+        $('collection-kind-icon').className = 'ti ' + (collectionKind === 'rehearsal' ? 'ti-microphone' : 'ti-music');
         $('catalog-dialog').setAttribute('aria-label', label);
         $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
         const mobilePanels = $('mobile-panels');

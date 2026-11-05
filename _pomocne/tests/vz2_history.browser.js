@@ -54,7 +54,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
                     assert.equal(await item.locator('.history-candidate-note').textContent(), 'Začátek pokusu');
                 }
                 await item.getByRole('button', { name: 'Přidat', exact: true }).click();
-                await add.locator('.history-add-status').getByText('Pokus přidán.', { exact: true }).waitFor();
+                await add.locator('.history-add-status').getByText('Úsek přidán.', { exact: true }).waitFor();
                 assert.equal(await add.isVisible(), true);
                 assert.equal(await item.count(), 0, 'assigned item disappears without closing the modal');
                 assert(await add.evaluate(n=>n.scrollWidth<=n.clientWidth+1), 'per-item actions fit the viewport');
@@ -84,13 +84,13 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await unassigned.locator('.history-unassigned-section').last().locator('li').count(), 3);
         await unassigned.locator('[data-history-close]').click();
         await page.locator('#history-filter summary').click();
-        await page.locator('#history-song-filter').selectOption(String(song.id));
+        await page.locator('#history-song-filter input[value="' + song.id + '"]').check();
         await page.locator('#history-options > summary').click();
         await page.locator('#history-unassigned-open').click();
         assert.equal(await unassigned.locator('.history-unassigned-section').last().locator('li').count(), 3, 'matrix song filter does not restrict the global list');
         await unassigned.locator('[data-history-close]').click();
         await page.locator('#history-filter summary').click();
-        await page.locator('#history-song-filter').selectOption('');
+        await page.locator('#history-song-filter button').click();
         assert.equal(await page.locator('#app-shell').isVisible(), true);
         assert.equal(await page.locator('#sidebar-slot #sidebar').isVisible(), false, 'matrix uses the catalogue dialog instead of a persistent sidebar');
         assert.equal(await page.locator('#song-workspace').isVisible(), false);
@@ -115,7 +115,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await openList();
         await page.locator('#history-list-add').click();
         const back = add.getByRole('button', { name: 'Zpět', exact: true });
-        const close = add.getByRole('button', { name: 'Zavřít přidávání pokusů', exact: true });
+        const close = add.getByRole('button', { name: 'Zavřít přidávání úseků', exact: true });
         const backBox = await back.boundingBox(), closeBox = await close.boundingBox();
         assert(backBox.x + backBox.width <= closeBox.x && Math.abs(backBox.y - closeBox.y) < 2, 'Back sits beside the close button');
         await back.click();
@@ -162,7 +162,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert(!(await detail.textContent()).includes('Poznámka za úsekem'));
         await detail.getByRole('button', { name: '+ Přidat výstřižek', exact: true }).click();
         assert.equal(await detail.getByText('Úpravy', { exact: true }).count(), 0);
-        assert.equal(await detail.getByRole('button', { name: 'Odebrat pokus z historie', exact: true }).isVisible(), true);
+        assert.equal(await detail.getByRole('button', { name: 'Odebrat úsek z historie', exact: true }).isVisible(), true);
         assert.equal(await detail.getByRole('button', { name: 'Připojit výstřižek', exact: true }).isDisabled(), true);
         await detail.getByLabel('Připojený výstřižek', { exact: true }).selectOption(String(clip));
         await detail.getByRole('button', { name: 'Připojit výstřižek', exact: true }).click();
@@ -194,7 +194,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await unassigned.locator('[data-history-close]').click();
         check(true, 'browser history: menu opens matrix; interval assignment seeks original audio and connects clip; two attempts share a single count and open via a compact list');
         await page.locator('#history-filter summary').click();
-        await page.locator('#history-song-filter').selectOption(String(song.id));
+        await page.locator('#history-song-filter input[value="' + song.id + '"]').check();
         assert.equal(await history.locator('thead th').count(), 2);
         await page.locator('#history-orientation').click();
         assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
@@ -212,7 +212,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await page.locator('#history-unassigned-open').click();
         assert((await unassigned.boundingBox()).width <= 390);
         await unassigned.locator('[data-history-close]').click();
-        assert.equal(await page.locator('#history-song-filter').inputValue(), String(song.id));
+        assert(await page.locator('#history-song-filter input[value="' + song.id + '"]').isChecked());
         assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
         assert.equal(await page.locator('#history-audio-filter').isChecked(), true);
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
@@ -224,7 +224,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await detail.locator('.history-detail-card').first().locator('summary').textContent(), 'Samostatný soubor');
         assert.equal(await detail.locator('audio').count(), 1);
         assert.equal(await page.locator('#history-detail-title').textContent(), 'samostatny-pokus.wav', 'standalone clip uses its filename as the heading');
-        await detail.getByRole('button', { name: 'Odebrat pokus z historie', exact: true }).click();
+        await detail.getByRole('button', { name: 'Odebrat úsek z historie', exact: true }).click();
         await detail.waitFor({ state: 'hidden' });
         await list.waitFor();
         assert.equal(await list.locator('.history-list-row').count(), 1);

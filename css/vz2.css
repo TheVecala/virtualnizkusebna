@@ -807,3 +807,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 .download-manager select { max-width: 100%; }
 
 .looper-wave-marker[aria-pressed="true"] .looper-wave-marker-label { outline: 2px solid var(--color-primary); }
+#offline-files .download-manager { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: center; }
+#offline-files .download-manager > h3, #offline-files .download-manager > p, #offline-files .download-manager > div, #offline-files .download-manager > select { grid-column: 1 / -1; margin: 0; }
+#offline-files .download-manager > h3:not(:first-child) { margin-top: 10px; }
+#offline-files .download-task { gap: 6px; padding: 7px; }

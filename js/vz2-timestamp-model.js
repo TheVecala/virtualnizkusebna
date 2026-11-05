@@ -26,7 +26,7 @@
             items.push({ id: 't' + entry.id, recording_id: recordingId, timestamp_id: Number(entry.id), end_timestamp_id: end ? Number(end.id) : null,
                 kind: take ? 'take' : entry.kind, start_ms: entry.time_ms, end_ms: endMs,
                 status: entry.kind === 'note' ? 'point' : endMs === null ? 'open' : 'complete',
-                label: clean(entry.body) || (take ? 'Pokus ' + takeNumber : passageTypes[entry.passage_type] || 'Poznámka'),
+                label: clean(entry.body) || (take ? 'Úsek ' + takeNumber : passageTypes[entry.passage_type] || 'Poznámka'),
                 passage_type: entry.kind === 'passage' ? entry.passage_type || 'custom' : null, note_text: entry.note_text || '',
                 parent_id: entry.parent_timestamp_id ? 't' + entry.parent_timestamp_id : null,
                 song_id: songId === null ? null : Number(songId), song_title: song?.title || entry.song_title || entry.history_song_title || '',

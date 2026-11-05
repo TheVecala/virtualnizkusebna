@@ -3,7 +3,7 @@
     'use strict';
     const Model = root.Vz2TimestampModel, Store = root.Vz2TimestampStore;
     const format = ms => Model.format(ms);
-    const names = { take: 'pokus', passage: 'pasáž', note: 'poznámka' };
+    const names = { take: 'úsek', passage: 'pasáž', note: 'poznámka' };
     const make = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
     let active = null, opening = false;
     function mount({ recording_id, list, adapter, kind, item, finish, draft }) {
@@ -12,7 +12,7 @@
         dialog.innerHTML = `<form autocomplete="off" novalidate>
             <div class="annotation-header"><div><h2 id="annotation-title" class="visually-hidden"></h2><p class="interval-context"></p></div><button type="button" class="annotation-close" aria-label="Zavřít editor">×</button></div>
             <div class="annotation-player"></div>
-            <div class="annotation-kinds" role="group" aria-label="Typ časové značky"><button type="button" data-kind="take">Pokus</button><button type="button" data-kind="passage">Pasáž</button><button type="button" data-kind="note">Poznámka</button></div>
+            <div class="annotation-kinds" role="group" aria-label="Typ časové značky"><button type="button" data-kind="take">Úsek</button><button type="button" data-kind="passage">Pasáž</button><button type="button" data-kind="note">Poznámka</button></div>
             <div class="annotation-scroll">
                 <div class="annotation-existing"><span>Rozpracovaný úsek</span><div data-choice="existing"></div></div>
                 <div class="annotation-times">
@@ -26,7 +26,7 @@
                 <div class="annotation-fields">
                     <div class="annotation-song annotation-field"><span>Skladba</span><div data-choice="song"></div></div>
                     <div class="annotation-passage annotation-field"><span>Typ pasáže</span><div data-choice="passage_type"></div></div>
-                    <div class="annotation-parent annotation-field"><span>Pokus</span><div data-choice="parent"></div></div>
+                    <div class="annotation-parent annotation-field"><span>Úsek</span><div data-choice="parent"></div></div>
                     <div class="annotation-field annotation-title-field"><label for="annotation-label">Název</label><input id="annotation-label" name="label" maxlength="4000"><button type="button" class="annotation-note-open" aria-label="Doplňující poznámka" title="Doplňující poznámka">+</button></div>
                     <section class="annotation-reference" aria-label="Časové značky nahrávky"><h3></h3><ol tabindex="0" aria-label="Seznam časových značek"></ol></section>
                 </div>
@@ -46,7 +46,7 @@
         const currentTime = () => Math.max(0, Math.round(adapter?.currentTimeMs?.() ?? 0));
         const report = text => { error.textContent = text; };
         active = { dialog, dirty: () => dirty() || !!noteDialog && noteDialog.querySelector('textarea').value !== note, recording_id, adapter };
-        for (const [key, title, search] of [['existing', 'Rozpracovaný úsek', true], ['song', 'Skladba', true], ['passage_type', 'Typ pasáže', false], ['parent', 'Pokus', true]]) {
+        for (const [key, title, search] of [['existing', 'Rozpracovaný úsek', true], ['song', 'Skladba', true], ['passage_type', 'Typ pasáže', false], ['parent', 'Úsek', true]]) {
             choices[key] = controls.choice(dialog.querySelector('[data-choice="' + key + '"]'), title, search);
         }
         const items = () => Model.items(latestList);
@@ -73,7 +73,7 @@
         }
         function update() {
             const point = kind === 'note';
-            dialog.querySelector('#annotation-title').textContent = selected ? 'Upravit ' + names[kind] : kind === 'take' ? 'Nový pokus' : kind === 'passage' ? 'Nová pasáž' : 'Nová poznámka';
+            dialog.querySelector('#annotation-title').textContent = selected ? 'Upravit ' + names[kind] : kind === 'take' ? 'Nový úsek' : kind === 'passage' ? 'Nová pasáž' : 'Nová poznámka';
             dialog.querySelectorAll('[data-kind]').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.kind === kind)); b.disabled = !!selected || busy; });
             dialog.querySelector('.annotation-end').hidden = point;
             dialog.querySelector('.annotation-boundaries').classList.toggle('annotation-point', point);
@@ -91,7 +91,7 @@
             const noteButton = dialog.querySelector('.annotation-note-open'); noteButton.hidden = point; noteButton.classList.toggle('has-note', !!note.trim()); noteButton.setAttribute('aria-label', note.trim() ? 'Upravit doplňující poznámku' : 'Doplňující poznámka');
             dialog.querySelector('.annotation-clear-end').hidden = point || end == null;
             dialog.querySelector('.annotation-fine-end').hidden = point;
-            dialog.querySelector('.annotation-save').textContent = kind === 'take' ? 'Uložit pokus' : kind === 'passage' ? 'Uložit pasáž' : 'Uložit poznámku';
+            dialog.querySelector('.annotation-save').textContent = kind === 'take' ? 'Uložit úsek' : kind === 'passage' ? 'Uložit pasáž' : 'Uložit poznámku';
             dialog.querySelector('.annotation-summary').textContent = point ? format(start) : format(start) + (end == null ? ' · konec doplním později' : '–' + format(end) + ' · ' + ((end - start) / 1000).toLocaleString('cs-CZ', { maximumFractionDigits: 3 }) + ' s');
             for (const edge of ['start', 'end']) {
                 const ms = edge === 'start' ? start : end;
@@ -198,7 +198,7 @@
                 if (selected && !now) { comparison.textContent = 'Značka byla mezitím odstraněna. Váš rozepsaný text zůstává ve formuláři.'; pendingLatest = null; return; }
                 comparison.append(make('strong', 'Aktuálně uložená verze'));
                 if (now) {
-                    for (const [title, value] of [['Název', now.label], ['Začátek', format(now.start_ms)], ['Konec', now.end_ms == null ? 'Nenastavený' : format(now.end_ms)], ['Skladba', now.song_title || 'Bez přiřazení'], ['Typ pasáže', Model.passageTypes[now.passage_type] || '—'], ['Pokus', items().find(i => i.id === now.parent_id)?.label || 'Samostatná pasáž'], ['Poznámka', now.note_text || '—']]) comparison.append(make('p', title + ': ' + value));
+                    for (const [title, value] of [['Název', now.label], ['Začátek', format(now.start_ms)], ['Konec', now.end_ms == null ? 'Nenastavený' : format(now.end_ms)], ['Skladba', now.song_title || 'Bez přiřazení'], ['Typ pasáže', Model.passageTypes[now.passage_type] || '—'], ['Úsek', items().find(i => i.id === now.parent_id)?.label || 'Samostatná pasáž'], ['Poznámka', now.note_text || '—']]) comparison.append(make('p', title + ': ' + value));
                 } else comparison.append(make('p', 'Seznam byl obnoven. Rozepsané údaje zůstávají.'));
                 dialog.querySelector('.annotation-rebase').hidden = false;
             } catch (e) { report(e.message); }
@@ -257,7 +257,7 @@
                 if (item_id && !item) throw Error('Značka již neexistuje.');
                 if (item ? !item.can_edit : !list.can_create) throw Error('K úpravě nemáte oprávnění.');
                 kind = item?.kind || kind;
-                if (!['take', 'passage', 'note'].includes(kind)) throw Error('Vyberte pokus, pasáž nebo poznámku.');
+                if (!['take', 'passage', 'note'].includes(kind)) throw Error('Vyberte úsek, pasáž nebo poznámku.');
                 mount({ recording_id, list, adapter, kind, item, finish, draft });
             } finally { opening = false; }
         }

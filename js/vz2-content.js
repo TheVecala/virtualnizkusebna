@@ -160,7 +160,10 @@
         const actions = make('div', undefined, 'toolbar'); actions.append(save,cancel,compare);
         cancel.hidden = compare.hidden = comparison.hidden = accept.hidden = true; form.append(label,actions,comparison,accept);
         const list = make('div', undefined, 'content-posts'), reload = iconButton('Obnovit příspěvky', 'refresh', () => load()), older = button('Starší příspěvky', () => load(ctx.before)); older.hidden = true;
-        ctx.dialog.append(form,reload,list,older);
+        ctx.dialog.append(form);
+        const feed = isIdeas ? document.getElementById('ideas-shared') : ctx.dialog;
+        if (isIdeas) feed.append(make('h3', 'Společná fronta nápadů'));
+        feed.append(reload,list,older);
         let thread, editing = null;
         body.addEventListener('input', () => ctx.dirty = true);
         function reset(force = false) {
@@ -188,7 +191,7 @@
                     item.append(make('p',p.body), postAttribution(p));
                     const controls = make('div',undefined,'toolbar');
                     if (p.can_edit) controls.append(button('Upravit', () => {
-                        if (!reset()) return; editing = p; body.value = p.body; save.textContent = 'Uložit úpravu'; label.firstChild.textContent = 'Upravit příspěvek'; cancel.hidden = false; body.focus();
+                        if (!reset()) return; if (isIdeas) document.querySelector('[data-idea-section=write]').click(); editing = p; body.value = p.body; save.textContent = 'Uložit úpravu'; label.firstChild.textContent = 'Upravit příspěvek'; cancel.hidden = false; body.focus();
                     }));
                     if (p.can_delete) controls.append(button('Smazat', async () => {
                         if (!confirm('Smazat tento příspěvek?')) return;

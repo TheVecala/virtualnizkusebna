@@ -1085,7 +1085,7 @@
             return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id),
                 view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(Math.max(0, Number(timeMs) || 0)) });
         },
-        getCarContext() { return { collections: data?.collections || [], recordings: data?.recordings || [], selected, kind, player: window.Vz2Player.getState() }; },
+        getCarContext() { return { collections: data?.collections || [], recordings: data?.recordings || [], linkedRecordings: Object.fromEntries((data?.collections || []).map(c => [String(c.id), linkedRecordingRows(c).map(row => row.recording.id)])), selected, kind, player: window.Vz2Player.getState() }; },
         openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'audio', time_ms: '0', listen: '1' }, true); },
         setCarRoute(enabled, player = null) {
             const params = Object.fromEntries(qs);

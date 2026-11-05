@@ -1,6 +1,7 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id), n=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
+const selectedSongs=new Set();
 let data=null, transposed=false, scroll={x:0,y:0}, cell=null, listCell=null, playsByCell=new Map();
 const detailPlayers=[];
 function releaseDetailPlayers(){detailPlayers.splice(0).forEach(player=>player.destroy());}
@@ -15,7 +16,7 @@ function origin(p){
  return {key:'standalone',label:'Samostatný soubor'};
 }
 function option(value,text){const o=n('option',text);o.value=value;return o;}
-function refreshFilter(){const select=$('history-song-filter'),v=select.value;select.replaceChildren(option('','Všechny skladby'));data.songs.forEach(s=>select.append(option(s.id,s.title)));select.value=v;}
+function refreshFilter(){const host=$('history-song-filter');host.replaceChildren();const all=n('button','Všechny skladby');all.type='button';all.onclick=()=>{selectedSongs.clear();render();};host.append(all);data.songs.forEach(s=>{const label=n('label'),input=n('input');input.type='checkbox';input.value=String(s.id);input.checked=selectedSongs.has(String(s.id));input.onchange=()=>{if(input.checked)selectedSongs.add(input.value);else selectedSongs.delete(input.value);const id=input.value;render();[...host.querySelectorAll('input')].find(item=>item.value===id)?.focus({preventScroll:true});};label.append(input,document.createTextNode(' '+s.title));host.append(label);});}
 function cellKey(songId,rehearsalId){return String(songId)+':'+String(rehearsalId);}
 function indexPlays(){
  const onlyAudio=$('history-audio-filter').checked;
@@ -28,8 +29,8 @@ function indexPlays(){
  });
 }
 function cellPlays(song,rehearsal){return playsByCell.get(cellKey(song.id,rehearsal.id))||[];}
-function render(){if(!data)return;indexPlays();refreshFilter();syncControls();const selected=Number($('history-song-filter').value)||null;
- const songs=data.songs.filter(s=>!selected||Number(s.id)===selected), rehearsals=data.rehearsals, rows=transposed?songs:rehearsals, cols=transposed?rehearsals:songs;
+function render(){if(!data)return;indexPlays();refreshFilter();syncControls();const selected=selectedSongs.size>0;
+ const songs=data.songs.filter(s=>!selected||selectedSongs.has(String(s.id))), rehearsals=data.rehearsals, rows=transposed?songs:rehearsals, cols=transposed?rehearsals:songs;
  const matrix=$('history-matrix');
  if(!songs.length||!rehearsals.length){const empty=n('div',undefined,'history-empty'),icon=n('i');icon.className='ti ti-calendar-off';icon.setAttribute('aria-hidden','true');empty.append(icon,n('h3',selected?'Pro výběr nejsou žádná data':'Historie je zatím prázdná'),n('p',selected?'Zkuste zobrazit všechny skladby nebo změnit filtr.':'Až propojíte úsek zkoušky se skladbou, objeví se tady.'));matrix.replaceChildren(empty);return;}
  const table=n('table');table.className='history-table';table.style.minWidth=(160+cols.length*84)+'px';
@@ -91,7 +92,7 @@ function renderList(){
   standalone.forEach(p=>appendPlay(p,clips));
   li.append(heading,clips);items.append(li);
  }
- if(!plays.length)items.append(n('li','V této buňce nejsou žádné pokusy odpovídající filtrům.','history-list-empty'));
+ if(!plays.length)items.append(n('li','V této buňce nejsou žádné úseky odpovídající filtrům.','history-list-empty'));
  $('history-list-add').hidden=!data.can_edit;
 }
 function openList(song,rehearsal){listCell={song,rehearsal};renderList();if(!$('history-list').open)$('history-list').showModal();}
@@ -204,8 +205,8 @@ function detail(p){
  }
  if(p.source)body.append(details('Poznámky ('+p.notes.length+')',p.notes.length?p.notes.map(x=>n('p',Vz2Timestamps.format(x.time_ms)+' · '+x.body)):[n('p','Žádné poznámky v úseku.')]));
  if(p.can_edit){
-  const del=n('button','Odebrat pokus z historie');del.className='danger';
-  del.onclick=async()=>{if(!confirm('Odebrat pouze historický pokus? Audio ani značky se nesmažou.'))return;data=await request({action:'delete',id:p.id,revision:p.revision});$('history-detail').close();render();};
+  const del=n('button','Odebrat úsek z historie');del.className='danger';
+  del.onclick=async()=>{if(!confirm('Odebrat pouze historický úsek? Audio ani značky se nesmažou.'))return;data=await request({action:'delete',id:p.id,revision:p.revision});$('history-detail').close();render();};
   body.append(n('p','Nahrávky, výstřižky a časové značky zůstanou zachované.','history-removal-help'),del);
  }
  dialog.showModal();}
@@ -240,7 +241,7 @@ async function addCandidate(fields,row){
   data=await request({action:'create',song_collection_id:Number(context.song.id),rehearsal_collection_id:Number(context.rehearsal.id),source_recording_id:null,start_timestamp_id:null,end_timestamp_id:null,clip_recording_id:null,...fields});
   render();if($('history-list').open)renderList();
   if(dialog.open && context===cell){
-   addBusy=false;renderCandidates();dialog.querySelector('.history-add-status').textContent='Pokus přidán.';
+   addBusy=false;renderCandidates();dialog.querySelector('.history-add-status').textContent='Úsek přidán.';
    const remaining=[...dialog.querySelectorAll('.history-candidate')];
    (remaining.find(candidate=>candidate.dataset.candidate===next)?.querySelector('button')||remaining[0]?.querySelector('button')||dialog.querySelector('[data-history-close]')).focus({preventScroll:true});
   }
@@ -257,14 +258,13 @@ async function loadHistory(){
  finally{loading=false;}
 };
 function syncControls(){
- const select=$('history-song-filter'), filtered=!!select.value;
+ const filtered=selectedSongs.size>0;
  $('history-filter').classList.toggle('is-active',filtered);
- $('history-filter-label').textContent=filtered ? select.selectedOptions[0]?.textContent || 'Skladby' : 'Všechny skladby';
- $('history-filter').querySelector('summary').title=filtered ? 'Filtr: '+select.selectedOptions[0]?.textContent : 'Filtr skladeb';
+ $('history-filter-label').textContent=filtered ? 'Vybráno: '+selectedSongs.size : 'Všechny skladby';
+ $('history-filter').querySelector('summary').title='Filtr skladeb';
  $('history-audio-filter').closest('label').classList.toggle('is-active',$('history-audio-filter').checked);
 }
 $('history-orientation').onclick=e=>{transposed=!transposed;e.currentTarget.setAttribute('aria-pressed',String(transposed));render();};
-$('history-song-filter').onchange=()=>{render();$('history-filter').open=false;};
 $('history-audio-filter').onchange=()=>{syncControls();render();};
 $('history-matrix').onscroll=e=>{scroll={x:e.currentTarget.scrollLeft,y:e.currentTarget.scrollTop};};
 $('history-filter').addEventListener('toggle',()=>{if($('history-filter').open)$('history-options').open=false;});

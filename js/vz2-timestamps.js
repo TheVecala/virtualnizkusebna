@@ -1,7 +1,7 @@
 (function (root) {
     'use strict';
     const Model = typeof module !== 'undefined' && module.exports ? require('./vz2-timestamp-model.js') : root.Vz2TimestampModel;
-    const kinds = { song_start: '♪ Pokusy', song_end: '■ Nespárované konce', passage: '↔ Pasáže', note: '● Poznámky' };
+    const kinds = { song_start: '♪ Úseky', song_end: '■ Nespárované konce', passage: '↔ Pasáže', note: '● Poznámky' };
     function format(ms) {
         return compactFormat(ms);
     }
@@ -30,7 +30,7 @@
     function tabular(entries, selected, duration = null) {
         const clean = value => String(value ?? '').replace(/[\t\r\n]+/g, ' ');
         return Model.normalize({ id: 0, entries, duration_ms: duration }).filter(i => selected.includes(i.source.kind)).map(i => [format(i.start_ms), i.end_ms === null ? '' : format(i.end_ms),
-            i.kind === 'take' ? 'Pokus' : i.kind === 'passage' ? Model.passageTypes[i.passage_type] : i.kind === 'note' ? 'Poznámka' : 'Konec bez začátku',
+            i.kind === 'take' ? 'Úsek' : i.kind === 'passage' ? Model.passageTypes[i.passage_type] : i.kind === 'note' ? 'Poznámka' : 'Konec bez začátku',
             i.label, i.song_title, [i.note_text, i.end_source?.body?.replace(/^[↑↓]$/, '')].filter(Boolean).join(' · '), i.status === 'open' ? 'Doplnit konec' : ''].map(clean).join('\t')).join('\n');
     }
     function filenameBase(filename) {
@@ -292,7 +292,7 @@
                     const interval = ['take', 'passage'].includes(annotation.kind);
                     if (annotation.can_edit) {
                         actions.append(iconButton('Upravit', 'pencil', () => interval ? openIntervalEditor(this, annotation.kind, annotation) : openEditor(this, row)));
-                        if (interval && end === null) actions.append(iconButton(annotation.kind === 'take' ? 'Ukončit pokus' : 'Ukončit pasáž', 'flag-check', () => openIntervalEditor(this, annotation.kind, annotation, true)));
+                        if (interval && end === null) actions.append(iconButton(annotation.kind === 'take' ? 'Ukončit úsek' : 'Ukončit pasáž', 'flag-check', () => openIntervalEditor(this, annotation.kind, annotation, true)));
                     }
                     if (annotation.can_delete) actions.append(iconButton('Smazat', 'trash', async () => {
                         if (!confirm('Smazat tuto časovou značku?\n' + row.body)) return;

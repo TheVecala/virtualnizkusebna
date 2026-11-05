@@ -23,7 +23,7 @@ assert.match(php, /kind'\]!==\s*'song_end'/);
 assert.match(php, /t\['time_ms'\] >= \$p\['start_ms'\] && \$t\['time_ms'\] < \$p\['end_ms'\]/);
 assert.match(ui, /history-audio-filter/);
 assert.match(ui, /history-orientation/);
-assert.match(ui, /if\(!confirm\('Odebrat pouze historický pokus\?/);
+assert.match(ui, /if\(!confirm\('Odebrat pouze historický úsek\?/);
 for (const id of ['show-history', 'history-workspace', 'history-matrix', 'history-list', 'history-add', 'history-detail']) {
     assert.match(page, new RegExp('id="' + id + '"'), 'history UI must be present: ' + id);
 }

@@ -50,7 +50,7 @@ function vz2_timestamp_time(int $ms): string {
 }
 function vz2_timestamp_export(array $list): string {
     $text = 'Nahrávka #'.$list['recording_id'].' — '.(($list['source_filename'] ?? null) ?: $list['title'])."\nExport: ".gmdate('Y-m-d\TH:i:s\Z').($list['title']!==''?"\nPopisek: ".$list['title']:'')."\n\nSouhrn:\n".($list['summary'] ?? '')."\n\nČasové zápisy:\n";
-    $kinds=['take'=>'Pokus','passage'=>'Pasáž','note'=>'Poznámka','boundary'=>'Konec bez začátku'];
+    $kinds=['take'=>'Úsek','passage'=>'Pasáž','note'=>'Poznámka','boundary'=>'Konec bez začátku'];
     foreach(vz2_timestamp_annotations($list,$list['entries']) as $item){
         $range=vz2_timestamp_time($item['start_ms']).($item['end_ms']!==null?' – '.vz2_timestamp_time($item['end_ms']):'');
         $text.=$range.' · '.$kinds[$item['kind']].' · '.$item['source']['author'].' [#'.$item['source']['created_by']."]\n".$item['label'];

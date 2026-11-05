@@ -47,7 +47,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
             await interval.locator('.annotation-close').click();
             await interval.waitFor({ state: 'hidden' });
         };
-        await add(panel, 'Pokus');
+        await add(panel, 'Úsek');
         await setTime('start', '00:01.123');
         await setTime('end', '00:08.456');
         await choose('song', String(song.id));
@@ -125,7 +125,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await page.evaluate(() => Vz2Player.seek(2));
         const looperPanel = page.locator('#looper-timestamps');
         await looperPanel.locator('details').evaluate(e => e.open = true);
-        await add(looperPanel, 'Pokus');
+        await add(looperPanel, 'Úsek');
         await interval.locator('.annotation-wave-message').waitFor({ state: 'hidden' });
         await interval.getByRole('button', { name: 'Přehrát', exact: true }).click();
         await page.waitForFunction(() => Vz2Player.getState().playing);

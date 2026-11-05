@@ -87,7 +87,7 @@ function vz2_history_write(array $in): array {
             $a=vz2_one($db,'SELECT * FROM vz2_timestamps WHERE id=?',[$start]);$b=vz2_one($db,'SELECT * FROM vz2_timestamps WHERE id=?',[$end]);
             if((int)$a['recording_id']!==$source || (int)$b['recording_id']!==$source || $a['kind']!=='song_start' || $b['kind']!=='song_end' || (int)$b['paired_timestamp_id']!==$start || (int)$b['time_ms']<=(int)$a['time_ms'])throw new Vz2Error('Úsek není platná propojená dvojice.');
             vz2_permission('comment',(int)$a['created_by']);
-            if(vz2_rows($db,'SELECT id FROM vz2_rehearsal_plays WHERE start_timestamp_id=?',[$start]))throw new Vz2Error('Pokus je již přiřazen. Obnovte historii.',409);
+            if(vz2_rows($db,'SELECT id FROM vz2_rehearsal_plays WHERE start_timestamp_id=?',[$start]))throw new Vz2Error('Úsek je již přiřazen. Obnovte historii.',409);
             vz2_query($db,'UPDATE vz2_timestamps SET song_collection_id=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[$song['id'],vz2_actor(),$start]);
             vz2_query($db,'UPDATE vz2_recordings SET timestamps_revision=timestamps_revision+1 WHERE id=?',[$source]);
         }elseif($action==='create' && ($start || $end))throw new Vz2Error('Časy vyžadují zdrojovou nahrávku.');
@@ -97,7 +97,7 @@ function vz2_history_write(array $in): array {
             vz2_query($db,'INSERT INTO vz2_rehearsal_plays(rehearsal_collection_id,song_collection_id,rehearsal_title_snapshot,song_title_snapshot,source_recording_id,start_timestamp_id,end_timestamp_id,clip_recording_id,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())',[$rehearsal['id'],$song['id'],$rehearsal['title'],$song['title'],$source,$start,$end,$clip,vz2_actor(),vz2_actor()]);$id=(int)$db->insert_id;
         }else{$id=vz2_id($in['id']??null);$p=vz2_one($db,'SELECT * FROM vz2_rehearsal_plays WHERE id=? FOR UPDATE',[$id]);vz2_revision($p,$in['revision']??null);
             if((int)$p['song_collection_id']!==(int)$song['id'] || (int)$p['rehearsal_collection_id']!==(int)$rehearsal['id'])throw new Vz2Error('Historickou skladbu ani zkoušku nelze tiše přeřadit.',409);
-            if(!$clip && $p['source_recording_id']===null)throw new Vz2Error('Přímý pokus z výstřižku musí mít výstřižek.');
+            if(!$clip && $p['source_recording_id']===null)throw new Vz2Error('Přímý úsek z výstřižku musí mít výstřižek.');
             vz2_query($db,'UPDATE vz2_rehearsal_plays SET clip_recording_id=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[$clip,vz2_actor(),$id]);}
         vz2_log($db,'history.'.($action==='create'?'created':'updated'),'rehearsal_play',$id,$song['title'],'Zkouška #'.$rehearsal['id']);return vz2_history_data($db);
     });

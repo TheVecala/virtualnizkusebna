@@ -2,7 +2,7 @@
     'use strict';
     const Model = root.Vz2TimestampModel, Store = root.Vz2TimestampStore;
     const format = Model.format, parse = Model.parse;
-    const kinds = { song_start: 'Pokus', song_end: 'Nespárovaný konec', passage: 'Pasáž', note: 'Poznámka' };
+    const kinds = { song_start: 'Úsek', song_end: 'Nespárovaný konec', passage: 'Pasáž', note: 'Poznámka' };
     const el = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     const request = (id, fields) => fields ? fields.kind === 'note' ? Store.saveNote(id, fields) : Store.save(id, fields) : Store.load(id);
     const publish = value => Store.accept(value);
@@ -106,7 +106,7 @@
             </div>
             <div class="ts-editor-footer">
                 <div class="ts-simple-actions" hidden><button type="button" class="ts-open-advanced">Otevřít pokročilé možnosti</button><button type="submit" name="kind" value="note" class="ts-save-note">Uložit poznámku</button></div>
-                <div class="ts-advanced-actions"><button type="button" name="kind" value="song_start" class="ts-new-take">Pokus</button><button type="submit" name="kind" value="song_end">Konec</button><button type="button" name="kind" value="passage" class="ts-new-passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button></div>
+                <div class="ts-advanced-actions"><button type="button" name="kind" value="song_start" class="ts-new-take">Úsek</button><button type="submit" name="kind" value="song_end">Konec</button><button type="button" name="kind" value="passage" class="ts-new-passage">Pasáž</button><button type="submit" name="kind" value="note">Poznámka</button></div>
                 <button type="button" class="ts-rebase" hidden>Načíst aktuální verzi k porovnání</button>
             </div>
             <div class="ts-pair-inline" hidden><h2>Propojit konec se začátkem</h2><label>Začátek skladby<select name="paired_timestamp_id"><option value="">Bez propojení</option></select></label><div class="toolbar"><button type="button" class="ts-pair-back">Zpět</button><button type="button" class="ts-pair-save">Uložit konec</button></div></div>

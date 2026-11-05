@@ -38,7 +38,7 @@ $config = ['csrf'=>auth_csrf_token(),'write'=>defined('VZ2_WRITES_ENABLED') && V
 <body class="segments-page">
 <header class="segments-topbar"><a class="segments-brand" href="index.php?v=2">ZKUŠEBNA DK!</a><nav aria-label="Navigace"><a href="prehled.php">Kompaktní přehled</a><a href="index.php?v=2">← Zpět do zkušebny</a></nav></header>
 <main>
-<header class="segments-intro"><div><p class="segments-kicker">SAMOSTATNÝ PANEL · ČASOVÝ PŘEHLED</p><h1>Úseky nahrávek</h1><p>Celá zkouška. Jednotlivé pokusy. Každá pasáž na svém místě.</p></div><button id="segments-reload" type="button">Obnovit data</button></header>
+<header class="segments-intro"><div><p class="segments-kicker">SAMOSTATNÝ PANEL · ČASOVÝ PŘEHLED</p><h1>Úseky nahrávek</h1><p>Celá zkouška. Jednotlivé úseky. Každá pasáž na svém místě.</p></div><button id="segments-reload" type="button">Obnovit data</button></header>
 <div class="segments-toolbar">
 <label>Zobrazení<select id="segments-view"><option value="single">Jedna nahrávka</option><option value="stack">Nahrávky nad sebou</option></select></label>
 <label>Barvy<select id="segments-color"><option value="type">Podle typu úseku</option><option value="song">Podle skladby</option><option value="recording">Podle nahrávky</option><option value="mono">Jednobarevně</option></select></label>
@@ -47,7 +47,7 @@ $config = ['csrf'=>auth_csrf_token(),'write'=>defined('VZ2_WRITES_ENABLED') && V
 <div class="segments-switches"><label><input id="segments-wave" type="checkbox"> Wavekřivka v pozadí</label><label><input id="segments-compact" type="checkbox">Kompaktní</label></div>
 </div>
 <details class="segments-sources" id="segments-sources" open><summary>Nahrávky <span id="segments-count"></span></summary><div class="segments-source-tools"><label>Hledat<input id="segments-search" type="search" placeholder="Název nahrávky nebo zkoušky"></label><label>Zkouška / skladba<select id="segments-collection"><option value="">Všechny</option></select></label><button id="segments-select-all" type="button" hidden>Vybrat zobrazené</button><button id="segments-select-none" type="button" hidden>Zrušit výběr</button></div><div id="segments-recordings" class="segments-recordings"></div></details>
-<div class="segments-display-options" role="group" aria-label="Viditelné druhy značek"><label><input id="segments-takes" type="checkbox" checked>Pokusy / skladby</label><label><input id="segments-passages" type="checkbox" checked>Pasáže</label><label><input id="segments-notes" type="checkbox" checked>Poznámky a hranice</label><label><input id="segments-labels" type="checkbox" checked>Popisky</label></div>
+<div class="segments-display-options" role="group" aria-label="Viditelné druhy značek"><label><input id="segments-takes" type="checkbox" checked>Úseky / skladby</label><label><input id="segments-passages" type="checkbox" checked>Pasáže</label><label><input id="segments-notes" type="checkbox" checked>Poznámky a hranice</label><label><input id="segments-labels" type="checkbox" checked>Popisky</label></div>
 <details id="segments-downloads"><summary>Stahování a soubory v zařízení</summary><div></div></details>
 <p id="segments-status" class="segments-status" role="status" aria-live="polite">Načítám nahrávky…</p>
 <div id="segments-panel"></div>
@@ -56,7 +56,7 @@ $config = ['csrf'=>auth_csrf_token(),'write'=>defined('VZ2_WRITES_ENABLED') && V
 <section class="segments-selection" id="segments-selection" aria-label="Vybraný úsek" hidden>
 <div class="segments-selection-heading"><div><p class="segments-kicker">VYBRANÝ ÚSEK</p><h2 id="segments-selected-title"></h2><p id="segments-selected-info"></p></div><span id="segments-selected-time"></span></div>
 <p id="segments-selected-body"></p>
-<div class="segments-player-actions"><button id="segments-edit" type="button">Upravit úsek</button><button id="segments-finish" type="button">Doplnit konec</button><button id="segments-delete" type="button">Smazat úsek</button><button id="segments-new-take" type="button">Nový pokus</button><button id="segments-new-note" type="button">Nová poznámka</button><button id="segments-new-passage" type="button">Nová pasáž</button><button id="segments-play" type="button">▶ Přehrát úsek</button><label><input id="segments-loop" type="checkbox">Opakovat úsek</label><a id="segments-open">Otevřít v looperu</a></div>
+<div class="segments-player-actions"><button id="segments-edit" type="button">Upravit úsek</button><button id="segments-finish" type="button">Doplnit konec</button><button id="segments-delete" type="button">Smazat úsek</button><button id="segments-new-take" type="button">Nový úsek</button><button id="segments-new-note" type="button">Nová poznámka</button><button id="segments-new-passage" type="button">Nová pasáž</button><button id="segments-play" type="button">▶ Přehrát úsek</button><label><input id="segments-loop" type="checkbox">Opakovat úsek</label><a id="segments-open">Otevřít v looperu</a></div>
 <audio id="segments-audio" controls preload="none" hidden></audio><p id="segments-audio-status" role="status"></p>
 </section>
 <noscript>Pro zobrazení úseků je potřeba JavaScript.</noscript>

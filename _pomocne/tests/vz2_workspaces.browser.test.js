@@ -233,7 +233,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                         bottomMenuBelowContent: rect('#mobile-sections-dock').top >= rect('.layout').bottom - 1,
                         menusInsideFrame: rect('#mobile-dock').top >= rect('#workspace-frame').top - 1 &&
                             rect('#mobile-sections-dock').bottom <= rect('#workspace-frame').bottom + 1,
-                        frameBorder: getComputedStyle(document.querySelector('#workspace-frame')).borderTopColor,
+                        frameBorder: getComputedStyle(document.querySelector('#workspace-frame')).borderBottomColor,
                         menuBorder: getComputedStyle(document.querySelector('#mobile-dock')).borderBottomColor };
                 });
                 assert(!geometry.overflow && !geometry.height, `${workspace}: viewport overflow at ${width}`);
@@ -242,7 +242,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                     if (workspace === 'songs' || workspace === 'rehearsals') {
                         assert(await page.locator('#mobile-panels').isVisible());
                         assert(geometry.bottomMenuBelowContent && geometry.menusInsideFrame && geometry.frameBorder === geometry.menuBorder,
-                            `${workspace}: the navigation frame contains both fixed menus and the content at ${width} px`);
+                            `${workspace}: the navigation frame contains both fixed menus and the content at ${width} px: ${JSON.stringify(geometry)}`);
                         const labelsFit = await page.locator('#mobile-panels button:visible .section-button-label').evaluateAll(labels => labels.every(label => label.getBoundingClientRect().width > 0 && label.scrollWidth <= label.clientWidth + 1));
                         assert(labelsFit, `${workspace}: section tab labels fit at ${width} px`);
                     }
@@ -433,7 +433,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             await switchTo(workspace);
             assert.equal(await page.locator(control).evaluate(node => node.parentElement.id), slot);
             assert(await page.locator(control).isVisible(), `${workspace} controls should be visible`);
-            assert.equal(await page.locator('#collection-header').isVisible(), false);
+            assert.equal(await page.locator('#collection-header').isVisible(), workspace === 'songs');
             const topbar = await page.evaluate(() => {
                 const navigation = document.querySelector('#workspace-navigation');
                 const menu = document.querySelector('#topbar .shell-menu');
@@ -477,7 +477,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(header.y >= mainNavigation.y + mainNavigation.height - 1 && popup.y >= header.y + header.height - 1 && popup.y + popup.height < 844,
             `Filter opens below the header within the viewport: ${JSON.stringify({popup, header, mainNavigation})}`);
         assert(popup.x >= 0 && popup.x + popup.width <= 390, 'Filter fits inside the mobile viewport');
-        await page.locator('#history-song-filter').selectOption('1');
+        await page.locator('#history-song-filter input[value="1"]').check();
+        await page.locator('#history-song-filter input[value="2"]').check();
+        assert.equal(await page.locator('#history-song-filter input:checked').count(), 2);
+        await page.locator('#history-song-filter input[value="2"]').uncheck();
         await page.locator('#history-options summary').click();
         const optionsMenu = await page.locator('#history-menu').boundingBox();
         assert(optionsMenu.x >= 0 && optionsMenu.x + optionsMenu.width <= 390, 'Matrix options fit inside the mobile viewport');
@@ -485,7 +488,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('songs'); await switchTo('history');
         assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
         assert(await page.locator('#history-audio-filter').isChecked());
-        assert.equal(await page.locator('#history-song-filter').inputValue(), '1');
+        assert(await page.locator('#history-song-filter input[value="1"]').isChecked());
         await page.locator('#history-workspace .panel-fullscreen-button').click();
         await page.locator('#history-controls-slot #history-orientation').waitFor({ state: 'visible' });
         await page.keyboard.press('Escape');
@@ -641,25 +644,23 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(await page.locator('#looper-audio').evaluate(audio => audio.paused), 'Manual Looper pause stops its timestamp loop');
         await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Zavřít časové značky' }).click();
         await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
-        const editorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
-        const playerBox = await page.locator('#player-shell').boundingBox();
-        assert(editorBox.y >= playerBox.y + playerBox.height, 'The mobile timestamp editor opens below the player');
-        assert(editorBox.height < 380, 'The mobile timestamp editor uses only the height its controls need');
-        assert(Math.abs(editorBox.y + editorBox.height - (844 - 8)) <= 2, 'The mobile timestamp editor stays at the bottom');
-        assert(await page.locator('.vz2-timestamp-editor [name=body]').isVisible(), 'The timestamp input is visible');
+        const editor = page.locator('.vz2-annotation-editor');
+        await editor.waitFor({ state: 'visible' });
+        const editorBox = await editor.boundingBox();
+        assert(editorBox.x >= 0 && editorBox.y >= 0 && editorBox.x + editorBox.width <= 390 && editorBox.y + editorBox.height <= 844, 'The mobile annotation editor fits the viewport');
+        assert(await editor.locator('[name=label]').isVisible(), 'The annotation title is visible');
         await shot('timestamp-editor-390');
-        await page.locator('.vz2-timestamp-editor .ts-close').click();
+        await editor.locator('.annotation-close').click();
         const normalWaveHeight = (await page.locator('#looper-wave').boundingBox()).height;
         await page.locator('#player-fullscreen').click();
         assert.equal((await page.locator('#looper-wave').boundingBox()).height, normalWaveHeight, 'Mobile fullscreen preserves waveform height');
         assert(await page.locator('#looper-timestamps .ts-song_start').isVisible(), 'Mobile fullscreen opens timestamps automatically');
         await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
-        const fullscreenEditorBox = await page.locator('.vz2-timestamp-editor').boundingBox();
-        const timelineBox = await page.locator('#looper-panel .timeline').boundingBox();
-        assert(fullscreenEditorBox.y >= timelineBox.y + timelineBox.height, 'The editor opens below the fullscreen Looper controls');
-        assert(fullscreenEditorBox.height < 380 && fullscreenEditorBox.y + fullscreenEditorBox.height <= 844, 'The fullscreen editor stays compact and visible');
+        await editor.waitFor({ state: 'visible' });
+        const fullscreenEditorBox = await editor.boundingBox();
+        assert(fullscreenEditorBox.x >= 0 && fullscreenEditorBox.y >= 0 && fullscreenEditorBox.x + fullscreenEditorBox.width <= 390 && fullscreenEditorBox.y + fullscreenEditorBox.height <= 844, 'The fullscreen annotation editor fits the viewport');
         await shot('timestamp-editor-fullscreen-390');
-        await page.locator('.vz2-timestamp-editor .ts-close').click();
+        await editor.locator('.annotation-close').click();
         await page.locator('#player-fullscreen').click();
         await page.locator('#looper-play').click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.playing);
@@ -943,12 +944,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.goto('http://vz2-workspaces.test/index.php?v=2&collection_id=3'); await ready();
         await page.locator('#car-mode-menu-open').click();
         assert(await page.locator('#car-picker-folders').isVisible(), 'The main menu car icon opens folder selection without a player');
-        await page.locator('#car-picker-close').click();
-        await page.locator('#car-close').click();
-        await page.locator('#car-mode-collection-open').click();
-        assert(await page.locator('#car-mode').isVisible(), 'The collection header car icon opens car mode');
-        assert(await page.locator('#car-picker-recordings').isVisible(), 'The collection icon starts with recordings from the current folder');
-        await page.locator('#car-picker-recordings .car-picker-row').first().click();
+        await page.locator('[data-car-kind=song]').click();
+        await page.locator('#car-picker-folder-list').getByRole('button', { name: /Nová skladba/ }).click();
+        const linkedRow = page.locator('#car-picker-recordings .car-picker-row').filter({ hasText: /Nový název|zkouška/ });
+        assert.equal(await linkedRow.count(), 1, 'A linked recording appears once in the song folder');
+        await linkedRow.click();
         await page.waitForFunction(() => window.Vz2CarMode.getState()?.mode === 'audio' && window.Vz2CarMode.getState()?.phase === 'ready');
         assert.equal(await page.evaluate(() => window.Vz2CarMode.getState().playing), false, 'The car mode picker does not autoplay');
         await page.locator('#car-play').click();

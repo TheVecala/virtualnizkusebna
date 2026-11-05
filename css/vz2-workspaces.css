@@ -283,3 +283,14 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #panel-recordings .song-details-description { grid-row: 3; grid-column: 1 / -1; }
     #panel-recordings .song-details-more { grid-row: 4; grid-column: 1 / -1; justify-self: start; }
 }
+#collection-kind-icon { display: none; }
+@media (max-width: 767px) {
+    #collection-kind-inline { display: none; }
+    #collection-kind-icon { display: inline-block; flex: none; font-size: 21px; color: var(--color-primary-hover); }
+    #collection-title-name { font-size: 20px; }
+    body[data-collection-kind=rehearsal] #collection-title-name { color: var(--color-primary-hover); }
+}
+#history-song-filter { display: grid; gap: 4px; max-height: 260px; overflow-y: auto; }
+#history-song-filter label { display: flex; align-items: center; gap: 8px; padding: 7px; cursor: pointer; }
+#ideas-workspace > [data-idea-panel] { flex: 0 1 auto; }
+#ideas-shared { flex: 1 1 auto; min-height: 0; overflow-y: auto; border-top: 1px solid var(--color-border); }

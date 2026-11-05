@@ -110,3 +110,6 @@
     .segments-selection-heading { flex-wrap: wrap; gap: 10px; }
     .segments-player-actions a { margin-left: 0; }
 }
+/* The shared app shell locks scrolling; this standalone page scrolls normally. */
+html:has(body.segments-page) { height: auto; overflow-y: auto; }
+body.segments-page { height: auto; min-height: 100vh; overflow: visible; }

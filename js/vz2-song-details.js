@@ -92,7 +92,7 @@
         const row = make('div', null, 'song-details-line');
         if (music) row.append(make('span', music, 'song-details-music'));
         if (options.canWrite && collection.can_edit && collection.lifecycle === 'active') {
-            const edit = make('button', music || description ? '✎' : '+ Popisek', 'song-details-edit'); edit.type = 'button';
+            const edit = make('button', music || description ? '✎' : '+ BPM, takt a info', 'song-details-edit'); edit.type = 'button';
             edit.setAttribute('aria-label', music || description ? 'Upravit popisek, tempo a takt' : 'Přidat popisek, tempo a takt');
             edit.title = edit.getAttribute('aria-label'); edit.onclick = () => open(collection, options); row.append(edit);
         }
