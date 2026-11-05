@@ -511,9 +511,8 @@
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'looper', time_ms: String(Math.round(seconds * 1000)) });
         }), adapter.cache);
         const inlinePlayer = adapter?.audio ? window.Vz2Audio.mount(adapter.audio, {
-            actionRow: actions, knownDurationMs: r.duration_ms, label: primaryName, compactLooper: true
+            inlineControls: true, knownDurationMs: r.duration_ms, label: primaryName, compactLooper: true
         }) : null;
-        if (inlinePlayer) { actions.classList.add('has-inline-player'); actions.prepend(inlinePlayer.trigger); }
         if (r.lifecycle === 'active' && r.kind === 'multitrack' && !mixed) actions.append(recordingIconButton('Otevřít v Mixéru', 'adjustments-horizontal', async () => {
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'mixer' });
             if (mixerId === String(r.id)) mixerPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -565,9 +564,7 @@
         if (fileActions.childElementCount || dangerActions.childElementCount) {
             recordingMenu.finish(); actions.append(recordingMenu.toggle);
         }
-        if (actions.childElementCount) card.append(actions);
-        if (inlinePlayer) card.append(inlinePlayer.root);
-        card.append(timestampsHost);
+        body.prepend(...[inlinePlayer?.root, actions.childElementCount ? actions : null, timestampsHost].filter(Boolean));
         if (r.title || canEditCaption) card.append(caption);
         else body.prepend(node('small', 'Vložil ' + r.author, 'recording-author vz2-attribution'));
         if (!body.hidden) prepareAudio();

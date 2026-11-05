@@ -294,3 +294,8 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 #history-song-filter label { display: flex; align-items: center; gap: 8px; padding: 7px; cursor: pointer; }
 #ideas-workspace > [data-idea-panel] { flex: 0 1 auto; }
 #ideas-shared { flex: 1 1 auto; min-height: 0; overflow-y: auto; border-top: 1px solid var(--color-border); }
+
+/* Recording details open together: player first, then the action toolbar. */
+.recording-body > .recording-actions { display: flex; flex-wrap: nowrap; gap: 4px; padding: 0; margin: 6px 0 8px; border: 0; background: transparent; }
+.recording-body > .vz2-inline-player { margin: 0; }
+.recording-body > .recording-timestamps:not([hidden]) { margin: 0 0 8px; padding: 6px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-shell); }
