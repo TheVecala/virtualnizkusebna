@@ -173,7 +173,7 @@
         audio.volume = Number($('looper-volume').value);
         const live = () => looper === current;
         const uploadPeaks = peakValues => {
-            if (!window.VZ2.write) return;
+            if (!window.VZ2.write || navigator.onLine === false) return;
             fetch('php/ajax/vz2_peaks.php', {
                 method: 'POST', credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.VZ2.csrf },
@@ -226,21 +226,34 @@
             ]);
             if (!live()) return;
             current.cached = initialSource.local;
+            const useAudioSource = () => {
+                const source = current.audioSource;
+                current.blob = source.blob;
+                if (audio.getAttribute('src') !== source.url) audio.src = source.url;
+                current.source = source.local ? 'offline' : source.blob ? 'memory' : 'web';
+                offlineLabel(current.cached); offline.disabled = false;
+            };
+            // Local playback must not wait for the optional waveform request.
+            if (current.cached) { useAudioSource(); $('looper-status').textContent = 'Připravuji průběh…'; }
             let peakData = validPeaks(localPeaks, file) ? localPeaks : null;
-            // Local audio must be playable even while a network request is hanging.
-            if (!peakData && !current.cached) {
+            if (!peakData && navigator.onLine !== false) {
+                const request = new AbortController();
+                const abort = () => request.abort();
+                current.abort.signal.addEventListener('abort', abort, { once: true });
+                // A stalled server must not prevent building peaks from saved audio.
+                const timeout = current.cached ? setTimeout(abort, 3000) : null;
                 try {
-                    const response = await fetch(peaksUrl, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal });
+                    const response = await fetch(peaksUrl, { credentials: 'same-origin', cache: 'no-store', signal: request.signal });
                     const data = response.ok ? await response.json() : null;
                     if (data?.ok && validPeaks(data, file)) peakData = data;
                 } catch (_) { /* A missing or damaged peaks file can be rebuilt. */ }
+                finally { clearTimeout(timeout); current.abort.signal.removeEventListener('abort', abort); }
             }
             if (!live()) return;
             if (peakData) {
                 current.peaks = Float32Array.from(peakData.peaks);
-                current.blob = initialSource.blob; audio.src = initialSource.url;
-                current.source = initialSource.local ? 'offline' : 'web';
-                offlineLabel(current.cached); offline.disabled = false;
+                if (peakData !== localPeaks) window.idbKeyval.set(current.peakCacheKey, { peaks: peakData.peaks, duration_ms: peakData.duration_ms }, store).catch(() => {});
+                useAudioSource();
                 $('looper-status').textContent = ''; update();
                 return;
             }
@@ -251,9 +264,7 @@
             }
             if (!live()) return;
             const blob = current.audioSource.blob;
-            current.blob = blob; audio.src = current.audioSource.url;
-            current.source = current.cached ? 'offline' : 'memory';
-            offlineLabel(current.cached); offline.disabled = false;
+            useAudioSource();
             $('looper-status').textContent = 'Připravuji průběh…'; current.decoding = true;
             try {
                 const context = new (window.AudioContext || window.webkitAudioContext)(); current.context = context;
@@ -273,7 +284,7 @@
                 current.peaks = peaks; $('looper-status').textContent = '';
                 const peakValues = Array.from(peaks);
                 window.idbKeyval.set(current.peakCacheKey, { peaks: peakValues, duration_ms: file.duration_ms }, store).catch(() => {});
-                if (!current.cached) uploadPeaks(peakValues);
+                uploadPeaks(peakValues);
             } catch (_) { if (live()) $('looper-status').textContent = 'Průběh není dostupný; audio a časový posuvník lze dál používat.'; }
             finally { if (current.context) { const context = current.context; current.context = null; if (context.state !== 'closed') await context.close().catch(() => {}); } current.decoding = false; }
             if (live()) update();

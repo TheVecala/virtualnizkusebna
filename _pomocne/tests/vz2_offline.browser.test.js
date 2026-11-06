@@ -88,6 +88,73 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
     try {
         await page.goto('http://offline.test/index.php?v=2&collection_id=1');
         await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'));
+        // Existing server peaks must work with saved audio, even when Web Audio
+        // cannot decode the format (the media element can still play it).
+        await page.evaluate(async r => {
+            window.peakRecording = r;
+            window.peakStore = idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+            window.peakKey = VZ2.cachePrefix + 'peaks:' + r.files[0].id + ':' + r.files[0].sha256;
+            window.originalDecode = AudioContext.prototype.decodeAudioData;
+            window.decodeCalls = 0;
+            AudioContext.prototype.decodeAudioData = function () { decodeCalls++; return Promise.reject(Error('Unsupported decoder')); };
+            await Vz2Downloads.enqueue(r.files[0]);
+        }, recordings[0]);
+        const cachedAudioRequests = audioRequests, firstPeakRequests = peakRequests;
+        await page.evaluate(() => Vz2Player.openLooper(peakRecording, peakRecording.files[0]));
+        await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready');
+        assert.equal(peakRequests, firstPeakRequests + 1, 'Saved audio still reads existing server peaks');
+        assert.equal(audioRequests, cachedAudioRequests, 'Reading peaks never downloads saved audio again');
+        assert.deepEqual(await page.evaluate(async () => (await idbKeyval.get(peakKey, peakStore))?.peaks), [0.1, 0.6, 0.3]);
+        assert.equal(await page.evaluate(() => decodeCalls), 0);
+        assert.equal(await page.locator('#looper-status').textContent(), '');
+        assert(await page.locator('#looper-wave').evaluate(canvas => {
+            return canvas.getContext('2d').getImageData(Math.floor(canvas.width / 3), 30, 1, 1).data[3] > 0;
+        }), 'Server peaks are drawn for saved audio');
+        await page.evaluate(() => Vz2Player.closeLooper());
+        await context.setOffline(true);
+        await page.evaluate(() => Vz2Player.openLooper(peakRecording, peakRecording.files[0]));
+        assert.equal(peakRequests, firstPeakRequests + 1, 'Reopening offline uses persisted peaks');
+        assert.equal(await page.locator('#looper-status').textContent(), '');
+        await context.setOffline(false);
+        await page.evaluate(async () => {
+            Vz2Player.closeLooper();
+            await Vz2Downloads.removeKey(Vz2Downloads.key(peakRecording.files[0]));
+            await Vz2Player.openLooper(peakRecording, peakRecording.files[0]);
+            Vz2Player.closeLooper();
+            await Vz2Downloads.enqueue(peakRecording.files[0]);
+            await Vz2Player.openLooper(peakRecording, peakRecording.files[0]);
+        });
+        assert.equal(await page.evaluate(() => decodeCalls), 0, 'Removing and saving audio again preserves usable peaks');
+        assert.equal(await page.locator('#looper-status').textContent(), '');
+        console.log('PASS: saved audio reads and draws server peaks, persists them offline and keeps them across removal/redownload without decoding');
+
+        // A stalled peaks server cannot block local playback or decoding fallback.
+        await page.evaluate(async () => {
+            Vz2Player.closeLooper(); AudioContext.prototype.decodeAudioData = originalDecode;
+            await idbKeyval.del(peakKey, peakStore);
+        });
+        const beforeStalledPeaksAudio = audioRequests;
+        let releasePeaks;
+        const heldPeaks = new Promise(resolve => { releasePeaks = resolve; });
+        const peakStarted = page.waitForRequest('**/vz2_peaks.php?*');
+        await page.route('**/vz2_peaks.php?*', async route => { await heldPeaks; await route.abort().catch(() => {}); });
+        await page.evaluate(() => { window.pendingPeaks = Vz2Player.openLooper(peakRecording, peakRecording.files[0]); });
+        await peakStarted;
+        await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready', null, { timeout: 2000 });
+        await page.locator('#looper-audio').evaluate(async audio => { audio.currentTime = 7; await audio.play(); });
+        await page.evaluate(() => pendingPeaks);
+        releasePeaks(); await page.unroute('**/vz2_peaks.php?*');
+        assert.equal(await page.locator('#looper-status').textContent(), '');
+        assert.equal(await page.evaluate(async () => (await idbKeyval.get(peakKey, peakStore)).peaks.length), 4096);
+        assert(await page.locator('#looper-audio').evaluate(audio => !audio.paused && audio.currentTime >= 7), 'Finishing peaks does not reset ongoing local playback');
+        assert.equal(audioRequests, beforeStalledPeaksAudio, 'Fallback decodes the saved blob without another audio request');
+        console.log('PASS: stalled peaks request allows immediate local playback and falls back to local decoding without resetting playback');
+        await page.evaluate(async () => {
+            Vz2Player.closeLooper();
+            await Vz2Downloads.removeKey(Vz2Downloads.key(peakRecording.files[0]));
+            await idbKeyval.del(peakKey, peakStore);
+        });
+        await page.locator('.recording-toggle[aria-expanded=false]').evaluateAll(buttons => buttons.forEach(button => button.click()));
         await start(single(1));
         for (const mode of ['ok', 'network', '401', '503']) await reconnect(single(1), mode);
         assert(catalogRequests >= 5);
@@ -121,6 +188,10 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         console.log('PASS: timestamp loop survives saving during playback');
 
         await page.evaluate(r => { Vz2Timestamps.stopLoop(); return Vz2Player.openLooper(r, r.files[0]); }, recordings[2]);
+        assert.deepEqual(await page.evaluate(async file => {
+            const db = idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+            return (await idbKeyval.get(VZ2.cachePrefix + 'peaks:' + file.id + ':' + file.sha256, db))?.peaks;
+        }, recordings[2].files[0]), [0.1, 0.6, 0.3], 'Peaks loaded with streamed audio are persisted too');
         await start('#looper-audio');
         await page.locator('#looper-offline').evaluate(b => b.click());
         await saved('#looper-audio', true);
