@@ -123,6 +123,8 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <link rel="stylesheet" data-vz2-style media="print" href="css/vz2-workspaces.css?v=<?=filemtime(__DIR__.'/css/vz2-workspaces.css')?>">
 <link rel="stylesheet" data-vz2-style media="print" href="css/vz2-car-mode.css?v=<?=filemtime(__DIR__.'/css/vz2-car-mode.css')?>">
 <link rel="stylesheet" href="css/vz2-timestamp-editor.css?v=<?=filemtime(__DIR__.'/css/vz2-timestamp-editor.css')?>">
+<link rel="stylesheet" href="css/vz2-select.css?v=<?=filemtime(__DIR__.'/css/vz2-select.css')?>">
+<script defer src="js/vz2-select.js?v=<?=filemtime(__DIR__.'/js/vz2-select.js')?>"></script>
 </head><body>
 <section id="vz2-boot" aria-label="Načítání zkušebny"><div id="vz2-boot-inner">
 <div id="vz2-boot-brand"><b>DK</b><span>VIRTUÁLNÍ ZKUŠEBNA</span></div>
@@ -230,7 +232,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 </nav>
 </div></div>
 <section id="activity" class="utility-panel" hidden aria-label="Deník změn"><div class="dialog-header"><h2>Deník změn</h2><button class="modal-close" type="button" data-close-utility="activity" aria-label="Zavřít deník" title="Zavřít deník">×</button></div><div class="log-entries"></div><button id="log-more">Starší změny</button></section>
-<section id="offline-files" class="utility-panel" hidden aria-label="Offline soubory"><div class="dialog-header"><h2>Offline soubory</h2><button class="modal-close" type="button" data-close-utility="offline-files" aria-label="Zavřít offline soubory" title="Zavřít offline soubory">×</button></div><p class="offline-intro">Kopie uložené v tomto prohlížeči zůstanou dostupné i po odstranění audia ze serveru.</p><div class="offline-files-list"></div><div class="offline-footer"><button id="offline-clear" class="danger">Odebrat vše</button></div></section>
+<section id="offline-files" class="utility-panel" hidden aria-label="Offline soubory"><div class="dialog-header"><h2>Offline soubory</h2><details class="offline-info"><summary aria-label="Informace o offline souborech" title="Informace o offline souborech">i</summary><p>Kopie uložené v tomto prohlížeči zůstanou dostupné i po odstranění audia ze serveru.</p></details><button class="modal-close" type="button" data-close-utility="offline-files" aria-label="Zavřít offline soubory" title="Zavřít offline soubory">×</button></div><div class="offline-files-list"></div><div class="offline-footer"><button id="offline-clear" class="danger">Odebrat vše</button></div></section>
 <section id="mixer-panel" class="mt-shell" hidden aria-label="Mixér vybrané nahrávky"><button id="mixer-copy-link" type="button" hidden><i class="ti ti-link" aria-hidden="true"></i><span>Vytvořit odkaz na pozici</span></button>
 <p id="mixer-context"></p>
 <div id="mt-notice" role="status" hidden></div>

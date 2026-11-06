@@ -62,6 +62,8 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         assert.equal(await noteMarker.locator('.looper-wave-marker-text').textContent(), 'Testovací poznámka');
         assert.equal(await startMarker.locator('.looper-wave-boundary path').count(), 1);
         assert.equal(await endMarker.locator('.looper-wave-boundary path').count(), 1);
+        assert.equal(await endMarker.locator('.looper-wave-marker-label').count(), 0, 'End marker has no duplicate label');
+        assert.equal(await startMarker.locator('.looper-wave-marker-label').count(), 1, 'Start marker retains its label');
         assert(await page.evaluate(() => {
             const start = document.querySelector('.looper-wave-marker[data-kind=song_start]');
             const end = document.querySelector('.looper-wave-marker[data-kind=song_end]');
@@ -71,7 +73,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         await page.locator('#looper-wave-scroll').screenshot({ path: path.join(temp, 'wave-boundaries.png') });
         await startMarker.locator('.looper-wave-boundary').click({ position: { x: 15, y: 9 } });
         assert(Math.abs((await page.evaluate(() => window.Vz2Player.getState().position)) - 2) < 0.1, 'Arrow seeks to the start timestamp');
-        await endMarker.locator('.looper-wave-marker-label').click();
+        await endMarker.locator('.looper-wave-boundary').click({ position: { x: 5, y: 9 } });
         assert(Math.abs((await page.evaluate(() => window.Vz2Player.getState().position)) - 6) < 0.1, 'End marker seeks to its timestamp');
         await page.setViewportSize({ width: 1872, height: 844 });
         await page.locator('#player-fullscreen').click();

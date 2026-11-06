@@ -128,6 +128,8 @@ function admin_member_form(array $user, bool $finalized): void {
   <link rel="stylesheet" href="css/themes.css?v=<?= filemtime(__DIR__ . '/css/themes.css') ?>">
   <link rel="stylesheet" href="css/help.css?v=<?= filemtime(__DIR__ . '/css/help.css') ?>">
   <link rel="stylesheet" href="css/admin.css?v=<?= filemtime(__DIR__ . '/css/admin.css') ?>">
+<link rel="stylesheet" href="css/vz2-select.css?v=<?=filemtime(__DIR__.'/css/vz2-select.css')?>">
+<script defer src="js/vz2-select.js?v=<?=filemtime(__DIR__.'/js/vz2-select.js')?>"></script>
 </head>
 <body class="admin-page">
   <a class="skip-link" href="#obsah">Přeskočit na obsah</a>

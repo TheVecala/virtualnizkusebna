@@ -299,3 +299,17 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 .recording-body > .recording-actions { display: flex; flex-wrap: nowrap; gap: 4px; padding: 0; margin: 6px 0 8px; border: 0; background: transparent; }
 .recording-body > .vz2-inline-player { margin: 0; }
 .recording-body > .recording-timestamps:not([hidden]) { margin: 0 0 8px; padding: 6px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-shell); }
+/* Keep player controls left aligned, including the empty player. */
+@media (max-width: 767px) {
+    #player-shell:is([data-mode=looper], [data-mode=empty]) .looper-header-controls { justify-content: flex-start; }
+    #player-shell[data-mode=empty] .looper-header-controls { flex: 0 1 auto; }
+}
+#history-controls #history-song-filter { display: grid; gap: 2px; }
+#history-controls #history-song-filter label { display: flex; justify-content: flex-start; align-items: center; gap: 8px; margin: 0; padding: 7px 4px; text-align: left; }
+#history-controls #history-song-filter input { flex: 0 0 18px; width: 18px; height: 18px; margin: 0; }
+#ideas-workspace > #ideas-write { flex: 0 0 auto; max-height: 48%; overflow-y: auto; }
+#ideas-workspace #ideas-write textarea { min-height: 65px; height: 90px; }
+@media (min-width: 768px) {
+    #player-shell:is([data-mode=looper], [data-mode=empty]) .player-ident { flex: 0 1 240px; }
+    #player-shell[data-mode=looper] #looper-options { margin-left: auto; }
+}

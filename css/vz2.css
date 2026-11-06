@@ -323,7 +323,7 @@ dialog form { margin-top: 0; }
 #looper-wave-markers { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .looper-wave-marker { position: absolute; top: 0; width: 1px; height: 100%; min-height: 0; padding: 0; overflow: visible; color: var(--marker-color); background: var(--marker-color); border: 0; border-radius: 0; pointer-events: auto; cursor: pointer; }
 .looper-wave-marker[data-kind=song_start], .looper-wave-marker[data-kind=song_end] { --marker-color: var(--color-timestamp-song-start); }
-.looper-wave-marker[data-kind=passage] { --marker-color: var(--color-timestamp-passage); }
+.looper-wave-marker[data-kind=passage], .looper-wave-marker[data-kind=passage_end] { --marker-color: var(--color-timestamp-passage); }
 .looper-wave-marker[data-kind=note] { --marker-color: var(--color-timestamp-note); }
 .looper-wave-boundary { position: absolute; top: 0; left: -1px; width: 20px; height: 16px; fill: none; stroke: var(--marker-color); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: auto; }
 .looper-wave-marker[data-kind=song_end] .looper-wave-boundary { left: -19px; }
@@ -811,3 +811,16 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 #offline-files .download-manager > h3, #offline-files .download-manager > p, #offline-files .download-manager > div, #offline-files .download-manager > select { grid-column: 1 / -1; margin: 0; }
 #offline-files .download-manager > h3:not(:first-child) { margin-top: 10px; }
 #offline-files .download-task { gap: 6px; padding: 7px; }
+#offline-files .offline-info { position: relative; flex: 0 0 auto; }
+#offline-files .offline-info summary { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--color-border); border-radius: 50%; cursor: pointer; font-weight: 700; list-style: none; }
+#offline-files .offline-info summary::-webkit-details-marker { display: none; }
+#offline-files .offline-info p { position: absolute; z-index: 2; right: 0; width: min(280px, 70vw); margin: 5px 0; padding: 10px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-panel); font-size: 12px; }
+#offline-files .download-manager { display: block; }
+.download-section { padding: 12px 0; border-top: 1px solid var(--color-border); }
+.download-section h3 { margin: 0 0 8px; }
+.download-section p { margin: 6px 0; }
+.download-selection { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.download-selection > h3, .download-selection > select, .download-selection > .download-choices, .download-selection > p { grid-column: 1 / -1; }
+.download-choices { max-height: 240px; overflow-y: auto; }
+.download-choices label { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 5px 0; text-align: left; }
+.download-choices input[type=checkbox] { flex: 0 0 18px; width: 18px; height: 18px; margin: 0; }

@@ -66,7 +66,8 @@
         const meta = make('p', '', 'vz2-attribution'), form = make('form'), titleLabel = make('label', 'Název dokumentu'), title = make('input');
         title.required = true; title.maxLength = 200; title.name = 'document_title'; titleLabel.append(title);
         const bodyLabel = make('label', 'Obsah'), body = make('textarea'); body.name = 'document_body'; body.rows = 14; body.spellcheck = false; body.required = true; bodyLabel.append(body);
-        const save = make('button', 'Uložit novou verzi'), compare = button('Načíst aktuální verzi k porovnání', compareLatest);
+        const save = make('button', 'Uložit'), saveClose = make('button', 'Uložit a zavřít'), compare = button('Načíst aktuální verzi k porovnání', compareLatest);
+        save.type = saveClose.type = 'submit';
         compare.hidden = true;
         const comparison = make('pre', '', 'content-preview'); comparison.hidden = true;
         const generate = kind === 'rehearsal_starts' ? button('Předvyplnit ze začátků skladeb', async () => {
@@ -81,7 +82,7 @@
         }) : null;
         const controls = make('div', undefined, 'toolbar');
         if (generate) controls.append(generate);
-        controls.append(save, compare);
+        controls.append(save, saveClose, compare);
         form.append(titleLabel, bodyLabel, controls);
         const history = make('section'), historyList = make('div'), preview = make('pre', '', 'content-preview'); preview.hidden = true;
         const restore = iconButton('Obnovit jako novou verzi', 'restore', restoreVersion); restore.hidden = true;
@@ -96,7 +97,7 @@
         }
         function assign(value) {
             state = value; title.value = documentTitle(collection, kind, value.document?.title); body.value = value.version?.body || '';
-            title.readOnly = body.readOnly = !value.can_edit; save.hidden = !value.can_edit;
+            title.readOnly = body.readOnly = !value.can_edit; save.hidden = saveClose.hidden = !value.can_edit;
             if (generate) generate.hidden = !value.can_edit;
             showHistory.hidden = !value.document;
             ctx.dirty = false; compare.hidden = comparison.hidden = true; ctx.status.textContent = ''; showMeta();
@@ -115,14 +116,16 @@
             state = ctx.latest; showMeta(); accept.hidden = true; compare.hidden = true;
             ctx.status.textContent = 'Zkontrolujte porovnání a uložte svou novou verzi.';
         }); accept.hidden = true; ctx.dialog.insertBefore(accept, history);
-        form.addEventListener('submit', e => {
-            e.preventDefault(); if (!state) return;
-            busy(ctx, async () => {
+        form.addEventListener('submit', async e => {
+            e.preventDefault(); if (!state || ctx.busy) return;
+            const closeAfterSave = e.submitter === saveClose; let saved = false;
+            await busy(ctx, async () => {
                 try {
                     const result = await api(null,{ ...fields('document_save'), title: title.value, body: body.value });
-                    assign(result); historyList.replaceChildren(); older.hidden = preview.hidden = restore.hidden = accept.hidden = true; ctx.status.textContent = 'Nová verze uložena.';
+                    assign(result); historyList.replaceChildren(); older.hidden = preview.hidden = restore.hidden = accept.hidden = true; ctx.status.textContent = 'Nová verze uložena.'; saved = true;
                 } catch (err) { compare.hidden = err.status !== 409; throw err; }
             });
+            if (saved && closeAfterSave && ctx.live()) close(ctx);
         });
         async function loadHistory(before) {
             await busy(ctx, async () => {

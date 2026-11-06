@@ -202,10 +202,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(savedOverviews.size, 0, 'Prefill does not save a version');
         assert.equal(await overviewEditor.locator('[name=document_body]').inputValue(), 'Nahrávka 1 — zkouška.wav\n  00:05  Písnička\n');
         await overviewEditor.locator('[name=document_body]').fill('Ručně upravený přehled');
-        await overviewEditor.getByRole('button', { name: 'Uložit novou verzi', exact: true }).click();
+        await overviewEditor.getByRole('button', { name: 'Uložit', exact: true }).click();
         await overviewEditor.getByText('Nová verze uložena.', { exact: true }).waitFor();
         assert.equal(savedOverviews.get('3').body, 'Ručně upravený přehled');
-        await overviewEditor.getByRole('button', { name: 'Zavřít', exact: true }).click();
+        await overviewEditor.getByRole('button', { name: 'Uložit a zavřít', exact: true }).click();
+        await overviewEditor.waitFor({ state: 'detached' });
         await page.locator('#rehearsal-starts-content .document-preview').getByText('Ručně upravený přehled', { exact: true }).waitFor();
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 1. října' }).click();
         await switchTo('songs');
@@ -292,7 +293,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-detail .history-add-clip').click();
         assert.equal(await page.locator('#history-detail .history-add-clip').isVisible(), false);
         assert.equal(await page.locator('#history-detail .history-detail-card').last().isVisible(), true);
-        assert.equal(await page.locator('#history-detail').getByLabel('Připojený výstřižek').count(), 1);
+        assert.equal(await page.locator('#history-detail select#history-clip-select').count(), 1);
         assert.equal(await page.locator('#history-detail').getByRole('button', { name: 'Připojit výstřižek' }).isDisabled(), true);
         assert.equal(await page.locator('#history-detail .vz2-audio-trigger, #history-detail .vz2-audio-collapse').count(), 0, 'Matrix detail has no separate play or collapse button');
         assert.equal(await page.locator('#history-detail .vz2-audio-transport:visible').count(), 1, 'Matrix detail shows its player immediately');
@@ -477,6 +478,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(header.y >= mainNavigation.y + mainNavigation.height - 1 && popup.y >= header.y + header.height - 1 && popup.y + popup.height < 844,
             `Filter opens below the header within the viewport: ${JSON.stringify({popup, header, mainNavigation})}`);
         assert(popup.x >= 0 && popup.x + popup.width <= 390, 'Filter fits inside the mobile viewport');
+        assert(await page.locator('#history-song-filter label').evaluateAll(labels => labels.every(label => { const box = label.querySelector('input').getBoundingClientRect(); const rect = label.getBoundingClientRect(); return box.left - rect.left < 12 && box.width <= 22; })), 'Checkboxes align at the start of each song row');
         await page.locator('#history-song-filter input[value="1"]').check();
         await page.locator('#history-song-filter input[value="2"]').check();
         assert.equal(await page.locator('#history-song-filter input:checked').count(), 2);

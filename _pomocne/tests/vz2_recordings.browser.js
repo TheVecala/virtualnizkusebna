@@ -150,7 +150,8 @@ module.exports = async ({ base, clients, good, request, upload, wav, db, check, 
         await actionsDialog.getByRole('button', { name: 'Přesunout', exact: true }).click();
         const moveDialog = page.locator('#move-dialog');
         await moveDialog.waitFor({ state: 'visible' });
-        await moveDialog.getByLabel('Cílová skladba nebo zkouška').selectOption(String(target.id));
+        await moveDialog.locator('.vz2-select-button').click();
+        await page.getByRole('option', { name: 'Cílová zkouška', exact: true }).click();
         await moveDialog.getByRole('button', { name: 'Potvrdit přesun', exact: true }).click();
         await page.waitForFunction(() => document.querySelector('#collection-title-name')?.textContent === 'Cílová zkouška');
         assert.equal(Number(db('SELECT collection_id FROM vz2_recordings WHERE id=?', [ids[0]])[0].collection_id), target.id);

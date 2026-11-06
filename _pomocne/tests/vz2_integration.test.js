@@ -416,7 +416,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         fs.renameSync(path.join(media,partialFile+'.held'),path.join(media,partialFile));
         if (process.env.VZ2_TEST_UPLOAD_PEAKS === '1') await require('./vz2_upload_peaks.browser')({ base, clients, good, wav, db, media, check });
         if (['1', 'timestamps'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });
-        if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_content.browser')({ base, clients, good, request, db, check, temp, upload, wav });
+        if (['1', 'content'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_content.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1','songmap'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_song_map.browser')({ base, clients, good, request, db, check, temp });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_navigation.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1', 'layout'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_layout.browser')({ base, clients, good, request, db, check, temp, upload, wav });

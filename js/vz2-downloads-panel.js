@@ -10,7 +10,6 @@
             const selected = new Set(); let revision = 0, renderSerial = 0, lastInventory = '';
             host.replaceChildren(); host.classList.add('download-manager'); status.setAttribute('role', 'status');
             filter.setAttribute('aria-label', 'Zkouška nebo skladba ke stažení');
-            const heading = el('h3', 'Uložit do zařízení');
             const add = button('Zařadit vybrané do fronty', async () => {
                 const records = getCatalog()?.recordings.filter(r => selected.has(String(r.id))) || [];
                 const plan = await D.plan(records);
@@ -21,7 +20,13 @@
             });
             const all = button('Vybrat zobrazené', () => { records().forEach(r => selected.add(String(r.id))); showChoices(); });
             const none = button('Zrušit výběr', () => { selected.clear(); showChoices(); });
-            host.append(heading, filter, all, none, choices, estimate, add, status, el('h3', 'Fronta stahování'), queue, el('h3', 'Soubory v zařízení'), usage, stored);
+            const section = (title, ...items) => { const block = el('section'); block.className = 'download-section'; block.append(el('h3', title), ...items); return block; };
+            const selection = section('Uložit do zařízení', filter, all, none, choices, estimate, add, status);
+            selection.classList.add('download-selection'); choices.className = 'download-choices';
+            const storedSection = section('Soubory v zařízení', usage, stored);
+            const clearFooter = host.closest('#offline-files')?.querySelector('.offline-footer');
+            if (clearFooter) storedSection.append(clearFooter);
+            host.append(storedSection, selection, section('Fronta stahování', queue));
             function records() { return (getCatalog()?.recordings || []).filter(r => r.lifecycle === 'active' && (!filter.value || String(r.collection_id) === filter.value) && r.files?.some(f => f.url)); }
             async function showEstimate() {
                 const serial = ++revision;
@@ -38,7 +43,7 @@
                     const label = el('label'), box = el('input'); box.type = 'checkbox'; box.checked = selected.has(String(r.id));
                     box.onchange = () => { if (box.checked) selected.add(String(r.id)); else selected.delete(String(r.id)); void showEstimate(); };
                     const files = (r.files || []).filter(f => f.url);
-                    label.append(box, document.createTextNode((r.title || r.files?.[0]?.original_name || 'Nahrávka ' + r.id) + ' · ' + files.length + ' souborů'));
+                    label.append(box, document.createTextNode((files.map(f => f.display_name || f.original_name || f.title).filter(Boolean).join(', ') || 'Nahrávka ' + r.id) + ' · ' + files.length + ' souborů'));
                     choices.append(label);
                 }
                 void showEstimate();
@@ -60,17 +65,10 @@
             async function showStored() {
                 const serial = ++renderSerial;
                 try {
-                    const rows = await D.inventory(), space = await navigator.storage?.estimate?.();
+                    const rows = await D.inventory();
                     if (serial !== renderSerial) return;
                     stored.replaceChildren();
-                    const byKey = new Map(rows.map(r => [r.key, r]));
-                    let text = rows.length + ' souborů · audio ' + size(rows.reduce((n, r) => n + r.size, 0));
-                    if (space?.quota != null) text += ' · odhad volného prostoru webu ' + size(Math.max(0, space.quota - space.usage));
-                    usage.textContent = text;
-                    for (const r of getCatalog()?.recordings || []) {
-                        const files = r.files || [], present = files.filter(f => byKey.has(D.key(f)));
-                        if (present.length) stored.append(el('p', (r.title || 'Nahrávka ' + r.id) + ' · v zařízení ' + present.length + '/' + files.length + (present.length === files.length ? ' · kompletní' : ' · neúplná')));
-                    }
+                    usage.textContent = rows.length + ' souborů · audio ' + size(rows.reduce((n, r) => n + r.size, 0));
                     for (const r of rows) {
                         const row = el('div'); row.className = 'download-task';
                         row.append(el('span', r.name + ' · ' + size(r.size)), button('Odebrat místní kopii', async () => {

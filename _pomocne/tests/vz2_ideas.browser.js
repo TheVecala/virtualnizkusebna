@@ -48,13 +48,14 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         check(true, 'ideas: full workspace preserves draft and panel preferences; playing Looper retains its size without interruption');
         for (const width of [360, 390, 767, 768, 1024, 1199, 1200, 1280, 1440, 1920]) {
             await page.setViewportSize({ width, height: 800 });
-            const geometry = await ideas.evaluate(n => ({ x: n.getBoundingClientRect().x, width: n.getBoundingClientRect().width + parseFloat(getComputedStyle(n).marginLeft) + parseFloat(getComputedStyle(n).marginRight), workspace: n.parentElement.clientWidth, pageWidth: document.documentElement.scrollWidth, pageHeight: document.documentElement.scrollHeight, scroll: n.querySelector('.panel-body').scrollHeight > n.querySelector('.panel-body').clientHeight }));
+            const geometry = await ideas.evaluate(n => ({ x: n.getBoundingClientRect().x, width: n.getBoundingClientRect().width + parseFloat(getComputedStyle(n).marginLeft) + parseFloat(getComputedStyle(n).marginRight), workspace: n.parentElement.clientWidth, pageWidth: document.documentElement.scrollWidth, pageHeight: document.documentElement.scrollHeight, scroll: n.querySelector('#ideas-shared').scrollHeight > n.querySelector('#ideas-shared').clientHeight }));
             assert.equal(geometry.width, geometry.workspace); assert(geometry.pageWidth <= width + 1); assert(geometry.pageHeight <= 801); assert(geometry.scroll);
             assert.equal(await page.locator('#content-area').isVisible(), false);
         }
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.screenshot({ path: path.join(temp, 'ui-stage4-ideas-desktop.png') });
         await page.setViewportSize({ width: 390, height: 844 });
+        assert(await ideas.evaluate(node => { const submit = node.querySelector('#ideas-write button[type=submit], #ideas-write button:not([type])').getBoundingClientRect(); const write = node.querySelector('#ideas-write').getBoundingClientRect(); return submit.top >= write.top && submit.bottom <= write.bottom && submit.bottom <= innerHeight; }), 'Send button is fully visible above the shared feed');
         await page.screenshot({ path: path.join(temp, 'ui-stage4-ideas-mobile.png') });
         await page.setViewportSize({ width: 390, height: 320 }); await draft.focus();
         await ideas.getByRole('button', { name: 'Odeslat', exact: true }).click();
@@ -67,8 +68,10 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await page.locator('[data-workspace-target=songs]:visible').click(); assert(await page.locator('#panel-tablature').isVisible());
         check(true, 'ideas: all 10 widths fit, independent scroll, mobile navigation and short-height editing preserve workspace state');
         await page.setViewportSize({ width: 1024, height: 800 });
-        await page.getByLabel('Levý panel', { exact: true }).selectOption('discussion');
-        await page.getByLabel('Pravý panel', { exact: true }).selectOption('tablature');
+        await page.getByRole('button', { name: /^Levý panel:/ }).click();
+        await page.getByRole('option', { name: 'Diskuse', exact: true }).click();
+        await page.getByRole('button', { name: /^Pravý panel:/ }).click();
+        await page.getByRole('option', { name: 'Mapa skladby', exact: true }).click();
         await page.locator('[data-workspace-target=ideas]:visible').click(); await page.locator('[data-workspace-target=songs]:visible').click();
         assert(await page.locator('#panel-discussion').isVisible()); assert(await page.locator('#panel-tablature').isVisible());
         await page.setViewportSize({ width: 1440, height: 900 });
@@ -78,8 +81,7 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await menu.locator('summary').click();
         await page.keyboard.press('Escape'); assert.equal(await menu.getAttribute('open'), null);
         assert.equal(await page.evaluate(() => document.activeElement.tagName), 'SUMMARY');
-        await menu.locator('summary').click(); await page.locator('#collection-title').click(); assert.equal(await menu.getAttribute('open'), null);
-        await page.locator('#catalog-close').click();
+        await menu.locator('summary').click(); await page.locator('#player-mode').click(); assert.equal(await menu.getAttribute('open'), null);
         assert.deepEqual(errors, []);
         check(true, 'ideas: tablet pair and desktop panels restore; menus close with Escape/outside click; no JavaScript errors');
         await page.locator('[data-workspace-target=ideas]:visible').click();

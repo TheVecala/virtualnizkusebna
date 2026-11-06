@@ -327,9 +327,11 @@
                 const path = document.createElementNS(arrow.namespaceURI, 'path'); path.setAttribute('d', visual.arrow);
                 arrow.append(path); marker.append(arrow);
             }
-            const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
-            const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
-            label.append(text); marker.append(label);
+            if (entry.kind !== 'song_end' && entry.kind !== 'passage_end') {
+                const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
+                const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
+                label.append(text); marker.append(label);
+            }
             marker.onclick = event => { event.stopPropagation(); window.Vz2TimestampStore.select({ recording_id: current.recording.id, item_id: entry.annotationId }); seek(ms / 1000); };
             markers.append(marker);
         });

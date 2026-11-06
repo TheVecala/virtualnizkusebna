@@ -34,6 +34,8 @@ $config = ['csrf'=>auth_csrf_token(),'write'=>defined('VZ2_WRITES_ENABLED') && V
 <script src="js/vz2-segments-panel.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-panel.js')?>" defer></script>
 <script src="js/vz2-segments.js?v=<?=filemtime(__DIR__.'/js/vz2-segments.js')?>" defer></script>
 <link rel="stylesheet" href="css/vz2-timestamp-editor.css?v=<?=filemtime(__DIR__.'/css/vz2-timestamp-editor.css')?>">
+<link rel="stylesheet" href="css/vz2-select.css?v=<?=filemtime(__DIR__.'/css/vz2-select.css')?>">
+<script defer src="js/vz2-select.js?v=<?=filemtime(__DIR__.'/js/vz2-select.js')?>"></script>
 </head>
 <body class="segments-page">
 <header class="segments-topbar"><a class="segments-brand" href="index.php?v=2">ZKUŠEBNA DK!</a><nav aria-label="Navigace"><a href="prehled.php">Kompaktní přehled</a><a href="index.php?v=2">← Zpět do zkušebny</a></nav></header>

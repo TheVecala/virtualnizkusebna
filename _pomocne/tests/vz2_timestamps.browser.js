@@ -19,6 +19,7 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         await page.route('https://cdn.jsdelivr.net/**', route => route.abort());
         await page.goto(base + 'index.php?collection_id=' + rehearsal.id);
         const card = page.locator('#recording-' + id), panel = card.locator('.vz2-timestamps');
+        await card.locator('.recording-toggle').click();
         await card.getByRole('button', { name: 'Otevřít časové značky', exact: true }).click();
         const editor = page.locator('.vz2-annotation-editor'), interval = page.locator('.vz2-interval-editor');
         const add = async (host, kind) => {
@@ -181,7 +182,8 @@ module.exports = async function ({ base, clients, good, upload, wav, request, db
         assert.equal(await page.locator('#segments-audio').evaluate(a => a.paused), false);
         assert.equal(await page.evaluate(() => window.Vz2Timestamps), undefined, 'standalone editor does not need the list module');
         await page.locator('#segments-downloads summary').click();
-        await page.locator('#segments-downloads select').selectOption(String(rehearsal.id));
+        await page.locator('#segments-downloads .vz2-select-button').click();
+        await page.getByRole('option', { name: 'Browser interval rehearsal', exact: true }).click();
         await page.getByRole('button', { name: 'Vybrat zobrazené', exact: true }).click();
         await page.getByRole('button', { name: 'Zařadit vybrané do fronty' }).click();
         await page.waitForFunction(() => Vz2Downloads.snapshot().length === 3 && Vz2Downloads.snapshot().every(t => t.state === 'complete'));
