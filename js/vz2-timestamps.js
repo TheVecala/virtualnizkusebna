@@ -168,6 +168,7 @@
         summary.append(heading, chevron);
         const content = el('div'), status = el('p'), toolbar = el('div'), list = el('ol');
         content.className = 'ts-content'; toolbar.className = 'toolbar';
+        list.className = 'ts-list';
         status.setAttribute('role', 'status'); status.className = 'error';
         const add = button('Přidat značku', () => openEditor(panel, null)); add.disabled = true;
         const quickUp = button('👍', () => quickNote(panel, '👍'));
@@ -179,16 +180,17 @@
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
         const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
         toolbar.append(add, quickUp, quickDown, reload, stop, exportButton); content.append(status, toolbar, list); shell.append(summary, content); container.append(shell);
-        let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport, mobileToggle, resizeObserver, playerObserver, mobileMedia;
+        let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileToggle, resizeObserver, playerObserver, mobileMedia;
+        const looperPanel = container.id === 'looper-timestamps';
         const mixerPanel = container.id === 'mixer-timestamps';
-        const pinnedOpen = () => container.id === 'looper-timestamps' && mobileMedia?.matches
+        const pinnedOpen = () => looperPanel
             && document.getElementById('player-shell').classList.contains('player-fullscreen');
         const positionDrawer = () => {
-            if (pinnedOpen()) {
-                shell.open = true;
+            if (pinnedOpen()) shell.open = true;
+            if (looperPanel) {
                 if (reload.parentElement !== mobileActions) mobileAdd.after(reload);
             } else if (reload.parentElement !== toolbar) quickDown.after(reload);
-            if (mobileActions && mobileMedia.matches) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
+            if (mobileActions && (looperPanel || mobileMedia.matches)) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
             Notes.reposition(panel);
         };
         const toggleDrawer = open => {
@@ -221,10 +223,8 @@
             for (const [control, label] of [[mobileQuickUp, 'Přidat poznámku: palec nahoru'], [mobileQuickDown, 'Přidat poznámku: palec dolů']]) {
                 control.className = 'ts-quick-note'; control.title = label; control.setAttribute('aria-label', label); control.disabled = true;
             }
-            if (!mixerPanel) { mobileExport = button('Export', () => openExport(panel)); mobileExport.disabled = true; }
             add.classList.add('ts-desktop-action'); quickUp.classList.add('ts-desktop-action'); quickDown.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
             mobileActions.append(mobileToggle, mobileAdd, mobileQuickUp, mobileQuickDown);
-            if (mobileExport) mobileActions.append(mobileExport);
             if (mixerPanel) document.getElementById('mixer-action-row').append(mobileActions);
             else container.before(mobileActions);
             document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
@@ -247,7 +247,6 @@
                 for (const control of [quickUp, quickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 if (mobileActions) {
                     mobileAdd.hidden = !value.can_create; mobileAdd.disabled = !value.can_create;
-                    if (mobileExport) mobileExport.disabled = false;
                     for (const control of [mobileQuickUp, mobileQuickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 }
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));

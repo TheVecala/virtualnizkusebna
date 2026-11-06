@@ -287,7 +287,7 @@
     });
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape' || e.defaultPrevented || !fullscreenPanel || document.querySelector('dialog[open]')) return;
-        const menu = fullscreenPanel.querySelector('details[open]');
+        const menu = fullscreenPanel.querySelector('details[open]:not(.vz2-timestamps)');
         if (menu) { menu.open = false; menu.querySelector('summary').focus(); e.preventDefault(); return; }
         const control = fullscreenPanel.querySelector('.panel-fullscreen-button');
         setPanelFullscreen(fullscreenPanel); control.focus({ preventScroll: true }); e.preventDefault();

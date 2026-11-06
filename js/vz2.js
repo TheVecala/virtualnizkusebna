@@ -9,10 +9,8 @@
     try { const saved = JSON.parse(localStorage.getItem(cfg.cachePrefix + 'workspaces:collections')); for (const k of Object.keys(collectionMemory)) if (saved?.[k] != null) collectionMemory[k] = String(saved[k]); } catch (_) { /* First visit / private storage. */ }
     const surfaceMemory = new Map(), catalogMemory = { song: { scroll: 0 }, rehearsal: { scroll: 0 } };
     const audioSources = [];
-    const timestampPanels = [];
     // Disclosure state lives only in this document; a reload always starts collapsed.
     const expandedRecordings = new Set();
-    const expandedRecordingTimestamps = new Set();
     const expandedLinkedRecordings = new Set();
     const expandedAttachments = new Set();
     let mixerNotes;
@@ -339,18 +337,18 @@
     function singlePlayer(parent, file, recording, actions, menuActions) {
         if (!file?.url) return;
         const audio = node('audio'); audio.preload = 'none';
-        let source;
+        let source, offlineSaved = false;
         audioSources.push(() => { unwatch(); source?.release(); source = null; });
         const sourceStatus = node('small', 'Ověřuji místní kopii…', 'recording-audio-source vz2-attribution');
         parent.append(sourceStatus);
-        const updateSource = () => { sourceStatus.textContent = audio.dataset.source === 'offline' ? 'Přehrávání ze zařízení' : 'Přehrávání ze sítě'; };
+        const updateSource = () => { sourceStatus.textContent = (offlineSaved ? 'Uloženo v zařízení · ' : '') + (audio.dataset.source === 'offline' ? 'Přehrávání ze zařízení' : 'Přehrávání ze sítě'); };
         const useLocal = blob => {
             const url = window.Vz2Offline.useBlob(audio, blob, text => message(text, true));
             source?.release();
             source = { release: () => URL.revokeObjectURL(url) };
             updateSource();
         };
-        const cache = recordingIconButton('Uložit offline', 'wifi-off', async () => {
+        const cache = button('Uložit offline', async () => {
             await sourceReady;
             const current = await window.Vz2Downloads.local(file);
             if (current) {
@@ -364,15 +362,13 @@
                     setCacheLabel('Odebrat offline kopii', true);
                 } catch (error) { setCacheLabel('Uložit offline'); throw error; }
             }
-        });
+        }, 'recording-text-action recording-offline');
         const setCacheLabel = (label, saved = false) => {
             cache.setAttribute('aria-label', label); cache.title = label;
             cache.setAttribute('aria-pressed', String(saved));
-            const percent = /(?:Stahuji offline )(\d+) %$/.exec(label);
-            if (percent) cache.dataset.progress = percent[1] + '%';
-            else if (label === 'Stahuji offline…' || label === 'Ukládám offline…') cache.dataset.progress = '…';
-            else delete cache.dataset.progress;
-            cache.replaceChildren(window.Vz2Audio.icon(saved ? 'device-floppy' : 'wifi-off'));
+            cache.textContent = label;
+            offlineSaved = saved;
+            if (audio.hasAttribute('src')) updateSource();
         };
         const unwatch = window.Vz2Downloads.watch(file, audio, saved => setCacheLabel(saved ? 'Odebrat offline kopii' : 'Uložit offline', saved));
         cache.setAttribute('aria-pressed', 'false');
@@ -438,22 +434,12 @@
     function recordingCard(r, list, collection) {
         const card = node('article', undefined, 'recording-card'); card.id = 'recording-' + r.id;
         const body = node('div', undefined, 'recording-body'); body.id = 'recording-body-' + r.id;
-        const timestampsHost = node('div', undefined, 'recording-timestamps');
-        timestampsHost.id = 'recording-timestamps-' + r.id; timestampsHost.hidden = true;
-        let adapter, timestampPanel;
+        let adapter;
         const prepareAudio = () => {
             if (adapter?.audio?.preload === 'none') {
                 adapter.audio.preload = 'metadata';
                 adapter.audio.load();
             }
-        };
-        const prepareTimestamps = () => {
-            prepareAudio();
-            if (!timestampPanel) {
-                timestampPanel = window.Vz2Timestamps.mount(timestampsHost, r.id, adapter || (r.kind === 'multitrack' ? mixerAdapter(r.id) : null));
-                timestampPanels.push(timestampPanel);
-            }
-            timestampPanel.shell.open = true;
         };
         const primaryName = recordingName(r);
         const title = node('span', primaryName, 'recording-title');
@@ -506,28 +492,17 @@
         if (!r.title && cfg.write && r.can_edit) fileActions.append(button('Přidat popisek', () => openEdit(r, 'recording')));
         if (r.lifecycle === 'active' && r.kind === 'single') adapter = singlePlayer(body, r.files[0], r, actions, fileActions);
         const mixed = mixerId === String(r.id);
-        if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.insertBefore(recordingIconButton('Otevřít v Looperu', 'wave-sine', async () => {
+        if (r.lifecycle === 'active' && r.kind === 'single' && r.files[0]?.url) actions.insertBefore(button('Otevřít v looperu', async () => {
             const seconds = adapter.audio.currentTime || 0;
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'looper', time_ms: String(Math.round(seconds * 1000)) });
-        }), adapter.cache);
+        }, 'recording-text-action recording-looper-entry'), adapter.cache);
         const inlinePlayer = adapter?.audio ? window.Vz2Audio.mount(adapter.audio, {
-            inlineControls: true, knownDurationMs: r.duration_ms, label: primaryName, compactLooper: true
+            inlineControls: true, knownDurationMs: r.duration_ms, label: primaryName, minimal: true
         }) : null;
         if (r.lifecycle === 'active' && r.kind === 'multitrack' && !mixed) actions.append(recordingIconButton('Otevřít v Mixéru', 'adjustments-horizontal', async () => {
             await navigate({ collection_id: String(r.collection_id), recording_id: String(r.id), view: 'mixer' });
             if (mixerId === String(r.id)) mixerPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }));
-        const timestampButton = recordingIconButton('Otevřít časové značky', 'timeline-event', () => {
-            const open = timestampsHost.hidden;
-            timestampsHost.hidden = !open; timestampButton.setAttribute('aria-expanded', String(open));
-            timestampButton.setAttribute('aria-label', open ? 'Sbalit časové značky' : 'Otevřít časové značky');
-            timestampButton.title = timestampButton.getAttribute('aria-label');
-            if (open) { expandedRecordingTimestamps.add(id); prepareTimestamps(); }
-            else expandedRecordingTimestamps.delete(id);
-        });
-        timestampButton.setAttribute('aria-controls', timestampsHost.id);
-        timestampButton.setAttribute('aria-expanded', 'false');
-        actions.append(timestampButton);
         if (r.lifecycle === 'active' && r.files.some(file => file.url)) {
             actions.append(recordingIconButton('Poslech v autě', 'car', () => window.Vz2CarMode.openRecording(r), 'recording-car-entry'));
         }
@@ -564,16 +539,11 @@
         if (fileActions.childElementCount || dangerActions.childElementCount) {
             recordingMenu.finish(); actions.append(recordingMenu.toggle);
         }
-        body.prepend(...[inlinePlayer?.root, actions.childElementCount ? actions : null, timestampsHost].filter(Boolean));
+        body.prepend(...[inlinePlayer?.root, actions.childElementCount ? actions : null].filter(Boolean));
         if (r.title || canEditCaption) card.append(caption);
         else body.prepend(node('small', 'Vložil ' + r.author, 'recording-author vz2-attribution'));
         if (!body.hidden) prepareAudio();
-        if (expandedRecordingTimestamps.has(id)) {
-            timestampsHost.hidden = false; timestampButton.setAttribute('aria-expanded', 'true');
-            timestampButton.setAttribute('aria-label', 'Sbalit časové značky'); timestampButton.title = 'Sbalit časové značky';
-        }
         card.append(body);
-        if (!timestampsHost.hidden) prepareTimestamps();
         return card;
     }
     async function createUploadPeaks(recordingId, originals, report) {
@@ -813,10 +783,8 @@
     function render() {
         const liveIds = new Set(data.recordings.map(r => String(r.id)));
         for (const id of expandedRecordings) if (!liveIds.has(id)) expandedRecordings.delete(id);
-        for (const id of expandedRecordingTimestamps) if (!liveIds.has(id)) expandedRecordingTimestamps.delete(id);
         const liveAttachmentIds = new Set(data.attachments.map(a => String(a.id)));
         for (const id of expandedAttachments) if (!liveAttachmentIds.has(id)) expandedAttachments.delete(id);
-        timestampPanels.splice(0).forEach(p => p.destroy());
         document.querySelectorAll('.recording-actions-dialog').forEach(dialog => dialog.remove());
         document.querySelectorAll('#content audio').forEach(a => a.pause()); audioSources.splice(0).forEach(release => release());
         const list = data.collections.filter(c => c.kind === kind && c.lifecycle === 'active'); $('collections').replaceChildren();

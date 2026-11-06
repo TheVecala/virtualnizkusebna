@@ -561,10 +561,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#recording-11 .recording-heading .recording-order-controls button').count(), 2, 'Ordering arrows are beside the filename');
         assert.equal(await page.locator('#recording-11 .recording-actions:visible, #recording-11 .vz2-audio-transport:visible').count(), 0, 'Collapsed recording hides the player and action row');
         await page.locator('#recording-11 .recording-toggle').click();
-        assert.equal(await page.locator('#recording-11 .recording-actions > button:visible').count(), 5, 'Five main actions share one row on mobile');
+        assert.equal(await page.locator('#recording-11 .recording-actions > button:visible').count(), 4, 'Looper, offline, car mode and more actions remain on mobile');
         assert.equal(await page.locator('#recording-11 .vz2-audio-trigger').count(), 0, 'No separate player disclosure button');
-        assert.deepEqual(await page.locator('#recording-11 .recording-actions > button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
-            ['Otevřít v Looperu', 'Uložit offline', 'Otevřít časové značky', 'Poslech v autě', 'Další'], 'The action row keeps its controls');
+        assert.deepEqual(await page.locator('#recording-11 .recording-actions > button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label') || button.textContent)),
+            ['Otevřít v looperu', 'Uložit offline', 'Poslech v autě', 'Další'], 'The action row keeps its controls');
         assert(await page.locator('#recording-11 .vz2-audio-transport').isVisible(), 'Opening the recording reveals the player');
         assert(await page.locator('#recording-11 audio').evaluate(audio => audio.paused), 'Opening the recording waits for Play');
         const playerJoin = await page.evaluate(() => {
@@ -580,34 +580,19 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const narrowPlayer = await page.evaluate(() => {
             const transport = document.querySelector('#recording-11 .vz2-audio-transport');
             const actions = [...document.querySelectorAll('#recording-11 .recording-actions > button')].filter(button => button.getClientRects().length);
-            const progress = transport.querySelector('.vz2-audio-progress').getBoundingClientRect();
-            const controls = transport.querySelector('.vz2-audio-controls').getBoundingClientRect();
             const slider = transport.querySelector('input[type=range]').getBoundingClientRect();
-            const buttons = [...transport.querySelectorAll('.vz2-audio-controls button')].map(button => button.getBoundingClientRect());
+            const play = transport.querySelector('.vz2-audio-play-pause').getBoundingClientRect();
             return { overflow: transport.scrollWidth > transport.clientWidth, height: transport.getBoundingClientRect().height,
-                sliderWidth: slider.width, progressWidth: progress.width, twoRows: controls.top >= progress.bottom,
-                buttonsOneRow: buttons.every(rect => Math.abs(rect.y - buttons[0].y) < 2),
-                actionsOneRow: actions.every(button => Math.abs(button.getBoundingClientRect().top - actions[0].getBoundingClientRect().top) < 2) };
+                sliderWidth: slider.width, oneRow: Math.abs(slider.y + slider.height / 2 - play.y - play.height / 2) < 2,
+                actionsFit: actions.every(button => { const box = button.getBoundingClientRect(); return box.left >= 0 && box.right <= innerWidth; }) };
         });
         await shot('recording-player-open-320');
-        assert(!narrowPlayer.overflow && narrowPlayer.twoRows && narrowPlayer.buttonsOneRow && narrowPlayer.actionsOneRow
-            && narrowPlayer.sliderWidth > narrowPlayer.progressWidth / 2 && narrowPlayer.height < 96,
-            'Compact playback uses a wide timeline and one button row at 320 px: ' + JSON.stringify(narrowPlayer));
+        assert(!narrowPlayer.overflow && narrowPlayer.oneRow && narrowPlayer.actionsFit && narrowPlayer.sliderWidth > 80 && narrowPlayer.height < 60,
+            'Quick playback fits one row at 320 px: ' + JSON.stringify(narrowPlayer));
         await page.setViewportSize({ width: 390, height: 844 });
         await page.locator('#recording-11 .vz2-audio-transport input').fill('10');
         await page.waitForFunction(() => document.querySelector('#recording-11 audio').currentTime >= 9.9);
-        await page.locator('#recording-11 .vz2-audio-back').click();
-        assert((await page.locator('#recording-11 audio').evaluate(audio => audio.currentTime)) < 6, 'Back skips five seconds');
-        await page.locator('#recording-11 .vz2-audio-forward').click();
-        assert((await page.locator('#recording-11 audio').evaluate(audio => audio.currentTime)) >= 9, 'Forward skips five seconds');
-        await page.locator('#recording-11 .vz2-audio-restart').click();
-        assert((await page.locator('#recording-11 audio').evaluate(audio => audio.currentTime)) < 1, 'Restart seeks to the beginning');
-        await page.locator('#recording-11 .vz2-audio-loop').click();
-        assert.equal(await page.locator('#recording-11 audio').evaluate(audio => audio.loop), true, 'Repeat toggles audio looping');
-        await page.locator('#recording-11 .vz2-audio-loop').click();
-        await page.locator('#recording-11 .vz2-audio-mute').click();
-        assert.equal(await page.locator('#recording-11 audio').evaluate(audio => audio.muted), true, 'Mute controls the recording');
-        await page.locator('#recording-11 .vz2-audio-mute').click();
+        assert.equal(await page.locator('#recording-11 .vz2-audio-transport button').count(), 1, 'Quick player only exposes play/pause');
         await page.locator('#recording-11 .vz2-audio-play-pause').click();
         assert(await page.locator('#recording-11 .vz2-audio-transport').isVisible(), 'Pause keeps the player expanded');
         await page.locator('#recording-11 .vz2-audio-play-pause').click();
@@ -617,19 +602,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#recording-11 audio').evaluate(audio => audio.paused), false, 'Collapsing preserves playback');
         await page.locator('#recording-11 .recording-toggle').click();
         await page.locator('#recording-11 .vz2-audio-play-pause').click();
-        await page.locator('#recording-11 .recording-actions').getByRole('button', { name: 'Otevřít časové značky' }).click();
-        assert.equal(await page.locator('#recording-11 .recording-timestamps .ts-summary:visible').count(), 0, 'The former timestamp heading is replaced by its icon');
-        await page.locator('#recording-11 .ts-song_start').getByRole('button', { name: 'Smyčka' }).click();
-        await page.waitForFunction(() => !document.querySelector('#recording-11 audio').paused);
-        await page.locator('#recording-11 audio').evaluate(audio => { audio.currentTime = 2.1; });
-        await page.waitForFunction(() => {
-            const audio = document.querySelector('#recording-11 audio');
-            return !audio.paused && audio.currentTime >= 1 && audio.currentTime < 2;
-        });
-        await page.locator('#recording-11 .vz2-audio-play-pause').click();
-        await page.locator('#recording-11 audio').evaluate(audio => { audio.currentTime = 2.1; });
-        await page.waitForTimeout(150);
-        assert(await page.locator('#recording-11 audio').evaluate(audio => audio.paused), 'Pausing stops the timestamp loop');
+        assert.equal(await page.locator('#recording-11 .recording-timestamps').count(), 0, 'Timestamp controls belong to the main player');
         await shot('recording-expanded-390');
         await page.locator('#recording-11 .recording-actions').getByRole('button', { name: 'Další' }).click();
         assert.equal(await page.locator('#recording-actions-11 .recording-action-order, #recording-actions-11 .recording-action-edit').count(), 0, 'The actions dialog has no edit or ordering section');
@@ -640,7 +613,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#edit-form').getByRole('button', { name: 'Uložit' }).click();
         await page.waitForFunction(() => document.querySelector('#recording-11 .recording-title')?.textContent === 'Nový název.wav');
         if (await page.locator('#recording-actions-11').isVisible()) await page.locator('#recording-actions-11 .modal-close').click();
-        await page.locator('#recording-11').getByRole('button', { name: 'Otevřít v Looperu', exact: true }).click();
+        await page.locator('#recording-11').getByRole('button', { name: 'Otevřít v looperu', exact: true }).click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
         await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Otevřít časové značky' }).click();
         await page.locator('#looper-timestamps .ts-song_start').getByRole('button', { name: 'Smyčka' }).click();
@@ -658,6 +631,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(await editor.locator('[name=label]').isVisible(), 'The annotation title is visible');
         await shot('timestamp-editor-390');
         await editor.locator('.annotation-close').click();
+        await page.locator('#looper-panel > .looper-timestamp-actions').getByRole('button', { name: 'Otevřít časové značky' }).click();
         const normalWaveHeight = (await page.locator('#looper-wave').boundingBox()).height;
         await page.locator('#player-fullscreen').click();
         assert.equal((await page.locator('#looper-wave').boundingBox()).height, normalWaveHeight, 'Mobile fullscreen preserves waveform height');

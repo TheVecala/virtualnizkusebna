@@ -9,10 +9,10 @@
         let selected = null, playhead = null;
         const waves = new Map();
         host.classList.add('segment-panel');
-        function choose(model, s) {
+        function choose(model, s, notify = true) {
             selected = { recording_id: model.id, segment: s };
             host.querySelectorAll('[data-segment-id]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.segmentId === s.id && b.dataset.recordingId === String(model.id))));
-            config.onSelect?.({ ...selected, recording: model.recording });
+            if (notify) config.onSelect?.({ ...selected, recording: model.recording });
         }
         function segment(model, s, duration) {
             const b = el('button', undefined, 'segment-item ' + (s.end_ms === null ? 'segment-point' : 'segment-range') + ' segment-' + (s.kind === 'recording' ? 'whole' : s.kind));
@@ -101,7 +101,7 @@
             setWaveform(id, data) { waves.set(String(id), data); render(); },
             clearWaveforms() { waves.clear(); },
             clearSelection() { selected = null; host.querySelectorAll('[aria-pressed]').forEach(b => b.setAttribute('aria-pressed', 'false')); setPlayhead(null, null); },
-            select(id, segmentId) { const model = models.find(m => String(m.id) === String(id)); const s = model?.segments.find(s => s.id === segmentId); if (s) choose(model, s); },
+            select(id, segmentId, notify = true) { const model = models.find(m => String(m.id) === String(id)); const s = model?.segments.find(s => s.id === segmentId); if (s) choose(model, s, notify); },
             setPlayhead,
             destroy() { host.replaceChildren(); host.classList.remove('segment-panel', 'segment-compact'); waves.clear(); }
         };

@@ -107,6 +107,7 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         assert.deepEqual(await page.evaluate(async () => (await idbKeyval.get(peakKey, peakStore))?.peaks), [0.1, 0.6, 0.3]);
         assert.equal(await page.evaluate(() => decodeCalls), 0);
         assert.equal(await page.locator('#looper-status').textContent(), '');
+        await page.locator('#looper-panel > .looper-timestamp-actions > button').first().click();
         assert(await page.locator('#looper-wave').evaluate(canvas => {
             return canvas.getContext('2d').getImageData(Math.floor(canvas.width / 3), 30, 1, 1).data[3] > 0;
         }), 'Server peaks are drawn for saved audio');
@@ -175,16 +176,17 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         await saved(single(2), false);
         console.log('PASS: reconnect success/network/401/503 preserves playback; saving preserves playing and paused media state');
 
-        // Timestamp loops remain mounted and repeat across the source replacement.
-        await start(single(4));
-        await page.locator('#recording-4 [aria-label="Otevřít časové značky"]').evaluate(b => b.click());
-        await page.waitForFunction(() => document.querySelector('#recording-timestamps-4 [data-playback="loop"]'), null, { timeout: 5000 });
-        await page.locator('#recording-timestamps-4 [data-playback="loop"]').evaluate(b => b.click());
-        await page.waitForFunction(() => !document.querySelector('#recording-4 audio').paused && document.querySelector('#recording-4 audio').currentTime < 4);
-        await page.locator('#recording-4 [aria-label="Uložit offline"]').evaluate(b => b.click());
-        await page.waitForFunction(() => document.querySelector('#recording-4 audio').currentSrc.startsWith('blob:') && !document.querySelector('#recording-4 audio').dataset.sourceSwitching);
-        await page.locator(single(4)).evaluate(a => { a.currentTime = 4.1; });
-        await page.waitForFunction(() => document.querySelector('#recording-4 audio').currentTime < 3 && !document.querySelector('#recording-4 audio').paused);
+        // Timestamp loops now live only in the Looper and survive source replacement.
+        await page.evaluate(r => Vz2Player.openLooper(r, r.files[0]), recordings.find(r => r.id === 4));
+        await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready');
+        await page.locator('#looper-panel > .looper-timestamp-actions > button').first().click();
+        await page.waitForFunction(() => document.querySelector('#looper-timestamps [data-playback="loop"]'), null, { timeout: 5000 });
+        await page.locator('#looper-timestamps [data-playback="loop"]').click();
+        await page.waitForFunction(() => !document.querySelector('#looper-audio').paused && document.querySelector('#looper-audio').currentTime < 4);
+        await page.locator('#looper-offline').evaluate(b => b.click());
+        await page.waitForFunction(() => document.querySelector('#looper-audio').currentSrc.startsWith('blob:') && !document.querySelector('#looper-audio').dataset.sourceSwitching);
+        await page.locator('#looper-audio').evaluate(a => { a.currentTime = 4.1; });
+        await page.waitForFunction(() => document.querySelector('#looper-audio').currentTime < 3 && !document.querySelector('#looper-audio').paused);
         console.log('PASS: timestamp loop survives saving during playback');
 
         await page.evaluate(r => { Vz2Timestamps.stopLoop(); return Vz2Player.openLooper(r, r.files[0]); }, recordings[2]);
@@ -384,7 +386,7 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
 
     } catch (error) {
         console.error('Browser errors:', errors);
-        console.error(await page.locator('#recording-timestamps-4').textContent({ timeout: 1000 }).catch(() => 'Timestamp panel is not mounted'));
+        console.error(await page.locator('#looper-timestamps').textContent({ timeout: 1000 }).catch(() => 'Timestamp panel is not mounted'));
         throw error;
     } finally { releaseDownload(); await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

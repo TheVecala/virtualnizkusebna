@@ -759,6 +759,30 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
     #player-shell[data-mode=mixer] #player-title-mobile { display: inline; }
 }
 
+/* Looper: transport stays in the bar; detailed views share one drawer. */
+#looper-panel > .timeline { margin: 0 0 4px; }
+#looper-panel > .looper-timestamp-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+#looper-panel > .looper-timestamp-actions > button { min-height: 34px; padding: 4px 8px; font-size: 12px; }
+#looper-panel > .looper-timestamp-actions > button:first-child { flex: 1 1 auto; }
+#looper-timestamps { display: none; position: fixed; z-index: 35; inset: var(--ts-drawer-top, 50%) 8px 0; padding: 8px 10px; overflow: auto; background: var(--color-panel); border: 1px solid var(--color-player-border); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 20px var(--color-shadow-medium); }
+#looper-timestamps.ts-drawer-open { display: block; animation: timestamp-drawer-rise .18s ease-out; }
+#looper-timestamps .vz2-timestamps { margin: 0; border: 0; }
+#looper-timestamps .ts-summary, #looper-timestamps .ts-desktop-action { display: none; }
+#looper-timestamps .ts-content > .toolbar { margin: 0; }
+#looper-timestamps .ts-content > .toolbar:not(:has(> button:not([hidden]):not(.ts-desktop-action))) { display: none; }
+.looper-view-switch { display: flex; gap: 6px; margin-bottom: 8px; }
+.looper-view-switch button { flex: 1 1 0; min-height: 36px; }
+.looper-view-switch button[aria-pressed=true] { color: var(--color-primary-text); background: var(--color-primary-bg); border-color: var(--color-primary); }
+#looper-segments-hint { margin: 8px 0; color: var(--color-text-muted); font-size: 12px; }
+#looper-segments .segment-item { min-height: 0; }
+#looper-timestamps.looper-view-segments .ts-list > li:not(.ts-selected) { display: none; }
+#player-shell.player-fullscreen #looper-timestamps { display: block; position: static; flex: 1 1 0; min-height: 0; margin-top: 8px; animation: none; box-shadow: none; }
+#player-shell.player-fullscreen #looper-panel > .looper-timestamp-actions > button:first-child { display: none; }
+@media (max-width: 420px) {
+    #looper-panel > .looper-timestamp-actions > button:first-child { flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { #looper-timestamps.ts-drawer-open { animation: none; } }
+
 /* Keep desktop timestamp editing in the player surface so transport stays usable. */
 @media (min-width: 768px) {
     .vz2-timestamp-editor.ts-docked[open] { position: relative; inset: auto; display: block; width: min(500px, 100%); max-height: none; margin: 8px 0 8px auto; overflow: visible; }

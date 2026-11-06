@@ -57,9 +57,11 @@
         const actionRow = options.actionRow;
         const inlineControls = !!options.inlineControls;
         const compactLooper = !!options.compactLooper;
+        const minimal = !!options.minimal;
         const root = document.createElement('div'); root.className = 'vz2-inline-player'; root.hidden = !!actionRow;
         if (inlineControls) root.classList.add('has-visible-controls');
         if (compactLooper) root.classList.add('is-compact-looper');
+        if (minimal) root.classList.add('is-minimal-player');
         const trigger = document.createElement('button'); trigger.type = 'button'; trigger.className = 'vz2-audio-trigger';
         const triggerIcon = compactLooper ? icon('play') : document.createElement('span');
         triggerIcon.classList.add('vz2-audio-icon'); triggerIcon.setAttribute('aria-hidden', 'true');
@@ -96,7 +98,9 @@
             transport.append(progress, controls);
         } else {
             if (actionRow || inlineControls) transport.append(playPause);
-            transport.append(current, seek, duration, mute);
+            transport.append(current, seek, duration);
+            if (minimal) playPause.append(icon('play'));
+            else transport.append(mute);
             if (!actionRow && !inlineControls) transport.append(collapse);
         }
         root.append(audio, transport);
@@ -132,7 +136,7 @@
             const triggerAction = actionRow ? (expanded ? 'Zavřít přehrávač' : 'Otevřít přehrávač') : audio.paused ? 'Přehrát' : 'Pozastavit';
             trigger.setAttribute('aria-label', triggerAction + (options.label ? ' ' + options.label : ' nahrávku'));
             trigger.title = trigger.getAttribute('aria-label');
-            if (compactLooper) changeIcon(playPause.firstElementChild, audio.paused ? 'play' : 'pause');
+            if (compactLooper || minimal) changeIcon(playPause.firstElementChild, audio.paused ? 'play' : 'pause');
             else playPause.textContent = audio.paused ? '▶' : '❚❚';
             playPause.setAttribute('aria-label', audio.paused ? 'Přehrát' : 'Pozastavit');
             playPause.title = playPause.getAttribute('aria-label');

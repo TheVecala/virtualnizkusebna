@@ -33,7 +33,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
             await card.getByRole('button', { name, exact: true }).click();
             if (await toggle.getAttribute('aria-expanded') === 'true') await toggle.click();
         };
-        const openLooper = () => openRecording(single.id, 'Otevřít');
+        const openLooper = () => openRecording(single.id, 'Otevřít v looperu');
         const openMixer = () => openRecording(mix.id, 'Otevřít v Mixéru');
         const state = () => page.evaluate(() => window.Vz2Player.getState());
         const ready = mode => page.waitForFunction(mode => { const s = window.Vz2Player.getState(); return s?.mode === mode && s.phase === 'ready' && !s.loading; }, mode);
@@ -48,6 +48,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         assert(savedPeaks.ok && savedPeaks.peaks.length > 0, 'Waveform peaks are stored on the server');
         assert.equal(await page.locator('#mixer-panel').isVisible(), false);
         assert.equal(await page.locator('.recording-toggle[aria-expanded=true]').count(), 0);
+        await page.locator('#looper-panel > .looper-timestamp-actions > button').first().click();
         assert.equal(await page.locator('#looper-wave').evaluate(n => n.width > 0), true);
         assert.equal(await page.locator('#looper-restart .ti-player-track-prev').count(), 1);
         assert.equal(await page.locator('#looper-loop .ti-repeat').count(), 1);
@@ -172,8 +173,8 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         check(true, 'player: shared Mixer transport preserves identical track start times, Mute/Solo and playback through collapse/fullscreen; idle switch is direct');
         const notes = await request(clients.admin, 'php/ajax/vz2_timestamps.php?recording_id=' + single.id);
         assert.equal((await request(clients.admin, 'php/ajax/vz2_timestamps.php', { action: 'create', recording_id: single.id, timestamps_revision: notes.json().timestamps_revision, kind: 'passage', time_ms: 1000, body: 'Pasáž pro Looper' })).status, 201);
-        await page.locator('#looper-timestamps .ts-summary').click();
-        await page.locator('#looper-timestamps').getByRole('button', { name: 'Obnovit značky', exact: true }).click();
+        await page.locator('#looper-panel > .looper-timestamp-actions > button').first().click();
+        await page.locator('#looper-panel > .looper-timestamp-actions').getByRole('button', { name: 'Obnovit značky', exact: true }).click();
         const marker = page.locator('.looper-wave-marker[data-timestamp-id]');
         await marker.waitFor({ state: 'visible' });
         assert.equal(await marker.locator('.looper-wave-marker-text').textContent(), 'Pasáž pro Looper');
