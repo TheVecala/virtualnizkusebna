@@ -482,6 +482,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-song-filter input[value="1"]').check();
         await page.locator('#history-song-filter input[value="2"]').check();
         assert.equal(await page.locator('#history-song-filter input:checked').count(), 2);
+        const fixedActions = await page.evaluate(() => {
+            const list = document.querySelector('#history-song-filter'), actions = document.querySelector('.history-filter-actions');
+            for (let i = 0; i < 20; i++) { const row = list.firstElementChild.cloneNode(true); row.classList.add('test-extra'); list.append(row); }
+            const before = actions.getBoundingClientRect().top; list.scrollTop = list.scrollHeight;
+            return { scrolled: list.scrollTop > 0, before, after: actions.getBoundingClientRect().top };
+        });
+        assert(fixedActions.scrolled && fixedActions.before === fixedActions.after, 'Only the song list scrolls while both filter actions stay fixed');
+        await page.evaluate(() => document.querySelectorAll('#history-song-filter .test-extra').forEach(row => row.remove()));
+        await page.locator('#history-song-filter-close').click();
+        assert.equal(await page.locator('#history-filter').getAttribute('open'), null);
+        await page.locator('#history-filter summary').click();
+        assert.equal(await page.locator('#history-song-filter input:checked').count(), 2, 'Closing the filter preserves the selection');
         await page.locator('#history-song-filter input[value="2"]').uncheck();
         await page.locator('#history-options summary').click();
         const optionsMenu = await page.locator('#history-menu').boundingBox();

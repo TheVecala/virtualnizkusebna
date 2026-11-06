@@ -313,3 +313,10 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #player-shell:is([data-mode=looper], [data-mode=empty]) .player-ident { flex: 0 1 240px; }
     #player-shell[data-mode=looper] #looper-options { margin-left: auto; }
 }
+
+/* The filter actions stay visible while only the song list scrolls. */
+#history-filter .history-filter-menu { display: flex; flex-direction: column; max-height: min(50dvh, 320px); overflow: hidden; }
+#history-filter .history-filter-actions { display: flex; flex: 0 0 auto; gap: 6px; padding-bottom: 8px; }
+#history-filter .history-filter-actions button { min-width: 0; }
+#history-filter .history-filter-actions button:first-child { flex: 1 1 auto; }
+#history-controls #history-song-filter { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }

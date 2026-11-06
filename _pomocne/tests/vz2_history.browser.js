@@ -90,7 +90,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         assert.equal(await unassigned.locator('.history-unassigned-section').last().locator('li').count(), 3, 'matrix song filter does not restrict the global list');
         await unassigned.locator('[data-history-close]').click();
         await page.locator('#history-filter summary').click();
-        await page.locator('#history-song-filter button').click();
+        await page.locator('#history-song-filter-all').click();
         assert.equal(await page.locator('#app-shell').isVisible(), true);
         assert.equal(await page.locator('#sidebar-slot #sidebar').isVisible(), false, 'matrix uses the catalogue dialog instead of a persistent sidebar');
         assert.equal(await page.locator('#song-workspace').isVisible(), false);

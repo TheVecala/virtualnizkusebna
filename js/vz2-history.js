@@ -16,7 +16,7 @@ function origin(p){
  return {key:'standalone',label:'Samostatný soubor'};
 }
 function option(value,text){const o=n('option',text);o.value=value;return o;}
-function refreshFilter(){const host=$('history-song-filter');host.replaceChildren();const all=n('button','Všechny skladby');all.type='button';all.onclick=()=>{selectedSongs.clear();render();};host.append(all);data.songs.forEach(s=>{const label=n('label'),input=n('input');input.type='checkbox';input.value=String(s.id);input.checked=selectedSongs.has(String(s.id));input.onchange=()=>{if(input.checked)selectedSongs.add(input.value);else selectedSongs.delete(input.value);const id=input.value;render();[...host.querySelectorAll('input')].find(item=>item.value===id)?.focus({preventScroll:true});};label.append(input,document.createTextNode(' '+s.title));host.append(label);});}
+function refreshFilter(){const host=$('history-song-filter'),scrollTop=host.scrollTop;host.replaceChildren();data.songs.forEach(s=>{const label=n('label'),input=n('input');input.type='checkbox';input.value=String(s.id);input.checked=selectedSongs.has(String(s.id));input.onchange=()=>{if(input.checked)selectedSongs.add(input.value);else selectedSongs.delete(input.value);const id=input.value;render();[...host.querySelectorAll('input')].find(item=>item.value===id)?.focus({preventScroll:true});};label.append(input,document.createTextNode(' '+s.title));host.append(label);});host.scrollTop=scrollTop;}
 function cellKey(songId,rehearsalId){return String(songId)+':'+String(rehearsalId);}
 function indexPlays(){
  const onlyAudio=$('history-audio-filter').checked;
@@ -264,6 +264,8 @@ function syncControls(){
  $('history-filter').querySelector('summary').title='Filtr skladeb';
  $('history-audio-filter').closest('label').classList.toggle('is-active',$('history-audio-filter').checked);
 }
+$('history-song-filter-all').onclick=()=>{selectedSongs.clear();render();};
+$('history-song-filter-close').onclick=()=>{$('history-filter').open=false;$('history-filter').querySelector('summary').focus();};
 $('history-orientation').onclick=e=>{transposed=!transposed;e.currentTarget.setAttribute('aria-pressed',String(transposed));render();};
 $('history-audio-filter').onchange=()=>{syncControls();render();};
 $('history-matrix').onscroll=e=>{scroll={x:e.currentTarget.scrollLeft,y:e.currentTarget.scrollTop};};
