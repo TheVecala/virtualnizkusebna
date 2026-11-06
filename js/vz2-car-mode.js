@@ -47,11 +47,11 @@
         audio.pause(); audio.removeAttribute('src'); audio.load();
         previous?.abort.abort(); previous?.audioSource?.release();
     }
-    async function openSingle(recording, seconds = 0) {
+    async function openSingle(recording, seconds = 0, recovering = false) {
         const file = recording.files.find(item => item.url);
         if (!file) { setStatus('Audio není dostupné.', true); return; }
         releaseSingle();
-        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), abort: new AbortController(), audioSource: null };
+        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), abort: new AbortController(), audioSource: null, autoRetried: false, recovering };
         single = current;
         const serial = audioSerial;
         audio.loop = false;
@@ -65,17 +65,42 @@
     }
     audio.addEventListener('loadedmetadata', () => {
         if (!single) return;
-        audio.currentTime = Math.min(Math.max(0, audio.duration || 0), single.seconds);
+        const duration = Number.isFinite(audio.duration) ? Math.max(0, audio.duration) : single.seconds;
+        audio.currentTime = Math.min(duration, single.seconds);
         single.phase = 'ready';
+        if (single.recovering) { single.recovering = false; setStatus(audio.paused ? 'Nahrávka je připravená. Stiskni Play.' : ''); }
         tick();
     });
+    function retrySingle(current, requestPlay = false) {
+        if (single !== current) return;
+        if (!current.audioSource) {
+            const recording = context?.recordings.find(row => String(row.id) === current.id);
+            if (recording) { setStatus('Znovu načítám nahrávku…'); void openSingle(recording, current.seconds, true); }
+            return;
+        }
+        current.phase = 'loading'; current.recovering = true;
+        setStatus('Znovu načítám nahrávku…'); tick();
+        audio.src = current.audioSource.url; audio.load();
+        if (requestPlay) audio.play().catch(() => {
+            if (single === current && current.phase !== 'error') setStatus('Nahrávka se načítá. Po načtení stiskni Play.');
+        });
+    }
+    audio.addEventListener('timeupdate', () => {
+        if (single?.phase === 'ready' && Number.isFinite(audio.currentTime)) single.seconds = audio.currentTime;
+    });
     audio.addEventListener('error', () => {
-        if (!single) return;
-        single.phase = 'error'; setStatus('Audio nelze načíst.', true); tick();
+        const current = single;
+        if (!current) return;
+        if (!current.autoRetried && current.audioSource) {
+            current.autoRetried = true; retrySingle(current); return;
+        }
+        current.phase = 'error'; current.recovering = false;
+        setStatus('Audio nelze načíst. Stiskni Play pro další pokus.', true); tick();
     });
     audio.addEventListener('play', () => {
         document.querySelectorAll('audio').forEach(other => { if (other !== audio) other.pause(); });
         window.MultitrackApp?.pause();
+        if (single) single.autoRetried = false;
     });
     function syncSingle() {
         if (mode.hidden || !mobile.matches) return;
@@ -106,7 +131,10 @@
     }
     async function play() {
         window.Vz2TimestampPlayback.stop();
-        if (single) { if (single.phase === 'ready') await audio.play(); }
+        if (single) {
+            if (single.phase === 'ready') { await audio.play(); setStatus(''); }
+            else if (single.phase === 'error') { single.autoRetried = true; retrySingle(single, true); }
+        }
         else await window.Vz2Player.play();
         tick();
     }
@@ -190,7 +218,8 @@
         const seek = $('car-seek');
         seek.max = String(duration); seek.disabled = !ready || duration <= 0;
         if (document.activeElement !== seek) seek.value = String(Math.min(position, duration));
-        for (const id of ['car-back', 'car-forward', 'car-play']) $(id).disabled = !ready;
+        for (const id of ['car-back', 'car-forward']) $(id).disabled = !ready;
+        $('car-play').disabled = !ready && !(single?.phase === 'error');
         for (const id of ['car-up', 'car-down']) $(id).disabled = !ready || !timestampList?.can_create || ratingBusy;
         $('car-chapter-list').querySelectorAll('.car-chapter').forEach(button => { button.disabled = !ready; });
         $('car-play').querySelector('span').classList.toggle('is-playing', !!player?.playing);
@@ -335,7 +364,7 @@
     picker.addEventListener('click', event => { if (event.target === picker) hidePicker(); });
     document.querySelectorAll('[data-car-kind]').forEach(button => button.addEventListener('click', () => { browseKind = button.dataset.carKind; renderPicker(); }));
     $('car-play').onclick = async () => {
-        try { if (playerState()?.playing) pause(); else await play(); setStatus(''); }
+        try { if (playerState()?.playing) { pause(); setStatus(''); } else await play(); }
         catch (_) { setStatus('Přehrávání se nepodařilo spustit.', true); }
         tick();
     };

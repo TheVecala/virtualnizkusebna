@@ -316,6 +316,24 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         await page.setViewportSize({ width: 320, height: 780 });
         await page.goto('http://offline.test/index.php?collection_id=1&recording_id=3&listen=1&view=audio&time_ms=2');
         await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready');
+        await page.locator('#car-audio').evaluate(audio => { audio.currentTime = 12; audio.dispatchEvent(new Event('timeupdate')); audio.dispatchEvent(new Event('error')); });
+        await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready' && document.querySelector('#car-status').textContent.includes('Stiskni Play'));
+        assert(Math.abs(await page.locator('#car-audio').evaluate(audio => audio.currentTime) - 12) < .2, 'Recovery preserves the last position');
+        assert(await page.locator('#car-audio').evaluate(audio => audio.paused), 'Recovery does not start playback on its own');
+        await page.locator('#car-audio').evaluate(audio => {
+            const source = audio.src;
+            Object.defineProperty(audio, 'src', { configurable: true, get: () => source, set: () => {} });
+            audio.load = () => {};
+            audio.dispatchEvent(new Event('error')); audio.dispatchEvent(new Event('error'));
+        });
+        assert.equal(await page.evaluate(() => Vz2CarMode.getState()?.phase), 'error');
+        assert(await page.locator('#car-play').isEnabled(), 'A failed recovery still offers a retry');
+        await page.locator('#car-audio').evaluate(audio => { delete audio.src; delete audio.load; });
+        await page.locator('#car-play').click();
+        await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready' && !document.querySelector('#car-audio').paused);
+        assert((await page.locator('#car-audio').evaluate(audio => audio.currentTime)) >= 11.8, 'Manual retry plays from the preserved position');
+        await page.locator('#car-audio').evaluate(audio => audio.pause());
+        console.log('PASS: car audio reloads after interruption and permits another retry after a repeated error');
         const carItems = [
             { id: 't1', timestamp_id: 1, recording_id: 3, kind: 'take', status: 'complete', start_ms: 0, end_ms: 4000, label: 'Pokus A', song_title: 'Skladba A' },
             { id: 't2', timestamp_id: 2, recording_id: 3, kind: 'take', status: 'complete', start_ms: 6000, end_ms: 9000, label: 'Pokus B' },
@@ -348,6 +366,12 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         await page.reload();
         await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready');
         assert.match(await page.locator('#car-audio').getAttribute('src'), /sample3\.wav$/);
+        await page.locator('#car-audio').evaluate(audio => { audio.currentTime = 7; audio.dispatchEvent(new Event('timeupdate')); audio.dispatchEvent(new Event('error')); });
+        await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready' && document.querySelector('#car-status').textContent.includes('Stiskni Play'));
+        assert.match(await page.locator('#car-audio').getAttribute('src'), /sample3\.wav$/);
+        assert(Math.abs(await page.locator('#car-audio').evaluate(audio => audio.currentTime) - 7) < .2, 'Network recovery preserves position');
+        await page.locator('#car-play').click();
+        await page.waitForFunction(() => !document.querySelector('#car-audio').paused);
         await page.setViewportSize({ width: 1280, height: 900 });
         await page.goto('http://offline.test/index.php?collection_id=1');
         await page.waitForFunction(() => document.querySelector('#recording-3 audio')?.dataset.source === 'web');
