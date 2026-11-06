@@ -1074,6 +1074,15 @@
         if (!recording || Number(recording.timestamps_revision || 0) > list.timestamps_revision) return;
         Object.assign(recording, { timestamps: list.entries, annotations: list.annotations, annotation_version: list.annotation_version,
             timestamps_revision: list.timestamps_revision, duration_ms: list.duration_ms });
+        if (list.detached_history_links?.length) {
+            const detached = new Map(list.detached_history_links.map(link => [Number(link.id), link]));
+            data.recording_links = (data.recording_links || []).flatMap(link => {
+                const change = detached.get(Number(link.id));
+                if (!change) return [link];
+                return change.kept_clip ? [{ ...link, source_recording_id: null, start_timestamp_id: null, end_timestamp_id: null, start_ms: null, end_ms: null, start_body: null, end_body: null }] : [];
+            });
+            renderedCollection = null;
+        }
     });
     window.Vz2App = {
         openRecording(recordingId, timeMs = 0) {

@@ -21,7 +21,7 @@
         });
         let value;
         try { value = await r.json(); } catch (_) { throw Error('Odpověď nelze načíst. Ověřte připojení a přihlášení.'); }
-        if (!r.ok || !value.ok) { const e = Error(value.error || 'Značky nelze načíst.'); e.status = r.status; throw e; }
+        if (!r.ok || !value.ok) { const e = Error(value.error || 'Značky nelze načíst.'); e.status = r.status; e.reason = value.reason; throw e; }
         return accept(value);
     }
     function load(id) {
@@ -39,9 +39,18 @@
         subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
         select, selection: () => selection,
         items: id => lists.has(Number(id)) ? root.Vz2TimestampModel.items(lists.get(Number(id))) : [],
-        remove(id, item, revision) {
+        remove(id, item, revision, removeHistoryLinks = false) {
             return request(id, { action: ['take', 'passage'].includes(item.kind) ? 'delete_interval' : 'delete',
-                id: item.timestamp_id, revision: item.source.revision, timestamps_revision: revision });
+                id: item.timestamp_id, revision: item.source.revision, timestamps_revision: revision,
+                ...(removeHistoryLinks ? { remove_history_links: true } : {}) });
+        },
+        async removeWithHistory(id, item, revision) {
+            try { return await api.remove(id, item, revision); }
+            catch (error) {
+                if (error.reason !== 'timestamp_history_linked') throw error;
+                if (!root.confirm('Časové značky jsou propojené se skladbou v matici. Odebrat tuto vazbu a smazat značky začátku a konce? Nahrávka se nesmaže. Případný výstřižek zůstane v matici samostatně.')) return null;
+                return api.remove(id, item, revision, true);
+            }
         },
         async addQuickNote(id, symbol, timeMs) {
             if (!['👍', '👎'].includes(symbol)) throw Error('Neplatné hodnocení.');

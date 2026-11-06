@@ -4,9 +4,11 @@ require_once __DIR__.'/vz2_song_details.php';
 
 final class Vz2Error extends RuntimeException {
     public int $status;
-    public function __construct(string $message, int $status = 400) {
+    public ?string $reason;
+    public function __construct(string $message, int $status = 400, ?string $reason = null) {
         parent::__construct($message);
         $this->status = $status;
+        $this->reason = $reason;
     }
 }
 

@@ -221,13 +221,13 @@
     $('segments-new-passage').onclick = () => edit('passage');
     $('segments-new-note').onclick = () => edit('note');
     $('segments-delete').onclick = async () => {
-        if (!selection || !confirm('Smazat vybraný úsek?')) return;
+        if (!selection || !confirm('Smazat vybrané časové značky? Nahrávka zůstane zachovaná.')) return;
         const chosen = selection;
         try {
             const list = await window.Vz2TimestampStore.load(chosen.recording_id);
             const current = window.Vz2TimestampModel.items(list).find(i => i.id === chosen.segment.id);
             if (!current || current.source.revision !== chosen.segment.source.revision) throw Error('Úsek byl změněn. Zkontrolujte aktuální údaje.');
-            await window.Vz2TimestampStore.remove(chosen.recording_id, current, list.timestamps_revision);
+            await window.Vz2TimestampStore.removeWithHistory(chosen.recording_id, current, list.timestamps_revision);
         } catch (e) { status(e.message, true); }
     };
     document.addEventListener('vz2:timestamp-selected', e => {

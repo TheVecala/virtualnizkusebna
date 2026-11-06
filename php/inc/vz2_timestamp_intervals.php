@@ -80,16 +80,29 @@ function vz2_timestamp_mutate(array $in): array {
         $row=null;
         if(!$creating){$row=vz2_one($db,'SELECT * FROM vz2_timestamps WHERE id=? AND recording_id=? FOR UPDATE',[vz2_id($in['id']??null),$id]);vz2_permission('comment',(int)$row['created_by']);vz2_revision($row,$in['revision']??null);}
         vz2_revision($recording,$in['timestamps_revision']??null,'timestamps_revision');
-        $affected=[];
+        $affected=[];$detachedHistory=[];
         if($row && $row['paired_timestamp_id'])$affected[]=(int)$row['paired_timestamp_id'];
         if($deleting){
             $targets=[(int)$row['id']];
             if($interval && $row['kind']==='song_start'){
                 foreach(vz2_rows($db,'SELECT * FROM vz2_timestamps WHERE paired_timestamp_id=? FOR UPDATE',[$row['id']]) as $end){vz2_permission('comment',(int)$end['created_by']);$targets[]=(int)$end['id'];}
             }
+            $links=[];
             foreach($targets as $target){
-                if(vz2_rows($db,'SELECT id FROM vz2_rehearsal_plays WHERE start_timestamp_id=? OR end_timestamp_id=?',[$target,$target]))throw new Vz2Error('Značka je součástí historie. Nejprve odeberte příslušný úsek.',409);
+                foreach(vz2_rows($db,'SELECT * FROM vz2_rehearsal_plays WHERE start_timestamp_id=? OR end_timestamp_id=? FOR UPDATE',[$target,$target]) as $link)$links[(int)$link['id']]=$link;
                 if(vz2_rows($db,'SELECT id FROM vz2_timestamps WHERE parent_timestamp_id=?',[$target]))throw new Vz2Error('Úsek obsahuje přiřazené pasáže. Nejprve je odpojte nebo odstraňte.',409);
+            }
+            if($links){
+                $detachable=$interval && $row['kind']==='song_start';
+                foreach($links as $link)if((int)$link['start_timestamp_id']!==(int)$row['id'] || !in_array((int)$link['end_timestamp_id'],$targets,true))$detachable=false;
+                if(!$detachable)throw new Vz2Error('Značka je propojená s historií. Nejprve odeberte její vazbu v matici.',409);
+                if(($in['remove_history_links']??false)!==true)throw new Vz2Error('Úsek je propojený se skladbou v matici.',409,'timestamp_history_linked');
+                foreach($links as $link){
+                    if($link['clip_recording_id'])vz2_query($db,'UPDATE vz2_rehearsal_plays SET source_recording_id=NULL,start_timestamp_id=NULL,end_timestamp_id=NULL,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[vz2_actor(),$link['id']]);
+                    else vz2_query($db,'DELETE FROM vz2_rehearsal_plays WHERE id=?',[$link['id']]);
+                    $detachedHistory[]=['id'=>(int)$link['id'],'kept_clip'=>(bool)$link['clip_recording_id']];
+                    vz2_log($db,'history.unassigned','rehearsal_play',(int)$link['id'],$link['song_title_snapshot'],'Odebrána vazba při mazání časového úseku');
+                }
             }
             // Delete the end first. A raw start deletion keeps an orphan boundary.
             foreach(array_reverse($targets) as $target){
@@ -153,6 +166,8 @@ function vz2_timestamp_mutate(array $in): array {
         foreach(array_unique($affected) as $startId)vz2_timestamp_sync_history($db,$recording,$startId);
         vz2_query($db,'UPDATE vz2_recordings SET timestamps_revision=timestamps_revision+1 WHERE id=?',[$id]);
         vz2_log($db,'timestamp.'.($deleting?'deleted':($creating?'created':'updated')),'timestamp',$timestampId,$recording['title'],'Nahrávka #'.$id.'; '.$kind.' @ '.$time.' ms');
-        return vz2_timestamp_list($db,$id);
+        $result=vz2_timestamp_list($db,$id);
+        if($detachedHistory)$result['detached_history_links']=$detachedHistory;
+        return $result;
     });
 }

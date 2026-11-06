@@ -295,8 +295,8 @@
                         if (interval && end === null) actions.append(iconButton(annotation.kind === 'take' ? 'Ukončit úsek' : 'Ukončit pasáž', 'flag-check', () => openIntervalEditor(this, annotation.kind, annotation, true)));
                     }
                     if (annotation.can_delete) actions.append(iconButton('Smazat', 'trash', async () => {
-                        if (!confirm('Smazat tuto časovou značku?\n' + row.body)) return;
-                        try { const result = await Store.remove(id, annotation, value.timestamps_revision); publish(result); status.textContent = 'Značka odstraněna.'; }
+                        if (!confirm((interval ? 'Smazat časové značky vybraného úseku? Nahrávka zůstane zachovaná.' : 'Smazat tuto časovou značku?') + '\n' + row.body)) return;
+                        try { const result = await Store.removeWithHistory(id, annotation, value.timestamps_revision); if (result) { publish(result); status.textContent = 'Značka odstraněna.'; } }
                         catch (e) { status.textContent = e.message; }
                     }));
                     if (interval && end === null) text.append(' ', el('small', '— Doplnit konec'));

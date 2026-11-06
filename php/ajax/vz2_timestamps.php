@@ -28,6 +28,6 @@ try {
         if (($in['action'] ?? '') === 'create' || (($in['action'] ?? '') === 'save_interval' && !array_key_exists('id',$in))) http_response_code(201);
     } else { header('Allow: GET, POST'); throw new Vz2Error('Nepodporovaná metoda.', 405); }
     echo json_encode(['ok'=>true]+$result, JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
-} catch (Vz2Error $e) { http_response_code($e->status); echo json_encode(['ok'=>false,'error'=>$e->getMessage()], JSON_UNESCAPED_UNICODE); }
+} catch (Vz2Error $e) { http_response_code($e->status); echo json_encode(['ok'=>false,'error'=>$e->getMessage()]+($e->reason!==null?['reason'=>$e->reason]:[]), JSON_UNESCAPED_UNICODE); }
 catch (JsonException $e) { http_response_code(400); echo '{"ok":false,"error":"Neplatný JSON."}'; }
 catch (Throwable $e) { error_log('VZ2 timestamps failed: '.get_class($e)); http_response_code(500); echo '{"ok":false,"error":"Zápisy se nepodařilo zpracovat."}'; }

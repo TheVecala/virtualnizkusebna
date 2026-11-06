@@ -162,6 +162,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         if (process.env.VZ2_TEST_SUITE === 'timestamp-intervals') {
             await require('./vz2_timestamp_intervals.integration')({ request, clients, good, upload, wav, db, check });
             if (process.env.VZ2_TEST_BROWSER === 'timestamps') await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });
+            if (process.env.VZ2_TEST_BROWSER === 'delete-link') await require('./vz2_delete_link.browser')({ base, clients, good, upload, wav, request, db, check });
             console.log('PASS timestamp interval suite: ' + checks + ' checks'); return;
         }
         if (process.env.VZ2_TEST_SUITE === 'wave-boundaries') {
