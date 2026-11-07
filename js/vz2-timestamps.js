@@ -183,6 +183,7 @@
         let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileToggle, resizeObserver, playerObserver, mobileMedia;
         const looperPanel = container.id === 'looper-timestamps';
         const mixerPanel = container.id === 'mixer-timestamps';
+        const actionsRow = looperPanel ? document.getElementById('looper-action-row') : null;
         const pinnedOpen = () => looperPanel
             && document.getElementById('player-shell').classList.contains('player-fullscreen');
         const positionDrawer = () => {
@@ -190,7 +191,7 @@
             if (looperPanel) {
                 if (reload.parentElement !== mobileActions) mobileAdd.after(reload);
             } else if (reload.parentElement !== toolbar) quickDown.after(reload);
-            if (mobileActions && (looperPanel || mobileMedia.matches)) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
+            if (mobileActions && (looperPanel || mobileMedia.matches)) container.style.setProperty('--ts-drawer-top', (actionsRow || mobileActions).getBoundingClientRect().bottom + 8 + 'px');
             Notes.reposition(panel);
         };
         const toggleDrawer = open => {
@@ -226,16 +227,18 @@
             add.classList.add('ts-desktop-action'); quickUp.classList.add('ts-desktop-action'); quickDown.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
             mobileActions.append(mobileToggle, mobileAdd, mobileQuickUp, mobileQuickDown);
             if (mixerPanel) document.getElementById('mixer-action-row').append(mobileActions);
+            else if (actionsRow) actionsRow.append(mobileActions);
             else container.before(mobileActions);
             document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
             resizeObserver = new ResizeObserver(positionDrawer);
             resizeObserver.observe(document.getElementById('player-shell')); resizeObserver.observe(mobileActions);
+            if (actionsRow) resizeObserver.observe(actionsRow);
             playerObserver = new MutationObserver(positionDrawer);
             playerObserver.observe(document.getElementById('player-shell'), { attributes: true, attributeFilter: ['class'] });
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, container, shell, containerId: container.id, inlineHost: mobileActions || shell, pinnedOpen,
+        const panel = { id, adapter, container, shell, containerId: container.id, inlineHost: actionsRow || mobileActions || shell, pinnedOpen,
             export: () => openExport(panel),
             drawerOpen: mobileActions ? () => container.classList.contains('ts-drawer-open') : null,
             closeDrawer: mobileActions ? () => toggleDrawer(false) : null,

@@ -57,7 +57,7 @@ let revision = 1, writable = true;
         return route.fulfill({ status: 204, body: '' });
     });
     const state = () => page.evaluate(() => Vz2Player.getState());
-    const drawer = page.locator('#looper-timestamps'), actions = page.locator('#looper-panel > .looper-timestamp-actions');
+    const drawer = page.locator('#looper-timestamps'), actions = page.locator('#looper-action-row > .looper-timestamp-actions');
     const toggle = actions.locator('button').first();
     try {
         await page.goto('http://playback.test/index.php?collection_id=1');
@@ -138,7 +138,12 @@ let revision = 1, writable = true;
                 assert(await page.locator('#looper-time').isVisible() && await page.locator('#looper-duration').isVisible());
                 const controlsBox = await page.locator('.looper-header-controls').boundingBox();
                 const visualBox = await page.locator('#looper-visuals').boundingBox();
-                const bar = await actions.boundingBox();
+                const bar = await page.locator('#looper-action-row').boundingBox();
+                const centers = await page.locator('#looper-action-row button:visible').evaluateAll(buttons => buttons.map(button => {
+                    const box = button.getBoundingClientRect(); return box.y + box.height / 2;
+                }));
+                assert(centers.every(y => Math.abs(y - centers[0]) < 1), 'view and timestamp buttons share one row at ' + width);
+                assert(await page.locator('#looper-action-row').evaluate(row => row.scrollWidth <= row.clientWidth || getComputedStyle(row).overflowX === 'auto'), 'narrow toolbar is scrollable');
                 assert(visualBox.y >= controlsBox.y + controlsBox.height && visualBox.y + visualBox.height <= bar.y + 1,
                     'position views stay between transport and timestamp actions at ' + width);
                 const bounds = await drawer.boundingBox();
@@ -171,7 +176,7 @@ let revision = 1, writable = true;
         assert.match(await page.locator('#looper-segments').textContent(), /zatím nemá časové značky/);
         writable = false;
         await reload.click();
-        await page.waitForFunction(() => document.querySelector('#looper-panel > .looper-timestamp-actions').textContent && document.querySelector('#looper-panel > .looper-timestamp-actions > button:nth-child(2)').hidden);
+        await page.waitForFunction(() => document.querySelector('#looper-action-row > .looper-timestamp-actions').textContent && document.querySelector('#looper-action-row > .looper-timestamp-actions > button:nth-child(2)').hidden);
         assert(await reload.isVisible(), 'refresh remains available in read-only mode');
         assert.deepEqual(errors, []);
         console.log('PASS close/reopen cleanup, empty recording, read-only controls, no JavaScript errors');

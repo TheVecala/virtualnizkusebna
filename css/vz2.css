@@ -514,7 +514,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
     #looper-timestamps, #mixer-timestamps { display: none; position: fixed; z-index: 35; inset: var(--ts-drawer-top, 50%) 8px 0; padding: 8px 10px; overflow: auto; background: var(--color-panel); border: 1px solid var(--color-player-border); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 20px var(--color-shadow-medium); }
     #looper-timestamps.ts-drawer-open, #mixer-timestamps.ts-drawer-open { display: block; animation: timestamp-drawer-rise .18s ease-out; }
     #player-shell.player-fullscreen #looper-timestamps { display: block; position: static; flex: 1 1 0; min-height: 0; margin-top: 8px; animation: none; box-shadow: none; }
-    #player-shell.player-fullscreen #looper-panel > .looper-timestamp-actions > button:first-child { display: none; }
+    #player-shell.player-fullscreen #looper-action-row > .looper-timestamp-actions > button:first-child { display: none; }
     #player-shell.player-fullscreen #looper-timestamps > .ts-inline[open] { position: static; width: 100%; margin: 0 0 8px; box-shadow: none; }
     #looper-timestamps .vz2-timestamps, #mixer-timestamps .vz2-timestamps { margin: 0; border: 0; }
     #looper-timestamps .ts-summary, #looper-timestamps .ts-desktop-action,
@@ -764,26 +764,23 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 #looper-visuals > .timeline { flex: 0 0 auto; justify-content: space-between; margin: 0 0 4px; }
 #looper-visuals > #looper-wave-scroll { flex: 0 0 auto; }
 #looper-segments { flex: 0 1 auto; min-height: 0; max-height: min(220px, 25dvh); overflow-y: auto; margin-bottom: 6px; }
-#looper-panel > .looper-timestamp-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-#looper-panel > .looper-timestamp-actions > button { min-height: 34px; padding: 4px 8px; font-size: 12px; }
-#looper-panel > .looper-timestamp-actions > button:first-child { flex: 1 1 auto; }
+#looper-action-row { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+#looper-action-row > .looper-timestamp-actions { display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: 5px; margin: 0; }
+#looper-action-row > .looper-timestamp-actions > button { flex: 0 0 auto; min-height: 36px; padding: 4px 8px; font-size: 12px; white-space: nowrap; }
 #looper-timestamps { display: none; position: fixed; z-index: 35; inset: var(--ts-drawer-top, 50%) 8px 0; padding: 8px 10px; overflow: auto; background: var(--color-panel); border: 1px solid var(--color-player-border); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 20px var(--color-shadow-medium); }
 #looper-timestamps.ts-drawer-open { display: block; animation: timestamp-drawer-rise .18s ease-out; }
 #looper-timestamps .vz2-timestamps { margin: 0; border: 0; }
 #looper-timestamps .ts-summary, #looper-timestamps .ts-desktop-action { display: none; }
 #looper-timestamps .ts-content > .toolbar { margin: 0; }
 #looper-timestamps .ts-content > .toolbar:not(:has(> button:not([hidden]):not(.ts-desktop-action))) { display: none; }
-.looper-view-switch { display: flex; gap: 6px; margin-bottom: 8px; }
-.looper-view-switch button { flex: 1 1 0; min-width: 0; min-height: 36px; padding: 4px 6px; font-size: 12px; }
+.looper-view-switch { display: flex; flex: 0 0 auto; gap: 6px; }
+.looper-view-switch button { flex: 0 0 auto; min-width: 0; min-height: 36px; padding: 4px 6px; font-size: 12px; white-space: nowrap; }
 .looper-view-switch button[aria-pressed=true] { color: var(--color-primary-text); background: var(--color-primary-bg); border-color: var(--color-primary); }
 #looper-segments .segment-item { min-height: 0; }
 #looper-segments .segment-recording { padding: 8px 14px; }
 #looper-segments .segment-recording-header { display: none; }
 #player-shell.player-fullscreen #looper-timestamps { display: block; position: static; flex: 1 1 0; min-height: 0; margin-top: 8px; animation: none; box-shadow: none; }
-#player-shell.player-fullscreen #looper-panel > .looper-timestamp-actions > button:first-child { display: none; }
-@media (max-width: 420px) {
-    #looper-panel > .looper-timestamp-actions > button:first-child { flex-basis: 100%; }
-}
+#player-shell.player-fullscreen #looper-action-row > .looper-timestamp-actions > button:first-child { display: none; }
 @media (prefers-reduced-motion: reduce) { #looper-timestamps.ts-drawer-open { animation: none; } }
 
 /* Keep desktop timestamp editing in the player surface so transport stays usable. */

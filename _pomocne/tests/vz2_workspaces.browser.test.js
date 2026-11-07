@@ -631,7 +631,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(await editor.locator('[name=label]').isVisible(), 'The annotation title is visible');
         await shot('timestamp-editor-390');
         await editor.locator('.annotation-close').click();
-        await page.locator('#looper-panel > .looper-timestamp-actions').getByRole('button', { name: 'Otevřít časové značky' }).click();
+        await page.locator('#looper-action-row > .looper-timestamp-actions').getByRole('button', { name: 'Otevřít časové značky' }).click();
         await page.locator('#looper-view-wave').click();
         const normalWaveHeight = (await page.locator('#looper-wave').boundingBox()).height;
         await page.locator('#player-fullscreen').click();

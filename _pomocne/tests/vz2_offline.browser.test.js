@@ -179,7 +179,7 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         // Timestamp loops now live only in the Looper and survive source replacement.
         await page.evaluate(r => Vz2Player.openLooper(r, r.files[0]), recordings.find(r => r.id === 4));
         await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready');
-        await page.locator('#looper-panel > .looper-timestamp-actions > button').first().click();
+        await page.locator('#looper-action-row > .looper-timestamp-actions > button').first().click();
         await page.waitForFunction(() => document.querySelector('#looper-timestamps [data-playback="loop"]'), null, { timeout: 5000 });
         await page.locator('#looper-timestamps [data-playback="loop"]').click();
         await page.waitForFunction(() => !document.querySelector('#looper-audio').paused && document.querySelector('#looper-audio').currentTime < 4);
