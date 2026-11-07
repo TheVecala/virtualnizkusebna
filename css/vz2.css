@@ -759,8 +759,11 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
     #player-shell[data-mode=mixer] #player-title-mobile { display: inline; }
 }
 
-/* Looper: transport stays in the bar; detailed views share one drawer. */
-#looper-panel > .timeline { margin: 0 0 4px; }
+/* Three position views stay below transport; the drawer contains timestamps. */
+#looper-panel > #looper-visuals { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 40px; min-width: 0; }
+#looper-visuals > .timeline { flex: 0 0 auto; justify-content: space-between; margin: 0 0 4px; }
+#looper-visuals > #looper-wave-scroll { flex: 0 0 auto; }
+#looper-segments { flex: 0 1 auto; min-height: 0; max-height: min(220px, 25dvh); overflow-y: auto; margin-bottom: 6px; }
 #looper-panel > .looper-timestamp-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 #looper-panel > .looper-timestamp-actions > button { min-height: 34px; padding: 4px 8px; font-size: 12px; }
 #looper-panel > .looper-timestamp-actions > button:first-child { flex: 1 1 auto; }
@@ -771,11 +774,11 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 #looper-timestamps .ts-content > .toolbar { margin: 0; }
 #looper-timestamps .ts-content > .toolbar:not(:has(> button:not([hidden]):not(.ts-desktop-action))) { display: none; }
 .looper-view-switch { display: flex; gap: 6px; margin-bottom: 8px; }
-.looper-view-switch button { flex: 1 1 0; min-height: 36px; }
+.looper-view-switch button { flex: 1 1 0; min-width: 0; min-height: 36px; padding: 4px 6px; font-size: 12px; }
 .looper-view-switch button[aria-pressed=true] { color: var(--color-primary-text); background: var(--color-primary-bg); border-color: var(--color-primary); }
-#looper-segments-hint { margin: 8px 0; color: var(--color-text-muted); font-size: 12px; }
 #looper-segments .segment-item { min-height: 0; }
-#looper-timestamps.looper-view-segments .ts-list > li:not(.ts-selected) { display: none; }
+#looper-segments .segment-recording { padding: 8px 14px; }
+#looper-segments .segment-recording-header { display: none; }
 #player-shell.player-fullscreen #looper-timestamps { display: block; position: static; flex: 1 1 0; min-height: 0; margin-top: 8px; animation: none; box-shadow: none; }
 #player-shell.player-fullscreen #looper-panel > .looper-timestamp-actions > button:first-child { display: none; }
 @media (max-width: 420px) {

@@ -4,7 +4,7 @@
     const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, mixerVolumeBeforeMute = 1;
     let waveColors;
-    let looperView = 'wave';
+    let looperView = 'slider';
     function waveformColors() {
         if (waveColors) return waveColors;
         const styles = getComputedStyle(document.documentElement);
@@ -143,9 +143,6 @@
     function closeLooper() {
         const old = looper; looper = null;
         if (old) {
-            // Keep the shared visualization nodes when the timestamp panel is rebuilt.
-            $('looper-visuals').hidden = true;
-            $('looper-panel').append($('looper-visuals'));
             old.segments?.destroy();
             old.abort.abort(); old.unwatch?.(); old.notes?.destroy(); old.audio.pause(); old.audio.removeAttribute('src'); old.audio.load(); old.audio.remove();
             old.audioSource?.release();
@@ -210,8 +207,6 @@
             playRange: async (start) => { if (!live() || current.phase !== 'ready') throw new Error('Looper není připravený.'); audio.loop = false; audio.currentTime = start / 1000; await audio.play(); }
         };
         current.notes = window.Vz2Timestamps.mount($('looper-timestamps'), recording.id, adapter);
-        current.notes.shell.querySelector('.ts-content').prepend($('looper-visuals'));
-        $('looper-visuals').hidden = false;
         current.segments = window.Vz2SegmentsPanel.mount($('looper-segments'), {
             options: { compact: true },
             onSelect: ({ segment }) => {
@@ -369,15 +364,14 @@
     function setLooperView(view) {
         looperView = view;
         const segments = view === 'segments';
-        $('looper-view-wave').setAttribute('aria-pressed', String(!segments));
-        $('looper-view-segments').setAttribute('aria-pressed', String(segments));
-        $('looper-wave-scroll').hidden = segments;
+        for (const name of ['slider', 'wave', 'segments']) $('looper-view-' + name).setAttribute('aria-pressed', String(view === name));
+        $('looper-seek').hidden = view !== 'slider';
+        $('looper-wave-scroll').hidden = view !== 'wave';
         $('looper-segments').hidden = !segments;
-        $('looper-segments-hint').hidden = !segments;
-        $('looper-timestamps').classList.toggle('looper-view-segments', segments);
         if (segments) looper?.segments?.setOptions({});
         update();
     }
+    $('looper-view-slider').onclick = () => setLooperView('slider');
     $('looper-view-wave').onclick = () => setLooperView('wave');
     $('looper-view-segments').onclick = () => setLooperView('segments');
     function draw() {

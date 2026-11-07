@@ -107,7 +107,7 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         assert.deepEqual(await page.evaluate(async () => (await idbKeyval.get(peakKey, peakStore))?.peaks), [0.1, 0.6, 0.3]);
         assert.equal(await page.evaluate(() => decodeCalls), 0);
         assert.equal(await page.locator('#looper-status').textContent(), '');
-        await page.locator('#looper-panel > .looper-timestamp-actions > button').first().click();
+        await page.locator('#looper-view-wave').click();
         assert(await page.locator('#looper-wave').evaluate(canvas => {
             return canvas.getContext('2d').getImageData(Math.floor(canvas.width / 3), 30, 1, 1).data[3] > 0;
         }), 'Server peaks are drawn for saved audio');

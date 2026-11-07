@@ -632,6 +632,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await shot('timestamp-editor-390');
         await editor.locator('.annotation-close').click();
         await page.locator('#looper-panel > .looper-timestamp-actions').getByRole('button', { name: 'Otevřít časové značky' }).click();
+        await page.locator('#looper-view-wave').click();
         const normalWaveHeight = (await page.locator('#looper-wave').boundingBox()).height;
         await page.locator('#player-fullscreen').click();
         assert.equal((await page.locator('#looper-wave').boundingBox()).height, normalWaveHeight, 'Mobile fullscreen preserves waveform height');
