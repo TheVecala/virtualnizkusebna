@@ -87,7 +87,7 @@ let revision = 1, writable = true;
         assert.equal(await actions.getByRole('button', { name: 'Export', exact: true }).count(), 0);
         const reload = actions.getByRole('button', { name: 'Obnovit značky', exact: true });
         assert(await reload.isVisible());
-        assert.equal(await reload.evaluate(e => e.previousElementSibling.textContent), 'Přidat značku');
+        assert.equal(await reload.evaluate(e => e.previousElementSibling.textContent), 'editor značek');
         await page.locator('#looper-view-wave').click();
         await page.locator('.looper-wave-marker').first().waitFor();
         assert(await page.locator('#looper-wave').isVisible());

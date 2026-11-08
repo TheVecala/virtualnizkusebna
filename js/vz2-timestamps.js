@@ -201,8 +201,8 @@
                 if (mixToggle?.getAttribute('aria-expanded') === 'true') mixToggle.click();
             }
             container.classList.toggle('ts-drawer-open', open);
-            mobileToggle.textContent = mixerPanel ? 'Časové značky' : (open ? 'Zavřít' : 'Otevřít') + ' časové značky';
-            if (mixerPanel) mobileToggle.setAttribute('aria-label', (open ? 'Zavřít' : 'Otevřít') + ' časové značky');
+            mobileToggle.textContent = mixerPanel ? 'Časové značky' : 'značky';
+            mobileToggle.setAttribute('aria-label', (open ? 'Zavřít' : 'Otevřít') + ' časové značky');
             mobileToggle.setAttribute('aria-expanded', String(open));
             if (open) { shell.open = true; positionDrawer(); }
         };
@@ -215,10 +215,10 @@
         if (container.id === 'looper-timestamps' || container.id === 'mixer-timestamps') {
             mobileMedia = matchMedia('(max-width: 767px)');
             mobileActions = el('div'); mobileActions.className = 'looper-timestamp-actions';
-            mobileToggle = button(mixerPanel ? 'Časové značky' : 'Otevřít časové značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
-            if (mixerPanel) mobileToggle.setAttribute('aria-label', 'Otevřít časové značky');
+            mobileToggle = button(mixerPanel ? 'Časové značky' : 'značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
+            mobileToggle.setAttribute('aria-label', 'Otevřít časové značky');
             mobileToggle.setAttribute('aria-expanded', 'false'); mobileToggle.setAttribute('aria-controls', container.id);
-            mobileAdd = button('Přidat značku', () => openEditor(panel, null)); mobileAdd.disabled = true;
+            mobileAdd = button(looperPanel ? 'editor značek' : 'Přidat značku', () => openEditor(panel, null)); mobileAdd.disabled = true;
             mobileQuickUp = button('👍', () => quickNote(panel, '👍'));
             mobileQuickDown = button('👎', () => quickNote(panel, '👎'));
             for (const [control, label] of [[mobileQuickUp, 'Přidat poznámku: palec nahoru'], [mobileQuickDown, 'Přidat poznámku: palec dolů']]) {
@@ -269,10 +269,8 @@
                         try { api.stopLoop(); await this.adapter.playRange(row.time_ms); }
                         catch (e) { status.textContent = e.message; }
                     }); seek.className = 'ts-time'; seek.title = 'Přehrát od ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
-                    const text = el('p', annotation.label), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
-                    const boundary = row.kind === 'song_start' || row.kind === 'song_end' ? boundaryIcon(row.kind) : null;
-                    // Older empty boundaries store an arrow as their body; show the type icon once.
-                    if (annotation.song_title) text.append(' · ' + annotation.song_title);
+                    const text = el('p', [annotation.song_title, annotation.label].filter(Boolean).join(' · ')), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
+                    const boundary = row.kind === 'song_end' ? boundaryIcon(row.kind) : null;
                     if (annotation.passage_type) text.append(' ', el('small', Model.passageTypes[annotation.passage_type]));
                     if (annotation.note_text) text.append(el('br'), document.createTextNode(annotation.note_text));
                     const endText = annotation.end_source?.body?.replace(/^[↑↓]$/, '');

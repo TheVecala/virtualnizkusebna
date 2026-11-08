@@ -623,7 +623,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.waitForTimeout(150);
         assert(await page.locator('#looper-audio').evaluate(audio => audio.paused), 'Manual Looper pause stops its timestamp loop');
         await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Zavřít časové značky' }).click();
-        await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
+        await page.locator('#looper-action-row .looper-timestamp-actions').getByRole('button', { name: 'editor značek', exact: true }).click();
         const editor = page.locator('.vz2-annotation-editor');
         await editor.waitFor({ state: 'visible' });
         const editorBox = await editor.boundingBox();
@@ -637,7 +637,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#player-fullscreen').click();
         assert.equal((await page.locator('#looper-wave').boundingBox()).height, normalWaveHeight, 'Mobile fullscreen preserves waveform height');
         assert(await page.locator('#looper-timestamps .ts-song_start').isVisible(), 'Mobile fullscreen opens timestamps automatically');
-        await page.locator('.looper-timestamp-actions').getByRole('button', { name: 'Přidat značku' }).click();
+        await page.locator('#looper-action-row .looper-timestamp-actions').getByRole('button', { name: 'editor značek', exact: true }).click();
         await editor.waitFor({ state: 'visible' });
         const fullscreenEditorBox = await editor.boundingBox();
         assert(fullscreenEditorBox.x >= 0 && fullscreenEditorBox.y >= 0 && fullscreenEditorBox.x + fullscreenEditorBox.width <= 390 && fullscreenEditorBox.y + fullscreenEditorBox.height <= 844, 'The fullscreen annotation editor fits the viewport');
