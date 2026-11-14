@@ -37,7 +37,8 @@
 .annotation-parent { flex: none; margin: 0 12px 6px; }
 .vz2-annotation-editor .annotation-parent-hint { font-size: 12px; color: var(--color-text-muted); margin: 0 0 4px; }
 .annotation-top-row { display: grid; grid-template-columns: minmax(210px, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
-.vz2-annotation-editor[data-kind=note] .annotation-top-row, .vz2-annotation-editor[data-kind=passage] .annotation-top-row { grid-template-columns: minmax(0, 1fr); }
+.vz2-annotation-editor[data-kind=note] .annotation-top-row { grid-template-columns: max-content minmax(0, 1fr); }
+.vz2-annotation-editor[data-kind=note] .annotation-caption-row { margin-top: 0; }
 .annotation-time-values { display: flex; align-items: baseline; gap: .25em; font-size: clamp(26px, 6.5vw, 32px); line-height: 1.25; white-space: nowrap; }
 .vz2-annotation-editor [data-edit-time] { color: var(--color-primary); font-variant-numeric: tabular-nums; white-space: nowrap; border: 0; background: transparent; min-width: 0; min-height: 40px; padding: 0; font-size: inherit; line-height: inherit; }
 .vz2-annotation-editor [data-edit-time]:hover { text-decoration: underline; }

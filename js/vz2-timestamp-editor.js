@@ -25,10 +25,10 @@
                             </div>
                         </div>
                         <div class="annotation-song" data-choice="song"></div>
+                        <div class="annotation-passage" data-choice="passage_type"></div>
                     </div>
                     <p class="annotation-time-error error" role="alert"></p>
                     <details class="annotation-fine"><summary>Zavřít přesné časy</summary><div class="annotation-fine-rows"></div><button type="button" class="annotation-clear-end">Doplnit konec později</button></details>
-                    <div class="annotation-passage annotation-field"><span>Typ pasáže</span><div data-choice="passage_type"></div></div>
                     <div class="annotation-caption-row">
                         <div class="annotation-title-field"><label for="annotation-label" class="visually-hidden">Popisek</label><input id="annotation-label" name="label" placeholder="Popisek" maxlength="4000"><button type="button" class="annotation-note-open" aria-label="Doplňující poznámka">+poz</button></div>
                         <button type="submit" class="annotation-save">uložit</button>
@@ -42,6 +42,7 @@
                 <section class="annotation-reference" aria-label="Časové značky nahrávky"><h3></h3><ol tabindex="0" aria-label="Seznam časových značek"></ol></section>
             </div>
         </form>`;
+        if (kind === 'note') dialog.querySelector('.annotation-top-row').append(dialog.querySelector('.annotation-caption-row'));
         document.body.append(dialog);
         const form = dialog.querySelector('form'), error = dialog.querySelector('.annotation-error'), timeError = dialog.querySelector('.annotation-time-error');
         const label = form.elements.label, choices = {}, controls = root.Vz2TimestampControls;
@@ -156,7 +157,7 @@
         }
         function populate(value, initial = false) {
             selected = value; kind = value?.kind || kind; invalidTimes.clear();
-            start = value?.start_ms ?? draft.time_ms ?? null;
+            start = value?.start_ms ?? draft.time_ms ?? currentTime();
             const capturedEnd = finish && value && value.end_ms == null && adapter?.canPlay?.() && draft.time_ms > start ? draft.time_ms : null;
             end = kind === 'note' ? null : value?.end_ms ?? capturedEnd ?? draft.end_time_ms ?? null;
             label.value = value?.source.body?.replace(/^[↑↓]$/, '') || draft.body || '';
@@ -197,8 +198,9 @@
         choices.parent.onChange(() => {
             const parent = parentTake();
             if (parent) {
-                start = null; end = null; invalidTimes.clear(); timeError.textContent = ''; report('');
-                player.seek(parent.start_ms);
+                if (start == null || start < parent.start_ms || start >= parent.end_ms) start = parent.start_ms;
+                end = null; invalidTimes.clear(); timeError.textContent = ''; report('');
+                player.seek(start);
             }
             update(); reference();
         });
@@ -274,9 +276,11 @@
                 revision = latestList.timestamps_revision;
                 // A successful save starts a blank annotation without replacing the player or its waveform.
                 const parentId = choices.parent.value;
-                item = null; finish = false; draft = {}; pendingLatest = null;
+                item = null; finish = false; draft = { time_ms: currentTime() }; pendingLatest = null;
                 populate(null);
                 choices.song.value = ''; choices.passage_type.value = 'custom'; choices.parent.value = kind === 'passage' ? parentId : ''; choices.existing.value = '';
+                const parent = parentTake();
+                if (kind === 'passage' && parent && (start < parent.start_ms || start >= parent.end_ms)) start = parent.start_ms;
                 reference();
                 baseline = state(); justSaved = true;
                 dialog.querySelector('.annotation-fine').open = false;
@@ -292,8 +296,8 @@
         async open({ recording_id, kind = 'take', item_id = null, adapter = null, finish = false, draft = {}, list = null }) {
             if (opening) return;
             if (active?.dialog.open) { active.dialog.focus(); return; }
-            // Finishing an existing interval captures now; new forms wait for an explicit time insertion.
-            draft = finish ? { time_ms: Math.max(0, Math.round(adapter?.currentTimeMs?.() ?? 0)), ...draft } : { ...draft };
+            // Capture the opening position before loading data; explicit selection drafts take precedence.
+            draft = { time_ms: Math.max(0, Math.round(adapter?.currentTimeMs?.() ?? 0)), ...draft };
             opening = true;
             try {
                 list = list || await Store.load(recording_id);
