@@ -268,7 +268,7 @@ const root = path.resolve(__dirname, '../..');
             assert(order.captureStart.top >= order.start.bottom && order.captureEnd.top >= order.end.bottom, 'each capture button sits below its time');
             assert(order.save.left >= order.caption.right && Math.abs(order.save.top - order.caption.top) < 1, 'save is beside the caption');
             assert(order.older.top > order.caption.bottom, 'older timestamps stay at the bottom');
-            assert.equal(await editor.locator('[data-capture=start]').textContent(), 'zač');
+            assert.equal(await editor.locator('[data-capture=start]').textContent(), 'Začátek teď');
             assert.equal(await editor.locator('[data-edit-time=end]').textContent(), '—');
             await editor.locator('[data-edit-time=start]').click();
             assert(await editor.locator('[name=start]').isVisible(), 'clicking time opens fine tuning');

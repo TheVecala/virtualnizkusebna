@@ -20,9 +20,9 @@
                     <div class="annotation-top-row">
                         <div class="annotation-times">
                             <div class="annotation-boundaries">
-                                <div class="annotation-time-row" role="group" aria-label="Začátek"><button type="button" data-edit-time="start"></button><button type="button" data-capture="start">zač</button></div>
+                                <div class="annotation-time-row" role="group" aria-label="Začátek"><button type="button" data-edit-time="start"></button><button type="button" data-capture="start">Začátek teď</button></div>
                                 <span class="annotation-time-dash" aria-hidden="true">–</span>
-                                <div class="annotation-time-row annotation-end" role="group" aria-label="Konec"><button type="button" data-edit-time="end"></button><button type="button" data-capture="end" aria-label="Nastavit konec podle přehrávače">kon</button></div>
+                                <div class="annotation-time-row annotation-end" role="group" aria-label="Konec"><button type="button" data-edit-time="end"></button><button type="button" data-capture="end" aria-label="Nastavit konec podle přehrávače">Konec teď</button></div>
                             </div>
                         </div>
                         <div class="annotation-song" data-choice="song"></div>
@@ -98,9 +98,12 @@
             dialog.querySelector('[data-capture=start]').setAttribute('aria-label', point ? 'Nastavit čas poznámky' : 'Nastavit začátek');
             dialog.querySelector('[data-capture=start]').title = point ? 'Nastavit čas poznámky podle přehrávače' : 'Nastavit začátek podle přehrávače';
             const exact = ms => format(ms) + (ms % 1000 ? ',' + String(ms % 1000).padStart(3, '0') : '');
-            dialog.querySelector('[data-capture=start]').textContent = point ? 'teď' : 'zač';
-            dialog.querySelector('[data-edit-time=start]').textContent = exact(start);
-            dialog.querySelector('[data-edit-time=end]').textContent = end == null ? '—' : exact(end);
+            dialog.querySelector('[data-capture=start]').textContent = point ? 'Čas teď' : 'Začátek teď';
+            for (const [edge, ms] of [['start', start], ['end', end]]) {
+                const button = dialog.querySelector('[data-edit-time=' + edge + ']');
+                button.replaceChildren(make('span', ms == null ? '—' : format(ms), 'annotation-time-main'));
+                if (ms != null && ms % 1000) button.append(make('span', ',' + String(ms % 1000).padStart(3, '0'), 'annotation-time-fraction'));
+            }
             dialog.querySelector('[data-edit-time=start]').setAttribute('aria-label', (point ? 'Upravit čas poznámky ' : 'Upravit začátek ') + exact(start));
             dialog.querySelector('[data-edit-time=end]').setAttribute('aria-label', end == null ? 'Doplnit konec' : 'Upravit konec ' + exact(end));
             dialog.querySelector('.annotation-song').hidden = kind !== 'take';
