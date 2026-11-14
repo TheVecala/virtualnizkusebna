@@ -1,4 +1,4 @@
-/* Timestamp editor A5: one compact player and one scrolling form. */
+/* Timestamp editor: controls above a persistent, live timestamp preview. */
 .vz2-annotation-editor {
     width: min(620px, calc(100vw - 32px)); height: min(820px, calc(100dvh - 32px));
     max-width: none; max-height: none; margin: auto; padding: 0; overflow: hidden;
@@ -38,16 +38,14 @@
 .annotation-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px 8px; }
 .annotation-times, .annotation-fields { border: 1px solid var(--color-border); border-radius: 7px; padding: 4px 8px; margin-bottom: 8px; }
 .annotation-times { position: relative; }
-.annotation-boundaries { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 6px; padding-right: 40px; min-height: 42px; }
-.annotation-time-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px; min-width: 0; }
+.annotation-boundaries { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 6px; padding-right: 66px; min-height: 42px; }
+.annotation-time-row { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 2px; min-width: 0; }
 .annotation-boundaries.annotation-point { grid-template-columns: minmax(0, 1fr); }
-.vz2-annotation-editor .annotation-time { color: var(--color-primary); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; white-space: nowrap; min-width: 0; border-color: transparent; text-align: center; padding-inline: 0; }
-.vz2-annotation-editor [data-capture] { font-size: 12px; padding-inline: 6px; white-space: nowrap; }
+.vz2-annotation-editor [data-capture] { font-size: 13px; padding-inline: 6px; white-space: nowrap; }
 .vz2-annotation-editor .annotation-fine { border: 0; padding: 0; }
-.vz2-annotation-editor .annotation-fine summary { position: absolute; top: 4px; right: 4px; display: flex; align-items: center; justify-content: center; width: 36px; height: 42px; min-height: 42px; padding: 0; border: 1px solid var(--color-control-border); border-radius: 4px; background: var(--color-control-bg); color: var(--color-control-text); list-style: none; cursor: pointer; }
+.vz2-annotation-editor .annotation-fine summary { position: absolute; top: 4px; right: 4px; display: flex; align-items: center; justify-content: center; width: 60px; height: 42px; min-height: 42px; padding: 0; border: 1px solid var(--color-control-border); border-radius: 4px; background: var(--color-control-bg); color: var(--color-control-text); list-style: none; cursor: pointer; }
 .annotation-fine summary::-webkit-details-marker { display: none; }
 .annotation-fine summary::marker { content: ''; }
-.annotation-fine summary svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; }
 .vz2-annotation-editor .annotation-fine[open] summary { border-color: var(--color-primary); color: var(--color-primary); }
 .annotation-fine[open] .annotation-fine-rows { padding-top: 8px; }
 .annotation-fine-row { display: flex; flex-wrap: wrap; align-items: end; gap: 4px; margin-bottom: 8px; }
@@ -56,9 +54,11 @@
 .annotation-fine-row button { flex: 1; font-size: 12px; }
 .annotation-field, .annotation-existing { display: grid; grid-template-columns: 78px minmax(0, 1fr); align-items: center; gap: 6px; padding: 5px 0; }
 .vz2-annotation-editor .annotation-field label, .annotation-field > span, .annotation-existing > span { font-size: 14px; margin: 0; }
-.vz2-annotation-editor .annotation-title-field { grid-template-columns: 78px minmax(0, 1fr) 42px; }
-.vz2-annotation-editor .annotation-title-field input { width: 100%; height: 42px; }
-.annotation-note-open { font-size: 23px; }
+.annotation-field-tools { display: flex; gap: 6px; padding: 5px 0; }
+.annotation-field-tools button { flex: 1; }
+.vz2-annotation-editor .annotation-title-field { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.vz2-annotation-editor .annotation-title-field label { font-size: 13px; margin: 0; }
+.vz2-annotation-editor .annotation-title-field input { flex: 1; width: 100%; height: 42px; }
 .annotation-note-open.has-note { color: var(--color-primary); border-color: var(--color-primary); background: var(--color-primary-bg); }
 .annotation-reference { margin-top: 7px; border: 1px solid var(--color-border); border-radius: 5px; overflow: hidden; }
 .annotation-reference h3 { margin: 0; padding: 7px 8px; font-size: 13px; background: var(--color-shell); }
@@ -69,12 +69,17 @@
 .annotation-reference .annotation-child { padding-left: 12px; }
 .annotation-reference .annotation-selected { background: var(--color-primary-bg); }
 .annotation-footer { flex: 0 0 auto; padding: 7px 10px max(8px, env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border); background: var(--color-panel); }
-.annotation-summary { display: block; font-size: 13px; padding-bottom: 6px; }
-.annotation-summary-row { justify-content: space-between; flex-wrap: wrap; }
-.annotation-save-status { font-size: 13px; }
-.annotation-footer > div { display: flex; gap: 8px; }
-.annotation-footer button { flex: 1; }
-.annotation-footer .annotation-save { flex: 1.5; }
+.annotation-save-status { display: block; font-size: 12px; color: var(--color-text-muted); padding-top: 4px; }
+.annotation-actions { display: flex; gap: 8px; }
+.annotation-actions button { flex: 1; }
+.annotation-actions .annotation-save { flex: 1.5; }
+.annotation-preview { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; padding: 6px 8px; border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); border-radius: 5px; background: var(--color-shell); max-height: 120px; overflow-y: auto; }
+.annotation-preview-times { flex: none; max-width: 100%; font-variant-numeric: tabular-nums; }
+.vz2-annotation-editor .annotation-preview-times button { color: var(--color-primary); background: transparent; border: 0; padding: 4px 2px; min-height: 32px; font-size: 13px; font-weight: 600; }
+.vz2-annotation-editor .annotation-preview-times button:hover { text-decoration: underline; }
+.annotation-preview-text { flex: 1 1 140px; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+.vz2-annotation-editor .annotation-preview-note { margin: 3px 0 0; white-space: pre-wrap; font-size: 12px; color: var(--color-text-muted); }
+.annotation-preview.is-saved { border-color: var(--color-primary); }
 .vz2-annotation-editor .annotation-error, .vz2-annotation-editor .annotation-time-error { font-size: 13px; margin: 5px 0; }
 .vz2-annotation-editor .interval-current { padding: 8px; background: var(--color-shell); font-size: 13px; }
 .vz2-annotation-editor .interval-current p { margin: 4px 0; }
@@ -128,3 +133,6 @@
 .vz2-annotation-editor.annotation-tiny .annotation-header button { min-height: 32px; }
 .annotation-tiny .annotation-kinds button { min-height: 34px; }
 .annotation-note-dialog { position: fixed; left: 50%; right: auto; bottom: auto; transform: translateX(-50%); margin: 0; }
+
+.annotation-tiny .annotation-footer { max-height: 50%; overflow-y: auto; }
+.annotation-tiny .annotation-preview { margin-top: 4px; }
