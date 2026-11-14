@@ -134,7 +134,7 @@
                 lastDraw = signature; const dpr = root.devicePixelRatio || 1;
                 canvas.width = width * dpr; canvas.height = height * dpr; context.setTransform(dpr, 0, 0, dpr, 0, 0);
                 const colors = getComputedStyle(host);
-                if (range.end != null) {
+                if (range.start != null && range.end != null) {
                     const left = Math.max(0, (range.start - start) / span() * width), right = Math.min(width, (range.end - start) / span() * width);
                     context.fillStyle = colors.getPropertyValue('--color-primary').trim() || '#008a91'; context.globalAlpha = .12;
                     context.fillRect(left, 0, Math.max(0, right - left), height); context.globalAlpha = 1;

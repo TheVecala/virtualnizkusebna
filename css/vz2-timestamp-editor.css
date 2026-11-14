@@ -38,14 +38,12 @@
 .vz2-annotation-editor .annotation-parent-hint { font-size: 12px; color: var(--color-text-muted); margin: 0 0 4px; }
 .annotation-top-row { display: grid; grid-template-columns: minmax(210px, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .vz2-annotation-editor[data-kind=note] .annotation-top-row, .vz2-annotation-editor[data-kind=passage] .annotation-top-row { grid-template-columns: minmax(0, 1fr); }
-.annotation-boundaries { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 4px; max-width: 340px; }
-.annotation-time-row { display: grid; grid-template-rows: 58px auto; justify-items: start; min-width: 0; }
-.annotation-boundaries.annotation-point { grid-template-columns: minmax(0, 1fr); }
-.annotation-time-dash { align-self: start; font-size: clamp(26px, 6.5vw, 32px); line-height: 1.25; }
-.vz2-annotation-editor [data-edit-time] { color: var(--color-primary); font-variant-numeric: tabular-nums; white-space: nowrap; border: 0; background: transparent; min-width: 0; max-width: 100%; padding: 0; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; font-size: clamp(26px, 6.5vw, 32px); line-height: 1.25; }
-.annotation-time-fraction { font-size: 11px; line-height: 1.2; }
+.annotation-time-values { display: flex; align-items: baseline; gap: .25em; font-size: clamp(26px, 6.5vw, 32px); line-height: 1.25; white-space: nowrap; }
+.vz2-annotation-editor [data-edit-time] { color: var(--color-primary); font-variant-numeric: tabular-nums; white-space: nowrap; border: 0; background: transparent; min-width: 0; min-height: 40px; padding: 0; font-size: inherit; line-height: inherit; }
 .vz2-annotation-editor [data-edit-time]:hover { text-decoration: underline; }
-.vz2-annotation-editor [data-capture] { font-size: 12px; padding: 3px 6px; min-height: 30px; white-space: nowrap; }
+.vz2-annotation-editor .annotation-time-placeholder { color: var(--color-text-muted); }
+.annotation-captures { display: flex; gap: 8px; margin-top: 4px; }
+.vz2-annotation-editor [data-capture] { font-size: 11px; padding: 3px 6px; min-height: 30px; white-space: nowrap; }
 .vz2-annotation-editor .annotation-fine { border: 0; padding: 0; margin: 0; }
 .vz2-annotation-editor .annotation-fine:not([open]) > summary { display: none; }
 .vz2-annotation-editor .annotation-fine summary { width: fit-content; color: var(--color-text-muted); font-size: 12px; padding: 5px 0; cursor: pointer; }
