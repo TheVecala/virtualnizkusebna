@@ -1,4 +1,4 @@
-/* Timestamp editor: controls above a persistent, live timestamp preview. */
+/* Timestamp editor: live result first, recording timestamps below the editing controls. */
 .vz2-annotation-editor {
     width: min(620px, calc(100vw - 32px)); height: min(820px, calc(100dvh - 32px));
     max-width: none; max-height: none; margin: auto; padding: 0; overflow: hidden;
@@ -32,10 +32,18 @@
 .annotation-transport > span { height: 26px; border-left: 1px solid var(--color-border); margin: 0 6px; }
 .annotation-transport button { min-width: 42px; }
 .vz2-annotation-editor .annotation-play, .vz2-annotation-editor .annotation-save { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, white); }
-.annotation-kinds { display: flex; flex: none; gap: 3px; margin: 2px 10px 6px; padding: 3px; background: var(--color-shell); border: 1px solid var(--color-border); border-radius: 7px; }
-.annotation-kinds button { flex: 1; min-width: 0; }
-.vz2-annotation-editor .annotation-kinds button[aria-pressed=true] { background: var(--color-primary); color: var(--color-on-primary, white); border-color: var(--color-primary); opacity: 1; }
-.annotation-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px 8px; }
+.annotation-kinds { margin: 12px 0; padding: 4px 0; }
+.annotation-kind-labels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.vz2-annotation-editor .annotation-kind-labels button { min-width: 0; border: 0; background: transparent; color: var(--color-text-muted); }
+.vz2-annotation-editor .annotation-kind-labels button[aria-pressed=true] { color: var(--color-primary); font-weight: 700; opacity: 1; }
+.vz2-annotation-editor .annotation-kind-slider { display: block; appearance: none; width: calc(200% / 3 + 26px); height: 32px; margin: 0 auto; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.annotation-kind-slider::-webkit-slider-runnable-track { height: 8px; border-radius: 8px; background: var(--color-border); }
+.annotation-kind-slider::-moz-range-track { height: 8px; border-radius: 8px; background: var(--color-border); }
+.annotation-kind-slider::-webkit-slider-thumb { appearance: none; width: 26px; height: 26px; margin-top: -9px; border: 2px solid var(--color-panel); border-radius: 50%; background: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
+.annotation-kind-slider::-moz-range-thumb { width: 22px; height: 22px; border: 2px solid var(--color-panel); border-radius: 50%; background: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
+.annotation-kind-slider:disabled { opacity: .6; cursor: default; }
+.annotation-kind-slider:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: 16px; }
+.annotation-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px max(8px, env(safe-area-inset-bottom)); }
 .annotation-times, .annotation-fields { border: 1px solid var(--color-border); border-radius: 7px; padding: 4px 8px; margin-bottom: 8px; }
 .annotation-times { position: relative; }
 .annotation-boundaries { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 6px; padding-right: 66px; min-height: 42px; }
@@ -56,24 +64,23 @@
 .vz2-annotation-editor .annotation-field label, .annotation-field > span, .annotation-existing > span { font-size: 14px; margin: 0; }
 .annotation-field-tools { display: flex; gap: 6px; padding: 5px 0; }
 .annotation-field-tools button { flex: 1; }
-.vz2-annotation-editor .annotation-title-field { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.vz2-annotation-editor .annotation-title-field { margin: 0; }
 .vz2-annotation-editor .annotation-title-field label { font-size: 13px; margin: 0; }
-.vz2-annotation-editor .annotation-title-field input { flex: 1; width: 100%; height: 42px; }
+.vz2-annotation-editor .annotation-title-field input { width: 100%; height: 42px; }
 .annotation-note-open.has-note { color: var(--color-primary); border-color: var(--color-primary); background: var(--color-primary-bg); }
 .annotation-reference { margin-top: 7px; border: 1px solid var(--color-border); border-radius: 5px; overflow: hidden; }
 .annotation-reference h3 { margin: 0; padding: 7px 8px; font-size: 13px; background: var(--color-shell); }
-.annotation-reference ol { margin: 0; padding: 0 8px; list-style: none; overflow-y: auto; max-height: 114px; min-height: 40px; overscroll-behavior: contain; scrollbar-width: thin; }
+.annotation-reference ol { margin: 0; padding: 0 8px; list-style: none; min-height: 40px; }
 .annotation-reference li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding: 7px 0; font-size: 12px; border-top: 1px solid var(--color-border); }
 .annotation-reference li > span:first-child { color: var(--color-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .annotation-reference li > span:last-child { overflow-wrap: anywhere; }
 .annotation-reference .annotation-child { padding-left: 12px; }
 .annotation-reference .annotation-selected { background: var(--color-primary-bg); }
-.annotation-footer { flex: 0 0 auto; padding: 7px 10px max(8px, env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border); background: var(--color-panel); }
+.annotation-live { padding: 0 0 8px; }
+.annotation-preview-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; gap: 8px; }
+.annotation-preview-row > .annotation-save { align-self: start; min-width: 72px; }
 .annotation-save-status { display: block; font-size: 12px; color: var(--color-text-muted); padding-top: 4px; }
-.annotation-actions { display: flex; gap: 8px; }
-.annotation-actions button { flex: 1; }
-.annotation-actions .annotation-save { flex: 1.5; }
-.annotation-preview { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; padding: 6px 8px; border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); border-radius: 5px; background: var(--color-shell); max-height: 120px; overflow-y: auto; }
+.annotation-preview { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; padding: 4px 6px; border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); border-radius: 5px; background: var(--color-shell); max-height: 120px; overflow-y: auto; }
 .annotation-preview-times { flex: none; max-width: 100%; font-variant-numeric: tabular-nums; }
 .vz2-annotation-editor .annotation-preview-times button { color: var(--color-primary); background: transparent; border: 0; padding: 4px 2px; min-height: 32px; font-size: 13px; font-weight: 600; }
 .vz2-annotation-editor .annotation-preview-times button:hover { text-decoration: underline; }
@@ -107,7 +114,6 @@
     .vz2-annotation-editor .annotation-header { padding-block: 4px; }
     .annotation-transport { padding-block: 3px; }
     .annotation-kinds { margin-bottom: 3px; }
-    .annotation-footer { padding-top: 4px; }
 }
 @media (max-height: 420px) {
     .annotation-wave { height: 48px; }
@@ -133,6 +139,3 @@
 .vz2-annotation-editor.annotation-tiny .annotation-header button { min-height: 32px; }
 .annotation-tiny .annotation-kinds button { min-height: 34px; }
 .annotation-note-dialog { position: fixed; left: 50%; right: auto; bottom: auto; transform: translateX(-50%); margin: 0; }
-
-.annotation-tiny .annotation-footer { max-height: 50%; overflow-y: auto; }
-.annotation-tiny .annotation-preview { margin-top: 4px; }

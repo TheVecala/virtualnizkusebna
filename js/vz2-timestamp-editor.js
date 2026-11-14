@@ -13,8 +13,13 @@
             <div class="annotation-header"><div><h2 id="annotation-title" class="visually-hidden"></h2><p class="interval-context"></p></div><button type="button" class="annotation-close" aria-label="Zavřít editor">×</button></div>
             <div class="annotation-player"></div>
             <div class="annotation-scroll">
-                <div class="annotation-kinds" role="group" aria-label="Typ časové značky"><button type="button" data-kind="take">Úsek</button><button type="button" data-kind="passage">Pasáž</button><button type="button" data-kind="note">Poznámka</button></div>
-                <div class="annotation-existing"><span>Rozpracovaný úsek</span><div data-choice="existing"></div></div>
+                <div class="annotation-live">
+                    <div class="annotation-preview-row">
+                        <div class="annotation-preview" role="group" aria-label="Náhled ukládané značky"><div class="annotation-preview-times"><button type="button" data-edit-time="start"></button><span class="annotation-preview-end"><span aria-hidden="true"> – </span><button type="button" data-edit-time="end"></button></span></div><div class="annotation-preview-text"><span class="annotation-preview-caption"></span><p class="annotation-preview-note"></p></div></div>
+                        <button type="submit" class="annotation-save">Uložit</button>
+                    </div>
+                    <span class="annotation-save-status" role="status"></span>
+                </div>
                 <div class="annotation-times">
                     <div class="annotation-boundaries">
                         <div class="annotation-time-row" role="group" aria-label="Začátek"><button type="button" data-capture="start">Začátek teď</button></div>
@@ -23,28 +28,28 @@
                     <p class="annotation-time-error error" role="alert"></p>
                     <details class="annotation-fine"><summary aria-label="Přesné časy">Časy</summary><div class="annotation-fine-rows"></div><button type="button" class="annotation-clear-end">Doplnit konec později</button></details>
                 </div>
+                <div class="annotation-kinds" role="group" aria-label="Typ časové značky">
+                    <input class="annotation-kind-slider" type="range" min="0" max="2" step="1" value="0" aria-label="Typ značky" aria-valuetext="Úsek">
+                    <div class="annotation-kind-labels"><button type="button" data-kind="take">Úsek</button><button type="button" data-kind="passage">Pasáž</button><button type="button" data-kind="note">Poznámka</button></div>
+                </div>
+                <div class="annotation-existing"><span>Rozpracovaný úsek</span><div data-choice="existing"></div></div>
                 <div class="annotation-fields">
                     <div class="annotation-song annotation-field"><span>Skladba</span><div data-choice="song"></div></div>
                     <div class="annotation-passage annotation-field"><span>Typ pasáže</span><div data-choice="passage_type"></div></div>
                     <div class="annotation-parent annotation-field"><span>Úsek</span><div data-choice="parent"></div></div>
-                    <div class="annotation-field-tools"><button type="button" class="annotation-label-toggle" aria-expanded="false" aria-controls="annotation-caption">Popisek</button><button type="button" class="annotation-note-open" aria-label="Doplňující poznámka">Poznámka</button></div>
-                    <section class="annotation-reference" aria-label="Časové značky nahrávky"><h3></h3><ol tabindex="0" aria-label="Seznam časových značek"></ol></section>
+                    <div class="annotation-field annotation-title-field"><label for="annotation-label">Popisek</label><input id="annotation-label" name="label" maxlength="4000"></div>
+                    <div class="annotation-field-tools"><button type="button" class="annotation-note-open" aria-label="Doplňující poznámka">Doplňující poznámka</button><button type="button" class="annotation-new">Nová značka</button></div>
                 </div>
                 <p class="error annotation-error" role="alert"></p>
                 <div class="interval-current" hidden></div><button type="button" class="interval-reload" hidden>Načíst aktuální verzi k porovnání</button><button type="button" class="annotation-rebase" hidden>Použít aktuální revizi</button>
-            </div>
-            <div class="annotation-footer">
-                <div class="annotation-actions"><button type="button" class="annotation-new">Nová značka</button><button type="submit" class="annotation-save">Uložit úsek</button></div>
-                <div id="annotation-caption" class="annotation-title-field" hidden><label for="annotation-label">Popisek</label><input id="annotation-label" name="label" maxlength="4000"></div>
-                <div class="annotation-preview" role="group" aria-label="Náhled ukládané značky"><div class="annotation-preview-times"><button type="button" data-edit-time="start"></button><span class="annotation-preview-end"><span aria-hidden="true"> – </span><button type="button" data-edit-time="end"></button></span></div><div class="annotation-preview-text"><span class="annotation-preview-caption"></span><p class="annotation-preview-note"></p></div></div>
-                <span class="annotation-save-status" role="status"></span>
+                <section class="annotation-reference" aria-label="Časové značky nahrávky"><h3></h3><ol tabindex="0" aria-label="Seznam časových značek"></ol></section>
             </div>
         </form>`;
         document.body.append(dialog);
         const form = dialog.querySelector('form'), error = dialog.querySelector('.annotation-error'), timeError = dialog.querySelector('.annotation-time-error');
         const label = form.elements.label, choices = {}, controls = root.Vz2TimestampControls;
         let selected = item, revision = list.timestamps_revision, busy = false, start, end, note = '', baseline, pendingLatest = null, noteDialog = null, latestList = list;
-        let suggestedLabel = '', typeDrafts = {}, saved = !!item, captionOpen = !!item || kind === 'note';
+        let suggestedLabel = '', typeDrafts = {}, saved = !!item;
         const invalidTimes = new Map();
         const state = (overrides = {}) => JSON.stringify({ kind, start, end, label: label.value, note, song: choices.song.value, passage_type: choices.passage_type.value, parent: choices.parent.value, ...overrides });
         const dirty = () => baseline !== state() || invalidTimes.size > 0;
@@ -99,10 +104,11 @@
             const noteButton = dialog.querySelector('.annotation-note-open'); noteButton.hidden = point; noteButton.classList.toggle('has-note', !!note.trim()); noteButton.setAttribute('aria-label', note.trim() ? 'Upravit doplňující poznámku' : 'Doplňující poznámka');
             dialog.querySelector('.annotation-clear-end').hidden = point || end == null;
             dialog.querySelector('.annotation-fine-end').hidden = point;
-            dialog.querySelector('.annotation-save').textContent = kind === 'take' ? 'Uložit úsek' : kind === 'passage' ? 'Uložit pasáž' : 'Uložit poznámku';
-            dialog.querySelector('.annotation-title-field').hidden = !captionOpen && !point;
-            dialog.querySelector('.annotation-label-toggle').setAttribute('aria-expanded', String(captionOpen || point));
-            dialog.querySelector('.annotation-label-toggle').textContent = point ? 'Text poznámky' : 'Popisek';
+            dialog.querySelector('.annotation-save').setAttribute('aria-label', kind === 'take' ? 'Uložit úsek' : kind === 'passage' ? 'Uložit pasáž' : 'Uložit poznámku');
+            const kindSlider = dialog.querySelector('.annotation-kind-slider');
+            kindSlider.value = ['take', 'passage', 'note'].indexOf(kind);
+            kindSlider.setAttribute('aria-valuetext', kind === 'take' ? 'Úsek' : kind === 'passage' ? 'Pasáž' : 'Poznámka');
+            kindSlider.disabled = !!selected || busy;
             // Use the same normalization as the timestamp list, including default captions and inherited songs.
             const previewId = selected?.timestamp_id ?? Math.max(0, ...(latestList.entries || []).map(e => Number(e.id))) + 1;
             const source = { ...selected?.source, id: previewId, kind: point ? 'note' : kind === 'take' ? 'song_start' : 'passage', time_ms: start,
@@ -155,7 +161,7 @@
             choices.passage_type.value = value?.passage_type || 'custom';
             const parents = Model.containingTakes(latestList, start, end);
             choices.parent.value = value ? value.source.parent_timestamp_id : parents.length === 1 ? parents[0].timestamp_id : '';
-            saved = !!value; captionOpen = !!value || kind === 'note';
+            saved = !!value;
             if (initial) baseline = state(capturedEnd == null ? {} : { end: value.end_ms });
             update(); reference();
         }
@@ -171,9 +177,6 @@
             dialog.querySelector('.annotation-fine').open = true;
             const input = form.elements[b.dataset.editTime]; input.focus(); input.select();
         });
-        dialog.querySelector('.annotation-label-toggle').onclick = () => {
-            captionOpen = !captionOpen; update(); if (captionOpen || kind === 'note') label.focus();
-        };
         label.oninput = update;
         choices.song.onChange(update);
         dialog.querySelector('.annotation-clear-end').onclick = () => { end = null; invalidTimes.delete('end'); timeError.textContent = ''; update(); };
@@ -185,6 +188,10 @@
             else if (kind === 'note') { end = null; }
             fillOptions(); update(); timeError.textContent = '';
         });
+        dialog.querySelector('.annotation-kind-slider').oninput = e => {
+            const next = ['take', 'passage', 'note'][Number(e.target.value)];
+            dialog.querySelector('[data-kind="' + next + '"]').click();
+        };
         choices.existing.onChange(value => {
             if (dirty() && !confirm('Zahodit rozepsané změny a otevřít jiný úsek?')) { choices.existing.value = selected?.timestamp_id || ''; return; }
             populate(items().find(i => String(i.timestamp_id) === value) || null, true);
@@ -264,7 +271,7 @@
             if (!selected && !latestList.can_create) { report('K přidání značky již nemáte oprávnění.'); return; }
             if (invalidTimes.size) { timeError.textContent = [...invalidTimes.values()][0]; dialog.querySelector('.annotation-fine').open = true; return; }
             if (kind !== 'note' && end != null && end <= start) { timeError.textContent = 'Konec musí být po začátku.'; dialog.querySelector('[data-edit-time=end]').focus(); return; }
-            if (kind === 'note' && !label.value.trim()) { report('U poznámky vyplňte text.'); captionOpen = true; update(); label.focus(); return; }
+            if (kind === 'note' && !label.value.trim()) { report('U poznámky vyplňte text.'); update(); label.focus(); return; }
             const fields = { timestamps_revision: revision, time_ms: start, body: label.value };
             if (selected) { fields.id = selected.timestamp_id; fields.revision = selected.source.revision; }
             if (kind !== 'note') Object.assign(fields, { kind: kind === 'take' ? 'song_start' : 'passage', end_time_ms: end, note_text: note,

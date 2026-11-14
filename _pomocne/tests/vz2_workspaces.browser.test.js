@@ -628,8 +628,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await editor.waitFor({ state: 'visible' });
         const editorBox = await editor.boundingBox();
         assert(editorBox.x >= 0 && editorBox.y >= 0 && editorBox.x + editorBox.width <= 390 && editorBox.y + editorBox.height <= 844, 'The mobile annotation editor fits the viewport');
-        await editor.locator('.annotation-label-toggle').click();
-        assert(await editor.locator('[name=label]').isVisible(), 'The caption can be opened above the timestamp preview');
+        assert(await editor.locator('[name=label]').isVisible(), 'The caption is immediately editable');
         await shot('timestamp-editor-390');
         await editor.locator('.annotation-close').click();
         await page.locator('#looper-action-row > .looper-timestamp-actions').getByRole('button', { name: 'Otevřít časové značky' }).click();
