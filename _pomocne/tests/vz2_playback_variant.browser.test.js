@@ -87,7 +87,16 @@ let revision = 1, writable = true;
         assert.equal(await actions.getByRole('button', { name: 'Export', exact: true }).count(), 0);
         const reload = actions.getByRole('button', { name: 'Obnovit značky', exact: true });
         assert(await reload.isVisible());
-        assert.equal(await reload.evaluate(e => e.previousElementSibling.textContent), 'editor značek');
+        assert.equal(await reload.evaluate(e => e.previousElementSibling.textContent), 'poznámka');
+        for (const [label, kind] of [['úsek', 'take'], ['pasáž', 'passage'], ['poznámka', 'note']]) {
+            await actions.getByRole('button', { name: label, exact: true }).click();
+            const editor = page.locator('.vz2-annotation-editor');
+            await editor.waitFor({ state: 'visible' });
+            assert.equal(await editor.getAttribute('data-kind'), kind);
+            assert.equal(await editor.locator('.annotation-parent').isVisible(), kind === 'passage');
+            assert.equal(await editor.locator('.annotation-kind-slider').count(), 0);
+            await editor.locator('.annotation-close').click();
+        }
         await page.locator('#looper-view-wave').click();
         await page.locator('.looper-wave-marker').first().waitFor();
         assert(await page.locator('#looper-wave').isVisible());

@@ -66,7 +66,7 @@
     let exportDialog, activeExportPanel;
     const Notes = root.Vz2NoteEditor;
     const openEditor = (panel, row) => {
-        // Orphaned legacy ends keep their explicit repair flow; all normal annotations share A5.
+        // Orphaned legacy ends keep their explicit repair flow; normal annotations open their own typed dialog.
         if (row?.kind === 'song_end') return Notes.openPanel(panel, row);
         return root.Vz2TimestampEditor.open({ recording_id: panel.id, kind: row ? 'note' : 'take',
             item_id: row ? 't' + row.id : null, adapter: panel.adapter, list: panel.list }).catch(e => panel.error(e.message));
@@ -171,6 +171,9 @@
         list.className = 'ts-list';
         status.setAttribute('role', 'status'); status.className = 'error';
         const add = button('Přidat značku', () => openEditor(panel, null)); add.disabled = true;
+        const addPassage = button('pasáž', () => openIntervalEditor(panel, 'passage'));
+        const addNote = button('poznámka', () => openIntervalEditor(panel, 'note'));
+        addPassage.disabled = addNote.disabled = true;
         const quickUp = button('👍', () => quickNote(panel, '👍'));
         const quickDown = button('👎', () => quickNote(panel, '👎'));
         for (const [control, label] of [[quickUp, 'Přidat poznámku: palec nahoru'], [quickDown, 'Přidat poznámku: palec dolů']]) {
@@ -179,8 +182,8 @@
         const reload = iconButton('Obnovit značky', 'refresh', () => panel.load());
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
         const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
-        toolbar.append(add, quickUp, quickDown, reload, stop, exportButton); content.append(status, toolbar, list); shell.append(summary, content); container.append(shell);
-        let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileToggle, resizeObserver, playerObserver, mobileMedia;
+        toolbar.append(add, addPassage, addNote, quickUp, quickDown, reload, stop, exportButton); content.append(status, toolbar, list); shell.append(summary, content); container.append(shell);
+        let mobileActions, mobileAdd, mobilePassage, mobileNote, mobileQuickUp, mobileQuickDown, mobileToggle, resizeObserver, playerObserver, mobileMedia;
         const looperPanel = container.id === 'looper-timestamps';
         const mixerPanel = container.id === 'mixer-timestamps';
         const actionsRow = looperPanel ? document.getElementById('looper-action-row') : null;
@@ -189,7 +192,7 @@
         const positionDrawer = () => {
             if (pinnedOpen()) shell.open = true;
             if (looperPanel) {
-                if (reload.parentElement !== mobileActions) mobileAdd.after(reload);
+                if (reload.parentElement !== mobileActions) (mobileNote || mobileAdd).after(reload);
             } else if (reload.parentElement !== toolbar) quickDown.after(reload);
             if (mobileActions && (looperPanel || mobileMedia.matches)) container.style.setProperty('--ts-drawer-top', (actionsRow || mobileActions).getBoundingClientRect().bottom + 8 + 'px');
             Notes.reposition(panel);
@@ -218,14 +221,18 @@
             mobileToggle = button(mixerPanel ? 'Časové značky' : 'značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
             mobileToggle.setAttribute('aria-label', 'Otevřít časové značky');
             mobileToggle.setAttribute('aria-expanded', 'false'); mobileToggle.setAttribute('aria-controls', container.id);
-            mobileAdd = button(looperPanel ? 'editor značek' : 'Přidat značku', () => openEditor(panel, null)); mobileAdd.disabled = true;
+            mobileAdd = button(looperPanel ? 'úsek' : 'Přidat značku', () => openIntervalEditor(panel, 'take')); mobileAdd.disabled = true;
+            mobilePassage = button('pasáž', () => openIntervalEditor(panel, 'passage'));
+            mobileNote = button('poznámka', () => openIntervalEditor(panel, 'note'));
+            mobilePassage.disabled = mobileNote.disabled = true;
             mobileQuickUp = button('👍', () => quickNote(panel, '👍'));
             mobileQuickDown = button('👎', () => quickNote(panel, '👎'));
             for (const [control, label] of [[mobileQuickUp, 'Přidat poznámku: palec nahoru'], [mobileQuickDown, 'Přidat poznámku: palec dolů']]) {
                 control.className = 'ts-quick-note'; control.title = label; control.setAttribute('aria-label', label); control.disabled = true;
             }
+            for (const control of [addPassage, addNote]) control.classList.add('ts-desktop-action');
             add.classList.add('ts-desktop-action'); quickUp.classList.add('ts-desktop-action'); quickDown.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
-            mobileActions.append(mobileToggle, mobileAdd, mobileQuickUp, mobileQuickDown);
+            mobileActions.append(...[mobileToggle, mobileAdd, mobilePassage, mobileNote, mobileQuickUp, mobileQuickDown].filter(Boolean));
             if (mixerPanel) document.getElementById('mixer-action-row').append(mobileActions);
             else if (actionsRow) actionsRow.append(mobileActions);
             else container.before(mobileActions);
@@ -246,10 +253,12 @@
             list: null, dead: false, quickBusy: false, quickButtons: [quickUp, quickDown, mobileQuickUp, mobileQuickDown].filter(Boolean), error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
-                this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = !value.can_create; exportButton.disabled = false;
+                this.list = value; list.replaceChildren();
+                for (const control of [add, addPassage, addNote]) { control.hidden = !value.can_create; control.disabled = !value.can_create; }
+                exportButton.disabled = false;
                 for (const control of [quickUp, quickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 if (mobileActions) {
-                    mobileAdd.hidden = !value.can_create; mobileAdd.disabled = !value.can_create;
+                    for (const control of [mobileAdd, mobilePassage, mobileNote].filter(Boolean)) { control.hidden = !value.can_create; control.disabled = !value.can_create; }
                     for (const control of [mobileQuickUp, mobileQuickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 }
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));
