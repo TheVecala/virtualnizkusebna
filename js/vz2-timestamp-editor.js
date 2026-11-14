@@ -38,7 +38,7 @@
                     <div class="annotation-passage annotation-field"><span>Typ pasáže</span><div data-choice="passage_type"></div></div>
                     <div class="annotation-parent annotation-field"><span>Úsek</span><div data-choice="parent"></div></div>
                     <div class="annotation-field annotation-title-field"><label for="annotation-label">Popisek</label><input id="annotation-label" name="label" maxlength="4000"></div>
-                    <div class="annotation-field-tools"><button type="button" class="annotation-note-open" aria-label="Doplňující poznámka">Doplňující poznámka</button><button type="button" class="annotation-new">Nová značka</button></div>
+                    <div class="annotation-field-tools"><button type="button" class="annotation-note-open" aria-label="Doplňující poznámka">Doplňující poznámka</button></div>
                 </div>
                 <p class="error annotation-error" role="alert"></p>
                 <div class="interval-current" hidden></div><button type="button" class="interval-reload" hidden>Načíst aktuální verzi k porovnání</button><button type="button" class="annotation-rebase" hidden>Použít aktuální revizi</button>
@@ -49,7 +49,7 @@
         const form = dialog.querySelector('form'), error = dialog.querySelector('.annotation-error'), timeError = dialog.querySelector('.annotation-time-error');
         const label = form.elements.label, choices = {}, controls = root.Vz2TimestampControls;
         let selected = item, revision = list.timestamps_revision, busy = false, start, end, note = '', baseline, pendingLatest = null, noteDialog = null, latestList = list;
-        let suggestedLabel = '', typeDrafts = {}, saved = !!item;
+        let suggestedLabel = '', typeDrafts = {}, saved = !!item, justSaved = false;
         const invalidTimes = new Map();
         const state = (overrides = {}) => JSON.stringify({ kind, start, end, label: label.value, note, song: choices.song.value, passage_type: choices.passage_type.value, parent: choices.parent.value, ...overrides });
         const dirty = () => baseline !== state() || invalidTimes.size > 0;
@@ -101,7 +101,7 @@
             dialog.querySelector('.annotation-passage').hidden = dialog.querySelector('.annotation-parent').hidden = kind !== 'passage';
             dialog.querySelector('label[for=annotation-label]').textContent = point ? 'Text poznámky' : 'Popisek';
             label.setAttribute('aria-label', point ? 'Text poznámky' : 'Popisek');
-            const noteButton = dialog.querySelector('.annotation-note-open'); noteButton.hidden = point; noteButton.classList.toggle('has-note', !!note.trim()); noteButton.setAttribute('aria-label', note.trim() ? 'Upravit doplňující poznámku' : 'Doplňující poznámka');
+            const noteButton = dialog.querySelector('.annotation-note-open'); noteButton.parentElement.hidden = point; noteButton.classList.toggle('has-note', !!note.trim()); noteButton.setAttribute('aria-label', note.trim() ? 'Upravit doplňující poznámku' : 'Doplňující poznámka');
             dialog.querySelector('.annotation-clear-end').hidden = point || end == null;
             dialog.querySelector('.annotation-fine-end').hidden = point;
             dialog.querySelector('.annotation-save').setAttribute('aria-label', kind === 'take' ? 'Uložit úsek' : kind === 'passage' ? 'Uložit pasáž' : 'Uložit poznámku');
@@ -120,9 +120,8 @@
             dialog.querySelector('.annotation-preview-caption').textContent = [preview?.song_title, preview?.label].filter(Boolean).join(' · ');
             dialog.querySelector('.annotation-preview-note').textContent = point ? '' : note;
             const clean = saved && !dirty();
-            dialog.querySelector('.annotation-save-status').textContent = busy ? 'Ukládání…' : clean ? '✓ Uloženo' : 'Neuložené změny';
+            dialog.querySelector('.annotation-save-status').textContent = busy ? 'Ukládání…' : clean ? '✓ Uloženo' : justSaved && !dirty() ? '✓ Uloženo · Nová značka' : 'Neuložené změny';
             dialog.querySelector('.annotation-save').disabled = busy || clean;
-            dialog.querySelector('.annotation-new').disabled = busy || !latestList.can_create;
             dialog.querySelector('.annotation-preview').classList.toggle('is-saved', clean);
             for (const edge of ['start', 'end']) {
                 const ms = edge === 'start' ? start : end;
@@ -161,7 +160,7 @@
             choices.passage_type.value = value?.passage_type || 'custom';
             const parents = Model.containingTakes(latestList, start, end);
             choices.parent.value = value ? value.source.parent_timestamp_id : parents.length === 1 ? parents[0].timestamp_id : '';
-            saved = !!value;
+            saved = !!value; justSaved = false;
             if (initial) baseline = state(capturedEnd == null ? {} : { end: value.end_ms });
             update(); reference();
         }
@@ -216,17 +215,6 @@
         };
         const close = () => { if (!busy && (!dirty() || confirm('Zahodit rozepsané změny?'))) dialog.close(); };
         dialog.querySelector('.annotation-close').onclick = close;
-        dialog.querySelector('.annotation-new').onclick = () => {
-            if (busy || !latestList.can_create || dirty() && !confirm('Zahodit rozepsané změny a začít novou značku?')) return;
-            const song = choices.song.value, passageType = choices.passage_type.value;
-            item = null; finish = false; draft = { time_ms: currentTime() }; typeDrafts = {}; pendingLatest = null;
-            populate(null);
-            choices.song.value = song; choices.passage_type.value = passageType; choices.existing.value = '';
-            baseline = state(); report(''); timeError.textContent = '';
-            dialog.querySelector('.interval-current').hidden = dialog.querySelector('.interval-reload').hidden = dialog.querySelector('.annotation-rebase').hidden = true;
-            dialog.querySelector('.annotation-fine').open = false;
-            update();
-        };
         dialog.addEventListener('cancel', e => { e.preventDefault(); close(); });
         const unsubscribe = Store.subscribe(value => {
             if (Number(value.recording_id) === Number(recording_id)) { latestList = value; reference(); }
@@ -278,16 +266,16 @@
                 song_collection_id: kind === 'take' && choices.song.value ? Number(choices.song.value) : null,
                 passage_type: kind === 'passage' ? choices.passage_type.value : null,
                 parent_timestamp_id: kind === 'passage' && choices.parent.value ? Number(choices.parent.value) : null });
-            const previousIds = new Set(items().map(i => i.timestamp_id));
             busy = true; update(); const buttons = [...form.querySelectorAll('button,input')]; buttons.forEach(b => b.disabled = true);
             try {
                 latestList = await (kind === 'note' ? Store.saveNote(recording_id, fields) : Store.saveInterval(recording_id, fields));
                 revision = latestList.timestamps_revision;
-                // Retain the authoritative saved annotation; subsequent saves update it instead of duplicating it.
-                const stored = items().find(i => fields.id ? i.timestamp_id === fields.id : i.kind === kind && !previousIds.has(i.timestamp_id));
-                if (!stored) throw Error('Uloženou značku nelze načíst. Zavřete editor a obnovte seznam.');
-                finish = false; draft = {}; typeDrafts = {}; pendingLatest = null;
-                populate(stored, true);
+                // A successful save starts a blank annotation without replacing the player or its waveform.
+                item = null; finish = false; draft = { time_ms: currentTime() }; typeDrafts = {}; pendingLatest = null;
+                populate(null);
+                choices.song.value = ''; choices.passage_type.value = 'custom'; choices.parent.value = ''; choices.existing.value = '';
+                baseline = state(); justSaved = true;
+                dialog.querySelector('.annotation-fine').open = false;
                 dialog.querySelector('.interval-current').hidden = dialog.querySelector('.interval-reload').hidden = dialog.querySelector('.annotation-rebase').hidden = true;
             }
             catch (err) { report(err.message); dialog.querySelector('.interval-reload').hidden = err.status !== 409; error.scrollIntoView({ block: 'nearest' }); }
