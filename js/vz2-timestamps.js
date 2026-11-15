@@ -186,6 +186,8 @@
         let mobileActions, mobileAdd, mobilePassage, mobileNote, mobileQuickUp, mobileQuickDown, mobileToggle, resizeObserver, playerObserver, mobileMedia;
         const looperPanel = container.id === 'looper-timestamps';
         const mixerPanel = container.id === 'mixer-timestamps';
+        const editorHost = looperPanel ? el('div') : null;
+        if (editorHost) { editorHost.className = 'ts-editor-host'; editorHost.hidden = true; container.prepend(editorHost); }
         const actionsRow = looperPanel ? document.getElementById('looper-action-row') : null;
         const pinnedOpen = () => looperPanel
             && document.getElementById('player-shell').classList.contains('player-fullscreen');
@@ -214,7 +216,7 @@
                 toggleDrawer(false); mobileToggle.focus();
             }
         };
-        const onMobileChange = () => { toggleDrawer(false); positionDrawer(); };
+        const onMobileChange = () => { if (!looperPanel) toggleDrawer(false); positionDrawer(); };
         if (container.id === 'looper-timestamps' || container.id === 'mixer-timestamps') {
             mobileMedia = matchMedia('(max-width: 767px)');
             mobileActions = el('div'); mobileActions.className = 'looper-timestamp-actions';
@@ -245,7 +247,7 @@
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, container, shell, containerId: container.id, inlineHost: actionsRow || mobileActions || shell, pinnedOpen,
+        const panel = { id, adapter, container, shell, editorHost, containerId: container.id, inlineHost: actionsRow || mobileActions || shell, pinnedOpen,
             export: () => openExport(panel),
             drawerOpen: mobileActions ? () => container.classList.contains('ts-drawer-open') : null,
             closeDrawer: mobileActions ? () => toggleDrawer(false) : null,
@@ -327,6 +329,7 @@
             destroy() {
                 this.dead = true; panels.delete(this); if (Playback.state()?.owner === this) api.stopLoop(); shell.remove();
                 Notes.detach(this);
+                if (editorHost) { root.Vz2TimestampEditor.detach(this); editorHost.remove(); }
                 resizeObserver?.disconnect(); playerObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
                 window.removeEventListener('resize', positionDrawer); document.removeEventListener('keydown', onDrawerKey);
                 mobileActions?.remove(); container.classList.remove('ts-drawer-open'); container.style.removeProperty('--ts-drawer-top');
@@ -334,6 +337,7 @@
             }
         };
         Notes.attach(panel);
+        if (editorHost) root.Vz2TimestampEditor.attach(panel);
         positionDrawer();
         panel.container = container; panels.add(panel); panel.load(); return panel;
     };

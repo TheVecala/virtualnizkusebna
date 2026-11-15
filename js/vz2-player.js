@@ -197,6 +197,18 @@
             isPlaying: () => live() && !audio.paused && !audio.ended,
             pause: () => { if (live()) audio.pause(); },
             play: () => { if (!live()) throw Error('Looper již není otevřený.'); return audio.play(); },
+            showWave: () => { if (live()) setLooperView('wave'); },
+            fitRange: (start, end) => {
+                if (!live() || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) return;
+                current.waveRange = { start, end }; current.markersDirty = true;
+                $('looper-zoom').value = 1; $('looper-wave-scroll').scrollLeft = 0;
+                if (current.phase === 'ready' && (audio.currentTime * 1000 < start || audio.currentTime * 1000 >= end)) seek(start / 1000);
+                setLooperView('wave');
+            },
+            setAnnotationRange: range => {
+                if (!live() || JSON.stringify(current.annotationRange) === JSON.stringify(range)) return;
+                current.annotationRange = range; current.markersDirty = true; draw();
+            },
             waveform: () => current.peaks ? { peaks: current.peaks, duration_ms: file.duration_ms || Math.round(audio.duration * 1000) } : null,
             isLoading: () => audio.dataset.sourceSwitching === 'true',
             canPlay: () => live() && current.phase === 'ready' && !audio.error,
@@ -309,7 +321,7 @@
             if (live()) update();
         } catch (e) { if (live()) { current.phase = 'error'; error(e.message); update(); } }
     }
-    function renderWaveTimestamps(current, width, durationMs) {
+    function renderWaveTimestamps(current, width, durationMs, view) {
         const markers = document.createDocumentFragment();
         const entries = window.Vz2TimestampModel.items({ id: current.recording.id, entries: current.timestamps || [], duration_ms: Math.round(durationMs) }).flatMap(item => {
             const start = { ...item.source, body: item.label, annotationId: item.id };
@@ -326,8 +338,8 @@
         };
         if (durationMs > 0) entries.forEach(entry => {
             const ms = Number(entry.time_ms), visual = visuals[entry.kind];
-            if (!visual || !Number.isFinite(ms) || ms < 0 || ms > durationMs) return;
-            const x = Math.min(width - 1, ms / durationMs * width);
+            if (!visual || !Number.isFinite(ms) || ms < view.start || ms > view.end) return;
+            const x = Math.min(width - 1, (ms - view.start) / (view.end - view.start) * width);
             const marker = document.createElement('button'); marker.type = 'button';
             const labelOnLeft = entry.kind === 'song_end' ? x >= 155 : x > width - 155;
             marker.className = 'looper-wave-marker' + (labelOnLeft ? ' is-label-left' : '');
@@ -354,6 +366,12 @@
             marker.onclick = event => { event.stopPropagation(); window.Vz2TimestampStore.select({ recording_id: current.recording.id, item_id: entry.annotationId }); seek(ms / 1000); };
             markers.append(marker);
         });
+        for (const [edge, ms] of Object.entries(current.annotationRange || {})) {
+            if (ms == null || ms < view.start || ms > view.end) continue;
+            const marker = document.createElement('span'); marker.className = 'looper-draft-edge';
+            marker.style.left = Math.min(width - 2, (ms - view.start) / (view.end - view.start) * width) + 'px';
+            marker.textContent = edge === 'start' ? 'A' : 'B'; marker.setAttribute('aria-hidden', 'true'); markers.append(marker);
+        }
         $('looper-wave-markers').replaceChildren(markers);
         current.markerWidth = width; current.markerDuration = durationMs; current.markersDirty = false;
     }
@@ -374,6 +392,12 @@
     $('looper-view-slider').onclick = () => setLooperView('slider');
     $('looper-view-wave').onclick = () => setLooperView('wave');
     $('looper-view-segments').onclick = () => setLooperView('segments');
+    const waveDuration = () => Math.max(1, Number.isFinite(looper?.audio.duration) ? looper.audio.duration * 1000 : looper?.file.duration_ms || 1);
+    function waveRange() {
+        const total = waveDuration();
+        const range = looper?.waveRange;
+        return range && range.start < total ? { start: range.start, end: Math.min(total, range.end) } : { start: 0, end: total };
+    }
     function draw() {
         if (!$('looper-wave-scroll').clientWidth) return;
         const canvas = $('looper-wave'), width = Math.max(1, Math.min(16384, $('looper-wave-scroll').clientWidth * Number($('looper-zoom').value))), height = fullscreen && !matchMedia('(max-width: 767px)').matches ? 180 : 90;
@@ -382,16 +406,19 @@
         canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
         if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
         const durationMs = Number.isFinite(looper.audio.duration) ? looper.audio.duration * 1000 : 0;
-        if (looper.markersDirty || looper.markerWidth !== width || looper.markerDuration !== durationMs) renderWaveTimestamps(looper, width, durationMs);
+        const view = waveRange(), span = view.end - view.start;
+        canvas.dataset.rangeStart = view.start; canvas.dataset.rangeEnd = view.end;
+        if (looper.markersDirty || looper.markerWidth !== width || looper.markerDuration !== durationMs) renderWaveTimestamps(looper, width, durationMs, view);
         const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, width, height);
         const colors = waveformColors();
         const peaks = looper.peaks;
-        const x = (looper.audio.currentTime / (looper.audio.duration || 1)) * width;
+        const x = (looper.audio.currentTime * 1000 - view.start) / span * width;
         if (peaks) {
             for (const played of [false, true]) {
                 ctx.strokeStyle = played ? colors.played : colors.idle; ctx.beginPath();
                 for (let i = 0; i < peaks.length; i++) {
-                    const px = i / peaks.length * width;
+                    const px = (i / peaks.length * durationMs - view.start) / span * width;
+                    if (px < 0 || px > width) continue;
                     if ((px <= x) !== played) continue;
                     const h = Math.max(1, peaks[i] * (height / 2 - 3));
                     ctx.moveTo(px, height / 2 - h); ctx.lineTo(px, height / 2 + h);
@@ -443,9 +470,16 @@
     $('looper-back').onclick = () => mode === 'mixer' ? $('mt-backward').click() : seek((looper?.audio.currentTime || 0) - 5);
     $('looper-forward').onclick = () => mode === 'mixer' ? $('mt-forward').click() : seek((looper?.audio.currentTime || 0) + 5);
     $('looper-seek').oninput = e => seek(Number(e.target.value)); $('looper-zoom').oninput = draw;
-    $('looper-zoom-out').onclick = () => { $('looper-zoom').value = Math.max(1, Number($('looper-zoom').value) - 1); draw(); };
+    $('looper-zoom-out').onclick = () => {
+        if (looper?.waveRange && Number($('looper-zoom').value) === 1) {
+            const range = waveRange(), span = range.end - range.start, total = waveDuration();
+            const start = Math.max(0, Math.min(total - span * 2, range.start - span / 2));
+            looper.waveRange = span * 2 >= total ? null : { start, end: start + span * 2 }; looper.markersDirty = true;
+        } else $('looper-zoom').value = Math.max(1, Number($('looper-zoom').value) - 1);
+        draw();
+    };
     $('looper-zoom-in').onclick = () => { $('looper-zoom').value = Math.min(16, Number($('looper-zoom').value) + 1); draw(); };
-    $('looper-wave').onclick = e => { if (looper) seek(e.offsetX / $('looper-wave').clientWidth * looper.audio.duration); };
+    $('looper-wave').onclick = e => { if (looper) { const range = waveRange(); seek((range.start + e.offsetX / $('looper-wave').clientWidth * (range.end - range.start)) / 1000); } };
     $('looper-volume').oninput = e => {
         if (mode === 'mixer') {
             $('mt-master-volume').value = Math.round(Number(e.target.value) * 100);
@@ -526,7 +560,7 @@
         showMixer(recording) { closeLooper(); if (mode !== 'mixer' || id !== String(recording.id)) mixerPending = true; select('mixer', recording); },
         hideMixer() { if (mode === 'mixer') resetShell(); },
         mixerFailed() { mixerPending = false; },
-        canLeave(nextId, nextMode) { const current = getState(); if (!current || (String(nextId) === id && nextMode === mode)) return true; return (!current.playing && !current.loading) || confirm('Přehrávač hraje nebo načítá audio. Zastavit jej a přejít jinam?'); }
+        canLeave(nextId, nextMode) { const current = getState(); if (!current || (String(nextId) === id && nextMode === mode)) return true; return window.Vz2TimestampEditor.canLeave() && ((!current.playing && !current.loading) || confirm('Přehrávač hraje nebo načítá audio. Zastavit jej a přejít jinam?')); }
     };
     layout();
 }());

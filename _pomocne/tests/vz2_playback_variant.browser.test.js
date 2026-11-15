@@ -27,12 +27,14 @@ let entries = [entry({ id: 1, kind: 'song_start', time_ms: 3000, body: 'Pokus' }
     entry({ id: 2, kind: 'song_end', time_ms: 12000, paired_timestamp_id: 1, body: '↓' }),
     entry({ id: 3, kind: 'passage', time_ms: 6000, end_time_ms: 9000, parent_timestamp_id: 1, body: 'Refrén' }),
     entry({ id: 4, kind: 'note', time_ms: 7000, body: '👍' })];
-let revision = 1, writable = true;
+let revision = 1, writable = true, failWrite = false, nextTimestampId = 100;
+const writes = [];
 (async () => {
     const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/chromium', headless: true,
         args: ['--autoplay-policy=no-user-gesture-required'] });
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('dialog', d => d.accept());
+    let acceptDialog = true;
+    const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('dialog', d => acceptDialog ? d.accept() : d.dismiss());
     await page.route('**/*', async route => {
         const url = new URL(route.request().url()), p = url.pathname;
         if (url.hostname !== 'playback.test') return route.abort();
@@ -48,7 +50,14 @@ let revision = 1, writable = true;
         if (p === '/php/ajax/vz2_peaks.php') return route.fulfill({ json: { ok: true, duration_ms: 40000, peaks: Array.from({ length: 200 }, (_, i) => .2 + Math.abs(Math.sin(i)) * .5) } });
         if (p === '/php/ajax/vz2_timestamps.php') {
             const data = route.request().postDataJSON();
-            if (data) { revision++; entries.push(entry({ id: 100 + revision, kind: data.kind, time_ms: data.time_ms, body: data.body })); }
+            if (data) {
+                if (failWrite) return route.abort();
+                writes.push(data); revision++;
+                const row = entry({ ...data, id: data.id || nextTimestampId++, revision });
+                entries = entries.filter(e => e.id !== row.id && e.paired_timestamp_id !== row.id);
+                entries.push(row);
+                if (data.kind === 'song_start' && data.end_time_ms != null) entries.push(entry({ id: nextTimestampId++, kind: 'song_end', time_ms: data.end_time_ms, paired_timestamp_id: row.id, body: '↓' }));
+            }
             const id = Number(url.searchParams.get('recording_id') || data?.recording_id);
             return route.fulfill({ json: { ok: true, recording_id: id, timestamps_revision: revision, duration_ms: 40000, can_create: writable, entries: id === 11 ? entries : [] } });
         }
@@ -95,8 +104,13 @@ let revision = 1, writable = true;
             assert.equal(await editor.getAttribute('data-kind'), kind);
             assert.equal(await editor.locator('.annotation-parent').isVisible(), kind === 'passage');
             assert.equal(await editor.locator('.annotation-kind-slider').count(), 0);
+            assert.equal(await editor.evaluate(e => e.matches(':modal')), false);
+            assert.equal(await editor.locator('.annotation-player, .annotation-reference').count(), 0);
+            assert.equal(await drawer.locator('.annotation-inline').count(), 1);
+            assert(await page.locator('#looper-wave').isVisible());
             await editor.locator('.annotation-close').click();
         }
+        if (await drawer.isVisible()) await toggle.click();
         await page.locator('#looper-view-wave').click();
         await page.locator('.looper-wave-marker').first().waitFor();
         assert(await page.locator('#looper-wave').isVisible());
@@ -136,7 +150,7 @@ let revision = 1, writable = true;
         await actions.getByRole('button', { name: 'Přidat poznámku: palec nahoru', exact: true }).click();
         await page.waitForFunction(() => document.querySelectorAll('#looper-segments .segment-note').length === 3);
         console.log('PASS quick player, text offline state, independent position views and timestamp drawer, seek/loop and live timestamp updates');
-        for (const width of [320, 390, 767, 960, 1440]) {
+        for (const width of [320, 390, 767, 768, 960, 1440]) {
             await page.setViewportSize({ width, height: 844 });
             if (!await drawer.isVisible()) await toggle.click();
             for (const view of ['slider', 'wave', 'segments']) {
@@ -173,6 +187,98 @@ let revision = 1, writable = true;
             await page.keyboard.press('Escape');
         }
         console.log('PASS drawer, fullscreen and all three position views at 320/390/767/960/1440 px');
+        const editor = drawer.locator('.annotation-inline');
+        await page.evaluate(() => Vz2Player.seek(14.321));
+        await actions.getByRole('button', { name: 'úsek', exact: true }).click();
+        assert.equal(await editor.locator('[data-edit-time=start]').textContent(), '00:14');
+        assert.equal(await editor.locator('[data-edit-time=end]').textContent(), '--:--');
+        assert(await page.evaluate(() => originalAudio === document.getElementById('looper-audio')));
+        await page.evaluate(() => Vz2Player.seek(24.654));
+        await editor.locator('[data-capture=end]').click();
+        await editor.locator('[name=label]').fill('Úsek ze společného přehrávače');
+        failWrite = true;
+        await editor.locator('.annotation-add-passages').click();
+        await editor.locator('.annotation-error').filter({ hasText: /fetch/i }).waitFor();
+        assert.equal(await editor.locator('[name=label]').inputValue(), 'Úsek ze společného přehrávače');
+        failWrite = false;
+        await editor.locator('.annotation-add-passages').click();
+        await page.waitForFunction(() => document.querySelector('.annotation-inline[open]')?.dataset.kind === 'passage');
+        await page.waitForFunction(() => Number(document.getElementById('looper-wave').dataset.rangeStart) === 14321);
+        assert.equal(Number(await page.locator('#looper-wave').getAttribute('data-range-end')), 24654);
+        const takeId = entries.find(e => e.body === 'Úsek ze společného přehrávače').id;
+        assert.equal(writes.at(-1).time_ms, 14321);
+        assert.equal(writes.at(-1).end_time_ms, 24654);
+        assert.match(await editor.locator('[data-choice=parent] > button').textContent(), /Úsek ze společného přehrávače/);
+        const canvas = page.locator('#looper-wave');
+        const waveBox = await canvas.boundingBox();
+        await canvas.click({ position: { x: waveBox.width / 2, y: waveBox.height - 12 } });
+        assert(Math.abs((await state()).position - 19.4875) < .03, 'clicking the focused main wave uses take-relative coordinates');
+        await editor.locator('[data-capture=start]').click();
+        await page.evaluate(() => Vz2Player.seek(23.123));
+        await editor.locator('[data-capture=end]').click();
+        await editor.locator('[name=label]').fill('Pasáž ze společné wave');
+        await editor.locator('.annotation-save').click();
+        await editor.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
+        assert.equal(writes.at(-1).parent_timestamp_id, takeId);
+        assert.equal(writes.at(-1).end_time_ms, 23123);
+        assert.equal(await editor.locator('[name=label]').inputValue(), '');
+        assert.equal(Number(await canvas.getAttribute('data-range-start')), 14321, 'saving retains zoom');
+        await editor.locator('[data-choice=parent] > button').click();
+        await page.getByRole('option').filter({ hasText: 'Pokus' }).click();
+        await page.waitForFunction(() => Number(document.getElementById('looper-wave').dataset.rangeStart) === 3000);
+        assert.equal(Number(await canvas.getAttribute('data-range-end')), 12000);
+        await page.locator('#looper-zoom-out').click();
+        assert(Number(await canvas.getAttribute('data-range-end')) > 12000, 'zoom out expands a focused take');
+        await actions.getByRole('button', { name: 'poznámka', exact: true }).click();
+        await page.waitForFunction(() => document.querySelector('.annotation-inline[open]')?.dataset.kind === 'note');
+        await editor.locator('[name=label]').fill('Nezahodit');
+        acceptDialog = false;
+        await actions.getByRole('button', { name: 'úsek', exact: true }).click();
+        assert.equal(await editor.getAttribute('data-kind'), 'note');
+        assert.equal(await editor.locator('[name=label]').inputValue(), 'Nezahodit');
+        await page.locator('#player-close').evaluate(e => e.click());
+        assert.equal((await state()).id, '11', 'closing the player can be cancelled without losing the draft');
+        acceptDialog = true;
+        await actions.getByRole('button', { name: 'úsek', exact: true }).click();
+        await page.waitForFunction(() => document.querySelector('.annotation-inline[open]')?.dataset.kind === 'take');
+        await editor.locator('.annotation-close').click();
+        await drawer.locator('.ts-list [data-annotation-id="t' + takeId + '"]').getByRole('button', { name: 'Upravit', exact: true }).click();
+        assert.equal(await editor.locator('[name=label]').inputValue(), 'Úsek ze společného přehrávače');
+        await editor.locator('[name=label]').fill('Upravený úsek');
+        await editor.locator('.annotation-save').click();
+        await editor.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
+        assert.equal(writes.at(-1).id, takeId);
+        assert.match(await drawer.locator('.ts-list').textContent(), /Upravený úsek/);
+        const previewDir = path.join(root, '_pomocne/dist/inline-timestamps'); fs.mkdirSync(previewDir, { recursive: true });
+        for (const width of [320, 390, 767, 768, 960, 1440]) {
+            await page.setViewportSize({ width, height: 844 });
+            for (const [label, kind] of [['úsek', 'take'], ['pasáž', 'passage'], ['poznámka', 'note']]) {
+                await actions.getByRole('button', { name: label, exact: true }).click();
+                await page.waitForFunction(kind => document.querySelector('.annotation-inline[open]')?.dataset.kind === kind, kind);
+                assert(await drawer.isVisible(), 'resizing keeps the active editor open');
+                const formBox = await editor.boundingBox(), listBox = await drawer.locator('.vz2-timestamps').boundingBox();
+                if (width < 768) assert(formBox.y + formBox.height <= listBox.y + 2, 'mobile form precedes timestamps');
+                else assert(formBox.x >= listBox.x + listBox.width, 'desktop form is to the right of timestamps');
+                assert(await drawer.evaluate(e => e.scrollWidth <= e.clientWidth + 1), 'drawer has no horizontal overflow at ' + width);
+                assert.equal(await page.locator('.annotation-wave, .annotation-transport').count(), 0);
+                assert(await page.evaluate(() => originalAudio === document.getElementById('looper-audio')));
+                if (width === 390 || width === 1440) await page.screenshot({ path: path.join(previewDir, kind + '-' + width + '.png') });
+            }
+        }
+        await page.setViewportSize({ width: 390, height: 400 });
+        await editor.locator('[name=label]').fill('Poznámka s klávesnicí');
+        await editor.locator('.annotation-save').click();
+        await editor.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
+        assert.equal(writes.at(-1).body, 'Poznámka s klávesnicí');
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.locator('#player-fullscreen').click();
+        assert(await editor.isVisible());
+        assert(await page.locator('#looper-wave').isVisible());
+        await page.keyboard.press('Escape');
+        await actions.getByRole('button', { name: 'úsek', exact: true }).click();
+        assert.equal(await drawer.locator('.annotation-inline').count(), 1);
+        console.log('PASS inline desktop/mobile editors, shared wave capture and fit, save/edit/failure, dirty switch guard, keyboard and fullscreen');
+
         await page.locator('#player-close').evaluate(e => e.click());
         assert.equal(await state(), null);
         await page.locator('#recording-12 .recording-toggle').click();
@@ -182,6 +288,7 @@ let revision = 1, writable = true;
         assert.equal(await page.locator('#looper-visuals').count(), 1);
         assert.equal(await page.locator('#looper-segments .segment-note').count(), 0);
         assert.equal(await page.evaluate(() => originalAudio.isConnected), false);
+        assert.equal(await page.locator('.annotation-inline').count(), 0, 'closing the recording cleans up the inline editor');
         assert.match(await page.locator('#looper-segments').textContent(), /zatím nemá časové značky/);
         writable = false;
         await reload.click();

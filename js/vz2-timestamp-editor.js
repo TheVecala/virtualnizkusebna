@@ -1,4 +1,4 @@
-/* Shared implementation of separate take, passage and point-note dialogs. */
+/* Take, passage and point-note forms: inline in the Looper, dialogs for other hosts. */
 (function (root) {
     'use strict';
     const Model = root.Vz2TimestampModel, Store = root.Vz2TimestampStore;
@@ -6,10 +6,12 @@
     const names = { take: 'úsek', passage: 'pasáž', note: 'poznámka' };
     const make = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
     let active = null, opening = false;
-    function mount({ recording_id, list, adapter, kind, item, finish, draft, parent_id }) {
+    const panels = new Set();
+    function mount({ recording_id, list, adapter, kind, item, finish, draft, parent_id, panel }) {
         const dialog = make('dialog', null, 'vz2-annotation-editor vz2-interval-editor');
         dialog.setAttribute('aria-labelledby', 'annotation-title');
         dialog.dataset.kind = kind;
+        if (panel) dialog.classList.add('annotation-inline');
         dialog.innerHTML = `<form autocomplete="off" novalidate>
             <div class="annotation-header"><div><h2 id="annotation-title"></h2><p class="interval-context"></p></div><button type="button" class="annotation-close" aria-label="Zavřít editor">×</button></div>
             <div class="annotation-parent"><div class="annotation-field"><span>Úsek</span><div data-choice="parent"></div></div><p class="annotation-parent-hint" role="status"></p></div>
@@ -44,17 +46,23 @@
         </form>`;
         if (kind === 'take') dialog.querySelector('.annotation-top-row').append(dialog.querySelector('.annotation-captures'));
         if (kind === 'note') dialog.querySelector('.annotation-top-row').append(dialog.querySelector('.annotation-caption-row'));
-        document.body.append(dialog);
+        (panel?.editorHost || document.body).append(dialog);
+        if (panel) {
+            panel.editorHost.hidden = false; panel.container.classList.add('ts-editing'); panel.openDrawer();
+            dialog.querySelector('.annotation-player').remove();
+            dialog.querySelector('.annotation-reference').remove();
+        }
         const form = dialog.querySelector('form'), error = dialog.querySelector('.annotation-error'), timeError = dialog.querySelector('.annotation-time-error');
         const label = form.elements.label, choices = {}, controls = root.Vz2TimestampControls;
         let selected = item, revision = list.timestamps_revision, busy = false, start, end, note = '', baseline, pendingLatest = null, noteDialog = null, latestList = list;
+        let disposed = false;
         let suggestedLabel = '', saved = !!item, justSaved = false, lastSavedTakeId = null;
         const invalidTimes = new Map();
         const state = (overrides = {}) => JSON.stringify({ kind, start, end, label: label.value, note, song: choices.song.value, passage_type: choices.passage_type.value, parent: choices.parent.value, ...overrides });
         const dirty = () => baseline !== state() || invalidTimes.size > 0;
         const currentTime = () => Math.max(0, Math.round(adapter?.currentTimeMs?.() ?? 0));
         const report = text => { error.textContent = text; };
-        active = { dialog, dirty: () => dirty() || !!noteDialog && noteDialog.querySelector('textarea').value !== note, recording_id, adapter };
+        active = { dialog, panel, busy: () => busy, dirty: () => dirty() || !!noteDialog && noteDialog.querySelector('textarea').value !== note, recording_id, adapter };
         for (const [key, title, search] of [['existing', 'Rozpracovaný úsek', true], ['song', 'Skladba', true], ['passage_type', 'Typ pasáže', false], ['parent', 'Úsek', true]]) {
             choices[key] = controls.choice(dialog.querySelector('[data-choice="' + key + '"]'), title, search);
         }
@@ -80,6 +88,7 @@
             dialog.querySelector('.annotation-existing').hidden = !!selected || kind === 'note' || !open.length;
         }
         function reference() {
+            if (panel) return;
             const host = dialog.querySelector('.annotation-reference ol'), scroll = host.scrollTop; host.replaceChildren();
             const rows = kind === 'passage' ? items().filter(i => i.kind === 'passage' && String(i.source.parent_timestamp_id) === choices.parent.value) : items(); dialog.querySelector('.annotation-reference h3').textContent = 'Časové značky · ' + rows.length;
             if (!rows.length) host.append(make('li', 'Zatím žádné časové značky.', 'muted'));
@@ -92,6 +101,8 @@
             }); host.scrollTop = scroll;
         }
         function update() {
+            if (disposed) return;
+            if (panel) adapter?.setAnnotationRange?.({ start, end: kind === 'note' ? null : end });
             const point = kind === 'note';
             dialog.querySelector('#annotation-title').textContent = selected ? 'Upravit ' + names[kind] : kind === 'take' ? 'Nový úsek' : kind === 'passage' ? 'Nová pasáž' : 'Nová poznámka';
             dialog.querySelectorAll('.annotation-end').forEach(e => e.hidden = point);
@@ -181,7 +192,12 @@
         }
         populate(item, true);
         dialog.querySelector('.interval-context').textContent = latestList.source_filename || latestList.title || 'Nahrávka';
-        const player = controls.transport(dialog.querySelector('.annotation-player'), adapter, latestList, () => ({ start, end: kind === 'note' ? null : end }), report);
+        const player = panel ? {
+            seek: ms => { root.Vz2TimestampPlayback?.stop(); adapter?.seek(ms); },
+            fitRange: (from, to) => adapter?.fitRange?.(from, to),
+            destroy: () => adapter?.setAnnotationRange?.(null)
+        } : controls.transport(dialog.querySelector('.annotation-player'), adapter, latestList, () => ({ start, end: kind === 'note' ? null : end }), report);
+        if (panel) adapter?.showWave?.();
         if (kind === 'passage' && parentTake()) player.fitRange(parentTake().start_ms, parentTake().end_ms);
         const readiness = setInterval(() => {
             const ready = !!adapter?.canPlay?.();
@@ -230,6 +246,7 @@
         const close = () => { if (!busy && (!dirty() || confirm('Zahodit rozepsané změny?'))) dialog.close(); };
         dialog.querySelector('.annotation-close').onclick = close;
         dialog.addEventListener('cancel', e => { e.preventDefault(); close(); });
+        dialog.addEventListener('keydown', e => { if (panel && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } });
         const unsubscribe = Store.subscribe(value => {
             if (Number(value.recording_id) === Number(recording_id)) { latestList = value; fillOptions(); update(); reference(); }
         });
@@ -241,11 +258,17 @@
             if (viewport && matchMedia('(max-width: 767px)').matches) { dialog.style.setProperty('--annotation-height', viewport.height + 'px'); dialog.style.setProperty('--annotation-top', viewport.offsetTop + 'px'); }
         };
         root.visualViewport?.addEventListener('resize', resize); root.visualViewport?.addEventListener('scroll', resize); root.addEventListener('resize', resize);
-        dialog.addEventListener('close', () => {
+        const destroy = () => {
+            if (disposed) return;
+            disposed = true;
+            if (panel) { panel.editorHost.hidden = true; panel.container.classList.remove('ts-editing'); }
+            noteDialog?.close();
             clearInterval(readiness); unsubscribe(); player.destroy(); Object.values(choices).forEach(c => c.destroy());
             root.visualViewport?.removeEventListener('resize', resize); root.visualViewport?.removeEventListener('scroll', resize); root.removeEventListener('resize', resize);
             dialog.remove(); if (active?.dialog === dialog) active = null;
-        });
+        };
+        active.destroy = destroy;
+        dialog.addEventListener('close', destroy);
         dialog.querySelector('.interval-reload').onclick = async () => {
             try {
                 pendingLatest = await Store.reload(recording_id); latestList = pendingLatest;
@@ -301,6 +324,7 @@
             busy = true; update(); const buttons = [...form.querySelectorAll('button,input')]; buttons.forEach(b => b.disabled = true);
             try {
                 latestList = await (kind === 'note' ? Store.saveNote(recording_id, fields) : Store.saveInterval(recording_id, fields));
+                if (disposed) return;
                 revision = latestList.timestamps_revision;
                 const savedTake = kind === 'take' ? items().find(i => i.kind === 'take' && (fields.id ? i.timestamp_id === fields.id : !knownIds.has(i.timestamp_id) && i.start_ms === fields.time_ms && i.end_ms === fields.end_time_ms)) : null;
                 lastSavedTakeId = savedTake?.timestamp_id ?? null;
@@ -322,25 +346,39 @@
         };
         form.onsubmit = e => submit(e);
         dialog.querySelector('.annotation-add-passages').onclick = e => submit(e, kind === 'take');
-        dialog.showModal(); resize(); dialog.querySelector('.annotation-close').focus({ preventScroll: true });
+        if (panel) dialog.show(); else dialog.showModal();
+        resize(); dialog.querySelector('.annotation-close').focus({ preventScroll: true });
     }
     root.Vz2TimestampEditor = {
         isOpen: () => !!active?.dialog.open,
+        attach(panel) { panels.add(panel); },
+        detach(panel) {
+            panels.delete(panel);
+            const editor = active;
+            if (editor?.panel === panel) { editor.dialog.close(); editor.destroy(); }
+        },
+        canLeave() { return !active?.panel || !active.dialog.open || !active.busy() && (!active.dirty() || confirm('Zahodit rozepsané změny?')); },
         async open({ recording_id, kind = 'take', item_id = null, adapter = null, finish = false, draft = {}, list = null, parent_id = null }) {
             if (opening) return;
-            if (active?.dialog.open) { active.dialog.focus(); return; }
+            const panel = [...panels].find(p => !p.dead && Number(p.id) === Number(recording_id) && (!adapter || adapter === p.adapter));
+            adapter = panel?.adapter || adapter;
             // Capture the opening position before loading data; explicit selection drafts take precedence.
             draft = { time_ms: Math.max(0, Math.round(adapter?.currentTimeMs?.() ?? 0)), ...draft };
             opening = true;
             try {
+                if (active?.dialog.open) {
+                    if (!active.panel || active.busy() || active.dirty() && !confirm('Zahodit rozepsané změny?')) { active.dialog.focus(); return; }
+                    await new Promise(resolve => { active.dialog.addEventListener('close', resolve, { once: true }); active.dialog.close(); });
+                }
                 list = list || await Store.load(recording_id);
+                if (panel?.dead) return;
                 const item = item_id ? Model.items(list).find(i => i.id === item_id) : null;
                 if (item_id && !item) throw Error('Značka již neexistuje.');
                 if (item ? !item.can_edit : !list.can_create) throw Error('K úpravě nemáte oprávnění.');
                 kind = item?.kind || kind;
                 if (!['take', 'passage', 'note'].includes(kind)) throw Error('Vyberte úsek, pasáž nebo poznámku.');
                 if (parent_id != null && !Model.items(list).some(i => i.kind === 'take' && i.timestamp_id === Number(parent_id) && i.end_ms != null)) throw Error('Vybraný úsek již nemá platný začátek a konec.');
-                mount({ recording_id, list, adapter, kind, item, finish, draft, parent_id });
+                mount({ recording_id, list, adapter, kind, item, finish, draft, parent_id, panel });
             } finally { opening = false; }
         }
     };

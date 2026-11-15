@@ -122,3 +122,21 @@
 .vz2-annotation-editor.annotation-tiny .annotation-header h2 { font-size: 15px; }
 .vz2-annotation-editor.annotation-tiny .annotation-header button { min-height: 32px; }
 .annotation-note-dialog { position: fixed; left: 50%; right: auto; bottom: auto; transform: translateX(-50%); margin: 0; }
+
+/* The Looper owns playback; its timestamp editor shares the drawer with the list. */
+#looper-timestamps.ts-editing.ts-drawer-open, #player-shell.player-fullscreen #looper-timestamps.ts-editing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr); gap: 16px; align-content: start; align-items: start; }
+#looper-timestamps > .ts-editor-host { order: 2; min-width: 0; position: sticky; top: 0; }
+#looper-timestamps > .vz2-timestamps { order: 1; min-width: 0; }
+.vz2-annotation-editor.annotation-inline[open] { display: block; position: relative; inset: auto; width: 100%; height: auto; max-height: none; margin: 0; overflow: visible; border: 0; border-radius: 0; }
+.vz2-annotation-editor.annotation-inline form { height: auto; }
+.vz2-annotation-editor.annotation-inline .annotation-scroll { overflow: visible; padding: 8px 0; }
+.vz2-annotation-editor.annotation-inline .annotation-header { padding: 0 0 6px; border: 0; }
+.vz2-annotation-editor.annotation-inline h2 { font-size: 14px; color: var(--color-text-muted); }
+.vz2-annotation-editor.annotation-inline .annotation-close { min-height: 28px; width: 28px; flex-basis: 28px; font-size: 20px; }
+.vz2-annotation-editor.annotation-inline .interval-context { display: none; }
+.vz2-annotation-editor.annotation-inline .annotation-parent { margin-inline: 0; }
+.vz2-annotation-editor.annotation-inline .annotation-choice-popup { z-index: 60; }
+@media (max-width: 767px) {
+    #looper-timestamps.ts-editing.ts-drawer-open, #player-shell.player-fullscreen #looper-timestamps.ts-editing { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    #looper-timestamps > .ts-editor-host { order: 0; position: static; border-bottom: 1px solid var(--color-border); }
+}

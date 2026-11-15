@@ -65,12 +65,12 @@
         const closeOthers = () => close();
         dialog?.addEventListener('annotation-close-choices', closeOthers);
         root.visualViewport?.addEventListener('resize', position);
-        root.addEventListener('resize', position); dialog.addEventListener('scroll', position, true);
+        root.addEventListener('resize', position); root.addEventListener('scroll', position, true);
         return {
             get value() { return value; }, set value(v) { value = String(v ?? ''); updateLabel(); },
             setOptions(rows) { options = rows.map(o => ({ ...o, value: String(o.value ?? '') })); updateLabel(); render(); },
             onChange(fn) { changed = fn; }, close,
-            destroy() { document.removeEventListener('pointerdown', outside); document.removeEventListener('focusin', focusOutside); dialog?.removeEventListener('annotation-close-choices', closeOthers); root.visualViewport?.removeEventListener('resize', position); root.removeEventListener('resize', position); dialog.removeEventListener('scroll', position, true); popup.remove(); }
+            destroy() { document.removeEventListener('pointerdown', outside); document.removeEventListener('focusin', focusOutside); dialog?.removeEventListener('annotation-close-choices', closeOthers); root.visualViewport?.removeEventListener('resize', position); root.removeEventListener('resize', position); root.removeEventListener('scroll', position, true); popup.remove(); }
         };
     }
     const waveCache = new Map();

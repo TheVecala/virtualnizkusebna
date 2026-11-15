@@ -234,6 +234,7 @@
         return { ...recording, collection_title: data.collections.find(c => String(c.id) === String(recording.collection_id))?.title || '' };
     }
     function closePlayer() {
+        if (!window.Vz2TimestampEditor.canLeave()) return;
         ++playerSerial; mixerSeek = null;
         if (mixerId) stopMixer();
         window.Vz2Player.closeLooper();
