@@ -114,7 +114,7 @@
         host.innerHTML = `<div class="annotation-wave" role="slider" tabindex="0" aria-label="Pozice přehrávání" aria-valuemin="0"><canvas></canvas><span class="annotation-wave-message">Načítám křivku…</span><span class="annotation-playhead"><b></b></span><span class="annotation-edge annotation-edge-start"><b>A</b></span><span class="annotation-edge annotation-edge-end"><b>B</b></span></div><div class="annotation-ruler"><span class="annotation-ticks"></span><span class="annotation-duration"></span></div><div class="annotation-transport"><button type="button" data-seek="-5000" aria-label="Zpět o 5 sekund">−5 s</button><button type="button" class="annotation-play" aria-label="Přehrát">▶</button><button type="button" data-seek="5000" aria-label="Vpřed o 5 sekund">+5 s</button><span></span><button type="button" data-zoom="out" aria-label="Oddálit křivku">−</button><button type="button" data-zoom="in" aria-label="Přiblížit křivku">+</button></div>`;
         const wave = host.querySelector('.annotation-wave'), canvas = wave.querySelector('canvas'), context = canvas.getContext('2d');
         const message = wave.querySelector('.annotation-wave-message'), playhead = wave.querySelector('.annotation-playhead'), play = host.querySelector('.annotation-play');
-        const abort = new AbortController(); let data = null, dead = false, zoom = 1, start = 0, frame, lastDraw = '', gesture = null;
+        const abort = new AbortController(); let data = null, dead = false, zoom = 1, start = 0, frame, lastDraw = '', gesture = null, pendingFit = null;
         const duration = () => Math.max(0, adapter?.durationMs?.() || recording.duration_ms || data?.duration_ms || 0);
         const current = () => Math.max(0, Math.round(adapter?.currentTimeMs?.() || 0));
         const span = () => Math.max(1, duration() / zoom);
@@ -123,10 +123,22 @@
             if (!adapter?.canPlay?.()) return;
             root.Vz2TimestampPlayback?.stop(); adapter.seek(Math.max(0, Math.min(duration() || Infinity, ms)));
         };
+        const fitRange = (from, to) => {
+            if (Number.isFinite(from) && Number.isFinite(to) && from >= 0 && to > from) pendingFit = { from, to };
+        };
         const position = (node, at) => { node.hidden = at == null || at < start || at > start + span(); if (!node.hidden) { node.style.left = Math.max(0, Math.min(100, (at - start) / span() * 100)) + '%'; node.querySelector('b').style.transform = (at - start) / span() > .8 ? 'translateX(-100%)' : ''; } };
         function draw() {
             if (dead) return;
-            const at = current(), total = duration(), ready = !!adapter?.canPlay?.(), playing = !!adapter?.isPlaying?.();
+            const total = duration(), ready = !!adapter?.canPlay?.(), playing = !!adapter?.isPlaying?.();
+            if (pendingFit && total > 0) {
+                const from = Math.min(pendingFit.from, total), to = Math.min(pendingFit.to, total);
+                if (to > from) {
+                    zoom = total / (to - from); start = clampStart(from);
+                    if (ready && (current() < from || current() >= to)) seek(from);
+                }
+                if (ready) pendingFit = null;
+            }
+            const at = current();
             if (playing && !gesture && (at < start || at > start + span())) start = clampStart(at - span() / 2);
             const range = getRange(), width = wave.clientWidth, height = wave.clientHeight;
             const signature = [start, span(), width, height, range.start, range.end, !!data, document.documentElement.dataset.theme].join(':');
@@ -187,7 +199,7 @@
             if (!dead) { lastDraw = ''; message.hidden = !!data?.peaks?.length; message.textContent = 'Křivka není dostupná'; }
         }).catch(() => { if (!dead) message.textContent = 'Křivka není dostupná'; });
         draw();
-        return { seek, destroy() { dead = true; abort.abort(); cancelAnimationFrame(frame); } };
+        return { seek, fitRange, destroy() { dead = true; abort.abort(); cancelAnimationFrame(frame); } };
     }
     root.Vz2TimestampControls = { choice, transport, fileWaveform };
 })(window);
