@@ -59,7 +59,7 @@ const writes = [];
                 if (data.kind === 'song_start' && data.end_time_ms != null) entries.push(entry({ id: nextTimestampId++, kind: 'song_end', time_ms: data.end_time_ms, paired_timestamp_id: row.id, body: '↓' }));
             }
             const id = Number(url.searchParams.get('recording_id') || data?.recording_id);
-            return route.fulfill({ json: { ok: true, recording_id: id, timestamps_revision: revision, duration_ms: 40000, can_create: writable, entries: id === 11 ? entries : [] } });
+            return route.fulfill({ json: { ok: true, recording_id: id, timestamps_revision: revision, duration_ms: 40000, can_create: writable, songs: Array.from({ length: 20 }, (_, i) => ({ id: i + 1, title: 'Skladba ' + (i + 1), lifecycle: 'active' })), entries: id === 11 ? entries : [] } });
         }
         if (p === '/php/ajax/vz2_history.php') return route.fulfill({ json: { ok: true, songs: [], rehearsals: [], plays: [], unassigned_intervals: [], unassigned_clips: [] } });
         if (p === '/php/ajax/vz2_content.php') return route.fulfill({ json: { ok: true, document: null, version: null, posts: [], thread: { id: 1 }, can_edit: false } });
@@ -262,6 +262,19 @@ const writes = [];
                 assert(await drawer.evaluate(e => e.scrollWidth <= e.clientWidth + 1), 'drawer has no horizontal overflow at ' + width);
                 assert.equal(await page.locator('.annotation-wave, .annotation-transport').count(), 0);
                 assert(await page.evaluate(() => originalAudio === document.getElementById('looper-audio')));
+                if (kind === 'take') {
+                    await editor.locator('[data-edit-time=start]').click();
+                    const start = await editor.locator('[name=start]').boundingBox(), end = await editor.locator('[name=end]').boundingBox();
+                    assert(Math.abs(start.y - end.y) < 1 && end.x > start.x + start.width, 'precise times share a row at ' + width);
+                    for (const edge of ['start', 'end']) {
+                        const input = await editor.locator('[name=' + edge + ']').boundingBox();
+                        const buttons = await editor.locator('.annotation-fine-' + edge + ' button').evaluateAll(nodes => nodes.map(n => { const r = n.getBoundingClientRect(); return { y: r.y, height: r.height }; }));
+                        assert(buttons.every(b => b.y >= input.y + input.height && b.height <= 30), 'small adjustment buttons sit below their time');
+                    }
+                    assert(await drawer.evaluate(e => e.scrollWidth <= e.clientWidth + 1));
+                    if (width === 390 || width === 1440) await page.screenshot({ path: path.join(previewDir, 'precise-' + width + '.png') });
+                    await editor.locator('.annotation-fine summary').click();
+                }
                 if (width === 390 || width === 1440) await page.screenshot({ path: path.join(previewDir, kind + '-' + width + '.png') });
             }
         }
@@ -278,6 +291,31 @@ const writes = [];
         await actions.getByRole('button', { name: 'úsek', exact: true }).click();
         assert.equal(await drawer.locator('.annotation-inline').count(), 1);
         console.log('PASS inline desktop/mobile editors, shared wave capture and fit, save/edit/failure, dirty switch guard, keyboard and fullscreen');
+        await page.setViewportSize({ width: 1440, height: 540 });
+        for (const fullscreen of [false, true]) {
+            if (await page.locator('#player-fullscreen').getAttribute('aria-pressed') !== String(fullscreen)) await page.locator('#player-fullscreen').click();
+            for (const [label, kind, choice] of [['úsek', 'take', 'song'], ['pasáž', 'passage', 'passage_type']]) {
+                await actions.getByRole('button', { name: label, exact: true }).click();
+                await page.waitForFunction(kind => document.querySelector('.annotation-inline[open]')?.dataset.kind === kind, kind);
+                if (kind === 'passage') {
+                    await editor.locator('[data-choice=parent] > button').click();
+                    await page.getByRole('option').filter({ hasText: 'Pokus' }).click();
+                }
+                await editor.locator('[data-choice=' + choice + '] > button').click();
+                const popup = editor.locator('.annotation-choice-popup:not([hidden])');
+                const visibility = await popup.evaluate(node => {
+                    const box = node.getBoundingClientRect(), player = document.getElementById('looper-visuals').getBoundingClientRect();
+                    const top = Math.max(box.top, player.top), bottom = Math.min(box.bottom, player.bottom);
+                    return { overlap: bottom > top, visible: node.contains(document.elementFromPoint(box.x + box.width / 2, (top + bottom) / 2)) };
+                });
+                assert(visibility.overlap && visibility.visible, 'dropdown stays above the player: ' + choice + ', fullscreen=' + fullscreen);
+                await page.screenshot({ path: path.join(previewDir, 'menu-' + choice + '-' + fullscreen + '.png') });
+                await popup.getByRole('option').nth(1).click();
+                assert.equal(await popup.count(), 0, 'selection closes the menu');
+            }
+        }
+        console.log('PASS song and passage dropdowns remain clickable above the player, including fullscreen');
+
 
         await page.locator('#player-close').evaluate(e => e.click());
         assert.equal(await state(), null);

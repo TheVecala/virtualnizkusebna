@@ -8,12 +8,15 @@
         const id = 'annotation-choice-' + (++serial), button = make('button', '', 'annotation-choice-trigger');
         button.type = 'button'; button.setAttribute('aria-label', label); button.setAttribute('aria-haspopup', 'listbox'); button.setAttribute('aria-expanded', 'false');
         const popup = make('div', null, 'annotation-choice-popup'); popup.hidden = true;
+        // Escape the inline editor's clipping and the player's stacking contexts.
+        const topLayer = typeof popup.showPopover === 'function';
+        if (topLayer) popup.popover = 'manual';
         const search = make('input'); search.type = 'search'; search.placeholder = 'Hledat…'; search.setAttribute('aria-label', 'Hledat: ' + label); search.hidden = !searchable;
         const list = make('div', null, 'annotation-choice-list'); list.id = id; list.role = 'listbox'; list.setAttribute('aria-label', label); button.setAttribute('aria-controls', id);
         popup.append(search, list); host.classList.add('annotation-choice'); host.append(button);
         const dialog = host.closest('dialog'); dialog.append(popup);
         let options = [], value = '', changed = () => {}, active = 0;
-        const close = (focus = false) => { popup.hidden = true; button.setAttribute('aria-expanded', 'false'); if (focus) button.focus(); };
+        const close = (focus = false) => { if (topLayer && popup.matches(':popover-open')) popup.hidePopover(); popup.hidden = true; button.setAttribute('aria-expanded', 'false'); if (focus) button.focus(); };
         const filtered = () => options.filter(o => !searchable || o.label.toLocaleLowerCase('cs').includes(search.value.toLocaleLowerCase('cs')));
         function render() {
             list.replaceChildren();
@@ -42,6 +45,7 @@
             if (!popup.hidden) return close();
             host.closest('dialog')?.dispatchEvent(new Event('annotation-close-choices'));
             search.value = ''; active = Math.max(0, options.findIndex(o => o.value === value)); render(); popup.hidden = false;
+            if (topLayer) popup.showPopover();
             button.setAttribute('aria-expanded', 'true'); position();
             // Avoid opening the phone keyboard until the user explicitly chooses search.
             list.querySelector('[tabindex="0"]')?.focus({ preventScroll: true });

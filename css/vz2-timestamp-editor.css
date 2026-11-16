@@ -52,10 +52,14 @@
 .vz2-annotation-editor .annotation-fine summary { width: fit-content; color: var(--color-text-muted); font-size: 12px; padding: 5px 0; cursor: pointer; }
 .vz2-annotation-editor .annotation-fine[open] summary { color: var(--color-primary); }
 .annotation-fine[open] .annotation-fine-rows { padding-top: 8px; }
-.annotation-fine-row { display: flex; flex-wrap: wrap; align-items: end; gap: 4px; margin-bottom: 8px; }
-.vz2-annotation-editor .annotation-fine-row label { flex: 1 1 100%; font-size: 13px; gap: 3px; }
-.vz2-annotation-editor .annotation-fine-row input { max-width: 180px; }
-.annotation-fine-row button { flex: 1; font-size: 12px; }
+.annotation-fine-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.annotation-fine-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-content: start; gap: 4px; min-width: 0; margin-bottom: 8px; }
+.vz2-annotation-editor .annotation-fine-row label { grid-column: 1 / -1; min-width: 0; font-size: 12px; gap: 3px; }
+.vz2-annotation-editor .annotation-fine-row input { width: 100%; min-height: 34px; padding: 4px 6px; font-variant-numeric: tabular-nums; }
+.vz2-annotation-editor .annotation-fine-row button { min-width: 0; min-height: 26px; padding: 3px 2px; font-size: 11px; white-space: nowrap; }
+.vz2-annotation-editor .annotation-clear-end { min-height: 26px; padding: 3px 6px; font-size: 11px; }
+.vz2-annotation-editor[data-kind=note] .annotation-fine-rows { grid-template-columns: minmax(0, 1fr); max-width: 320px; }
+@media (max-width: 420px) { .annotation-fine-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .annotation-field, .annotation-existing { display: grid; grid-template-columns: 78px minmax(0, 1fr); align-items: center; gap: 6px; padding: 5px 0; }
 .vz2-annotation-editor .annotation-field label, .annotation-field > span, .annotation-existing > span { font-size: 14px; margin: 0; }
 .annotation-caption-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; margin-top: 12px; }
@@ -140,3 +144,7 @@
     #looper-timestamps.ts-editing.ts-drawer-open, #player-shell.player-fullscreen #looper-timestamps.ts-editing { grid-template-columns: minmax(0, 1fr); gap: 12px; }
     #looper-timestamps > .ts-editor-host { order: 0; position: static; border-bottom: 1px solid var(--color-border); }
 }
+
+/* Native popovers stay visible above the shared player, including fullscreen. */
+.annotation-choice-popup[popover] { inset: auto; margin: 0; color: var(--color-text); }
+.annotation-choice-popup::backdrop { background: transparent; pointer-events: none; }
