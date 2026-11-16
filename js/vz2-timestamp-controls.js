@@ -77,41 +77,72 @@
             destroy() { document.removeEventListener('pointerdown', outside); document.removeEventListener('focusin', focusOutside); dialog?.removeEventListener('annotation-close-choices', closeOthers); root.visualViewport?.removeEventListener('resize', position); root.removeEventListener('resize', position); root.removeEventListener('scroll', position, true); popup.remove(); }
         };
     }
-    const waveCache = new Map();
+    // All waveform consumers share completed data AND in-flight requests by file hash.
+    const waveCache = new Map(), waveDecodes = new Map();
     let peakStore;
-    async function fileWaveform(file, signal) {
-        if (!file?.url) return null;
-        const key = (root.VZ2?.cachePrefix || '') + 'peaks:' + file.id + ':' + file.sha256;
-        if (waveCache.has(key)) return waveCache.get(key);
-        const valid = data => data && Array.isArray(data.peaks) && data.peaks.length > 0 && data.peaks.length <= 4096 && data.peaks.every(p => Number.isFinite(p) && p >= 0 && p <= 1) && data.duration_ms > 0 && (file.duration_ms == null || Number(file.duration_ms) === Number(data.duration_ms));
+    const waveKey = file => (root.VZ2?.cachePrefix || '') + 'peaks:' + file.id + ':' + file.sha256;
+    const validWave = (data, file) => data && Array.isArray(data.peaks) && data.peaks.length > 0 && data.peaks.length <= 4096
+        && data.peaks.every(p => Number.isFinite(p) && p >= 0 && p <= 1) && data.duration_ms > 0
+        && (file.duration_ms == null || Number(file.duration_ms) === Number(data.duration_ms));
+    async function rememberWave(key, data) {
+        if (peakStore) try { await root.idbKeyval.set(key, data, peakStore); } catch (_) { /* Cache is optional. */ }
+        return data;
+    }
+    async function storedWave(file, key) {
         let data;
-        try { if (root.idbKeyval) { peakStore ||= root.idbKeyval.createStore('zkusebna-vz2-cache', 'audio'); data = await root.idbKeyval.get(key, peakStore); } } catch (_) { /* Offline cache is optional. */ }
-        if (!valid(data)) {
-            try {
-                const response = await fetch('php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256), { credentials: 'same-origin', signal });
-                if (response.ok) data = await response.json();
-            } catch (e) { if (signal.aborted) throw e; }
-        }
-        if (!valid(data)) {
-            const source = await root.Vz2Downloads.read(file, { download: true, signal });
-            signal.throwIfAborted();
-            const context = new (root.AudioContext || root.webkitAudioContext)();
-            try {
-                const buffer = await context.decodeAudioData(await source.blob.arrayBuffer()); signal.throwIfAborted();
-                const peaks = new Array(Math.min(4096, buffer.length)).fill(0);
-                for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-                    const samples = buffer.getChannelData(channel);
-                    for (let i = 0; i < peaks.length; i++) {
-                        const from = Math.floor(i * samples.length / peaks.length), to = Math.floor((i + 1) * samples.length / peaks.length);
-                        for (let j = from; j < to; j++) peaks[i] = Math.max(peaks[i], Math.min(1, Math.abs(samples[j]) || 0));
-                    }
+        try {
+            if (root.idbKeyval) { peakStore ||= root.idbKeyval.createStore('zkusebna-vz2-cache', 'audio'); data = await root.idbKeyval.get(key, peakStore); }
+        } catch (_) { /* Offline cache is optional. */ }
+        if (validWave(data, file)) return data;
+        if (navigator.onLine === false) return null;
+        const request = new AbortController(), timeout = setTimeout(() => request.abort(), 5000);
+        try {
+            const response = await fetch('php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256), { credentials: 'same-origin', signal: request.signal });
+            data = response.ok ? await response.json() : null;
+            return validWave(data, file) ? await rememberWave(key, { peaks: data.peaks, duration_ms: data.duration_ms }) : null;
+        } catch (_) { return null; }
+        finally { clearTimeout(timeout); }
+    }
+    async function decodeWave(file, key, blob) {
+        const source = blob ? { blob } : await root.Vz2Downloads.read(file, { download: true });
+        const context = new (root.AudioContext || root.webkitAudioContext)();
+        let data;
+        try {
+            const buffer = await context.decodeAudioData(await source.blob.arrayBuffer());
+            const peaks = new Array(Math.min(4096, buffer.length)).fill(0);
+            for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                const samples = buffer.getChannelData(channel);
+                for (let i = 0; i < peaks.length; i++) {
+                    const from = Math.floor(i * samples.length / peaks.length), to = Math.floor((i + 1) * samples.length / peaks.length);
+                    for (let j = from; j < to; j++) if (Number.isFinite(samples[j])) peaks[i] = Math.max(peaks[i], Math.min(1, Math.abs(samples[j])));
                 }
-                data = { peaks, duration_ms: Math.round(buffer.duration * 1000) };
-            } finally { await context.close(); }
+            }
+            data = { peaks, duration_ms: Math.round(buffer.duration * 1000) };
+        } finally { await context.close(); }
+        await rememberWave(key, data);
+        if (root.VZ2?.write && navigator.onLine !== false) {
+            // Generated once per file, regardless of which view requested it.
+            fetch('php/ajax/vz2_peaks.php', { method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': root.VZ2.csrf },
+                body: JSON.stringify({ file_id: file.id, sha256: file.sha256, peaks: data.peaks })
+            }).catch(() => {});
         }
-        signal.throwIfAborted(); waveCache.set(key, data);
-        if (peakStore) root.idbKeyval.set(key, data, peakStore).catch(() => {});
-        if (waveCache.size > 6) waveCache.delete(waveCache.keys().next().value);
+        waveCache.set(key, Promise.resolve(data));
+        return data;
+    }
+    async function fileWaveform(file, signal, { decode = true, blob = null } = {}) {
+        if (!file?.url) return null;
+        signal?.throwIfAborted();
+        const key = waveKey(file);
+        if (!waveCache.has(key)) waveCache.set(key, storedWave(file, key));
+        let data = await waveCache.get(key);
+        signal?.throwIfAborted();
+        if (!data && waveDecodes.has(key)) data = await waveDecodes.get(key);
+        if (!data && decode) {
+            if (!waveDecodes.has(key)) waveDecodes.set(key, decodeWave(file, key, blob).finally(() => waveDecodes.delete(key)));
+            data = await waveDecodes.get(key);
+        }
+        signal?.throwIfAborted();
         return data;
     }
     function transport(host, adapter, recording, getRange, onError) {

@@ -29,6 +29,7 @@ let entries = [entry({ id: 1, kind: 'song_start', time_ms: 3000, body: 'Pokus' }
     entry({ id: 4, kind: 'note', time_ms: 7000, body: '👍' })];
 let revision = 1, writable = true, failWrite = false, nextTimestampId = 100;
 const writes = [];
+let peakRequests = 0, scriptAudioRequests = 0;
 (async () => {
     const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/chromium', headless: true,
         args: ['--autoplay-policy=no-user-gesture-required'] });
@@ -41,13 +42,14 @@ const writes = [];
         if (p === '/index.php') return route.fulfill({ contentType: 'text/html', body: html });
         if (/^\/(js|css|meat)\//.test(p)) return route.fulfill({ contentType: p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'image/png', body: fs.readFileSync(path.join(root, p)) });
         if (p === '/sample.wav') {
+            if (route.request().resourceType() === 'fetch') scriptAudioRequests++;
             const range = /^bytes=(\d+)-(\d*)$/.exec(route.request().headers().range || '');
             const start = range ? Number(range[1]) : 0, end = range?.[2] ? Math.min(Number(range[2]), wav.length - 1) : wav.length - 1;
             return route.fulfill({ status: range ? 206 : 200, contentType: 'audio/wav', body: wav.subarray(start, end + 1),
                 headers: { 'accept-ranges': 'bytes', ...(range ? { 'content-range': `bytes ${start}-${end}/${wav.length}` } : {}) } });
         }
         if (p === '/php/ajax/vz2.php') return route.fulfill({ json: url.searchParams.get('action') === 'mixer' ? { ok: true, multitracks: [] } : catalog });
-        if (p === '/php/ajax/vz2_peaks.php') return route.fulfill({ json: { ok: true, duration_ms: 40000, peaks: Array.from({ length: 200 }, (_, i) => .2 + Math.abs(Math.sin(i)) * .5) } });
+        if (p === '/php/ajax/vz2_peaks.php') { peakRequests++; if (url.searchParams.get('id') === '12') return route.fulfill({ status: 404, json: { ok: false } }); return route.fulfill({ json: { ok: true, duration_ms: 40000, peaks: Array.from({ length: 200 }, (_, i) => .2 + Math.abs(Math.sin(i)) * .5) } }); }
         if (p === '/php/ajax/vz2_timestamps.php') {
             const data = route.request().postDataJSON();
             if (data) {
@@ -92,6 +94,7 @@ const writes = [];
         assert.equal(await drawer.isVisible(), false);
         assert.equal(await page.locator('#looper-wave').isVisible(), false);
         assert(await page.locator('#looper-seek').isVisible());
+        assert.equal(peakRequests, 0, 'slider never requests waveform JSON');
         assert((await page.locator('#looper-seek').boundingBox()).y >= (await page.locator('.looper-header-controls').boundingBox()).y + (await page.locator('.looper-header-controls').boundingBox()).height);
         assert.equal(await actions.getByRole('button', { name: 'Export', exact: true }).count(), 0);
         const reload = actions.getByRole('button', { name: 'Obnovit značky', exact: true });
@@ -117,6 +120,12 @@ const writes = [];
         assert.equal(await drawer.isVisible(), false, 'wave works independently of the timestamp drawer');
         assert.equal(await drawer.locator('#looper-visuals, .looper-view-switch').count(), 0);
         assert.equal(await page.locator('#looper-seek').isVisible(), false, 'wave replaces the basic slider');
+        assert.equal(peakRequests, 0, 'opening timestamp editors and marks does not request waveform data');
+        await page.locator('#looper-show-wave').check();
+        await page.waitForFunction(() => !document.getElementById('looper-status').textContent);
+        assert.equal(peakRequests, 1);
+        await page.locator('#looper-show-wave').uncheck();
+        await page.locator('#looper-show-wave').check();
         await page.locator('#looper-play').click();
         await page.waitForFunction(() => Vz2Player.getState().playing);
         await page.evaluate(() => { window.originalAudio = document.getElementById('looper-audio'); });
@@ -130,7 +139,18 @@ const writes = [];
         assert.equal(await drawer.isVisible(), false, 'segments also work with the drawer closed');
         await page.locator('#looper-play').click();
         await page.locator('#looper-segments [data-segment-id="t1"]').click();
-        assert(Math.abs((await state()).position - 3) < .1);
+        assert(Math.abs((await state()).position - 7.5) < .1, 'clicking inside a take seeks to that position');
+        assert.equal(await page.locator('#looper-segments .segment-wave').count(), 1);
+        const plot = page.locator('#looper-segments .segment-plot');
+        const box = await plot.boundingBox();
+        await plot.click({ position: { x: box.width * .75, y: 1 } });
+        assert(Math.abs((await state()).position - 30) < .1, 'empty timeline space is seekable');
+        await plot.focus(); await page.keyboard.press('ArrowLeft');
+        assert(Math.abs((await state()).position - 29) < .1, 'keyboard seeking uses the same timeline');
+        await page.locator('#looper-show-wave').uncheck();
+        assert.equal(await page.locator('#looper-segments .segment-wave').count(), 0);
+        await page.locator('#looper-show-wave').check();
+        assert.equal(peakRequests, 1, 'marks and segments share the first waveform request');
         await toggle.click();
         assert.equal(await drawer.locator('.ts-list > li:visible').count(), 3, 'the full timestamp list is independent of the position view');
         const selected = drawer.locator('.ts-list .ts-selected');
@@ -187,6 +207,7 @@ const writes = [];
             await page.keyboard.press('Escape');
         }
         console.log('PASS drawer, fullscreen and all three position views at 320/390/767/960/1440 px');
+        await page.locator('#looper-view-wave').click();
         const editor = drawer.locator('.annotation-inline');
         await page.evaluate(() => Vz2Player.seek(14.321));
         await actions.getByRole('button', { name: 'úsek', exact: true }).click();
@@ -209,6 +230,15 @@ const writes = [];
         assert.equal(writes.at(-1).time_ms, 14321);
         assert.equal(writes.at(-1).end_time_ms, 24654);
         assert.match(await editor.locator('[data-choice=parent] > button').textContent(), /Úsek ze společného přehrávače/);
+        await page.locator('#looper-view-segments').click();
+        const focusedPlot = page.locator('#looper-segments .segment-plot');
+        assert.equal(Number(await focusedPlot.getAttribute('data-view-start')), 14321);
+        assert.equal(Number(await focusedPlot.getAttribute('data-view-end')), 24654);
+        await focusedPlot.waitFor({ state: 'visible' });
+        await focusedPlot.click();
+        assert(Math.abs((await state()).position - 19.4875) < .03, 'segment seeking respects the focused take');
+        assert.equal(peakRequests, 1);
+        await page.locator('#looper-view-wave').click();
         const canvas = page.locator('#looper-wave');
         const waveBox = await canvas.boundingBox();
         await canvas.click({ position: { x: waveBox.width / 2, y: waveBox.height - 12 } });
@@ -317,11 +347,18 @@ const writes = [];
         console.log('PASS song and passage dropdowns remain clickable above the player, including fullscreen');
 
 
+        await page.locator('#looper-view-slider').click();
+        const peaksBeforeNextRecording = peakRequests;
         await page.locator('#player-close').evaluate(e => e.click());
         assert.equal(await state(), null);
+        const audioDownloadsBeforeMissingWave = scriptAudioRequests;
         await page.locator('#recording-12 .recording-toggle').click();
         await page.locator('#recording-12 .recording-looper-entry').click();
         await page.waitForFunction(() => Vz2Player.getState()?.id === '12' && Vz2Player.getState().phase === 'ready');
+        assert.equal(peakRequests, peaksBeforeNextRecording, 'slider skips peaks for a new recording even with wave previously enabled');
+        await page.locator('#looper-view-segments').click();
+        await page.waitForFunction(() => document.getElementById('looper-status').textContent.includes('Průběh není dostupný'));
+        assert.equal(scriptAudioRequests, audioDownloadsBeforeMissingWave, 'missing JSON never triggers a whole audio download for the Looper');
         await toggle.click();
         assert.equal(await page.locator('#looper-visuals').count(), 1);
         assert.equal(await page.locator('#looper-segments .segment-note').count(), 0);

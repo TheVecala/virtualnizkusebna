@@ -206,7 +206,7 @@
                 if (mixToggle?.getAttribute('aria-expanded') === 'true') mixToggle.click();
             }
             container.classList.toggle('ts-drawer-open', open);
-            mobileToggle.textContent = mixerPanel ? 'Časové značky' : 'značky';
+            mobileToggle.textContent = mixerPanel ? 'Časové značky' : 'seznam značek';
             mobileToggle.setAttribute('aria-label', (open ? 'Zavřít' : 'Otevřít') + ' časové značky');
             mobileToggle.setAttribute('aria-expanded', String(open));
             if (open) { shell.open = true; positionDrawer(); }
@@ -220,7 +220,7 @@
         if (container.id === 'looper-timestamps' || container.id === 'mixer-timestamps') {
             mobileMedia = matchMedia('(max-width: 767px)');
             mobileActions = el('div'); mobileActions.className = 'looper-timestamp-actions';
-            mobileToggle = button(mixerPanel ? 'Časové značky' : 'značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
+            mobileToggle = button(mixerPanel ? 'Časové značky' : 'seznam značek', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
             mobileToggle.setAttribute('aria-label', 'Otevřít časové značky');
             mobileToggle.setAttribute('aria-expanded', 'false'); mobileToggle.setAttribute('aria-controls', container.id);
             mobileAdd = button(looperPanel ? 'úsek' : 'Přidat značku', () => openIntervalEditor(panel, 'take')); mobileAdd.disabled = true;

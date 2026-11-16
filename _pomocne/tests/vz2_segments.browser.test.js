@@ -56,6 +56,12 @@ wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.
         await page.locator('#segments-takes').uncheck(); assert.equal(await page.locator('.segment-take').count(), 0); assert.equal(await page.locator('.segment-passage').count(), 4);
         await page.locator('#segments-takes').check();
         await page.locator('#segments-wave').check(); await page.waitForFunction(() => document.querySelectorAll('.segment-wave').length === 2);
+        const waveRequests = requests.filter(r => r.path.includes('peaks')).length;
+        assert.equal(waveRequests, 2, 'one waveform request per file');
+        await page.locator('#segments-wave').uncheck(); await page.locator('#segments-wave').check();
+        await page.waitForFunction(() => document.querySelectorAll('.segment-wave').length === 2);
+        assert.equal(requests.filter(r => r.path.includes('peaks')).length, waveRequests);
+        assert.equal(requests.filter(r => r.path === '/sample.wav').length, 0, 'waveform views do not download audio');
         await page.locator('#segments-zoom').selectOption('4');
         assert(await page.locator('.segment-scroll').evaluate(e => e.scrollWidth > e.clientWidth * 3.9));
         await page.locator('#segments-zoom').selectOption('1');
@@ -66,7 +72,7 @@ wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.
         // Actual media transport and interval boundary behavior.
         await page.locator('[data-segment-id="t1"]').first().click();
         await page.locator('#segments-play').click();
-        await page.waitForFunction(() => { const a = document.querySelector('audio'); return !a.paused && a.readyState >= 2 && !a.seeking && a.currentTime >= 10 && a.currentTime < 12; }).catch(async e => {
+        await page.waitForFunction(() => { const a = document.querySelector('audio'); return !a.paused && a.readyState >= 2 && !a.seeking && a.currentTime >= 36 && a.currentTime < 40; }).catch(async e => {
             console.error(await page.locator('audio').evaluate(a => ({ src: a.currentSrc, ready: a.readyState, paused: a.paused, current: a.currentTime, seeking: a.seeking, network: a.networkState, error: a.error?.message, status: document.querySelector('#segments-audio-status').textContent })));
             throw e;
         });
@@ -75,12 +81,12 @@ wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.
             console.error(await page.locator('audio').evaluate(a => ({ ready: a.readyState, paused: a.paused, current: a.currentTime, seeking: a.seeking, error: a.error?.message, loop: document.querySelector('#segments-loop').checked, selected: document.querySelector('#segments-selected-time').textContent })));
             throw e;
         });
-        assert(Math.abs(await page.locator('audio').evaluate(a => a.currentTime) - 65) < .05);
+        assert(await page.locator('audio').evaluate(a => a.currentTime >= 65 && a.currentTime < 66), 'playback stops on reaching the end boundary');
         await page.locator('#segments-loop').check(); await page.locator('#segments-play').click();
         await page.evaluate(() => { document.querySelector('audio').currentTime = 65.1; });
         await page.waitForFunction(() => { const a = document.querySelector('audio'); return !a.paused && a.currentTime < 11; });
         await page.locator('[data-segment-id="t14"]').click();
-        assert(await page.locator('audio').evaluate(a => a.paused), 'new selection stops old playback');
+        assert(await page.locator('audio').evaluate(a => !a.paused), 'seeking within the same recording preserves playback');
         assert(await page.locator('#segments-loop').isDisabled(), 'point markers cannot loop');
         await page.setViewportSize({ width: 390, height: 844 });
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'mobile has no page overflow');

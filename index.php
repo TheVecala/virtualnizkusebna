@@ -192,7 +192,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 </div>
 <small id="looper-offline-status">přehrávám ze sítě</small><p id="looper-status" role="status"></p>
 <div id="looper-action-row">
-<div class="looper-view-switch" role="group" aria-label="Zobrazení nahrávky"><button id="looper-view-slider" type="button" aria-pressed="true">posuvník</button><button id="looper-view-wave" type="button" aria-pressed="false">wave</button><button id="looper-view-segments" type="button" aria-pressed="false">úseky</button></div>
+<div class="looper-view-switch" role="group" aria-label="Zobrazení nahrávky"><button id="looper-view-slider" type="button" aria-pressed="true">posuvník</button><button id="looper-view-wave" type="button" aria-pressed="false">značky</button><button id="looper-view-segments" type="button" aria-pressed="false">úseky</button><label id="looper-wave-option" hidden><input id="looper-show-wave" type="checkbox"> wave</label></div>
 </div>
 <div id="looper-timestamps"></div></section>
 </div></section>

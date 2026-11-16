@@ -6,7 +6,7 @@
     // Embeddable view: receives data, reports selections; owns neither fetch nor playback.
     function mount(host, config = {}) {
         let models = [], options = { color: 'type', scale: 'shared', wave: false, labels: true, compact: false, zoom: 1, takes: true, passages: true, notes: true, ...config.options };
-        let selected = null, playhead = null;
+        let selected = null, playhead = null, draftRange = null;
         const waves = new Map();
         host.classList.add('segment-panel');
         function choose(model, s, notify = true) {
@@ -14,30 +14,34 @@
             host.querySelectorAll('[data-segment-id]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.segmentId === s.id && b.dataset.recordingId === String(model.id))));
             if (notify) config.onSelect?.({ ...selected, recording: model.recording });
         }
-        function segment(model, s, duration) {
+        function segment(model, s, view) {
             const b = el('button', undefined, 'segment-item ' + (s.end_ms === null ? 'segment-point' : 'segment-range') + ' segment-' + (s.kind === 'recording' ? 'whole' : s.kind));
             b.type = 'button'; b.dataset.segmentId = s.id; b.dataset.recordingId = model.id;
             const title = s.label + ' · ' + rangeText(s) + (s.song_title ? ' · ' + s.song_title : '') + (s.boundary === 'open' ? ' · chybí konec' : '');
             b.title = title; b.setAttribute('aria-label', title);
             b.setAttribute('aria-pressed', String(String(selected?.recording_id) === String(model.id) && selected?.segment.id === s.id));
-            b.style.left = (s.start_ms / duration * 100) + '%';
-            if (s.start_ms / duration > .8) b.classList.add('segment-near-end');
-            if (s.end_ms !== null) b.style.width = ((s.end_ms - s.start_ms) / duration * 100) + '%';
+            const start = Math.max(view.start, s.start_ms), span = view.end - view.start;
+            b.style.left = ((start - view.start) / span * 100) + '%';
+            if ((start - view.start) / span > .8) b.classList.add('segment-near-end');
+            if (s.end_ms !== null) b.style.width = ((Math.min(view.end, s.end_ms) - start) / span * 100) + '%';
             b.style.setProperty('--segment-color', M.color(s, model.id, options.color));
             const label = el('span', s.label, 'segment-label'); label.hidden = !options.labels; b.append(label);
             b.onclick = () => choose(model, s);
             b.ondblclick = () => config.onActivate?.({ recording_id: model.id, recording: model.recording, segment: s });
             return b;
         }
-        function renderWave(model, plot, duration) {
+        function renderWave(model, plot, view) {
             const data = waves.get(String(model.id));
             if (!options.wave) return;
             if (!data?.peaks?.length) { plot.append(el('span', data?.message || 'Křivka není načtená', 'segment-wave-message')); return; }
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.classList.add('segment-wave'); svg.setAttribute('viewBox', '0 0 1000 100'); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('aria-hidden', 'true');
-            svg.style.width = (data.duration_ms / duration * 100) + '%';
+            svg.style.width = '100%';
             const path = document.createElementNS(svg.namespaceURI, 'path');
-            path.setAttribute('d', data.peaks.map((v, i) => 'M' + (i / data.peaks.length * 1000).toFixed(2) + ',' + (50 - v * 47).toFixed(2) + 'v' + (v * 94).toFixed(2)).join(' '));
+            path.setAttribute('d', data.peaks.map((v, i) => {
+                const x = (i / data.peaks.length * data.duration_ms - view.start) / (view.end - view.start) * 1000;
+                return x < 0 || x > 1000 ? '' : 'M' + x.toFixed(2) + ',' + (50 - v * 47).toFixed(2) + 'v' + (v * 94).toFixed(2);
+            }).join(' '));
             svg.append(path); plot.append(svg);
         }
         function render() {
@@ -49,17 +53,41 @@
             const surface = el('div', undefined, 'segment-surface'); surface.style.width = (options.zoom * 100) + '%'; viewport.append(surface); host.append(viewport);
             const commonDuration = Math.max(...models.map(m => m.extent_ms));
             for (const model of models) {
-                const duration = options.scale === 'shared' ? commonDuration : model.extent_ms;
+                const duration = Math.max(1, options.scale === 'shared' ? commonDuration : model.extent_ms);
+                const view = options.viewRange && options.viewRange.start < duration && options.viewRange.end > options.viewRange.start
+                    ? { start: Math.max(0, options.viewRange.start), end: Math.min(duration, options.viewRange.end) } : { start: 0, end: duration };
                 const card = el('section', undefined, 'segment-recording'); card.dataset.recordingId = model.id;
                 const header = el('header', undefined, 'segment-recording-header');
                 header.append(el('strong', model.name), el('span', (model.collection?.title || '') + ' · ' + (model.duration_ms === null ? 'Délka neznámá; osa po poslední značku' : M.format(model.duration_ms))));
                 card.append(header);
                 const ruler = el('div', undefined, 'segment-ruler');
-                for (let i = 0; i <= 8; i++) { const tick = el('span', M.format(duration * i / 8)); tick.style.left = (i * 12.5) + '%'; ruler.append(tick); }
+                for (let i = 0; i <= 8; i++) { const tick = el('span', M.format(view.start + (view.end - view.start) * i / 8)); tick.style.left = (i * 12.5) + '%'; ruler.append(tick); }
                 card.append(ruler);
-                const plot = el('div', undefined, 'segment-plot'); plot.dataset.recordingId = model.id; plot.dataset.duration = duration;
-                renderWave(model, plot, duration);
-                const visible = model.segments.filter(s => s.kind === 'take' ? options.takes : s.kind === 'passage' ? options.passages : options.notes);
+                const plot = el('div', undefined, 'segment-plot'); plot.dataset.recordingId = model.id; plot.dataset.duration = duration; plot.dataset.viewStart = view.start; plot.dataset.viewEnd = view.end;
+                plot.tabIndex = 0; plot.setAttribute('role', 'slider'); plot.setAttribute('aria-label', 'Pozice v nahrávce ' + model.name);
+                plot.setAttribute('aria-valuemin', '0'); plot.setAttribute('aria-valuemax', String(model.duration_ms || model.extent_ms));
+                const seek = (time_ms, segment_id = null) => {
+                    time_ms = Math.round(Math.max(0, Math.min(model.duration_ms || model.extent_ms, time_ms)));
+                    setPlayhead(model.id, time_ms); config.onSeek?.({ recording_id: model.id, recording: model.recording, time_ms, segment_id });
+                };
+                plot.onclick = e => {
+                    if (e.detail === 0) {
+                        const button = e.target.closest('[data-segment-id]');
+                        if (button) seek(model.segments.find(s => s.id === button.dataset.segmentId)?.start_ms || 0, button.dataset.segmentId);
+                        return;
+                    }
+                    const box = plot.getBoundingClientRect();
+                    seek(view.start + (e.clientX - box.left) / box.width * (view.end - view.start), e.target.closest('[data-segment-id]')?.dataset.segmentId);
+                };
+                plot.onkeydown = e => {
+                    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+                    e.preventDefault();
+                    const at = String(playhead?.recording_id) === String(model.id) ? playhead.time_ms : view.start;
+                    seek(e.key === 'Home' ? view.start : e.key === 'End' ? view.end : at + (e.key === 'ArrowLeft' ? -1000 : 1000));
+                };
+                renderWave(model, plot, view);
+                const visible = model.segments.filter(s => (s.end_ms == null ? s.start_ms >= view.start && s.start_ms <= view.end : s.start_ms < view.end && s.end_ms > view.start)
+                    && (s.kind === 'take' ? options.takes : s.kind === 'passage' ? options.passages : options.notes));
                 const takes = visible.filter(s => s.kind === 'take');
                 // Keep passages below their take; overlapping takes receive separate rows.
                 const rows = [];
@@ -70,12 +98,12 @@
                 }
                 rows.push(...M.lanes(visible.filter(s => s.kind === 'passage' && (!s.parent_id || !takes.some(t => t.id === s.parent_id)))));
                 // Point markers use lanes as well, keeping coincident annotations selectable.
-                const pointSpacing = duration * (options.labels ? 155 : 24) / Math.max(200, viewport.clientWidth * options.zoom - 48);
+                const pointSpacing = (view.end - view.start) * (options.labels ? options.compact ? 115 : 155 : 24) / Math.max(200, viewport.clientWidth * options.zoom - 48);
                 rows.push(...M.lanes(visible.filter(s => s.kind === 'note' || s.kind === 'boundary'), pointSpacing));
                 if (!rows.length) plot.append(el('p', model.segments.length ? 'Tento výběr neobsahuje viditelné úseky.' : 'Nahrávka zatím nemá časové značky.', 'segment-empty'));
-                for (const row of rows) { const lane = el('div', undefined, 'segment-lane'); for (const s of row) lane.append(segment(model, s, duration)); plot.append(lane); }
+                for (const row of rows) { const lane = el('div', undefined, 'segment-lane'); for (const s of row) lane.append(segment(model, s, view)); plot.append(lane); }
                 const baseline = el('div', undefined, 'segment-lane segment-baseline');
-                if (model.duration_ms !== null && model.duration_ms > 0) baseline.append(segment(model, { id: 'recording', kind: 'recording', label: 'Celá nahrávka', start_ms: 0, end_ms: model.duration_ms }, duration));
+                if (model.duration_ms !== null && model.duration_ms > 0) baseline.append(segment(model, { id: 'recording', kind: 'recording', label: 'Celá nahrávka', start_ms: 0, end_ms: model.duration_ms }, view));
                 else baseline.append(el('span', 'Konec nahrávky není známý', 'segment-unknown-end'));
                 plot.append(baseline);
                 const cursor = el('div', undefined, 'segment-playhead'); cursor.hidden = true; plot.append(cursor);
@@ -84,6 +112,7 @@
                 surface.append(card);
             }
             viewport.scrollLeft = scroll;
+            setDraftRange(draftRange);
             if (playhead) setPlayhead(playhead.recording_id, playhead.time_ms);
             if (focus?.segmentId) [...host.querySelectorAll('[data-segment-id]')].find(b => b.dataset.segmentId === focus.segmentId && b.dataset.recordingId === focus.recordingId)?.focus({ preventScroll: true });
         }
@@ -91,13 +120,29 @@
             playhead = { recording_id: id, time_ms: ms };
             for (const plot of host.querySelectorAll('.segment-plot')) {
                 const cursor = plot.querySelector('.segment-playhead');
-                cursor.hidden = String(id) !== plot.dataset.recordingId || ms === null;
-                cursor.style.left = Math.max(0, Math.min(100, (ms || 0) / Number(plot.dataset.duration) * 100)) + '%';
+                const from = Number(plot.dataset.viewStart), to = Number(plot.dataset.viewEnd);
+                cursor.hidden = String(id) !== plot.dataset.recordingId || ms === null || ms < from || ms > to;
+                cursor.style.left = Math.max(0, Math.min(100, ((ms || 0) - from) / (to - from) * 100)) + '%';
+                plot.setAttribute('aria-valuenow', String(String(id) === plot.dataset.recordingId ? ms || 0 : 0));
+                plot.setAttribute('aria-valuetext', M.format(String(id) === plot.dataset.recordingId ? ms || 0 : 0));
+            }
+        }
+        function setDraftRange(range) {
+            draftRange = range;
+            host.querySelectorAll('.segment-draft-edge').forEach(e => e.remove());
+            for (const plot of host.querySelectorAll('.segment-plot')) {
+                const from = Number(plot.dataset.viewStart), to = Number(plot.dataset.viewEnd);
+                for (const [edge, ms] of Object.entries(range || {})) {
+                    if (ms == null || ms < from || ms > to) continue;
+                    const marker = el('span', edge === 'start' ? 'A' : 'B', 'segment-draft-edge');
+                    marker.style.left = 'clamp(0px, ' + ((ms - from) / (to - from) * 100) + '%, calc(100% - 2px))'; marker.setAttribute('aria-hidden', 'true'); plot.append(marker);
+                }
             }
         }
         return {
+            setDraftRange,
             setData(recordings, context = {}) { models = recordings.map(r => M.build(r, context)); render(); },
-            setOptions(next) { options = { ...options, ...next }; render(); },
+            setOptions(next) { const changedRange = 'viewRange' in next && JSON.stringify(options.viewRange) !== JSON.stringify(next.viewRange); options = { ...options, ...next }; render(); if (changedRange) host.querySelector('.segment-scroll')?.scrollTo(0, 0); },
             setWaveform(id, data) { waves.set(String(id), data); render(); },
             clearWaveforms() { waves.clear(); },
             clearSelection() { selected = null; host.querySelectorAll('[aria-pressed]').forEach(b => b.setAttribute('aria-pressed', 'false')); setPlayhead(null, null); },

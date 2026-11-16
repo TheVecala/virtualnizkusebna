@@ -777,7 +777,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 .looper-view-switch button { flex: 0 0 auto; min-width: 0; min-height: 36px; padding: 4px 6px; font-size: 12px; white-space: nowrap; }
 .looper-view-switch button[aria-pressed=true] { color: var(--color-primary-text); background: var(--color-primary-bg); border-color: var(--color-primary); }
 #looper-segments .segment-item { min-height: 0; }
-#looper-segments .segment-recording { padding: 8px 14px; }
+#looper-segments .segment-recording { padding: 4px 10px; }
 #looper-segments .segment-recording-header { display: none; }
 #player-shell.player-fullscreen #looper-timestamps { display: block; position: static; flex: 1 1 0; min-height: 0; margin-top: 8px; animation: none; box-shadow: none; }
 #player-shell.player-fullscreen #looper-action-row > .looper-timestamp-actions > button:first-child { display: none; }
@@ -849,3 +849,6 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 .download-choices label { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 5px 0; text-align: left; }
 .download-choices input[type=checkbox] { flex: 0 0 18px; width: 18px; height: 18px; margin: 0; }
 .looper-draft-edge { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--color-danger); color: var(--color-danger); font-size: 12px; font-weight: bold; padding: 26px 2px 0; pointer-events: none; }
+
+#looper-wave-option { display: inline-flex; align-items: center; gap: 4px; margin: 0; padding: 0 4px; font-size: 12px; white-space: nowrap; }
+#looper-show-wave { width: 14px; height: 14px; margin: 0; accent-color: var(--color-primary); }
