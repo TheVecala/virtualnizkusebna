@@ -151,6 +151,59 @@ let peakRequests = 0, scriptAudioRequests = 0;
         assert.equal(await page.locator('#looper-segments .segment-wave').count(), 0);
         await page.locator('#looper-show-wave').check();
         assert.equal(peakRequests, 1, 'marks and segments share the first waveform request');
+        const readViewport = () => page.evaluate(() => {
+            const node = document.getElementById('looper-view-segments').getAttribute('aria-pressed') === 'true'
+                ? document.querySelector('#looper-segments .segment-plot') : document.getElementById('looper-wave');
+            return [Number(node.dataset.viewStart ?? node.dataset.rangeStart), Number(node.dataset.viewEnd ?? node.dataset.rangeEnd)];
+        });
+        for (const view of ['wave', 'segments']) {
+            await page.locator('#looper-view-' + view).click();
+            await page.locator('#looper-zoom-reset').click();
+            await page.waitForFunction(() => !document.querySelector('#looper-view-segments[aria-pressed=true]') || Number(document.querySelector('#looper-segments .segment-plot').dataset.viewStart) === 0);
+            await page.locator('#looper-zoom-in').click();
+            await page.waitForFunction(() => Number(document.querySelector('#looper-segments .segment-plot').dataset.viewStart) === 10000);
+            let range = await readViewport(); assert(Math.abs(range[1] - range[0] - 20000) < 1, view + ' has a working zoom button');
+            const timeline = page.locator(view === 'wave' ? '#looper-wave' : '#looper-segments .segment-plot');
+            const bounds = await timeline.boundingBox(), at = (await state()).position;
+            await page.mouse.move(bounds.x + bounds.width * .5, bounds.y + 8); await page.mouse.down();
+            await page.mouse.move(bounds.x + bounds.width * .7, bounds.y + 8, { steps: 5 }); await page.mouse.up();
+            range = await readViewport(); assert(Math.abs(range[0] - 6000) < 80, view + ' can pan');
+            assert(Math.abs((await state()).position - at) < .01, 'dragging does not change playback');
+            const anchor = range[0] + .75 * (range[1] - range[0]);
+            await page.mouse.move(bounds.x + bounds.width * .75, bounds.y + 8);
+            await page.keyboard.down('Control'); await page.mouse.wheel(0, -100); await page.keyboard.up('Control');
+            await page.waitForFunction(() => { const n = document.querySelector('#looper-segments .segment-plot'); return Number(n.dataset.viewEnd) - Number(n.dataset.viewStart) < 15000; });
+            range = await readViewport(); assert(Math.abs(range[0] + .75 * (range[1] - range[0]) - anchor) < 80, 'zoom preserves the cursor time');
+            await page.locator('#looper-view-' + (view === 'wave' ? 'segments' : 'wave')).click();
+            const switched = await readViewport(); assert(Math.abs(switched[0] - range[0]) < 1 && Math.abs(switched[1] - range[1]) < 1, 'view switching retains zoom');
+        }
+        await page.locator('#looper-zoom-reset').click();
+        await page.waitForFunction(() => Number(document.querySelector('#looper-segments .segment-plot').dataset.viewStart) === 0);
+        assert.equal(peakRequests, 1, 'zoom and pan never request waveform data again');
+        await page.setViewportSize({ width: 390, height: 844 });
+        const touchSession = await page.context().newCDPSession(page);
+        await touchSession.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 2 });
+        for (const view of ['wave', 'segments']) {
+            await page.locator('#looper-view-' + view).click();
+            await page.locator('#looper-zoom-reset').click();
+            await page.waitForFunction(() => Number(document.querySelector('#looper-segments .segment-plot').dataset.viewStart) === 0);
+            const timeline = page.locator(view === 'wave' ? '#looper-wave' : '#looper-segments .segment-plot');
+            const box = await timeline.evaluate(e => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; });
+            const at = (await state()).position;
+            const fingers = (a, b) => [a, b].map((f, i) => ({ id: i + 1, x: box.x + f * box.width, y: box.y + box.height / 2 }));
+            await touchSession.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: fingers(.35, .65) });
+            await touchSession.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: fingers(.2, .8) });
+            await touchSession.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+            const range = await readViewport(); assert(Math.abs(range[0] - 10000) < 100 && Math.abs(range[1] - 30000) < 100, view + ' supports native pinch');
+            assert(Math.abs((await state()).position - at) < .01, 'pinch does not seek');
+        }
+        await touchSession.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.locator('#looper-zoom-reset').click();
+        await page.waitForFunction(() => Number(document.querySelector('#looper-segments .segment-plot').dataset.viewStart) === 0);
+        assert.equal(peakRequests, 1, 'pinch also reuses the same waveform');
+        console.log('PASS shared Looper zoom: marks/segments buttons, mouse pan, Ctrl-wheel anchor, native pinch and viewport retention');
+
         await toggle.click();
         assert.equal(await drawer.locator('.ts-list > li:visible').count(), 3, 'the full timestamp list is independent of the position view');
         const selected = drawer.locator('.ts-list .ts-selected');
@@ -258,6 +311,7 @@ let peakRequests = 0, scriptAudioRequests = 0;
         await page.waitForFunction(() => Number(document.getElementById('looper-wave').dataset.rangeStart) === 3000);
         assert.equal(Number(await canvas.getAttribute('data-range-end')), 12000);
         await page.locator('#looper-zoom-out').click();
+        await page.waitForFunction(() => Number(document.getElementById('looper-wave').dataset.rangeEnd) > 12000);
         assert(Number(await canvas.getAttribute('data-range-end')) > 12000, 'zoom out expands a focused take');
         await actions.getByRole('button', { name: 'poznámka', exact: true }).click();
         await page.waitForFunction(() => document.querySelector('.annotation-inline[open]')?.dataset.kind === 'note');

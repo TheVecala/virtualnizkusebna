@@ -120,3 +120,15 @@
 /* The shared app shell locks scrolling; this standalone page scrolls normally. */
 html:has(body.segments-page) { height: auto; overflow-y: auto; }
 body.segments-page { height: auto; min-height: 100vh; overflow: visible; }
+
+/* Zoom and pointer gestures share the same timeline controller in every view. */
+.segment-plot, .segment-ruler { touch-action: none; user-select: none; }
+.segment-plot { cursor: grab; }
+.segment-plot:active { cursor: grabbing; }
+.timeline-zoom-controls { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
+.timeline-zoom-controls > button, .segments-page .timeline-zoom-controls > button {
+    min-width: 28px; min-height: 26px; padding: 2px 6px; margin: 0; font-size: 14px; line-height: 20px;
+    border: 1px solid var(--color-waveform-control-border); border-radius: 4px;
+    background: var(--color-waveform-control-bg); color: var(--color-waveform-control-text);
+}
+.timeline-zoom-controls > button:last-child, .segments-page .timeline-zoom-controls > button:last-child { font-size: 11px; }

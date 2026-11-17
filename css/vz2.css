@@ -333,9 +333,6 @@ dialog form { margin-top: 0; }
 .looper-wave-marker:hover .looper-wave-marker-label, .looper-wave-marker:focus-visible .looper-wave-marker-label { background: var(--color-waveform-label-bg); }
 .looper-wave-marker:focus-visible { outline: 2px solid var(--marker-color); outline-offset: 2px; }
 #looper-wave-name { position: absolute; z-index: 3; top: 4px; left: 8px; max-width: 70%; overflow: hidden; color: var(--color-waveform-control-text); background: var(--color-overlay-light); border-radius: 3px; padding: 1px 4px; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
-.looper-zoom-controls { position: sticky; bottom: 5px; left: 5px; display: flex; width: max-content; gap: 3px; margin-top: -28px; z-index: 2; }
-.looper-zoom-controls > button { width: 25px; height: 23px; min-height: 23px; padding: 0; background: var(--color-waveform-control-bg); border: 1px solid var(--color-waveform-control-border); color: var(--color-waveform-control-text); border-radius: 4px; font-size: 17px; line-height: 20px; }
-#looper-zoom { display: none; }
 #looper-panel .timeline { margin-top: 8px; }
 @media (max-width: 760px) {
     #player-shell[data-mode=looper] .player-header { flex-wrap: wrap; gap: 4px; }
@@ -852,3 +849,6 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 
 #looper-wave-option { display: inline-flex; align-items: center; gap: 4px; margin: 0; padding: 0 4px; font-size: 12px; white-space: nowrap; }
 #looper-show-wave { width: 14px; height: 14px; margin: 0; accent-color: var(--color-primary); }
+
+#looper-wave-scroll { touch-action: none; cursor: grab; user-select: none; }
+#looper-wave-scroll:active { cursor: grabbing; }

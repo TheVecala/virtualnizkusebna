@@ -63,7 +63,12 @@ wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.
         assert.equal(requests.filter(r => r.path.includes('peaks')).length, waveRequests);
         assert.equal(requests.filter(r => r.path === '/sample.wav').length, 0, 'waveform views do not download audio');
         await page.locator('#segments-zoom').selectOption('4');
-        assert(await page.locator('.segment-scroll').evaluate(e => e.scrollWidth > e.clientWidth * 3.9));
+        assert(await page.locator('.segment-plot').first().evaluate(e => Math.abs((Number(e.dataset.viewEnd) - Number(e.dataset.viewStart)) / Number(e.dataset.duration) - .25) < .001), 'dropdown zoom narrows the viewport');
+        await page.locator('.timeline-zoom-controls').getByRole('button', { name: 'Oddálit', exact: true }).click();
+        await page.waitForFunction(() => document.getElementById('segments-zoom').value === '2');
+        await page.locator('.timeline-zoom-controls').getByRole('button', { name: 'Celá nahrávka', exact: true }).click();
+        await page.waitForFunction(() => document.getElementById('segments-zoom').value === '1');
+        assert.equal(requests.filter(r => r.path.includes('peaks')).length, waveRequests, 'zoom reuses the cached waveform');
         await page.locator('#segments-zoom').selectOption('1');
         await page.locator('#segments-color').selectOption('type');
         await page.locator('#segments-scale').selectOption('shared');

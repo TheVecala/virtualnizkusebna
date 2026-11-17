@@ -167,7 +167,7 @@
         const audio = document.createElement('audio'); audio.id = 'looper-audio'; audio.preload = 'auto'; audio.setAttribute('playsinline', ''); audio.hidden = true;
         const current = { audio, abort: new AbortController(), phase: 'loading', file, recording, peaks: null, url: null, blob: null, timestamps: [], markersDirty: true };
         looper = current; $('looper-panel').append(audio); select('looper', recording);
-        $('looper-status').textContent = 'Načítám audio…'; $('looper-zoom').value = 1; $('looper-wave-scroll').scrollLeft = 0; offlineLabel(false);
+        $('looper-status').textContent = 'Načítám audio…'; $('looper-wave-scroll').scrollLeft = 0; offlineLabel(false);
         audio.volume = Number($('looper-volume').value);
         const live = () => looper === current;
         const adapter = {
@@ -179,7 +179,7 @@
             fitRange: (start, end) => {
                 if (!live() || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) return;
                 current.waveRange = { start, end }; current.markersDirty = true;
-                $('looper-zoom').value = 1; $('looper-wave-scroll').scrollLeft = 0;
+                $('looper-wave-scroll').scrollLeft = 0;
                 if (current.phase === 'ready' && (audio.currentTime * 1000 < start || audio.currentTime * 1000 >= end)) seek(start / 1000);
                 setLooperView(looperView === 'slider' ? 'wave' : looperView);
             },
@@ -198,7 +198,8 @@
         };
         current.notes = window.Vz2Timestamps.mount($('looper-timestamps'), recording.id, adapter);
         current.segments = window.Vz2SegmentsPanel.mount($('looper-segments'), {
-            options: { compact: true },
+            options: { compact: true }, controls: false,
+            onViewportChange: setLooperViewport,
             onSelect: ({ segment }) => {
                 if (!live()) return;
                 window.Vz2TimestampStore.select({ recording_id: recording.id, item_id: segment.id });
@@ -310,7 +311,8 @@
         $('looper-wave-scroll').hidden = view !== 'wave';
         $('looper-segments').hidden = !segments;
         $('looper-wave-option').hidden = view === 'slider';
-        if (segments) looper?.segments?.setOptions({ wave: $('looper-show-wave').checked, viewRange: looper.waveRange || null, zoom: Number($('looper-zoom').value) });
+        $('looper-zoom-controls').hidden = view === 'slider';
+        if (segments) looper?.segments?.setOptions({ wave: $('looper-show-wave').checked, viewRange: looper.waveRange || null });
         ensureWaveform();
         update();
     }
@@ -326,7 +328,7 @@
     }
     function draw() {
         if (!$('looper-wave-scroll').clientWidth) return;
-        const canvas = $('looper-wave'), width = Math.max(1, Math.min(16384, $('looper-wave-scroll').clientWidth * Number($('looper-zoom').value))), height = fullscreen && !matchMedia('(max-width: 767px)').matches ? 180 : 90;
+        const canvas = $('looper-wave'), width = Math.max(1, $('looper-wave-scroll').clientWidth), height = fullscreen && !matchMedia('(max-width: 767px)').matches ? 180 : 90;
         if (!looper || !width) return;
         $('looper-wave-track').style.width = width + 'px'; $('looper-wave-track').style.height = height + 'px';
         canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
@@ -395,16 +397,24 @@
     $('looper-restart').onclick = () => mode === 'mixer' ? $('mt-restart').click() : seek(0);
     $('looper-back').onclick = () => mode === 'mixer' ? $('mt-backward').click() : seek((looper?.audio.currentTime || 0) - 5);
     $('looper-forward').onclick = () => mode === 'mixer' ? $('mt-forward').click() : seek((looper?.audio.currentTime || 0) + 5);
-    $('looper-seek').oninput = e => seek(Number(e.target.value)); $('looper-zoom').oninput = draw;
-    $('looper-zoom-out').onclick = () => {
-        if (looper?.waveRange && Number($('looper-zoom').value) === 1) {
-            const range = waveRange(), span = range.end - range.start, total = waveDuration();
-            const start = Math.max(0, Math.min(total - span * 2, range.start - span / 2));
-            looper.waveRange = span * 2 >= total ? null : { start, end: start + span * 2 }; looper.markersDirty = true;
-        } else $('looper-zoom').value = Math.max(1, Number($('looper-zoom').value) - 1);
+    $('looper-seek').oninput = e => seek(Number(e.target.value));
+    function setLooperViewport(range) {
+        if (!looper) return;
+        const total = waveDuration();
+        looper.waveRange = range.start === 0 && range.end === 1 ? null : { start: range.start * total, end: range.end * total };
+        looper.markersDirty = true;
+        looper.segments?.setOptions({ viewRange: looper.waveRange });
         draw();
-    };
-    $('looper-zoom-in').onclick = () => { $('looper-zoom').value = Math.min(16, Number($('looper-zoom').value) + 1); draw(); };
+    }
+    const timeline = window.Vz2Timeline.mount($('looper-wave-scroll'), {
+        accepts: () => true,
+        getRect: () => $('looper-wave').getBoundingClientRect(),
+        getRange: () => { const range = waveRange(), total = waveDuration(); return { start: range.start / total, end: range.end / total }; },
+        setRange: setLooperViewport
+    });
+    $('looper-zoom-out').onclick = () => timeline.zoomBy(.5);
+    $('looper-zoom-in').onclick = () => timeline.zoomBy(2);
+    $('looper-zoom-reset').onclick = () => timeline.reset();
     $('looper-wave').onclick = e => { if (looper) { const range = waveRange(); seek((range.start + e.offsetX / $('looper-wave').clientWidth * (range.end - range.start)) / 1000); } };
     $('looper-volume').oninput = e => {
         if (mode === 'mixer') {
