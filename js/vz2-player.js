@@ -4,6 +4,7 @@
     let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, mixerVolumeBeforeMute = 1;
     let waveColors;
     let looperView = 'slider';
+    const showWave = { wave: true, segments: false };
     function waveformColors() {
         if (waveColors) return waveColors;
         const styles = getComputedStyle(document.documentElement);
@@ -305,6 +306,7 @@
     }
     function setLooperView(view) {
         looperView = view;
+        $('looper-show-wave').checked = showWave[view] || false;
         const segments = view === 'segments';
         for (const name of ['slider', 'wave', 'segments']) $('looper-view-' + name).setAttribute('aria-pressed', String(view === name));
         $('looper-seek').hidden = view !== 'slider';
@@ -316,7 +318,7 @@
         ensureWaveform();
         update();
     }
-    $('looper-show-wave').onchange = () => setLooperView(looperView);
+    $('looper-show-wave').onchange = () => { showWave[looperView] = $('looper-show-wave').checked; setLooperView(looperView); };
     $('looper-view-slider').onclick = () => setLooperView('slider');
     $('looper-view-wave').onclick = () => setLooperView('wave');
     $('looper-view-segments').onclick = () => setLooperView('segments');

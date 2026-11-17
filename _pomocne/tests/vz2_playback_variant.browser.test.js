@@ -120,8 +120,7 @@ let peakRequests = 0, scriptAudioRequests = 0;
         assert.equal(await drawer.isVisible(), false, 'wave works independently of the timestamp drawer');
         assert.equal(await drawer.locator('#looper-visuals, .looper-view-switch').count(), 0);
         assert.equal(await page.locator('#looper-seek').isVisible(), false, 'wave replaces the basic slider');
-        assert.equal(peakRequests, 0, 'opening timestamp editors and marks does not request waveform data');
-        await page.locator('#looper-show-wave').check();
+        assert(await page.locator('#looper-show-wave').isChecked(), 'marks show wave by default');
         await page.waitForFunction(() => !document.getElementById('looper-status').textContent);
         assert.equal(peakRequests, 1);
         await page.locator('#looper-show-wave').uncheck();
@@ -131,6 +130,8 @@ let peakRequests = 0, scriptAudioRequests = 0;
         await page.evaluate(() => { window.originalAudio = document.getElementById('looper-audio'); });
         const before = (await state()).position;
         await page.locator('#looper-view-segments').click();
+        assert.equal(await page.locator('#looper-show-wave').isChecked(), false, 'segments keep their independent wave preference');
+        await page.locator('#looper-show-wave').check();
         assert.equal((await state()).playing, true);
         assert((await state()).position >= before && (await state()).position < before + 2);
         assert(await page.evaluate(() => originalAudio === document.getElementById('looper-audio')));
@@ -238,7 +239,7 @@ let peakRequests = 0, scriptAudioRequests = 0;
                 const centers = await page.locator('#looper-action-row button:visible').evaluateAll(buttons => buttons.map(button => {
                     const box = button.getBoundingClientRect(); return box.y + box.height / 2;
                 }));
-                assert(centers.every(y => Math.abs(y - centers[0]) < 1), 'view and timestamp buttons share one row at ' + width);
+                assert(centers.every(y => Math.abs(y - centers[0]) < 1), 'timestamp buttons share one row at ' + width);
                 assert(await page.locator('#looper-action-row').evaluate(row => row.scrollWidth <= row.clientWidth || getComputedStyle(row).overflowX === 'auto'), 'narrow toolbar is scrollable');
                 assert(visualBox.y >= controlsBox.y + controlsBox.height && visualBox.y + visualBox.height <= bar.y + 1,
                     'position views stay between transport and timestamp actions at ' + width);

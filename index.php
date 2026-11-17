@@ -188,13 +188,14 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div id="looper-visuals">
 <div id="looper-wave-scroll" hidden><div id="looper-wave-track"><canvas id="looper-wave" aria-label="Průběh nahrávky; kliknutím lze nastavit čas"></canvas><div id="looper-wave-markers"></div></div><span id="looper-wave-name" aria-hidden="true"></span></div>
 <div id="looper-segments" hidden></div>
+<div id="looper-view-controls">
 <div id="looper-zoom-controls" class="timeline-zoom-controls" role="group" aria-label="Přiblížení časové osy" hidden><button id="looper-zoom-out" type="button" title="Oddálit" aria-label="Oddálit">−</button><button id="looper-zoom-in" type="button" title="Přiblížit" aria-label="Přiblížit">+</button><button id="looper-zoom-reset" type="button">Celá nahrávka</button></div>
+<div class="looper-view-switch" role="group" aria-label="Zobrazení nahrávky"><button id="looper-view-slider" type="button" aria-pressed="true">posuvník</button><button id="looper-view-wave" type="button" aria-pressed="false">značky</button><button id="looper-view-segments" type="button" aria-pressed="false">úseky</button><label id="looper-wave-option" hidden><input id="looper-show-wave" type="checkbox"> wave</label></div>
+</div>
 <div class="timeline"><output id="looper-time">00:00</output><input id="looper-seek" aria-label="Čas Looperu" type="range" min="0" max="0" step="0.01" value="0"><output id="looper-duration">00:00</output></div>
 </div>
 <small id="looper-offline-status">přehrávám ze sítě</small><p id="looper-status" role="status"></p>
-<div id="looper-action-row">
-<div class="looper-view-switch" role="group" aria-label="Zobrazení nahrávky"><button id="looper-view-slider" type="button" aria-pressed="true">posuvník</button><button id="looper-view-wave" type="button" aria-pressed="false">značky</button><button id="looper-view-segments" type="button" aria-pressed="false">úseky</button><label id="looper-wave-option" hidden><input id="looper-show-wave" type="checkbox"> wave</label></div>
-</div>
+<div id="looper-action-row"></div>
 <div id="looper-timestamps"></div></section>
 </div></section>
 <div id="workspace-frame">

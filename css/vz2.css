@@ -852,3 +852,11 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 
 #looper-wave-scroll { touch-action: none; cursor: grab; user-select: none; }
 #looper-wave-scroll:active { cursor: grabbing; }
+
+/* Position-view choices sit beside zoom, above the timestamp actions. */
+#looper-view-controls { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; min-width: 0; padding: 4px 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+#looper-view-controls .timeline-zoom-controls { flex: 0 0 auto; padding: 0; }
+#looper-view-controls .looper-view-switch { align-items: center; gap: 4px; }
+#looper-view-controls .looper-view-switch button { min-height: 28px; padding: 2px 4px; font-size: 11px; }
+#looper-view-controls #looper-wave-option { padding: 0 2px; font-size: 11px; }
+#looper-visuals:has(#looper-seek:not([hidden])) > .timeline { order: -1; }
