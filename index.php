@@ -194,7 +194,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 </div>
 <div class="timeline"><output id="looper-time">00:00</output><input id="looper-seek" aria-label="Čas Looperu" type="range" min="0" max="0" step="0.01" value="0"><output id="looper-duration">00:00</output></div>
 </div>
-<small id="looper-offline-status">přehrávám ze sítě</small><p id="looper-status" role="status"></p>
+<small id="looper-offline-status">přehrávám ze sítě</small><div id="looper-wave-feedback"><p id="looper-status" role="status"></p><button id="looper-wave-retry" type="button" hidden>Zkusit znovu</button><button id="looper-wave-create" type="button" title="Vytvořit křivku z audia. Pokud není v zařízení, stáhne se celá nahrávka." hidden>Vytvořit křivku</button></div>
 <div id="looper-action-row"></div>
 <div id="looper-timestamps"></div></section>
 </div></section>

@@ -66,6 +66,7 @@
             return;
         }
         if (mode !== 'looper' || !looper) return;
+        updateWaveActions();
         const a = looper.audio, ready = looper.phase === 'ready';
         for (const control of ['looper-restart', 'looper-back', 'looper-play', 'looper-forward', 'looper-loop', 'looper-seek']) $(control).disabled = !ready;
         $('looper-play').firstElementChild.className = s.playing ? 'ti ti-player-pause-filled' : 'ti ti-player-play-filled';
@@ -234,17 +235,44 @@
             ensureWaveform(current);
         } catch (e) { if (live()) { current.phase = 'error'; error(e.message); update(); } }
     }
-    function ensureWaveform(current = looper) {
-        if (!current || !current.audioSource || looperView === 'slider' || !$('looper-show-wave').checked || current.wavePromise) return;
-        $('looper-status').textContent = 'Načítám průběh…';
-        current.wavePromise = window.Vz2TimestampControls.fileWaveform(current.file, current.abort.signal, { blob: current.blob, decode: !!current.blob }).then(data => {
+    function updateWaveActions() {
+        const visible = looper && looperView !== 'slider' && !looper.peaks;
+        $('looper-wave-create').hidden = !visible;
+        $('looper-wave-create').disabled = !looper?.audioSource || !!looper?.wavePromise;
+        $('looper-wave-retry').hidden = !visible || !looper.waveFailed || !$('looper-show-wave').checked;
+        $('looper-wave-retry').disabled = !!looper?.wavePromise;
+    }
+    function ensureWaveform(current = looper, { create = false } = {}) {
+        if (!current || !current.audioSource || current.peaks || current.wavePromise ||
+            (!create && (looperView === 'slider' || !$('looper-show-wave').checked))) return;
+        current.waveFailed = false;
+        $('looper-status').textContent = create ? 'Vytvářím křivku…' : 'Načítám křivku…';
+        current.wavePromise = window.Vz2TimestampControls.fileWaveform(current.file, current.abort.signal,
+            { blob: current.blob, decode: create || !!current.blob }).then(data => {
             if (looper !== current) return;
             current.peaks = data?.peaks || null;
+            current.waveFailed = !data;
             current.segments.setWaveform(current.recording.id, data);
-            $('looper-status').textContent = data ? '' : 'Průběh není dostupný.';
-            update();
-        }).catch(e => { if (looper === current && e.name !== 'AbortError') $('looper-status').textContent = 'Průběh není dostupný; přehrávání můžete dál používat.'; });
+            $('looper-status').textContent = data ? '' : 'Křivka zatím není uložená (JSON chybí). Můžete ji vytvořit z audia.';
+        }).catch(error => {
+            if (looper === current && error.name !== 'AbortError') {
+                current.waveFailed = true;
+                $('looper-status').textContent = create ? 'Křivku se nepodařilo vytvořit. Zkuste to znovu.' : error.message;
+            }
+        }).finally(() => {
+            current.wavePromise = null;
+            if (looper === current) update();
+        });
+        updateWaveActions();
     }
+    $('looper-wave-retry').onclick = () => ensureWaveform();
+    $('looper-wave-create').onclick = () => {
+        if (!looper || looper.wavePromise) return;
+        showWave[looperView] = true;
+        $('looper-show-wave').checked = true;
+        looper.segments?.setOptions({ wave: true });
+        ensureWaveform(looper, { create: true });
+    };
 
     function renderWaveTimestamps(current, width, durationMs, view) {
         const markers = document.createDocumentFragment();

@@ -94,13 +94,19 @@
             if (root.idbKeyval) { peakStore ||= root.idbKeyval.createStore('zkusebna-vz2-cache', 'audio'); data = await root.idbKeyval.get(key, peakStore); }
         } catch (_) { /* Offline cache is optional. */ }
         if (validWave(data, file)) return data;
-        if (navigator.onLine === false) return null;
+        if (navigator.onLine === false) throw new Error('Křivka není uložená v zařízení. Pro načtení se připojte k internetu.');
         const request = new AbortController(), timeout = setTimeout(() => request.abort(), 5000);
         try {
             const response = await fetch('php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256), { credentials: 'same-origin', signal: request.signal });
-            data = response.ok ? await response.json() : null;
-            return validWave(data, file) ? await rememberWave(key, { peaks: data.peaks, duration_ms: data.duration_ms }) : null;
-        } catch (_) { return null; }
+            if (response.status === 404) return null;
+            if (!response.ok) throw new Error('Načítání křivky selhalo. Zkuste to znovu.');
+            data = await response.json();
+            if (!validWave(data, file)) throw new Error('Data křivky nejsou platná. Zkuste ji vytvořit znovu.');
+            return await rememberWave(key, { peaks: data.peaks, duration_ms: data.duration_ms });
+        } catch (error) {
+            if (request.signal.aborted) throw new Error('Načítání křivky trvalo příliš dlouho. Zkuste to znovu.');
+            throw new Error(error instanceof TypeError || error instanceof SyntaxError ? 'Načítání křivky selhalo. Zkuste to znovu.' : error.message);
+        }
         finally { clearTimeout(timeout); }
     }
     async function decodeWave(file, key, blob) {
@@ -117,7 +123,7 @@
                     for (let j = from; j < to; j++) if (Number.isFinite(samples[j])) peaks[i] = Math.max(peaks[i], Math.min(1, Math.abs(samples[j])));
                 }
             }
-            data = { peaks, duration_ms: Math.round(buffer.duration * 1000) };
+            data = { peaks, duration_ms: Number(file.duration_ms) > 0 ? Number(file.duration_ms) : Math.round(buffer.duration * 1000) };
         } finally { await context.close(); }
         await rememberWave(key, data);
         if (root.VZ2?.write && navigator.onLine !== false) {
@@ -134,8 +140,21 @@
         if (!file?.url) return null;
         signal?.throwIfAborted();
         const key = waveKey(file);
-        if (!waveCache.has(key)) waveCache.set(key, storedWave(file, key));
-        let data = await waveCache.get(key);
+        // Retain successful results and share pending work, but never cache a failure.
+        // A later user activation can retry without reloading the page.
+        if (!waveCache.has(key) && !waveDecodes.has(key)) {
+            const pending = storedWave(file, key).then(data => {
+                if (!data && waveCache.get(key) === pending) waveCache.delete(key);
+                return data;
+            }, error => {
+                if (waveCache.get(key) === pending) waveCache.delete(key);
+                throw error;
+            });
+            waveCache.set(key, pending);
+        }
+        let data;
+        try { data = await (waveCache.get(key) || waveDecodes.get(key)); }
+        catch (error) { if (!decode) throw error; }
         signal?.throwIfAborted();
         if (!data && waveDecodes.has(key)) data = await waveDecodes.get(key);
         if (!data && decode) {

@@ -5,14 +5,18 @@ const { chromium } = require('playwright');
 (async () => {
     const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/chromium', headless: true });
     const context = await browser.newContext();
-    let requests = 0;
+    let requests = 0, recovered = false;
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.pathname === '/') return route.fulfill({ contentType: 'text/html', body: '<!doctype html><body></body>' });
         if (url.pathname.endsWith('vz2_peaks.php')) {
             requests++;
             await new Promise(resolve => setTimeout(resolve, 60));
-            return route.fulfill({ json: url.searchParams.get('id') === '1' ? { ok: true, duration_ms: 10000, peaks: [.1, .5, .3] } : { ok: false } });
+            const id = url.searchParams.get('id');
+            if (id === '3' && !recovered) return route.fulfill({ status: 503, json: { ok: false } });
+            return route.fulfill(id === '1' || recovered && ['3', '4'].includes(id)
+                ? { json: { ok: true, duration_ms: 10000, peaks: [.1, .5, .3] } }
+                : { status: 404, json: { ok: false } });
         }
         return route.abort();
     });
@@ -26,7 +30,7 @@ const { chromium } = require('playwright');
             window.downloads = 0; window.decodes = 0;
             window.Vz2Downloads = { read: async () => { downloads++; return { blob: new Blob(['audio']) }; } };
             window.AudioContext = class {
-                async decodeAudioData() { decodes++; await new Promise(r => setTimeout(r, 30)); return { duration: 10, length: 4, numberOfChannels: 1, getChannelData: () => [.1, -.2, .4, .6] }; }
+                async decodeAudioData() { decodes++; await new Promise(r => setTimeout(r, 30)); if (window.failDecode) { window.failDecode = false; throw Error('Bad audio'); } return { duration: 10.01, length: 4, numberOfChannels: 1, getChannelData: () => [.1, -.2, .4, .6] }; }
                 async close() {}
             };
         });
@@ -58,9 +62,37 @@ const { chromium } = require('playwright');
             return { shared: data[0] === data[1], downloads, decodes };
         });
         assert.deepEqual(decoded, { shared: true, downloads: 0, decodes: 1 });
-        assert.equal(requests, 3, 'fallback decoding reuses the earlier JSON result');
+        assert.equal(requests, 4, 'missing JSON can be retried and concurrent decoders still share one request');
         await second.evaluate(() => Vz2TimestampControls.fileWaveform({ ...file, id: 2 }, null, { decode: false }));
-        assert.equal(requests, 3, 'generated peaks are cached across pages');
+        assert.equal(requests, 4, 'generated peaks are cached across pages');
+        const failures = await page.evaluate(async () => {
+            const failed = await Promise.allSettled([1, 2].map(() => Vz2TimestampControls.fileWaveform({ ...file, id: 3 }, null, { decode: false })));
+            const missing = await Vz2TimestampControls.fileWaveform({ ...file, id: 4 }, null, { decode: false });
+            return { messages: failed.map(r => r.reason?.message), missing, downloads };
+        });
+        assert(failures.messages.every(message => message.includes('Načítání křivky selhalo')));
+        assert.equal(failures.missing, null); assert.equal(failures.downloads, 0);
+        assert.equal(requests, 6, 'failed concurrent requests are shared too');
+        recovered = true;
+        await page.evaluate(async () => {
+            for (const id of [3, 4]) {
+                const data = await Vz2TimestampControls.fileWaveform({ ...file, id }, null, { decode: false });
+                if (!data?.peaks.length) throw Error('Retry failed');
+                await Vz2TimestampControls.fileWaveform({ ...file, id }, null, { decode: false });
+            }
+        });
+        assert.equal(requests, 8, 'server errors and missing JSON both recover without a page reload; successes stay cached');
+        const retriedDecode = await page.evaluate(async () => {
+            const f = { ...file, id: 5 }, blob = new Blob(['local audio']); window.failDecode = true;
+            const failed = await Promise.allSettled([Vz2TimestampControls.fileWaveform(f, null, { blob })]);
+            const data = await Vz2TimestampControls.fileWaveform(f, null, { blob });
+            return { failure: failed[0].status, duration: data.duration_ms, downloads, decodes };
+        });
+        assert.deepEqual(retriedDecode, { failure: 'rejected', duration: 10000, downloads: 0, decodes: 3 });
+        const beforeReuse = requests;
+        await second.evaluate(() => Vz2TimestampControls.fileWaveform({ ...file, id: 5 }, null, { decode: false }));
+        assert.equal(requests, beforeReuse, 'generated duration matches file metadata so another page reuses the saved peaks');
+
         console.log('PASS waveform cache: opt-in, concurrent requests, abort isolation, memory/IndexedDB reuse, file replacement and one decode from existing audio');
     } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

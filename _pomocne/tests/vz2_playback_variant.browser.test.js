@@ -29,7 +29,7 @@ let entries = [entry({ id: 1, kind: 'song_start', time_ms: 3000, body: 'Pokus' }
     entry({ id: 4, kind: 'note', time_ms: 7000, body: '👍' })];
 let revision = 1, writable = true, failWrite = false, nextTimestampId = 100;
 const writes = [];
-let peakRequests = 0, scriptAudioRequests = 0;
+let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioRequests = 0;
 (async () => {
     const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/chromium', headless: true,
         args: ['--autoplay-policy=no-user-gesture-required'] });
@@ -42,14 +42,14 @@ let peakRequests = 0, scriptAudioRequests = 0;
         if (p === '/index.php') return route.fulfill({ contentType: 'text/html', body: html });
         if (/^\/(js|css|meat)\//.test(p)) return route.fulfill({ contentType: p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'image/png', body: fs.readFileSync(path.join(root, p)) });
         if (p === '/sample.wav') {
-            if (route.request().resourceType() === 'fetch') scriptAudioRequests++;
+            if (['fetch', 'xhr'].includes(route.request().resourceType())) scriptAudioRequests++;
             const range = /^bytes=(\d+)-(\d*)$/.exec(route.request().headers().range || '');
             const start = range ? Number(range[1]) : 0, end = range?.[2] ? Math.min(Number(range[2]), wav.length - 1) : wav.length - 1;
             return route.fulfill({ status: range ? 206 : 200, contentType: 'audio/wav', body: wav.subarray(start, end + 1),
                 headers: { 'accept-ranges': 'bytes', ...(range ? { 'content-range': `bytes ${start}-${end}/${wav.length}` } : {}) } });
         }
         if (p === '/php/ajax/vz2.php') return route.fulfill({ json: url.searchParams.get('action') === 'mixer' ? { ok: true, multitracks: [] } : catalog });
-        if (p === '/php/ajax/vz2_peaks.php') { peakRequests++; if (url.searchParams.get('id') === '12') return route.fulfill({ status: 404, json: { ok: false } }); return route.fulfill({ json: { ok: true, duration_ms: 40000, peaks: Array.from({ length: 200 }, (_, i) => .2 + Math.abs(Math.sin(i)) * .5) } }); }
+        if (p === '/php/ajax/vz2_peaks.php') { if (route.request().method() === 'POST') { peakWrites++; return route.fulfill({ status: 201, json: { ok: true } }); } peakRequests++; if (url.searchParams.get('id') === '12') return route.fulfill({ status: missingWaveStatus, json: { ok: false } }); return route.fulfill({ json: { ok: true, duration_ms: 40000, peaks: Array.from({ length: 200 }, (_, i) => .2 + Math.abs(Math.sin(i)) * .5) } }); }
         if (p === '/php/ajax/vz2_timestamps.php') {
             const data = route.request().postDataJSON();
             if (data) {
@@ -412,8 +412,40 @@ let peakRequests = 0, scriptAudioRequests = 0;
         await page.waitForFunction(() => Vz2Player.getState()?.id === '12' && Vz2Player.getState().phase === 'ready');
         assert.equal(peakRequests, peaksBeforeNextRecording, 'slider skips peaks for a new recording even with wave previously enabled');
         await page.locator('#looper-view-segments').click();
-        await page.waitForFunction(() => document.getElementById('looper-status').textContent.includes('Průběh není dostupný'));
+        await page.waitForFunction(() => document.getElementById('looper-status').textContent.includes('Načítání křivky selhalo'));
+        missingWaveStatus = 404;
+        await page.locator('#looper-wave-retry').click();
+        await page.waitForFunction(() => document.getElementById('looper-status').textContent.includes('JSON chybí'));
+        const missingRequests = peakRequests;
+        await page.locator('#looper-show-wave').uncheck();
+        await page.locator('#looper-show-wave').check();
+        await page.waitForFunction(() => document.getElementById('looper-status').textContent.includes('JSON chybí'));
+        assert.equal(peakRequests, missingRequests + 1, 'reactivating wave retries missing JSON');
         assert.equal(scriptAudioRequests, audioDownloadsBeforeMissingWave, 'missing JSON never triggers a whole audio download for the Looper');
+        await page.locator('#looper-play').click();
+        const playingAudio = await page.evaluate(() => { window.creatingAudio = document.getElementById('looper-audio'); return creatingAudio.currentTime; });
+        if (process.env.PLAYBACK_SCREENSHOT_DIR) {
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.screenshot({ path: path.join(process.env.PLAYBACK_SCREENSHOT_DIR, 'wave-create-mobile.png') });
+            await page.setViewportSize({ width: 1440, height: 900 });
+        }
+        await page.locator('#looper-wave-create').click();
+        await page.waitForFunction(() => document.getElementById('looper-wave-create').hidden);
+        await page.waitForFunction(() => document.querySelector('#looper-segments .segment-wave'));
+        assert.equal(scriptAudioRequests, audioDownloadsBeforeMissingWave + 1, 'explicit creation downloads audio once');
+        assert.equal(peakWrites, 1, 'created peaks are shared with the server');
+        assert(await page.evaluate(() => creatingAudio === document.getElementById('looper-audio') && !creatingAudio.paused), 'creation preserves the playing audio element');
+        assert((await state()).position >= playingAudio, 'creation does not reset playback');
+        await page.locator('#looper-play').click();
+        const generatedRequests = peakRequests;
+        await page.locator('#looper-view-wave').click();
+        await page.locator('#looper-show-wave').uncheck();
+        await page.locator('#looper-show-wave').check();
+        await page.locator('#looper-view-segments').click();
+        assert.equal(peakRequests, generatedRequests, 'generated waveform is reused between views');
+        assert.equal(scriptAudioRequests, audioDownloadsBeforeMissingWave + 1);
+        console.log('PASS waveform recovery: server error, missing JSON, retry, explicit creation, one audio download, shared peaks and uninterrupted playback');
+
         await toggle.click();
         assert.equal(await page.locator('#looper-visuals').count(), 1);
         assert.equal(await page.locator('#looper-segments .segment-note').count(), 0);
