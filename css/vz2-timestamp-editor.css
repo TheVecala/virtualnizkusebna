@@ -51,15 +51,21 @@
 .vz2-annotation-editor .annotation-fine:not([open]) > summary { display: none; }
 .vz2-annotation-editor .annotation-fine summary { width: fit-content; color: var(--color-text-muted); font-size: 12px; padding: 5px 0; cursor: pointer; }
 .vz2-annotation-editor .annotation-fine[open] summary { color: var(--color-primary); }
-.annotation-fine[open] .annotation-fine-rows { padding-top: 8px; }
-.annotation-fine-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.annotation-fine-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-content: start; gap: 4px; min-width: 0; margin-bottom: 8px; }
+.annotation-fine[open] .annotation-fine-rows { padding-top: 2px; }
+.annotation-fine-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.annotation-fine-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-content: start; gap: 2px; min-width: 0; margin-bottom: 4px; }
 .vz2-annotation-editor .annotation-fine-row label { grid-column: 1 / -1; min-width: 0; font-size: 12px; gap: 3px; }
-.vz2-annotation-editor .annotation-fine-row input { width: 100%; min-height: 34px; padding: 4px 6px; font-variant-numeric: tabular-nums; }
-.vz2-annotation-editor .annotation-fine-row button { min-width: 0; min-height: 26px; padding: 3px 2px; font-size: 11px; white-space: nowrap; }
+.vz2-annotation-editor .annotation-fine-row input { width: 100%; min-height: 30px; padding: 3px 4px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.vz2-annotation-editor .annotation-fine-row button { min-width: 0; min-height: 24px; padding: 1px 0; font-size: 10px; white-space: nowrap; }
 .vz2-annotation-editor .annotation-clear-end { min-height: 26px; padding: 3px 6px; font-size: 11px; }
 .vz2-annotation-editor[data-kind=note] .annotation-fine-rows { grid-template-columns: minmax(0, 1fr); max-width: 320px; }
-@media (max-width: 420px) { .annotation-fine-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Precise editing replaces the regular time/capture area in place. */
+.annotation-times:has(.annotation-fine[open]) > .annotation-boundaries { display: none; }
+.vz2-annotation-editor[data-kind=take] .annotation-top-row:has(.annotation-fine[open]) .annotation-times { grid-row: 1 / 3; }
+.vz2-annotation-editor[data-kind=take] .annotation-top-row:has(.annotation-fine[open]) > .annotation-captures { grid-column: 2; grid-row: 2; align-self: end; min-width: 0; }
+.annotation-top-row:has(.annotation-fine[open]) .annotation-add-passages { white-space: normal; min-width: 0; padding: 3px 2px; font-size: 10px; }
+.annotation-top-row:has(.annotation-fine[open]) [data-capture] { display: none; }
+.vz2-annotation-editor[data-kind=note] .annotation-top-row:has(.annotation-fine[open]) { grid-template-columns: minmax(120px, 1fr) minmax(0, 1.3fr); }
 .annotation-field, .annotation-existing { display: grid; grid-template-columns: 78px minmax(0, 1fr); align-items: center; gap: 6px; padding: 5px 0; }
 .vz2-annotation-editor .annotation-field label, .annotation-field > span, .annotation-existing > span { font-size: 14px; margin: 0; }
 .annotation-caption-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; margin-top: 12px; }

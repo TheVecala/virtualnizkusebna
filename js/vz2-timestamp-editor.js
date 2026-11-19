@@ -30,7 +30,7 @@
                         <div class="annotation-passage" data-choice="passage_type"></div>
                     </div>
                     <p class="annotation-time-error error" role="alert"></p>
-                    <details class="annotation-fine"><summary>Zavřít přesné časy</summary><div class="annotation-fine-rows"></div><button type="button" class="annotation-clear-end">Doplnit konec později</button></details>
+                    <details class="annotation-fine"><summary aria-label="Zavřít přesné nastavení času">Přesné časy · zavřít</summary><div class="annotation-fine-rows"></div><button type="button" class="annotation-clear-end">Doplnit konec později</button></details>
                     <div class="annotation-caption-row">
                         <div class="annotation-title-field"><label for="annotation-label" class="visually-hidden">Popisek</label><input id="annotation-label" name="label" placeholder="Popisek" maxlength="4000"><button type="button" class="annotation-note-open" aria-label="Doplňující poznámka">+poz</button></div>
                         <button type="submit" class="annotation-save">uložit</button>
@@ -44,6 +44,7 @@
                 <section class="annotation-reference" aria-label="Časové značky nahrávky"><h3></h3><ol tabindex="0" aria-label="Seznam časových značek"></ol></section>
             </div>
         </form>`;
+        dialog.querySelector('.annotation-times').append(dialog.querySelector('.annotation-fine'));
         if (kind === 'take') dialog.querySelector('.annotation-top-row').append(dialog.querySelector('.annotation-captures'));
         if (kind === 'note') dialog.querySelector('.annotation-top-row').append(dialog.querySelector('.annotation-caption-row'));
         (panel?.editorHost || document.body).append(dialog);
@@ -166,9 +167,10 @@
         for (const [edge, title] of [['start', 'Začátek'], ['end', 'Konec']]) {
             const row = make('div', null, 'annotation-fine-row annotation-fine-' + edge);
             const input = make('input'); input.name = edge; input.setAttribute('aria-label', title + ' přesně'); input.placeholder = 'mm:ss'; input.inputMode = 'text';
+            row.setAttribute('role', 'group'); row.setAttribute('aria-label', title + ' – posun v sekundách');
             row.append(make('label', title)); row.firstChild.append(input);
             for (const [delta, text] of [[-1000, '−1 s'], [-100, '−0,1 s'], [100, '+0,1 s'], [1000, '+1 s']]) {
-                const b = make('button', text); b.type = 'button'; b.setAttribute('aria-label', title + ' ' + text);
+                const b = make('button', text.replace(' s', '')); b.type = 'button'; b.title = title + ' ' + text; b.setAttribute('aria-label', title + ' ' + text);
                 b.onclick = () => { const at = edge === 'start' ? start : end; if (at == null) { timeError.textContent = edge === 'start' ? 'Nejprve vložte začátek.' : 'Nejprve vložte konec.'; return; } setEdge(edge, Math.max(0, at + delta)); }; row.append(b);
             }
             input.oninput = input.onchange = () => { try { if (!input.value.trim()) { if (edge === 'start') start = null; else end = null; invalidTimes.delete(edge); timeError.textContent = ''; update(); } else setEdge(edge, Model.parse(input.value)); } catch (e) { timeError.textContent = e.message; invalidTimes.set(edge, e.message); update(); } };
@@ -204,9 +206,16 @@
             dialog.querySelectorAll('[data-capture]').forEach(b => b.disabled = busy || !ready);
         }, 200);
         dialog.querySelectorAll('[data-capture]').forEach(b => b.onclick = () => { if (adapter?.canPlay?.()) setEdge(b.dataset.capture, currentTime()); });
+        const fineBox = dialog.querySelector('.annotation-fine');
+        let fineEdge = 'start';
         dialog.querySelectorAll('[data-edit-time]').forEach(b => b.onclick = () => {
-            dialog.querySelector('.annotation-fine').open = true;
-            const input = form.elements[b.dataset.editTime]; input.focus(); input.select();
+            fineEdge = b.dataset.editTime;
+            fineBox.open = true;
+            // Button adjustments are the primary interaction; typing requires an explicit tap.
+            dialog.querySelector('.annotation-fine-' + fineEdge + ' button').focus({ preventScroll: true });
+        });
+        fineBox.addEventListener('toggle', () => {
+            if (!fineBox.open && fineBox.contains(document.activeElement)) dialog.querySelector('[data-edit-time=' + fineEdge + ']').focus({ preventScroll: true });
         });
         label.oninput = update;
         choices.song.onChange(update);
@@ -312,7 +321,7 @@
             if (passageError()) { report(passageError()); return; }
             if (!selected && !latestList.can_create) { report('K přidání značky již nemáte oprávnění.'); return; }
             if (invalidTimes.size) { timeError.textContent = [...invalidTimes.values()][0]; dialog.querySelector('.annotation-fine').open = true; return; }
-            if (kind !== 'note' && start != null && end != null && end <= start) { timeError.textContent = 'Konec musí být po začátku.'; dialog.querySelector('[data-edit-time=end]').focus(); return; }
+            if (kind !== 'note' && start != null && end != null && end <= start) { timeError.textContent = 'Konec musí být po začátku.'; (fineBox.open ? dialog.querySelector('.annotation-fine-end button') : dialog.querySelector('[data-edit-time=end]')).focus({ preventScroll: true }); return; }
             if (kind === 'note' && !label.value.trim()) { report('U poznámky vyplňte text.'); update(); label.focus(); return; }
             const fields = { timestamps_revision: revision, time_ms: start, body: label.value };
             if (selected) { fields.id = selected.timestamp_id; fields.revision = selected.source.revision; }

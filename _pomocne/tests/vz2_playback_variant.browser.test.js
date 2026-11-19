@@ -349,16 +349,21 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
                 assert(await page.evaluate(() => originalAudio === document.getElementById('looper-audio')));
                 if (kind === 'take') {
                     await editor.locator('[data-edit-time=start]').click();
+                    assert(await editor.evaluate(e => e.querySelector('.annotation-fine-start button') === document.activeElement), 'opening precise times focuses a button, not the keyboard');
+                    assert.equal(await editor.locator('[data-edit-time=start]').isVisible(), false, 'precise controls replace ordinary time display');
+                    assert.equal(await editor.locator('[data-capture=start]').isVisible(), false, 'precise controls replace capture buttons');
+
                     const start = await editor.locator('[name=start]').boundingBox(), end = await editor.locator('[name=end]').boundingBox();
                     assert(Math.abs(start.y - end.y) < 1 && end.x > start.x + start.width, 'precise times share a row at ' + width);
                     for (const edge of ['start', 'end']) {
                         const input = await editor.locator('[name=' + edge + ']').boundingBox();
                         const buttons = await editor.locator('.annotation-fine-' + edge + ' button').evaluateAll(nodes => nodes.map(n => { const r = n.getBoundingClientRect(); return { y: r.y, height: r.height }; }));
-                        assert(buttons.every(b => b.y >= input.y + input.height && b.height <= 30), 'small adjustment buttons sit below their time');
+                        assert(buttons.every(b => b.y >= input.y + input.height && b.height <= 24 && Math.abs(b.y - buttons[0].y) < 1), 'all four compact adjustments share one row below their time');
                     }
                     assert(await drawer.evaluate(e => e.scrollWidth <= e.clientWidth + 1));
                     if (width === 390 || width === 1440) await page.screenshot({ path: path.join(previewDir, 'precise-' + width + '.png') });
                     await editor.locator('.annotation-fine summary').click();
+                    assert(await editor.locator('[data-capture=start]').isVisible(), 'closing precise controls restores capture buttons');
                 }
                 if (width === 390 || width === 1440) await page.screenshot({ path: path.join(previewDir, kind + '-' + width + '.png') });
             }
