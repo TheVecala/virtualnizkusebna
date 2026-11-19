@@ -261,6 +261,25 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
             await page.keyboard.press('Escape');
         }
         console.log('PASS drawer, fullscreen and all three position views at 320/390/767/960/1440 px');
+        for (const width of [390, 960, 1440]) for (const height of [400, 600]) {
+            await page.setViewportSize({ width, height });
+            for (const view of ['wave', 'segments']) {
+                await page.locator('#looper-view-' + view).click();
+                const rows = await page.evaluate(view => {
+                    const ids = [view === 'wave' ? 'looper-wave-scroll' : 'looper-segments', 'looper-view-controls', 'looper-time', 'looper-offline-status', 'looper-action-row'];
+                    return ids.map(id => { const r = document.getElementById(id).getBoundingClientRect(); return { id, top: r.top, bottom: r.bottom }; });
+                }, view);
+                assert(rows.every((row, i) => !i || row.top >= rows[i - 1].bottom - 1), 'player rows never overlap at ' + width + '×' + height + ' ' + view + ': ' + JSON.stringify(rows));
+                await actions.getByRole('button', { name: 'úsek', exact: true }).scrollIntoViewIfNeeded();
+                assert(await actions.getByRole('button', { name: 'úsek', exact: true }).evaluate(e => {
+                    const r = e.getBoundingClientRect(), body = document.getElementById('player-body').getBoundingClientRect();
+                    return r.top >= body.top - 1 && r.bottom <= body.bottom + 1;
+                }), 'timestamp actions remain reachable on short screens');
+            }
+        }
+        await page.setViewportSize({ width: 1440, height: 844 });
+        console.log('PASS short-screen Looper: wave and segment toolbars never overlap and actions stay reachable');
+
         await page.locator('#looper-view-wave').click();
         const editor = drawer.locator('.annotation-inline');
         await page.evaluate(() => Vz2Player.seek(14.321));

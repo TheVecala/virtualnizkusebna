@@ -240,8 +240,8 @@ dialog form { margin-top: 0; }
 .player-header > button { width: 32px; flex: 0 0 32px; padding: 3px; }
 #player-play { color: var(--color-primary); background: var(--color-primary-bg); }
 #player-body { min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; padding: 8px; scrollbar-width: thin; }
-#player-shell[data-mode=looper] #player-body { display: flex; flex-direction: column; overflow: hidden; }
-#looper-panel { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; min-width: 0; }
+#player-shell[data-mode=looper] #player-body { display: flex; flex-direction: column; overflow-x: hidden; overflow-y: auto; }
+#looper-panel { display: flex; flex: 1 0 auto; flex-direction: column; min-height: 0; min-width: 0; }
 #looper-panel > :not(#looper-timestamps) { flex: 0 0 auto; }
 #looper-timestamps { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .looper-timestamp-actions { display: none; }
@@ -757,15 +757,12 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 }
 
 /* Three position views stay below transport; the drawer contains timestamps. */
-#looper-panel > #looper-visuals { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 40px; min-width: 0; }
+#looper-panel > #looper-visuals { display: flex; flex-direction: column; flex: 0 0 auto; min-height: 40px; min-width: 0; }
 #looper-visuals > .timeline { flex: 0 0 auto; justify-content: space-between; margin: 0 0 4px; }
 #looper-visuals > #looper-wave-scroll { flex: 0 0 auto; }
-#looper-visuals:has(#looper-segments:not([hidden])) { flex-shrink: 0; }
 #looper-segments { flex: 0 0 auto; margin-bottom: 6px; }
-/* Keep every segment lane at its natural height; scroll the player, not a tiny nested panel. */
-#player-shell[data-mode=looper]:has(#looper-segments:not([hidden])):not(.player-fullscreen) { max-height: min(70dvh, calc(100dvh - 180px)); }
-#player-shell[data-mode=looper]:has(#looper-segments:not([hidden])) #player-body { overflow-y: auto; }
-#looper-panel:has(#looper-segments:not([hidden])) { flex-shrink: 0; }
+/* Keep visualizations and control rows at their natural height; scroll the player when space runs out. */
+#player-shell[data-mode=looper]:not(.player-fullscreen) { max-height: min(70dvh, calc(100dvh - 180px)); }
 #looper-segments .segment-plot, #looper-segments .segment-ruler { touch-action: pan-y; }
 #looper-action-row { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
 #looper-action-row > .looper-timestamp-actions { display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: 5px; margin: 0; }
@@ -856,7 +853,7 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 #looper-wave-option { display: inline-flex; align-items: center; gap: 4px; margin: 0; padding: 0 4px; font-size: 12px; white-space: nowrap; }
 #looper-show-wave { width: 14px; height: 14px; margin: 0; accent-color: var(--color-primary); }
 
-#looper-wave-scroll { touch-action: none; cursor: grab; user-select: none; }
+#looper-wave-scroll { touch-action: pan-y; cursor: grab; user-select: none; }
 #looper-wave-scroll:active { cursor: grabbing; }
 
 /* Position-view choices sit beside zoom, above the timestamp actions. */
