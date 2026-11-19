@@ -760,7 +760,13 @@ input[type=checkbox], input[type=range], progress { accent-color: var(--color-pr
 #looper-panel > #looper-visuals { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 40px; min-width: 0; }
 #looper-visuals > .timeline { flex: 0 0 auto; justify-content: space-between; margin: 0 0 4px; }
 #looper-visuals > #looper-wave-scroll { flex: 0 0 auto; }
-#looper-segments { flex: 0 1 auto; min-height: 0; max-height: min(220px, 25dvh); overflow-y: auto; margin-bottom: 6px; }
+#looper-visuals:has(#looper-segments:not([hidden])) { flex-shrink: 0; }
+#looper-segments { flex: 0 0 auto; margin-bottom: 6px; }
+/* Keep every segment lane at its natural height; scroll the player, not a tiny nested panel. */
+#player-shell[data-mode=looper]:has(#looper-segments:not([hidden])):not(.player-fullscreen) { max-height: min(70dvh, calc(100dvh - 180px)); }
+#player-shell[data-mode=looper]:has(#looper-segments:not([hidden])) #player-body { overflow-y: auto; }
+#looper-panel:has(#looper-segments:not([hidden])) { flex-shrink: 0; }
+#looper-segments .segment-plot, #looper-segments .segment-ruler { touch-action: pan-y; }
 #looper-action-row { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
 #looper-action-row > .looper-timestamp-actions { display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: 5px; margin: 0; }
 #looper-action-row > .looper-timestamp-actions > button { flex: 0 0 auto; min-height: 36px; padding: 4px 8px; font-size: 12px; white-space: nowrap; }

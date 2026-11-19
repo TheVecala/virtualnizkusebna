@@ -196,7 +196,11 @@
             if (looperPanel) {
                 if (reload.parentElement !== mobileActions) (mobileNote || mobileAdd).after(reload);
             } else if (reload.parentElement !== toolbar) quickDown.after(reload);
-            if (mobileActions && (looperPanel || mobileMedia.matches)) container.style.setProperty('--ts-drawer-top', (actionsRow || mobileActions).getBoundingClientRect().bottom + 8 + 'px');
+            if (mobileActions && (looperPanel || mobileMedia.matches)) {
+                const actionBottom = (actionsRow || mobileActions).getBoundingClientRect().bottom;
+                const bottom = looperPanel ? Math.min(actionBottom, document.getElementById('player-shell').getBoundingClientRect().bottom) : actionBottom;
+                container.style.setProperty('--ts-drawer-top', bottom + 8 + 'px');
+            }
             Notes.reposition(panel);
         };
         const toggleDrawer = open => {
