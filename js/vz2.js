@@ -576,55 +576,77 @@
         if (!timestampsHost.hidden) prepareTimestamps();
         return card;
     }
-    async function createUploadPeaks(recordingId, originals, report) {
-        const catalog = await api();
-        const recording = catalog.recordings.find(r => Number(r.id) === Number(recordingId));
-        if (!recording || recording.files.length !== originals.length) throw new Error('Nelze dohledat stopy nahrávky.');
+    async function decodeUploadPeaks(original, report, label) {
         const Context = window.AudioContext || window.webkitAudioContext;
         if (!Context) throw new Error('Tento prohlížeč neumí vytvořit křivku audia.');
         const context = new Context();
-        const failures = [];
         try {
-            for (let index = 0; index < originals.length; index++) {
-                const file = recording.files[index], original = originals[index];
-                const label = `Stopa ${index + 1}/${originals.length}: ${original.name}`;
-                try {
-                    report('Dekóduji audio… ' + label);
-                    const buffer = await context.decodeAudioData(await original.arrayBuffer());
-                    const count = Math.min(4096, buffer.length), peaks = new Float32Array(count);
-                    let yielded = performance.now();
-                    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-                        const samples = buffer.getChannelData(channel);
-                        for (let i = 0; i < count; i++) {
-                            const start = Math.floor(i * samples.length / count), end = Math.floor((i + 1) * samples.length / count);
-                            for (let j = start; j < end; j++) {
-                                const sample = Math.abs(samples[j]);
-                                if (Number.isFinite(sample)) peaks[i] = Math.max(peaks[i], Math.min(1, sample));
-                            }
-                            if (performance.now() - yielded > 16 || i === count - 1) {
-                                report('Vytvářím křivku… ' + label, (channel * count + i + 1) / (buffer.numberOfChannels * count) * 100);
-                                await new Promise(resolve => setTimeout(resolve, 0));
-                                yielded = performance.now();
-                            }
-                        }
+            report('Dekóduji audio… ' + label);
+            let buffer;
+            try { buffer = await context.decodeAudioData(await original.arrayBuffer()); }
+            catch (_) { throw new Error('Audio nelze dekódovat. Prohlížeč nemusí podporovat jeho formát nebo nemá dost paměti pro tuto nahrávku.'); }
+            const count = Math.min(4096, buffer.length), peaks = new Float32Array(count);
+            let yielded = performance.now();
+            for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                const samples = buffer.getChannelData(channel);
+                for (let i = 0; i < count; i++) {
+                    const start = Math.floor(i * samples.length / count), end = Math.floor((i + 1) * samples.length / count);
+                    for (let j = start; j < end; j++) {
+                        const sample = Math.abs(samples[j]);
+                        if (Number.isFinite(sample)) peaks[i] = Math.max(peaks[i], Math.min(1, sample));
                     }
-                    report('Ukládám křivku do JSON… ' + label);
-                    const response = await fetch('php/ajax/vz2_peaks.php', {
-                        method: 'POST', credentials: 'same-origin',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': cfg.csrf },
-                        body: JSON.stringify({ file_id: file.id, sha256: file.sha256, peaks: Array.from(peaks) })
-                    });
-                    const result = await response.json();
-                    if (!response.ok || !result.ok) throw new Error(result.error || 'Křivku nelze uložit.');
-                } catch (error) { failures.push(original.name + ': ' + error.message); }
+                    if (performance.now() - yielded > 16 || i === count - 1) {
+                        report('Vytvářím křivku… ' + label, (channel * count + i + 1) / (buffer.numberOfChannels * count) * 100);
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                        yielded = performance.now();
+                    }
+                }
             }
+            return Array.from(peaks);
         } finally { await context.close().catch(() => {}); }
+    }
+    async function createUploadPeaks(upload, report) {
+        if (!upload.tracks) {
+            const catalog = await api();
+            const recording = catalog.recordings.find(r => Number(r.id) === Number(upload.id));
+            if (!recording || recording.files.length !== upload.originals.length) throw new Error('Nelze dohledat stopy nahrávky.');
+            // IDs retain insertion order even if another user has reordered the tracks.
+            upload.tracks = [...recording.files].sort((a, b) => Number(a.id) - Number(b.id)).map((file, index) => ({ file, original: upload.originals[index], saved: false, peaks: null }));
+        }
+        const failures = [];
+        for (const [index, track] of upload.tracks.entries()) {
+            if (track.saved) continue;
+            const { file, original } = track;
+            const label = `Stopa ${index + 1}/${upload.tracks.length}: ${original.name}`;
+            try {
+                // Keep only the small peaks array for retries, never a decoded AudioBuffer.
+                if (!track.peaks) track.peaks = await decodeUploadPeaks(original, report, label);
+                report('Ukládám křivku do JSON… ' + label);
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 30000);
+                try {
+                    const response = await fetch('php/ajax/vz2_peaks.php', {
+                        method: 'POST', credentials: 'same-origin', signal: controller.signal,
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': cfg.csrf },
+                        body: JSON.stringify({ file_id: file.id, sha256: file.sha256, peaks: track.peaks })
+                    });
+                    let result;
+                    try { result = await response.json(); }
+                    catch (_) { throw new Error('Server nepotvrdil uložení JSON. Ověřte připojení a přihlášení a zkuste to znovu.'); }
+                    if (!response.ok || !result.ok) throw new Error(result.error || 'Křivku nelze uložit.');
+                    track.saved = true; track.peaks = null;
+                } catch (error) {
+                    if (controller.signal.aborted) throw new Error('Server včas nepotvrdil uložení JSON. Zkuste to znovu.');
+                    throw error;
+                } finally { clearTimeout(timeout); }
+            } catch (error) { failures.push(original.name + ': ' + error.message); }
+        }
         if (failures.length) throw new Error(failures.join('\n'));
     }
     function uploadForm(collection) {
         const form = node('form');
         form.innerHTML = '<div class="dialog-header"><h2 id="upload-title">Vložit nahrávku nebo přílohu</h2><button class="modal-close" type="button" aria-label="Zavřít vložení" title="Zavřít">×</button></div><label>Krátký popisek (nepovinný)<input name="title" maxlength="200"></label><fieldset class="upload-kind"><legend>Druh</legend><label><input type="radio" name="kind" value="single" checked><span>Běžná</span></label><label><input type="radio" name="kind" value="multitrack"><span>Vícestopá</span></label><label><input type="radio" name="kind" value="attachment"><span>Příloha</span></label></fieldset><label>Soubory<input name="files[]" type="file" multiple required></label><label class="upload-peaks-option"><input type="checkbox" name="create_peaks"><span>Po nahrání vytvořit křivku a uložit do JSON</span></label><p class="upload-status" role="status" aria-live="polite"></p><progress class="upload-progress" aria-label="Průběh nahrávání a tvorby křivky" max="100" value="0" hidden></progress><p class="upload-error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát</button></div>';
-        let busy = false, uploaded = false;
+        let busy = false, uploaded = null, completed = false;
         const dialog = $('upload-dialog'), close = form.querySelector('.modal-close');
         close.addEventListener('click', () => dialog.close());
         dialog.oncancel = e => { if (busy) e.preventDefault(); };
@@ -638,7 +660,7 @@
         });
         const requestKey = key();
         form.addEventListener('submit', async e => {
-            e.preventDefault(); if (busy || uploaded) return;
+            e.preventDefault(); if (busy || completed) return;
             const submit = form.querySelector('button[type=submit]');
             const originals = Array.from(form.querySelector('[type=file]').files);
             const generate = checkbox.checked && form.elements.kind.value !== 'attachment';
@@ -655,34 +677,40 @@
             const disabled = controls.map(control => control.disabled);
             controls.forEach(control => { control.disabled = true; });
             form.querySelector('.upload-error').textContent = '';
-            report('Nahrávám soubory…', 0);
             try {
-                const result = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest(); xhr.open('POST', 'php/ajax/vz2.php'); xhr.setRequestHeader('X-CSRF-Token', cfg.csrf);
-                    xhr.upload.onprogress = e => report('Nahrávám soubory…', e.lengthComputable ? e.loaded / e.total * 100 : undefined);
-                    xhr.upload.onload = () => report('Dokončuji uložení nahrávky…');
-                    xhr.onerror = () => reject(new Error('Spojení selhalo. Zkontrolujte nedokončené operace před dalším uploadem.'));
-                    xhr.onload = () => { try { const r = JSON.parse(xhr.responseText); if (xhr.status < 200 || xhr.status >= 300 || !r.ok) throw new Error(r.error || 'Upload selhal.'); resolve(r); } catch (err) { reject(err); } };
-                    xhr.send(fields);
-                });
-                uploaded = true;
+                if (!uploaded) {
+                    report('Nahrávám soubory…', 0);
+                    const result = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest(); xhr.open('POST', 'php/ajax/vz2.php'); xhr.setRequestHeader('X-CSRF-Token', cfg.csrf);
+                        xhr.upload.onprogress = e => report('Nahrávám soubory…', e.lengthComputable ? e.loaded / e.total * 100 : undefined);
+                        xhr.upload.onload = () => report('Dokončuji uložení nahrávky…');
+                        xhr.onerror = () => reject(new Error('Spojení selhalo. Zkontrolujte nedokončené operace před dalším uploadem.'));
+                        xhr.onload = () => { try { const r = JSON.parse(xhr.responseText); if (xhr.status < 200 || xhr.status >= 300 || !r.ok) throw new Error(r.error || 'Upload selhal.'); resolve(r); } catch (err) { reject(err); } };
+                        xhr.send(fields);
+                    });
+                    uploaded = { id: result.id, originals, tracks: null };
+                }
                 if (generate) {
                     report('Připravuji tvorbu křivky…');
-                    await createUploadPeaks(result.id, originals, report);
+                    await createUploadPeaks(uploaded, report);
                 }
+                completed = true;
                 report(generate ? 'Nahrávka i křivka jsou uložené.' : 'Nahrávka je uložená.', 100);
                 dialog.close(); message(generate ? 'Nahrávka byla nahrána a křivka uložena do JSON.' : 'Upload byl dokončen.');
-                await refresh(); await window.MultitrackApp.refreshList();
             } catch (err) {
                 progress.hidden = true;
-                const text = uploaded ? 'Nahrávka je uložená. Následující krok se nepodařilo dokončit: ' + err.message : err.message;
+                const text = uploaded ? 'Nahrávka je uložená, ale tvorba JSON není dokončená. Můžete ji zkusit znovu bez opětovného nahrávání souborů. ' + err.message : err.message;
                 status.textContent = uploaded ? 'Upload byl dokončen.' : '';
                 form.querySelector('.upload-error').textContent = text; message(text, true);
-                if (uploaded) submit.textContent = 'Nahrávka je uložená';
+                if (uploaded) submit.textContent = 'Zkusit vytvořit JSON znovu';
             } finally {
                 busy = false;
-                controls.forEach((control, index) => { control.disabled = disabled[index]; });
-                close.disabled = false; submit.disabled = uploaded;
+                controls.forEach((control, index) => { control.disabled = uploaded ? true : disabled[index]; });
+                close.disabled = false; submit.disabled = completed;
+            }
+            if (completed) {
+                try { await refresh(); await window.MultitrackApp.refreshList(); }
+                catch (err) { message('Uložení bylo dokončeno, ale seznam se nepodařilo obnovit. ' + err.message, true); }
             }
         }); return form;
     }
