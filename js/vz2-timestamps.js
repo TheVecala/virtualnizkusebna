@@ -268,6 +268,7 @@
                     for (const control of [mobileQuickUp, mobileQuickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 }
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));
+                let takeNumber = 0;
                 Model.items(value).forEach(annotation => {
                     const row = annotation.source;
                     const item = el('li'); item.className = 'ts-' + row.kind; item.dataset.annotationId = annotation.id;
@@ -284,7 +285,14 @@
                         try { api.stopLoop(); await this.adapter.playRange(row.time_ms); }
                         catch (e) { status.textContent = e.message; }
                     }); seek.className = 'ts-time'; seek.title = 'Přehrát od ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
-                    const text = el('p', [annotation.song_title, annotation.label].filter(Boolean).join(' · ')), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
+                    let caption = [annotation.song_title, annotation.label].filter(Boolean).join(' · ');
+                    if (annotation.kind === 'take') {
+                        const description = String(row.body || '').trim().replace(/^[↑↓]$/, '');
+                        const custom = /^Úsek\s+\d+$/i.test(description) ? '' : description;
+                        caption = [String(++takeNumber), annotation.song_title || '—', custom,
+                            annotation.end_ms == null ? 'délka —' : 'délka ' + compactFormat(annotation.end_ms - annotation.start_ms)].filter(Boolean).join(' · ');
+                    }
+                    const text = el('p', caption), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
                     const boundary = row.kind === 'song_end' ? boundaryIcon(row.kind) : null;
                     if (annotation.passage_type) text.append(' ', el('small', Model.passageTypes[annotation.passage_type]));
                     if (annotation.note_text) text.append(el('br'), document.createTextNode(annotation.note_text));
