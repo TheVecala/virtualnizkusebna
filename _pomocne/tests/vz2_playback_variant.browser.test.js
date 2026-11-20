@@ -6,6 +6,7 @@ const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../..');
+const TimestampModel = require('../../js/vz2-timestamp-model.js');
 const config = { csrf: 'test', write: true, admin: false, cachePrefix: 'playback-variant:' };
 const php = fs.readFileSync(path.join(root, 'index.php'), 'utf8');
 const html = php.slice(php.indexOf('<!doctype html>'))
@@ -27,6 +28,12 @@ let entries = [entry({ id: 1, kind: 'song_start', time_ms: 3000, body: 'Pokus' }
     entry({ id: 2, kind: 'song_end', time_ms: 12000, paired_timestamp_id: 1, body: '↓' }),
     entry({ id: 3, kind: 'passage', time_ms: 6000, end_time_ms: 9000, parent_timestamp_id: 1, body: 'Refrén' }),
     entry({ id: 4, kind: 'note', time_ms: 7000, body: '👍' })];
+// The real catalogue and timestamp endpoint include precomputed annotations.
+for (const recording of recordings) {
+    recording.timestamps = recording.id === 11 ? entries.map(e => ({ ...e })) : [];
+    recording.annotation_version = TimestampModel.version;
+    recording.annotations = TimestampModel.normalize(recording);
+}
 let revision = 1, writable = true, failWrite = false, nextTimestampId = 100;
 const writes = [];
 let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioRequests = 0;
@@ -57,11 +64,11 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
                 writes.push(data); revision++;
                 const row = entry({ ...data, id: data.id || nextTimestampId++, revision });
                 entries = entries.filter(e => e.id !== row.id && e.paired_timestamp_id !== row.id);
-                entries.push(row);
+                if (!['delete', 'delete_interval'].includes(data.action)) entries.push(row);
                 if (data.kind === 'song_start' && data.end_time_ms != null) entries.push(entry({ id: nextTimestampId++, kind: 'song_end', time_ms: data.end_time_ms, paired_timestamp_id: row.id, body: '↓' }));
             }
             const id = Number(url.searchParams.get('recording_id') || data?.recording_id);
-            return route.fulfill({ json: { ok: true, recording_id: id, timestamps_revision: revision, duration_ms: 40000, can_create: writable, songs: Array.from({ length: 20 }, (_, i) => ({ id: i + 1, title: 'Skladba ' + (i + 1), lifecycle: 'active' })), entries: id === 11 ? entries : [] } });
+            return route.fulfill({ json: { ok: true, recording_id: id, timestamps_revision: revision, duration_ms: 40000, can_create: writable, annotation_version: TimestampModel.version, annotations: TimestampModel.normalize({ id, entries: id === 11 ? entries : [], duration_ms: 40000 }), songs: Array.from({ length: 20 }, (_, i) => ({ id: i + 1, title: 'Skladba ' + (i + 1), lifecycle: 'active' })), entries: id === 11 ? entries : [] } });
         }
         if (p === '/php/ajax/vz2_history.php') return route.fulfill({ json: { ok: true, songs: [], rehearsals: [], plays: [], unassigned_intervals: [], unassigned_clips: [] } });
         if (p === '/php/ajax/vz2_content.php') return route.fulfill({ json: { ok: true, document: null, version: null, posts: [], thread: { id: 1 }, can_edit: false } });
@@ -224,6 +231,31 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
         await actions.getByRole('button', { name: 'Přidat poznámku: palec nahoru', exact: true }).click();
         await page.waitForFunction(() => document.querySelectorAll('#looper-segments .segment-note').length === 3);
         console.log('PASS quick player, text offline state, independent position views and timestamp drawer, seek/loop and live timestamp updates');
+        const beforeTimestampChange = { state: await state(), range: await readViewport(), peaks: peakRequests, audio: scriptAudioRequests };
+        const liveTakeId = await page.evaluate(async () => {
+            const result = await Vz2TimestampStore.saveInterval(11, { kind: 'song_start', time_ms: 4000, end_time_ms: 8000, body: 'Živý úsek' });
+            return result.entries.find(e => e.body === 'Živý úsek').id;
+        });
+        const liveTake = page.locator('#looper-segments [data-segment-id="t' + liveTakeId + '"]');
+        assert.equal(await liveTake.locator('.segment-label').textContent(), 'Živý úsek', 'new take appears without switching views');
+        await page.evaluate(id => Vz2TimestampStore.saveInterval(11, { id, kind: 'song_start', time_ms: 5000, end_time_ms: 11000, body: 'Posunutý úsek' }), liveTakeId);
+        assert.equal(await liveTake.locator('.segment-label').textContent(), 'Posunutý úsek', 'renamed take updates immediately');
+        assert.match(await liveTake.getAttribute('title'), /00:05 – 00:11/);
+        assert.equal(await liveTake.evaluate(e => e.style.left), '12.5%', 'changed boundary updates segment position');
+        assert.equal(await liveTake.evaluate(e => e.style.width), '15%', 'changed end updates segment width');
+        await page.evaluate(id => {
+            const item = Vz2TimestampStore.items(11).find(i => i.timestamp_id === id);
+            return Vz2TimestampStore.remove(11, item, Vz2TimestampStore.peek(11).timestamps_revision);
+        }, liveTakeId);
+        assert.equal(await liveTake.count(), 0, 'deleted take disappears immediately');
+        assert.deepEqual(await readViewport(), beforeTimestampChange.range, 'timestamp changes preserve viewport');
+        assert.equal(peakRequests, beforeTimestampChange.peaks, 'timestamp changes reuse waveform JSON');
+        assert.equal(scriptAudioRequests, beforeTimestampChange.audio, 'timestamp changes do not download audio');
+        assert.equal((await state()).playing, beforeTimestampChange.state.playing);
+        assert(Math.abs((await state()).position - beforeTimestampChange.state.position) < .1);
+        assert(await page.evaluate(() => originalAudio === document.getElementById('looper-audio')));
+        console.log('PASS live segments with catalogue annotations: add, rename, move boundaries and delete without switching views or reloading audio');
+
         for (const width of [320, 390, 767, 768, 960, 1440]) {
             await page.setViewportSize({ width, height: 844 });
             if (!await drawer.isVisible()) await toggle.click();
@@ -353,6 +385,7 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
         await editor.locator('.annotation-save-status').filter({ hasText: 'Uloženo' }).waitFor();
         assert.equal(writes.at(-1).id, takeId);
         assert.match(await drawer.locator('.ts-list').textContent(), /Upravený úsek/);
+        assert.equal(await page.locator('#looper-segments [data-segment-id="t' + takeId + '"] .segment-label').textContent(), 'Upravený úsek', 'editor save also refreshes segment labels');
         const previewDir = path.join(root, '_pomocne/dist/inline-timestamps'); fs.mkdirSync(previewDir, { recursive: true });
         for (const width of [320, 390, 767, 768, 960, 1440]) {
             await page.setViewportSize({ width, height: 844 });

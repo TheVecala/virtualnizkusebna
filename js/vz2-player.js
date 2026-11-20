@@ -329,7 +329,8 @@
         current.markerWidth = width; current.markerDuration = durationMs; current.markersDirty = false;
     }
     function refreshSegments(current) {
-        current.segments?.setData([{ ...current.recording, timestamps: current.timestamps,
+        // Catalogue annotations are a snapshot; rebuild segments from the live timestamp list.
+        current.segments?.setData([{ ...current.recording, annotations: undefined, entries: current.timestamps, timestamps: current.timestamps,
             duration_ms: Number.isFinite(current.audio.duration) ? Math.round(current.audio.duration * 1000) : current.recording.duration_ms }]);
     }
     function setLooperView(view) {
