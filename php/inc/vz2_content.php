@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/vz2_core.php';
 require_once __DIR__.'/vz2_song_map.php';
+require_once __DIR__.'/vz2_timestamp_model.php';
 
 function vz2_content_right(string $right, ?int $owner = null): bool {
     return defined('VZ2_WRITES_ENABLED') && VZ2_WRITES_ENABLED === true
@@ -24,11 +25,20 @@ function vz2_document_body($body): string {
     if (!is_string($body) || preg_match('//u', $body) !== 1 || trim($body) === '' || strlen($body) > 1048576) throw new Vz2Error('Dokument musí obsahovat text a může mít nejvýše 1 MiB v UTF-8.');
     return $body; // Preserve indentation, chords, tablature and trailing newlines.
 }
+function vz2_rehearsal_start_line(array $item): string {
+    $clock = static fn(int $ms): string => sprintf('%02d:%02d', intdiv($ms,60000), intdiv($ms,1000)%60);
+    $clean = static fn(string $text): string => preg_replace('/\s+/u',' ',trim($text));
+    $song = $clean((string)($item['song_title'] ?? ''));
+    $description = $clean((string)($item['source']['body'] ?? ''));
+    if (in_array($description, ['↑','↓'], true)) $description = '';
+    $duration = $item['end_ms'] === null ? '—' : $clock($item['end_ms'] - $item['start_ms']);
+    return '  '.$clock($item['start_ms']).'  |  '.($song ?: '—').'  |  '.($description ?: '—').'  |  '.$duration;
+}
 function vz2_rehearsal_starts_draft(mysqli $db, array $in): array {
     $collection = vz2_one($db, 'SELECT id,kind,lifecycle FROM vz2_collections WHERE id=?', [vz2_id($in['collection_id'] ?? null)]);
     vz2_document_collection_kind('rehearsal_starts',$collection);
     if ($collection['lifecycle'] !== 'active' || !vz2_content_right('edit_text')) throw new Vz2Error('Předvyplnění vyžaduje právo upravovat text.',403);
-    $recordings = vz2_rows($db, 'SELECT id,kind,title FROM vz2_recordings WHERE collection_id=? ORDER BY sort_order,id', [$collection['id']]);
+    $recordings = vz2_rows($db, 'SELECT id,kind,title,duration_ms FROM vz2_recordings WHERE collection_id=? ORDER BY sort_order,id', [$collection['id']]);
     $files = vz2_rows($db, 'SELECT f.recording_id,f.title,f.original_name,f.format FROM vz2_audio_files f JOIN vz2_recordings r ON r.id=f.recording_id WHERE r.collection_id=? ORDER BY r.sort_order,r.id,f.sort_order,f.id', [$collection['id']]);
     $names = [];
     $counts = [];
@@ -41,7 +51,7 @@ function vz2_rehearsal_starts_draft(mysqli $db, array $in): array {
         if ($extension !== '' && !str_ends_with(strtolower($name),'.'.strtolower($extension))) $name .= '.'.$extension;
         $names[$id] = $name;
     }
-    $starts = vz2_rows($db, "SELECT t.recording_id,t.time_ms,t.body FROM vz2_timestamps t JOIN vz2_recordings r ON r.id=t.recording_id WHERE r.collection_id=? AND t.kind='song_start' ORDER BY r.sort_order,r.id,t.time_ms,t.id", [$collection['id']]);
+    $starts = vz2_rows($db, "SELECT t.*,s.title song_title,p.song_title_snapshot history_song_title FROM vz2_timestamps t JOIN vz2_recordings r ON r.id=t.recording_id LEFT JOIN vz2_collections s ON s.id=t.song_collection_id LEFT JOIN vz2_rehearsal_plays p ON p.start_timestamp_id=t.id WHERE r.collection_id=? AND t.kind IN ('song_start','song_end') ORDER BY r.sort_order,r.id,t.time_ms,t.id", [$collection['id']]);
     $byRecording = [];
     foreach ($starts as $start) $byRecording[(int)$start['recording_id']][] = $start;
     $sections = [];
@@ -50,11 +60,9 @@ function vz2_rehearsal_starts_draft(mysqli $db, array $in): array {
         $name = $names[$id] ?? ($recording['title'] ?: 'Nahrávka');
         if ($recording['kind'] !== 'single' && ($counts[$id] ?? 0) > 1) $name .= ' +'.($counts[$id]-1);
         $lines = ['Nahrávka '.($index+1).' — '.$name];
-        foreach ($byRecording[$id] ?? [] as $start) {
-            $label = preg_replace('/\s+/u',' ',trim($start['body']));
-            if ($label === '' || $label === '↑') $label = 'Začátek skladby';
-            $time = (int)$start['time_ms'];
-            $lines[] = sprintf('  %02d:%02d  %s',intdiv($time,60000),intdiv($time,1000)%60,$label);
+        foreach (vz2_timestamp_annotations($recording, $byRecording[$id] ?? []) as $item) {
+            if ($item['kind'] !== 'take') continue;
+            $lines[] = vz2_rehearsal_start_line($item);
         }
         if (count($lines) === 1) $lines[] = '  Žádné začátky skladeb.';
         $sections[] = implode("\n",$lines);
