@@ -66,11 +66,17 @@
         if (!Number.isSafeInteger(ms) || ms > 604800000) throw new Error('Nejvyšší čas je 7 dní.');
         return ms;
     }
+    function timelineLabel(item) {
+        const song = clean(item.song_title), label = clean(item.label);
+        if (!song || !['take', 'passage'].includes(item.kind)) return label;
+        const automatic = item.kind === 'take' && /^Úsek\s+\d+$/i.test(label);
+        return [song, !automatic && label !== song ? label : ''].filter(Boolean).join(' · ');
+    }
     function compactFormat(ms) {
         const seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
         return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
     }
-    const api = { format: compactFormat, parse, version, passageTypes, time, normalize, items, endOf, containingTakes, activeTakes };
+    const api = { format: compactFormat, parse, version, passageTypes, time, normalize, items, timelineLabel, endOf, containingTakes, activeTakes };
     if (typeof module !== 'undefined') module.exports = api;
     root.Vz2TimestampModel = api;
 })(typeof window === 'undefined' ? globalThis : window);

@@ -277,10 +277,10 @@
     function renderWaveTimestamps(current, width, durationMs, view) {
         const markers = document.createDocumentFragment();
         const entries = window.Vz2TimestampModel.items({ id: current.recording.id, entries: current.timestamps || [], duration_ms: Math.round(durationMs) }).flatMap(item => {
-            const start = { ...item.source, body: item.label, annotationId: item.id };
+            const start = { ...item.source, body: window.Vz2TimestampModel.timelineLabel(item), annotationId: item.id };
             if (item.end_ms === null) return [start];
             return [start, { annotationId: item.id, id: item.end_timestamp_id || item.timestamp_id, kind: item.kind === 'take' ? 'song_end' : 'passage_end', time_ms: item.end_ms,
-                body: item.end_source?.body?.replace(/^[↑↓]$/, '') || item.label }];
+                body: item.end_source?.body?.replace(/^[↑↓]$/, '') || window.Vz2TimestampModel.timelineLabel(item) }];
         }).sort((a, b) => a.time_ms - b.time_ms || Number(a.id) - Number(b.id));
         const visuals = {
             song_start: { arrow: 'M1 1V9H15 M10 4L15 9L10 14', name: 'Začátek skladby' },

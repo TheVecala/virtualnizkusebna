@@ -18,7 +18,7 @@
         function segment(model, s, view) {
             const b = el('button', undefined, 'segment-item ' + (s.end_ms === null ? 'segment-point' : 'segment-range') + ' segment-' + (s.kind === 'recording' ? 'whole' : s.kind));
             b.type = 'button'; b.dataset.segmentId = s.id; b.dataset.recordingId = model.id;
-            const title = s.label + ' · ' + rangeText(s) + (s.song_title ? ' · ' + s.song_title : '') + (s.boundary === 'open' ? ' · chybí konec' : '');
+            const title = root.Vz2TimestampModel.timelineLabel(s) + ' · ' + rangeText(s) + (s.boundary === 'open' ? ' · chybí konec' : '');
             b.title = title; b.setAttribute('aria-label', title);
             b.setAttribute('aria-pressed', String(String(selected?.recording_id) === String(model.id) && selected?.segment.id === s.id));
             const start = Math.max(view.start, s.start_ms), span = view.end - view.start;
@@ -26,7 +26,7 @@
             if ((start - view.start) / span > .8) b.classList.add('segment-near-end');
             if (s.end_ms !== null) b.style.width = ((Math.min(view.end, s.end_ms) - start) / span * 100) + '%';
             b.style.setProperty('--segment-color', M.color(s, model.id, options.color));
-            const label = el('span', s.label, 'segment-label'); label.hidden = !options.labels; b.append(label);
+            const label = el('span', root.Vz2TimestampModel.timelineLabel(s), 'segment-label'); label.hidden = !options.labels; b.append(label);
             b.onclick = () => choose(model, s);
             b.ondblclick = () => config.onActivate?.({ recording_id: model.id, recording: model.recording, segment: s });
             return b;
