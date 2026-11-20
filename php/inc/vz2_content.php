@@ -32,7 +32,7 @@ function vz2_rehearsal_start_line(array $item): string {
     $description = $clean((string)($item['source']['body'] ?? ''));
     if (in_array($description, ['↑','↓'], true)) $description = '';
     $duration = $item['end_ms'] === null ? '—' : $clock($item['end_ms'] - $item['start_ms']);
-    return '  '.$clock($item['start_ms']).'  |  '.($song ?: '—').'  |  '.($description ?: '—').'  |  '.$duration;
+    return '  '.$clock($item['start_ms']).' – '.($song ?: '—').' ('.$duration.')'.($description !== '' ? ' – '.$description : '');
 }
 function vz2_rehearsal_starts_draft(mysqli $db, array $in): array {
     $collection = vz2_one($db, 'SELECT id,kind,lifecycle FROM vz2_collections WHERE id=?', [vz2_id($in['collection_id'] ?? null)]);
