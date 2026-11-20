@@ -107,7 +107,7 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
         const reload = actions.getByRole('button', { name: 'Obnovit značky', exact: true });
         assert(await reload.isVisible());
         assert.equal(await reload.evaluate(e => e.previousElementSibling.textContent), 'poznámka');
-        for (const [label, kind] of [['úsek', 'take'], ['pasáž', 'passage'], ['poznámka', 'note']]) {
+        for (const [label, kind] of [['skladba', 'take'], ['pasáž', 'passage'], ['poznámka', 'note']]) {
             await actions.getByRole('button', { name: label, exact: true }).click();
             const editor = page.locator('.vz2-annotation-editor');
             await editor.waitFor({ state: 'visible' });
@@ -302,8 +302,8 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
                     return ids.map(id => { const r = document.getElementById(id).getBoundingClientRect(); return { id, top: r.top, bottom: r.bottom }; });
                 }, view);
                 assert(rows.every((row, i) => !i || row.top >= rows[i - 1].bottom - 1), 'player rows never overlap at ' + width + '×' + height + ' ' + view + ': ' + JSON.stringify(rows));
-                await actions.getByRole('button', { name: 'úsek', exact: true }).scrollIntoViewIfNeeded();
-                assert(await actions.getByRole('button', { name: 'úsek', exact: true }).evaluate(e => {
+                await actions.getByRole('button', { name: 'skladba', exact: true }).scrollIntoViewIfNeeded();
+                assert(await actions.getByRole('button', { name: 'skladba', exact: true }).evaluate(e => {
                     const r = e.getBoundingClientRect(), body = document.getElementById('player-body').getBoundingClientRect();
                     return r.top >= body.top - 1 && r.bottom <= body.bottom + 1;
                 }), 'timestamp actions remain reachable on short screens');
@@ -315,7 +315,7 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
         await page.locator('#looper-view-wave').click();
         const editor = drawer.locator('.annotation-inline');
         await page.evaluate(() => Vz2Player.seek(14.321));
-        await actions.getByRole('button', { name: 'úsek', exact: true }).click();
+        await actions.getByRole('button', { name: 'skladba', exact: true }).click();
         assert.equal(await editor.locator('[data-edit-time=start]').textContent(), '00:14');
         assert.equal(await editor.locator('[data-edit-time=end]').textContent(), '--:--');
         assert(await page.evaluate(() => originalAudio === document.getElementById('looper-audio')));
@@ -369,13 +369,13 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
         await page.waitForFunction(() => document.querySelector('.annotation-inline[open]')?.dataset.kind === 'note');
         await editor.locator('[name=label]').fill('Nezahodit');
         acceptDialog = false;
-        await actions.getByRole('button', { name: 'úsek', exact: true }).click();
+        await actions.getByRole('button', { name: 'skladba', exact: true }).click();
         assert.equal(await editor.getAttribute('data-kind'), 'note');
         assert.equal(await editor.locator('[name=label]').inputValue(), 'Nezahodit');
         await page.locator('#player-close').evaluate(e => e.click());
         assert.equal((await state()).id, '11', 'closing the player can be cancelled without losing the draft');
         acceptDialog = true;
-        await actions.getByRole('button', { name: 'úsek', exact: true }).click();
+        await actions.getByRole('button', { name: 'skladba', exact: true }).click();
         await page.waitForFunction(() => document.querySelector('.annotation-inline[open]')?.dataset.kind === 'take');
         await editor.locator('.annotation-close').click();
         await drawer.locator('.ts-list [data-annotation-id="t' + takeId + '"]').getByRole('button', { name: 'Upravit', exact: true }).click();
@@ -389,7 +389,7 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
         const previewDir = path.join(root, '_pomocne/dist/inline-timestamps'); fs.mkdirSync(previewDir, { recursive: true });
         for (const width of [320, 390, 767, 768, 960, 1440]) {
             await page.setViewportSize({ width, height: 844 });
-            for (const [label, kind] of [['úsek', 'take'], ['pasáž', 'passage'], ['poznámka', 'note']]) {
+            for (const [label, kind] of [['skladba', 'take'], ['pasáž', 'passage'], ['poznámka', 'note']]) {
                 await actions.getByRole('button', { name: label, exact: true }).click();
                 await page.waitForFunction(kind => document.querySelector('.annotation-inline[open]')?.dataset.kind === kind, kind);
                 assert(await drawer.isVisible(), 'resizing keeps the active editor open');
@@ -430,13 +430,13 @@ let peakRequests = 0, peakWrites = 0, missingWaveStatus = 503, scriptAudioReques
         assert(await editor.isVisible());
         assert(await page.locator('#looper-wave').isVisible());
         await page.keyboard.press('Escape');
-        await actions.getByRole('button', { name: 'úsek', exact: true }).click();
+        await actions.getByRole('button', { name: 'skladba', exact: true }).click();
         assert.equal(await drawer.locator('.annotation-inline').count(), 1);
         console.log('PASS inline desktop/mobile editors, shared wave capture and fit, save/edit/failure, dirty switch guard, keyboard and fullscreen');
         await page.setViewportSize({ width: 1440, height: 540 });
         for (const fullscreen of [false, true]) {
             if (await page.locator('#player-fullscreen').getAttribute('aria-pressed') !== String(fullscreen)) await page.locator('#player-fullscreen').click();
-            for (const [label, kind, choice] of [['úsek', 'take', 'song'], ['pasáž', 'passage', 'passage_type']]) {
+            for (const [label, kind, choice] of [['skladba', 'take', 'song'], ['pasáž', 'passage', 'passage_type']]) {
                 await actions.getByRole('button', { name: label, exact: true }).click();
                 await page.waitForFunction(kind => document.querySelector('.annotation-inline[open]')?.dataset.kind === kind, kind);
                 if (kind === 'passage') {

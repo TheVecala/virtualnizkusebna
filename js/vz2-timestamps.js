@@ -227,7 +227,7 @@
             mobileToggle = button(mixerPanel ? 'Časové značky' : 'seznam značek', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
             mobileToggle.setAttribute('aria-label', 'Otevřít časové značky');
             mobileToggle.setAttribute('aria-expanded', 'false'); mobileToggle.setAttribute('aria-controls', container.id);
-            mobileAdd = button(looperPanel ? 'úsek' : 'Přidat značku', () => openIntervalEditor(panel, 'take')); mobileAdd.disabled = true;
+            mobileAdd = button(looperPanel ? 'skladba' : 'Přidat značku', () => openIntervalEditor(panel, 'take')); mobileAdd.disabled = true;
             mobilePassage = button('pasáž', () => openIntervalEditor(panel, 'passage'));
             mobileNote = button('poznámka', () => openIntervalEditor(panel, 'note'));
             mobilePassage.disabled = mobileNote.disabled = true;

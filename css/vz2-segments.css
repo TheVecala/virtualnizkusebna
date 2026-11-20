@@ -63,7 +63,7 @@
 .segment-point[aria-pressed="true"] { outline: 1px solid var(--segment-color); }
 .segment-baseline { margin-top: 5px; }
 .segment-baseline .segment-label { color: var(--color-text-muted); font-size: 10px; }
-.segment-wave { position: absolute; inset: 0 auto 0 0; height: 100%; pointer-events: none; opacity: .19; }
+.segment-wave { position: absolute; inset: 0 auto 0 0; height: 100%; pointer-events: none; }
 .segment-wave path { stroke: var(--color-waveform-idle); stroke-width: 1; fill: none; }
 .segment-wave-message { display: block; margin-bottom: 12px; font-size: 10px; color: var(--color-text-muted); }
 .segment-playhead { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--color-waveform-playhead); pointer-events: none; z-index: 2; }
