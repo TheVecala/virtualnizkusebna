@@ -85,7 +85,10 @@ summary::-webkit-details-marker { display: none; }
 .shell-menu nav a, .shell-menu nav button { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-surface); color: var(--color-text); font: inherit; text-align: center; text-decoration: none; white-space: nowrap; }
 .shell-menu nav a:hover, .shell-menu nav button:hover { border-color: var(--color-primary-hover); background: var(--color-dropdown-hover-bg); }
 #app-shell { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; width: 100%; max-width: none; margin: 0; padding: 0; overflow: hidden; }
-#message { flex: 0 0 auto; margin: 0; min-height: 0; max-height: 18vh; overflow: auto; padding: 4px 12px; }
+#message { display: flex; align-items: flex-start; gap: 8px; flex: 0 0 auto; margin: 0; min-height: 0; max-height: 18vh; overflow: auto; padding: 4px 12px; }
+#message .message-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+#message .message-close { flex: 0 0 24px; min-height: 24px; padding: 0; font-size: 18px; line-height: 22px; color: inherit; background: transparent; border-color: transparent; position: sticky; top: 0; }
+#message .message-close:hover { border-color: currentColor; }
 #message:empty { display: none; }
 #connection-status { flex: 0 0 auto; margin: 0; padding: 4px 12px; }
 #app-shell > .notice { margin: 0; padding: 3px 12px; }

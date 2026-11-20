@@ -33,7 +33,13 @@
         b.append(symbol); b.setAttribute('aria-label', label); b.title = label;
         return b;
     }
-    function message(text, error = false) { $('message').textContent = text; $('message').className = error ? 'error' : ''; }
+    function message(text, error = false) {
+        const host = $('message'); host.replaceChildren(); host.className = error ? 'error' : '';
+        if (!text) return;
+        const close = button('×', () => message(''), 'message-close');
+        close.setAttribute('aria-label', 'Zavřít hlášení'); close.title = 'Zavřít hlášení';
+        host.append(node('span', text, 'message-text'), close);
+    }
     function recordingActionsDialog(recording) {
         const dialog = node('dialog', undefined, 'recording-actions-dialog');
         dialog.id = 'recording-actions-' + recording.id;
