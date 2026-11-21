@@ -1,0 +1,240 @@
+(() => {
+  'use strict';
+  const songs = JSON.parse(document.getElementById('song-data').textContent);
+  const byId = new Map(songs.map(song => [song.id, song]));
+  const $ = id => document.getElementById(id);
+  // New layouts only need a registry entry, a button, and scoped CSS.
+  const layouts = ['compact', 'overview', 'large'];
+  const distances = ['normal', 'wall'];
+  let currentId = null;
+  let request = null;
+  let listScroll = 0;
+  let lastOpened = null;
+
+  function remember(key, value) {
+    try { localStorage.setItem(`hrani.${key}`, value); } catch (_) { /* Private browsing can disable storage. */ }
+  }
+  function preference(key, allowed, fallback) {
+    try { const value = localStorage.getItem(`hrani.${key}`); return allowed.includes(value) ? value : fallback; }
+    catch (_) { return fallback; }
+  }
+  function setView(key, value) {
+    document.body.dataset[key] = value;
+    document.querySelectorAll(`button[data-${key}]`).forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset[key] === value));
+    });
+    remember(key, value);
+  }
+  ['layout', 'distance'].forEach(key => {
+    const allowed = key === 'layout' ? layouts : distances;
+    setView(key, preference(key, allowed, key === 'layout' ? 'overview' : 'normal'));
+    document.querySelectorAll(`button[data-${key}]`).forEach(button => {
+      button.addEventListener('click', () => setView(key, button.dataset[key]));
+    });
+  });
+
+  function element(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function fold(text) { return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('cs'); }
+  function renderList() {
+    const term = fold($('song-search').value.trim());
+    const visible = songs.filter(song => fold(song.title).includes(term));
+    $('song-list').replaceChildren();
+    visible.forEach(song => {
+      const link = element('a', `song-row${song.id === lastOpened ? ' last-opened' : ''}`);
+      link.href = `#song=${encodeURIComponent(song.id)}`;
+      link.dataset.song = song.id;
+      const name = element('span', 'song-name');
+      name.append(element('span', 'song-number', String(songs.indexOf(song) + 1).padStart(2, '0')), element('strong', '', song.title));
+      const assets = [];
+      if (song.hasText) assets.push('Text a akordy');
+      if (song.hasTab) assets.push('Tabulatura');
+      if (song.documents) assets.push(`Přílohy: ${song.documents}`);
+      const recordingCount = element('span', 'song-recordings');
+      recordingCount.setAttribute('aria-label', `Nahrávky: ${song.recordings}`);
+      recordingCount.append(element('span', 'recordings-label', 'Audio: '), document.createTextNode(String(song.recordings)));
+      link.append(name, element('span', 'song-assets', assets.join(' · ') || 'Bez textových podkladů'), recordingCount);
+      link.addEventListener('click', () => { listScroll = window.scrollY; });
+      $('song-list').append(link);
+    });
+    $('song-count').textContent = `${visible.length} / ${songs.length}`;
+    $('list-empty').hidden = visible.length > 0;
+    $('list-empty').textContent = songs.length ? 'Žádná skladba neodpovídá hledání.' : 'Zatím tu nejsou žádné skladby. Přidejte je ve správě zkušebny.';
+  }
+  $('song-search').addEventListener('input', renderList);
+  document.querySelector('.skip-link').addEventListener('click', event => {
+    event.preventDefault();
+    $('main').focus();
+  });
+
+  function stopAudio() {
+    document.querySelectorAll('audio').forEach(audio => { audio.pause(); audio.removeAttribute('src'); audio.load(); });
+  }
+  function renderRecordings(files) {
+    const recordings = files.filter(file => file.audio);
+    $('recordings').replaceChildren();
+    $('recording-count').textContent = String(recordings.length);
+    if (!recordings.length) $('recordings').append(element('p', 'empty-state', 'Zatím žádné nahrávky.'));
+    recordings.forEach(file => {
+      const row = element('div', 'recording');
+      if (file.openUrl || !file.url) {
+        row.append(element('p', 'recording-name', file.name));
+        if (file.openUrl) {
+          const link = element('a', 'file-link', 'Otevřít vícestopou nahrávku ve zkušebně');
+          link.href = file.openUrl;
+          row.append(link);
+        } else {
+          row.append(element('p', 'empty-state', file.state === 'deleted' ? 'Zvukový soubor byl odstraněn.' : 'Zvukový soubor není dostupný.'));
+        }
+        $('recordings').append(row);
+        return;
+      }
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.preload = 'none';
+      audio.src = file.url;
+      audio.setAttribute('aria-label', file.name);
+      const play = element('button', 'recording-play', 'Přehrát');
+      play.type = 'button';
+      play.setAttribute('aria-label', `Přehrát ${file.name}`);
+      const fallback = element('a', 'audio-fallback', 'Otevřít zvukový soubor');
+      fallback.href = file.url;
+      fallback.target = '_blank';
+      fallback.rel = 'noopener';
+      fallback.hidden = true;
+      play.addEventListener('click', async () => {
+        if (!audio.paused) { audio.pause(); return; }
+        try { await audio.play(); } catch (_) { fallback.hidden = false; }
+      });
+      audio.addEventListener('play', () => {
+        document.querySelectorAll('audio').forEach(other => { if (other !== audio) other.pause(); });
+        play.textContent = 'Pozastavit';
+        play.setAttribute('aria-label', `Pozastavit ${file.name}`);
+      });
+      audio.addEventListener('pause', () => { play.textContent = 'Přehrát'; play.setAttribute('aria-label', `Přehrát ${file.name}`); });
+      audio.addEventListener('error', () => { fallback.hidden = false; });
+      row.append(element('p', 'recording-name', file.name), play, audio, fallback);
+      $('recordings').append(row);
+    });
+  }
+  function renderDetail(song) {
+    $('song-text').textContent = song.text;
+    $('song-tab').textContent = song.tab;
+    $('text-panel').hidden = !song.text.trim();
+    $('tab-panel').hidden = !song.tab.trim();
+    $('no-score').hidden = Boolean(song.text.trim() || song.tab.trim());
+    renderRecordings(song.files);
+    const documents = song.files.filter(file => !file.audio);
+    $('documents-panel').hidden = !documents.length;
+    $('documents').replaceChildren();
+    documents.forEach(file => {
+      if (!file.url) {
+        $('documents').append(element('p', 'empty-state', `${file.name} — soubor není dostupný.`));
+        return;
+      }
+      const link = element('a', 'file-link', file.name);
+      link.href = file.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.setAttribute('aria-label', `${file.name} – otevřít v nové kartě`);
+      $('documents').append(link);
+    });
+    $('song-notes').replaceChildren();
+    if (!song.notes.available) {
+      $('song-notes').append(element('p', 'empty-state', 'Poznámky se nepodařilo načíst. Ostatní podklady jsou dostupné.'));
+    } else if (!song.notes.items.length) {
+      $('song-notes').append(element('p', 'empty-state', 'Zatím žádné poznámky.'));
+    }
+    song.notes.items.forEach(note => {
+      const item = element('article', 'note');
+      item.append(element('p', '', note.text), element('div', 'note-meta', `${note.author} · ${note.date}`));
+      $('song-notes').append(item);
+    });
+  }
+  function setNeighbours(id) {
+    const index = songs.findIndex(song => song.id === id);
+    $('song-position').textContent = index < 0 ? '' : `Skladba ${index + 1} / ${songs.length}`;
+    [['previous-song', songs[index - 1]], ['next-song', index < 0 ? null : songs[index + 1]]].forEach(([buttonId, song]) => {
+      const button = $(buttonId);
+      button.disabled = !song;
+      button.querySelector('span').textContent = song ? song.title : '';
+      button.onclick = () => { if (song) window.location.hash = `song=${encodeURIComponent(song.id)}`; };
+    });
+  }
+  async function openSong(id) {
+    if (request) request.abort();
+    request = new AbortController();
+    const activeRequest = request;
+    stopAudio();
+    currentId = id;
+    document.body.dataset.screen = 'detail';
+    lastOpened = id;
+    $('list-view').hidden = true;
+    $('detail-view').hidden = false;
+    $('song-content').hidden = true;
+    $('detail-status').hidden = false;
+    $('detail-status').textContent = 'Načítání podkladů…';
+    $('retry').hidden = true;
+    const song = byId.get(id);
+    $('song-title').textContent = song ? song.title : 'Skladba není dostupná';
+    document.title = `${song ? song.title : 'Skladba'} · Hraní`;
+    setNeighbours(id);
+    window.scrollTo(0, 0);
+    $('song-title').focus({ preventScroll: true });
+    if (!song) { $('detail-status').textContent = 'Tuto skladbu v seznamu nemáme. Vraťte se do seznamu skladeb.'; return; }
+    try {
+      const url = new URL('hrani.php', window.location.href);
+      url.search = new URLSearchParams({ data: '1', song: id }).toString();
+      const response = await fetch(url, { signal: activeRequest.signal, headers: { Accept: 'application/json' } });
+      const detail = await response.json();
+      if (!response.ok) throw new Error(detail.error || 'Podklady se nepodařilo načíst.');
+      if (activeRequest !== request) return;
+      renderDetail(detail);
+      $('detail-status').hidden = true;
+      $('song-content').hidden = false;
+    } catch (error) {
+      if (error.name === 'AbortError' || activeRequest !== request) return;
+      $('detail-status').textContent = error instanceof TypeError || error instanceof SyntaxError ? 'Podklady se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu.' : error.message;
+      $('retry').hidden = false;
+    }
+  }
+  function route() {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const id = params.get('song');
+    if (id) { openSong(id); return; }
+    if (request) request.abort();
+    request = null;
+    const wasDetail = currentId !== null;
+    currentId = null;
+    document.body.dataset.screen = 'list';
+    stopAudio();
+    $('detail-view').hidden = true;
+    $('list-view').hidden = false;
+    document.title = 'Hraní · Virtuální zkušebna';
+    renderList();
+    if (wasDetail) {
+      const selected = Array.from(document.querySelectorAll('.song-row')).find(row => row.dataset.song === lastOpened);
+      if (selected) selected.focus({ preventScroll: true });
+      window.scrollTo(0, listScroll);
+    }
+  }
+  $('retry').addEventListener('click', () => { if (currentId) openSong(currentId); });
+  window.addEventListener('hashchange', route);
+  window.addEventListener('pagehide', stopAudio);
+  if (document.fullscreenEnabled) {
+    $('fullscreen').hidden = false;
+    $('fullscreen').addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await document.documentElement.requestFullscreen();
+      } catch (_) { $('fullscreen').textContent = 'Celá obrazovka není dostupná'; }
+    });
+    document.addEventListener('fullscreenchange', () => { $('fullscreen').textContent = document.fullscreenElement ? 'Ukončit celou obrazovku' : 'Celá obrazovka'; });
+  }
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  route();
+})();
