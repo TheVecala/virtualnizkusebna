@@ -66,7 +66,7 @@
     let exportDialog, activeExportPanel;
     const Notes = root.Vz2NoteEditor;
     const openEditor = (panel, row) => {
-        // Orphaned legacy ends keep their explicit repair flow; all normal annotations share A5.
+        // Orphaned legacy ends keep their explicit repair flow; normal annotations open their own typed dialog.
         if (row?.kind === 'song_end') return Notes.openPanel(panel, row);
         return root.Vz2TimestampEditor.open({ recording_id: panel.id, kind: row ? 'note' : 'take',
             item_id: row ? 't' + row.id : null, adapter: panel.adapter, list: panel.list }).catch(e => panel.error(e.message));
@@ -168,8 +168,12 @@
         summary.append(heading, chevron);
         const content = el('div'), status = el('p'), toolbar = el('div'), list = el('ol');
         content.className = 'ts-content'; toolbar.className = 'toolbar';
+        list.className = 'ts-list';
         status.setAttribute('role', 'status'); status.className = 'error';
         const add = button('Přidat značku', () => openEditor(panel, null)); add.disabled = true;
+        const addPassage = button('pasáž', () => openIntervalEditor(panel, 'passage'));
+        const addNote = button('poznámka', () => openIntervalEditor(panel, 'note'));
+        addPassage.disabled = addNote.disabled = true;
         const quickUp = button('👍', () => quickNote(panel, '👍'));
         const quickDown = button('👎', () => quickNote(panel, '👎'));
         for (const [control, label] of [[quickUp, 'Přidat poznámku: palec nahoru'], [quickDown, 'Přidat poznámku: palec dolů']]) {
@@ -178,17 +182,25 @@
         const reload = iconButton('Obnovit značky', 'refresh', () => panel.load());
         const stop = button('Vypnout smyčku', api.stopLoop); stop.hidden = true;
         const exportButton = button('Export', () => openExport(panel)); exportButton.disabled = true;
-        toolbar.append(add, quickUp, quickDown, reload, stop, exportButton); content.append(status, toolbar, list); shell.append(summary, content); container.append(shell);
-        let mobileActions, mobileAdd, mobileQuickUp, mobileQuickDown, mobileExport, mobileToggle, resizeObserver, playerObserver, mobileMedia;
+        toolbar.append(add, addPassage, addNote, quickUp, quickDown, reload, stop, exportButton); content.append(status, toolbar, list); shell.append(summary, content); container.append(shell);
+        let mobileActions, mobileAdd, mobilePassage, mobileNote, mobileQuickUp, mobileQuickDown, mobileToggle, resizeObserver, playerObserver, mobileMedia;
+        const looperPanel = container.id === 'looper-timestamps';
         const mixerPanel = container.id === 'mixer-timestamps';
-        const pinnedOpen = () => container.id === 'looper-timestamps' && mobileMedia?.matches
+        const editorHost = looperPanel ? el('div') : null;
+        if (editorHost) { editorHost.className = 'ts-editor-host'; editorHost.hidden = true; container.prepend(editorHost); }
+        const actionsRow = looperPanel ? document.getElementById('looper-action-row') : null;
+        const pinnedOpen = () => looperPanel
             && document.getElementById('player-shell').classList.contains('player-fullscreen');
         const positionDrawer = () => {
-            if (pinnedOpen()) {
-                shell.open = true;
-                if (reload.parentElement !== mobileActions) mobileAdd.after(reload);
+            if (pinnedOpen()) shell.open = true;
+            if (looperPanel) {
+                if (reload.parentElement !== mobileActions) (mobileNote || mobileAdd).after(reload);
             } else if (reload.parentElement !== toolbar) quickDown.after(reload);
-            if (mobileActions && mobileMedia.matches) container.style.setProperty('--ts-drawer-top', mobileActions.getBoundingClientRect().bottom + 8 + 'px');
+            if (mobileActions && (looperPanel || mobileMedia.matches)) {
+                const actionBottom = (actionsRow || mobileActions).getBoundingClientRect().bottom;
+                const bottom = looperPanel ? Math.min(actionBottom, document.getElementById('player-shell').getBoundingClientRect().bottom) : actionBottom;
+                container.style.setProperty('--ts-drawer-top', bottom + 8 + 'px');
+            }
             Notes.reposition(panel);
         };
         const toggleDrawer = open => {
@@ -198,8 +210,8 @@
                 if (mixToggle?.getAttribute('aria-expanded') === 'true') mixToggle.click();
             }
             container.classList.toggle('ts-drawer-open', open);
-            mobileToggle.textContent = mixerPanel ? 'Časové značky' : (open ? 'Zavřít' : 'Otevřít') + ' časové značky';
-            if (mixerPanel) mobileToggle.setAttribute('aria-label', (open ? 'Zavřít' : 'Otevřít') + ' časové značky');
+            mobileToggle.textContent = mixerPanel ? 'Časové značky' : 'seznam značek';
+            mobileToggle.setAttribute('aria-label', (open ? 'Zavřít' : 'Otevřít') + ' časové značky');
             mobileToggle.setAttribute('aria-expanded', String(open));
             if (open) { shell.open = true; positionDrawer(); }
         };
@@ -208,34 +220,38 @@
                 toggleDrawer(false); mobileToggle.focus();
             }
         };
-        const onMobileChange = () => { toggleDrawer(false); positionDrawer(); };
+        const onMobileChange = () => { if (!looperPanel) toggleDrawer(false); positionDrawer(); };
         if (container.id === 'looper-timestamps' || container.id === 'mixer-timestamps') {
             mobileMedia = matchMedia('(max-width: 767px)');
             mobileActions = el('div'); mobileActions.className = 'looper-timestamp-actions';
-            mobileToggle = button(mixerPanel ? 'Časové značky' : 'Otevřít časové značky', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
-            if (mixerPanel) mobileToggle.setAttribute('aria-label', 'Otevřít časové značky');
+            mobileToggle = button(mixerPanel ? 'Časové značky' : 'seznam značek', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
+            mobileToggle.setAttribute('aria-label', 'Otevřít časové značky');
             mobileToggle.setAttribute('aria-expanded', 'false'); mobileToggle.setAttribute('aria-controls', container.id);
-            mobileAdd = button('Přidat značku', () => openEditor(panel, null)); mobileAdd.disabled = true;
+            mobileAdd = button(looperPanel ? 'skladba' : 'Přidat značku', () => openIntervalEditor(panel, 'take')); mobileAdd.disabled = true;
+            mobilePassage = button('pasáž', () => openIntervalEditor(panel, 'passage'));
+            mobileNote = button('poznámka', () => openIntervalEditor(panel, 'note'));
+            mobilePassage.disabled = mobileNote.disabled = true;
             mobileQuickUp = button('👍', () => quickNote(panel, '👍'));
             mobileQuickDown = button('👎', () => quickNote(panel, '👎'));
             for (const [control, label] of [[mobileQuickUp, 'Přidat poznámku: palec nahoru'], [mobileQuickDown, 'Přidat poznámku: palec dolů']]) {
                 control.className = 'ts-quick-note'; control.title = label; control.setAttribute('aria-label', label); control.disabled = true;
             }
-            if (!mixerPanel) { mobileExport = button('Export', () => openExport(panel)); mobileExport.disabled = true; }
+            for (const control of [addPassage, addNote]) control.classList.add('ts-desktop-action');
             add.classList.add('ts-desktop-action'); quickUp.classList.add('ts-desktop-action'); quickDown.classList.add('ts-desktop-action'); exportButton.classList.add('ts-desktop-action');
-            mobileActions.append(mobileToggle, mobileAdd, mobileQuickUp, mobileQuickDown);
-            if (mobileExport) mobileActions.append(mobileExport);
+            mobileActions.append(...[mobileToggle, mobileAdd, mobilePassage, mobileNote, mobileQuickUp, mobileQuickDown].filter(Boolean));
             if (mixerPanel) document.getElementById('mixer-action-row').append(mobileActions);
+            else if (actionsRow) actionsRow.append(mobileActions);
             else container.before(mobileActions);
             document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
             resizeObserver = new ResizeObserver(positionDrawer);
             resizeObserver.observe(document.getElementById('player-shell')); resizeObserver.observe(mobileActions);
+            if (actionsRow) resizeObserver.observe(actionsRow);
             playerObserver = new MutationObserver(positionDrawer);
             playerObserver.observe(document.getElementById('player-shell'), { attributes: true, attributeFilter: ['class'] });
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
-        const panel = { id, adapter, container, shell, containerId: container.id, inlineHost: mobileActions || shell, pinnedOpen,
+        const panel = { id, adapter, container, shell, editorHost, containerId: container.id, inlineHost: actionsRow || mobileActions || shell, pinnedOpen,
             export: () => openExport(panel),
             drawerOpen: mobileActions ? () => container.classList.contains('ts-drawer-open') : null,
             closeDrawer: mobileActions ? () => toggleDrawer(false) : null,
@@ -243,14 +259,16 @@
             list: null, dead: false, quickBusy: false, quickButtons: [quickUp, quickDown, mobileQuickUp, mobileQuickDown].filter(Boolean), error: text => { status.textContent = text; },
             update(value) {
                 if (this.list && value.timestamps_revision < this.list.timestamps_revision) return;
-                this.list = value; list.replaceChildren(); add.hidden = !value.can_create; add.disabled = !value.can_create; exportButton.disabled = false;
+                this.list = value; list.replaceChildren();
+                for (const control of [add, addPassage, addNote]) { control.hidden = !value.can_create; control.disabled = !value.can_create; }
+                exportButton.disabled = false;
                 for (const control of [quickUp, quickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 if (mobileActions) {
-                    mobileAdd.hidden = !value.can_create; mobileAdd.disabled = !value.can_create;
-                    if (mobileExport) mobileExport.disabled = false;
+                    for (const control of [mobileAdd, mobilePassage, mobileNote].filter(Boolean)) { control.hidden = !value.can_create; control.disabled = !value.can_create; }
                     for (const control of [mobileQuickUp, mobileQuickDown]) { control.hidden = !value.can_create; control.disabled = !value.can_create || this.quickBusy; }
                 }
                 if (!value.entries.length) list.append(el('li', 'Zatím žádné časové značky.'));
+                let takeNumber = 0;
                 Model.items(value).forEach(annotation => {
                     const row = annotation.source;
                     const item = el('li'); item.className = 'ts-' + row.kind; item.dataset.annotationId = annotation.id;
@@ -267,10 +285,15 @@
                         try { api.stopLoop(); await this.adapter.playRange(row.time_ms); }
                         catch (e) { status.textContent = e.message; }
                     }); seek.className = 'ts-time'; seek.title = 'Přehrát od ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
-                    const text = el('p', annotation.label), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
-                    const boundary = row.kind === 'song_start' || row.kind === 'song_end' ? boundaryIcon(row.kind) : null;
-                    // Older empty boundaries store an arrow as their body; show the type icon once.
-                    if (annotation.song_title) text.append(' · ' + annotation.song_title);
+                    let caption = [annotation.song_title, annotation.label].filter(Boolean).join(' · ');
+                    if (annotation.kind === 'take') {
+                        const description = String(row.body || '').trim().replace(/^[↑↓]$/, '');
+                        const custom = /^Úsek\s+\d+$/i.test(description) ? '' : description;
+                        caption = [String(++takeNumber), annotation.song_title || '—', custom,
+                            annotation.end_ms == null ? 'délka —' : 'délka ' + compactFormat(annotation.end_ms - annotation.start_ms)].filter(Boolean).join(' · ');
+                    }
+                    const text = el('p', caption), authors = el('small', row.author + (row.updated_by !== row.created_by || row.revision > 1 ? ' · upravil/a ' + row.editor : ''));
+                    const boundary = row.kind === 'song_end' ? boundaryIcon(row.kind) : null;
                     if (annotation.passage_type) text.append(' ', el('small', Model.passageTypes[annotation.passage_type]));
                     if (annotation.note_text) text.append(el('br'), document.createTextNode(annotation.note_text));
                     const endText = annotation.end_source?.body?.replace(/^[↑↓]$/, '');
@@ -318,6 +341,7 @@
             destroy() {
                 this.dead = true; panels.delete(this); if (Playback.state()?.owner === this) api.stopLoop(); shell.remove();
                 Notes.detach(this);
+                if (editorHost) { root.Vz2TimestampEditor.detach(this); editorHost.remove(); }
                 resizeObserver?.disconnect(); playerObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
                 window.removeEventListener('resize', positionDrawer); document.removeEventListener('keydown', onDrawerKey);
                 mobileActions?.remove(); container.classList.remove('ts-drawer-open'); container.style.removeProperty('--ts-drawer-top');
@@ -325,6 +349,7 @@
             }
         };
         Notes.attach(panel);
+        if (editorHost) root.Vz2TimestampEditor.attach(panel);
         positionDrawer();
         panel.container = container; panels.add(panel); panel.load(); return panel;
     };

@@ -25,7 +25,7 @@ module.exports = async ({ request, clients, db, good, check }) => {
 
     assert.equal((await get('guest', draftQuery)).status, 403);
     const proposal = (await get('admin', draftQuery)).json().text;
-    assert.equal(proposal, 'Nahrávka 1 — Druhá.wav\n  00:03  Večer rychleji\n\nNahrávka 2 — První nahrávka\n  01:05  Ráno\n  02:00  Začátek skladby\n');
+    assert.equal(proposal, 'Nahrávka 1 — Druhá.wav\n  00:03 – — (—) – Večer rychleji\n\nNahrávka 2 — První nahrávka\n  01:05 – — (—) – Ráno\n  02:00 – — (—)\n');
     assert.equal((await get('admin', documentQuery)).json().document, null);
     check(db("SELECT id FROM vz2_documents WHERE collection_id=? AND kind='rehearsal_starts'", [rehearsal.id]).length === 0, 'generating a rehearsal draft does not save a document');
 

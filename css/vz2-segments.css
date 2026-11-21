@@ -5,7 +5,7 @@
 .segments-topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 28px; border-bottom: 1px solid var(--color-border); }
 .segments-brand { letter-spacing: .12em; font-weight: 800; text-decoration: none; }
 .segments-topbar nav { display: flex; gap: 24px; font-size: 12px; }
-.segments-page main { max-width: 1680px; margin: auto; padding: 32px 28px 64px; }
+.segments-page main { width: 100%; max-width: none; margin: 0; padding: 32px 28px 64px; }
 .segments-intro { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 25px; }
 .segments-kicker { margin: 0 0 7px; color: var(--color-primary); letter-spacing: .14em; font-size: 10px; font-weight: 700; }
 .segments-page h1 { margin: 0; font-size: clamp(25px, 3vw, 36px); letter-spacing: -.03em; font-weight: 650; }
@@ -48,7 +48,7 @@
 .segment-ruler > span { position: absolute; transform: translateX(-50%); }
 .segment-ruler > span:first-child { transform: none; }
 .segment-ruler > span:last-child { transform: translateX(-100%); }
-.segment-plot { position: relative; background-image: linear-gradient(to right, var(--color-divider) 1px, transparent 1px); background-size: 12.5% 100%; padding-top: 7px; }
+.segment-plot { position: relative; cursor: crosshair; background-image: linear-gradient(to right, var(--color-divider) 1px, transparent 1px); background-size: 12.5% 100%; padding-top: 7px; }
 .segment-lane { height: 40px; position: relative; }
 .segment-item { position: absolute; top: 3px; height: 30px; padding: 0 !important; border: 0 !important; background: transparent !important; color: var(--color-text) !important; cursor: pointer; border-radius: 3px; text-align: left; font: inherit; }
 .segment-range { min-width: 3px; overflow: hidden; }
@@ -63,18 +63,25 @@
 .segment-point[aria-pressed="true"] { outline: 1px solid var(--segment-color); }
 .segment-baseline { margin-top: 5px; }
 .segment-baseline .segment-label { color: var(--color-text-muted); font-size: 10px; }
-.segment-wave { position: absolute; inset: 0 auto 0 0; height: 100%; pointer-events: none; opacity: .19; }
+.segment-wave { position: absolute; inset: 0 auto 0 0; height: 100%; pointer-events: none; }
 .segment-wave path { stroke: var(--color-waveform-idle); stroke-width: 1; fill: none; }
 .segment-wave-message { display: block; margin-bottom: 12px; font-size: 10px; color: var(--color-text-muted); }
 .segment-playhead { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--color-waveform-playhead); pointer-events: none; z-index: 2; }
 .segment-playhead::before { content: ''; position: absolute; top: -3px; left: -4px; width: 7px; height: 7px; background: var(--color-waveform-playhead); transform: rotate(45deg); }
 .segment-warning, .segment-unknown-end { color: var(--color-warning); font-size: 10px; }
 .segment-empty { color: var(--color-text-muted); padding: 16px 20px; margin: 0; }
-.segment-compact .segment-recording { padding-top: 12px; padding-bottom: 8px; }
-.segment-compact .segment-recording-header { margin-bottom: 10px; }
-.segment-compact .segment-lane { height: 29px; }
-.segment-compact .segment-item { height: 25px; }
-.segment-compact .segment-item::after { height: 5px; bottom: 0; }
+.segment-compact .segment-recording { padding-top: 6px; padding-bottom: 4px; }
+.segment-compact .segment-recording-header { margin-bottom: 5px; }
+.segment-compact .segment-lane { height: 22px; }
+.segment-compact .segment-item { height: 20px; min-height: 0; top: 1px; }
+.segment-compact .segment-item::after { height: 4px; bottom: 0; }
+.segment-compact .segment-label { font-size: 10px; line-height: 13px; padding-bottom: 6px; }
+.segment-compact .segment-ruler { height: 18px; }
+.segment-compact .segment-plot { padding-top: 2px; }
+.segment-compact .segment-baseline { height: 12px; margin-top: 2px; }
+.segment-compact .segment-baseline .segment-item { height: 10px; }
+.segment-compact .segment-baseline .segment-label { display: none; }
+.segment-draft-edge { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--color-danger); color: var(--color-danger); font-size: 10px; font-weight: bold; padding-left: 2px; pointer-events: none; z-index: 3; }
 .segments-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 16px 0 5px; color: var(--color-text-muted); font-size: 11px; }
 .segments-legend > span { display: flex; align-items: center; gap: 7px; }
 .segments-swatch { width: 16px; height: 5px; border-radius: 4px; background: var(--segment-color); }
@@ -113,3 +120,15 @@
 /* The shared app shell locks scrolling; this standalone page scrolls normally. */
 html:has(body.segments-page) { height: auto; overflow-y: auto; }
 body.segments-page { height: auto; min-height: 100vh; overflow: visible; }
+
+/* Zoom and pointer gestures share the same timeline controller in every view. */
+.segment-plot, .segment-ruler { touch-action: none; user-select: none; }
+.segment-plot { cursor: grab; }
+.segment-plot:active { cursor: grabbing; }
+.timeline-zoom-controls { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
+.timeline-zoom-controls > button, .segments-page .timeline-zoom-controls > button {
+    min-width: 28px; min-height: 26px; padding: 2px 6px; margin: 0; font-size: 14px; line-height: 20px;
+    border: 1px solid var(--color-waveform-control-border); border-radius: 4px;
+    background: var(--color-waveform-control-bg); color: var(--color-waveform-control-text);
+}
+.timeline-zoom-controls > button:last-child, .segments-page .timeline-zoom-controls > button:last-child { font-size: 11px; }

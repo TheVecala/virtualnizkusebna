@@ -8,12 +8,15 @@
         const id = 'annotation-choice-' + (++serial), button = make('button', '', 'annotation-choice-trigger');
         button.type = 'button'; button.setAttribute('aria-label', label); button.setAttribute('aria-haspopup', 'listbox'); button.setAttribute('aria-expanded', 'false');
         const popup = make('div', null, 'annotation-choice-popup'); popup.hidden = true;
+        // Escape the inline editor's clipping and the player's stacking contexts.
+        const topLayer = typeof popup.showPopover === 'function';
+        if (topLayer) popup.popover = 'manual';
         const search = make('input'); search.type = 'search'; search.placeholder = 'Hledat…'; search.setAttribute('aria-label', 'Hledat: ' + label); search.hidden = !searchable;
         const list = make('div', null, 'annotation-choice-list'); list.id = id; list.role = 'listbox'; list.setAttribute('aria-label', label); button.setAttribute('aria-controls', id);
         popup.append(search, list); host.classList.add('annotation-choice'); host.append(button);
         const dialog = host.closest('dialog'); dialog.append(popup);
         let options = [], value = '', changed = () => {}, active = 0;
-        const close = (focus = false) => { popup.hidden = true; button.setAttribute('aria-expanded', 'false'); if (focus) button.focus(); };
+        const close = (focus = false) => { if (topLayer && popup.matches(':popover-open')) popup.hidePopover(); popup.hidden = true; button.setAttribute('aria-expanded', 'false'); if (focus) button.focus(); };
         const filtered = () => options.filter(o => !searchable || o.label.toLocaleLowerCase('cs').includes(search.value.toLocaleLowerCase('cs')));
         function render() {
             list.replaceChildren();
@@ -42,6 +45,7 @@
             if (!popup.hidden) return close();
             host.closest('dialog')?.dispatchEvent(new Event('annotation-close-choices'));
             search.value = ''; active = Math.max(0, options.findIndex(o => o.value === value)); render(); popup.hidden = false;
+            if (topLayer) popup.showPopover();
             button.setAttribute('aria-expanded', 'true'); position();
             // Avoid opening the phone keyboard until the user explicitly chooses search.
             list.querySelector('[tabindex="0"]')?.focus({ preventScroll: true });
@@ -65,56 +69,106 @@
         const closeOthers = () => close();
         dialog?.addEventListener('annotation-close-choices', closeOthers);
         root.visualViewport?.addEventListener('resize', position);
-        root.addEventListener('resize', position); dialog.addEventListener('scroll', position, true);
+        root.addEventListener('resize', position); root.addEventListener('scroll', position, true);
         return {
             get value() { return value; }, set value(v) { value = String(v ?? ''); updateLabel(); },
             setOptions(rows) { options = rows.map(o => ({ ...o, value: String(o.value ?? '') })); updateLabel(); render(); },
             onChange(fn) { changed = fn; }, close,
-            destroy() { document.removeEventListener('pointerdown', outside); document.removeEventListener('focusin', focusOutside); dialog?.removeEventListener('annotation-close-choices', closeOthers); root.visualViewport?.removeEventListener('resize', position); root.removeEventListener('resize', position); dialog.removeEventListener('scroll', position, true); popup.remove(); }
+            destroy() { document.removeEventListener('pointerdown', outside); document.removeEventListener('focusin', focusOutside); dialog?.removeEventListener('annotation-close-choices', closeOthers); root.visualViewport?.removeEventListener('resize', position); root.removeEventListener('resize', position); root.removeEventListener('scroll', position, true); popup.remove(); }
         };
     }
-    const waveCache = new Map();
+    // All waveform consumers share completed data AND in-flight requests by file hash.
+    const waveCache = new Map(), waveDecodes = new Map();
     let peakStore;
-    async function fileWaveform(file, signal) {
-        if (!file?.url) return null;
-        const key = (root.VZ2?.cachePrefix || '') + 'peaks:' + file.id + ':' + file.sha256;
-        if (waveCache.has(key)) return waveCache.get(key);
-        const valid = data => data && Array.isArray(data.peaks) && data.peaks.length > 0 && data.peaks.length <= 4096 && data.peaks.every(p => Number.isFinite(p) && p >= 0 && p <= 1) && data.duration_ms > 0 && (file.duration_ms == null || Number(file.duration_ms) === Number(data.duration_ms));
+    const waveKey = file => (root.VZ2?.cachePrefix || '') + 'peaks:' + file.id + ':' + file.sha256;
+    const validWave = (data, file) => data && Array.isArray(data.peaks) && data.peaks.length > 0 && data.peaks.length <= 4096
+        && data.peaks.every(p => Number.isFinite(p) && p >= 0 && p <= 1) && data.duration_ms > 0
+        && (file.duration_ms == null || Number(file.duration_ms) === Number(data.duration_ms));
+    async function rememberWave(key, data) {
+        if (peakStore) try { await root.idbKeyval.set(key, data, peakStore); } catch (_) { /* Cache is optional. */ }
+        return data;
+    }
+    async function storedWave(file, key) {
         let data;
-        try { if (root.idbKeyval) { peakStore ||= root.idbKeyval.createStore('zkusebna-vz2-cache', 'audio'); data = await root.idbKeyval.get(key, peakStore); } } catch (_) { /* Offline cache is optional. */ }
-        if (!valid(data)) {
-            try {
-                const response = await fetch('php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256), { credentials: 'same-origin', signal });
-                if (response.ok) data = await response.json();
-            } catch (e) { if (signal.aborted) throw e; }
+        try {
+            if (root.idbKeyval) { peakStore ||= root.idbKeyval.createStore('zkusebna-vz2-cache', 'audio'); data = await root.idbKeyval.get(key, peakStore); }
+        } catch (_) { /* Offline cache is optional. */ }
+        if (validWave(data, file)) return data;
+        if (navigator.onLine === false) throw new Error('Křivka není uložená v zařízení. Pro načtení se připojte k internetu.');
+        const request = new AbortController(), timeout = setTimeout(() => request.abort(), 5000);
+        try {
+            const response = await fetch('php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256), { credentials: 'same-origin', signal: request.signal });
+            if (response.status === 404) return null;
+            if (!response.ok) throw new Error('Načítání křivky selhalo. Zkuste to znovu.');
+            data = await response.json();
+            if (!validWave(data, file)) throw new Error('Data křivky nejsou platná. Zkuste ji vytvořit znovu.');
+            return await rememberWave(key, { peaks: data.peaks, duration_ms: data.duration_ms });
+        } catch (error) {
+            if (request.signal.aborted) throw new Error('Načítání křivky trvalo příliš dlouho. Zkuste to znovu.');
+            throw new Error(error instanceof TypeError || error instanceof SyntaxError ? 'Načítání křivky selhalo. Zkuste to znovu.' : error.message);
         }
-        if (!valid(data)) {
-            const source = await root.Vz2Downloads.read(file, { download: true, signal });
-            signal.throwIfAborted();
-            const context = new (root.AudioContext || root.webkitAudioContext)();
-            try {
-                const buffer = await context.decodeAudioData(await source.blob.arrayBuffer()); signal.throwIfAborted();
-                const peaks = new Array(Math.min(4096, buffer.length)).fill(0);
-                for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-                    const samples = buffer.getChannelData(channel);
-                    for (let i = 0; i < peaks.length; i++) {
-                        const from = Math.floor(i * samples.length / peaks.length), to = Math.floor((i + 1) * samples.length / peaks.length);
-                        for (let j = from; j < to; j++) peaks[i] = Math.max(peaks[i], Math.min(1, Math.abs(samples[j]) || 0));
-                    }
+        finally { clearTimeout(timeout); }
+    }
+    async function decodeWave(file, key, blob) {
+        const source = blob ? { blob } : await root.Vz2Downloads.read(file, { download: true });
+        const context = new (root.AudioContext || root.webkitAudioContext)();
+        let data;
+        try {
+            const buffer = await context.decodeAudioData(await source.blob.arrayBuffer());
+            const peaks = new Array(Math.min(4096, buffer.length)).fill(0);
+            for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                const samples = buffer.getChannelData(channel);
+                for (let i = 0; i < peaks.length; i++) {
+                    const from = Math.floor(i * samples.length / peaks.length), to = Math.floor((i + 1) * samples.length / peaks.length);
+                    for (let j = from; j < to; j++) if (Number.isFinite(samples[j])) peaks[i] = Math.max(peaks[i], Math.min(1, Math.abs(samples[j])));
                 }
-                data = { peaks, duration_ms: Math.round(buffer.duration * 1000) };
-            } finally { await context.close(); }
+            }
+            data = { peaks, duration_ms: Number(file.duration_ms) > 0 ? Number(file.duration_ms) : Math.round(buffer.duration * 1000) };
+        } finally { await context.close(); }
+        await rememberWave(key, data);
+        if (root.VZ2?.write && navigator.onLine !== false) {
+            // Generated once per file, regardless of which view requested it.
+            fetch('php/ajax/vz2_peaks.php', { method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': root.VZ2.csrf },
+                body: JSON.stringify({ file_id: file.id, sha256: file.sha256, peaks: data.peaks })
+            }).catch(() => {});
         }
-        signal.throwIfAborted(); waveCache.set(key, data);
-        if (peakStore) root.idbKeyval.set(key, data, peakStore).catch(() => {});
-        if (waveCache.size > 6) waveCache.delete(waveCache.keys().next().value);
+        waveCache.set(key, Promise.resolve(data));
+        return data;
+    }
+    async function fileWaveform(file, signal, { decode = true, blob = null } = {}) {
+        if (!file?.url) return null;
+        signal?.throwIfAborted();
+        const key = waveKey(file);
+        // Retain successful results and share pending work, but never cache a failure.
+        // A later user activation can retry without reloading the page.
+        if (!waveCache.has(key) && !waveDecodes.has(key)) {
+            const pending = storedWave(file, key).then(data => {
+                if (!data && waveCache.get(key) === pending) waveCache.delete(key);
+                return data;
+            }, error => {
+                if (waveCache.get(key) === pending) waveCache.delete(key);
+                throw error;
+            });
+            waveCache.set(key, pending);
+        }
+        let data;
+        try { data = await (waveCache.get(key) || waveDecodes.get(key)); }
+        catch (error) { if (!decode) throw error; }
+        signal?.throwIfAborted();
+        if (!data && waveDecodes.has(key)) data = await waveDecodes.get(key);
+        if (!data && decode) {
+            if (!waveDecodes.has(key)) waveDecodes.set(key, decodeWave(file, key, blob).finally(() => waveDecodes.delete(key)));
+            data = await waveDecodes.get(key);
+        }
+        signal?.throwIfAborted();
         return data;
     }
     function transport(host, adapter, recording, getRange, onError) {
         host.innerHTML = `<div class="annotation-wave" role="slider" tabindex="0" aria-label="Pozice přehrávání" aria-valuemin="0"><canvas></canvas><span class="annotation-wave-message">Načítám křivku…</span><span class="annotation-playhead"><b></b></span><span class="annotation-edge annotation-edge-start"><b>A</b></span><span class="annotation-edge annotation-edge-end"><b>B</b></span></div><div class="annotation-ruler"><span class="annotation-ticks"></span><span class="annotation-duration"></span></div><div class="annotation-transport"><button type="button" data-seek="-5000" aria-label="Zpět o 5 sekund">−5 s</button><button type="button" class="annotation-play" aria-label="Přehrát">▶</button><button type="button" data-seek="5000" aria-label="Vpřed o 5 sekund">+5 s</button><span></span><button type="button" data-zoom="out" aria-label="Oddálit křivku">−</button><button type="button" data-zoom="in" aria-label="Přiblížit křivku">+</button></div>`;
         const wave = host.querySelector('.annotation-wave'), canvas = wave.querySelector('canvas'), context = canvas.getContext('2d');
         const message = wave.querySelector('.annotation-wave-message'), playhead = wave.querySelector('.annotation-playhead'), play = host.querySelector('.annotation-play');
-        const abort = new AbortController(); let data = null, dead = false, zoom = 1, start = 0, frame, lastDraw = '', gesture = null;
+        const abort = new AbortController(); let data = null, dead = false, zoom = 1, start = 0, frame, lastDraw = '', gesture = null, pendingFit = null;
         const duration = () => Math.max(0, adapter?.durationMs?.() || recording.duration_ms || data?.duration_ms || 0);
         const current = () => Math.max(0, Math.round(adapter?.currentTimeMs?.() || 0));
         const span = () => Math.max(1, duration() / zoom);
@@ -123,10 +177,22 @@
             if (!adapter?.canPlay?.()) return;
             root.Vz2TimestampPlayback?.stop(); adapter.seek(Math.max(0, Math.min(duration() || Infinity, ms)));
         };
+        const fitRange = (from, to) => {
+            if (Number.isFinite(from) && Number.isFinite(to) && from >= 0 && to > from) pendingFit = { from, to };
+        };
         const position = (node, at) => { node.hidden = at == null || at < start || at > start + span(); if (!node.hidden) { node.style.left = Math.max(0, Math.min(100, (at - start) / span() * 100)) + '%'; node.querySelector('b').style.transform = (at - start) / span() > .8 ? 'translateX(-100%)' : ''; } };
         function draw() {
             if (dead) return;
-            const at = current(), total = duration(), ready = !!adapter?.canPlay?.(), playing = !!adapter?.isPlaying?.();
+            const total = duration(), ready = !!adapter?.canPlay?.(), playing = !!adapter?.isPlaying?.();
+            if (pendingFit && total > 0) {
+                const from = Math.min(pendingFit.from, total), to = Math.min(pendingFit.to, total);
+                if (to > from) {
+                    zoom = total / (to - from); start = clampStart(from);
+                    if (ready && (current() < from || current() >= to)) seek(from);
+                }
+                if (ready) pendingFit = null;
+            }
+            const at = current();
             if (playing && !gesture && (at < start || at > start + span())) start = clampStart(at - span() / 2);
             const range = getRange(), width = wave.clientWidth, height = wave.clientHeight;
             const signature = [start, span(), width, height, range.start, range.end, !!data, document.documentElement.dataset.theme].join(':');
@@ -134,7 +200,7 @@
                 lastDraw = signature; const dpr = root.devicePixelRatio || 1;
                 canvas.width = width * dpr; canvas.height = height * dpr; context.setTransform(dpr, 0, 0, dpr, 0, 0);
                 const colors = getComputedStyle(host);
-                if (range.end != null) {
+                if (range.start != null && range.end != null) {
                     const left = Math.max(0, (range.start - start) / span() * width), right = Math.min(width, (range.end - start) / span() * width);
                     context.fillStyle = colors.getPropertyValue('--color-primary').trim() || '#008a91'; context.globalAlpha = .12;
                     context.fillRect(left, 0, Math.max(0, right - left), height); context.globalAlpha = 1;
@@ -187,7 +253,7 @@
             if (!dead) { lastDraw = ''; message.hidden = !!data?.peaks?.length; message.textContent = 'Křivka není dostupná'; }
         }).catch(() => { if (!dead) message.textContent = 'Křivka není dostupná'; });
         draw();
-        return { seek, destroy() { dead = true; abort.abort(); cancelAnimationFrame(frame); } };
+        return { seek, fitRange, destroy() { dead = true; abort.abort(); cancelAnimationFrame(frame); } };
     }
     root.Vz2TimestampControls = { choice, transport, fileWaveform };
 })(window);
