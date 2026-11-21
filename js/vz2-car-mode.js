@@ -4,6 +4,9 @@
     const $ = id => document.getElementById(id);
     const mode = $('car-mode'), picker = $('car-picker'), linkDialog = $('time-link-dialog'), audio = $('car-audio');
     const mobile = matchMedia('(max-width: 767px)');
+    const fromPlaying = () => new URLSearchParams(location.search).get('playing') === '1';
+    const canOpen = () => mobile.matches || fromPlaying();
+    let openedPlayingPicker = false;
     let context, browseCollectionId, browseKind = 'song', pickerLevel = 'recordings';
     let timestampList = null, timestampId = null, timestampSerial = 0, activeChapter = null;
     let previousFocus = null, pendingSelection = null, linkTarget = null, ratingBusy = false;
@@ -103,7 +106,7 @@
         if (single) single.autoRetried = false;
     });
     function syncSingle() {
-        if (mode.hidden || !mobile.matches) return;
+        if (mode.hidden || !canOpen()) return;
         const app = window.Vz2App?.getCarContext();
         if (!app) return;
         const query = new URLSearchParams(location.search);
@@ -311,7 +314,7 @@
         seek(0); setStatus('');
     }
     function open(manual = false, initialLevel = 'folders') {
-        if (!mobile.matches) return;
+        if (!canOpen()) return;
         if (mode.hidden) {
             previousFocus = document.activeElement;
             window.Vz2TimestampPlayback.stop();
@@ -328,14 +331,27 @@
         const current = playerState();
         picker.hidden = true; mode.hidden = true; pendingSelection = null;
         document.body.classList.remove('car-mode-open');
-        if (manual) window.Vz2App?.setCarRoute(false, current);
         if (single) releaseSingle();
+        if (manual && fromPlaying()) {
+            window.Vz2Player.pause();
+            location.replace('hrani.php#rehearsals');
+            return;
+        }
+        if (manual) window.Vz2App?.setCarRoute(false, current);
         previousFocus?.focus?.();
     }
     function sync() {
-        if (mobile.matches && new URLSearchParams(location.search).get('listen') === '1') {
+        const params = new URLSearchParams(location.search);
+        if (canOpen() && params.get('listen') === '1') {
             if (mode.hidden) open(); else refreshContext();
-        } else close();
+            if (fromPlaying() && !openedPlayingPicker && context?.selected != null) {
+                openedPlayingPicker = true;
+                if (!params.has('recording_id')) showPicker();
+            }
+        } else {
+            openedPlayingPicker = false;
+            close();
+        }
     }
     async function rate(symbol) {
         const player = playerState();

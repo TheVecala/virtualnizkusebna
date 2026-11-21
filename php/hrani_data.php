@@ -24,6 +24,12 @@ function hrani_catalog(mysqli $db): array {
     return array_map('hrani_song', $rows);
 }
 
+function hrani_rehearsals(mysqli $db): array {
+    return vz2_rows($db, "SELECT c.id,c.title,
+        (SELECT COUNT(*) FROM vz2_recordings r WHERE r.collection_id=c.id AND r.lifecycle='active') recordings
+        FROM vz2_collections c WHERE c.kind='rehearsal' AND c.lifecycle='active' ORDER BY c.sort_order,c.id");
+}
+
 function hrani_notes(mysqli $db, int $id): array {
     try {
         $discussion = vz2_discussion_read($db, ['collection_id'=>$id]);

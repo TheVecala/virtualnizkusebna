@@ -190,6 +190,7 @@
         }
         const route = { workspace: next.workspace, kind };
         if (params.listen === '1') route.listen = '1';
+        if (params.playing === '1' && route.listen === '1') route.playing = '1';
         if (selected != null) route.collection_id = String(selected);
         if (target && !['history', 'ideas'].includes(next.workspace)) {
             route.recording_id = String(target.id);
@@ -199,7 +200,7 @@
         }
         setRoute(route, true);
         const nextMixer = openRecording && target?.kind === 'multitrack' && target.lifecycle === 'active' ? String(target.id) : null;
-        const nextCarAudio = openRecording && params.listen === '1' && matchMedia('(max-width: 767px)').matches
+        const nextCarAudio = openRecording && params.listen === '1' && (params.playing === '1' || matchMedia('(max-width: 767px)').matches)
             && target?.kind === 'single' && target.lifecycle === 'active' && target.files.some(file => file.url) ? String(target.id) : null;
         const nextLooper = !nextCarAudio && openRecording && target?.kind === 'single' && target.lifecycle === 'active' && target.files[0]?.url && params.view === 'looper' ? String(target.id) : null;
         const loadSerial = nextMixer || nextLooper || nextCarAudio ? ++playerSerial : playerSerial;
@@ -1095,7 +1096,7 @@
                 view: recording.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: String(Math.max(0, Number(timeMs) || 0)) });
         },
         getCarContext() { return { collections: data?.collections || [], recordings: data?.recordings || [], linkedRecordings: Object.fromEntries((data?.collections || []).map(c => [String(c.id), linkedRecordingRows(c).map(row => row.recording.id)])), selected, kind, player: window.Vz2Player.getState() }; },
-        openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'audio', time_ms: '0', listen: '1' }, true); },
+        openCarRecording(recording) { return navigate({ collection_id: String(recording.collection_id), recording_id: String(recording.id), view: recording.kind === 'multitrack' ? 'mixer' : 'audio', time_ms: '0', listen: '1', ...(qs.get('playing') === '1' ? { playing: '1' } : {}) }, true); },
         setCarRoute(enabled, player = null) {
             const params = Object.fromEntries(qs);
             if (enabled) {

@@ -19,7 +19,7 @@ try {
     $db = vz2_db();
     $db->begin_transaction(MYSQLI_TRANS_START_READ_ONLY | MYSQLI_TRANS_START_WITH_CONSISTENT_SNAPSHOT);
     try {
-        $result = $isData ? hrani_detail($db, vz2_id($_GET['song'] ?? null)) : hrani_catalog($db);
+        $result = $isData ? hrani_detail($db, vz2_id($_GET['song'] ?? null)) : ['songs'=>hrani_catalog($db), 'rehearsals'=>hrani_rehearsals($db)];
         $db->commit();
     } catch (Throwable $error) {
         $db->rollback();
@@ -29,7 +29,8 @@ try {
         echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;
     }
-    $songs = $result;
+    $songs = $result['songs'];
+    $rehearsals = $result['rehearsals'];
 } catch (Throwable $error) {
     $status = $error instanceof Vz2Error ? $error->status : 500;
     if (!$isData && $status === 401) {
@@ -67,11 +68,21 @@ try {
     <a class="quiet-button edit-link" href="index.php">Editovat</a>
   </header>
   <main id="main" tabindex="-1">
+    <nav id="playing-lists" class="segmented playing-lists" aria-label="Seznamy v režimu Hraní">
+      <a href="#" id="show-songs" aria-current="page">Skladby</a>
+      <a href="#rehearsals" id="show-rehearsals">Zkoušky</a>
+    </nav>
     <section id="list-view" aria-labelledby="list-title">
       <div class="list-heading"><h1 id="list-title">Skladby</h1><span id="song-count" class="count" aria-live="polite"></span></div>
       <div class="list-columns" aria-hidden="true"><span>Skladba</span><span>Info</span><span>Nahrávky</span></div>
       <div id="song-list" class="song-list"></div>
       <p id="list-empty" class="empty-state" hidden></p>
+    </section>
+    <section id="rehearsal-view" class="rehearsal-list" aria-labelledby="rehearsal-title" hidden>
+      <div class="list-heading"><h1 id="rehearsal-title">Zkoušky</h1><span id="rehearsal-count" class="count"></span></div>
+      <div class="list-columns" aria-hidden="true"><span>Zkouška</span><span>Nahrávky</span></div>
+      <div id="rehearsal-list" class="song-list"></div>
+      <p id="rehearsal-empty" class="empty-state" hidden>Zatím tu nejsou žádné zkoušky.</p>
     </section>
     <section id="detail-view" aria-labelledby="song-title" hidden>
       <div class="song-heading">
@@ -103,5 +114,6 @@ try {
     <noscript><p class="empty-state">Pro hráčské zobrazení zapněte JavaScript. <a href="index.php">Otevřít běžnou zkušebnu</a></p></noscript>
   </main>
   <script type="application/json" id="song-data"><?php echo json_encode($songs, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE); ?></script>
+  <script type="application/json" id="rehearsal-data"><?php echo json_encode($rehearsals, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE); ?></script>
 </body>
 </html>

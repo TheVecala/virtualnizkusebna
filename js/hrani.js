@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const songs = JSON.parse(document.getElementById('song-data').textContent);
+  const rehearsals = JSON.parse(document.getElementById('rehearsal-data').textContent);
   const byId = new Map(songs.map(song => [song.id, song]));
   const $ = id => document.getElementById(id);
   // New layouts only need a registry entry, a button, and scoped CSS.
@@ -204,10 +205,37 @@
       $('retry').hidden = false;
     }
   }
+  function renderRehearsals() {
+    const rows = rehearsals.map(rehearsal => {
+      const link = element('a', 'song-row');
+      const params = new URLSearchParams({
+        v: '2', kind: 'rehearsal', collection_id: String(rehearsal.id), listen: '1', playing: '1'
+      });
+      link.href = 'index.php?' + params;
+      const name = element('span', 'song-name');
+      name.append(element('strong', '', rehearsal.title));
+      const count = element('span', 'song-recordings');
+      count.setAttribute('aria-label', 'Nahrávky: ' + rehearsal.recordings);
+      count.append(element('span', 'recordings-label', 'Audio: '), document.createTextNode(String(rehearsal.recordings)));
+      link.append(name, count);
+      return link;
+    });
+    $('rehearsal-list').replaceChildren(...rows);
+    $('rehearsal-count').textContent = String(rehearsals.length);
+    $('rehearsal-empty').hidden = rehearsals.length > 0;
+  }
   function route() {
     const params = new URLSearchParams(window.location.hash.slice(1));
     const id = params.get('song');
-    if (id) { openSong(id); return; }
+    $('playing-lists').hidden = Boolean(id);
+    if (id) {
+      $('rehearsal-view').hidden = true;
+      openSong(id);
+      return;
+    }
+    const showRehearsals = window.location.hash === '#rehearsals';
+    $(showRehearsals ? 'show-songs' : 'show-rehearsals').removeAttribute('aria-current');
+    $(showRehearsals ? 'show-rehearsals' : 'show-songs').setAttribute('aria-current', 'page');
     if (request) request.abort();
     request = null;
     const wasDetail = currentId !== null;
@@ -215,9 +243,11 @@
     document.body.dataset.screen = 'list';
     stopAudio();
     $('detail-view').hidden = true;
-    $('list-view').hidden = false;
-    document.title = 'Hraní · Virtuální zkušebna';
-    renderList();
+    $('list-view').hidden = showRehearsals;
+    $('rehearsal-view').hidden = !showRehearsals;
+    document.title = showRehearsals ? 'Zkoušky · Hraní' : 'Hraní · Virtuální zkušebna';
+    if (showRehearsals) renderRehearsals();
+    else renderList();
     if (wasDetail) {
       const selected = Array.from(document.querySelectorAll('.song-row')).find(row => row.dataset.song === lastOpened);
       if (selected) selected.focus({ preventScroll: true });

@@ -41,7 +41,10 @@ const server = http.createServer((request, response) => {
       return;
     }
     let html = fs.readFileSync(path.join(root, 'hrani.php'), 'utf8');
-    html = html.slice(html.indexOf('<!doctype html>')).replace(/<\?php[\s\S]*?\?>/g, JSON.stringify(songs).replace(/</g, '\\u003c'));
+    const rehearsals = [{ id: 101, title: 'Zkouška 21. 11.', recordings: 2 }, { id: 102, title: 'Zkouška 14. 11.', recordings: 0 }];
+    html = html.slice(html.indexOf('<!doctype html>')).replace(
+      /(id="(song|rehearsal)-data">)<\?php[\s\S]*?\?>/g,
+      (_, start, kind) => start + JSON.stringify(kind === 'song' ? songs : rehearsals).replace(/</g, '\\u003c'));
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.end(html);
     return;
