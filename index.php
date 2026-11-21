@@ -16,7 +16,7 @@ try{
     if(($_SESSION['logged_in_single']??false)!==true){
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
             $query=['v'=>'2'];
-            foreach(['collection_id','recording_id','time_ms','view','kind','listen','playing'] as $p)if(isset($_GET[$p]) && is_string($_GET[$p]))$query[$p]=$_GET[$p];
+            foreach(['collection_id','recording_id','time_ms','view','kind','listen'] as $p)if(isset($_GET[$p]) && is_string($_GET[$p]))$query[$p]=$_GET[$p];
             $_SESSION['deep_link_after_login']=http_build_query($query);
         }
         require __DIR__.'/php/loginbox4.php';return;

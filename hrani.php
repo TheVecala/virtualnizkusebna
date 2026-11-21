@@ -19,7 +19,13 @@ try {
     $db = vz2_db();
     $db->begin_transaction(MYSQLI_TRANS_START_READ_ONLY | MYSQLI_TRANS_START_WITH_CONSISTENT_SNAPSHOT);
     try {
-        $result = $isData ? hrani_detail($db, vz2_id($_GET['song'] ?? null)) : ['songs'=>hrani_catalog($db), 'rehearsals'=>hrani_rehearsals($db)];
+        if (!$isData) {
+            $result = ['songs'=>hrani_catalog($db), 'rehearsals'=>hrani_rehearsals($db)];
+        } elseif (isset($_GET['rehearsal'])) {
+            $result = hrani_rehearsal_detail($db, vz2_id($_GET['rehearsal']));
+        } else {
+            $result = hrani_detail($db, vz2_id($_GET['song'] ?? null));
+        }
         $db->commit();
     } catch (Throwable $error) {
         $db->rollback();
@@ -83,6 +89,27 @@ try {
       <div class="list-columns" aria-hidden="true"><span>Zkouška</span><span>Nahrávky</span></div>
       <div id="rehearsal-list" class="song-list"></div>
       <p id="rehearsal-empty" class="empty-state" hidden>Zatím tu nejsou žádné zkoušky.</p>
+    </section>
+    <section id="rehearsal-player" class="rehearsal-player" aria-labelledby="rehearsal-player-title" hidden>
+      <a href="#rehearsals" class="quiet-button">Seznam zkoušek</a>
+      <h1 id="rehearsal-player-title" tabindex="-1"></h1>
+      <p id="rehearsal-player-status" class="empty-state" role="status" hidden></p>
+      <button type="button" id="retry-rehearsal" hidden>Zkusit znovu</button>
+      <div id="rehearsal-transport" class="panel rehearsal-transport" hidden>
+        <label for="rehearsal-recording">Nahrávka</label>
+        <select id="rehearsal-recording"></select>
+        <audio id="rehearsal-audio" preload="metadata"></audio>
+        <div class="rehearsal-timeline">
+          <input type="range" id="rehearsal-seek" aria-label="Pozice v nahrávce" min="0" max="0" value="0" step="0.1" disabled>
+          <div class="rehearsal-times"><span id="rehearsal-elapsed">0:00</span><span id="rehearsal-duration">0:00</span></div>
+        </div>
+        <div class="rehearsal-controls">
+          <button type="button" id="rehearsal-backward" aria-label="Zpět o 10 sekund" disabled>−10 s</button>
+          <button type="button" id="rehearsal-play">Přehrát</button>
+          <button type="button" id="rehearsal-forward" aria-label="Vpřed o 10 sekund" disabled>+10 s</button>
+        </div>
+        <p id="rehearsal-audio-status" role="status" hidden></p>
+      </div>
     </section>
     <section id="detail-view" aria-labelledby="song-title" hidden>
       <div class="song-heading">

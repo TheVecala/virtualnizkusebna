@@ -30,6 +30,25 @@ function hrani_rehearsals(mysqli $db): array {
         FROM vz2_collections c WHERE c.kind='rehearsal' AND c.lifecycle='active' ORDER BY c.sort_order,c.id");
 }
 
+function hrani_rehearsal_detail(mysqli $db, int $id): array {
+    $rehearsal = vz2_one($db, "SELECT id,title FROM vz2_collections WHERE id=? AND kind='rehearsal' AND lifecycle='active'", [$id]);
+    $rows = vz2_rows($db, "SELECT f.*,r.title recording_title,r.kind recording_kind
+        FROM vz2_audio_files f JOIN vz2_recordings r ON r.id=f.recording_id
+        WHERE r.collection_id=? AND r.lifecycle='active' AND f.state='available'
+        ORDER BY r.sort_order,r.id,f.sort_order,f.id", [$id]);
+    $recordings = [];
+    foreach ($rows as $row) {
+        $file = vz2_file_public($row, 'audio');
+        if (!$file['url']) continue;
+        $name = $row['recording_title'];
+        if ($row['recording_kind'] === 'multitrack') {
+            $name = ($name !== '' ? $name . ' · ' : '') . 'Stopa: ' . $file['display_name'];
+        }
+        $recordings[] = ['name'=>$name !== '' ? $name : $file['display_name'], 'url'=>$file['url']];
+    }
+    return ['id'=>(string)$rehearsal['id'], 'title'=>$rehearsal['title'], 'recordings'=>$recordings];
+}
+
 function hrani_notes(mysqli $db, int $id): array {
     try {
         $discussion = vz2_discussion_read($db, ['collection_id'=>$id]);

@@ -114,6 +114,20 @@ body[data-distance="wall"] .song-assets, body[data-distance="wall"] .song-record
 body[data-distance="wall"] .song-content { grid-template-columns: minmax(0, 1.7fr) minmax(24rem, 1fr); }
 body[data-distance="wall"] .recording-play { display: block; font-size: 1.3rem; }
 body[data-distance="wall"] .song-navigation button { font-size: 1.3rem; }
+.rehearsal-player { width: min(100%, 42rem); margin-inline: auto; }
+.rehearsal-player h1 { margin: .9rem 0 1.3rem; }
+.rehearsal-transport { display: grid; gap: .85rem; }
+.rehearsal-transport label, .rehearsal-times { color: var(--muted); }
+.rehearsal-transport select { width: 100%; min-width: 0; min-height: 52px; padding: .5rem .7rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: .65rem; }
+.rehearsal-timeline { min-width: 0; margin: 0; padding: 0; border: 0; }
+.rehearsal-timeline input { display: block; margin: 0; padding: 0; min-height: 44px; accent-color: var(--accent); background: transparent; }
+.rehearsal-times { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.rehearsal-controls { display: grid; grid-template-columns: 1fr 1.75fr 1fr; gap: .5rem; }
+.rehearsal-controls button { min-height: 64px; padding: .5rem .25rem; font-weight: 650; }
+#rehearsal-play { background: var(--accent); color: var(--ink); }
+#rehearsal-play:hover { background: #c5f2de; }
+#rehearsal-audio-status { color: var(--muted); }
+
 @media (max-width: 1100px) {
   .app-header { align-items: center; flex-wrap: nowrap; }
   .distance-control { display: none; }

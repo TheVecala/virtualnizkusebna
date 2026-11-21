@@ -12,6 +12,7 @@ const songs = [
   { id: 'novy-napad', title: 'Nový nápad', hasText: false, hasTab: false, recordings: 0, documents: 0 },
   { id: 'specialni', title: '<Zkouška> & „název“', hasText: true, hasTab: false, recordings: 0, documents: 0 },
 ];
+const rehearsals = [{ id: 101, title: 'Zkouška 21. 11.', recordings: 2 }, { id: 102, title: 'Zkouška 14. 11.', recordings: 0 }];
 const text = 'INTRO\nAm       F        C        G\n\nSLOKA\nAm                   F\nPodél kolejí se vrací den,\nC                    G\nna druhý břeh nás veze sen.\n\nREFRÉN\nF          C         G        Am\nJeště chvíli hrát, ještě chvíli znít.\nF          C         G\nNež se noční vlak dá zase do pohybu.\n\nDOHRA\nAm  F  C  G  |  Am';
 const tab = 'e|----------------------------------------|\nB|------1--------1--------1--------0-------|\nG|----2---2----2---2----0---0----0---0------|\nD|--2--------3--------2--------0-----------|\nA|0----------------3----------------------|\nE|---------1----------------3-------------|';
 const wav = Buffer.alloc(44 + 16000);
@@ -33,6 +34,14 @@ const server = http.createServer((request, response) => {
     return;
   }
   if (url.pathname === '/' || url.pathname === '/hrani.php') {
+    if (url.searchParams.has('data') && url.searchParams.has('rehearsal')) {
+      const rehearsal = rehearsals.find(row => String(row.id) === url.searchParams.get('rehearsal'));
+      response.setHeader('Content-Type', 'application/json; charset=utf-8');
+      if (!rehearsal) { response.statusCode = 404; response.end(JSON.stringify({ error: 'Zkouška není dostupná.' })); return; }
+      const recordings = Array.from({ length: rehearsal.recordings }, (_, index) => ({ name: 'Nahrávka ' + (index + 1), url: '/sample.wav' }));
+      response.end(JSON.stringify({ ...rehearsal, recordings }));
+      return;
+    }
     if (url.searchParams.has('data')) {
       const song = songs.find(item => item.id === url.searchParams.get('song'));
       response.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -41,7 +50,6 @@ const server = http.createServer((request, response) => {
       return;
     }
     let html = fs.readFileSync(path.join(root, 'hrani.php'), 'utf8');
-    const rehearsals = [{ id: 101, title: 'Zkouška 21. 11.', recordings: 2 }, { id: 102, title: 'Zkouška 14. 11.', recordings: 0 }];
     html = html.slice(html.indexOf('<!doctype html>')).replace(
       /(id="(song|rehearsal)-data">)<\?php[\s\S]*?\?>/g,
       (_, start, kind) => start + JSON.stringify(kind === 'song' ? songs : rehearsals).replace(/</g, '\\u003c'));

@@ -205,13 +205,142 @@
       $('retry').hidden = false;
     }
   }
+  const rehearsalAudio = $('rehearsal-audio');
+  const recordingPicker = $('rehearsal-recording');
+  const rehearsalSeek = $('rehearsal-seek');
+  const rehearsalPlay = $('rehearsal-play');
+  const rehearsalStatus = $('rehearsal-player-status');
+  const audioStatus = $('rehearsal-audio-status');
+  let rehearsalRecordings = [];
+  let openedRehearsal = null;
+  let lastRehearsal = null;
+  let rehearsalScroll = 0;
+
+  function audioMessage(message = '') {
+    audioStatus.textContent = message;
+    audioStatus.hidden = !message;
+  }
+
+  function timeLabel(value) {
+    const seconds = Math.floor(value || 0);
+    return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+  }
+
+  function updateTransport() {
+    const duration = Number.isFinite(rehearsalAudio.duration) && rehearsalAudio.duration > 0
+      ? rehearsalAudio.duration : 0;
+    rehearsalSeek.max = String(duration);
+    rehearsalSeek.value = String(rehearsalAudio.currentTime);
+    $('rehearsal-elapsed').textContent = timeLabel(rehearsalAudio.currentTime);
+    $('rehearsal-duration').textContent = timeLabel(duration);
+    rehearsalSeek.disabled = $('rehearsal-backward').disabled = $('rehearsal-forward').disabled = !duration;
+    rehearsalPlay.textContent = rehearsalAudio.paused ? 'Přehrát' : 'Pozastavit';
+  }
+
+  function selectRehearsalRecording() {
+    rehearsalAudio.pause();
+    rehearsalAudio.src = rehearsalRecordings[Number(recordingPicker.value)].url;
+    rehearsalAudio.load();
+    rehearsalSeek.value = '0';
+    audioMessage();
+    updateTransport();
+  }
+
+  function seekRehearsal(seconds) {
+    if (!Number.isFinite(rehearsalAudio.duration)) return;
+    rehearsalAudio.currentTime = Math.min(rehearsalAudio.duration, Math.max(0, seconds));
+    rehearsalSeek.value = String(rehearsalAudio.currentTime);
+    updateTransport();
+  }
+
+  recordingPicker.addEventListener('change', selectRehearsalRecording);
+  rehearsalSeek.addEventListener('input', () => seekRehearsal(Number(rehearsalSeek.value)));
+  $('rehearsal-backward').addEventListener('click', () => seekRehearsal(rehearsalAudio.currentTime - 10));
+  $('rehearsal-forward').addEventListener('click', () => seekRehearsal(rehearsalAudio.currentTime + 10));
+  rehearsalPlay.addEventListener('click', async () => {
+    if (!rehearsalAudio.paused) { rehearsalAudio.pause(); return; }
+    const source = rehearsalAudio.getAttribute('src');
+    if (!source) return;
+    audioMessage();
+    if (rehearsalAudio.error) rehearsalAudio.load();
+    try {
+      await rehearsalAudio.play();
+    } catch (error) {
+      if (error.name !== 'AbortError' && rehearsalAudio.getAttribute('src') === source) {
+        audioMessage('Nahrávku se nepodařilo přehrát. Zkus to znovu.');
+      }
+    }
+  });
+  for (const event of ['loadedmetadata', 'timeupdate', 'play', 'pause', 'ended', 'emptied']) {
+    rehearsalAudio.addEventListener(event, updateTransport);
+  }
+  rehearsalAudio.addEventListener('error', () => {
+    if (rehearsalAudio.hasAttribute('src')) audioMessage('Nahrávku se nepodařilo načíst.');
+    updateTransport();
+  });
+
+  async function openRehearsal(id) {
+    if (request) request.abort();
+    const activeRequest = new AbortController();
+    request = activeRequest;
+    stopAudio();
+    currentId = null;
+    openedRehearsal = lastRehearsal = id;
+    document.body.dataset.screen = 'detail';
+    $('list-view').hidden = true;
+    $('rehearsal-view').hidden = true;
+    $('detail-view').hidden = true;
+    $('rehearsal-player').hidden = false;
+    $('rehearsal-transport').hidden = true;
+    $('retry-rehearsal').hidden = true;
+    const title = $('rehearsal-player-title');
+    title.textContent = rehearsals.find(row => String(row.id) === id)?.title || 'Zkouška';
+    document.title = title.textContent + ' · Hraní';
+    rehearsalStatus.hidden = false;
+    rehearsalStatus.textContent = 'Načítání nahrávek…';
+    window.scrollTo(0, 0);
+    title.focus({ preventScroll: true });
+    try {
+      const response = await fetch('hrani.php?' + new URLSearchParams({ data: '1', rehearsal: id }), {
+        signal: activeRequest.signal, headers: { Accept: 'application/json' }
+      });
+      const detail = await response.json();
+      if (!response.ok) throw new Error(detail.error || 'Nahrávky se nepodařilo načíst.');
+      if (activeRequest !== request) return;
+      title.textContent = detail.title;
+      document.title = detail.title + ' · Hraní';
+      rehearsalRecordings = detail.recordings;
+      if (!rehearsalRecordings.length) {
+        rehearsalStatus.textContent = 'Zkouška zatím nemá žádnou dostupnou nahrávku.';
+        return;
+      }
+      recordingPicker.replaceChildren(...rehearsalRecordings.map((recording, index) => {
+        const option = element('option', '', recording.name);
+        option.value = String(index);
+        return option;
+      }));
+      recordingPicker.selectedIndex = 0;
+      selectRehearsalRecording();
+      rehearsalStatus.hidden = true;
+      $('rehearsal-transport').hidden = false;
+    } catch (error) {
+      if (activeRequest !== request || error.name === 'AbortError') return;
+      rehearsalStatus.textContent = error instanceof TypeError || error instanceof SyntaxError
+        ? 'Nahrávky se nepodařilo načíst. Zkontroluj připojení.' : error.message;
+      $('retry-rehearsal').hidden = false;
+    }
+  }
+
+  $('retry-rehearsal').addEventListener('click', () => {
+    if (openedRehearsal) openRehearsal(openedRehearsal);
+  });
+
   function renderRehearsals() {
     const rows = rehearsals.map(rehearsal => {
       const link = element('a', 'song-row');
-      const params = new URLSearchParams({
-        v: '2', kind: 'rehearsal', collection_id: String(rehearsal.id), listen: '1', playing: '1'
-      });
-      link.href = 'index.php?' + params;
+      link.href = '#rehearsal=' + encodeURIComponent(rehearsal.id);
+      link.dataset.rehearsal = rehearsal.id;
+      link.addEventListener('click', () => { rehearsalScroll = window.scrollY; });
       const name = element('span', 'song-name');
       name.append(element('strong', '', rehearsal.title));
       const count = element('span', 'song-recordings');
@@ -227,7 +356,12 @@
   function route() {
     const params = new URLSearchParams(window.location.hash.slice(1));
     const id = params.get('song');
-    $('playing-lists').hidden = Boolean(id);
+    const rehearsalId = params.get('rehearsal');
+    $('playing-lists').hidden = Boolean(id || rehearsalId);
+    if (rehearsalId) { openRehearsal(rehearsalId); return; }
+    const wasRehearsal = openedRehearsal !== null;
+    openedRehearsal = null;
+    $('rehearsal-player').hidden = true;
     if (id) {
       $('rehearsal-view').hidden = true;
       openSong(id);
@@ -248,6 +382,11 @@
     document.title = showRehearsals ? 'Zkoušky · Hraní' : 'Hraní · Virtuální zkušebna';
     if (showRehearsals) renderRehearsals();
     else renderList();
+    if (wasRehearsal && showRehearsals) {
+      const selected = Array.from($('rehearsal-list').children).find(row => row.dataset.rehearsal === lastRehearsal);
+      if (selected) selected.focus({ preventScroll: true });
+      window.scrollTo(0, rehearsalScroll);
+    }
     if (wasDetail) {
       const selected = Array.from(document.querySelectorAll('.song-row')).find(row => row.dataset.song === lastOpened);
       if (selected) selected.focus({ preventScroll: true });
@@ -256,7 +395,7 @@
   }
   $('retry').addEventListener('click', () => { if (currentId) openSong(currentId); });
   window.addEventListener('hashchange', route);
-  window.addEventListener('pagehide', stopAudio);
+  window.addEventListener('pagehide', () => document.querySelectorAll('audio').forEach(audio => audio.pause()));
   if (document.fullscreenEnabled) {
     $('fullscreen').hidden = false;
     $('fullscreen').addEventListener('click', async () => {
