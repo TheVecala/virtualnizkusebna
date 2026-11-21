@@ -6,6 +6,7 @@
   // New layouts only need a registry entry, a button, and scoped CSS.
   const layouts = ['compact', 'overview', 'large'];
   const distances = ['normal', 'wall'];
+  const desktop = window.matchMedia('(min-width: 1101px)');
   let currentId = null;
   let request = null;
   let listScroll = 0;
@@ -19,7 +20,7 @@
     catch (_) { return fallback; }
   }
   function setView(key, value) {
-    document.body.dataset[key] = value;
+    document.body.dataset[key] = key === 'distance' && !desktop.matches ? 'normal' : value;
     document.querySelectorAll(`button[data-${key}]`).forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset[key] === value));
     });
@@ -33,16 +34,18 @@
     });
   });
 
+  desktop.addEventListener('change', () => {
+    setView('distance', preference('distance', distances, 'normal'));
+  });
+
   function element(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
     if (text !== undefined) node.textContent = text;
     return node;
   }
-  function fold(text) { return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('cs'); }
   function renderList() {
-    const term = fold($('song-search').value.trim());
-    const visible = songs.filter(song => fold(song.title).includes(term));
+    const visible = songs;
     $('song-list').replaceChildren();
     visible.forEach(song => {
       const link = element('a', `song-row${song.id === lastOpened ? ' last-opened' : ''}`);
@@ -51,21 +54,20 @@
       const name = element('span', 'song-name');
       name.append(element('span', 'song-number', String(songs.indexOf(song) + 1).padStart(2, '0')), element('strong', '', song.title));
       const assets = [];
-      if (song.hasText) assets.push('Text a akordy');
-      if (song.hasTab) assets.push('Tabulatura');
-      if (song.documents) assets.push(`Přílohy: ${song.documents}`);
+      if (song.tempos?.length) assets.push(`${song.tempos.join(' / ')} BPM`);
+      if (song.meters?.length) assets.push(song.meters.join(' / '));
+      if (song.description) assets.push(song.description);
       const recordingCount = element('span', 'song-recordings');
       recordingCount.setAttribute('aria-label', `Nahrávky: ${song.recordings}`);
       recordingCount.append(element('span', 'recordings-label', 'Audio: '), document.createTextNode(String(song.recordings)));
-      link.append(name, element('span', 'song-assets', assets.join(' · ') || 'Bez textových podkladů'), recordingCount);
+      link.append(name, element('span', 'song-assets', assets.join(' · ') || '—'), recordingCount);
       link.addEventListener('click', () => { listScroll = window.scrollY; });
       $('song-list').append(link);
     });
-    $('song-count').textContent = `${visible.length} / ${songs.length}`;
+    $('song-count').textContent = String(songs.length);
     $('list-empty').hidden = visible.length > 0;
-    $('list-empty').textContent = songs.length ? 'Žádná skladba neodpovídá hledání.' : 'Zatím tu nejsou žádné skladby. Přidejte je ve správě zkušebny.';
+    $('list-empty').textContent = 'Zatím tu nejsou žádné skladby. Přidejte je ve správě zkušebny.';
   }
-  $('song-search').addEventListener('input', renderList);
   document.querySelector('.skip-link').addEventListener('click', event => {
     event.preventDefault();
     $('main').focus();

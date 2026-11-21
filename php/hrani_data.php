@@ -5,15 +5,17 @@ require_once __DIR__.'/inc/vz2_content.php';
 
 // Read-only adapter for the current beta schema; no legacy paths or mutations.
 function hrani_song(array $row): array {
+    $details = vz2_song_details_decode($row);
     return [
         'id'=>(string)$row['id'], 'title'=>$row['title'],
+        'description'=>$details['song_description'], 'tempos'=>$details['song_tempos'], 'meters'=>$details['song_meters'],
         'hasText'=>(bool)$row['has_text'], 'hasTab'=>(bool)$row['has_tab'],
         'recordings'=>(int)$row['recording_count'], 'documents'=>(int)$row['attachment_count'],
     ];
 }
 
 function hrani_catalog(mysqli $db): array {
-    $rows = vz2_rows($db, "SELECT c.id,c.title,
+    $rows = vz2_rows($db, "SELECT c.id,c.title,c.song_description,c.song_tempos,c.song_meters,
         EXISTS(SELECT 1 FROM vz2_documents d WHERE d.collection_id=c.id AND d.kind='lyrics_chords') has_text,
         EXISTS(SELECT 1 FROM vz2_documents d WHERE d.collection_id=c.id AND d.kind='tablature') has_tab,
         (SELECT COUNT(*) FROM vz2_recordings r WHERE r.collection_id=c.id AND r.lifecycle='active') recording_count,

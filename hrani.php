@@ -63,14 +63,13 @@ try {
         <button type="button" data-distance="wall" aria-pressed="false">Na zeď</button>
       </div>
       <button type="button" id="fullscreen" class="quiet-button" hidden>Celá obrazovka</button>
-      <a class="quiet-button edit-link" href="index.php">Správa zkušebny</a>
     </div>
+    <a class="quiet-button edit-link" href="index.php">Editovat</a>
   </header>
   <main id="main" tabindex="-1">
     <section id="list-view" aria-labelledby="list-title">
-      <div class="list-heading"><div><p class="eyebrow">Všechno připravené ke hraní</p><h1 id="list-title">Skladby</h1></div><span id="song-count" class="count" aria-live="polite"></span></div>
-      <label class="search-field" for="song-search"><span>Hledat skladbu</span><input id="song-search" type="search" placeholder="Název skladby…" autocomplete="off"></label>
-      <div class="list-columns" aria-hidden="true"><span>Skladba</span><span>Podklady</span><span>Nahrávky</span></div>
+      <div class="list-heading"><h1 id="list-title">Skladby</h1><span id="song-count" class="count" aria-live="polite"></span></div>
+      <div class="list-columns" aria-hidden="true"><span>Skladba</span><span>Info</span><span>Nahrávky</span></div>
       <div id="song-list" class="song-list"></div>
       <p id="list-empty" class="empty-state" hidden></p>
     </section>
