@@ -25,7 +25,7 @@ const server = http.createServer((request, response) => {
   if (url.pathname === '/preview') {
     const width = ['390', '768', '1280', '1920'].includes(url.searchParams.get('width')) ? url.searchParams.get('width') : '1280';
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
-    response.end(`<!doctype html><html lang="cs"><meta charset="utf-8"><title>Ukázka hráčského zobrazení</title><style>body{margin:0;background:#27343e;color:#fff;font:16px system-ui}nav{padding:12px;display:flex;gap:20px;flex-wrap:wrap}a{color:#a9e7ca}iframe{display:block;border:0;margin:auto;max-width:none;height:calc(100vh - 76px)}</style><nav>Ukázková data · vizuální kontrola <a href="?width=390">Mobil</a><a href="?width=768">Tablet</a><a href="?width=1280">Desktop</a><a href="?width=1920">Obrazovka na zdi</a></nav><iframe title="Hráčské zobrazení" src="/hrani.php" width="${width}"></iframe></html>`);
+    response.end(`<!doctype html><html lang="cs"><meta charset="utf-8"><title>Ukázka hráčského zobrazení</title><style>body{margin:0;background:#27343e;color:#fff;font:16px system-ui}nav{padding:12px;display:flex;gap:20px;flex-wrap:wrap}a{color:#a9e7ca}iframe{display:block;border:0;margin:auto;max-width:none;height:calc(100vh - 76px)}</style><nav>Ukázková data · vizuální kontrola <a href="?width=390">Mobil</a><a href="?width=768">Tablet</a><a href="?width=1280">Desktop</a><a href="?width=1920">Obrazovka na zdi</a></nav><iframe title="Hráčské zobrazení" src="/simple.php" width="${width}"></iframe></html>`);
     return;
   }
   if (url.pathname === '/sample.wav') {
@@ -33,7 +33,7 @@ const server = http.createServer((request, response) => {
     response.end(wav);
     return;
   }
-  if (url.pathname === '/' || url.pathname === '/hrani.php') {
+  if (url.pathname === '/' || ['/hrani.php', '/simple.php'].includes(url.pathname)) {
     if (url.searchParams.has('data') && url.searchParams.has('rehearsal')) {
       const rehearsal = rehearsals.find(row => String(row.id) === url.searchParams.get('rehearsal'));
       response.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -46,10 +46,24 @@ const server = http.createServer((request, response) => {
       const song = songs.find(item => item.id === url.searchParams.get('song'));
       response.setHeader('Content-Type', 'application/json; charset=utf-8');
       if (!song) { response.statusCode = 404; response.end(JSON.stringify({ error: 'Skladba není dostupná.' })); return; }
+      if (url.searchParams.get('content') === 'info') {
+        const entries = song.id === 'novy-napad' ? [] : [
+          { type: 'song_details', label: 'Popisek, tempo a takt', tempos: [112], meters: ['4/4'], body: 'Po druhém refrénu krátká pauza.' },
+          { type: 'document', label: 'Text a akordy', body: text },
+          { type: 'marker', kind: 'take', recording_id: 1, recording_name: 'Zkouška – verze 1.wav',
+            start_ms: 42000, end_ms: 68000, body: 'Druhý pokus', note_text: 'Zpomalit dohru.', end_body: 'Poslední akord' },
+          { type: 'map', label: 'Mapa', body: '3 takty', sections: [{ name: 'Intro', first_bar: 1, bars: [
+            { base: 'hihat', fill: 0 }, { base: 'ride', fill: 1, has_detail: true }, { special: 'stop' }
+          ] }] },
+          { type: 'map_detail', label: 'Intro · takt 2', bar_number: 2, body: '1 & 2 & 3 & 4 &\n  x   x   x   x' }
+        ];
+        response.end(JSON.stringify({ id: song.id, title: song.title, entries }));
+        return;
+      }
       response.end(JSON.stringify({ ...song, text: song.hasText ? text : '', tab: song.hasTab ? tab : '', files: Array.from({ length: song.recordings }, (_, index) => ({ name: `Zkouška – verze ${index + 1}.wav`, audio: true, url: '/sample.wav' })), notes: { available: true, items: song.id === 'novy-napad' ? [] : [{ text: 'Po druhém refrénu krátká pauza. Dohru hrajeme dvakrát, poslední akord nechat doznít.', author: 'Ukázková poznámka', date: '21. 11. 2026' }] } }));
       return;
     }
-    let html = fs.readFileSync(path.join(root, 'hrani.php'), 'utf8');
+    let html = fs.readFileSync(path.join(root, 'simple.php'), 'utf8');
     html = html.slice(html.indexOf('<!doctype html>')).replace(
       /(id="(song|rehearsal)-data">)<\?php[\s\S]*?\?>/g,
       (_, start, kind) => start + JSON.stringify(kind === 'song' ? songs : rehearsals).replace(/</g, '\\u003c'));
@@ -57,7 +71,7 @@ const server = http.createServer((request, response) => {
     response.end(html);
     return;
   }
-  const files = { '/css/hrani.css': 'text/css', '/js/hrani.js': 'text/javascript' };
+  const files = { '/js/vz2-timestamp-model.js': 'text/javascript', '/js/vz2-song-map-model.js': 'text/javascript', '/css/hrani.css': 'text/css', '/js/hrani.js': 'text/javascript' };
   if (files[url.pathname]) {
     response.setHeader('Content-Type', files[url.pathname] + '; charset=utf-8');
     response.end(fs.readFileSync(path.join(root, url.pathname)));

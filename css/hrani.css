@@ -128,6 +128,30 @@ body[data-distance="wall"] .song-navigation button { font-size: 1.3rem; }
 #rehearsal-play:hover { background: #c5f2de; }
 #rehearsal-audio-status { color: var(--muted); }
 
+.layout-control button { min-height: 34px; padding: .25rem .5rem; font-size: .78rem; }
+.content-control { width: fit-content; max-width: 100%; flex-wrap: wrap; margin-bottom: var(--gap); }
+.content-control button { min-height: 42px; }
+.simple-info-row { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: .25rem 1rem; padding: .6rem 0; }
+.simple-info-row + .simple-info-row { border-top: 1px solid var(--line); }
+.simple-marker-heading { margin: .4rem 0 .2rem; }
+.simple-info-row + .simple-marker-heading { margin-top: .9rem; }
+.simple-info-label { color: var(--accent); }
+.simple-info-body { display: grid; gap: .25rem; min-width: 0; overflow-wrap: anywhere; }
+.simple-info-body p { white-space: pre-wrap; }
+.simple-info-body .note-meta { margin: 0; }
+.simple-map { display: grid; gap: var(--gap); }
+.simple-bars { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: .35rem; }
+.simple-bar { display: grid; place-items: center; min-height: 48px; min-width: 0; padding: .2rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--bg); }
+.simple-bar[data-base="ride"] { color: var(--accent); }
+.simple-bar.has-detail { border-color: var(--accent); box-shadow: inset 0 -3px var(--accent); }
+.simple-bar-number { color: var(--muted); font-size: .75rem; }
+.simple-bar strong { font-size: var(--score-size); }
+#simple-bar-dialog { width: min(42rem, calc(100% - 2rem)); max-height: 85dvh; color: var(--text); }
+#simple-bar-dialog::backdrop { background: rgb(0 0 0 / .65); }
+#simple-bar-dialog form { margin-top: 1rem; }
+body[data-layout="compact"] .simple-info-row { padding: .35rem 0; }
+body[data-distance="wall"] .simple-info-row { font-size: 1.3rem; }
+
 @media (max-width: 1100px) {
   .app-header { align-items: center; flex-wrap: nowrap; }
   .distance-control { display: none; }
@@ -152,8 +176,9 @@ body[data-distance="wall"] .song-navigation button { font-size: 1.3rem; }
   .song-recordings { font-size: .875rem; color: var(--muted); }
   .recordings-label { display: inline; }
   .song-content, body[data-distance="wall"] .song-content { grid-template-columns: minmax(0, 1fr); }
-  .layout-control { display: grid; grid-template-columns: 1fr 1fr 1.2fr; width: 100%; }
-  .layout-control button { padding: .55rem .35rem; font-size: .875rem; }
+  .layout-control { max-width: 100%; }
+  .simple-info-row { grid-template-columns: minmax(0, 1fr); }
+  .simple-bars { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .song-navigation { gap: .6rem; padding-top: .65rem; }
   .song-navigation button { min-width: 0; width: 50%; padding: .75rem .65rem; }
   body[data-layout="large"] .song-navigation button { padding: .9rem .65rem; font-size: 1rem; }

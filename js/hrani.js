@@ -12,6 +12,8 @@
   let request = null;
   let listScroll = 0;
   let lastOpened = null;
+  let songView = 'default';
+  let songLoad = null;
 
   function remember(key, value) {
     try { localStorage.setItem(`hrani.${key}`, value); } catch (_) { /* Private browsing can disable storage. */ }
@@ -168,10 +170,142 @@
       button.onclick = () => { if (song) window.location.hash = `song=${encodeURIComponent(song.id)}`; };
     });
   }
+  function detailStatus(message, retry = false) {
+    $('detail-status').textContent = message;
+    $('detail-status').hidden = !message;
+    $('retry').hidden = !retry;
+  }
+
+  function entryDate(value) {
+    if (!value) return '';
+    const date = new Date(value.includes('T') ? value : value.replace(' ', 'T') + 'Z');
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('cs-CZ', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
+  function renderSongInfo(snapshot) {
+    const entries = snapshot.entries.filter(entry => entry.type === 'marker');
+    if (!entries.length) return element('p', 'empty-state', 'Skladba zatím nemá žádné časové značky.');
+    const list = element('div', 'panel simple-info');
+    const markerNames = { take: 'Úsek', boundary: 'Konec bez začátku', passage: 'Pasáž', note: 'Poznámka' };
+    let recordingId = null;
+    for (const entry of entries) {
+      if (entry.recording_id !== recordingId) {
+        recordingId = entry.recording_id;
+        const heading = [entry.rehearsal_title, entry.recording_name].filter(Boolean).join(' · ');
+        list.append(element('h2', 'simple-marker-heading', heading || 'Nahrávka'));
+      }
+      const row = element('article', 'simple-info-row');
+      const formatTime = window.Vz2TimestampModel.format;
+      const markerTime = formatTime(entry.start_ms) + (entry.end_ms == null ? '' : '–' + formatTime(entry.end_ms));
+      const label = markerNames[entry.kind] || 'Značka';
+      row.append(element('strong', 'simple-info-label', [label, markerTime].filter(Boolean).join(' · ')));
+      const body = element('div', 'simple-info-body');
+      if (entry.body && entry.body !== label) body.append(element('p', '', entry.body));
+      const passage = window.Vz2TimestampModel.passageTypes[entry.passage_type] || entry.passage_type;
+      const context = [entry.song_title, passage, entry.status === 'open' ? 'Bez konce' : ''].filter(Boolean).join(' · ');
+      if (context) body.append(element('span', 'note-meta', context));
+      if (entry.note_text) body.append(element('p', '', entry.note_text));
+      const meta = [entry.author, entryDate(entry.at)].filter(Boolean).join(' · ');
+      if (meta) body.append(element('span', 'note-meta', meta));
+      if (entry.end_body || entry.end_author || entry.end_at) {
+        const end = [entry.end_body, entry.end_author, entryDate(entry.end_at)].filter(Boolean).join(' · ');
+        body.append(element('p', '', 'Konec: ' + end));
+      }
+      row.append(body);
+      list.append(row);
+    }
+    return list;
+  }
+
+  function renderSongMap(snapshot) {
+    const map = snapshot.entries.find(entry => entry.type === 'map');
+    if (!map) return element('p', 'empty-state', 'Skladba zatím nemá mapu.');
+    const details = new Map(snapshot.entries.filter(entry => entry.type === 'map_detail').map(entry => [entry.bar_number, entry]));
+    const host = element('div', 'simple-map');
+    for (const section of map.sections) {
+      const group = element('section', 'panel');
+      group.append(element('h2', '', section.name));
+      const grid = element('div', 'simple-bars');
+      section.bars.forEach((bar, index) => {
+        const number = section.first_bar + index;
+        const detail = details.get(number);
+        const model = window.Vz2SongMapModel;
+        const name = 'Takt ' + number + ' · ' + model.label(bar);
+        const cell = element(detail ? 'button' : 'div', 'simple-bar');
+        cell.dataset.base = bar.base || '';
+        cell.setAttribute('aria-label', detail ? name + ' · otevřít detail' : name);
+        if (!detail) cell.setAttribute('role', 'img');
+        cell.title = name;
+        cell.append(element('span', 'simple-bar-number', String(number)), element('strong', '', model.symbol(bar)));
+        if (detail) {
+          cell.type = 'button';
+          cell.classList.add('has-detail');
+          cell.addEventListener('click', () => {
+            $('simple-bar-title').textContent = detail.label;
+            $('simple-bar-text').textContent = detail.body;
+            $('simple-bar-dialog').showModal();
+          });
+        }
+        grid.append(cell);
+      });
+      group.append(grid);
+      host.append(group);
+    }
+    return host;
+  }
+
+  async function readSongView(id, signal, info = false) {
+    const params = new URLSearchParams({ data: '1', song: id });
+    if (info) params.set('content', 'info');
+    const response = await fetch('simple.php?' + params, { signal, headers: { Accept: 'application/json' } });
+    const detail = await response.json();
+    if (!response.ok) throw new Error(detail.error || 'Podklady se nepodařilo načíst.');
+    return detail;
+  }
+
+  async function updateSongView() {
+    const load = songLoad;
+    if (!load) return;
+    const view = songView;
+    $('song-content').hidden = true;
+    $('song-extra').hidden = true;
+    detailStatus('Načítání podkladů…');
+    try {
+      if (view === 'default') {
+        load.default ??= readSongView(load.id, load.signal);
+        const detail = await load.default;
+        if (load !== songLoad || view !== songView) return;
+        if (!load.rendered) { renderDetail(detail); load.rendered = true; }
+        $('song-content').hidden = false;
+      } else {
+        load.info ??= readSongView(load.id, load.signal, true);
+        const snapshot = await load.info;
+        if (load !== songLoad || view !== songView) return;
+        $('song-extra').replaceChildren(view === 'map' ? renderSongMap(snapshot) : renderSongInfo(snapshot));
+        $('song-extra').hidden = false;
+      }
+      detailStatus('');
+    } catch (error) {
+      if (load !== songLoad || view !== songView || error.name === 'AbortError') return;
+      detailStatus(error instanceof TypeError || error instanceof SyntaxError
+        ? 'Podklady se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu.' : error.message, true);
+    }
+  }
+
+  document.querySelectorAll('[data-song-view]').forEach(button => {
+    button.addEventListener('click', () => {
+      if (button.dataset.songView === songView) return;
+      songView = button.dataset.songView;
+      document.querySelectorAll('[data-song-view]').forEach(control => control.setAttribute('aria-pressed', String(control === button)));
+      $('recordings').querySelectorAll('audio').forEach(audio => audio.pause());
+      updateSongView();
+    });
+  });
+
   async function openSong(id) {
     if (request) request.abort();
     request = new AbortController();
-    const activeRequest = request;
+    songLoad = null;
     stopAudio();
     currentId = id;
     document.body.dataset.screen = 'detail';
@@ -179,31 +313,19 @@
     $('list-view').hidden = true;
     $('detail-view').hidden = false;
     $('song-content').hidden = true;
+    $('song-extra').hidden = true;
     $('detail-status').hidden = false;
     $('detail-status').textContent = 'Načítání podkladů…';
     $('retry').hidden = true;
     const song = byId.get(id);
     $('song-title').textContent = song ? song.title : 'Skladba není dostupná';
-    document.title = `${song ? song.title : 'Skladba'} · Hraní`;
+    document.title = `${song ? song.title : 'Skladba'} · Simple`;
     setNeighbours(id);
     window.scrollTo(0, 0);
     $('song-title').focus({ preventScroll: true });
     if (!song) { $('detail-status').textContent = 'Tuto skladbu v seznamu nemáme. Vraťte se do seznamu skladeb.'; return; }
-    try {
-      const url = new URL('hrani.php', window.location.href);
-      url.search = new URLSearchParams({ data: '1', song: id }).toString();
-      const response = await fetch(url, { signal: activeRequest.signal, headers: { Accept: 'application/json' } });
-      const detail = await response.json();
-      if (!response.ok) throw new Error(detail.error || 'Podklady se nepodařilo načíst.');
-      if (activeRequest !== request) return;
-      renderDetail(detail);
-      $('detail-status').hidden = true;
-      $('song-content').hidden = false;
-    } catch (error) {
-      if (error.name === 'AbortError' || activeRequest !== request) return;
-      $('detail-status').textContent = error instanceof TypeError || error instanceof SyntaxError ? 'Podklady se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu.' : error.message;
-      $('retry').hidden = false;
-    }
+    songLoad = { id, signal: request.signal };
+    await updateSongView();
   }
   const rehearsalAudio = $('rehearsal-audio');
   const recordingPicker = $('rehearsal-recording');
@@ -295,20 +417,20 @@
     $('retry-rehearsal').hidden = true;
     const title = $('rehearsal-player-title');
     title.textContent = rehearsals.find(row => String(row.id) === id)?.title || 'Zkouška';
-    document.title = title.textContent + ' · Hraní';
+    document.title = title.textContent + ' · Simple';
     rehearsalStatus.hidden = false;
     rehearsalStatus.textContent = 'Načítání nahrávek…';
     window.scrollTo(0, 0);
     title.focus({ preventScroll: true });
     try {
-      const response = await fetch('hrani.php?' + new URLSearchParams({ data: '1', rehearsal: id }), {
+      const response = await fetch('simple.php?' + new URLSearchParams({ data: '1', rehearsal: id }), {
         signal: activeRequest.signal, headers: { Accept: 'application/json' }
       });
       const detail = await response.json();
       if (!response.ok) throw new Error(detail.error || 'Nahrávky se nepodařilo načíst.');
       if (activeRequest !== request) return;
       title.textContent = detail.title;
-      document.title = detail.title + ' · Hraní';
+      document.title = detail.title + ' · Simple';
       rehearsalRecordings = detail.recordings;
       if (!rehearsalRecordings.length) {
         rehearsalStatus.textContent = 'Zkouška zatím nemá žádnou dostupnou nahrávku.';
@@ -357,6 +479,8 @@
     const params = new URLSearchParams(window.location.hash.slice(1));
     const id = params.get('song');
     const rehearsalId = params.get('rehearsal');
+    songLoad = null;
+    $('simple-bar-dialog').close();
     $('playing-lists').hidden = Boolean(id || rehearsalId);
     if (rehearsalId) { openRehearsal(rehearsalId); return; }
     const wasRehearsal = openedRehearsal !== null;
@@ -379,7 +503,7 @@
     $('detail-view').hidden = true;
     $('list-view').hidden = showRehearsals;
     $('rehearsal-view').hidden = !showRehearsals;
-    document.title = showRehearsals ? 'Zkoušky · Hraní' : 'Hraní · Virtuální zkušebna';
+    document.title = showRehearsals ? 'Zkoušky · Simple' : 'Simple · Virtuální zkušebna';
     if (showRehearsals) renderRehearsals();
     else renderList();
     if (wasRehearsal && showRehearsals) {

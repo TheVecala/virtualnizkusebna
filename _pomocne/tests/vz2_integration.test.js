@@ -28,7 +28,7 @@ const write = (name, value) => { fs.mkdirSync(path.dirname(name), { recursive: t
 const phpString = value => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 for (const dir of ['php', 'js', 'css', 'meat']) fs.cpSync(path.join(root, dir), path.join(web, dir), { recursive: true });
 for (const dir of ['migrations', 'tools']) fs.cpSync(path.join(root, '_pomocne', dir), path.join(web, dir), { recursive: true });
-for (const file of ['index.php', 'admin.php', 'help.php', 'prehled.php', 'useky.php', 'hrani.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
+for (const file of ['index.php', 'admin.php', 'help.php', 'prehled.php', 'useky.php', 'simple.php', 'hrani.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
 write(path.join(media, '.vz2-storage-id'), database);
 write(path.join(temp, 'db.php'), `<?php
 if(PHP_SAPI!=='cli')exit;

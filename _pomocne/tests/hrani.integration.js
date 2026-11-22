@@ -20,6 +20,12 @@ module.exports = async ({ clients, request, good, upload, wav, db, check }) => {
     assert.equal((await upload('alice', song.id, 'Sólo')).status, 201);
     assert.equal((await upload('alice', song.id, 'Mix', 'multitrack', ['kytara.wav', 'basa.wav'], [wav(), wav()])).status, 201);
     assert.equal((await upload('alice', song.id, 'Příloha', 'attachment', ['poznamky.txt'], [Buffer.from('Podklad')])).status, 201);
+    const map = { schema_version: 1, sections: [{ id: 'a'.repeat(32), name: 'Intro', bars: [
+        { id: 'b'.repeat(32), base: 'ride', fill: 0, crash: false, special: null, detail: '1 & 2 &\n  x   x' }
+    ] }] };
+    const savedMap = await request(clients.alice, 'php/ajax/vz2_content.php', { action: 'document_save', collection_id: song.id,
+        kind: 'song_map', document_id: null, current_revision: 0, title: 'Mapa skladby', body: JSON.stringify(map) });
+    assert.equal(savedMap.status, 200, savedMap.text);
     const before = db('SELECT COUNT(*) n FROM vz2_activity_log')[0].n;
     const catalog = response => JSON.parse(response.text.match(/id="song-data">([\s\S]*?)<\/script>/)[1]);
     for (const role of ['admin', 'alice', 'guest']) {
@@ -48,6 +54,15 @@ module.exports = async ({ clients, request, good, upload, wav, db, check }) => {
     assert.equal((await request(clients.guest, 'hrani.php?data=1&song=../etc')).status, 400);
     assert.equal((await request(clients.guest, 'hrani.php?data=1&song=4294967295')).status, 404);
     assert.equal((await request(clients.alice, 'hrani.php?data=1', { action: 'delete_collection', id: song.id })).status, 405);
+    const info = await request(clients.guest, `simple.php?data=1&song=${song.id}&content=info`);
+    assert.equal(info.status, 200, info.text);
+    const snapshot = info.json();
+    assert.equal(snapshot.id, song.id);
+    assert.equal(snapshot.entries.find(entry => entry.type === 'map').sections[0].bars[0].base, 'ride');
+    const bar = snapshot.entries.find(entry => entry.type === 'map_detail');
+    assert.deepEqual([bar.bar_number, bar.body], [1, map.sections[0].bars[0].detail]);
+    assert(snapshot.entries.some(entry => entry.type === 'discussion' && entry.body === 'Poznámka pro hraní'));
+    assert.equal((await request(clients.guest, `simple.php?data=1&song=${rehearsal.id}&content=info`)).status, 404);
     const blank = (await request(clients.guest, `hrani.php?data=1&song=${empty.id}`)).json();
     assert.deepEqual([blank.text, blank.tab, blank.files, blank.notes.items], ['', '', [], []]);
     assert.equal(db('SELECT COUNT(*) n FROM vz2_activity_log')[0].n, before);

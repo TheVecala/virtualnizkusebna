@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/inc/vz2_catalog.php';
 require_once __DIR__.'/inc/vz2_content.php';
+require_once __DIR__.'/inc/vz2_overview.php';
 
 // Read-only adapter for the current beta schema; no legacy paths or mutations.
 function hrani_song(array $row): array {
