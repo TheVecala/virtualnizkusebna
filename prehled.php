@@ -21,10 +21,12 @@ try {
 <meta name="robots" content="noindex,nofollow">
 <title>Kompaktní přehled · Zkušebna DK!</title>
 <link rel="stylesheet" href="css/themes.css?v=<?=filemtime(__DIR__.'/css/themes.css')?>">
+<link rel="stylesheet" href="css/vz2-overview-render.css?v=<?=filemtime(__DIR__.'/css/vz2-overview-render.css')?>">
 <link rel="stylesheet" href="css/vz2-overview.css?v=<?=filemtime(__DIR__.'/css/vz2-overview.css')?>">
 <script defer src="js/vz2-timestamp-model.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-model.js')?>"></script>
 <script src="js/vz2-song-map-model.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map-model.js')?>" defer></script>
 <script src="js/vz2-overview-filter.js?v=<?=filemtime(__DIR__.'/js/vz2-overview-filter.js')?>" defer></script>
+<script src="js/vz2-overview-render.js?v=<?=filemtime(__DIR__.'/js/vz2-overview-render.js')?>" defer></script>
 <script src="js/vz2-overview.js?v=<?=filemtime(__DIR__.'/js/vz2-overview.js')?>" defer></script>
 </head>
 <body>

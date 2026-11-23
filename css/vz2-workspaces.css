@@ -245,7 +245,7 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 }
 @media (max-width: 360px) { #mobile-panels button .section-button-label { font-size: 9px; } }
 
-/* Metadata belongs to the whole song, above its panels. */
+/* Collection details are shown above the panels. */
 .song-details { max-width: 680px; font-size: 13px; margin-top: 3px; }
 .song-details-line { display: flex; align-items: center; gap: 8px; }
 .song-details-music { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -266,7 +266,7 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 .song-details-comparison { padding: 8px; border: 1px solid var(--color-border); white-space: pre-wrap; overflow-wrap: anywhere; }
 .song-details-dialog .annotation-choice-trigger { font-size: 13px; }
 @media (min-width: 1200px) {
-    body[data-collection-kind=song] #collection-header:not([hidden]) { display: flex; padding-bottom: 6px; }
+    #collection-header:not([hidden]):has(#song-details:not([hidden])) { display: flex; padding-bottom: 6px; }
     #collection-header .collection-heading-row { display: none; }
 }
 

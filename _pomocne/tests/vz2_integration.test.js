@@ -28,7 +28,7 @@ const write = (name, value) => { fs.mkdirSync(path.dirname(name), { recursive: t
 const phpString = value => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 for (const dir of ['php', 'js', 'css', 'meat']) fs.cpSync(path.join(root, dir), path.join(web, dir), { recursive: true });
 for (const dir of ['migrations', 'tools']) fs.cpSync(path.join(root, '_pomocne', dir), path.join(web, dir), { recursive: true });
-for (const file of ['index.php', 'admin.php', 'help.php', 'prehled.php', 'useky.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
+for (const file of ['index.php', 'admin.php', 'help.php', 'prehled.php', 'useky.php', 'simple.php', 'hrani.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
 write(path.join(media, '.vz2-storage-id'), database);
 write(path.join(temp, 'db.php'), `<?php
 if(PHP_SAPI!=='cli')exit;
@@ -154,6 +154,10 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
             check((await request(clients.anon, 'maintenance.html')).status === 200, 'maintenance target exists');
         } finally { write(entryPath, normalEntry); }
         check((await request(clients.admin, 'index.php?v=2')).status === 200, 'application resumes after maintenance switch is disabled');
+        if (process.env.VZ2_TEST_SUITE === 'hrani') {
+            await require('./hrani.integration')({ clients, request, good, upload, wav, db, check });
+            console.log('PASS playing view suite: ' + checks + ' checks'); return;
+        }
         if (process.env.VZ2_TEST_SUITE === 'song-details') {
             await require('./vz2_song_details.integration')({ base, clients, request, good, db, check,
                 migrate: () => dbAction('migrate_song_details') });
