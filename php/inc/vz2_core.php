@@ -125,7 +125,8 @@ function vz2_mutate(array $in): array {
             vz2_log($db,'collection.created','collection',$id,$title);
             return ['id'=>$id,'revision'=>1];
         }
-        if ($action === 'song_details_update') return vz2_song_details_save($db, $in);
+        if ($action === 'song_details_update') return vz2_collection_details_save($db, $in, 'song');
+        if ($action === 'rehearsal_description_update') return vz2_collection_details_save($db, $in, 'rehearsal');
         if ($action === 'collection_rename') {
             $r = vz2_collection($db, vz2_id($in['id'] ?? null)); vz2_active($r);
             vz2_permission('rename_val',(int)$r['created_by']); vz2_revision($r,$in['revision'] ?? null);

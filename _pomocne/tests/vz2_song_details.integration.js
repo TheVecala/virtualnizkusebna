@@ -7,8 +7,11 @@ module.exports = async ({ base, clients, request, good, db, check, migrate }) =>
     const read = async () => (await good('guest')).collections.find(row => Number(row.id) === song.id);
     const initial = await read();
     assert.deepEqual([initial.song_description, initial.song_tempos, initial.song_meters], ['', [], []]);
+    assert.equal(initial.can_edit_details, false);
+    const otherMember = (await good('bob')).collections.find(row => Number(row.id) === song.id);
+    assert.deepEqual([otherMember.can_edit, otherMember.can_edit_details], [false, true]);
     const fields = { action: 'song_details_update', id: song.id, revision: 1, song_tempos: [120, 132.5, 120], song_meters: ['4/4', '3/4', '4/4'], song_description: 'Po refrénu zrychlit.\n<img src=x onerror=alert(1)> & další sloka.' };
-    const saved = await good('alice', fields);
+    const saved = await good('bob', fields);
     assert.equal(saved.revision, 2);
     assert.deepEqual((await read()).song_tempos, fields.song_tempos);
     assert.deepEqual((await read()).song_meters, fields.song_meters);
@@ -17,7 +20,8 @@ module.exports = async ({ base, clients, request, good, db, check, migrate }) =>
     assert.deepEqual(db('SELECT * FROM vz2_collections WHERE id=?', [song.id]), beforeMigration);
     check(true, 'song details: ordered and repeated tempos/meters, Unicode, migration rerun preserves existing data');
     assert.equal((await request(clients.alice, 'php/ajax/vz2.php', fields)).status, 409);
-    for (const who of ['guest', 'bob']) assert.equal((await request(clients[who], 'php/ajax/vz2.php', { ...fields, revision: 2 })).status, 403);
+    assert.equal((await request(clients.guest, 'php/ajax/vz2.php', { ...fields, revision: 2 })).status, 403);
+    assert.equal((await request(clients.bob, 'php/ajax/vz2.php', { action: 'collection_rename', id: song.id, revision: 2, title: 'Jiný název' })).status, 403);
     assert.equal((await request(clients.alice, 'php/ajax/vz2.php', { ...fields, revision: 2 }, { noCsrf: true })).status, 403);
     assert.equal((await request(clients.anon, 'php/ajax/vz2.php', fields)).status, 401);
     assert.equal((await request(clients.admin, 'php/ajax/vz2.php', { ...fields, id: rehearsal.id })).status, 400);
@@ -28,7 +32,16 @@ module.exports = async ({ base, clients, request, good, db, check, migrate }) =>
         { song_description: 'x'.repeat(10001) }
     ]) assert.equal((await request(clients.alice, 'php/ajax/vz2.php', { ...fields, revision: 2, ...invalid })).status, 400, JSON.stringify(invalid).slice(0, 80));
     assert.equal(Number((await read()).revision), 2, 'rejected writes do not change revision');
-    check(true, 'song details: ownership, guest/anonymous/CSRF, stale revision, invalid values and wrong collection kind');
+    check(true, 'song details: another member can edit, ownership still applies to renaming, guest/anonymous/CSRF, stale revisions and invalid values');
+    const rehearsalFields = { action: 'rehearsal_description_update', id: rehearsal.id, revision: 1, description: 'Příště začneme refrénem.' };
+    assert.equal((await request(clients.guest, 'php/ajax/vz2.php', rehearsalFields)).status, 403);
+    assert.equal((await request(clients.bob, 'php/ajax/vz2.php', { ...rehearsalFields, id: song.id })).status, 400);
+    const rehearsalSaved = await good('bob', rehearsalFields);
+    assert.equal(rehearsalSaved.revision, 2);
+    assert.equal((await request(clients.alice, 'php/ajax/vz2.php', rehearsalFields)).status, 409);
+    const rehearsalRead = (await good('guest')).collections.find(row => Number(row.id) === rehearsal.id);
+    assert.deepEqual([rehearsalRead.song_description, rehearsalRead.song_tempos, rehearsalRead.song_meters], [rehearsalFields.description, [], []]);
+    check(true, 'rehearsal descriptions: shared member editing, guest read access, revision conflicts and no musical fields');
     await good('alice', { action: 'collection_rename', id: song.id, revision: 2, title: 'Skladba s tempy — nová' });
     assert.equal((await read()).song_description, fields.song_description, 'rename preserves metadata');
     await good('admin', { ...fields, revision: 3, song_description: '0' });
