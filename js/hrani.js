@@ -533,10 +533,12 @@
     const params = new URLSearchParams(window.location.hash.slice(1));
     const id = params.get('song');
     const rehearsalId = params.get('rehearsal');
+    const showRehearsals = Boolean(rehearsalId) || window.location.hash === '#rehearsals';
     songLoad = null;
     setMenu(false);
     $('song-view-controls').hidden = Boolean(rehearsalId) || !byId.has(id);
-    $('playing-lists').hidden = Boolean(id || rehearsalId);
+    $(showRehearsals ? 'show-songs' : 'show-rehearsals').removeAttribute('aria-current');
+    $(showRehearsals ? 'show-rehearsals' : 'show-songs').setAttribute('aria-current', id || rehearsalId ? 'location' : 'page');
     if (rehearsalId) { openRehearsal(rehearsalId); return; }
     const wasRehearsal = openedRehearsal !== null;
     openedRehearsal = null;
@@ -546,9 +548,6 @@
       openSong(id);
       return;
     }
-    const showRehearsals = window.location.hash === '#rehearsals';
-    $(showRehearsals ? 'show-songs' : 'show-rehearsals').removeAttribute('aria-current');
-    $(showRehearsals ? 'show-rehearsals' : 'show-songs').setAttribute('aria-current', 'page');
     if (request) request.abort();
     request = null;
     const wasDetail = currentId !== null;

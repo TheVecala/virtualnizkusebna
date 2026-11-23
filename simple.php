@@ -79,7 +79,16 @@ try {
 <body data-layout="overview" data-distance="normal">
   <a class="skip-link" href="#main">Přejít na obsah</a>
   <header class="app-header">
-    <a class="brand" href="simple.php" aria-label="Simple – seznam skladeb"><span class="brand-mark" aria-hidden="true">≋</span> Zkušebna <span class="brand-mode">/ Simple</span></a>
+    <div class="header-leading">
+      <a class="brand" href="simple.php" aria-label="SimpleZkušebna – seznam skladeb"><span class="brand-mark" aria-hidden="true">≋</span> SimpleZkušebna</a>
+      <div class="header-navigation">
+        <span class="header-divider" aria-hidden="true">/</span>
+        <nav class="segmented playing-lists" aria-label="Skladby a zkoušky">
+          <a href="#" id="show-songs" aria-current="page">Skladby</a>
+          <a href="#rehearsals" id="show-rehearsals">Zkoušky</a>
+        </nav>
+      </div>
+    </div>
     <button type="button" id="header-menu-toggle" class="header-menu-toggle quiet-button" aria-label="Otevřít menu" aria-controls="header-menu" aria-expanded="false">
       <span aria-hidden="true">☰</span>
     </button>
@@ -105,10 +114,6 @@ try {
     </div>
   </header>
   <main id="main" tabindex="-1">
-    <nav id="playing-lists" class="segmented playing-lists" aria-label="Seznamy v režimu Simple">
-      <a href="#" id="show-songs" aria-current="page">Skladby</a>
-      <a href="#rehearsals" id="show-rehearsals">Zkoušky</a>
-    </nav>
     <section id="list-view" aria-labelledby="list-title">
       <div class="list-heading"><h1 id="list-title">Skladby</h1><span id="song-count" class="count" aria-live="polite"></span></div>
       <div class="list-columns" aria-hidden="true"><span>Skladba</span><span>Info</span><span>Nahrávky</span></div>
