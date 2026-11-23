@@ -54,8 +54,7 @@ function hrani_notes(mysqli $db, int $id): array {
     try {
         $discussion = vz2_discussion_read($db, ['collection_id'=>$id]);
         $notes = array_map(static fn(array $post): array => [
-            'text'=>$post['body'], 'author'=>$post['author'],
-            'date'=>(new DateTimeImmutable($post['created_at']))->setTimezone(new DateTimeZone('Europe/Prague'))->format('j. n. Y'),
+            'text'=>$post['body'],
         ], $discussion['posts']);
         return ['available'=>true, 'items'=>$notes];
     } catch (Vz2Error $error) {

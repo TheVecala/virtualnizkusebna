@@ -71,7 +71,7 @@ const server = http.createServer((request, response) => {
     response.end(html);
     return;
   }
-  const files = { '/js/vz2-timestamp-model.js': 'text/javascript', '/js/vz2-song-map-model.js': 'text/javascript', '/css/hrani.css': 'text/css', '/js/hrani.js': 'text/javascript' };
+  const files = { '/js/vz2-timestamp-model.js': 'text/javascript', '/js/vz2-song-map-model.js': 'text/javascript', '/css/hrani.css': 'text/css', '/css/vz2-overview-render.css': 'text/css', '/js/vz2-overview-render.js': 'text/javascript', '/js/hrani.js': 'text/javascript' };
   if (files[url.pathname]) {
     response.setHeader('Content-Type', files[url.pathname] + '; charset=utf-8');
     response.end(fs.readFileSync(path.join(root, url.pathname)));

@@ -28,6 +28,11 @@ try {
             if (($_GET['content'] ?? '') === 'info') {
                 $result = vz2_overview_data($db, $songId)['songs'][0] ?? null;
                 if (!$result) throw new Vz2Error('Skladba není dostupná.', 404);
+                unset($result['created_at']);
+                foreach ($result['entries'] as &$entry) {
+                    unset($entry['author'], $entry['at'], $entry['end_author'], $entry['end_at']);
+                }
+                unset($entry);
             } else {
                 $result = hrani_detail($db, $songId);
             }
@@ -63,15 +68,22 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10171d">
   <title>Simple · Virtuální zkušebna</title>
+  <link rel="stylesheet" href="css/vz2-overview-render.css">
   <link rel="stylesheet" href="css/hrani.css">
   <script src="js/vz2-song-map-model.js" defer></script>
   <script src="js/vz2-timestamp-model.js" defer></script>
+  <script src="js/vz2-overview-render.js" defer></script>
   <script src="js/hrani.js" defer></script>
 </head>
 <body data-layout="overview" data-distance="normal">
   <a class="skip-link" href="#main">Přejít na obsah</a>
   <header class="app-header">
     <a class="brand" href="simple.php" aria-label="Simple – seznam skladeb"><span class="brand-mark" aria-hidden="true">≋</span> Zkušebna <span class="brand-mode">/ Simple</span></a>
+    <div class="segmented layout-control" role="group" aria-label="Kompaktnost zobrazení">
+      <button type="button" data-layout="compact" aria-pressed="false">Kompaktní</button>
+      <button type="button" data-layout="overview" aria-pressed="true">Přehled</button>
+      <button type="button" data-layout="large" aria-pressed="false">Velká tlačítka</button>
+    </div>
     <div class="header-actions">
       <div class="segmented distance-control" role="group" aria-label="Vzdálenost obrazovky">
         <button type="button" data-distance="normal" aria-pressed="true">Běžné</button>
@@ -123,17 +135,14 @@ try {
       <div class="song-heading">
         <a href="#" id="back-to-list" class="quiet-button">Seznam skladeb</a>
         <span id="song-position" class="eyebrow"></span>
-        <h1 id="song-title" tabindex="-1"></h1>
-        <div class="segmented layout-control" role="group" aria-label="Kompaktnost zobrazení">
-          <button type="button" data-layout="compact" aria-pressed="false">Kompaktní</button>
-          <button type="button" data-layout="overview" aria-pressed="true">Přehled</button>
-          <button type="button" data-layout="large" aria-pressed="false">Velká tlačítka</button>
+        <div class="song-title-row">
+          <h1 id="song-title" tabindex="-1"></h1>
+          <div class="segmented content-control" role="group" aria-label="Obsah skladby">
+            <button type="button" data-song-view="default" aria-pressed="true">Text a nahrávky</button>
+            <button type="button" data-song-view="info" aria-pressed="false">Všechny informace</button>
+            <button type="button" data-song-view="map" aria-pressed="false">Mapa skladby</button>
+          </div>
         </div>
-      </div>
-      <div class="segmented content-control" role="group" aria-label="Obsah skladby">
-        <button type="button" data-song-view="default" aria-pressed="true">Text a nahrávky</button>
-        <button type="button" data-song-view="info" aria-pressed="false">Všechny informace</button>
-        <button type="button" data-song-view="map" aria-pressed="false">Mapa skladby</button>
       </div>
       <p id="detail-status" class="empty-state" role="status" hidden></p>
       <button id="retry" type="button" class="quiet-button" hidden>Zkusit znovu</button>
@@ -150,11 +159,6 @@ try {
         </div>
       </div>
       <section id="song-extra" aria-label="Další pohled na skladbu" hidden></section>
-      <dialog id="simple-bar-dialog" class="panel" aria-labelledby="simple-bar-title">
-        <h2 id="simple-bar-title"></h2>
-        <pre id="simple-bar-text" class="score"></pre>
-        <form method="dialog"><button type="submit">Zavřít</button></form>
-      </dialog>
       <nav class="song-navigation" aria-label="Přechod mezi skladbami"><button type="button" id="previous-song">Předchozí skladba<span></span></button><button type="button" id="next-song">Další skladba<span></span></button></nav>
     </section>
     <noscript><p class="empty-state">Pro hráčské zobrazení zapněte JavaScript. <a href="index.php">Otevřít běžnou zkušebnu</a></p></noscript>

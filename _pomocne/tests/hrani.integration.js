@@ -39,7 +39,7 @@ module.exports = async ({ clients, request, good, upload, wav, db, check }) => {
         const detail = response.json();
         assert.equal(detail.text, 'Am   F\nAktuální text <bez HTML>');
         assert.equal(detail.tab, '');
-        assert.equal(detail.notes.items[0].text, 'Poznámka pro hraní');
+        assert.deepEqual(detail.notes.items[0], { text: 'Poznámka pro hraní' });
         const single = detail.files.find(file => file.name === 'Sólo');
         assert.match(single.url, /^php\/ajax\/vz2_files\.php\?type=audio&/);
         assert.equal((await request(clients[role], single.url)).status, 200);
@@ -58,6 +58,10 @@ module.exports = async ({ clients, request, good, upload, wav, db, check }) => {
     assert.equal(info.status, 200, info.text);
     const snapshot = info.json();
     assert.equal(snapshot.id, song.id);
+    assert.equal(Object.hasOwn(snapshot, 'created_at'), false);
+    for (const entry of snapshot.entries) {
+        for (const key of ['author', 'at', 'end_author', 'end_at']) assert.equal(Object.hasOwn(entry, key), false);
+    }
     assert.equal(snapshot.entries.find(entry => entry.type === 'map').sections[0].bars[0].base, 'ride');
     const bar = snapshot.entries.find(entry => entry.type === 'map_detail');
     assert.deepEqual([bar.bar_number, bar.body], [1, map.sections[0].bars[0].detail]);

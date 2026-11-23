@@ -14,6 +14,7 @@
   let lastOpened = null;
   let songView = 'default';
   let songLoad = null;
+  const mapVisibility = { bars: true, details: true };
 
   function remember(key, value) {
     try { localStorage.setItem(`hrani.${key}`, value); } catch (_) { /* Private browsing can disable storage. */ }
@@ -156,7 +157,7 @@
     }
     song.notes.items.forEach(note => {
       const item = element('article', 'note');
-      item.append(element('p', '', note.text), element('div', 'note-meta', `${note.author} · ${note.date}`));
+      item.append(element('p', '', note.text));
       $('song-notes').append(item);
     });
   }
@@ -176,45 +177,8 @@
     $('retry').hidden = !retry;
   }
 
-  function entryDate(value) {
-    if (!value) return '';
-    const date = new Date(value.includes('T') ? value : value.replace(' ', 'T') + 'Z');
-    return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('cs-CZ', { dateStyle: 'short', timeStyle: 'short' });
-  }
-
   function renderSongInfo(snapshot) {
-    const entries = snapshot.entries.filter(entry => entry.type === 'marker');
-    if (!entries.length) return element('p', 'empty-state', 'Skladba zatím nemá žádné časové značky.');
-    const list = element('div', 'panel simple-info');
-    const markerNames = { take: 'Úsek', boundary: 'Konec bez začátku', passage: 'Pasáž', note: 'Poznámka' };
-    let recordingId = null;
-    for (const entry of entries) {
-      if (entry.recording_id !== recordingId) {
-        recordingId = entry.recording_id;
-        const heading = [entry.rehearsal_title, entry.recording_name].filter(Boolean).join(' · ');
-        list.append(element('h2', 'simple-marker-heading', heading || 'Nahrávka'));
-      }
-      const row = element('article', 'simple-info-row');
-      const formatTime = window.Vz2TimestampModel.format;
-      const markerTime = formatTime(entry.start_ms) + (entry.end_ms == null ? '' : '–' + formatTime(entry.end_ms));
-      const label = markerNames[entry.kind] || 'Značka';
-      row.append(element('strong', 'simple-info-label', [label, markerTime].filter(Boolean).join(' · ')));
-      const body = element('div', 'simple-info-body');
-      if (entry.body && entry.body !== label) body.append(element('p', '', entry.body));
-      const passage = window.Vz2TimestampModel.passageTypes[entry.passage_type] || entry.passage_type;
-      const context = [entry.song_title, passage, entry.status === 'open' ? 'Bez konce' : ''].filter(Boolean).join(' · ');
-      if (context) body.append(element('span', 'note-meta', context));
-      if (entry.note_text) body.append(element('p', '', entry.note_text));
-      const meta = [entry.author, entryDate(entry.at)].filter(Boolean).join(' · ');
-      if (meta) body.append(element('span', 'note-meta', meta));
-      if (entry.end_body || entry.end_author || entry.end_at) {
-        const end = [entry.end_body, entry.end_author, entryDate(entry.end_at)].filter(Boolean).join(' · ');
-        body.append(element('p', '', 'Konec: ' + end));
-      }
-      row.append(body);
-      list.append(row);
-    }
-    return list;
+    return window.Vz2OverviewRender.renderCollection(snapshot, 'song', {}, undefined, { showHeading: false });
   }
 
   function renderSongMap(snapshot) {
@@ -222,33 +186,51 @@
     if (!map) return element('p', 'empty-state', 'Skladba zatím nemá mapu.');
     const details = new Map(snapshot.entries.filter(entry => entry.type === 'map_detail').map(entry => [entry.bar_number, entry]));
     const host = element('div', 'simple-map');
+    const controls = element('div', 'simple-map-options');
+    controls.setAttribute('role', 'group');
+    controls.setAttribute('aria-label', 'Zobrazení mapy skladby');
+    for (const [key, text] of [['bars', 'Zobrazit takty'], ['details', 'Zobrazit detaily taktů']]) {
+      const label = element('label');
+      const input = element('input');
+      input.type = 'checkbox';
+      input.checked = mapVisibility[key];
+      input.addEventListener('change', () => {
+        mapVisibility[key] = input.checked;
+        host.querySelectorAll(`[data-map-part="${key}"]`).forEach(part => { part.hidden = !input.checked; });
+      });
+      label.append(input, document.createTextNode(text));
+      controls.append(label);
+    }
+    host.append(controls);
+    const model = window.Vz2SongMapModel;
     for (const section of map.sections) {
       const group = element('section', 'panel');
       group.append(element('h2', '', section.name));
       const grid = element('div', 'simple-bars');
+      grid.dataset.mapPart = 'bars';
+      grid.hidden = !mapVisibility.bars;
+      const annotations = element('div', 'simple-bar-details');
+      annotations.dataset.mapPart = 'details';
+      annotations.hidden = !mapVisibility.details;
       section.bars.forEach((bar, index) => {
         const number = section.first_bar + index;
         const detail = details.get(number);
-        const model = window.Vz2SongMapModel;
         const name = 'Takt ' + number + ' · ' + model.label(bar);
-        const cell = element(detail ? 'button' : 'div', 'simple-bar');
+        const cell = element('div', detail ? 'simple-bar has-detail' : 'simple-bar');
         cell.dataset.base = bar.base || '';
-        cell.setAttribute('aria-label', detail ? name + ' · otevřít detail' : name);
-        if (!detail) cell.setAttribute('role', 'img');
+        cell.setAttribute('aria-label', name);
+        cell.setAttribute('role', 'img');
         cell.title = name;
         cell.append(element('span', 'simple-bar-number', String(number)), element('strong', '', model.symbol(bar)));
-        if (detail) {
-          cell.type = 'button';
-          cell.classList.add('has-detail');
-          cell.addEventListener('click', () => {
-            $('simple-bar-title').textContent = detail.label;
-            $('simple-bar-text').textContent = detail.body;
-            $('simple-bar-dialog').showModal();
-          });
-        }
         grid.append(cell);
+        if (detail) {
+          const annotation = element('div', 'simple-bar-detail');
+          annotation.append(element('h3', '', 'Takt ' + number), element('pre', 'score', detail.body));
+          annotations.append(annotation);
+        }
       });
       group.append(grid);
+      if (annotations.childElementCount) group.append(annotations);
       host.append(group);
     }
     return host;
@@ -480,7 +462,6 @@
     const id = params.get('song');
     const rehearsalId = params.get('rehearsal');
     songLoad = null;
-    $('simple-bar-dialog').close();
     $('playing-lists').hidden = Boolean(id || rehearsalId);
     if (rehearsalId) { openRehearsal(rehearsalId); return; }
     const wasRehearsal = openedRehearsal !== null;
