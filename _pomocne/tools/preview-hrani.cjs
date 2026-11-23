@@ -64,9 +64,11 @@ const server = http.createServer((request, response) => {
       return;
     }
     let html = fs.readFileSync(path.join(root, 'simple.php'), 'utf8');
-    html = html.slice(html.indexOf('<!doctype html>')).replace(
-      /(id="(song|rehearsal)-data">)<\?php[\s\S]*?\?>/g,
-      (_, start, kind) => start + JSON.stringify(kind === 'song' ? songs : rehearsals).replace(/</g, '\\u003c'));
+    html = html.slice(html.indexOf('<!doctype html>'))
+      .replace(/<\?=filemtime\(__DIR__\.'(\/(?:css|js)\/[\w.-]+)'\)\?>/g,
+        (_, file) => String(Math.floor(fs.statSync(path.join(root, file)).mtimeMs / 1000)))
+      .replace(/(id="(song|rehearsal)-data">)<\?php[\s\S]*?\?>/g,
+        (_, start, kind) => start + JSON.stringify(kind === 'song' ? songs : rehearsals).replace(/</g, '\\u003c'));
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.end(html);
     return;

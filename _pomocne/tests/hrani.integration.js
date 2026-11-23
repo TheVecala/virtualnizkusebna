@@ -31,6 +31,7 @@ module.exports = async ({ clients, request, good, upload, wav, db, check }) => {
     for (const role of ['admin', 'alice', 'guest']) {
         const page = await request(clients[role], 'hrani.php');
         assert.equal(page.status, 200, page.text);
+        assert.match(page.text, /src="js\/hrani\.js\?v=\d+"/);
         const rows = catalog(page);
         assert.deepEqual(rows.map(row => row.id), [String(empty.id), String(song.id)]);
         assert.deepEqual([rows[1].hasText, rows[1].hasTab, rows[1].recordings, rows[1].documents], [true, false, 2, 1]);
