@@ -33,6 +33,7 @@ try {
                     unset($entry['author'], $entry['at'], $entry['end_author'], $entry['end_at']);
                 }
                 unset($entry);
+                $result['files'] = hrani_song_files($db, $songId, true);
             } else {
                 $result = hrani_detail($db, $songId);
             }
@@ -79,19 +80,29 @@ try {
   <a class="skip-link" href="#main">Přejít na obsah</a>
   <header class="app-header">
     <a class="brand" href="simple.php" aria-label="Simple – seznam skladeb"><span class="brand-mark" aria-hidden="true">≋</span> Zkušebna <span class="brand-mode">/ Simple</span></a>
-    <div class="segmented layout-control" role="group" aria-label="Kompaktnost zobrazení">
-      <button type="button" data-layout="compact" aria-pressed="false">Kompaktní</button>
-      <button type="button" data-layout="overview" aria-pressed="true">Přehled</button>
-      <button type="button" data-layout="large" aria-pressed="false">Velká tlačítka</button>
-    </div>
-    <div class="header-actions">
-      <div class="segmented distance-control" role="group" aria-label="Vzdálenost obrazovky">
-        <button type="button" data-distance="normal" aria-pressed="true">Běžné</button>
-        <button type="button" data-distance="wall" aria-pressed="false">Na zeď</button>
+    <button type="button" id="header-menu-toggle" class="header-menu-toggle quiet-button" aria-label="Otevřít menu" aria-controls="header-menu" aria-expanded="false">
+      <span aria-hidden="true">☰</span>
+    </button>
+    <div id="header-menu" class="header-menu">
+      <div id="song-view-controls" class="segmented content-control" role="group" aria-label="Obsah skladby" hidden>
+        <button type="button" data-song-view="default" aria-pressed="true">Text a poznámky</button>
+        <button type="button" data-song-view="info" aria-pressed="false">Všechny informace</button>
+        <button type="button" data-song-view="map" aria-pressed="false">Mapa skladby</button>
       </div>
-      <button type="button" id="fullscreen" class="quiet-button" hidden>Celá obrazovka</button>
+      <div class="segmented layout-control" role="group" aria-label="Kompaktnost zobrazení">
+        <button type="button" data-layout="compact" aria-pressed="false">Kompaktní</button>
+        <button type="button" data-layout="overview" aria-pressed="true">Přehled</button>
+        <button type="button" data-layout="large" aria-pressed="false">Velká tlačítka</button>
+      </div>
+      <div class="header-actions">
+        <div class="segmented distance-control" role="group" aria-label="Vzdálenost obrazovky">
+          <button type="button" data-distance="normal" aria-pressed="true">Běžné</button>
+          <button type="button" data-distance="wall" aria-pressed="false">Na zeď</button>
+        </div>
+        <button type="button" id="fullscreen" class="quiet-button" hidden>Celá obrazovka</button>
+      </div>
+      <a class="quiet-button edit-link" href="index.php">Editovat</a>
     </div>
-    <a class="quiet-button edit-link" href="index.php">Editovat</a>
   </header>
   <main id="main" tabindex="-1">
     <nav id="playing-lists" class="segmented playing-lists" aria-label="Seznamy v režimu Simple">
@@ -135,30 +146,25 @@ try {
       <div class="song-heading">
         <a href="#" id="back-to-list" class="quiet-button">Seznam skladeb</a>
         <span id="song-position" class="eyebrow"></span>
-        <div class="song-title-row">
-          <h1 id="song-title" tabindex="-1"></h1>
-          <div class="segmented content-control" role="group" aria-label="Obsah skladby">
-            <button type="button" data-song-view="default" aria-pressed="true">Text a nahrávky</button>
-            <button type="button" data-song-view="info" aria-pressed="false">Všechny informace</button>
-            <button type="button" data-song-view="map" aria-pressed="false">Mapa skladby</button>
-          </div>
-        </div>
+        <h1 id="song-title" tabindex="-1"></h1>
       </div>
       <p id="detail-status" class="empty-state" role="status" hidden></p>
       <button id="retry" type="button" class="quiet-button" hidden>Zkusit znovu</button>
       <div id="song-content" class="song-content" hidden>
         <div class="score-column">
           <section class="panel" id="text-panel"><h2>Text a akordy</h2><pre id="song-text" class="score"></pre></section>
-          <section class="panel" id="tab-panel"><h2>Tabulatura</h2><pre id="song-tab" class="score tab-score" tabindex="0" aria-label="Tabulatura, delší řádky lze posouvat vodorovně"></pre></section>
-          <p id="no-score" class="empty-state" hidden>Text ani tabulatura zatím nejsou vložené.</p>
+          <p id="no-score" class="empty-state" hidden>Text zatím není vložený.</p>
         </div>
+        <section class="panel"><h2>Poznámky ke skladbě</h2><p class="section-caption">Posledních až 20 poznámek</p><div id="song-notes"></div></section>
+      </div>
+      <section id="song-info" class="song-content" aria-label="Všechny informace o skladbě" hidden>
         <div class="reference-column">
           <section class="panel"><h2>Nahrávky <span id="recording-count" class="count"></span></h2><div id="recordings"></div></section>
           <section class="panel" id="documents-panel"><h2>Další podklady</h2><div id="documents"></div></section>
-          <section class="panel"><h2>Poznámky ke skladbě</h2><p class="section-caption">Posledních až 20 poznámek</p><div id="song-notes"></div></section>
         </div>
-      </div>
-      <section id="song-extra" aria-label="Další pohled na skladbu" hidden></section>
+        <div id="song-overview"></div>
+      </section>
+      <section id="song-extra" aria-label="Mapa skladby" hidden></section>
       <nav class="song-navigation" aria-label="Přechod mezi skladbami"><button type="button" id="previous-song">Předchozí skladba<span></span></button><button type="button" id="next-song">Další skladba<span></span></button></nav>
     </section>
     <noscript><p class="empty-state">Pro hráčské zobrazení zapněte JavaScript. <a href="index.php">Otevřít běžnou zkušebnu</a></p></noscript>

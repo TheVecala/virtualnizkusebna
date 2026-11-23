@@ -15,10 +15,10 @@ const songs = [
 const rehearsals = [{ id: 101, title: 'Zkouška 21. 11.', recordings: 2 }, { id: 102, title: 'Zkouška 14. 11.', recordings: 0 }];
 const text = 'INTRO\nAm       F        C        G\n\nSLOKA\nAm                   F\nPodél kolejí se vrací den,\nC                    G\nna druhý břeh nás veze sen.\n\nREFRÉN\nF          C         G        Am\nJeště chvíli hrát, ještě chvíli znít.\nF          C         G\nNež se noční vlak dá zase do pohybu.\n\nDOHRA\nAm  F  C  G  |  Am';
 const tab = 'e|----------------------------------------|\nB|------1--------1--------1--------0-------|\nG|----2---2----2---2----0---0----0---0------|\nD|--2--------3--------2--------0-----------|\nA|0----------------3----------------------|\nE|---------1----------------3-------------|';
-const wav = Buffer.alloc(44 + 16000);
+const wav = Buffer.alloc(44 + 48000);
 wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16);
 wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(16000, 28);
-wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(16000, 40);
+wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(wav.length - 44, 40);
 const server = http.createServer((request, response) => {
   const url = new URL(request.url, 'http://127.0.0.1');
   response.setHeader('Cache-Control', 'no-store');
@@ -30,7 +30,20 @@ const server = http.createServer((request, response) => {
   }
   if (url.pathname === '/sample.wav') {
     response.setHeader('Content-Type', 'audio/wav');
-    response.end(wav);
+    response.setHeader('Accept-Ranges', 'bytes');
+    const range = request.headers.range?.match(/^bytes=(\d+)-(\d*)$/);
+    const start = range ? Number(range[1]) : 0;
+    const end = Math.min(range?.[2] ? Number(range[2]) : wav.length - 1, wav.length - 1);
+    if (start > end) {
+      response.writeHead(416, { 'Content-Range': `bytes */${wav.length}` }).end();
+      return;
+    }
+    if (range) response.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${wav.length}`,
+      'Content-Length': end - start + 1
+    });
+    else response.setHeader('Content-Length', wav.length);
+    response.end(wav.subarray(start, end + 1));
     return;
   }
   if (url.pathname === '/' || ['/hrani.php', '/simple.php'].includes(url.pathname)) {
@@ -46,10 +59,14 @@ const server = http.createServer((request, response) => {
       const song = songs.find(item => item.id === url.searchParams.get('song'));
       response.setHeader('Content-Type', 'application/json; charset=utf-8');
       if (!song) { response.statusCode = 404; response.end(JSON.stringify({ error: 'Skladba není dostupná.' })); return; }
+      const files = Array.from({ length: song.recordings }, (_, index) => ({
+        name: `Zkouška – verze ${index + 1}.wav`, audio: true, url: '/sample.wav'
+      }));
       if (url.searchParams.get('content') === 'info') {
         const entries = song.id === 'novy-napad' ? [] : [
           { type: 'song_details', label: 'Popisek, tempo a takt', tempos: [112], meters: ['4/4'], body: 'Po druhém refrénu krátká pauza.' },
-          { type: 'document', label: 'Text a akordy', body: text },
+          ...(song.hasText ? [{ type: 'document', kind: 'lyrics_chords', label: 'Text a akordy', body: text }] : []),
+          ...(song.hasTab ? [{ type: 'document', kind: 'tablature', label: 'Tabulatura', body: tab }] : []),
           { type: 'marker', kind: 'take', recording_id: 1, recording_name: 'Zkouška – verze 1.wav',
             start_ms: 42000, end_ms: 68000, body: 'Druhý pokus', note_text: 'Zpomalit dohru.', end_body: 'Poslední akord' },
           { type: 'map', label: 'Mapa', body: '3 takty', sections: [{ name: 'Intro', first_bar: 1, bars: [
@@ -57,10 +74,14 @@ const server = http.createServer((request, response) => {
           ] }] },
           { type: 'map_detail', label: 'Intro · takt 2', bar_number: 2, body: '1 & 2 & 3 & 4 &\n  x   x   x   x' }
         ];
-        response.end(JSON.stringify({ id: song.id, title: song.title, entries }));
+        if (song.id === 'nocni-vlak') files.push({
+          name: 'Průběh zkoušky.wav', audio: true, url: '/sample.wav',
+          label: 'Druhý pokus', rehearsalTitle: rehearsals[0].title, startMs: 500, endMs: 1500
+        });
+        response.end(JSON.stringify({ id: song.id, title: song.title, entries, files }));
         return;
       }
-      response.end(JSON.stringify({ ...song, text: song.hasText ? text : '', tab: song.hasTab ? tab : '', files: Array.from({ length: song.recordings }, (_, index) => ({ name: `Zkouška – verze ${index + 1}.wav`, audio: true, url: '/sample.wav' })), notes: { available: true, items: song.id === 'novy-napad' ? [] : [{ text: 'Po druhém refrénu krátká pauza. Dohru hrajeme dvakrát, poslední akord nechat doznít.', author: 'Ukázková poznámka', date: '21. 11. 2026' }] } }));
+      response.end(JSON.stringify({ ...song, text: song.hasText ? text : '', tab: song.hasTab ? tab : '', files, notes: { available: true, items: song.id === 'novy-napad' ? [] : [{ text: 'Po druhém refrénu krátká pauza. Dohru hrajeme dvakrát, poslední akord nechat doznít.', author: 'Ukázková poznámka', date: '21. 11. 2026' }] } }));
       return;
     }
     let html = fs.readFileSync(path.join(root, 'simple.php'), 'utf8');

@@ -42,6 +42,27 @@
     setView('distance', preference('distance', distances, 'normal'));
   });
 
+  const menuToggle = $('header-menu-toggle');
+  const headerMenu = $('header-menu');
+  const mobileMenu = window.matchMedia('(max-width: 960px)');
+  const menuIsOpen = () => menuToggle.getAttribute('aria-expanded') === 'true';
+  function setMenu(open, restoreFocus = false) {
+    menuToggle.setAttribute('aria-expanded', String(open));
+    menuToggle.setAttribute('aria-label', open ? 'Zavřít menu' : 'Otevřít menu');
+    if (restoreFocus) menuToggle.focus();
+  }
+  menuToggle.addEventListener('click', () => setMenu(!menuIsOpen()));
+  headerMenu.addEventListener('click', event => {
+    if (menuIsOpen() && event.target.closest('button, a')) setMenu(false, true);
+  });
+  document.addEventListener('click', event => {
+    if (menuIsOpen() && !headerMenu.contains(event.target) && !menuToggle.contains(event.target)) setMenu(false);
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && menuIsOpen()) setMenu(false, true);
+  });
+  mobileMenu.addEventListener('change', () => setMenu(false));
+
   function element(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -80,6 +101,33 @@
   function stopAudio() {
     document.querySelectorAll('audio').forEach(audio => { audio.pause(); audio.removeAttribute('src'); audio.load(); });
   }
+  function limitRecordingToRange(audio, start, end) {
+    const finish = () => Number.isFinite(audio.duration) ? Math.min(end, audio.duration) : end;
+    const beginning = () => Math.min(start, finish());
+    const seek = time => {
+      const ranges = audio.seekable;
+      for (let index = 0; index < ranges.length; index++) {
+        if (time >= ranges.start(index) && time <= ranges.end(index)) {
+          audio.currentTime = time;
+          return;
+        }
+      }
+    };
+    audio.addEventListener('loadedmetadata', () => { audio.currentTime = beginning(); });
+    audio.addEventListener('seeking', () => {
+      if (audio.currentTime < beginning() - .01) seek(beginning());
+      if (audio.currentTime > finish() + .01) seek(finish());
+    });
+    audio.addEventListener('timeupdate', () => {
+      if (!audio.paused && audio.currentTime >= finish()) {
+        audio.pause();
+        seek(finish());
+      }
+    });
+    audio.addEventListener('play', () => {
+      if (audio.currentTime < beginning() - .01 || audio.currentTime >= finish()) seek(beginning());
+    });
+  }
   function renderRecordings(files) {
     const recordings = files.filter(file => file.audio);
     $('recordings').replaceChildren();
@@ -87,8 +135,17 @@
     if (!recordings.length) $('recordings').append(element('p', 'empty-state', 'Zatím žádné nahrávky.'));
     recordings.forEach(file => {
       const row = element('div', 'recording');
+      const hasRange = Number.isFinite(file.startMs) && file.endMs > file.startMs;
+      const label = file.label || file.name;
+      row.append(element('p', 'recording-name', label));
+      if (file.rehearsalTitle !== undefined) {
+        const format = window.Vz2TimestampModel.format;
+        const range = hasRange ? format(file.startMs) + '–' + format(file.endMs) : '';
+        const context = [file.rehearsalTitle, file.label ? file.name : '', range].filter(Boolean);
+        row.append(element('p', 'recording-context', context.join(' · ')));
+      }
+      if (file.summary) row.append(element('p', 'recording-summary', file.summary));
       if (file.openUrl || !file.url) {
-        row.append(element('p', 'recording-name', file.name));
         if (file.openUrl) {
           const link = element('a', 'file-link', 'Otevřít vícestopou nahrávku ve zkušebně');
           link.href = file.openUrl;
@@ -102,13 +159,15 @@
       const audio = document.createElement('audio');
       audio.controls = true;
       audio.preload = 'none';
+      audio.playsInline = true;
       audio.src = file.url;
-      audio.setAttribute('aria-label', file.name);
+      audio.setAttribute('aria-label', label);
+      if (hasRange) limitRecordingToRange(audio, file.startMs / 1000, file.endMs / 1000);
       const play = element('button', 'recording-play', 'Přehrát');
       play.type = 'button';
-      play.setAttribute('aria-label', `Přehrát ${file.name}`);
+      play.setAttribute('aria-label', `Přehrát ${label}`);
       const fallback = element('a', 'audio-fallback', 'Otevřít zvukový soubor');
-      fallback.href = file.url;
+      fallback.href = hasRange ? `${file.url}#t=${file.startMs / 1000},${file.endMs / 1000}` : file.url;
       fallback.target = '_blank';
       fallback.rel = 'noopener';
       fallback.hidden = true;
@@ -119,22 +178,32 @@
       audio.addEventListener('play', () => {
         document.querySelectorAll('audio').forEach(other => { if (other !== audio) other.pause(); });
         play.textContent = 'Pozastavit';
-        play.setAttribute('aria-label', `Pozastavit ${file.name}`);
+        play.setAttribute('aria-label', `Pozastavit ${label}`);
       });
-      audio.addEventListener('pause', () => { play.textContent = 'Přehrát'; play.setAttribute('aria-label', `Přehrát ${file.name}`); });
+      audio.addEventListener('pause', () => { play.textContent = 'Přehrát'; play.setAttribute('aria-label', `Přehrát ${label}`); });
       audio.addEventListener('error', () => { fallback.hidden = false; });
-      row.append(element('p', 'recording-name', file.name), play, audio, fallback);
+      row.append(play, audio, fallback);
       $('recordings').append(row);
     });
   }
   function renderDetail(song) {
     $('song-text').textContent = song.text;
-    $('song-tab').textContent = song.tab;
     $('text-panel').hidden = !song.text.trim();
-    $('tab-panel').hidden = !song.tab.trim();
-    $('no-score').hidden = Boolean(song.text.trim() || song.tab.trim());
-    renderRecordings(song.files);
-    const documents = song.files.filter(file => !file.audio);
+    $('no-score').hidden = !$('text-panel').hidden;
+    $('song-notes').replaceChildren();
+    if (!song.notes.available) {
+      $('song-notes').append(element('p', 'empty-state', 'Poznámky se nepodařilo načíst.'));
+    } else if (!song.notes.items.length) {
+      $('song-notes').append(element('p', 'empty-state', 'Zatím žádné poznámky.'));
+    }
+    song.notes.items.forEach(note => {
+      const item = element('article', 'note');
+      item.append(element('p', '', note.text));
+      $('song-notes').append(item);
+    });
+  }
+  function renderDocuments(files) {
+    const documents = files.filter(file => !file.audio);
     $('documents-panel').hidden = !documents.length;
     $('documents').replaceChildren();
     documents.forEach(file => {
@@ -148,17 +217,6 @@
       link.rel = 'noopener';
       link.setAttribute('aria-label', `${file.name} – otevřít v nové kartě`);
       $('documents').append(link);
-    });
-    $('song-notes').replaceChildren();
-    if (!song.notes.available) {
-      $('song-notes').append(element('p', 'empty-state', 'Poznámky se nepodařilo načíst. Ostatní podklady jsou dostupné.'));
-    } else if (!song.notes.items.length) {
-      $('song-notes').append(element('p', 'empty-state', 'Zatím žádné poznámky.'));
-    }
-    song.notes.items.forEach(note => {
-      const item = element('article', 'note');
-      item.append(element('p', '', note.text));
-      $('song-notes').append(item);
     });
   }
   function setNeighbours(id) {
@@ -178,7 +236,14 @@
   }
 
   function renderSongInfo(snapshot) {
-    return window.Vz2OverviewRender.renderCollection(snapshot, 'song', {}, undefined, { showHeading: false });
+    renderRecordings(snapshot.files);
+    renderDocuments(snapshot.files);
+    const entries = snapshot.entries.filter(entry => entry.kind !== 'lyrics_chords' && entry.type !== 'map' && entry.type !== 'map_detail');
+    $('song-overview').replaceChildren();
+    if (entries.length) {
+      const overview = window.Vz2OverviewRender.renderCollection({ ...snapshot, entries }, 'song', {}, undefined, { showHeading: false });
+      $('song-overview').append(overview);
+    }
   }
 
   function renderSongMap(snapshot) {
@@ -250,6 +315,7 @@
     if (!load) return;
     const view = songView;
     $('song-content').hidden = true;
+    $('song-info').hidden = true;
     $('song-extra').hidden = true;
     detailStatus('Načítání podkladů…');
     try {
@@ -263,8 +329,13 @@
         load.info ??= readSongView(load.id, load.signal, true);
         const snapshot = await load.info;
         if (load !== songLoad || view !== songView) return;
-        $('song-extra').replaceChildren(view === 'map' ? renderSongMap(snapshot) : renderSongInfo(snapshot));
-        $('song-extra').hidden = false;
+        if (view === 'map') {
+          $('song-extra').replaceChildren(renderSongMap(snapshot));
+          $('song-extra').hidden = false;
+        } else {
+          if (!load.infoRendered) { renderSongInfo(snapshot); load.infoRendered = true; }
+          $('song-info').hidden = false;
+        }
       }
       detailStatus('');
     } catch (error) {
@@ -295,6 +366,7 @@
     $('list-view').hidden = true;
     $('detail-view').hidden = false;
     $('song-content').hidden = true;
+    $('song-info').hidden = true;
     $('song-extra').hidden = true;
     $('detail-status').hidden = false;
     $('detail-status').textContent = 'Načítání podkladů…';
@@ -462,6 +534,8 @@
     const id = params.get('song');
     const rehearsalId = params.get('rehearsal');
     songLoad = null;
+    setMenu(false);
+    $('song-view-controls').hidden = Boolean(rehearsalId) || !byId.has(id);
     $('playing-lists').hidden = Boolean(id || rehearsalId);
     if (rehearsalId) { openRehearsal(rehearsalId); return; }
     const wasRehearsal = openedRehearsal !== null;

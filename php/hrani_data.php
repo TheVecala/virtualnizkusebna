@@ -63,35 +63,67 @@ function hrani_notes(mysqli $db, int $id): array {
     }
 }
 
-function hrani_detail(mysqli $db, int $id): array {
-    $song = vz2_one($db, "SELECT id,title FROM vz2_collections WHERE id=? AND kind='song' AND lifecycle='active'", [$id]);
-    $text = vz2_document_read($db, ['collection_id'=>$id, 'kind'=>'lyrics_chords']);
-    $tab = vz2_document_read($db, ['collection_id'=>$id, 'kind'=>'tablature']);
-    $recordings = vz2_rows($db, "SELECT id,title,kind FROM vz2_recordings WHERE collection_id=? AND lifecycle='active' ORDER BY sort_order,id", [$id]);
-    $audio = vz2_rows($db, "SELECT f.* FROM vz2_audio_files f JOIN vz2_recordings r ON r.id=f.recording_id
-        WHERE r.collection_id=? AND r.lifecycle='active' ORDER BY r.sort_order,r.id,f.sort_order,f.id", [$id]);
+function hrani_song_files(mysqli $db, int $id, bool $includeAssigned = false): array {
+    $recordings = vz2_rows($db, "SELECT id,title,kind,collection_id FROM vz2_recordings
+        WHERE collection_id=? AND lifecycle='active' ORDER BY sort_order,id", [$id]);
+    if ($includeAssigned) {
+        $assigned = vz2_rows($db, "SELECT r.id,r.title,r.kind,r.collection_id,r.summary,h.title rehearsal_title,
+                st.body start_body,st.time_ms start_ms,et.time_ms end_ms
+            FROM vz2_rehearsal_plays p
+            JOIN vz2_recordings r ON r.id=p.source_recording_id
+            JOIN vz2_collections h ON h.id=r.collection_id
+            JOIN vz2_timestamps st ON st.id=p.start_timestamp_id
+            JOIN vz2_timestamps et ON et.id=p.end_timestamp_id
+            WHERE p.song_collection_id=? AND h.kind='rehearsal' AND h.lifecycle='active' AND r.lifecycle='active'
+                AND et.time_ms>st.time_ms
+            ORDER BY h.sort_order,h.id,r.sort_order,r.id,st.time_ms,p.id", [$id]);
+        $recordings = array_merge($recordings, $assigned);
+    }
     $byRecording = [];
-    foreach ($audio as $file) $byRecording[$file['recording_id']][] = $file;
+    if ($recordings) {
+        $ids = array_values(array_unique(array_column($recordings, 'id')));
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $audio = vz2_rows($db, "SELECT * FROM vz2_audio_files WHERE recording_id IN ($placeholders)
+            ORDER BY recording_id,sort_order,id", $ids);
+        foreach ($audio as $file) $byRecording[$file['recording_id']][] = $file;
+    }
     $files = [];
     foreach ($recordings as $recording) {
         $tracks = $byRecording[$recording['id']] ?? [];
         $name = $recording['title'] ?: ($tracks[0]['title'] ?? 'Nahrávka');
+        $file = ['name'=>$name, 'audio'=>true, 'url'=>null];
+        if (isset($recording['rehearsal_title'])) {
+            $label = trim($recording['start_body']);
+            $file += [
+                'rehearsalTitle'=>$recording['rehearsal_title'], 'startMs'=>(int)$recording['start_ms'],
+                'endMs'=>(int)$recording['end_ms'], 'label'=>$label === '↑' ? '' : $label,
+                'summary'=>$recording['summary'],
+            ];
+        }
         if ($recording['kind'] === 'multitrack') {
             // Keep multitracks in the existing mixer instead of playing stems as a mix.
-            $files[] = ['name'=>$name, 'audio'=>true, 'url'=>null,
-                'openUrl'=>'index.php?v=2&collection_id='.$id.'&recording_id='.$recording['id'].'&view=mixer'];
-            continue;
+            $file['openUrl'] = 'index.php?v=2&collection_id='.$recording['collection_id'].'&recording_id='.$recording['id'].'&view=mixer';
+            if (isset($file['startMs'])) $file['openUrl'] .= '&kind=rehearsal&time_ms='.$file['startMs'];
+        } else {
+            $public = $tracks ? vz2_file_public($tracks[0], 'audio') : null;
+            $file['url'] = $public['url'] ?? null;
+            $file['state'] = $public['state'] ?? 'missing';
         }
-        $public = $tracks ? vz2_file_public($tracks[0], 'audio') : null;
-        $files[] = ['name'=>$name, 'audio'=>true, 'url'=>$public['url'] ?? null,
-            'state'=>$public['state'] ?? 'missing'];
+        $files[] = $file;
     }
     $attachments = vz2_rows($db, "SELECT * FROM vz2_attachments WHERE collection_id=? AND state IN ('available','deleted') ORDER BY id", [$id]);
     foreach ($attachments as $file) {
         $public = vz2_file_public($file, 'attachment');
         $files[] = ['name'=>$public['display_name'], 'audio'=>false, 'url'=>$public['url'], 'state'=>$public['state']];
     }
+    return $files;
+}
+
+function hrani_detail(mysqli $db, int $id): array {
+    $song = vz2_one($db, "SELECT id,title FROM vz2_collections WHERE id=? AND kind='song' AND lifecycle='active'", [$id]);
+    $text = vz2_document_read($db, ['collection_id'=>$id, 'kind'=>'lyrics_chords']);
+    $tab = vz2_document_read($db, ['collection_id'=>$id, 'kind'=>'tablature']);
     return ['id'=>(string)$song['id'], 'title'=>$song['title'],
         'text'=>$text['version']['body'] ?? '', 'tab'=>$tab['version']['body'] ?? '',
-        'files'=>$files, 'notes'=>hrani_notes($db, $id)];
+        'files'=>hrani_song_files($db, $id), 'notes'=>hrani_notes($db, $id)];
 }

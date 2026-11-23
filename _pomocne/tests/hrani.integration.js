@@ -4,7 +4,8 @@ const assert = require('node:assert/strict');
 module.exports = async ({ clients, request, good, upload, wav, db, check }) => {
     const song = await good('alice', { action: 'collection_create', kind: 'song', title: 'Hraní <zkouška> & akordy' });
     const empty = await good('alice', { action: 'collection_create', kind: 'song', title: 'Prázdná skladba' });
-    const rehearsal = await good('alice', { action: 'collection_create', kind: 'rehearsal', title: 'Nezobrazovat zkoušku' });
+    const rehearsalTitle = 'Zkouška s přiřazeným úsekem';
+    const rehearsal = await good('alice', { action: 'collection_create', kind: 'rehearsal', title: rehearsalTitle });
     const deleting = await good('alice', { action: 'collection_create', kind: 'song', title: 'Probíhá mazání' });
     db("UPDATE vz2_collections SET lifecycle='deleting' WHERE id=?", [deleting.id]);
     const order = (await good('alice')).orders.find(row => row.kind === 'song');
@@ -16,10 +17,24 @@ module.exports = async ({ clients, request, good, upload, wav, db, check }) => {
     const revised = await request(clients.alice, 'php/ajax/vz2_content.php', { action: 'document_save', collection_id: song.id,
         kind: 'lyrics_chords', document_id: saved.document.id, current_revision: 1, title: 'Akordy', body: 'Am   F\nAktuální text <bez HTML>' });
     assert.equal(revised.status, 200, revised.text);
-    assert.equal((await request(clients.alice, 'php/ajax/vz2_content.php', { action: 'post_create', collection_id: song.id, body: 'Poznámka pro hraní' })).status, 200);
+    const discussion = await request(clients.alice, 'php/ajax/vz2_content.php?action=discussion&collection_id=' + song.id);
+    assert.equal(discussion.status, 200, discussion.text);
+    const post = await request(clients.alice, 'php/ajax/vz2_content.php', {
+        action: 'post_create', thread_id: discussion.json().thread.id, body: 'Poznámka pro hraní'
+    });
+    assert.equal(post.status, 200, post.text);
     assert.equal((await upload('alice', song.id, 'Sólo')).status, 201);
     assert.equal((await upload('alice', song.id, 'Mix', 'multitrack', ['kytara.wav', 'basa.wav'], [wav(), wav()])).status, 201);
     assert.equal((await upload('alice', song.id, 'Příloha', 'attachment', ['poznamky.txt'], [Buffer.from('Podklad')])).status, 201);
+    const source = await upload('alice', rehearsal.id, 'Celá zkouška', 'single', ['zkouska.wav'], [wav(4)]);
+    assert.equal(source.status, 201, source.text);
+    const recordingId = source.json().id;
+    const stamps = (await request(clients.alice, 'php/ajax/vz2_timestamps.php?recording_id=' + recordingId)).json();
+    const interval = await request(clients.alice, 'php/ajax/vz2_timestamps.php', {
+        action: 'save_interval', recording_id: recordingId, timestamps_revision: stamps.timestamps_revision,
+        kind: 'song_start', song_collection_id: song.id, body: 'Druhý pokus', time_ms: 500, end_time_ms: 1500
+    });
+    assert(interval.status < 300, interval.text);
     const map = { schema_version: 1, sections: [{ id: 'a'.repeat(32), name: 'Intro', bars: [
         { id: 'b'.repeat(32), base: 'ride', fill: 0, crash: false, special: null, detail: '1 & 2 &\n  x   x' }
     ] }] };
@@ -67,10 +82,18 @@ module.exports = async ({ clients, request, good, upload, wav, db, check }) => {
     const bar = snapshot.entries.find(entry => entry.type === 'map_detail');
     assert.deepEqual([bar.bar_number, bar.body], [1, map.sections[0].bars[0].detail]);
     assert(snapshot.entries.some(entry => entry.type === 'discussion' && entry.body === 'Poznámka pro hraní'));
+    assert.deepEqual(snapshot.files.filter(file => file.audio).map(file => file.name), ['Sólo', 'Mix', 'Celá zkouška']);
+    assert(snapshot.files.some(file => !file.audio && file.url));
+    const assigned = snapshot.files.find(file => file.rehearsalTitle);
+    assert.deepEqual([assigned.rehearsalTitle, assigned.label, assigned.startMs, assigned.endMs],
+        [rehearsalTitle, 'Druhý pokus', 500, 1500]);
+    assert.equal((await request(clients.guest, assigned.url)).status, 200);
+    const blankInfo = (await request(clients.guest, `simple.php?data=1&song=${empty.id}&content=info`)).json();
+    assert.deepEqual(blankInfo.files, []);
     assert.equal((await request(clients.guest, `simple.php?data=1&song=${rehearsal.id}&content=info`)).status, 404);
     const blank = (await request(clients.guest, `hrani.php?data=1&song=${empty.id}`)).json();
     assert.deepEqual([blank.text, blank.tab, blank.files, blank.notes.items], ['', '', [], []]);
     assert.equal(db('SELECT COUNT(*) n FROM vz2_activity_log')[0].n, before);
-    assert.equal(Number(db('SELECT current_revision FROM vz2_documents WHERE collection_id=?', [song.id])[0].current_revision), 2);
+    assert.equal(Number(db("SELECT current_revision FROM vz2_documents WHERE collection_id=? AND kind='lyrics_chords'", [song.id])[0].current_revision), 2);
     check(true, 'playing view: anonymous/invalid requests, empty song, rejected writes and unchanged data');
 };
