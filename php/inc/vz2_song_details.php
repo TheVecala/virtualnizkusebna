@@ -29,18 +29,31 @@ function vz2_song_details_decode(array $row): array {
         'song_tempos'=>json_decode($row['song_tempos'] ?? '[]', true, 4, JSON_THROW_ON_ERROR),
         'song_meters'=>json_decode($row['song_meters'] ?? '[]', true, 4, JSON_THROW_ON_ERROR)];
 }
-function vz2_song_details_save(mysqli $db, array $in): array {
+function vz2_collection_details_save(mysqli $db, array $in, string $kind): array {
     $row = vz2_collection($db, vz2_id($in['id'] ?? null));
     vz2_active($row);
-    if ($row['kind'] !== 'song') throw new Vz2Error('Tyto údaje patří ke skladbě.');
-    vz2_permission('rename_val', (int)$row['created_by']);
+    if ($row['kind'] !== $kind) throw new Vz2Error($kind === 'song' ? 'Tyto údaje patří ke skladbě.' : 'Tento popisek patří ke zkoušce.');
+    vz2_permission('comment');
     vz2_revision($row, $in['revision'] ?? null);
-    $values = vz2_song_details_values($in);
-    vz2_query($db, 'UPDATE vz2_collections SET song_description=?,song_tempos=?,song_meters=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',
-        [$values['song_description'] === '' ? null : $values['song_description'], json_encode($values['song_tempos'], JSON_THROW_ON_ERROR),
-         json_encode($values['song_meters'], JSON_THROW_ON_ERROR), vz2_actor(), $row['id']]);
-    vz2_log($db, 'song.details_updated', 'collection', (int)$row['id'], $row['title'],
-        json_encode(['song_tempos'=>$values['song_tempos'], 'song_meters'=>$values['song_meters'],
-            'description_length'=>preg_match_all('/./us', $values['song_description'])], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+    if ($kind === 'song') {
+        $values = vz2_song_details_values($in);
+        $description = $values['song_description'];
+        vz2_query($db, 'UPDATE vz2_collections SET song_description=?,song_tempos=?,song_meters=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',
+            [$description === '' ? null : $description, json_encode($values['song_tempos'], JSON_THROW_ON_ERROR),
+             json_encode($values['song_meters'], JSON_THROW_ON_ERROR), vz2_actor(), $row['id']]);
+        $action = 'song.details_updated';
+        $detail = ['song_tempos'=>$values['song_tempos'], 'song_meters'=>$values['song_meters']];
+    } else {
+        $description = vz2_text($in['description'] ?? null, 10000, true);
+        $values = ['description'=>$description];
+        // The existing description column is shared by songs and rehearsals.
+        vz2_query($db, 'UPDATE vz2_collections SET song_description=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',
+            [$description === '' ? null : $description, vz2_actor(), $row['id']]);
+        $action = 'rehearsal.description_updated';
+        $detail = [];
+    }
+    $detail['description_length'] = preg_match_all('/./us', $description);
+    vz2_log($db, $action, 'collection', (int)$row['id'], $row['title'],
+        json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
     return ['id'=>(int)$row['id'], 'revision'=>(int)$row['revision'] + 1] + $values;
 }
