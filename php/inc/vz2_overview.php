@@ -47,11 +47,13 @@ function vz2_overview_data(mysqli $db, ?int $songId = null): array {
                 $bars = is_array($section['bars'] ?? null) ? $section['bars'] : [];
                 $barCount = count($bars);
                 $playingBars = [];
-                foreach ($bars as $bar) $playingBars[] = [
-                    'base'=>$bar['base'] ?? null, 'fill'=>(int)($bar['fill'] ?? 0),
-                    'crash'=>(bool)($bar['crash'] ?? false), 'special'=>$bar['special'] ?? null,
-                    'has_detail'=>trim((string)($bar['detail'] ?? '')) !== ''
-                ];
+                foreach ($bars as $bar) {
+                    $playingBar = array_intersect_key($bar, array_flip([
+                        'kind','base','meter','marks','unresolved_fill','fill','crash','special'
+                    ]));
+                    $playingBar['has_detail'] = trim((string)($bar['detail'] ?? '')) !== '';
+                    $playingBars[] = $playingBar;
+                }
                 $mapSections[] = ['name'=>$name, 'bars'=>$playingBars, 'first_bar'=>$barNumber];
                 foreach ($bars as $index => $bar) {
                     if (trim((string)($bar['detail'] ?? '')) === '') continue;

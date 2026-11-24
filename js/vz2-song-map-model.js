@@ -10,21 +10,56 @@
         ['F4', null, 4, false, null], ['?', null, 0, false, 'unknown'],
         ['Pauza', null, 0, false, 'pause'], ['Stop', null, 0, false, 'stop']
     ].map(([name, base, fill, crash, special]) => ({ name, base, fill, crash, special }));
-    const symbol = bar => {
-        if (bar.special) return { unknown: '?', pause: '—', stop: '■' }[bar.special];
-        if (bar.fill === 4) return 'F4';
-        return (bar.base === 'ride' ? '○' : '□') + (bar.crash ? '✦' : bar.fill ? 'F' + bar.fill : '');
+    const meters = {
+        '2/4': [1, 1], '3/4': [1, 1, 1], '4/4': [1, 1, 1, 1],
+        '5/4': [1, 1, 1, 1, 1], '6/4': [1, 1, 1, 1, 1, 1],
+        '6/8': [3, 3], '7/8': [2, 2, 3], '9/8': [3, 3, 3]
     };
-    const label = bar => {
-        if (bar.special) return { unknown: 'Neurčený takt', pause: 'Pauza', stop: 'Stop' }[bar.special];
-        if (bar.fill === 4) return 'F4';
-        return (bar.base === 'ride' ? 'Ride' : 'Hi-hat') + (bar.crash ? ' + Crash na začátku' : bar.fill ? ' + F' + bar.fill : '');
-    };
-    const semantic = type => ({ base: type.base, fill: type.fill, crash: type.crash, special: type.special });
+    function meterFor(key) {
+        const [numerator, denominator] = key.split('/').map(Number);
+        return { numerator, denominator, groups: [...meters[key]] };
+    }
+    function fromLegacy(bar) {
+        if (bar.kind) return bar;
+        return {
+            id: bar.id, kind: bar.special || 'rhythm', base: bar.base,
+            meter: null, marks: bar.crash ? [{ unit: 1, state: null, crash: true }] : [],
+            unresolved_fill: bar.fill || null, detail: bar.detail
+        };
+    }
+    function label(bar) {
+        const { kind, base, meter, marks, unresolved_fill } = fromLegacy(bar);
+        if (kind !== 'rhythm') return { unknown: 'Neurčený takt', pause: 'Pauza', stop: 'Stop' }[kind];
+        return [
+            base === 'ride' ? 'Ride' : base === 'hihat' ? 'Hi-hat' : 'Přechod',
+            meter && meter.numerator + '/' + meter.denominator,
+            unresolved_fill && 'F' + unresolved_fill,
+            ...marks.map(({ unit, state, crash }) => unit + '. pozice: ' +
+                [state === 'fill' ? 'přechod' : state === 'pause' ? 'pauza' : '', crash ? 'crash' : ''].filter(Boolean).join(' + '))
+        ].filter(Boolean).join(', ');
+    }
+    function collectDetails(sections) {
+        const details = new Map();
+        let number = 0;
+        for (const section of sections) {
+            for (const bar of section.bars) {
+                number++;
+                if (!bar.detail.trim()) continue;
+                if (!details.has(bar.detail)) details.set(bar.detail, []);
+                details.get(bar.detail).push({ id: bar.id, number, section: section.name });
+            }
+        }
+        return details;
+    }
     class Draft {
         constructor(map = null) { this.reset(map); }
         reset(map) {
-            this.map = map === null ? null : clone(map); this.saved = JSON.stringify(this.map);
+            this.map = map === null ? null : clone(map);
+            if (this.map?.schema_version === 1) {
+                this.map.schema_version = 2;
+                this.map.sections.forEach(section => { section.bars = section.bars.map(fromLegacy); });
+            }
+            this.saved = JSON.stringify(this.map);
             this.history = []; this.selected = null; this.pending = null;
         }
         get dirty() { return JSON.stringify(this.map) !== this.saved; }
@@ -43,7 +78,7 @@
                 this.history.push(snapshot); if (this.history.length > 100) this.history.shift();
             }
         }
-        create() { this.change(() => { this.map = { schema_version: 1, sections: [] }; }); }
+        create() { this.change(() => { this.map = { schema_version: 2, sections: [] }; }); }
         nextName(name) {
             const base = name.trim().replace(/\s+\d+$/, '');
             const matches = this.sections.filter(s => s.name.replace(/\s+\d+$/, '') === base);
@@ -60,26 +95,47 @@
                 let section = this.sections[this.sections.length - 1];
                 if (pending) { section = { id: id(), name: pending, bars: [] }; this.sections.push(section); }
                 else if (!section) { section = { id: id(), name: 'Bez sekce', bars: [] }; this.sections.push(section); }
-                const bar = { id: id(), ...semantic(type), detail: '' }; section.bars.push(bar); this.selected = bar.id;
+                const bar = fromLegacy({ ...type, id: id(), detail: '' }); section.bars.push(bar); this.selected = bar.id;
             });
             return true;
         }
-        setType(type, barId = this.selected) {
-            const found = this.find(barId); if (found) this.change(() => Object.assign(found.bar, semantic(type)));
+        addSection(name) {
+            const section = { id: id(), name: this.nextName(name), bars: [] };
+            this.change(() => this.sections.push(section));
+            return section.id;
         }
-        insert(after) {
-            const found = this.find(); if (!found) return;
+        insertBar(sectionId, index, value) {
+            const section = this.sections.find(item => item.id === sectionId);
+            if (!section || index < 0 || index > section.bars.length) return;
+            const bar = { ...clone(value), id: id() };
             this.change(() => {
-                const bar = { id: id(), ...semantic(types.find(t => t.special === 'unknown')), detail: '' };
-                found.section.bars.splice(found.index + (after ? 1 : 0), 0, bar); this.selected = bar.id;
+                section.bars.splice(index, 0, bar);
+                this.selected = bar.id;
             });
+            return bar.id;
+        }
+        replaceBar(barId, value) {
+            const found = this.find(barId);
+            if (found) this.change(() => { found.section.bars[found.index] = { ...clone(value), id: barId }; });
+        }
+        copyBar(sourceId, sectionId, index, count = 1) {
+            const source = this.find(sourceId);
+            const section = this.sections.find(item => item.id === sectionId);
+            if (!source || !section || index < 0 || index > section.bars.length || !Number.isInteger(count) || count < 1) return;
+            const total = this.sections.reduce((sum, item) => sum + item.bars.length, 0);
+            if (total + count > 8192) return;
+            const copies = Array.from({ length: count }, () => ({ ...clone(source.bar), id: id() }));
+            this.change(() => {
+                section.bars.splice(index, 0, ...copies);
+                this.selected = copies[copies.length - 1].id;
+            });
+            return this.selected;
         }
         removeBar() {
             const found = this.find(); if (!found) return;
             this.change(() => {
                 found.section.bars.splice(found.index, 1);
                 this.selected = found.section.bars[Math.min(found.index, found.section.bars.length - 1)]?.id || null;
-                if (!found.section.bars.length) this.map.sections.splice(this.sections.indexOf(found.section), 1);
             });
         }
         moveBar(delta) {
@@ -116,7 +172,7 @@
             this.map = snapshot.map; this.selected = snapshot.selected; this.pending = snapshot.pending;
         }
     }
-    const exported = { Draft, types, symbol, label };
+    const exported = { Draft, types, meters, meterFor, fromLegacy, label, collectDetails };
     if (typeof module !== 'undefined' && module.exports) module.exports = exported;
     else root.Vz2SongMapModel = exported;
 }(typeof window === 'undefined' ? globalThis : window));

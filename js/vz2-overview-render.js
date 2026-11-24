@@ -64,8 +64,9 @@
                 for (let index = 0; index < bars.length; index += 8) {
                     const barRow = make('div', undefined, 'overview-map-row');
                     bars.slice(index, index + 8).forEach((bar, offset) => {
-                        const cell = make('span', window.Vz2SongMapModel.symbol(bar),
+                        const cell = make('span', undefined,
                             `overview-map-bar${bar.has_detail ? ' has-detail' : ''}`);
+                        cell.append(window.Vz2SongMapSvg.render(bar));
                         const description = `Takt ${Number(section.first_bar) + index + offset}: ${window.Vz2SongMapModel.label(bar)}`;
                         cell.dataset.base = bar.base || '';
                         cell.setAttribute('role', 'img');
