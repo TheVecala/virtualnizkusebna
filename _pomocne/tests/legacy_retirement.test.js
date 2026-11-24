@@ -34,12 +34,14 @@ const manifest = JSON.parse(fs.readFileSync(path.join(out,'manifest.json')));
 assert.deepEqual(manifest.removed_files, removed);
 assert.equal(manifest.version, 'VZ2.1.1');
 assert.equal(manifest.required_migration, '010');
+assert.equal(manifest.required_song_map_schema, 2);
 for (const file of manifest.support_files) {
     const bytes = fs.readFileSync(path.join(out, file.path));
     assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex'), file.sha256);
     assert(!manifest.files.some(runtime => runtime.path === file.path), 'SQL and deployment docs stay outside web root');
 }
 assert(manifest.support_files.some(file => file.path === '2_migrace/010_vz2_song_details.sql'));
+assert(manifest.support_files.some(file => file.path === '2_migrace/song-map-cutover.md'));
 assert(manifest.files.some(f => f.path === 'php/login/connect.php'));
 assert(manifest.files.some(f => f.path === 'js/multitrack.js'));
 assert(manifest.files.some(f => f.path === 'maintenance.html'));
@@ -75,7 +77,8 @@ put('_pomocne/AGENTS.md', 'Development instructions, not web content.');
 put('_pomocne/tools/vz2_release.js', read('_pomocne/tools/vz2_release.js'));
 put('_pomocne/deploy/vz1-retirement/removed-files.txt', read('_pomocne/deploy/vz1-retirement/removed-files.txt'));
 put('_pomocne/deploy/current/README.cs.md', read('_pomocne/deploy/current/README.cs.md'));
-for (const file of ['_pomocne/migrations/010_vz2_song_details.sql', '_pomocne/docs/vz2/song-details-v2.1.1.md']) put(file, read(file));
+for (const file of ['_pomocne/migrations/010_vz2_song_details.sql', '_pomocne/docs/vz2/song-details-v2.1.1.md',
+    '_pomocne/docs/vz2/song-map-cutover.md']) put(file, read(file));
 fixtureGit('init', '--quiet');
 fixtureGit('add', '--', '.');
 fixtureGit('-c','user.name=Release test','-c','user.email=release-test@example.invalid','commit','--quiet','-m','Fixture');

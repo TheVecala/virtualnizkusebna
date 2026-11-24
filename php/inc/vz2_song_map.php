@@ -101,3 +101,27 @@ function vz2_song_map_rhythm($bar): void {
         $previous = $mark->unit;
     }
 }
+
+/** Write one format, including when a pre-transition client submits a valid V1 map. */
+function vz2_song_map_v2_body($body): string {
+    $validated = vz2_song_map_body($body);
+    $map = json_decode($validated, false, 16, JSON_THROW_ON_ERROR);
+    if ($map->schema_version === 2) return $validated;
+
+    $map->schema_version = 2;
+    foreach ($map->sections as $section) {
+        foreach ($section->bars as &$bar) {
+            $bar = (object) [
+                'id' => $bar->id,
+                'kind' => $bar->special ?? 'rhythm',
+                'base' => $bar->base,
+                'meter' => null,
+                'marks' => $bar->crash ? [(object) ['unit' => 1, 'state' => null, 'crash' => true]] : [],
+                'unresolved_fill' => $bar->fill ?: null,
+                'detail' => $bar->detail,
+            ];
+        }
+        unset($bar);
+    }
+    return vz2_song_map_body(json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+}
