@@ -22,12 +22,21 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         return page;
     }
     const mapHost = page => page.locator('#tablature-content');
-    const mode = (page, name) => mapHost(page).getByRole('button', { name, exact: true }).click();
+    const menu = page => page.locator('#tablature-actions');
+    const openMenu = async page => {
+        const toggle = menu(page).getByRole('button', { name: 'Nabídka mapy' });
+        if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+    };
+    const menuAction = async (page, name) => {
+        await openMenu(page);
+        await menu(page).getByRole('button', { name, exact: true }).click();
+    };
+    const mode = menuAction;
     const type = (page, name) => mapHost(page).locator('[data-type=' + JSON.stringify(name) + ']').click();
     const bars = page => mapHost(page).locator('.song-map-bar');
     const dialog = (page, name) => page.getByRole('dialog', { name, exact: true });
     const save = async (page, revision) => {
-        await page.locator('#tablature-actions').getByRole('button', { name: 'Uložit mapu', exact: true }).click();
+        await menuAction(page, 'Uložit mapu');
         await mapHost(page).getByText('Mapa uložena · verze ' + revision, { exact: true }).waitFor();
     };
     try {
@@ -38,7 +47,7 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         await host.getByRole('button', { name: 'Vytvořit mapu', exact: true }).click();
         assert.equal(await host.locator('.song-map-section').count(), 0);
         const addSection = async name => {
-            await host.getByRole('button', { name: '+ Sekce', exact: true }).click();
+            await menuAction(page, '+ Sekce');
             const form = dialog(page, 'Nová sekce');
             await form.getByLabel('Název sekce').fill(name);
             await form.getByRole('button', { name: 'Vytvořit sekci' }).click();
@@ -79,8 +88,7 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         for (let n = 0; n < 8; n++) await repeat.click();
         assert.deepEqual(await repeat.boundingBox(), repeatStart, 'adding across row break leaves controls stationary');
         assert.equal(await first.locator('.song-map-row').first().locator('.song-map-bar').count(), 8);
-        const list = page.locator('#tablature-actions').getByRole('button', { name: 'Výpis detailů' });
-        await list.click();
+        await menuAction(page, 'Výpis detailů');
         const details = dialog(page, 'Výpis detailů skladby');
         assert.equal(await details.locator('article').count(), 1);
         assert.equal(await details.locator('pre').textContent(), detailText);
@@ -117,7 +125,7 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         await host.getByRole('button', { name: 'Bridge', exact: true }).click();
         assert.equal(await sections.count(), 2);
         await type(page, 'RD+F3'); assert.equal(await sections.count(), 3);
-        await host.getByRole('button', { name: '↶ Zpět', exact: true }).click();
+        await menuAction(page, 'Zpět');
         assert.equal(await sections.count(), 2);
         await mode(page, 'UPRAVIT');
         await bars(page).first().click(); await edit().getByRole('button', { name: 'Hi-hat', exact: true }).click(); await commit();
@@ -125,7 +133,7 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         await page.evaluate(() => window.dispatchEvent(new Event('online'))); await (await refreshed).finished();
         assert.match(await bars(page).first().getAttribute('aria-label'), /Hi-hat.*pauza.*crash/);
         await save(page, 2);
-        await page.locator('#tablature-actions').getByRole('button', { name: 'Historie mapy', exact: true }).click();
+        await menuAction(page, 'Historie mapy');
         const history = dialog(page, 'Historie mapy');
         await history.locator('.song-map-history-row').nth(1).getByRole('button', { name: 'Zobrazit', exact: true }).click();
         const version = dialog(page, 'Verze 1');
@@ -143,12 +151,41 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         await racerEditor.getByRole('button', { name: 'Použít', exact: true }).click();
         await bars(page).first().click(); await edit().locator('[data-target="4-state"]').click(); await commit();
         await save(page, 4);
-        await racer.locator('#tablature-actions').getByRole('button', { name: 'Uložit mapu', exact: true }).click();
-        await mapHost(racer).getByRole('button', { name: 'Porovnat aktuální verzi', exact: true }).waitFor();
+        await menuAction(racer, 'Uložit mapu');
+        await mapHost(racer).getByText('Dokument mezitím někdo změnil.', { exact: false }).waitFor();
+        await openMenu(racer);
+        await menu(racer).getByRole('button', { name: 'Porovnat aktuální verzi', exact: true }).waitFor();
         assert.match(await bars(racer).first().getAttribute('aria-label'), /Hi-hat/);
         await racer.close();
         check(true, 'map browser: listening controls retained, catalog refresh, revision restore and conflict retains local draft');
         await mode(page, 'MAPA'); assert.equal(await host.locator('.song-map-palette').count(), 0); assert.equal(await host.locator('.song-map-number').count(), 0);
+        const rowMetrics = () => host.locator('.song-map-row').first().evaluate(row => {
+            const cells = [...row.querySelectorAll('svg')].map(svg => svg.getBoundingClientRect());
+            return { width: cells[0].width, pitch: cells[1].left - cells[0].left, rowWidth: row.getBoundingClientRect().width };
+        });
+        await page.setViewportSize({ width: 390, height: 900 });
+        await page.locator('[data-mobile-panel=tablature]').click();
+        await openMenu(page);
+        const toggle = menu(page).getByRole('button', { name: 'Nabídka mapy' });
+        assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+        const maximize = page.locator('#panel-tablature .panel-fullscreen-button');
+        const [toggleBox, maximizeBox] = await Promise.all([toggle.boundingBox(), maximize.boundingBox()]);
+        assert(toggleBox.x < maximizeBox.x && maximizeBox.x - (toggleBox.x + toggleBox.width) < 12);
+        await menuAction(page, 'Zmenšit velikost ikon');
+        const smaller = await rowMetrics();
+        await menuAction(page, 'Zvětšit velikost ikon');
+        const larger = await rowMetrics();
+        assert(larger.width > smaller.width);
+        assert.equal(larger.pitch, smaller.pitch);
+        const originalWidth = larger.rowWidth;
+        for (let index = 0; index < 4; index++) await menuAction(page, 'Zvětšit rozestup ikon');
+        const spaced = await rowMetrics();
+        assert(spaced.rowWidth > originalWidth && spaced.pitch > larger.pitch);
+        assert.equal(spaced.width, larger.width);
+        assert(await menu(page).getByRole('button', { name: 'Zvětšit rozestup ikon' }).isDisabled());
+        await page.keyboard.press('Escape');
+        assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+        check(true, 'map browser: mobile menu, independent icon size and spacing, spacing reaches panel width');
         for (const width of [1440, 1024, 768, 390, 320]) {
             await page.setViewportSize({ width, height: 900 });
             if (width < 768) await page.locator('[data-mobile-panel=tablature]').click();
@@ -171,7 +208,7 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         assert.equal(await host.locator('.song-map-palette').count(), 0);
         assert.equal(JSON.parse((await getMap()).json().version.body).sections[0].bars[0].detail, 'Detail upravený přímo v MAPĚ');
         await page.locator('[data-mobile-panel=tablature]').click();
-        await page.locator('#tablature-actions').getByRole('button', { name: 'UPRAVIT', exact: true }).click();
+        await mode(page, 'UPRAVIT');
         await bars(page).first().click();
         assert(await edit().evaluate(el => el.getBoundingClientRect().width < innerWidth && el.getBoundingClientRect().height <= innerHeight));
         await edit().getByRole('button', { name: 'Hi-hat', exact: true }).click();
@@ -184,12 +221,19 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         await page.locator('[data-mobile-panel=tablature]').click();
         assert.equal(await page.locator('#tablature-actions .song-map-save-state').textContent(), 'Neuloženo');
         await page.setViewportSize({ width: 1440, height: 900 });
+        await page.locator('#panel-tablature .panel-fullscreen-button').click();
+        await menu(page).getByRole('button', { name: 'MAPA', exact: true }).waitFor();
+        assert(!(await toggle.isVisible()), 'wide desktop panel shows actions inline');
+        await page.locator('#panel-tablature .panel-fullscreen-button').click();
         const leave = page.evaluate(id => window.Vz2SongMap.canLeave(id), other.id);
         await dialog(page, 'Neuložené změny').getByRole('button', { name: 'Zůstat', exact: true }).click();
         assert.equal(await leave, false);
         assert.equal(new URL(page.url()).searchParams.get('collection_id'), String(song.id));
-        const guest = await pageFor('guest'); assert.equal(await mapHost(guest).getByRole('button', { name: 'UPRAVIT', exact: true }).count(), 0);
+        const guest = await pageFor('guest');
+        await openMenu(guest);
+        assert.equal(await menu(guest).getByRole('button', { name: 'UPRAVIT', exact: true }).count(), 0);
         assert.equal(await guest.locator('#tablature-actions').getByRole('button', { name: 'Uložit mapu', exact: true }).count(), 0);
+        if (await menu(guest).locator(':popover-open').count()) await guest.keyboard.press('Escape');
         await bars(guest).first().click(); assert(await dialog(guest, 'Detail taktu').locator('textarea').getAttribute('readonly') !== null);
         check(true, 'map browser: compact MAPA at five viewport widths, fixed 8/4+4, no horizontal overflow, dirty panel/navigation guard and guest read-only Detail');
         await guest.goto(base + 'hrani.php#song=' + song.id);

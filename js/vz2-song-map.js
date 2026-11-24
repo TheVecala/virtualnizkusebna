@@ -63,6 +63,163 @@
         if (!response.ok || !data.ok) { const e = new Error(data.error || 'Operace selhala.'); e.status = response.status; throw e; }
         return data;
     }
+    const viewPreference = { size: 28, spacing: 0 };
+    try {
+        const saved = JSON.parse(localStorage.getItem('vz2-song-map-display'));
+        if (Number.isInteger(saved?.size)) viewPreference.size = Math.min(72, Math.max(16, saved.size));
+        if (Number.isInteger(saved?.spacing)) viewPreference.spacing = Math.min(4, Math.max(0, saved.spacing));
+    } catch (_) { /* Session-only preferences. */ }
+
+    function updateDisplay(ctx) {
+        ctx.view.style.setProperty('--song-map-icon-size', viewPreference.size + 'px');
+        ctx.view.style.setProperty('--song-map-spacing', viewPreference.spacing / 4);
+        const cell = ctx.view.querySelector('.song-map-bar');
+        const maxSize = Math.min(72, cell?.clientWidth ? Math.floor(cell.clientWidth) : 72);
+        const size = Math.min(viewPreference.size, maxSize);
+        ctx.displayButtons.forEach((control, index) => {
+            control.disabled = ctx.busy || [size <= 16, size >= maxSize,
+                viewPreference.spacing === 0, viewPreference.spacing === 4][index];
+        });
+    }
+
+    function positionMenu(ctx) {
+        const rect = ctx.menuButton.getBoundingClientRect();
+        ctx.menu.style.top = rect.bottom + 5 + 'px';
+        ctx.menu.style.right = Math.max(8, innerWidth - rect.right) + 'px';
+        ctx.menu.style.maxHeight = Math.max(44, innerHeight - rect.bottom - 13) + 'px';
+    }
+
+    function layoutActions(ctx) {
+        if (!ctx.menu?.isConnected) return;
+        const header = ctx.actions.parentElement;
+        const style = getComputedStyle(header);
+        const siblingWidth = [...header.children].filter(child => child !== ctx.actions && child.getClientRects().length)
+            .reduce((sum, child) => sum + Math.max(child.scrollWidth, child.getBoundingClientRect().width), 0);
+        const available = header.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - siblingWidth - 16;
+        const inline = innerWidth >= 768 && available >= ctx.menuWidth;
+        if (inline && ctx.menu.hasAttribute('popover')) {
+            if (ctx.menu.matches(':popover-open')) ctx.menu.hidePopover();
+            ctx.menu.removeAttribute('popover');
+        } else if (!inline) {
+            ctx.menu.setAttribute('popover', 'auto');
+            if (ctx.menu.matches(':popover-open')) positionMenu(ctx);
+        }
+        ctx.menuButton.hidden = inline;
+        updateDisplay(ctx);
+    }
+
+    function renderActions(ctx) {
+        const { draft } = ctx;
+        const menu = make('div', undefined, 'song-map-actions');
+        const menuButton = button('⋯', () => {
+            if (!menu.matches(':popover-open')) positionMenu(ctx);
+        }, 'song-map-menu-button');
+        menuButton.setAttribute('aria-label', 'Nabídka mapy');
+        menuButton.setAttribute('aria-expanded', 'false');
+        menu.id = 'song-map-actions-menu';
+        menu.setAttribute('popover', 'auto');
+        menuButton.setAttribute('aria-controls', menu.id);
+        menuButton.setAttribute('popovertarget', menu.id);
+        menu.addEventListener('beforetoggle', event => menuButton.setAttribute('aria-expanded', String(event.newState === 'open')));
+        ctx.menu = menu;
+        ctx.menuButton = menuButton;
+
+        const modes = make('div', undefined, 'song-map-modes');
+        modes.setAttribute('role', 'group');
+        modes.setAttribute('aria-label', 'Režim mapy');
+        for (const [mode, title] of [['map', 'MAPA'], ['edit', 'UPRAVIT'], ['listen', 'ZÁPIS POSLECHEM']]) {
+            if (mode !== 'map' && !ctx.response.can_edit) continue;
+            const control = button(title, () => {
+                ctx.mode = mode;
+                ctx.copy = null;
+                ctx.barCopy = null;
+                render(ctx);
+                const next = ctx.menuButton.hidden ? ctx.menu.querySelector('[aria-pressed="true"]') : ctx.menuButton;
+                next?.focus();
+            });
+            control.setAttribute('aria-pressed', String(ctx.mode === mode));
+            modes.append(control);
+        }
+        menu.append(modes);
+
+        if (ctx.mode !== 'map') {
+            const undo = button('Zpět', () => {
+                draft.undo();
+                ctx.copy = null;
+                ctx.barCopy = null;
+                ctx.scrollToEnd = ctx.mode === 'listen';
+                render(ctx);
+            });
+            undo.disabled = !draft.history.length;
+            menu.append(undo);
+        }
+
+        if (ctx.mode === 'edit' && !ctx.copy && !ctx.barCopy) menu.append(button('+ Sekce', () => {
+            if (menu.matches(':popover-open')) menu.hidePopover();
+            sectionName(ctx);
+        }));
+        const saveState = make('span', draft.dirty ? 'Neuloženo' : 'Uloženo', 'song-map-save-state');
+        saveState.dataset.dirty = String(draft.dirty);
+        menu.append(saveState);
+        if (ctx.response.can_edit) {
+            const save = button('Uložit', () => saveMap(ctx));
+            save.setAttribute('aria-label', 'Uložit mapu');
+            save.disabled = !draft.dirty;
+            menu.append(save);
+        }
+        if (ctx.response.document) {
+            const versions = button('Historie', () => {
+                if (menu.matches(':popover-open')) menu.hidePopover();
+                history(ctx);
+            });
+            versions.setAttribute('aria-label', 'Historie mapy');
+            menu.append(versions);
+        }
+        if (ctx.conflict) menu.append(button('Porovnat aktuální verzi', () => {
+            if (menu.matches(':popover-open')) menu.hidePopover();
+            compare(ctx);
+        }));
+        const details = collectDetails(draft.sections);
+        if (details.size) menu.append(button('Výpis detailů', () => {
+            if (menu.matches(':popover-open')) menu.hidePopover();
+            detailList(ctx, details);
+        }));
+
+        ctx.displayButtons = [];
+        for (const [key, title, step] of [['size', 'Velikost ikon', 4], ['spacing', 'Rozestup ikon', 1]]) {
+            const group = make('div', undefined, 'song-map-display-controls');
+            group.setAttribute('role', 'group');
+            group.setAttribute('aria-label', title);
+            group.append(make('span', title));
+            for (const direction of [-1, 1]) {
+                const label = (direction < 0 ? 'Zmenšit ' : 'Zvětšit ') + title.toLowerCase();
+                const control = button(direction < 0 ? '−' : '+', () => {
+                    const cell = ctx.view.querySelector('.song-map-bar');
+                    const size = cell?.clientWidth ? Math.min(viewPreference.size, Math.floor(cell.clientWidth)) : viewPreference.size;
+                    if (key === 'size') viewPreference.size = Math.max(16, Math.min(72, size + direction * step));
+                    else viewPreference.spacing += direction;
+                    try { localStorage.setItem('vz2-song-map-display', JSON.stringify(viewPreference)); }
+                    catch (_) { /* Session-only preferences. */ }
+                    updateDisplay(ctx);
+                });
+                control.setAttribute('aria-label', label);
+                control.title = label;
+                ctx.displayButtons.push(control);
+                group.append(control);
+            }
+            menu.append(group);
+        }
+        const measure = menu.cloneNode(true);
+        measure.removeAttribute('id');
+        measure.removeAttribute('popover');
+        measure.classList.add('song-map-actions-measure');
+        measure.inert = true;
+        ctx.actions.append(menuButton, menu, measure);
+        ctx.menuWidth = measure.getBoundingClientRect().width;
+        measure.remove();
+        layoutActions(ctx);
+    }
+
     function render(ctx) {
         const draft = ctx.draft, map = draft.map;
         const savedDetails = new Map((ctx.response?.version ? JSON.parse(ctx.response.version.body).sections : []).flatMap(section => section.bars.map(bar => [bar.id, bar.detail])));
@@ -76,52 +233,16 @@
             if (ctx.response?.can_edit) ctx.host.append(button('Vytvořit mapu', () => { draft.create(); ctx.mode = 'edit'; render(ctx); }));
             return;
         }
-        const modeRow = compact => {
-            const row = make('div', undefined, compact ? 'song-map-mode-row song-map-mode-row-mobile' : 'song-map-mode-row');
-            const modes = make('div', undefined, 'song-map-modes'); modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', 'Režim Mapy');
-            [['map','MAPA'],['edit','UPRAVIT'],['listen','ZÁPIS POSLECHEM']].forEach(([mode, title]) => {
-                if (mode !== 'map' && !ctx.response.can_edit) return;
-                const control = button(compact && mode === 'listen' ? 'POSLECH' : title, () => { ctx.mode = mode; ctx.copy = null; ctx.barCopy = null; render(ctx); });
-                if (compact) { control.setAttribute('aria-label', title); control.title = title; }
-                control.setAttribute('aria-pressed', String(ctx.mode === mode)); modes.append(control);
-            });
-            row.append(modes);
-            if (ctx.mode !== 'map') {
-                const undo = button(compact ? '↶' : '↶ Zpět', () => { draft.undo(); ctx.copy = null; ctx.barCopy = null; ctx.scrollToEnd = ctx.mode === 'listen'; render(ctx); }, 'song-map-undo');
-                if (compact) { undo.setAttribute('aria-label', 'Zpět'); undo.title = 'Zpět'; }
-                undo.disabled = !draft.history.length; row.append(undo);
-            }
-            return row;
-        };
-        controls.append(modeRow(false));
-        ctx.actions.append(modeRow(true));
-        const saveState = make('span', draft.dirty ? 'Neuloženo' : 'Uloženo', 'song-map-save-state');
-        saveState.dataset.dirty = String(draft.dirty); saveState.title = saveState.textContent;
-        saveState.setAttribute('aria-label', saveState.textContent);
-        ctx.actions.append(saveState);
-        if (!ctx.preview) {
-            if (ctx.response.can_edit) { const save = button('Uložit', () => saveMap(ctx)); save.setAttribute('aria-label', 'Uložit mapu'); save.disabled = !draft.dirty || ctx.busy; ctx.actions.append(save); }
-            if (ctx.response.document) {
-                const versions = button('Historie', () => history(ctx));
-                versions.setAttribute('aria-label', 'Historie mapy');
-                ctx.actions.append(versions);
-            }
-            if (ctx.conflict) controls.append(button('Porovnat aktuální verzi', () => compare(ctx)));
-        }
         if (!ctx.copy && ctx.mode === 'listen') palette(ctx, controls);
-        if (ctx.mode === 'edit' && !ctx.copy && !ctx.barCopy) controls.append(button('+ Sekce', () => sectionName(ctx)));
         if (ctx.barCopy) {
             controls.append(make('span', 'Vyberte místo pro vložení taktu.'),
                 button('Ukončit kopírování taktu', () => { ctx.barCopy = null; render(ctx); }));
         }
-        const details = collectDetails(map.sections);
-        if (details.size) ctx.actions.append(button('Výpis detailů', () => detailList(ctx, details)));
         if (ctx.copy) {
             const tools = make('div', undefined, 'toolbar');
             tools.append(make('span', 'Vyberte cílové takty (' + ctx.copy.targets.size + ')'), button('Použít detail na vybrané takty', () => applyCopy(ctx)), button('Ukončit kopírování', () => { ctx.copy = null; render(ctx); }));
             controls.append(tools);
         }
-        controls.classList.toggle('song-map-controls-only-modes', controls.childElementCount === 1);
         const scroll = make('div', undefined, 'song-map-scroll');
         const view = make('div', undefined, 'song-map'); view.dataset.mode = ctx.mode;
         let number = 0;
@@ -157,7 +278,13 @@
             view.append(block);
         });
         scroll.append(view);
-        ctx.host.append(controls, scroll);
+        if (controls.childElementCount) ctx.host.append(controls);
+        ctx.host.append(scroll);
+        ctx.view = view;
+        if (ctx.preview) {
+            view.style.setProperty('--song-map-icon-size', viewPreference.size + 'px');
+            view.style.setProperty('--song-map-spacing', viewPreference.spacing / 4);
+        } else renderActions(ctx);
         scroll.scrollTop = ctx.scrollToEnd ? scroll.scrollHeight : previousScroll;
         ctx.scrollToEnd = false;
         [...ctx.host.querySelectorAll('button'), ...ctx.actions.querySelectorAll('button')].forEach(control => { if (ctx.busy) control.disabled = true; });
@@ -517,13 +644,17 @@
         dialog.addEventListener('close', () => { editor.destroy(); if (ctx.detailDialog === dialog) { ctx.detailDirty = false; ctx.detailDialog = null; ctx.detailSave = null; ctx.detailFlush = null; } });
         dialog.addEventListener('cancel', e => { e.preventDefault(); close(); }); dialog.showModal();
     }
+    const menuResize = new ResizeObserver(() => { if (current) layoutActions(current); });
     async function mount(collection) {
         if (current?.collection.id === collection?.id) return;
         const ticket = ++serial;
         const host = document.getElementById('song-map-content'), actions = document.getElementById('tablature-actions');
+        menuResize.disconnect();
         current = null; host.replaceChildren(); actions.replaceChildren();
         if (!collection || collection.kind !== 'song') { host.append(make('p', collection ? 'Mapa skladby je dostupná u skladeb.' : 'Vyberte skladbu.', 'muted')); return; }
         const ctx = { collection, host, actions, draft: new Draft(), response: null, mode: 'map', copy: null, notice: '', busy: false }; current = ctx;
+        menuResize.observe(actions.parentElement);
+        menuResize.observe(host);
         host.append(make('p', 'Načítám mapu…', 'muted'));
         try {
             ctx.response = await api({ action: 'document', collection_id: collection.id, kind: 'song_map' });
@@ -548,6 +679,12 @@
         if (live(ctx)) { ctx.detailDialog?.close(); ctx.draft.reset(ctx.response.version ? JSON.parse(ctx.response.version.body) : null); ctx.mode = 'map'; ctx.copy = null; ctx.notice = ''; render(ctx); }
         return true;
     }
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape' || !current?.menu?.matches(':popover-open')) return;
+        event.preventDefault();
+        current.menu.hidePopover();
+        current.menuButton.focus({ preventScroll: true });
+    }, true);
     window.addEventListener('beforeunload', e => { if (current?.draft.dirty || current?.detailDirty || current?.editor?.dirty() || current?.busy) { e.preventDefault(); e.returnValue = ''; } });
     window.Vz2SongMap = { mount, canLeave };
 }());

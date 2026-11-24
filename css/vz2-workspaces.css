@@ -135,7 +135,6 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 .idea-future { padding: 24px; color: var(--color-text-muted); }
 .idea-future h3 { color: var(--color-text); }
 .mobile-label, #mobile-dock, #mobile-sections-dock { display: none; }
-.song-map-mode-row-mobile { display: none; }
 @media (min-width: 1200px) {
     #workspace-navigation { flex: 1 1 auto; min-width: 0; justify-content: center; }
     #workspace-navigation > button { padding-inline: 10px; }
@@ -179,16 +178,8 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     .panel[data-panel] > .panel-header > .panel-fullscreen-button { flex: 0 0 40px; width: 40px; margin-left: auto; }
     #panel-recordings > .panel-header { border-bottom: 1px solid var(--color-border); }
     #panel-recordings .panel-header-actions button { min-height: 40px; padding: 5px 8px; font-size: 12px; }
-    #song-map-content .song-map-controls > .song-map-mode-row,
-    #song-map-content .song-map-controls-only-modes { display: none; }
-    #tablature-actions .song-map-mode-row-mobile { display: flex; flex: 0 0 auto; align-items: center; gap: 2px; margin: 0; }
-    #tablature-actions .song-map-mode-row-mobile .song-map-modes { flex: 0 0 auto; flex-wrap: nowrap; gap: 2px; }
-    #tablature-actions .song-map-mode-row-mobile button { min-height: 40px; padding: 3px 5px; font-size: 11px; }
-    #tablature-actions .song-map-mode-row-mobile .song-map-undo { margin-left: 0; }
-    #tablature-actions .song-map-save-state { flex: 0 0 18px; width: 18px; text-align: center; font-size: 0; }
-    #tablature-actions .song-map-save-state::before { content: '✓'; font-size: 17px; line-height: 1; }
-    #tablature-actions .song-map-save-state[data-dirty=true]::before { content: '●'; color: var(--color-warning); font-size: 13px; }
-    #tablature-actions > button { padding-inline: 5px; }
+    #panel-tablature > .panel-header > #tablature-actions { flex: 1 1 auto; justify-content: flex-end; }
+    #tablature-actions .song-map-menu-button { width: 40px; min-height: 40px; }
     #mobile-panels:not([hidden]) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; width: 100%; padding: 0; border: 0; background: none; }
     #mobile-panels button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; height: 44px; min-height: 44px; padding: 3px 1px; border: 1px solid transparent; border-radius: 8px; background: none; }
     #mobile-panels button .panel-character-icon { display: block; flex: 0 0 23px; width: 23px; height: 23px; object-fit: contain; }

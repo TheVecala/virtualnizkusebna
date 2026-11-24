@@ -121,7 +121,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <link rel="stylesheet" href="css/vz2-song-map-symbol.css?v=<?=hash_file('sha256', __DIR__.'/css/vz2-song-map-symbol.css')?>">
 <link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/multitrack.css?v=<?=filemtime(__DIR__.'/css/multitrack.css')?>"><link rel="stylesheet" data-vz2-style media="print" fetchpriority="high" href="css/vz2.css?v=<?=hash_file('sha256', __DIR__.'/css/vz2.css')?>">
 <link rel="stylesheet" data-vz2-icons media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
-<link rel="stylesheet" data-vz2-style media="print" href="css/vz2-workspaces.css?v=<?=filemtime(__DIR__.'/css/vz2-workspaces.css')?>">
+<link rel="stylesheet" data-vz2-style media="print" href="css/vz2-workspaces.css?v=<?=hash_file('sha256', __DIR__.'/css/vz2-workspaces.css')?>">
 <link rel="stylesheet" data-vz2-style media="print" href="css/vz2-segments.css?v=<?=filemtime(__DIR__.'/css/vz2-segments.css')?>">
 <link rel="stylesheet" data-vz2-style media="print" href="css/vz2-car-mode.css?v=<?=filemtime(__DIR__.'/css/vz2-car-mode.css')?>">
 <link rel="stylesheet" href="css/vz2-timestamp-editor.css?v=<?=filemtime(__DIR__.'/css/vz2-timestamp-editor.css')?>">
