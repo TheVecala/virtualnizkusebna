@@ -79,11 +79,15 @@
                         }
                         for (const crash of crashes) {
                             const bounds = crash.getBoundingClientRect();
-                            const halfStroke = 0.75 * width / 64;
-                            check(crash.getAttribute('stroke-width') === '1.5' && close(bounds.width, width * 12 / 64)
-                                && bounds.left - halfStroke >= box.left && bounds.right + halfStroke <= box.right
-                                && bounds.top - halfStroke >= box.top && bounds.bottom + halfStroke <= box.bottom,
-                            context + ' · crash včetně tahu uvnitř viewBoxu');
+                            const halfStroke = width / 64;
+                            const allowedBleed = 2 * width / 64 + 0.02;
+                            check(crash.getAttribute('stroke-width') === '2' && close(bounds.width, width * 18 / 64)
+                                && getComputedStyle(svg).overflow === 'visible'
+                                && bounds.left - halfStroke >= box.left - allowedBleed
+                                && bounds.right + halfStroke <= box.right + allowedBleed
+                                && bounds.top - halfStroke >= box.top - allowedBleed
+                                && bounds.bottom + halfStroke <= box.bottom + allowedBleed,
+                            context + ' · zvětšený crash bez oříznutí');
                         }
                         count++;
                     }

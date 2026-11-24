@@ -2,6 +2,7 @@
     display: inline-block;
     width: 24px;
     height: auto;
+    overflow: visible;
     vertical-align: middle;
     color: var(--color-song-map-ink, #e4e9dc);
     fill: currentColor;
