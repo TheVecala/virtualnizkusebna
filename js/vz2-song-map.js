@@ -324,6 +324,7 @@
                 ctx.draft.append(type); ctx.scrollToEnd = true;
                 render(ctx);
             });
+            control.prepend(window.Vz2SongMapSvg.render(type));
             control.dataset.type = type.name;
             if (type.special === 'unknown') control.title = 'Neurčený takt – takt jsem slyšel, ale nestihl jsem určit jeho obsah.';
             palette.append(control);

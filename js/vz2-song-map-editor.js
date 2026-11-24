@@ -137,14 +137,15 @@
             legacy.disabled = !draft.base;
             legacy.textContent = 'Odstranit původní F' + draft.unresolved_fill;
             if (draft.kind !== 'rhythm' || !draft.base || !draft.meter) return;
-            for (const point of Svg.positions(draft.meter)) {
+            const layout = Svg.layout(draft.meter, draft.base);
+            for (const point of layout.positions) {
                 const mark = draft.marks.find(item => item.unit === point.unit);
                 const group = point.groupStart ? ', začátek skupiny' : '';
                 const state = mark?.state === 'fill' ? 'přechod' : mark?.state === 'pause' ? 'pauza' : 'základní rytmus';
-                const center = target(point, 'state', state + group);
+                const center = target(point, 'state', state + group, layout);
                 center.textContent = mark?.state ? '' : String(point.unit);
                 center.classList.toggle('song-map-group-start', point.groupStart);
-                const edge = target({ ...Svg.crashPoint(point, draft.base), unit: point.unit }, 'crash', 'Crash');
+                const edge = target({ ...point.crash, unit: point.unit }, 'crash', 'Crash', layout);
                 edge.setAttribute('aria-pressed', String(Boolean(mark?.crash)));
                 edge.textContent = mark?.crash ? '' : '·';
                 marks.append(center, edge);
@@ -152,7 +153,7 @@
             if (focusKey) marks.querySelector('[data-target="' + focusKey + '"]')?.focus();
         }
 
-        function target(point, type, state) {
+        function target(point, type, state, { width, height, padding }) {
             const key = point.unit + '-' + type;
             const node = button('', () => {
                 const mark = draft.marks.find(item => item.unit === point.unit) ||
@@ -166,8 +167,8 @@
             });
             node.className = 'song-map-editor-target song-map-editor-target-' + type;
             node.dataset.target = key;
-            node.style.left = point.x + '%';
-            node.style.top = point.y + '%';
+            node.style.left = (point.x + padding) / width * 100 + '%';
+            node.style.top = (point.y + padding) / (height + padding * 2) * 100 + '%';
             node.setAttribute('aria-label', point.unit + '. pozice: ' + state);
             return node;
         }

@@ -147,7 +147,7 @@ body[data-distance="wall"] #song-overview :is(.overview-entry-body, .overview-en
 .simple-map-options input { width: 1.2rem; height: 1.2rem; min-height: 0; margin: 0; accent-color: var(--accent); }
 .simple-map { display: grid; gap: var(--gap); }
 .simple-bars { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: .35rem; }
-.simple-bar { display: grid; place-items: center; min-height: 48px; min-width: 0; padding: .2rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--bg); }
+.simple-bar { --song-map-icon-background: var(--bg); display: grid; place-items: center; min-height: 48px; min-width: 0; padding: .2rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--bg); }
 .simple-bar[data-base="ride"] { color: var(--accent); }
 .simple-bar.has-detail { border-color: var(--accent); box-shadow: inset 0 -3px var(--accent); }
 .simple-bar-number { color: var(--muted); font-size: .75rem; }

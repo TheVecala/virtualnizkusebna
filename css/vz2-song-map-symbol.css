@@ -1,41 +1,19 @@
 .song-map-symbol {
     display: inline-block;
     width: 24px;
-    height: 24px;
+    height: auto;
     vertical-align: middle;
-    overflow: visible;
-    color: #e4e9dc;
+    color: var(--color-song-map-ink, #e4e9dc);
     fill: currentColor;
-    --song-map-crash-fill: #242b26;
-    --song-map-crash-stroke: #b8d28d;
 }
-
-[data-theme="light"] .song-map-symbol {
-    color: var(--color-text);
-    --song-map-crash-fill: var(--color-surface);
-    --song-map-crash-stroke: var(--color-primary);
-}
-
-.song-map-symbol-outline,
-.song-map-symbol-cross {
-    stroke: currentColor;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.song-map-symbol-outline { stroke-width: 2.8125; }
-.song-map-symbol-cross { stroke-width: 3.1; }
 
 .song-map-symbol-crash {
-    fill: var(--song-map-crash-fill);
-    stroke: var(--song-map-crash-stroke);
-    stroke-width: 2.4;
+    fill: var(--song-map-icon-background, var(--color-panel, #242b26));
+    stroke: var(--color-song-map-crash, #b1c47a);
     stroke-linejoin: round;
 }
 
 .song-map-symbol-large {
     display: block;
     width: 100%;
-    height: 100%;
 }
