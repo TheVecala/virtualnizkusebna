@@ -232,7 +232,7 @@ body[data-collection-kind=rehearsal] #tablature-content { overflow-y: auto; }
     border: 1px solid transparent;
     border-radius: 6px;
 }
-.song-map-editor button.song-map-editor-target-crash { color: var(--color-primary-hover); }
+.song-map-editor button.song-map-editor-target-crash { width: 27px; height: 27px; color: var(--color-primary-hover); }
 .song-map-editor button.song-map-group-start { border-left-color: var(--color-primary); }
 .song-map-editor button.song-map-editor-target:hover,
 .song-map-editor button.song-map-editor-target:focus-visible { border-color: var(--color-primary); }

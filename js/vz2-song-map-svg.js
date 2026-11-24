@@ -8,30 +8,38 @@
         return element;
     }
 
+    // The 4/4 positions follow the numbered examples in navrh_svg_takty.
+    const grids = {
+        1: [[50, 50]],
+        2: [[28, 50], [72, 50]],
+        3: [[28, 28], [72, 28], [50, 72]],
+        4: [[28, 28], [72, 28], [28, 72], [72, 72]],
+        5: [[28, 28], [72, 28], [28, 72], [50, 72], [72, 72]],
+        6: [[28, 28], [50, 28], [72, 28], [28, 72], [50, 72], [72, 72]],
+        7: [[28, 28], [50, 28], [72, 28], [28, 50], [72, 50], [28, 72], [72, 72]],
+        9: [[28, 28], [50, 28], [72, 28], [28, 50], [50, 50], [72, 50], [28, 72], [50, 72], [72, 72]]
+    };
+    const crashPath = 'M 0 -8 Q 1.5 -1.5 8 0 Q 1.5 1.5 0 8 Q -1.5 1.5 -8 0 Q -1.5 -1.5 0 -8 Z';
+
     function positions(meter) {
         const count = meter?.numerator || 1;
-        const columns = Math.min(3, count);
-        const rows = Math.ceil(count / columns);
         const starts = new Set();
         let start = 1;
         for (const group of meter?.groups || [1]) {
             if (start > 1) starts.add(start);
             start += group;
         }
-        return Array.from({ length: count }, (_, index) => {
-            const angle = index / count * Math.PI * 2 - Math.PI * 0.75;
-            return {
-                unit: index + 1, groupStart: starts.has(index + 1),
-                x: 50 + (index % columns - (columns - 1) / 2) * 19,
-                y: 50 + (Math.floor(index / columns) - (rows - 1) / 2) * 19,
-                dx: Math.cos(angle), dy: Math.sin(angle)
-            };
-        });
+        return grids[count].map(([x, y], index) => ({
+            unit: index + 1, groupStart: starts.has(index + 1), x, y,
+            // A central slot has no radial direction. Give it a free point on the outline.
+            dx: x === 50 && y === 50 ? (count === 1 ? -1 : Math.SQRT2 - 1) : x - 50,
+            dy: x === 50 && y === 50 ? -1 : y - 50
+        }));
     }
 
     function crashPoint(position, base) {
         const { dx, dy } = position;
-        const scale = base === 'ride' ? 43 : 42 / Math.max(Math.abs(dx), Math.abs(dy));
+        const scale = 35 / (base === 'ride' ? Math.hypot(dx, dy) : Math.max(Math.abs(dx), Math.abs(dy)));
         return { x: 50 + dx * scale, y: 50 + dy * scale };
     }
 
@@ -68,8 +76,8 @@
             return svg;
         }
         const outline = bar.base === 'ride'
-            ? shape('circle', { cx: 50, cy: 50, r: 43 })
-            : shape('rect', { x: 8, y: 8, width: 84, height: 84 });
+            ? shape('circle', { cx: 50, cy: 50, r: 35 })
+            : shape('rect', { x: 15, y: 15, width: 70, height: 70, rx: 6 });
         outline.setAttribute('class', 'song-map-symbol-outline');
         svg.append(outline);
         const marks = new Map(bar.marks.map(mark => [mark.unit, mark]));
@@ -77,7 +85,7 @@
             const { unit, x, y } = position;
             const mark = marks.get(unit);
             if (mark?.state === 'fill') {
-                svg.append(shape('circle', { cx: x, cy: y, r: 4.5 }));
+                svg.append(shape('circle', { cx: x, cy: y, r: 4.4 }));
             }
             if (mark?.state === 'pause' || mark?.mixed) {
                 const offset = mark.mixed ? 5 : 0;
@@ -85,7 +93,7 @@
             }
             if (mark?.crash) {
                 const point = crashPoint(position, bar.base);
-                svg.append(shape('path', { d: 'M 0 -8 L 2 -2 L 8 0 L 2 2 L 0 8 L -2 2 L -8 0 L -2 -2 Z',
+                svg.append(shape('path', { d: crashPath,
                     transform: `translate(${point.x} ${point.y})`, class: 'song-map-symbol-crash' }));
             }
         }
