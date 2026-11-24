@@ -8,16 +8,20 @@
         return element;
     }
 
-    // The 4/4 positions follow the numbered examples in navrh_svg_takty.
+    // Normalize the reference SVG's viewBox (-8, -8, 64, 64) to percentages
+    // so the editor can use the same positions for its click targets.
+    const normalize = coordinate => (coordinate + 8) * 100 / 64;
+    const outlineStart = normalize(0);
+    const outlineSize = normalize(48) - outlineStart;
     const grids = {
-        1: [[50, 50]],
-        2: [[28, 50], [72, 50]],
-        3: [[28, 28], [72, 28], [50, 72]],
-        4: [[28, 28], [72, 28], [28, 72], [72, 72]],
-        5: [[28, 28], [72, 28], [28, 72], [50, 72], [72, 72]],
-        6: [[28, 28], [50, 28], [72, 28], [28, 72], [50, 72], [72, 72]],
-        7: [[28, 28], [50, 28], [72, 28], [28, 50], [72, 50], [28, 72], [72, 72]],
-        9: [[28, 28], [50, 28], [72, 28], [28, 50], [50, 50], [72, 50], [28, 72], [50, 72], [72, 72]]
+        1: [[24, 24]],
+        2: [[12, 24], [36, 24]],
+        3: [[12, 12], [36, 12], [24, 36]],
+        4: [[12, 12], [36, 12], [12, 36], [36, 36]],
+        5: [[12, 12], [36, 12], [12, 36], [24, 36], [36, 36]],
+        6: [[12, 12], [24, 12], [36, 12], [12, 36], [24, 36], [36, 36]],
+        7: [[12, 12], [24, 12], [36, 12], [12, 24], [36, 24], [12, 36], [36, 36]],
+        9: [[12, 12], [24, 12], [36, 12], [12, 24], [24, 24], [36, 24], [12, 36], [24, 36], [36, 36]]
     };
     const crashPath = 'M 0 -8 Q 1.5 -1.5 8 0 Q 1.5 1.5 0 8 Q -1.5 1.5 -8 0 Q -1.5 -1.5 0 -8 Z';
 
@@ -29,7 +33,7 @@
             if (start > 1) starts.add(start);
             start += group;
         }
-        return grids[count].map(([x, y], index) => ({
+        return grids[count].map(pair => pair.map(normalize)).map(([x, y], index) => ({
             unit: index + 1, groupStart: starts.has(index + 1), x, y,
             // A central slot has no radial direction. Give it a free point on the outline.
             dx: x === 50 && y === 50 ? (count === 1 ? -1 : Math.SQRT2 - 1) : x - 50,
@@ -39,7 +43,7 @@
 
     function crashPoint(position, base) {
         const { dx, dy } = position;
-        const scale = 35 / (base === 'ride' ? Math.hypot(dx, dy) : Math.max(Math.abs(dx), Math.abs(dy)));
+        const scale = (outlineSize / 2) / (base === 'ride' ? Math.hypot(dx, dy) : Math.max(Math.abs(dx), Math.abs(dy)));
         return { x: 50 + dx * scale, y: 50 + dy * scale };
     }
 
@@ -76,16 +80,17 @@
             return svg;
         }
         const outline = bar.base === 'ride'
-            ? shape('circle', { cx: 50, cy: 50, r: 35 })
-            : shape('rect', { x: 15, y: 15, width: 70, height: 70, rx: 6 });
+            ? shape('circle', { cx: 50, cy: 50, r: outlineSize / 2 })
+            : shape('rect', { x: outlineStart, y: outlineStart, width: outlineSize, height: outlineSize, rx: 3.125 });
         outline.setAttribute('class', 'song-map-symbol-outline');
         svg.append(outline);
         const marks = new Map(bar.marks.map(mark => [mark.unit, mark]));
+        const radius = (bar.meter?.numerator || 1) >= 5 ? 7.8 : bar.base === 'ride' ? 9.5 : 13.75;
         for (const position of positions(bar.meter)) {
             const { unit, x, y } = position;
             const mark = marks.get(unit);
             if (mark?.state === 'fill') {
-                svg.append(shape('circle', { cx: x, cy: y, r: 4.4 }));
+                svg.append(shape('circle', { cx: mark.mixed ? x - 4 : x, cy: y, r: mark.mixed ? 4.4 : radius }));
             }
             if (mark?.state === 'pause' || mark?.mixed) {
                 const offset = mark.mixed ? 5 : 0;
