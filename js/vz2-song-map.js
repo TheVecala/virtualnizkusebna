@@ -3,7 +3,7 @@
     const make = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
     const button = (label, run, cls) => { const b = make('button', label, cls); b.type = 'button'; b.addEventListener('click', run); return b; };
     let current, serial = 0;
-    const { Draft, types, meterFor, label, collectDetails } = window.Vz2SongMapModel;
+    const { Draft, meterFor, label, collectDetails } = window.Vz2SongMapModel;
     const Detail = window.Vz2BarDetail;
     const live = ctx => current === ctx;
     function modal(title) {
@@ -44,7 +44,6 @@
         });
         if (!name || !live(ctx)) return;
         if (section) ctx.draft.rename(section.id, name);
-        else if (ctx.mode === 'listen') ctx.draft.queue(name);
         else {
             const sectionId = ctx.draft.addSection(name);
             render(ctx);
@@ -434,28 +433,24 @@
         dialog.showModal();
     }
     function palette(ctx, host) {
-        const palette = make('div', undefined, 'song-map-palette song-map-palette-' + ctx.mode); palette.setAttribute('aria-label', 'Takty');
-        if (ctx.mode === 'listen') {
-            const sections = make('div', undefined, 'toolbar song-map-quick-sections');
-            ['Intro','Sloka','Refrén','Bridge','Sólo','Outro','Jiná'].forEach(name => sections.append(button(name, () => {
-                if (name === 'Jiná') sectionName(ctx); else { ctx.draft.queue(name); render(ctx); }
-            })));
-            host.append(make('strong', 'SEKCE'), sections);
+        const palette = make('div', undefined, 'song-map-palette song-map-palette-listen');
+        palette.setAttribute('role', 'group');
+        palette.setAttribute('aria-label', 'Zápis taktů poslechem');
+        for (const [base, name, suffix] of [['hihat', 'Hi-hat', 'HH'], ['ride', 'Ride', 'RD']]) {
+            for (const [sectionName, prefix] of [['Intro', 'IN'], ['Sloka', 'SL'], ['Refrén', 'RF'], [null, null]]) {
+                const code = prefix ? prefix + '+' + suffix : suffix;
+                const control = button(code, () => {
+                    ctx.draft.recordBar(base, sectionName);
+                    ctx.scrollToEnd = true;
+                    render(ctx);
+                    ctx.host.querySelector('[data-type="' + code + '"]')?.focus({ preventScroll: true });
+                });
+                control.dataset.type = code;
+                control.setAttribute('aria-label', sectionName ? sectionName + ' – první takt ' + name : 'Přidat takt ' + name);
+                control.prepend(window.Vz2SongMapSvg.render({ kind: 'rhythm', base, meter: null, marks: [] }));
+                palette.append(control);
+            }
         }
-        const heading = make('div', undefined, 'song-map-palette-heading');
-        heading.append(make('strong', 'TAKTY'));
-        if (ctx.draft.pending) heading.append(make('span', 'Další takt začne: ' + ctx.draft.pending, 'song-map-pending'));
-        host.append(heading);
-        types.forEach(type => {
-            const control = button(type.name, () => {
-                ctx.draft.append(type); ctx.scrollToEnd = true;
-                render(ctx);
-            });
-            control.prepend(window.Vz2SongMapSvg.render(type));
-            control.dataset.type = type.name;
-            if (type.special === 'unknown') control.title = 'Neurčený takt – takt jsem slyšel, ale nestihl jsem určit jeho obsah.';
-            palette.append(control);
-        });
         host.append(palette);
     }
     function fields(ctx, action) {

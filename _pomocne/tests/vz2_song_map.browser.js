@@ -121,12 +121,43 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         assert.equal(new Set(ids).size, ids.length);
         check(true, 'map browser: compact modal, odd meter, Hi-hat/Ride, independent crash, stable add controls, detail grouping, targeted insertion and empty section persistence');
         await mode(page, 'ZÁPIS POSLECHEM');
-        assert.equal(await host.locator('.song-map-palette-listen button').first().evaluate(button => getComputedStyle(button).minHeight), '58px');
-        await host.getByRole('button', { name: 'Bridge', exact: true }).click();
+        const padGrid = host.locator('.song-map-palette-listen');
+        const pads = padGrid.getByRole('button');
+        const codes = ['IN+HH', 'SL+HH', 'RF+HH', 'HH', 'IN+RD', 'SL+RD', 'RF+RD', 'RD'];
+        assert.deepEqual(await pads.evaluateAll(buttons => buttons.map(button => button.dataset.type)), codes);
+        assert.equal(await pads.first().evaluate(button => getComputedStyle(button).minHeight), '58px');
+        const initialBarCount = await bars(page).count();
+        for (const [code, section, base] of [
+            ['IN+HH', 'Intro', 'Hi-hat'], ['SL+HH', 'Sloka 2', 'Hi-hat'], ['RF+HH', 'Refrén 1', 'Hi-hat'],
+            ['IN+RD', 'Intro', 'Ride'], ['SL+RD', 'Sloka 2', 'Ride'], ['RF+RD', 'Refrén 1', 'Ride']
+        ]) {
+            await type(page, code);
+            assert.equal(await sections.count(), 3);
+            assert.equal(await bars(page).count(), initialBarCount + 1);
+            assert.equal(await sections.last().locator('h3').textContent(), section);
+            assert.match(await bars(page).last().getAttribute('aria-label'), new RegExp(base + '$'));
+            assert.equal(await sections.last().locator('.song-map-bar').count(), 1);
+            await menuAction(page, 'Zpět');
+            assert.equal(await sections.count(), 2);
+            assert.equal(await bars(page).count(), initialBarCount);
+        }
+        await type(page, 'HH');
+        await type(page, 'RD');
         assert.equal(await sections.count(), 2);
-        await type(page, 'RD+F3'); assert.equal(await sections.count(), 3);
+        assert.equal(await sections.last().locator('.song-map-bar').count(), 2);
+        assert.match(await bars(page).nth(initialBarCount).getAttribute('aria-label'), /Hi-hat$/);
+        assert.match(await bars(page).last().getAttribute('aria-label'), /Ride$/);
         await menuAction(page, 'Zpět');
-        assert.equal(await sections.count(), 2);
+        await menuAction(page, 'Zpět');
+        await page.setViewportSize({ width: 320, height: 900 });
+        await page.locator('[data-mobile-panel=tablature]').click();
+        const rows = await pads.evaluateAll(buttons => buttons.map(button => Math.round(button.getBoundingClientRect().top)));
+        assert.equal(new Set(rows.slice(0, 4)).size, 1);
+        assert.equal(new Set(rows.slice(4)).size, 1);
+        assert(rows[4] > rows[0]);
+        assert(await padGrid.evaluate(grid => grid.scrollWidth <= grid.clientWidth + 1));
+        await page.setViewportSize({ width: 1440, height: 900 });
+        check(true, 'map browser: eight one-tap listening pads in two mobile rows, all section and rhythm combinations, atomic Undo');
         await mode(page, 'UPRAVIT');
         await bars(page).first().click(); await edit().getByRole('button', { name: 'Hi-hat', exact: true }).click(); await commit();
         const refreshed = page.waitForResponse(r => new URL(r.url()).pathname.endsWith('/php/ajax/vz2.php') && new URL(r.url()).searchParams.get('action') === 'catalog');
@@ -157,7 +188,7 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         await menu(racer).getByRole('button', { name: 'Porovnat aktuální verzi', exact: true }).waitFor();
         assert.match(await bars(racer).first().getAttribute('aria-label'), /Hi-hat/);
         await racer.close();
-        check(true, 'map browser: listening controls retained, catalog refresh, revision restore and conflict retains local draft');
+        check(true, 'map browser: catalog refresh, revision restore and conflict retains local draft');
         await mode(page, 'MAPA'); assert.equal(await host.locator('.song-map-palette').count(), 0); assert.equal(await host.locator('.song-map-number').count(), 0);
         const rowMetrics = () => host.locator('.song-map-row').first().evaluate(row => {
             const cells = [...row.querySelectorAll('svg')].map(svg => svg.getBoundingClientRect());

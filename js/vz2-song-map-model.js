@@ -2,14 +2,6 @@
     'use strict';
     const clone = value => JSON.parse(JSON.stringify(value));
     const id = () => Array.from(root.crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-    const types = [
-        ['HH+CRASH', 'hihat', 0, true, null], ['HI-HAT', 'hihat', 0, false, null],
-        ['HH+F1', 'hihat', 1, false, null], ['HH+F2', 'hihat', 2, false, null], ['HH+F3', 'hihat', 3, false, null],
-        ['RD+CRASH', 'ride', 0, true, null], ['RIDE', 'ride', 0, false, null],
-        ['RD+F1', 'ride', 1, false, null], ['RD+F2', 'ride', 2, false, null], ['RD+F3', 'ride', 3, false, null],
-        ['F4', null, 4, false, null], ['?', null, 0, false, 'unknown'],
-        ['Pauza', null, 0, false, 'pause'], ['Stop', null, 0, false, 'stop']
-    ].map(([name, base, fill, crash, special]) => ({ name, base, fill, crash, special }));
     const meters = {
         '2/4': [1, 1], '3/4': [1, 1, 1], '4/4': [1, 1, 1, 1],
         '5/4': [1, 1, 1, 1, 1], '6/4': [1, 1, 1, 1, 1, 1],
@@ -60,7 +52,7 @@
                 this.map.sections.forEach(section => { section.bars = section.bars.map(fromLegacy); });
             }
             this.saved = JSON.stringify(this.map);
-            this.history = []; this.selected = null; this.pending = null;
+            this.history = []; this.selected = null;
         }
         get dirty() { return JSON.stringify(this.map) !== this.saved; }
         get sections() { return this.map?.sections || []; }
@@ -72,7 +64,7 @@
             return null;
         }
         change(fn) {
-            const snapshot = { map: clone(this.map), selected: this.selected, pending: this.pending };
+            const snapshot = { map: clone(this.map), selected: this.selected };
             fn();
             if (JSON.stringify(snapshot.map) !== JSON.stringify(this.map)) {
                 this.history.push(snapshot); if (this.history.length > 100) this.history.shift();
@@ -86,16 +78,20 @@
             const last = Math.max(...matches.map(s => Number(s.name.match(/\s+(\d+)$/)?.[1] || 1)));
             return base + ' ' + (last + 1);
         }
-        queue(name) { this.pending = this.nextName(name); }
-        append(type) {
+        recordBar(base, sectionName) {
             if (!this.map) return false;
-            // Undo the first bar of a pending section returns to the previous section.
-            const pending = this.pending; this.pending = null;
             this.change(() => {
-                let section = this.sections[this.sections.length - 1];
-                if (pending) { section = { id: id(), name: pending, bars: [] }; this.sections.push(section); }
-                else if (!section) { section = { id: id(), name: 'Bez sekce', bars: [] }; this.sections.push(section); }
-                const bar = fromLegacy({ ...type, id: id(), detail: '' }); section.bars.push(bar); this.selected = bar.id;
+                let section = this.sections.at(-1);
+                if (sectionName || !section) {
+                    section = { id: id(), name: sectionName ? this.nextName(sectionName) : 'Bez sekce', bars: [] };
+                    this.sections.push(section);
+                }
+                const bar = {
+                    id: id(), kind: 'rhythm', base, meter: null, marks: [],
+                    unresolved_fill: null, detail: ''
+                };
+                section.bars.push(bar);
+                this.selected = bar.id;
             });
             return true;
         }
@@ -169,10 +165,10 @@
         }
         undo() {
             const snapshot = this.history.pop(); if (!snapshot) return;
-            this.map = snapshot.map; this.selected = snapshot.selected; this.pending = snapshot.pending;
+            this.map = snapshot.map; this.selected = snapshot.selected;
         }
     }
-    const exported = { Draft, types, meters, meterFor, fromLegacy, label, collectDetails };
+    const exported = { Draft, meters, meterFor, fromLegacy, label, collectDetails };
     if (typeof module !== 'undefined' && module.exports) module.exports = exported;
     else root.Vz2SongMapModel = exported;
 }(typeof window === 'undefined' ? globalThis : window));
