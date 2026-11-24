@@ -16,8 +16,8 @@ potřeba opakovat pro druhou instalaci.
 
 Pro tento balíček platí koordinovaný postup pro alfu i betu podle
 `2_migrace/song-map-cutover.md`. Aplikační soubory a převod map se nasazují
-během společné odstávky. Migrační nástroj se spouští z checkoutu stejné revize
-mimo veřejný web.
+během společné odstávky. Předběžný čtecí SQL přehled a CLI nástroj jsou v
+`2_migrace/`. Tuto složku uchovejte mimo veřejný web vedle `1_soubory/`.
 
 ## Soubory
 

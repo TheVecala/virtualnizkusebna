@@ -20,12 +20,17 @@ Zachovají se identifikátory a pořadí sekcí a taktů, názvy, textové detai
 
 1. Dohledejte skutečné manifesty obou instalací. Porovnejte identity DB z obou serverových konfigurací a potvrďte, že jde o jedinou instanci a schéma. Zjistěte, kdo další do této DB zapisuje.
 2. Ověřte PHP 8.1 nebo vyšší s `mysqli`, verzi MariaDB, schéma dokumentů, verze migrací 001–010 a přístup k obnově zálohy. Na izolované obnovené kopii proveďte úplnou zkoušku včetně Hraní, Přehledu, úpravy map, historie a návratu.
-3. Spusťte čtecí inventuru proti ověřenému cíli. Uloží počty a otisky před a po převodu. Volba `--details` přidá jeden řádek JSON pro každou revizi, poslední řádek je souhrn. Výstup neobsahuje texty map ani databázové heslo. Pokud kontrola zjistí anomálii, rozhodněte o ní před odstávkou.
+3. Pro předběžnou inventuru v phpMyAdmin vyberte společnou databázi a spusťte
+   `2_migrace/song-map-inventory.sql`. Zkontrolujte název databáze, počty revizí ve
+   V1 a V2 a případné neplatné záznamy. Potom spusťte úplnou čtecí kontrolu proti ověřenému cíli. Uloží počty a otisky před a po převodu. Volba `--details` přidá jeden řádek JSON pro každou revizi, poslední řádek je souhrn. Výstup neobsahuje texty map ani databázové heslo. Pokud kontrola zjistí anomálii, rozhodněte o ní před odstávkou.
 
-Nástroj spouštějte přes CLI z checkoutu stejné revize jako nasazovaný balíček, mimo veřejný web. Připojení se zadává výslovně proměnnými `VZ2_MAP_DB_HOST`, `VZ2_MAP_DB_PORT`, `VZ2_MAP_DB_NAME`, `VZ2_MAP_DB_USER` a `VZ2_MAP_DB_PASSWORD` z chráněné konfigurace prostředí.
+Nástroj spouštějte přes CLI mimo veřejný web. V checkoutu je pod
+`_pomocne/tools/`, v rozbaleném balíčku pod `2_migrace/`. Pro kontrolu z balíčku
+ponechte `2_migrace/` vedle `1_soubory/`, odkud se načítá validátor.
+Níže uvedené příkazy používají cestu z balíčku. Připojení se zadává výslovně proměnnými `VZ2_MAP_DB_HOST`, `VZ2_MAP_DB_PORT`, `VZ2_MAP_DB_NAME`, `VZ2_MAP_DB_USER` a `VZ2_MAP_DB_PASSWORD` z chráněné konfigurace prostředí.
 
 ```sh
-php _pomocne/tools/vz2_song_map_migrate.php --check --details > mapy-pred.jsonl
+php 2_migrace/vz2_song_map_migrate.php --check --details > mapy-pred.jsonl
 ```
 
 ## Odstávka a převod
@@ -36,8 +41,8 @@ php _pomocne/tools/vz2_song_map_migrate.php --check --details > mapy-pred.jsonl
 4. Spusťte převod jednou. Transakce uzamkne mapové revize, znovu spočítá plán, ověří původní obsah jednotlivých revizí a před potvrzením porovná skutečný výsledek s očekávaným otiskem. Při chybě se vrátí celá transakce. Výstup `updated` je počet převedených revizí.
 
 ```sh
-php _pomocne/tools/vz2_song_map_migrate.php --apply "$VZ2_MAP_APPROVED_SHA"
-php _pomocne/tools/vz2_song_map_migrate.php --check --details > mapy-po.jsonl
+php 2_migrace/vz2_song_map_migrate.php --apply "$VZ2_MAP_APPROVED_SHA"
+php 2_migrace/vz2_song_map_migrate.php --check --details > mapy-po.jsonl
 ```
 
 5. Potvrďte nulový počet revizí V1, shodu nového `before_sha256` s očekávaným `after_sha256`, kontinuitu revizí ověřovaných v manifestu a počty map, sekcí a taktů. Vedle mapových kontrol porovnejte nemapové revize s předmigračním exportem.

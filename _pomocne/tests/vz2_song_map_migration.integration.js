@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
 const { createHash } = require('node:crypto');
 const path = require('node:path');
+const fs = require('node:fs');
 
 module.exports = async ({ request, clients, db, good, check, database, dbPort, php, root }) => {
     assert.match(database, /^vz2_test_[a-f0-9]{12}$/);
@@ -114,6 +115,19 @@ module.exports = async ({ request, clients, db, good, check, database, dbPort, p
             db('DROP DATABASE ' + copy);
         }
         check(true, 'map migration: MariaDB backup restored in a different database with matching revision hashes');
+        const inventorySql = fs.readFileSync(path.join(root, '_pomocne/sql/song-map-inventory.sql'));
+        const inventory = () => exec(clientTool, ['--database=' + database, '--batch', '--default-character-set=utf8mb4'], inventorySql).toString();
+        const summary = inventory();
+        assert.match(summary, /^V1\t3\t1\t/m);
+        assert.match(summary, /^V2\t1\t1\t/m);
+        db('UPDATE vz2_document_versions SET body=? WHERE document_id=? AND revision=1', ['{not json', activeId]);
+        try {
+            assert.match(inventory(), /^Neplatný JSON\t1\t0\t/m);
+        } finally {
+            db('UPDATE vz2_document_versions SET body=? WHERE document_id=? AND revision=1', [emptyV1, activeId]);
+        }
+        assert.deepEqual(readAll(), before);
+        check(true, 'map inventory SQL: V1 and V2 counts, malformed JSON and no persisted changes');
     }
 
     // A valid source that rejects part of the write must roll back preceding updates.

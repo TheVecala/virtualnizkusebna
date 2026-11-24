@@ -48,7 +48,10 @@ for (const entry of entries) {
 const support = [
     ['_pomocne/migrations/010_vz2_song_details.sql', '2_migrace/010_vz2_song_details.sql'],
     ['_pomocne/docs/vz2/song-details-v2.1.1.md', '2_migrace/song-details-v2.1.1.md'],
-    ['_pomocne/docs/vz2/song-map-cutover.md', '2_migrace/song-map-cutover.md']
+    ['_pomocne/docs/vz2/song-map-cutover.md', '2_migrace/song-map-cutover.md'],
+    ['_pomocne/sql/song-map-inventory.sql', '2_migrace/song-map-inventory.sql'],
+    ['_pomocne/tools/vz2_song_map_migrate.php', '2_migrace/vz2_song_map_migrate.php'],
+    ['_pomocne/CHANGELOG.md', 'CHANGELOG.md']
 ].map(([source, name]) => {
     const content = fs.readFileSync(path.join(root, source));
     fs.mkdirSync(path.dirname(path.join(out, name)), { recursive: true });

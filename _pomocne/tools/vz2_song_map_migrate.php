@@ -1,7 +1,8 @@
 <?php
 declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
-require_once dirname(__DIR__, 2).'/php/inc/vz2_song_map.php';
+$source = basename(__DIR__) === '2_migrace' ? dirname(__DIR__).'/1_soubory' : dirname(__DIR__, 2);
+require_once $source.'/php/inc/vz2_song_map.php';
 
 function migration_target(mysqli $db): array {
     $target = $db->query('SELECT DATABASE() AS db, @@hostname AS host, @@port AS port,
