@@ -46,8 +46,26 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
         assert.equal((await getMap()).json().document, null);
         await host.getByRole('button', { name: 'Vytvořit mapu', exact: true }).click();
         assert.equal(await host.locator('.song-map-section').count(), 0);
-        const addSection = async name => {
-            await menuAction(page, '+ Sekce');
+        const empty = host.locator('.song-map-empty');
+        await empty.getByText('Zvol, jak chceš začít tvořit mapu skladby.').waitFor();
+        await openMenu(page);
+        assert(await menu(page).getByRole('button', { name: 'Uložit mapu', exact: true }).isDisabled());
+        await page.keyboard.press('Escape');
+        assert.equal(await page.evaluate(() => window.Vz2SongMap.canLeave(-1)), true);
+        await empty.getByRole('button', { name: 'Zápis poslechem', exact: true }).click();
+        await empty.getByText('Pusť skladbu a během poslechu klepej na tlačítka odpovídající taktům.').waitFor();
+        assert.equal(await host.locator('.song-map-palette-listen button').count(), 8);
+        await type(page, 'HH');
+        assert.equal(await empty.count(), 0);
+        await menuAction(page, 'Zpět');
+        await empty.getByText('Pusť skladbu a během poslechu klepej na tlačítka odpovídající taktům.').waitFor();
+        assert.equal(await page.evaluate(() => window.Vz2SongMap.canLeave(-1)), true);
+        await mode(page, 'MAPA');
+        await empty.getByRole('button', { name: 'Upravit', exact: true }).click();
+        check(true, 'map browser: empty-map mode choices, listening hint, Undo to pristine state and no leave prompt');
+        const addSection = async (name, first = false) => {
+            if (first) await empty.getByRole('button', { name: 'Vytvořit první pasáž' }).click();
+            else await menuAction(page, '+ Sekce');
             const form = dialog(page, 'Nová sekce');
             await form.getByLabel('Název sekce').fill(name);
             await form.getByRole('button', { name: 'Vytvořit sekci' }).click();
@@ -60,7 +78,7 @@ module.exports = async ({ base, clients, good, request, db, check, temp }) => {
             await edit().getByRole('button', { name, exact: true }).click();
         };
         const sections = host.locator('.song-map-section');
-        await addSection('Sloka');
+        await addSection('Sloka', true);
         const first = sections.first();
         const addControl = first.getByRole('button', { name: 'Přidat nový takt', exact: true });
         const repeat = first.getByRole('button', { name: 'Přidat stejný takt', exact: true });
