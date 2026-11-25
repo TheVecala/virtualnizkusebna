@@ -33,11 +33,32 @@ foreach ([['fill'=>1],['fill'=>4],['special'=>'pause'],['fill'=>'0'],['crash'=>1
 $next=$map; $next['sections'][0]['bars'][]=$bar; reject_map($next,'duplicate bar IDs');
 $next=$map; $next['sections'][0]['id']=$bar['id']; reject_map($next,'section/bar ID collision');
 $next=$map; $next['sections'][0]['bars']=[]; reject_map($next,'empty section');
-$next=$map; $next['schema_version']=2; reject_map($next,'unknown schema version');
+$next=$map; $next['schema_version']=3; reject_map($next,'unknown schema version');
 $next=$map; $next['sections'][0]['name']=' '; reject_map($next,'blank section name');
 foreach (['{}','null','[]','{"schema_version":1,"sections":{}}','{bad'] as $body) {
     try { vz2_song_map_body($body); throw new RuntimeException('invalid JSON shape accepted'); }
     catch (Vz2Error $e) { check_map(true,'reject JSON shape '.$body); }
 }
 check_map(vz2_document_body("  Text\n")==="  Text\n" && vz2_document_kind('tablature')==='tablature','legacy plain documents unchanged');
+$modern = $map;
+$modern['schema_version'] = 2;
+$modern['sections'][0]['bars'] = [];
+check_map(json_decode(vz2_song_map_body($encode($modern)),true)===$modern, 'V2 accepts empty section');
+$rhythm = ['id'=>$bar['id'],'kind'=>'rhythm','base'=>'ride',
+    'meter'=>['numerator'=>7,'denominator'=>8,'groups'=>[2,2,3]],
+    'marks'=>[['unit'=>6,'state'=>'pause','crash'=>true]],'unresolved_fill'=>null,'detail'=>$bar['detail']];
+$modern['sections'][0]['bars'][] = $rhythm;
+check_map(json_decode(vz2_song_map_body($encode($modern)),true)===$modern, 'V2 preserves Crash with a pause in odd meter');
+foreach ([
+    ['meter'=>['numerator'=>7,'denominator'=>8,'groups'=>[2,2,2]]],
+    ['marks'=>[['unit'=>8,'state'=>'fill','crash'=>false]]],
+    ['marks'=>[['unit'=>1,'state'=>null,'crash'=>false]]],
+    ['marks'=>array_merge($rhythm['marks'], $rhythm['marks'])],
+    ['kind'=>'unknown'],
+    ['meter'=>null],
+] as $change) {
+    $next = $modern;
+    $next['sections'][0]['bars'][0] = array_replace($rhythm, $change);
+    reject_map($next, 'reject invalid V2 bar '.json_encode($change));
+}
 echo 'PASS '.$checks.' checks'.PHP_EOL;

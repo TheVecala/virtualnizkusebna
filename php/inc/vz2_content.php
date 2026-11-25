@@ -115,10 +115,10 @@ function vz2_document_write(array $in): array {
             $body = vz2_one($db,'SELECT body FROM vz2_document_versions WHERE document_id=? AND revision=?',[$doc['id'],$source])['body'];
             $title = $doc['title'];
         } else {
-            $body = $kind === 'song_map' ? vz2_song_map_body($in['body'] ?? null) : vz2_document_body($in['body'] ?? null);
+            $body = $kind === 'song_map' ? vz2_song_map_v2_body($in['body'] ?? null) : vz2_document_body($in['body'] ?? null);
             $title = $kind === 'song_map' ? 'Mapa skladby' : vz2_text($in['title'] ?? null);
         }
-        if ($restore && $kind === 'song_map') $body = vz2_song_map_body($body);
+        if ($restore && $kind === 'song_map') $body = vz2_song_map_v2_body($body);
         if (!$doc) {
             vz2_query($db, 'INSERT INTO vz2_documents(collection_id,kind,title,created_by,updated_by,created_at,updated_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())', [$collection['id'],$kind,$title,vz2_actor(),vz2_actor()]);
             $id = (int)$db->insert_id;

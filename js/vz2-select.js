@@ -23,7 +23,7 @@
         p.style.top = (up ? Math.max(top + 8, box.top - Math.min(available, p.scrollHeight) - 4) : box.bottom + 4) + 'px';
     }
     function enhance(select) {
-        if (select.dataset.vz2Select || select.multiple || select.size > 1 || !select.parentNode) return;
+        if (select.dataset.vz2Select || select.hasAttribute('data-native-select') || select.multiple || select.size > 1 || !select.parentNode) return;
         select.dataset.vz2Select = 'true';
         const wrapper = document.createElement('span'); wrapper.className = 'vz2-select';
         select.before(wrapper); wrapper.append(select);

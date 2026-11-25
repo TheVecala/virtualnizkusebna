@@ -174,6 +174,11 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
             console.log('PASS wave boundaries: ' + checks + ' checks');
             return;
         }
+        if (process.env.VZ2_TEST_SUITE === 'songmap-migration') {
+            await require('./vz2_song_map_migration.integration')({ request, clients, db, good, check, database, dbPort, php, root });
+            console.log('PASS song map migration: ' + checks + ' checks');
+            return;
+        }
         if (process.env.VZ2_TEST_SUITE === 'songmap') {
             await require('./vz2_song_map.integration')({ request, clients, db, good, check });
             await require('./vz2_song_map.browser')({ base, clients, good, request, db, check, temp });

@@ -12,6 +12,13 @@ nepatří do veřejného webu. Podrobný postup pro alfu je v
 `2_migrace/song-details-v2.1.1.md`. Již provedenou 010 na společné DB není
 potřeba opakovat pro druhou instalaci.
 
+## Jednorázový přechod Mapy skladby na schéma 2
+
+Pro tento balíček platí koordinovaný postup pro alfu i betu podle
+`2_migrace/song-map-cutover.md`. Aplikační soubory a převod map se nasazují
+během společné odstávky. Předběžný čtecí SQL přehled a CLI nástroj jsou v
+`2_migrace/`. Tuto složku uchovejte mimo veřejný web vedle `1_soubory/`.
+
 ## Soubory
 
 Do kořene cílové aplikace nahrajte obsah `1_soubory/`, se zachováním podadresářů.

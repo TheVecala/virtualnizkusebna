@@ -69,9 +69,11 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10171d">
   <title>Simple · Virtuální zkušebna</title>
+  <link rel="stylesheet" href="css/vz2-song-map-symbol.css?v=<?=hash_file('sha256', __DIR__.'/css/vz2-song-map-symbol.css')?>">
   <link rel="stylesheet" href="css/vz2-overview-render.css?v=<?=filemtime(__DIR__.'/css/vz2-overview-render.css')?>">
   <link rel="stylesheet" href="css/hrani.css?v=<?=filemtime(__DIR__.'/css/hrani.css')?>">
   <script src="js/vz2-song-map-model.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map-model.js')?>" defer></script>
+  <script defer src="js/vz2-song-map-svg.js?v=<?=hash_file('sha256', __DIR__.'/js/vz2-song-map-svg.js')?>"></script>
   <script src="js/vz2-timestamp-model.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-model.js')?>" defer></script>
   <script src="js/vz2-overview-render.js?v=<?=filemtime(__DIR__.'/js/vz2-overview-render.js')?>" defer></script>
   <script src="js/hrani.js?v=<?=filemtime(__DIR__.'/js/hrani.js')?>" defer></script>

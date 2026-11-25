@@ -47,7 +47,11 @@ for (const entry of entries) {
 }
 const support = [
     ['_pomocne/migrations/010_vz2_song_details.sql', '2_migrace/010_vz2_song_details.sql'],
-    ['_pomocne/docs/vz2/song-details-v2.1.1.md', '2_migrace/song-details-v2.1.1.md']
+    ['_pomocne/docs/vz2/song-details-v2.1.1.md', '2_migrace/song-details-v2.1.1.md'],
+    ['_pomocne/docs/vz2/song-map-cutover.md', '2_migrace/song-map-cutover.md'],
+    ['_pomocne/sql/song-map-inventory.sql', '2_migrace/song-map-inventory.sql'],
+    ['_pomocne/tools/vz2_song_map_migrate.php', '2_migrace/vz2_song_map_migrate.php'],
+    ['_pomocne/CHANGELOG.md', 'CHANGELOG.md']
 ].map(([source, name]) => {
     const content = fs.readFileSync(path.join(root, source));
     fs.mkdirSync(path.dirname(path.join(out, name)), { recursive: true });
@@ -57,7 +61,7 @@ const support = [
 fs.copyFileSync(path.join(root,'_pomocne/deploy/current/README.cs.md'),path.join(out,'README.cs.md'));
 fs.writeFileSync(path.join(out,'removed-files.txt'),removed.join('\n')+'\n');
 fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({
-    version:'VZ2.1.1', required_migration:'010', support_files:support,
+    version:'VZ2.1.1', required_migration:'010', required_song_map_schema:2, support_files:support,
     mode:'full', source_commit:git('rev-parse','HEAD'), working_tree_changes:git('status','--porcelain'),
     note:'Hashes identify working-tree content. Files outside _pomocne are included automatically, except Git metadata and preserved server configuration. removed-files.txt applies only to this installation.',
     preserved_server_files:serverConfiguration,

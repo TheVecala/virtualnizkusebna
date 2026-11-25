@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="cs" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geometrie SVG ikon Mapy skladby</title>
+<link rel="stylesheet" href="../../css/themes.css">
+<link rel="stylesheet" href="../../css/vz2-song-map-symbol.css">
+<script defer src="../../js/vz2-song-map-model.js"></script>
+<script defer src="../../js/vz2-song-map-svg.js"></script>
+<script defer src="vz2_song_map_geometry.js"></script>
+<style>
+body { font: 15px system-ui, sans-serif; color: var(--color-text); background: var(--color-panel); padding: 1rem; }
+h2 { font-size: 1.1rem; }
+section { overflow-x: auto; }
+table { border-collapse: collapse; }
+th, td { border-bottom: 1px solid var(--color-divider); padding: .5rem; text-align: center; }
+th[scope="row"] { text-align: left; white-space: nowrap; }
+@media print { tr { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<h1>Geometrie SVG ikon Mapy skladby</h1>
+<p id="result" role="status">Probíhá kontrola geometrie.</p>
+<p>U krajních dvojic Ride sahá zaoblený konec vnější diagonály křížku přibližně 1,84 SVG jednotky za střednici obrysu. Při současném Crashi se v rohu mohou značky dotknout. Zvětšený Crash má rozpětí 18 jednotek a u rohů může včetně tahu přesáhnout okraj ikony o 2 jednotky.</p>
+<main id="preview"></main>
+</body>
+</html>

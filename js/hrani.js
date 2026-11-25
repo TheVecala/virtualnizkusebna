@@ -286,7 +286,7 @@
         cell.setAttribute('aria-label', name);
         cell.setAttribute('role', 'img');
         cell.title = name;
-        cell.append(element('span', 'simple-bar-number', String(number)), element('strong', '', model.symbol(bar)));
+        cell.append(element('span', 'simple-bar-number', String(number)), window.Vz2SongMapSvg.render(bar));
         grid.append(cell);
         if (detail) {
           const annotation = element('div', 'simple-bar-detail');

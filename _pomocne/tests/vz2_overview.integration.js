@@ -75,7 +75,7 @@ module.exports = async ({ base, clients, request, good, db, check, browser }) =>
         && songMap.label === 'Mapa' && songMap.body === '10 taktů' && songMap.sections.length === 2
         && songMap.sections[0].name === 'Refrén' && songMap.sections[0].first_bar === 1
         && songMap.sections[0].bars.length === 9 && songMap.sections[0].bars[0].has_detail
-        && songMap.sections[0].bars[1].base === 'ride' && songMap.sections[0].bars[1].fill === 2
+        && songMap.sections[0].bars[1].base === 'ride' && songMap.sections[0].bars[1].unresolved_fill === 2
         && songMap.sections[1].name === 'Bridge' && songMap.sections[1].first_bar === 10
         && songMap.sections[1].bars.length === 1
         && foundSong.entries.some(item => item.body === 'Hraj tiše.')
