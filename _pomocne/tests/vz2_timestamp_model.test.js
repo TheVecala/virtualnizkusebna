@@ -25,6 +25,11 @@ for (const duration_ms of [12000, null, 5000, 0]) {
     assert.deepEqual(M.normalize({ ...recording, entries: [...entries].reverse() }), js);
 }
 const items = M.normalize({ id: 42, entries });
+const shortened = M.normalize({ id: 42, duration_ms: 5000, entries });
+assert.equal(shortened.length, items.length, 'shorter replacement never hides entries');
+assert.equal(shortened.find(i => i.id === 't1').end_ms, 9000, 'explicit end survives shortening');
+assert.equal(shortened.find(i => i.id === 't1').truncated, true);
+assert.equal(shortened.find(i => i.id === 't7').out_of_range, true);
 assert.equal(items.find(i => i.id === 't4').end_ms, null, 'neither next marker nor duration closes a passage');
 assert.equal(items.find(i => i.id === 't3').song_id, 9);
 assert.equal(items.find(i => i.id === 't6').parent_id, null, 'overlap never silently assigns a parent');

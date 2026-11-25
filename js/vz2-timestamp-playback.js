@@ -3,6 +3,11 @@
     'use strict';
     let active = null, serial = 0, busy = false;
     const notify = () => document.dispatchEvent(new Event('vz2:timestamp-playback'));
+    function bounds(adapter, item) {
+        const duration = adapter.durationMs?.();
+        if (duration != null && item.start_ms >= duration) throw Error('Značka je mimo délku nahrávky.');
+        return item.end_ms === null ? null : duration == null ? item.end_ms : Math.min(item.end_ms, duration);
+    }
     const api = root.Vz2TimestampPlayback = {
         state: () => active,
         stop() { serial++; active = null; notify(); },
@@ -10,7 +15,8 @@
             if (repeat && item.end_ms === null) throw Error('Nejprve doplňte konec úseku.');
             api.stop(); const token = serial;
             root.Vz2TimestampStore.select({ recording_id: item.recording_id, item_id: item.id });
-            await adapter.playRange(item.start_ms, item.end_ms);
+            const end = bounds(adapter, item);
+            await adapter.playRange(item.start_ms, end);
             if (token !== serial || owner?.dead) return;
             active = { adapter, item, owner, repeat, onError }; notify();
         }
@@ -25,10 +31,13 @@
         const state = active;
         if (!state || busy || state.adapter.isLoading?.()) return;
         if (!state.adapter.canPlay()) { api.stop(); return; }
-        if (state.item.end_ms === null || state.adapter.currentTimeMs() < state.item.end_ms) return;
+        let end;
+        try { end = bounds(state.adapter, state.item); }
+        catch (e) { api.stop(); state.onError(e.message); return; }
+        if (end === null || state.adapter.currentTimeMs() < end) return;
         if (!state.repeat) { state.adapter.pause?.(); api.stop(); return; }
         busy = true;
-        try { await state.adapter.playRange(state.item.start_ms, state.item.end_ms); }
+        try { await state.adapter.playRange(state.item.start_ms, end); }
         catch (e) { if (active === state) api.stop(); state.onError(e.message); }
         finally { busy = false; }
     }, 25);

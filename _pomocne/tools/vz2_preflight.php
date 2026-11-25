@@ -101,6 +101,8 @@ try {
     $collectionColumns=array_column(vz2_rows($db,'SHOW COLUMNS FROM vz2_collections'),'Field');
     vz2_preflight_report(!array_diff(['song_description','song_tempos','song_meters'],$collectionColumns),'Song description, tempos and meters (migration 010)');
     $timestampColumns=array_column(vz2_rows($db,'SHOW COLUMNS FROM vz2_timestamps'),'Field');
+    $operationColumns=array_column(vz2_rows($db,'SHOW COLUMNS FROM vz2_file_operations'),'Type','Field');
+    vz2_preflight_report(isset($operationColumns['payload_json']) && str_contains($operationColumns['action']??'',"'replace_audio'"),'Audio replacement recovery (migration 011)');
     vz2_preflight_report(!array_diff(['end_time_ms','passage_type','note_text','song_collection_id','parent_timestamp_id'],$timestampColumns),'Explicit timestamp intervals (migration 009)');
     $postBody = $db->query("SHOW COLUMNS FROM vz2_discussion_posts WHERE Field='body'")->fetch_assoc();
     vz2_preflight_report($postBody && strtolower($postBody['Type'])==='mediumtext', 'Discussion MEDIUMTEXT (migration 003)');

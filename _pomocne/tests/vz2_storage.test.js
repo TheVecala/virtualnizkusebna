@@ -57,6 +57,7 @@ $completed=hash_file('sha256',$target)===$hash && is_file($source);
 unlink($source);vz2_copy_exclusive($source,$target,$hash);$recovered=is_file($target);
 file_put_contents($source,$body);file_put_contents($target,substr($body,0,100));
 $partial=false;try{vz2_copy_exclusive($source,$target,$hash);}catch(RuntimeException $e){$partial=$e->getCode()===409;}
+clearstatcache(true,$target); // Inspect the overwritten fixture, not PHP's earlier stat cache.
 echo json_encode([$collision && $preserved,$completed,$recovered,$partial && filesize($target)===100 && hash_file('sha256',$source)===$hash]);
 `);
     const io=JSON.parse(execFileSync(php,['-d','disable_functions=link',ioTest],{windowsHide:true,encoding:'utf8'}));

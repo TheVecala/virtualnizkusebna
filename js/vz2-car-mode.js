@@ -192,6 +192,7 @@
                 text('span', [row.song_title, row.label].filter((value, i, values) => value && values.indexOf(value) === i).join(' · '), 'car-chapter-name'),
                 text('span', '', 'car-chapter-play'));
             if (row.end_ms === null) button.title = 'Konec úseku není doplněný.';
+            if (row.out_of_range) { button.disabled = true; button.title = 'Mimo délku nahrávky'; }
             button.lastElementChild.setAttribute('aria-hidden', 'true');
             button.addEventListener('click', async () => {
                 if (context?.player?.phase !== 'ready') return;

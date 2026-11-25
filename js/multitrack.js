@@ -1584,6 +1584,20 @@
         play: playTransport,
         seek: function(seconds) { seekTo(seconds, true); },
         destroy: cleanupCurrentSet,
+        restoreSettings: function(snapshot) {
+            if (!currentSet || currentSet.phase !== 'ready' || String(currentSet.item.id) !== String(snapshot.id)) return;
+            currentSet.tracks.forEach(function(track) {
+                var saved = snapshot.tracks.find(function(t) { return t.file === track.file; });
+                if (!saved) return;
+                track.muted = !!saved.muted; track.solo = !!saved.solo;
+                track.volume = clamp(finiteNumber(saved.volume, 1), 0, 1);
+                if (track.channel) {
+                    track.channel.fader.value = String(Math.round(track.volume * 100));
+                    track.channel.value.textContent = Math.round(track.volume * 100) + ' %';
+                }
+            });
+            applyTrackGains(currentSet);
+        },
         detectSourceSampleRate: detectSourceSampleRate,
         getWaveform: function() {
             if (!currentSet || currentSet.phase !== 'ready') return null;

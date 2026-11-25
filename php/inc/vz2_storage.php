@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/vz2_core.php';
 require_once __DIR__.'/vz2_media.php';
 require_once __DIR__.'/vz2_file_io.php';
+require_once __DIR__.'/vz2_audio_replacement.php';
 
 function vz2_within(string $path,string $root): bool {
     $path=str_replace('\\','/',rtrim($path,'/\\'));$root=str_replace('\\','/',rtrim($root,'/\\'));
@@ -210,13 +211,14 @@ function vz2_run_operation(int $id): array {
     if(!auth_is_admin() && (int)$op['actor_id']!==vz2_actor())throw new Vz2Error('Cizí operace.',403);
     if($op['state']==='completed')return ['id'=>(int)$op['target_id'],'operation_id'=>$id,'completed'=>true];
     if($op['action']==='delete_collection' && !auth_is_admin())throw new Vz2Error('Úplné smazání celé skladby nebo zkoušky smí dokončit jen admin.',403);
-    vz2_permission(str_starts_with($op['action'],'upload_')?'upload':'delete_file');
+    vz2_permission(str_starts_with($op['action'],'upload_') || $op['action']==='replace_audio'?'upload':'delete_file');
     $lock=fopen(vz2_path('.locks/'.$id.'.lock',true),'c');
     if(!$lock || !flock($lock,LOCK_EX|LOCK_NB)){if($lock)fclose($lock);throw new Vz2Error('Operace právě probíhá.',409);}
     try{
         $op=vz2_one($db,'SELECT * FROM vz2_file_operations WHERE id=?',[$id]);
         if($op['state']==='completed')return ['id'=>(int)$op['target_id'],'operation_id'=>$id,'completed'=>true];
         vz2_query($db,"UPDATE vz2_file_operations SET state='running',error_code=NULL,updated_at=UTC_TIMESTAMP() WHERE id=?",[$id]);
+        if($op['action']==='replace_audio')return vz2_run_audio_replacement($db,$op);
         $upload=str_starts_with($op['action'],'upload_');
         foreach(vz2_rows($db,'SELECT * FROM vz2_file_operation_items WHERE operation_id=? ORDER BY item_no',[$id]) as $item){
             if($item['state']==='done' && !$upload)continue;

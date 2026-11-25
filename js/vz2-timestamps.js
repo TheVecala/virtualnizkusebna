@@ -284,7 +284,7 @@
                     const seek = button(compactFormat(row.time_ms), async () => {
                         try { api.stopLoop(); await this.adapter.playRange(row.time_ms); }
                         catch (e) { status.textContent = e.message; }
-                    }); seek.className = 'ts-time'; seek.title = 'Přehrát od ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.endMs = row.time_ms;
+                    }); seek.className = 'ts-time'; seek.title = 'Přehrát od ' + format(row.time_ms); seek.dataset.playback = 'seek'; seek.dataset.startMs = row.time_ms;
                     let caption = [annotation.song_title, annotation.label].filter(Boolean).join(' · ');
                     if (annotation.kind === 'take') {
                         const description = String(row.body || '').trim().replace(/^[↑↓]$/, '');
@@ -309,7 +309,7 @@
                             try { await Playback.play(this.adapter, annotation, { repeat: true, owner: this, onError: this.error }); }
                             catch (e) { status.textContent = e.message; }
                         }); repeat.dataset.playback = end == null ? 'unknown' : 'loop';
-                        if (end != null) repeat.dataset.endMs = end;
+                        repeat.dataset.startMs = annotation.start_ms;
                         repeat.title = end == null ? 'Konec úseku není známý.' : format(row.time_ms) + ' – ' + format(end); actions.append(repeat);
                     }
                     const interval = ['take', 'passage'].includes(annotation.kind);
@@ -324,6 +324,8 @@
                     }));
                     if (interval && end === null) text.append(' ', el('small', '— Doplnit konec'));
                     if (row.kind === 'song_end' && !row.paired_timestamp_id) text.append(' ', el('small', '— konec bez začátku'));
+                    if (annotation.out_of_range) text.append(' ', el('small', '— Mimo délku nahrávky'));
+                    else if (annotation.truncated) text.append(' ', el('small', '— Přesahuje konec; přehraje se do konce audia'));
                     const rowMain = el('div'); rowMain.className = 'ts-row-main';
                     rowMain.append(seek);
                     if (boundary) rowMain.append(boundary);
@@ -334,7 +336,7 @@
             playback() {
                 const duration = this.adapter?.durationMs();
                 shell.querySelectorAll('[data-playback]').forEach(b => b.disabled = b.dataset.playback === 'unknown' || !this.adapter?.canPlay()
-                    || (duration != null && Number(b.dataset.endMs) > duration));
+                    || (duration != null && Number(b.dataset.startMs) >= duration));
                 stop.hidden = Playback.state()?.owner !== this;
             },
             async load() { reload.disabled = true; try { const value = await request(id); if (!this.dead) { publish(value); status.textContent = ''; } } catch (e) { status.textContent = e.message; } finally { reload.disabled = false; } },

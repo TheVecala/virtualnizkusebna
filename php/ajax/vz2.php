@@ -31,6 +31,9 @@ try {
         vz2_ready(true);
         if(empty($_SESSION['user_id']))throw new Vz2Error('Zápis vyžaduje osobní účet.',403);
         if($action==='upload'){$result=vz2_upload($in,$_FILES);http_response_code(201);}
+        elseif($action==='prepare_audio_replacement')$result=vz2_prepare_audio_replacement($in,$_FILES);
+        elseif($action==='replace_audio')$result=vz2_replace_audio($in);
+        elseif($action==='discard_audio_replacement')$result=vz2_discard_audio_replacement($in);
         elseif(in_array($action,['remove_audio','remove_attachment','delete_recording','delete_collection'],true))$result=vz2_remove($in);
         elseif($action==='retry')$result=vz2_run_operation(vz2_id($in['operation_id']??null));
         else $result=vz2_mutate($in);

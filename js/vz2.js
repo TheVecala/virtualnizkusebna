@@ -432,7 +432,7 @@
             durationMs: () => current()?.duration == null ? null : Math.round(current().duration * 1000),
             seek: ms => { if (current()?.phase === 'ready') window.MultitrackApp.seek(ms / 1000); },
             playRange: async (start, end) => {
-                if (current()?.phase !== 'ready' || end > Math.round(current().duration * 1000)) throw new Error('Tento úsek není v načteném audiu dostupný.');
+                if (current()?.phase !== 'ready' || start >= Math.round(current().duration * 1000)) throw new Error('Tento úsek není v načteném audiu dostupný.');
                 document.querySelectorAll('#content audio').forEach(a => a.pause());
                 window.MultitrackApp.pause(); window.MultitrackApp.seek(start / 1000); await window.MultitrackApp.play();
             }
@@ -522,6 +522,8 @@
             const li = node('li', fileName(f) + (f.url ? '' : ' · ' + state(f.state)));
             if (f.url) fileActions.append(fileLink(f));
             if (cfg.write && r.can_edit) fileActions.append(button(r.files.length > 1 ? 'Přejmenovat soubor: ' + fileName(f) : 'Přejmenovat soubor', () => openEdit(f, 'track', r)));
+            if (cfg.write && r.can_replace && r.lifecycle === 'active' && ['available', 'deleted', 'missing'].includes(f.state))
+                fileActions.append(button((f.state === 'deleted' || f.state === 'missing' ? 'Nahrát náhradu' : 'Nahradit soubor') + (r.files.length > 1 ? ': ' + fileName(f) : ''), () => openAudioReplacement(r, f)));
             if (r.kind !== 'single') {
                 if (cfg.write && cfg.canReorder && r.can_edit && r.files.length > 1) {
                     li.classList.add('recording-track-row');
@@ -552,6 +554,67 @@
         if (!body.hidden) prepareAudio();
         card.append(body);
         return card;
+    }
+    function openAudioReplacement(recording, file) {
+        const dialog = node('dialog', undefined, 'audio-replacement-dialog');
+        dialog.setAttribute('aria-label', 'Nahradit zvukový soubor');
+        const form = node('form');
+        form.innerHTML = '<div class="dialog-header"><h2>Nahradit zvukový soubor</h2><button type="button" class="modal-close" aria-label="Zavřít náhradu">×</button></div><p class="replacement-name"></p><p>Zvolte nový export se stejným začátkem a časováním. Značky, popisek a nastavení zůstanou zachované.</p><label>Nový zvukový soubor<input type="file" name="file" required accept=".mp3,.wav,.ogg,.flac,.aac"></label><p class="replacement-status" role="status" aria-live="polite"></p><progress max="100" hidden aria-label="Nahrávání náhrady"></progress><p class="replacement-warning"></p><p class="error" role="alert"></p><div class="toolbar"><button type="submit">Nahrát a zkontrolovat</button><button type="button" class="replacement-cancel">Zrušit</button></div>';
+        form.querySelector('.replacement-name').textContent = fileName(file);
+        const input = form.elements.file, submit = form.querySelector('[type=submit]');
+        const status = form.querySelector('.replacement-status'), warning = form.querySelector('.replacement-warning');
+        const error = form.querySelector('[role=alert]'), progress = form.querySelector('progress');
+        let prepared = null, busy = false, saved = false;
+        const close = () => { if (!busy) dialog.close(); };
+        form.querySelector('.modal-close').onclick = close;
+        form.querySelector('.replacement-cancel').onclick = close;
+        dialog.addEventListener('cancel', e => { if (busy) e.preventDefault(); });
+        const discard = () => { if (prepared && !saved) api({ action: 'discard_audio_replacement', token: prepared.token }).catch(err => message(err.message, true)); };
+        dialog.addEventListener('close', () => { discard(); dialog.remove(); });
+        input.onchange = () => { discard(); prepared = null; warning.textContent = ''; status.textContent = ''; submit.textContent = 'Nahrát a zkontrolovat'; };
+        const precise = ms => ms == null ? 'nezjištěná' : window.Vz2Timestamps.format(ms) + ',' + String(ms % 1000).padStart(3, '0');
+        form.onsubmit = async e => {
+            e.preventDefault(); if (busy || saved) return;
+            busy = true; error.textContent = '';
+            form.querySelectorAll('button, input').forEach(c => c.disabled = true);
+            try {
+                if (!prepared) {
+                    const fields = new FormData(); fields.append('file', input.files[0]);
+                    fields.append('action', 'prepare_audio_replacement'); fields.append('id', recording.id);
+                    fields.append('file_id', file.id); fields.append('revision', recording.revision);
+                    progress.hidden = false; progress.value = 0; status.textContent = 'Nahrávám a ověřuji náhradu…';
+                    prepared = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest(); xhr.open('POST', 'php/ajax/vz2.php'); xhr.setRequestHeader('X-CSRF-Token', cfg.csrf);
+                        xhr.upload.onprogress = event => { if (event.lengthComputable) progress.value = event.loaded / event.total * 100; };
+                        xhr.upload.onload = () => { progress.removeAttribute('value'); status.textContent = 'Ověřuji zvukový soubor…'; };
+                        xhr.onerror = () => reject(Error('Spojení selhalo. Zkuste náhradu nahrát znovu.'));
+                        xhr.onload = () => { try { const result = JSON.parse(xhr.responseText); if (!xhr.status || xhr.status >= 300 || !result.ok) throw Error(result.error || 'Upload selhal.'); resolve(result); } catch (err) { reject(err); } };
+                        xhr.send(fields);
+                    });
+                    const difference = prepared.old_duration_ms == null ? null : prepared.new_duration_ms - prepared.old_duration_ms;
+                    status.textContent = 'Původní délka: ' + precise(prepared.old_duration_ms) + ' · nová délka: ' + precise(prepared.new_duration_ms) + (difference == null ? '' : ' · rozdíl: ' + (difference < 0 ? '−' : '+') + precise(Math.abs(difference))) + '.';
+                    if (recording.kind === 'multitrack') status.textContent += ' Délka celé nahrávky po výměně: ' + precise(prepared.recording_duration_ms) + '.';
+                    warning.textContent = (difference === null ? 'Původní délka není známá. ' : difference !== 0 ? 'Délka souboru se liší. ' : '') + 'Značky mimo délku nahrávky: ' + prepared.outside_count + '. Úseky přesahující konec: ' + prepared.overlap_count + '. Časy se zachovají; přesahující úseky se přehrají do konce audia.';
+                    submit.textContent = 'Potvrdit náhradu';
+                } else {
+                    status.textContent = 'Dokončuji náhradu…';
+                    await api({ action: 'replace_audio', token: prepared.token }); saved = true;
+                    const mixSettings = window.MultitrackApp?.getState();
+                    window.Vz2Timestamps.stopLoop();
+                    if (mixerId === String(recording.id)) stopMixer();
+                    if (window.Vz2Player.getState()?.id === String(recording.id)) window.Vz2Player.closeLooper();
+                    dialog.close();
+                    await refresh(); await window.MultitrackApp.refreshList();
+                    if (String(mixSettings?.id) === String(recording.id)) {
+                        await mixerAdapter(recording.id).prepare();
+                        window.MultitrackApp.restoreSettings(mixSettings);
+                    }
+                    message('Zvukový soubor byl nahrazen. Značky a nastavení zůstaly zachované.');
+                }
+            } catch (err) { error.textContent = err.message; if (saved) message('Náhrada byla uložena, ale seznam se nepodařilo obnovit. ' + err.message, true); }
+            finally { busy = false; progress.hidden = true; form.querySelectorAll('button, input').forEach(c => c.disabled = false); submit.disabled = saved; }
+        };
+        dialog.append(form); document.body.append(dialog); dialog.showModal();
     }
     async function decodeUploadPeaks(original, report, label) {
         const Context = window.AudioContext || window.webkitAudioContext;

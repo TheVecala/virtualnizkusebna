@@ -8,7 +8,7 @@
     function normalize(recording, context = {}) {
         const recordingId = Number(recording.id ?? recording.recording_id);
         const duration = time(recording.duration_ms);
-        const entries = (recording.entries || recording.timestamps || []).filter(t => ['song_start', 'song_end', 'passage', 'note'].includes(t.kind) && time(t.time_ms) !== null && (duration === null || Number(t.time_ms) <= duration))
+        const entries = (recording.entries || recording.timestamps || []).filter(t => ['song_start', 'song_end', 'passage', 'note'].includes(t.kind) && time(t.time_ms) !== null)
             .map(t => ({ ...t, time_ms: Number(t.time_ms) })).sort((a, b) => a.time_ms - b.time_ms || Number(a.id) - Number(b.id));
         const used = new Set(), items = [];
         let takeNumber = 0;
@@ -19,7 +19,7 @@
             const end = ends.length === 1 ? ends[0] : null;
             if (end) used.add(Number(end.id));
             const explicitEnd = take ? end?.time_ms ?? null : entry.kind === 'passage' ? time(entry.end_time_ms) : null;
-            const endMs = explicitEnd !== null && explicitEnd > entry.time_ms && (duration === null || explicitEnd <= duration) ? explicitEnd : null;
+            const endMs = explicitEnd !== null && explicitEnd > entry.time_ms ? explicitEnd : null;
             const link = (context.recording_links || []).find(p => Number(p.source_recording_id) === recordingId && Number(p.start_timestamp_id) === Number(entry.id));
             const songId = take ? (entry.song_collection_id ?? link?.song_collection_id ?? null) : null;
             const song = (context.collections || []).find(c => Number(c.id) === Number(songId));
@@ -43,7 +43,9 @@
                 passage_type: null, note_text: '', parent_id: null, song_id: null, song_title: '', can_edit: !!entry.can_edit, can_delete: !!entry.can_delete,
                 source: entry, end_source: null, boundary: 'open' });
         }
-        return items.sort((a, b) => a.start_ms - b.start_ms || a.timestamp_id - b.timestamp_id);
+        return items.map(item => ({ ...item, out_of_range: duration !== null && item.start_ms >= duration,
+            truncated: duration !== null && item.start_ms < duration && item.end_ms !== null && item.end_ms > duration }))
+            .sort((a, b) => a.start_ms - b.start_ms || a.timestamp_id - b.timestamp_id);
     }
     function items(recording, context) {
         return recording.annotation_version === version && Array.isArray(recording.annotations) ? recording.annotations : normalize(recording, context);

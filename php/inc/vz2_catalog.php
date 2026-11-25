@@ -36,6 +36,7 @@ function vz2_catalog():array {
         unset($r['storage_dir']);$r['files']=$byRecording[$r['id']]??[];
         $r['can_edit']=auth_is_admin() || (ma_pravo('edit_recording_label') && (int)$r['created_by']===(int)($_SESSION['user_id']??0));
         $r['can_remove']=auth_is_admin() || (ma_pravo('delete_file') && (int)$r['created_by']===(int)($_SESSION['user_id']??0));
+        $r['can_replace']=$r['can_remove'] && (auth_is_admin() || ma_pravo('upload'));
         $r['can_move']=auth_is_admin() || (ma_pravo('move_file') && (int)$r['created_by']===(int)($_SESSION['user_id']??0));
         $states=array_column($r['files'],'state');
         $r['audio_state']=$states && count(array_unique($states))===1?$states[0]:'partial';

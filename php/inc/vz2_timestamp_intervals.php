@@ -2,8 +2,8 @@
 declare(strict_types=1);
 require_once __DIR__.'/vz2_timestamp_model.php';
 
-function vz2_timestamp_ms($value, array $recording): int {
-    if(!is_int($value) || $value<0 || $value>604800000 || ($recording['duration_ms']!==null && $value>(int)$recording['duration_ms']))
+function vz2_timestamp_ms($value, array $recording, ?int $existing = null): int {
+    if(!is_int($value) || $value<0 || $value>604800000 || ($value!==$existing && $recording['duration_ms']!==null && $value>(int)$recording['duration_ms']))
         throw new Vz2Error('Čas musí být celé milisekundy v rozsahu nahrávky (nejvýše 7 dní).');
     return $value;
 }
@@ -12,6 +12,9 @@ function vz2_timestamp_optional_id($value): ?int { return $value===null || $valu
 // Validate the entire recording after a proposed mutation, inside its lock and
 // transaction. Moving either boundary can invalidate a child, so it is never clipped.
 function vz2_timestamp_validate_graph(mysqli $db, array $recording): void {
+    // Stored bounds may exceed a replacement's duration. Validate relationships,
+    // while each mutation separately validates any newly entered time.
+    $recording['duration_ms']=null;
     $rows=vz2_rows($db,'SELECT * FROM vz2_timestamps WHERE recording_id=? FOR UPDATE',[$recording['id']]);
     $by=[];$ends=[];foreach($rows as $row){$by[(int)$row['id']]=$row;if($row['paired_timestamp_id'])$ends[(int)$row['paired_timestamp_id']]=$row;}
     foreach($rows as $row){
@@ -114,7 +117,7 @@ function vz2_timestamp_mutate(array $in): array {
             $kind=$in['kind']??'';
             if(!in_array($kind,$interval?['song_start','passage']:['song_start','song_end','passage','note'],true))throw new Vz2Error('Neplatný typ zápisu.');
             if($interval && $row && $kind!==$row['kind'])throw new Vz2Error('Typ existujícího intervalu nelze změnit.');
-            $time=vz2_timestamp_ms($in['time_ms']??null,$recording);
+            $time=vz2_timestamp_ms($in['time_ms']??null,$recording,isset($row['time_ms'])?(int)$row['time_ms']:null);
             $type=$kind==='passage'?($in['passage_type']??$row['passage_type']??'custom'):null;
             if($type!==null && (!is_string($type) || !isset(vz2_passage_types()[$type])))throw new Vz2Error('Neplatný typ pasáže.');
             $body=$in['body']??null;
@@ -126,7 +129,7 @@ function vz2_timestamp_mutate(array $in): array {
             $parent=$kind==='passage'?vz2_timestamp_optional_id(array_key_exists('parent_timestamp_id',$in)?$in['parent_timestamp_id']:($row['parent_timestamp_id']??null)):null;
             $endMs=$kind==='passage'?(array_key_exists('end_time_ms',$in)?$in['end_time_ms']:(isset($row['end_time_ms'])?(int)$row['end_time_ms']:null)):null;
             if($kind==='passage' && !$row && !array_key_exists('end_time_ms',$in))$endMs=null;
-            if($endMs!==null)$endMs=vz2_timestamp_ms($endMs,$recording);
+            if($endMs!==null)$endMs=vz2_timestamp_ms($endMs,$recording,isset($row['end_time_ms'])?(int)$row['end_time_ms']:null);
             $pair=null;
             if($kind==='song_end'){
                 $pair=vz2_timestamp_optional_id(array_key_exists('paired_timestamp_id',$in)?$in['paired_timestamp_id']:($row['paired_timestamp_id']??null));
@@ -152,7 +155,7 @@ function vz2_timestamp_mutate(array $in): array {
                 $ends=vz2_rows($db,'SELECT * FROM vz2_timestamps WHERE paired_timestamp_id=? FOR UPDATE',[$timestampId]);$end=$ends[0]??null;
                 if($end)vz2_permission('comment',(int)$end['created_by']);
                 if($in['end_time_ms']!==null){
-                    $endTime=vz2_timestamp_ms($in['end_time_ms'],$recording);
+                    $endTime=vz2_timestamp_ms($in['end_time_ms'],$recording,isset($end['time_ms'])?(int)$end['time_ms']:null);
                     if($endTime<=$time)throw new Vz2Error('Konec úseku musí být po začátku.');
                     if($end)vz2_query($db,'UPDATE vz2_timestamps SET time_ms=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[$endTime,vz2_actor(),$end['id']]);
                     else vz2_query($db,"INSERT INTO vz2_timestamps(recording_id,kind,time_ms,body,paired_timestamp_id,created_by,updated_by,created_at,updated_at) VALUES (?,'song_end',?,'↓',?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())",[$id,$endTime,$timestampId,vz2_actor(),vz2_actor()]);
