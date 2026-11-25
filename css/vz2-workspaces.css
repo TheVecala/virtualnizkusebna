@@ -243,6 +243,7 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 .song-details-edit, .song-details-more { min-height: 32px; padding: 3px 7px; font-size: 12px; }
 .song-details-edit { flex: 0 0 auto; }
 .song-details-description { margin: 2px 0; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.song-details-line > .song-details-description { min-width: 0; }
 .song-details-description.is-expanded { display: block; }
 .song-details-more { color: var(--color-text-muted); }
 .collection-bpm { margin-left: auto; max-width: 38%; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
@@ -271,8 +272,9 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #panel-recordings .song-details-line { grid-row: 2; grid-column: 1; min-width: 0; }
     #panel-recordings .song-details-music { min-width: 0; }
     #panel-recordings > .panel-header > .panel-header-actions { grid-row: 2; grid-column: 2; justify-self: end; max-width: none; margin-left: 0; }
-    #panel-recordings .song-details-description { grid-row: 3; grid-column: 1 / -1; }
-    #panel-recordings .song-details-more { grid-row: 4; grid-column: 1 / -1; justify-self: start; }
+    #panel-recordings #song-details > .song-details-description { grid-row: 3; grid-column: 1 / -1; }
+    #panel-recordings .song-details-more { grid-row: 3; grid-column: 1 / -1; justify-self: start; }
+    #panel-recordings .song-details-description + .song-details-more { grid-row: 4; }
 }
 #collection-kind-icon { display: none; }
 @media (max-width: 767px) {

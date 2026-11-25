@@ -112,12 +112,14 @@
             edit.setAttribute('aria-label', (hasDetails ? 'Upravit ' : 'Přidat ') + label);
             edit.title = edit.getAttribute('aria-label'); edit.onclick = () => open(collection, options); row.append(edit);
         }
-        if (row.childElementCount) host.append(row);
+        if (row.childElementCount || description) host.append(row);
         if (description) {
             const text = make('p', description, 'song-details-description'), more = make('button', 'Zobrazit více', 'song-details-more');
             more.type = 'button'; more.setAttribute('aria-expanded', 'false'); more.hidden = true;
             more.onclick = () => { const expanded = more.getAttribute('aria-expanded') !== 'true'; more.setAttribute('aria-expanded', String(expanded)); text.classList.toggle('is-expanded', expanded); more.textContent = expanded ? 'Sbalit' : 'Zobrazit více'; };
-            host.append(text, more);
+            if (music) host.append(text);
+            else row.prepend(text);
+            host.append(more);
             observer = new ResizeObserver(() => { if (!text.classList.contains('is-expanded')) more.hidden = text.scrollHeight <= text.clientHeight + 1; }); observer.observe(text);
         }
         host.hidden = !host.childElementCount;

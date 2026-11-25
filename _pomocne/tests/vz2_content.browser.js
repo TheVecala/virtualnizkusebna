@@ -14,10 +14,13 @@ module.exports = async function ({ base, clients, good, request, db, check, temp
     const executablePath = [process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,chromium.executablePath(),'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(p=>p && fs.existsSync(p));
     const browser = await chromium.launch({headless:true,executablePath});
     const errors=[];
-    async function openPanelEditor(page, id) {
+    async function showPanel(page, id) {
         const toggle = page.locator('[data-desktop-panel="' + id + '"]');
         if (await toggle.getAttribute('aria-pressed') === 'false') await toggle.click();
-        await page.locator('#' + id + '-actions > button').first().click();
+    }
+    async function openPanelEditor(page, id, action = 'Upravit', actionsId = id) {
+        await showPanel(page, id);
+        await page.locator('#' + actionsId + '-actions').getByRole('button', { name: action, exact: true }).click();
     }
     async function pageFor(who) {
         const context=await browser.newContext({viewport:{width:1440,height:1000}});
@@ -67,6 +70,15 @@ module.exports = async function ({ base, clients, good, request, db, check, temp
         await openPanelEditor(page, 'lyrics');
         await dlg.locator('[name=document_body]:enabled').waitFor();
         check(true,'browser: history restore creates revision 4, draft survives catalogue refresh and discard leaves saved content unchanged');
+        await page.setViewportSize({width:390,height:400});
+        const historyButton = dlg.getByRole('button', {name:'Historie verzí', exact:true});
+        const historyInView = () => historyButton.evaluate(button => {
+            const rect = button.getBoundingClientRect();
+            return rect.top >= 0 && rect.bottom <= innerHeight;
+        });
+        assert(await historyInView(), 'history is visible on opening a short dialog');
+        await dlg.evaluate(dialog => { dialog.scrollTop = dialog.scrollHeight; });
+        assert(await historyInView(), 'history stays visible while scrolling the editor');
         await page.setViewportSize({width:390,height:844}); await page.screenshot({path:path.join(temp,'stage4-document-mobile.png')});
         assert(await dlg.evaluate(d=>d.scrollWidth<=d.clientWidth+1),'document dialog must fit mobile');
         await page.setViewportSize({width:1440,height:1000}); await page.screenshot({path:path.join(temp,'stage4-document-desktop.png')});
@@ -74,16 +86,20 @@ module.exports = async function ({ base, clients, good, request, db, check, temp
         await page.locator('#tablature-content').getByText('Tato skladba zatím nemá mapu.',{exact:true}).waitFor();
         assert.equal((await post('admin',{action:'document_save',collection_id:collection.id,kind:'tablature',document_id:null,current_revision:0,title:'Původní tabulatura',body:'e|---0---2---|\nB|---1---3---|\n'})).status,200);
         check((await get('admin',query)).json().version.body===original,'browser: replacement Map slot preserves legacy tablature storage and lyrics/chords');
-        await openPanelEditor(page, 'discussion');
+        const posts = page.locator('#discussion-content');
+        await openPanelEditor(page, 'discussion', 'Napsat příspěvek');
         await dlg.locator('[name=post_body]').fill('Adminův příspěvek'); await dlg.getByRole('button',{name:'Odeslat',exact:true}).click();
-        await dlg.locator('article').getByText('Adminův příspěvek',{exact:true}).waitFor();
-        await dlg.getByRole('button',{name:'Zavřít',exact:true}).click();
+        await dlg.waitFor({state:'detached'});
+        await posts.getByText('Adminův příspěvek',{exact:true}).waitFor();
         const bob=await pageFor('bob'), member=bob.locator('.vz2-content-dialog');
-        await openPanelEditor(bob, 'discussion');
-        await member.locator('article').getByText('Adminův příspěvek',{exact:true}).waitFor();
-        assert.equal(await member.locator('article button').count(),0);
+        const memberPosts = bob.locator('#discussion-content');
+        await openPanelEditor(bob, 'discussion', 'Napsat příspěvek');
+        assert.equal(await member.locator('article').count(),0);
+        assert.equal(await member.getByRole('button',{name:'Starší příspěvky'}).count(),0);
+        assert.equal(await memberPosts.locator('article button').count(),0);
         await member.locator('[name=post_body]').fill('Bobův příspěvek <script>alert(1)</script>'); await member.getByRole('button',{name:'Odeslat',exact:true}).click();
-        const own=member.locator('article').filter({hasText:'Bobův příspěvek'}); await own.waitFor(); assert.equal(await member.locator('script').count(),0);
+        await member.waitFor({state:'detached'});
+        const own=memberPosts.locator('article').filter({hasText:'Bobův příspěvek'}); await own.waitFor(); assert.equal(await memberPosts.locator('script').count(),0);
         await own.getByRole('button',{name:'Upravit',exact:true}).click(); await member.locator('[name=post_body]').fill('Bobův koncept');
         const thread=(await get('admin',{action:'discussion',collection_id:collection.id})).json(); const p=thread.posts.find(p=>p.created_by===3);
         assert.equal((await post('admin',{action:'post_update',thread_id:thread.thread.id,post_id:p.id,revision:p.revision,body:'Admin upravil Bobův příspěvek'})).status,200);
@@ -91,40 +107,73 @@ module.exports = async function ({ base, clients, good, request, db, check, temp
         await member.getByRole('button',{name:'Načíst aktuální příspěvek',exact:true}).waitFor(); assert.equal(await member.locator('[name=post_body]').inputValue(),'Bobův koncept');
         await member.getByRole('button',{name:'Načíst aktuální příspěvek',exact:true}).click(); await member.locator('pre').getByText(/Admin upravil/).waitFor();
         await member.getByRole('button',{name:'Použít aktuální revizi pro můj text',exact:true}).click(); await member.getByRole('button',{name:'Uložit úpravu',exact:true}).click();
-        await member.locator('article').getByText('Bobův koncept',{exact:true}).waitFor();
+        await member.waitFor({state:'detached'});
+        await memberPosts.locator('article').getByText('Bobův koncept',{exact:true}).waitFor();
         check(true,'browser: foreign post has no edit buttons; own post conflict retains draft and explicit resolution works');
-        await member.locator('article').filter({hasText:'Bobův koncept'}).getByRole('button',{name:'Smazat',exact:true}).click();
-        await member.locator('article').getByText('Bobův koncept',{exact:true}).waitFor({state:'detached'});
-        await member.getByRole('button',{name:'Zavřít',exact:true}).click();
+        await memberPosts.locator('article').filter({hasText:'Bobův koncept'}).getByRole('button',{name:'Smazat',exact:true}).click();
+        await memberPosts.locator('article').getByText('Bobův koncept',{exact:true}).waitFor({state:'detached'});
         const ideas = bob.locator('#ideas-workspace');
         await bob.getByRole('button',{name:'Nápady',exact:true}).click(); await ideas.locator('[name=post_body]').fill('Společný nápad');
         await ideas.getByRole('button',{name:'Odeslat',exact:true}).click(); await ideas.locator('article').getByText('Společný nápad',{exact:true}).waitFor();
         await bob.locator('[data-workspace-target=songs]:visible').click();
         const guest=await pageFor('guest'), readOnly=guest.locator('.vz2-content-dialog');
-        await openPanelEditor(guest, 'lyrics');
+        await openPanelEditor(guest, 'lyrics', 'Otevřít');
         await readOnly.locator('[name=document_body]:enabled').waitFor();
         assert.equal(await readOnly.locator('[name=document_body]').inputValue(),original);
         assert.equal(await readOnly.locator('[name=document_body]').evaluate(n=>n.readOnly),true);
         assert.equal(await readOnly.getByRole('button',{name:'Uložit',exact:true}).isVisible(),false);
         await readOnly.getByRole('button',{name:'Historie verzí',exact:true}).click(); await readOnly.getByRole('button',{name:/^Verze 1(?!\d)/}).click();
         assert.equal(await readOnly.getByRole('button',{name:'Obnovit jako novou verzi',exact:true}).isVisible(),false);
-        await readOnly.getByRole('button',{name:'Zavřít',exact:true}).click(); await guest.getByRole('button',{name:'Nápady',exact:true}).click();
+        await readOnly.getByRole('button',{name:'Zavřít',exact:true}).click();
+        await showPanel(guest, 'discussion');
+        await guest.locator('#discussion-content').getByText('Adminův příspěvek',{exact:true}).waitFor();
+        assert.equal(await guest.locator('#discussion-actions').getByRole('button',{name:'Napsat příspěvek'}).count(),0);
+        await guest.getByRole('button',{name:'Nápady',exact:true}).click();
         await guest.locator('#ideas-workspace article').getByText('Společný nápad',{exact:true}).waitFor(); assert.equal(await guest.locator('#ideas-workspace form').isVisible(),false);
         check(true,'browser: own post deletion works; global ideas shared with guest; guest sees documents/history without write controls');
-        await openPanelEditor(page, 'discussion');
-        await dlg.locator('article').getByText('Adminův příspěvek',{exact:true}).waitFor();
-        assert.equal(await dlg.getByText('Společný nápad',{exact:true}).count(),0);
+        await openPanelEditor(page, 'discussion', 'Napsat příspěvek');
+        assert.equal(await dlg.locator('article').count(),0);
+        assert.equal(await posts.getByText('Společný nápad',{exact:true}).count(),0);
         await page.setViewportSize({width:390,height:844}); await page.screenshot({path:path.join(temp,'stage4-discussion-mobile.png')});
         assert(await dlg.evaluate(d=>d.scrollWidth<=d.clientWidth+1),'discussion dialog must fit mobile');
         await page.setViewportSize({width:1440,height:1000}); await page.screenshot({path:path.join(temp,'stage4-discussion-desktop.png')});
         await dlg.getByRole('button',{name:'Zavřít',exact:true}).click();
-        await page.getByRole('button',{name:'Zkoušky',exact:true}).click(); await page.locator('#collections').getByRole('button',{name:second.title,exact:true}).click(); await openPanelEditor(page, 'discussion');
-        await dlg.getByText('Zatím žádné příspěvky.',{exact:true}).waitFor(); await dlg.getByRole('button',{name:'Zavřít',exact:true}).click();
+        const rehearsalDocuments = [
+            {kind:'lyrics_chords', panel:'lyrics', host:'lyrics', title:'Starý název zápisu'},
+            {kind:'rehearsal_starts', panel:'tablature', host:'rehearsal-starts', title:'Starý název začátků'}
+        ];
+        for (const doc of rehearsalDocuments) {
+            const result = await post('admin', { action:'document_save', collection_id:second.id, kind:doc.kind,
+                document_id:null, current_revision:0, title:doc.title, body:'Dříve uložený obsah' });
+            assert.equal(result.status, 200, result.text);
+        }
+        await page.getByRole('button',{name:'Zkoušky',exact:true}).click(); await page.locator('#collections').getByRole('button',{name:second.title,exact:true}).click();
+        for (const doc of rehearsalDocuments) {
+            await openPanelEditor(page, doc.panel, 'Upravit', doc.host);
+            await dlg.getByRole('button',{name:'Historie verzí',exact:true}).waitFor();
+            assert.equal(await dlg.getByLabel('Název dokumentu').count(),0);
+            const panelContent = page.locator('#' + doc.host + '-content');
+            assert.equal(await panelContent.getByText(doc.title).count(),0);
+            await dlg.locator('[name=document_body]').fill('Upravený obsah');
+            await dlg.getByRole('button',{name:'Uložit a zavřít',exact:true}).click();
+            await dlg.waitFor({state:'detached'});
+            await panelContent.getByText('Upravený obsah',{exact:true}).waitFor();
+            assert.equal((await get('admin',{...query, collection_id:second.id, kind:doc.kind})).json().document.title, doc.title);
+        }
+        await showPanel(page, 'discussion');
+        await posts.getByText('Zatím žádné příspěvky.',{exact:true}).waitFor();
+        await openPanelEditor(page, 'discussion', 'Napsat příspěvek');
+        assert.equal(await dlg.locator('article').count(),0);
+        await dlg.locator('[name=post_body]').fill('Příspěvek ke zkoušce');
+        await dlg.getByRole('button',{name:'Odeslat',exact:true}).click();
+        await dlg.waitFor({state:'detached'});
+        await posts.getByText('Příspěvek ke zkoušce',{exact:true}).waitFor();
+        assert.equal(await posts.getByText('Adminův příspěvek',{exact:true}).count(),0);
         const mix=await upload('admin',collection.id,'Mixér s diskusí','multitrack',['left.wav','right.wav'],[wav(1),wav(1)]); assert.equal(mix.status,201,mix.text);
         await page.goto(base+'index.php?v=2&view=mixer&recording_id='+mix.json().id);
         await page.waitForFunction(()=>window.MultitrackApp?.getState()?.phase==='ready');
-        await openPanelEditor(page, 'discussion');
-        await dlg.locator('article').getByText('Adminův příspěvek',{exact:true}).waitFor();
+        await showPanel(page, 'discussion');
+        await posts.getByText('Adminův příspěvek',{exact:true}).waitFor();
         assert.deepEqual(errors,[]);
         check(true,'browser: collection scopes stay separate, parent discussion remains accessible while Mixer plays, mobile layouts fit and no JS errors occur');
     } finally { await browser.close(); }

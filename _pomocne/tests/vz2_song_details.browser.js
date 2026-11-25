@@ -62,7 +62,7 @@ module.exports = async ({ base, clients, request, good, check, song, empty, rehe
             await header.locator('.song-details-music').waitFor({ state: 'visible' });
             assert(await header.locator('.song-details-music').isVisible(), 'metadata visible at ' + width);
             assert.equal(await page.locator('#car-mode-collection-open').count(), 0);
-            assert.equal(await page.locator('#catalog-picker').isVisible(), width < 1200);
+            await page.locator('#catalog-picker').waitFor({ state: width < 1200 ? 'visible' : 'hidden' });
             if (width < 768) {
                 const checkRows = async () => {
                     const boxes = await page.evaluate(() => {
@@ -104,9 +104,15 @@ module.exports = async ({ base, clients, request, good, check, song, empty, rehe
         await editor.waitFor({ state: 'hidden' });
         await header.locator('.song-details-description').filter({ hasText: 'Na další zkoušce' }).waitFor();
         assert.equal(await header.locator('.song-details-music').count(), 0);
-        await page.setViewportSize({ width: 390, height: 844 });
-        await header.getByRole('button', { name: 'Upravit popisek zkoušky' }).waitFor();
-        assert(await header.locator('.song-details-description').isVisible());
+        for (const width of [320, 390, 1440]) {
+            await page.setViewportSize({ width, height: 844 });
+            const pencil = await header.getByRole('button', { name: 'Upravit popisek zkoušky' }).boundingBox();
+            const description = await header.locator('.song-details-description').boundingBox();
+            assert(pencil && description && description.x + description.width <= pencil.x,
+                'rehearsal description and pencil sit side by side at ' + width);
+            assert(Math.abs(pencil.y + pencil.height / 2 - description.y - description.height / 2) < 2,
+                'rehearsal description and pencil share a row at ' + width);
+        }
         await page.goto(base + 'prehled.php');
         const preset = page.locator('[data-overview-preset=song_details]'), filters = page.locator('#overview-filters');
         assert(await preset.isVisible()); assert.equal(await filters.evaluate(e => e.open), false);
