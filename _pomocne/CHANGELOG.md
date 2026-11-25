@@ -2,9 +2,9 @@
 
 U každého vydání evidujeme změny pro uživatele, změny databáze a skutečné datum a revizi nasazení pro alfu a betu.
 
-## Připravované společné vydání
+## 25. 11. 2026 — Mapa skladby, Hraní a přehrávač
 
-**Stav k 24. 11. 2026:** Příprava. Číslo a datum vydání doplníme při nasazení.
+Vydání `c2e8557` bylo nasazeno nejdřív na betu a po ověření na alfu. Funkčnost obou prostředí potvrdil správce.
 
 ### Změny
 
@@ -15,13 +15,11 @@ U každého vydání evidujeme změny pro uživatele, změny databáze a skuteč
 
 ### Databáze
 
-Aktuální i historické revize map přejdou jednorázově z V1 na V2 během společné odstávky alfy a bety. Převod mění jen JSON map ve stávajícím sloupci. Historické značky F1–F4 se zachovají, nedoložené metrum zůstane neurčené. [Postup přechodu a návratu](docs/vz2/song-map-cutover.md)
+Na společné databázi se převedlo 18 aktuálních a historických revizí z V1 na V2. Kontrola po převodu potvrdila 25 revizí V2 v 6 mapách. Převod zasáhl jen JSON map ve stávajícím sloupci. Historické značky F1–F4 se zachovaly a nedoložené metrum zůstalo neurčené. [Postup přechodu a návratu](docs/vz2/song-map-cutover.md)
 
-### Výchozí revize
+### Nasazené revize
 
-| Prostředí | Revize | Stav |
+| Prostředí | Před vydáním | Po vydání |
 | --- | --- | --- |
-| Alfa | `24f1ea1` | Potvrzená nasazená revize před přechodem. |
-| Beta | `9edb137` | Výchozí revize bety z větve `feature/song-map-editor` po fázi 2. |
-
-Migrační kód je připravený v commitu `758aeed`. Produkční přechod čeká na čtecí inventuru společné databáze.
+| Beta | `9edb1373` | `c2e8557` |
+| Alfa | `24f1ea1` | `c2e8557` |
