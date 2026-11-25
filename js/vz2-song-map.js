@@ -107,6 +107,36 @@
         updateDisplay(ctx);
     }
 
+    function changeMode(ctx, mode) {
+        ctx.mode = mode;
+        ctx.copy = null;
+        ctx.barCopy = null;
+        render(ctx);
+    }
+
+    function emptyMapPrompt(ctx) {
+        const prompt = make('div', undefined, 'song-map-empty');
+        if (ctx.preview || !ctx.response.can_edit) {
+            prompt.append(make('p', 'Mapa zatím neobsahuje žádné takty.', 'muted'));
+        } else if (ctx.mode === 'edit') {
+            prompt.append(button('Vytvořit první pasáž', () => sectionName(ctx)));
+        } else if (ctx.mode === 'listen') {
+            prompt.append(make('p', 'Pusť skladbu a během poslechu klepej na tlačítka odpovídající taktům.', 'muted'));
+        } else {
+            prompt.append(make('p', 'Zvol, jak chceš začít tvořit mapu skladby.', 'muted'));
+            const actions = make('div', undefined, 'toolbar');
+            actions.append(button('Upravit', () => {
+                changeMode(ctx, 'edit');
+                ctx.view.querySelector('.song-map-empty button')?.focus({ preventScroll: true });
+            }), button('Zápis poslechem', () => {
+                changeMode(ctx, 'listen');
+                ctx.host.querySelector('.song-map-palette-listen button')?.focus({ preventScroll: true });
+            }));
+            prompt.append(actions);
+        }
+        return prompt;
+    }
+
     function renderActions(ctx) {
         const { draft } = ctx;
         const menu = make('div', undefined, 'song-map-actions');
@@ -129,10 +159,7 @@
         for (const [mode, title] of [['map', 'MAPA'], ['edit', 'UPRAVIT'], ['listen', 'ZÁPIS POSLECHEM']]) {
             if (mode !== 'map' && !ctx.response.can_edit) continue;
             const control = button(title, () => {
-                ctx.mode = mode;
-                ctx.copy = null;
-                ctx.barCopy = null;
-                render(ctx);
+                changeMode(ctx, mode);
                 const next = ctx.menuButton.hidden ? ctx.menu.querySelector('[aria-pressed="true"]') : ctx.menuButton;
                 next?.focus();
             });
@@ -157,9 +184,11 @@
             if (menu.matches(':popover-open')) menu.hidePopover();
             sectionName(ctx);
         }));
-        const saveState = make('span', draft.dirty ? 'Neuloženo' : 'Uloženo', 'song-map-save-state');
-        saveState.dataset.dirty = String(draft.dirty);
-        menu.append(saveState);
+        if (ctx.response.document || draft.dirty) {
+            const saveState = make('span', draft.dirty ? 'Neuloženo' : 'Uloženo', 'song-map-save-state');
+            saveState.dataset.dirty = String(draft.dirty);
+            menu.append(saveState);
+        }
         if (ctx.response.can_edit) {
             const save = button('Uložit', () => saveMap(ctx));
             save.setAttribute('aria-label', 'Uložit mapu');
@@ -229,7 +258,11 @@
         if (!map) {
             if (ctx.notice) ctx.host.append(controls);
             ctx.host.append(make('p', 'Tato skladba zatím nemá mapu.', 'muted'));
-            if (ctx.response?.can_edit) ctx.host.append(button('Vytvořit mapu', () => { draft.create(); ctx.mode = 'edit'; render(ctx); }));
+            if (ctx.response?.can_edit) ctx.host.append(button('Vytvořit mapu', () => {
+                draft.create();
+                changeMode(ctx, 'map');
+                ctx.view.querySelector('.song-map-empty button')?.focus({ preventScroll: true });
+            }));
             return;
         }
         if (!ctx.copy && ctx.mode === 'listen') palette(ctx, controls);
@@ -244,6 +277,9 @@
         }
         const scroll = make('div', undefined, 'song-map-scroll');
         const view = make('div', undefined, 'song-map'); view.dataset.mode = ctx.mode;
+        if (!map.sections.length || (ctx.mode !== 'edit' && map.sections.every(section => !section.bars.length))) {
+            view.append(emptyMapPrompt(ctx));
+        }
         let number = 0;
         map.sections.forEach((section, sectionIndex) => {
             const block = make('section', undefined, 'song-map-section'); block.dataset.sectionId = section.id;

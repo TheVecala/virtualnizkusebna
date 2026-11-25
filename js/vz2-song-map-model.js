@@ -70,7 +70,9 @@
                 this.history.push(snapshot); if (this.history.length > 100) this.history.shift();
             }
         }
-        create() { this.change(() => { this.map = { schema_version: 2, sections: [] }; }); }
+        create() {
+            if (!this.map) this.reset({ schema_version: 2, sections: [] });
+        }
         nextName(name) {
             const base = name.trim().replace(/\s+\d+$/, '');
             const matches = this.sections.filter(s => s.name.replace(/\s+\d+$/, '') === base);
