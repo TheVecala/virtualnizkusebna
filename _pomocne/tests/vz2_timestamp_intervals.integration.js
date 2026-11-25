@@ -28,6 +28,42 @@ module.exports = async function ({ request, clients, good, upload, wav, db, chec
     assert.equal(db('SELECT id FROM vz2_rehearsal_plays WHERE source_recording_id=?', [recording_id])[0].id, historyId);
     assert.equal(db('SELECT song_collection_id FROM vz2_rehearsal_plays WHERE id=?', [historyId])[0].song_collection_id, other.id);
     check(true, 'intervals: assignment survives an open take; completion and reassignment update one history row atomically');
+    // A linked interval may only detach history after explicit confirmation; clips survive independently.
+    list = await save({ ...interval, time_ms: 5500, end_time_ms: 6500, body: 'Mazané značky' });
+    const linked = list.annotations.find(i => i.label === 'Mazané značky');
+    const linkedHistory = db('SELECT * FROM vz2_rehearsal_plays WHERE start_timestamp_id=?', [linked.timestamp_id])[0];
+    const clipUpload = await upload('alice', song.id, 'Zachovaný výstřižek', 'single', ['clip.wav'], [wav(2)]);
+    assert.equal(clipUpload.status, 201); const clipId = clipUpload.json().id;
+    const attach = await request(clients.alice, 'php/ajax/vz2_history.php', { action: 'update', id: linkedHistory.id, revision: linkedHistory.revision, song_collection_id: song.id, rehearsal_collection_id: rehearsal.id, clip_recording_id: clipId });
+    assert.equal(attach.status, 200, attach.text);
+    const conflict = await save({ action: 'delete_interval', id: linked.timestamp_id }, 'alice', 409);
+    assert.equal(conflict.reason, 'timestamp_history_linked');
+    assert.equal((await save({ action: 'delete_interval', id: linked.timestamp_id, remove_history_links: 'true' }, 'alice', 409)).reason, 'timestamp_history_linked', 'only an explicit boolean confirms unlinking');
+    await save({ action: 'delete_interval', id: linked.timestamp_id, remove_history_links: true }, 'bob', 403);
+    list = await save({ action: 'save_interval', kind: 'passage', time_ms: 5700, end_time_ms: 5900, body: 'Podřízená pasáž', passage_type: 'custom', parent_timestamp_id: linked.timestamp_id });
+    const child = list.annotations.find(i => i.label === 'Podřízená pasáž');
+    const blocked = await save({ action: 'delete_interval', id: linked.timestamp_id, remove_history_links: true }, 'alice', 409);
+    assert.match(blocked.error, /pasáže/); assert.equal(db('SELECT source_recording_id FROM vz2_rehearsal_plays WHERE id=?', [linkedHistory.id])[0].source_recording_id, recording_id);
+    await save({ action: 'delete_interval', id: child.timestamp_id });
+    const beforeDelete = JSON.stringify(await read());
+    db("CREATE TRIGGER reject_delete_audit BEFORE INSERT ON vz2_activity_log FOR EACH ROW BEGIN IF NEW.action='timestamp.deleted' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='test'; END IF; END");
+    try { await save({ action: 'delete_interval', id: linked.timestamp_id, remove_history_links: true }, 'alice', 500); }
+    finally { db('DROP TRIGGER reject_delete_audit'); }
+    assert.equal(JSON.stringify(await read()), beforeDelete, 'audit failure rolls back timestamp deletion');
+    assert.equal(db('SELECT source_recording_id FROM vz2_rehearsal_plays WHERE id=?', [linkedHistory.id])[0].source_recording_id, recording_id, 'audit failure rolls back unlinking');
+    list = await save({ action: 'delete_interval', id: linked.timestamp_id, remove_history_links: true });
+    assert(!list.entries.some(e => [linked.timestamp_id, linked.end_timestamp_id].includes(e.id)), 'both time boundaries are deleted');
+    const detached = db('SELECT * FROM vz2_rehearsal_plays WHERE id=?', [linkedHistory.id])[0];
+    assert.equal(detached.source_recording_id, null); assert.equal(detached.start_timestamp_id, null); assert.equal(detached.end_timestamp_id, null);
+    assert.equal(detached.clip_recording_id, clipId); assert.equal(db('SELECT id FROM vz2_recordings WHERE id IN (?,?)', [recording_id, clipId]).length, 2);
+    assert.deepEqual(list.detached_history_links, [{ id: linkedHistory.id, kept_clip: true }]);
+    list = await save({ ...interval, time_ms: 7000, end_time_ms: 8000, body: 'Bez výstřižku' });
+    const noClip = list.annotations.find(i => i.label === 'Bez výstřižku');
+    const noClipHistory = db('SELECT id FROM vz2_rehearsal_plays WHERE start_timestamp_id=?', [noClip.timestamp_id])[0].id;
+    list = await save({ action: 'delete_interval', id: noClip.timestamp_id, remove_history_links: true });
+    assert.equal(db('SELECT id FROM vz2_rehearsal_plays WHERE id=?', [noClipHistory]).length, 0);
+    assert.deepEqual(list.detached_history_links, [{ id: noClipHistory, kept_clip: false }]);
+    check(true, 'intervals: confirmed deletion unlinks history atomically, preserves audio and clips, checks permissions and protects child passages');
     const passage = { action: 'save_interval', kind: 'passage', time_ms: 1001, end_time_ms: 2507, passage_type: 'chorus', body: '', note_text: 'Nástup hlasu', parent_timestamp_id: take.timestamp_id };
     list = await save(passage); const chorus = list.annotations.find(i => i.kind === 'passage');
     assert.equal(chorus.label, 'Refrén'); assert.equal(chorus.song_id, other.id); assert.equal(chorus.end_ms, 2507);

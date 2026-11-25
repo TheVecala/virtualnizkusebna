@@ -21,7 +21,12 @@ module.exports = async ({ request, clients, good, db, check }) => {
     const race = await Promise.all(['alice', 'bob'].map(who => post(who, save)));
     assert.deepEqual(race.map(r => r.status).sort(), [200, 409]);
     const first = (await get('guest')).json(); const id = first.document.id;
-    assert.deepEqual(JSON.parse(first.version.body), map);
+    assert.deepEqual(JSON.parse(first.version.body), { schema_version: 2, sections: [{
+        id: map.sections[0].id, name: map.sections[0].name, bars: [{
+            id: map.sections[0].bars[0].id, kind: 'rhythm', base: 'ride', meter: null, marks: [],
+            unresolved_fill: 2, detail: map.sections[0].bars[0].detail
+        }]
+    }] });
     const update = { ...save, document_id: id, current_revision: 1 };
     map.sections[0].bars[0].detail = 'nezávislá druhá verze';
     const second = await post('bob', { ...update, body: JSON.stringify(map), created_by: 1 });

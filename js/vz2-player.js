@@ -1,9 +1,10 @@
 (function () {
     'use strict';
     const $ = id => document.getElementById(id), shell = $('player-shell'), body = $('player-body');
-    const store = window.idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
     let mode = 'empty', id = null, looper = null, collapsed = false, fullscreen = null, mixerPending = false, mixerVolumeBeforeMute = 1;
     let waveColors;
+    let looperView = 'slider';
+    const showWave = { wave: true, segments: false };
     function waveformColors() {
         if (waveColors) return waveColors;
         const styles = getComputedStyle(document.documentElement);
@@ -38,16 +39,11 @@
         $('looper-offline-icon').className = cached ? 'ti ti-trash' : 'ti ti-wifi-off';
     }
     function getState() {
-        if (mode === 'looper' && looper) return { mode, id, phase: looper.phase, loading: looper.phase === 'loading' || looper.decoding, playing: !looper.audio.paused, position: looper.audio.currentTime, duration: looper.audio.duration, collapsed, fullscreen: !!fullscreen };
+        if (mode === 'looper' && looper) return { mode, id, phase: looper.phase, loading: looper.phase === 'loading', playing: !looper.audio.paused, position: looper.audio.currentTime, duration: looper.audio.duration, collapsed, fullscreen: !!fullscreen };
         if (mode === 'mixer') { const s = window.MultitrackApp.getState(); return { ...s, mode, id, loading: mixerPending || ['metadata', 'loading', 'awaiting-confirmation'].includes(s?.phase), collapsed, fullscreen: !!fullscreen }; }
         return null;
     }
     function clock(value) { return window.Vz2Timestamps.format(Number.isFinite(value) ? value * 1000 : 0); }
-    function validPeaks(data, file) {
-        return data && Array.isArray(data.peaks) && data.peaks.length > 0 && data.peaks.length <= 4096
-            && Number(data.duration_ms) === Number(file.duration_ms)
-            && data.peaks.every(value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1);
-    }
     function error(text) { if (mode === 'looper') $('looper-status').textContent = text; else { $('mt-notice').hidden = false; $('mt-notice').textContent = text; } }
     function update() {
         const s = getState();
@@ -70,6 +66,7 @@
             return;
         }
         if (mode !== 'looper' || !looper) return;
+        updateWaveActions();
         const a = looper.audio, ready = looper.phase === 'ready';
         for (const control of ['looper-restart', 'looper-back', 'looper-play', 'looper-forward', 'looper-loop', 'looper-seek']) $(control).disabled = !ready;
         $('looper-play').firstElementChild.className = s.playing ? 'ti ti-player-pause-filled' : 'ti ti-player-play-filled';
@@ -84,7 +81,10 @@
         $('looper-mute').setAttribute('aria-label', a.muted ? 'Zapnout zvuk' : 'Ztlumit zvuk');
         $('looper-mute').title = a.muted ? 'Zapnout zvuk' : 'Ztlumit zvuk';
         $('looper-volume-value').textContent = Math.round(a.volume * 100) + '%';
-        if (!collapsed) draw();
+        if (!collapsed) {
+            draw();
+            if (looperView === 'segments') looper.segments?.setPlayhead(id, a.currentTime * 1000);
+        }
     }
     function layout() {
         shell.dataset.mode = mode; shell.classList.toggle('player-collapsed', collapsed);
@@ -139,10 +139,10 @@
     function closeLooper() {
         const old = looper; looper = null;
         if (old) {
+            old.segments?.destroy();
             old.abort.abort(); old.unwatch?.(); old.notes?.destroy(); old.audio.pause(); old.audio.removeAttribute('src'); old.audio.load(); old.audio.remove();
             old.audioSource?.release();
             if (old.url) URL.revokeObjectURL(old.url);
-            if (old.context) old.context.close().catch(() => {});
             old.peaks = null;
         }
         $('looper-wave-markers').replaceChildren();
@@ -167,125 +167,120 @@
         if (mode === 'looper' && id === String(recording.id) && looper) { select('looper', recording); if (seekRequested && looper.phase === 'ready') looper.audio.currentTime = Math.max(0, Math.min(looper.audio.duration || 0, seconds)); return; }
         closeLooper();
         const audio = document.createElement('audio'); audio.id = 'looper-audio'; audio.preload = 'auto'; audio.setAttribute('playsinline', ''); audio.hidden = true;
-        const current = { audio, abort: new AbortController(), phase: 'loading', decoding: false, file, recording, peaks: null, url: null, context: null, blob: null, timestamps: [], markersDirty: true };
+        const current = { audio, abort: new AbortController(), phase: 'loading', file, recording, peaks: null, url: null, blob: null, timestamps: [], markersDirty: true };
         looper = current; $('looper-panel').append(audio); select('looper', recording);
-        $('looper-status').textContent = 'Načítám audio…'; $('looper-zoom').value = 1; $('looper-wave-scroll').scrollLeft = 0; offlineLabel(false);
+        $('looper-status').textContent = 'Načítám audio…'; $('looper-wave-scroll').scrollLeft = 0; offlineLabel(false);
         audio.volume = Number($('looper-volume').value);
         const live = () => looper === current;
-        const uploadPeaks = peakValues => {
-            if (!window.VZ2.write) return;
-            fetch('php/ajax/vz2_peaks.php', {
-                method: 'POST', credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.VZ2.csrf },
-                body: JSON.stringify({ file_id: file.id, sha256: file.sha256, peaks: peakValues })
-            }).then(async response => {
-                if (response.ok || !live()) return;
-                let reason = 'HTTP ' + response.status;
-                try { const data = await response.json(); if (typeof data.error === 'string' && data.error) reason = data.error; } catch (_) { /* HTTP status remains available. */ }
-                if (live()) $('looper-status').textContent = 'Průběh se nepodařilo uložit na server: ' + reason;
-            }).catch(() => {
-                if (live()) $('looper-status').textContent = 'Průběh se nepodařilo uložit na server: chyba spojení.';
-            });
-        };
         const adapter = {
             file,
             isPlaying: () => live() && !audio.paused && !audio.ended,
             pause: () => { if (live()) audio.pause(); },
             play: () => { if (!live()) throw Error('Looper již není otevřený.'); return audio.play(); },
+            showWave: () => { if (live() && looperView === 'slider') setLooperView('wave'); },
+            fitRange: (start, end) => {
+                if (!live() || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) return;
+                current.waveRange = { start, end }; current.markersDirty = true;
+                $('looper-wave-scroll').scrollLeft = 0;
+                if (current.phase === 'ready' && (audio.currentTime * 1000 < start || audio.currentTime * 1000 >= end)) seek(start / 1000);
+                setLooperView(looperView === 'slider' ? 'wave' : looperView);
+            },
+            setAnnotationRange: range => {
+                if (!live() || JSON.stringify(current.annotationRange) === JSON.stringify(range)) return;
+                current.annotationRange = range; current.markersDirty = true; current.segments?.setDraftRange(range); draw();
+            },
             waveform: () => current.peaks ? { peaks: current.peaks, duration_ms: file.duration_ms || Math.round(audio.duration * 1000) } : null,
             isLoading: () => audio.dataset.sourceSwitching === 'true',
             canPlay: () => live() && current.phase === 'ready' && !audio.error,
             currentTimeMs: () => Math.round(audio.currentTime * 1000),
             durationMs: () => Number.isFinite(audio.duration) ? Math.round(audio.duration * 1000) : null,
             seek: ms => { if (live()) audio.currentTime = Math.max(0, Math.min(audio.duration || 0, ms / 1000)); },
-            timestampsChanged: entries => { if (live()) { current.timestamps = entries; current.markersDirty = true; if (!collapsed) draw(); } },
+            timestampsChanged: entries => { if (live()) { current.timestamps = entries; current.markersDirty = true; refreshSegments(current); if (!collapsed) draw(); } },
             playRange: async (start) => { if (!live() || current.phase !== 'ready') throw new Error('Looper není připravený.'); audio.loop = false; audio.currentTime = start / 1000; await audio.play(); }
         };
         current.notes = window.Vz2Timestamps.mount($('looper-timestamps'), recording.id, adapter);
+        current.segments = window.Vz2SegmentsPanel.mount($('looper-segments'), {
+            options: { compact: true }, controls: false,
+            onViewportChange: setLooperViewport,
+            onSelect: ({ segment }) => {
+                if (!live()) return;
+                window.Vz2TimestampStore.select({ recording_id: recording.id, item_id: segment.id });
+            },
+            onSeek: ({ time_ms }) => { if (live()) seek(time_ms / 1000); },
+            onActivate: async ({ segment }) => {
+                if (!live() || !adapter.canPlay()) return;
+                try { await window.Vz2TimestampPlayback.play(adapter, { ...segment, recording_id: recording.id }, { owner: current.notes, onError: error }); }
+                catch (e) { if (live()) error(e.message); }
+            }
+        });
+        refreshSegments(current); setLooperView(looperView);
         audio.addEventListener('play', () => { if (live()) document.querySelectorAll('#content audio').forEach(a => a.pause()); });
         audio.addEventListener('loadedmetadata', () => { if (live()) audio.currentTime = Math.max(0, Math.min(audio.duration || 0, seconds)); }, { once: true });
-        audio.addEventListener('loadedmetadata', () => { if (live()) { current.phase = 'ready'; update(); } });
+        audio.addEventListener('loadedmetadata', () => { if (live()) { current.phase = 'ready'; refreshSegments(current); update(); } });
         audio.addEventListener('error', () => { if (live()) { current.phase = 'error'; error('Audio nelze přehrát. Zavřete Looper a obnovte seznam.'); update(); } });
         current.unwatch = window.Vz2Downloads.watch(file, audio, saved => {
             if (looper !== current) return;
             current.cached = saved; offlineLabel(saved);
         });
         current.cacheKey = window.Vz2Downloads.key(file);
-        current.peakCacheKey = window.VZ2.cachePrefix + 'peaks:' + file.id + ':' + file.sha256;
         download.href = 'php/ajax/vz2_timestamps.php?action=export&recording_id=' + encodeURIComponent(recording.id);
         offline.disabled = true;
         try {
-            const peaksUrl = 'php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256);
-            const [initialSource, localPeaks] = await Promise.all([
-                window.Vz2Downloads.source(file, { signal: current.abort.signal }).then(source => {
-                    if (!live()) { source.release(); return source; }
-                    // Own the URL immediately, even if the peaks read is still pending.
-                    current.audioSource = source; return source;
-                }),
-                window.idbKeyval.get(current.peakCacheKey, store).catch(() => null)
-            ]);
-            if (!live()) return;
-            current.cached = initialSource.local;
-            let peakData = validPeaks(localPeaks, file) ? localPeaks : null;
-            // Local audio must be playable even while a network request is hanging.
-            if (!peakData && !current.cached) {
-                try {
-                    const response = await fetch(peaksUrl, { credentials: 'same-origin', cache: 'no-store', signal: current.abort.signal });
-                    const data = response.ok ? await response.json() : null;
-                    if (data?.ok && validPeaks(data, file)) peakData = data;
-                } catch (_) { /* A missing or damaged peaks file can be rebuilt. */ }
-            }
-            if (!live()) return;
-            if (peakData) {
-                current.peaks = Float32Array.from(peakData.peaks);
-                current.blob = initialSource.blob; audio.src = initialSource.url;
-                current.source = initialSource.local ? 'offline' : 'web';
-                offlineLabel(current.cached); offline.disabled = false;
-                $('looper-status').textContent = ''; update();
-                return;
-            }
-            if (!initialSource.blob) {
-                const source = await window.Vz2Downloads.source(file, { download: true, signal: current.abort.signal });
-                if (!live()) { source.release(); return; }
-                current.audioSource.release(); current.audioSource = source; current.cached = source.local;
-            }
-            if (!live()) return;
-            const blob = current.audioSource.blob;
-            current.blob = blob; audio.src = current.audioSource.url;
-            current.source = current.cached ? 'offline' : 'memory';
-            offlineLabel(current.cached); offline.disabled = false;
-            $('looper-status').textContent = 'Připravuji průběh…'; current.decoding = true;
-            try {
-                const context = new (window.AudioContext || window.webkitAudioContext)(); current.context = context;
-                const buffer = await context.decodeAudioData(await blob.arrayBuffer());
-                if (!live()) return;
-                const count = Math.min(4096, buffer.length), peaks = new Float32Array(count);
-                for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-                    const samples = buffer.getChannelData(channel);
-                    for (let i = 0; i < count; i++) {
-                        const start = Math.floor(i * samples.length / count), end = Math.floor((i + 1) * samples.length / count);
-                        for (let j = start; j < end; j++) {
-                            const sample = Math.abs(samples[j]);
-                            if (Number.isFinite(sample)) peaks[i] = Math.max(peaks[i], Math.min(1, sample));
-                        }
-                    }
-                }
-                current.peaks = peaks; $('looper-status').textContent = '';
-                const peakValues = Array.from(peaks);
-                window.idbKeyval.set(current.peakCacheKey, { peaks: peakValues, duration_ms: file.duration_ms }, store).catch(() => {});
-                if (!current.cached) uploadPeaks(peakValues);
-            } catch (_) { if (live()) $('looper-status').textContent = 'Průběh není dostupný; audio a časový posuvník lze dál používat.'; }
-            finally { if (current.context) { const context = current.context; current.context = null; if (context.state !== 'closed') await context.close().catch(() => {}); } current.decoding = false; }
-            if (live()) update();
+            const source = await window.Vz2Downloads.source(file, { signal: current.abort.signal });
+            if (!live()) { source.release(); return; }
+            current.audioSource = source; current.blob = source.blob; current.cached = source.local;
+            current.source = source.local ? 'offline' : source.blob ? 'memory' : 'web';
+            audio.src = source.url;
+            offlineLabel(current.cached); offline.disabled = false; $('looper-status').textContent = '';
+            ensureWaveform(current);
         } catch (e) { if (live()) { current.phase = 'error'; error(e.message); update(); } }
     }
-    function renderWaveTimestamps(current, width, durationMs) {
+    function updateWaveActions() {
+        const visible = looper && looperView !== 'slider' && !looper.peaks;
+        $('looper-wave-create').hidden = !visible;
+        $('looper-wave-create').disabled = !looper?.audioSource || !!looper?.wavePromise;
+        $('looper-wave-retry').hidden = !visible || !looper.waveFailed || !$('looper-show-wave').checked;
+        $('looper-wave-retry').disabled = !!looper?.wavePromise;
+    }
+    function ensureWaveform(current = looper, { create = false } = {}) {
+        if (!current || !current.audioSource || current.peaks || current.wavePromise ||
+            (!create && (looperView === 'slider' || !$('looper-show-wave').checked))) return;
+        current.waveFailed = false;
+        $('looper-status').textContent = create ? 'Vytvářím křivku…' : 'Načítám křivku…';
+        current.wavePromise = window.Vz2TimestampControls.fileWaveform(current.file, current.abort.signal,
+            { blob: current.blob, decode: create || !!current.blob }).then(data => {
+            if (looper !== current) return;
+            current.peaks = data?.peaks || null;
+            current.waveFailed = !data;
+            current.segments.setWaveform(current.recording.id, data);
+            $('looper-status').textContent = data ? '' : 'Křivka zatím není uložená (JSON chybí). Můžete ji vytvořit z audia.';
+        }).catch(error => {
+            if (looper === current && error.name !== 'AbortError') {
+                current.waveFailed = true;
+                $('looper-status').textContent = create ? 'Křivku se nepodařilo vytvořit. Zkuste to znovu.' : error.message;
+            }
+        }).finally(() => {
+            current.wavePromise = null;
+            if (looper === current) update();
+        });
+        updateWaveActions();
+    }
+    $('looper-wave-retry').onclick = () => ensureWaveform();
+    $('looper-wave-create').onclick = () => {
+        if (!looper || looper.wavePromise) return;
+        showWave[looperView] = true;
+        $('looper-show-wave').checked = true;
+        looper.segments?.setOptions({ wave: true });
+        ensureWaveform(looper, { create: true });
+    };
+
+    function renderWaveTimestamps(current, width, durationMs, view) {
         const markers = document.createDocumentFragment();
         const entries = window.Vz2TimestampModel.items({ id: current.recording.id, entries: current.timestamps || [], duration_ms: Math.round(durationMs) }).flatMap(item => {
-            const start = { ...item.source, body: item.label, annotationId: item.id };
+            const start = { ...item.source, body: window.Vz2TimestampModel.timelineLabel(item), annotationId: item.id };
             if (item.end_ms === null) return [start];
             return [start, { annotationId: item.id, id: item.end_timestamp_id || item.timestamp_id, kind: item.kind === 'take' ? 'song_end' : 'passage_end', time_ms: item.end_ms,
-                body: item.end_source?.body?.replace(/^[↑↓]$/, '') || item.label }];
+                body: item.end_source?.body?.replace(/^[↑↓]$/, '') || window.Vz2TimestampModel.timelineLabel(item) }];
         }).sort((a, b) => a.time_ms - b.time_ms || Number(a.id) - Number(b.id));
         const visuals = {
             song_start: { arrow: 'M1 1V9H15 M10 4L15 9L10 14', name: 'Začátek skladby' },
@@ -296,8 +291,8 @@
         };
         if (durationMs > 0) entries.forEach(entry => {
             const ms = Number(entry.time_ms), visual = visuals[entry.kind];
-            if (!visual || !Number.isFinite(ms) || ms < 0 || ms > durationMs) return;
-            const x = Math.min(width - 1, ms / durationMs * width);
+            if (!visual || !Number.isFinite(ms) || ms < view.start || ms > view.end) return;
+            const x = Math.min(width - 1, (ms - view.start) / (view.end - view.start) * width);
             const marker = document.createElement('button'); marker.type = 'button';
             const labelOnLeft = entry.kind === 'song_end' ? x >= 155 : x > width - 155;
             marker.className = 'looper-wave-marker' + (labelOnLeft ? ' is-label-left' : '');
@@ -316,32 +311,73 @@
                 const path = document.createElementNS(arrow.namespaceURI, 'path'); path.setAttribute('d', visual.arrow);
                 arrow.append(path); marker.append(arrow);
             }
-            const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
-            const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
-            label.append(text); marker.append(label);
+            if (entry.kind !== 'song_end' && entry.kind !== 'passage_end') {
+                const label = document.createElement('span'); label.className = 'looper-wave-marker-label';
+                const text = document.createElement('span'); text.className = 'looper-wave-marker-text'; text.textContent = entry.body;
+                label.append(text); marker.append(label);
+            }
             marker.onclick = event => { event.stopPropagation(); window.Vz2TimestampStore.select({ recording_id: current.recording.id, item_id: entry.annotationId }); seek(ms / 1000); };
             markers.append(marker);
         });
+        for (const [edge, ms] of Object.entries(current.annotationRange || {})) {
+            if (ms == null || ms < view.start || ms > view.end) continue;
+            const marker = document.createElement('span'); marker.className = 'looper-draft-edge';
+            marker.style.left = Math.min(width - 2, (ms - view.start) / (view.end - view.start) * width) + 'px';
+            marker.textContent = edge === 'start' ? 'A' : 'B'; marker.setAttribute('aria-hidden', 'true'); markers.append(marker);
+        }
         $('looper-wave-markers').replaceChildren(markers);
         current.markerWidth = width; current.markerDuration = durationMs; current.markersDirty = false;
     }
+    function refreshSegments(current) {
+        // Catalogue annotations are a snapshot; rebuild segments from the live timestamp list.
+        current.segments?.setData([{ ...current.recording, annotations: undefined, entries: current.timestamps, timestamps: current.timestamps,
+            duration_ms: Number.isFinite(current.audio.duration) ? Math.round(current.audio.duration * 1000) : current.recording.duration_ms }]);
+    }
+    function setLooperView(view) {
+        looperView = view;
+        $('looper-show-wave').checked = showWave[view] || false;
+        const segments = view === 'segments';
+        for (const name of ['slider', 'wave', 'segments']) $('looper-view-' + name).setAttribute('aria-pressed', String(view === name));
+        $('looper-seek').hidden = view !== 'slider';
+        $('looper-wave-scroll').hidden = view !== 'wave';
+        $('looper-segments').hidden = !segments;
+        $('looper-wave-option').hidden = view === 'slider';
+        $('looper-zoom-controls').hidden = view === 'slider';
+        if (segments) looper?.segments?.setOptions({ wave: $('looper-show-wave').checked, viewRange: looper.waveRange || null });
+        ensureWaveform();
+        update();
+    }
+    $('looper-show-wave').onchange = () => { showWave[looperView] = $('looper-show-wave').checked; setLooperView(looperView); };
+    $('looper-view-slider').onclick = () => setLooperView('slider');
+    $('looper-view-wave').onclick = () => setLooperView('wave');
+    $('looper-view-segments').onclick = () => setLooperView('segments');
+    const waveDuration = () => Math.max(1, Number.isFinite(looper?.audio.duration) ? looper.audio.duration * 1000 : looper?.file.duration_ms || 1);
+    function waveRange() {
+        const total = waveDuration();
+        const range = looper?.waveRange;
+        return range && range.start < total ? { start: range.start, end: Math.min(total, range.end) } : { start: 0, end: total };
+    }
     function draw() {
-        const canvas = $('looper-wave'), width = Math.max(1, Math.min(16384, $('looper-wave-scroll').clientWidth * Number($('looper-zoom').value))), height = fullscreen && !matchMedia('(max-width: 767px)').matches ? 180 : 90;
+        if (!$('looper-wave-scroll').clientWidth) return;
+        const canvas = $('looper-wave'), width = Math.max(1, $('looper-wave-scroll').clientWidth), height = fullscreen && !matchMedia('(max-width: 767px)').matches ? 180 : 90;
         if (!looper || !width) return;
         $('looper-wave-track').style.width = width + 'px'; $('looper-wave-track').style.height = height + 'px';
         canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
         if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
         const durationMs = Number.isFinite(looper.audio.duration) ? looper.audio.duration * 1000 : 0;
-        if (looper.markersDirty || looper.markerWidth !== width || looper.markerDuration !== durationMs) renderWaveTimestamps(looper, width, durationMs);
+        const view = waveRange(), span = view.end - view.start;
+        canvas.dataset.rangeStart = view.start; canvas.dataset.rangeEnd = view.end;
+        if (looper.markersDirty || looper.markerWidth !== width || looper.markerDuration !== durationMs) renderWaveTimestamps(looper, width, durationMs, view);
         const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, width, height);
         const colors = waveformColors();
-        const peaks = looper.peaks;
-        const x = (looper.audio.currentTime / (looper.audio.duration || 1)) * width;
+        const peaks = $('looper-show-wave').checked ? looper.peaks : null;
+        const x = (looper.audio.currentTime * 1000 - view.start) / span * width;
         if (peaks) {
             for (const played of [false, true]) {
                 ctx.strokeStyle = played ? colors.played : colors.idle; ctx.beginPath();
                 for (let i = 0; i < peaks.length; i++) {
-                    const px = i / peaks.length * width;
+                    const px = (i / peaks.length * durationMs - view.start) / span * width;
+                    if (px < 0 || px > width) continue;
                     if ((px <= x) !== played) continue;
                     const h = Math.max(1, peaks[i] * (height / 2 - 3));
                     ctx.moveTo(px, height / 2 - h); ctx.lineTo(px, height / 2 + h);
@@ -392,10 +428,25 @@
     $('looper-restart').onclick = () => mode === 'mixer' ? $('mt-restart').click() : seek(0);
     $('looper-back').onclick = () => mode === 'mixer' ? $('mt-backward').click() : seek((looper?.audio.currentTime || 0) - 5);
     $('looper-forward').onclick = () => mode === 'mixer' ? $('mt-forward').click() : seek((looper?.audio.currentTime || 0) + 5);
-    $('looper-seek').oninput = e => seek(Number(e.target.value)); $('looper-zoom').oninput = draw;
-    $('looper-zoom-out').onclick = () => { $('looper-zoom').value = Math.max(1, Number($('looper-zoom').value) - 1); draw(); };
-    $('looper-zoom-in').onclick = () => { $('looper-zoom').value = Math.min(16, Number($('looper-zoom').value) + 1); draw(); };
-    $('looper-wave').onclick = e => { if (looper) seek(e.offsetX / $('looper-wave').clientWidth * looper.audio.duration); };
+    $('looper-seek').oninput = e => seek(Number(e.target.value));
+    function setLooperViewport(range) {
+        if (!looper) return;
+        const total = waveDuration();
+        looper.waveRange = range.start === 0 && range.end === 1 ? null : { start: range.start * total, end: range.end * total };
+        looper.markersDirty = true;
+        looper.segments?.setOptions({ viewRange: looper.waveRange });
+        draw();
+    }
+    const timeline = window.Vz2Timeline.mount($('looper-wave-scroll'), {
+        accepts: () => true,
+        getRect: () => $('looper-wave').getBoundingClientRect(),
+        getRange: () => { const range = waveRange(), total = waveDuration(); return { start: range.start / total, end: range.end / total }; },
+        setRange: setLooperViewport
+    });
+    $('looper-zoom-out').onclick = () => timeline.zoomBy(.5);
+    $('looper-zoom-in').onclick = () => timeline.zoomBy(2);
+    $('looper-zoom-reset').onclick = () => timeline.reset();
+    $('looper-wave').onclick = e => { if (looper) { const range = waveRange(); seek((range.start + e.offsetX / $('looper-wave').clientWidth * (range.end - range.start)) / 1000); } };
     $('looper-volume').oninput = e => {
         if (mode === 'mixer') {
             $('mt-master-volume').value = Math.round(Number(e.target.value) * 100);
@@ -425,7 +476,7 @@
             if (wasCached) await window.Vz2Downloads.removeKey(current.cacheKey);
             else {
                 $('looper-offline-status').textContent = 'ukládám do zařízení…';
-                current.blob = await window.Vz2Downloads.enqueue(current.file, { blob: current.blob });
+                current.blob = await window.Vz2Downloads.enqueue(current.file, { blob: current.blob, decode: !!current.blob });
                 if (looper !== current) return;
                 if (!current.audioSource?.blob && !current.url) {
                     current.url = window.Vz2Offline.useBlob(current.audio, current.blob, error);
@@ -440,6 +491,8 @@
         finally { if (looper === current) offline.disabled = false; }
     };
     document.addEventListener('vz2:timestamp-selected', e => {
+        if (e.detail?.recording_id === Number(looper?.recording.id)) looper.segments?.select(e.detail.recording_id, e.detail.item_id, false);
+        else looper?.segments?.clearSelection();
         $('looper-wave-markers').querySelectorAll('[data-annotation-id]').forEach(marker => marker.setAttribute('aria-pressed',
             String(e.detail?.recording_id === Number(looper?.recording.id) && e.detail?.item_id === marker.dataset.annotationId)));
     });
@@ -449,6 +502,13 @@
     });
     document.addEventListener('click', e => { if (looperMenu.open && !looperMenu.contains(e.target)) looperMenu.open = false; });
     new ResizeObserver(() => { if (looper && !collapsed) draw(); }).observe($('looper-wave-scroll'));
+    new ResizeObserver(() => {
+        if (!looper) return;
+        const width = $('looper-segments').clientWidth;
+        if (width === looper.segmentsWidth) return;
+        looper.segmentsWidth = width;
+        if (width) looper.segments?.setOptions({});
+    }).observe($('looper-segments'));
     setInterval(update, 100);
     window.Vz2Player = {
         getState, openLooper, closeLooper,
@@ -467,7 +527,7 @@
         showMixer(recording) { closeLooper(); if (mode !== 'mixer' || id !== String(recording.id)) mixerPending = true; select('mixer', recording); },
         hideMixer() { if (mode === 'mixer') resetShell(); },
         mixerFailed() { mixerPending = false; },
-        canLeave(nextId, nextMode) { const current = getState(); if (!current || (String(nextId) === id && nextMode === mode)) return true; return (!current.playing && !current.loading) || confirm('Přehrávač hraje nebo načítá audio. Zastavit jej a přejít jinam?'); }
+        canLeave(nextId, nextMode) { const current = getState(); if (!current || (String(nextId) === id && nextMode === mode)) return true; return window.Vz2TimestampEditor.canLeave() && ((!current.playing && !current.loading) || confirm('Přehrávač hraje nebo načítá audio. Zastavit jej a přejít jinam?')); }
     };
     layout();
 }());

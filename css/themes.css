@@ -5,6 +5,8 @@
 
   /* Brand and titles */
   --color-primary: #A8B879;
+  --color-song-map-ink: #e4e9dc;
+  --color-song-map-crash: #b1c47a;
   --color-primary-hover: #C2D19A;
   --color-primary-bg: #35402D;
   --color-primary-text: #C2D19A;
@@ -152,6 +154,8 @@
 
   /* Brand and titles */
   --color-primary: #5E722B;
+  --color-song-map-ink: var(--color-text);
+  --color-song-map-crash: var(--color-primary);
   --color-primary-hover: #4D6123;
   --color-primary-bg: #F2F5EA;
   --color-primary-text: #4B6026;

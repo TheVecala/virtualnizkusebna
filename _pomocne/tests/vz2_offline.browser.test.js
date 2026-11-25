@@ -88,6 +88,74 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
     try {
         await page.goto('http://offline.test/index.php?v=2&collection_id=1');
         await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'));
+        // Existing server peaks must work with saved audio, even when Web Audio
+        // cannot decode the format (the media element can still play it).
+        await page.evaluate(async r => {
+            window.peakRecording = r;
+            window.peakStore = idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+            window.peakKey = VZ2.cachePrefix + 'peaks:' + r.files[0].id + ':' + r.files[0].sha256;
+            window.originalDecode = AudioContext.prototype.decodeAudioData;
+            window.decodeCalls = 0;
+            AudioContext.prototype.decodeAudioData = function () { decodeCalls++; return Promise.reject(Error('Unsupported decoder')); };
+            await Vz2Downloads.enqueue(r.files[0]);
+        }, recordings[0]);
+        const cachedAudioRequests = audioRequests, firstPeakRequests = peakRequests;
+        await page.evaluate(() => Vz2Player.openLooper(peakRecording, peakRecording.files[0]));
+        await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready');
+        assert.equal(peakRequests, firstPeakRequests + 1, 'Saved audio still reads existing server peaks');
+        assert.equal(audioRequests, cachedAudioRequests, 'Reading peaks never downloads saved audio again');
+        assert.deepEqual(await page.evaluate(async () => (await idbKeyval.get(peakKey, peakStore))?.peaks), [0.1, 0.6, 0.3]);
+        assert.equal(await page.evaluate(() => decodeCalls), 0);
+        assert.equal(await page.locator('#looper-status').textContent(), '');
+        await page.locator('#looper-view-wave').click();
+        assert(await page.locator('#looper-wave').evaluate(canvas => {
+            return canvas.getContext('2d').getImageData(Math.floor(canvas.width / 3), 30, 1, 1).data[3] > 0;
+        }), 'Server peaks are drawn for saved audio');
+        await page.evaluate(() => Vz2Player.closeLooper());
+        await context.setOffline(true);
+        await page.evaluate(() => Vz2Player.openLooper(peakRecording, peakRecording.files[0]));
+        assert.equal(peakRequests, firstPeakRequests + 1, 'Reopening offline uses persisted peaks');
+        assert.equal(await page.locator('#looper-status').textContent(), '');
+        await context.setOffline(false);
+        await page.evaluate(async () => {
+            Vz2Player.closeLooper();
+            await Vz2Downloads.removeKey(Vz2Downloads.key(peakRecording.files[0]));
+            await Vz2Player.openLooper(peakRecording, peakRecording.files[0]);
+            Vz2Player.closeLooper();
+            await Vz2Downloads.enqueue(peakRecording.files[0]);
+            await Vz2Player.openLooper(peakRecording, peakRecording.files[0]);
+        });
+        assert.equal(await page.evaluate(() => decodeCalls), 0, 'Removing and saving audio again preserves usable peaks');
+        assert.equal(await page.locator('#looper-status').textContent(), '');
+        console.log('PASS: saved audio reads and draws server peaks, persists them offline and keeps them across removal/redownload without decoding');
+
+        // A stalled peaks server cannot block local playback or decoding fallback.
+        await page.evaluate(async () => {
+            Vz2Player.closeLooper(); AudioContext.prototype.decodeAudioData = originalDecode;
+            await idbKeyval.del(peakKey, peakStore);
+        });
+        const beforeStalledPeaksAudio = audioRequests;
+        let releasePeaks;
+        const heldPeaks = new Promise(resolve => { releasePeaks = resolve; });
+        const peakStarted = page.waitForRequest('**/vz2_peaks.php?*');
+        await page.route('**/vz2_peaks.php?*', async route => { await heldPeaks; await route.abort().catch(() => {}); });
+        await page.evaluate(() => { window.pendingPeaks = Vz2Player.openLooper(peakRecording, peakRecording.files[0]); });
+        await peakStarted;
+        await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready', null, { timeout: 2000 });
+        await page.locator('#looper-audio').evaluate(async audio => { audio.currentTime = 7; await audio.play(); });
+        await page.evaluate(() => pendingPeaks);
+        releasePeaks(); await page.unroute('**/vz2_peaks.php?*');
+        assert.equal(await page.locator('#looper-status').textContent(), '');
+        assert.equal(await page.evaluate(async () => (await idbKeyval.get(peakKey, peakStore)).peaks.length), 4096);
+        assert(await page.locator('#looper-audio').evaluate(audio => !audio.paused && audio.currentTime >= 7), 'Finishing peaks does not reset ongoing local playback');
+        assert.equal(audioRequests, beforeStalledPeaksAudio, 'Fallback decodes the saved blob without another audio request');
+        console.log('PASS: stalled peaks request allows immediate local playback and falls back to local decoding without resetting playback');
+        await page.evaluate(async () => {
+            Vz2Player.closeLooper();
+            await Vz2Downloads.removeKey(Vz2Downloads.key(peakRecording.files[0]));
+            await idbKeyval.del(peakKey, peakStore);
+        });
+        await page.locator('.recording-toggle[aria-expanded=false]').evaluateAll(buttons => buttons.forEach(button => button.click()));
         await start(single(1));
         for (const mode of ['ok', 'network', '401', '503']) await reconnect(single(1), mode);
         assert(catalogRequests >= 5);
@@ -108,19 +176,24 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         await saved(single(2), false);
         console.log('PASS: reconnect success/network/401/503 preserves playback; saving preserves playing and paused media state');
 
-        // Timestamp loops remain mounted and repeat across the source replacement.
-        await start(single(4));
-        await page.locator('#recording-4 [aria-label="Otevřít časové značky"]').evaluate(b => b.click());
-        await page.waitForFunction(() => document.querySelector('#recording-timestamps-4 [data-playback="loop"]'), null, { timeout: 5000 });
-        await page.locator('#recording-timestamps-4 [data-playback="loop"]').evaluate(b => b.click());
-        await page.waitForFunction(() => !document.querySelector('#recording-4 audio').paused && document.querySelector('#recording-4 audio').currentTime < 4);
-        await page.locator('#recording-4 [aria-label="Uložit offline"]').evaluate(b => b.click());
-        await page.waitForFunction(() => document.querySelector('#recording-4 audio').currentSrc.startsWith('blob:') && !document.querySelector('#recording-4 audio').dataset.sourceSwitching);
-        await page.locator(single(4)).evaluate(a => { a.currentTime = 4.1; });
-        await page.waitForFunction(() => document.querySelector('#recording-4 audio').currentTime < 3 && !document.querySelector('#recording-4 audio').paused);
+        // Timestamp loops now live only in the Looper and survive source replacement.
+        await page.evaluate(r => Vz2Player.openLooper(r, r.files[0]), recordings.find(r => r.id === 4));
+        await page.waitForFunction(() => Vz2Player.getState()?.phase === 'ready');
+        await page.locator('#looper-action-row > .looper-timestamp-actions > button').first().click();
+        await page.waitForFunction(() => document.querySelector('#looper-timestamps [data-playback="loop"]'), null, { timeout: 5000 });
+        await page.locator('#looper-timestamps [data-playback="loop"]').click();
+        await page.waitForFunction(() => !document.querySelector('#looper-audio').paused && document.querySelector('#looper-audio').currentTime < 4);
+        await page.locator('#looper-offline').evaluate(b => b.click());
+        await page.waitForFunction(() => document.querySelector('#looper-audio').currentSrc.startsWith('blob:') && !document.querySelector('#looper-audio').dataset.sourceSwitching);
+        await page.locator('#looper-audio').evaluate(a => { a.currentTime = 4.1; });
+        await page.waitForFunction(() => document.querySelector('#looper-audio').currentTime < 3 && !document.querySelector('#looper-audio').paused);
         console.log('PASS: timestamp loop survives saving during playback');
 
         await page.evaluate(r => { Vz2Timestamps.stopLoop(); return Vz2Player.openLooper(r, r.files[0]); }, recordings[2]);
+        assert.deepEqual(await page.evaluate(async file => {
+            const db = idbKeyval.createStore('zkusebna-vz2-cache', 'audio');
+            return (await idbKeyval.get(VZ2.cachePrefix + 'peaks:' + file.id + ':' + file.sha256, db))?.peaks;
+        }, recordings[2].files[0]), [0.1, 0.6, 0.3], 'Peaks loaded with streamed audio are persisted too');
         await start('#looper-audio');
         await page.locator('#looper-offline').evaluate(b => b.click());
         await saved('#looper-audio', true);
@@ -245,6 +318,24 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         await page.setViewportSize({ width: 320, height: 780 });
         await page.goto('http://offline.test/index.php?collection_id=1&recording_id=3&listen=1&view=audio&time_ms=2');
         await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready');
+        await page.locator('#car-audio').evaluate(audio => { audio.currentTime = 12; audio.dispatchEvent(new Event('timeupdate')); audio.dispatchEvent(new Event('error')); });
+        await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready' && document.querySelector('#car-status').textContent.includes('Stiskni Play'));
+        assert(Math.abs(await page.locator('#car-audio').evaluate(audio => audio.currentTime) - 12) < .2, 'Recovery preserves the last position');
+        assert(await page.locator('#car-audio').evaluate(audio => audio.paused), 'Recovery does not start playback on its own');
+        await page.locator('#car-audio').evaluate(audio => {
+            const source = audio.src;
+            Object.defineProperty(audio, 'src', { configurable: true, get: () => source, set: () => {} });
+            audio.load = () => {};
+            audio.dispatchEvent(new Event('error')); audio.dispatchEvent(new Event('error'));
+        });
+        assert.equal(await page.evaluate(() => Vz2CarMode.getState()?.phase), 'error');
+        assert(await page.locator('#car-play').isEnabled(), 'A failed recovery still offers a retry');
+        await page.locator('#car-audio').evaluate(audio => { delete audio.src; delete audio.load; });
+        await page.locator('#car-play').click();
+        await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready' && !document.querySelector('#car-audio').paused);
+        assert((await page.locator('#car-audio').evaluate(audio => audio.currentTime)) >= 11.8, 'Manual retry plays from the preserved position');
+        await page.locator('#car-audio').evaluate(audio => audio.pause());
+        console.log('PASS: car audio reloads after interruption and permits another retry after a repeated error');
         const carItems = [
             { id: 't1', timestamp_id: 1, recording_id: 3, kind: 'take', status: 'complete', start_ms: 0, end_ms: 4000, label: 'Pokus A', song_title: 'Skladba A' },
             { id: 't2', timestamp_id: 2, recording_id: 3, kind: 'take', status: 'complete', start_ms: 6000, end_ms: 9000, label: 'Pokus B' },
@@ -277,6 +368,12 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
         await page.reload();
         await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready');
         assert.match(await page.locator('#car-audio').getAttribute('src'), /sample3\.wav$/);
+        await page.locator('#car-audio').evaluate(audio => { audio.currentTime = 7; audio.dispatchEvent(new Event('timeupdate')); audio.dispatchEvent(new Event('error')); });
+        await page.waitForFunction(() => Vz2CarMode.getState()?.phase === 'ready' && document.querySelector('#car-status').textContent.includes('Stiskni Play'));
+        assert.match(await page.locator('#car-audio').getAttribute('src'), /sample3\.wav$/);
+        assert(Math.abs(await page.locator('#car-audio').evaluate(audio => audio.currentTime) - 7) < .2, 'Network recovery preserves position');
+        await page.locator('#car-play').click();
+        await page.waitForFunction(() => !document.querySelector('#car-audio').paused);
         await page.setViewportSize({ width: 1280, height: 900 });
         await page.goto('http://offline.test/index.php?collection_id=1');
         await page.waitForFunction(() => document.querySelector('#recording-3 audio')?.dataset.source === 'web');
@@ -289,7 +386,7 @@ const catalog = { ok: true, collections: [{ id: 1, title: 'Skladba', kind: 'song
 
     } catch (error) {
         console.error('Browser errors:', errors);
-        console.error(await page.locator('#recording-timestamps-4').textContent({ timeout: 1000 }).catch(() => 'Timestamp panel is not mounted'));
+        console.error(await page.locator('#looper-timestamps').textContent({ timeout: 1000 }).catch(() => 'Timestamp panel is not mounted'));
         throw error;
     } finally { releaseDownload(); await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

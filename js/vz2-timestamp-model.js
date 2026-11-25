@@ -26,7 +26,7 @@
             items.push({ id: 't' + entry.id, recording_id: recordingId, timestamp_id: Number(entry.id), end_timestamp_id: end ? Number(end.id) : null,
                 kind: take ? 'take' : entry.kind, start_ms: entry.time_ms, end_ms: endMs,
                 status: entry.kind === 'note' ? 'point' : endMs === null ? 'open' : 'complete',
-                label: clean(entry.body) || (take ? 'Pokus ' + takeNumber : passageTypes[entry.passage_type] || 'Poznámka'),
+                label: clean(entry.body) || (take ? 'Úsek ' + takeNumber : passageTypes[entry.passage_type] || 'Poznámka'),
                 passage_type: entry.kind === 'passage' ? entry.passage_type || 'custom' : null, note_text: entry.note_text || '',
                 parent_id: entry.parent_timestamp_id ? 't' + entry.parent_timestamp_id : null,
                 song_id: songId === null ? null : Number(songId), song_title: song?.title || entry.song_title || entry.history_song_title || '',
@@ -66,11 +66,17 @@
         if (!Number.isSafeInteger(ms) || ms > 604800000) throw new Error('Nejvyšší čas je 7 dní.');
         return ms;
     }
+    function timelineLabel(item) {
+        const song = clean(item.song_title), label = clean(item.label);
+        if (!song || !['take', 'passage'].includes(item.kind)) return label;
+        const automatic = item.kind === 'take' && /^Úsek\s+\d+$/i.test(label);
+        return [song, !automatic && label !== song ? label : ''].filter(Boolean).join(' · ');
+    }
     function compactFormat(ms) {
         const seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
         return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
     }
-    const api = { format: compactFormat, parse, version, passageTypes, time, normalize, items, endOf, containingTakes, activeTakes };
+    const api = { format: compactFormat, parse, version, passageTypes, time, normalize, items, timelineLabel, endOf, containingTakes, activeTakes };
     if (typeof module !== 'undefined') module.exports = api;
     root.Vz2TimestampModel = api;
 })(typeof window === 'undefined' ? globalThis : window);

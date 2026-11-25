@@ -8,7 +8,7 @@ module.exports = async ({ base, clients, request, good, check, song, empty, rehe
     const screenshots = path.resolve(__dirname, '../dist/vz2.1.1'); fs.mkdirSync(screenshots, { recursive: true });
     try {
         const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-        const [name, value] = clients.alice.cookie.split('='); await context.addCookies([{ name, value, url: base }]);
+        const [name, value] = clients.bob.cookie.split('='); await context.addCookies([{ name, value, url: base }]);
         const page = await context.newPage(), errors = [];
         page.on('pageerror', e => errors.push(e.message)); page.on('dialog', d => d.accept());
         await page.goto(base + 'index.php?v=2&kind=song&collection_id=' + song.id);
@@ -95,8 +95,18 @@ module.exports = async ({ base, clients, request, good, check, song, empty, rehe
         }
         check(true, 'browser: mobile/desktop song metadata, custom meter menu, BPM badge, expansion, safe text, conflict and network retry');
         await page.goto(base + 'index.php?v=2&kind=rehearsal&collection_id=' + rehearsal.id);
-        await page.locator('#collection-title-name').filter({ hasText: 'Zkouška' }).waitFor({ state: 'attached' });
-        assert(await header.isHidden());
+        await header.locator('.song-details-description').filter({ hasText: 'Příště začneme refrénem.' }).waitFor();
+        await header.getByRole('button', { name: 'Upravit popisek zkoušky' }).click();
+        await editor.getByRole('heading', { name: 'Popisek zkoušky' }).waitFor();
+        assert.equal(await editor.locator('input, .song-meter-choice').count(), 0);
+        await editor.getByRole('textbox', { name: 'Popisek' }).fill('Na další zkoušce projdeme celou skladbu.');
+        await editor.getByRole('button', { name: 'Uložit', exact: true }).click();
+        await editor.waitFor({ state: 'hidden' });
+        await header.locator('.song-details-description').filter({ hasText: 'Na další zkoušce' }).waitFor();
+        assert.equal(await header.locator('.song-details-music').count(), 0);
+        await page.setViewportSize({ width: 390, height: 844 });
+        await header.getByRole('button', { name: 'Upravit popisek zkoušky' }).waitFor();
+        assert(await header.locator('.song-details-description').isVisible());
         await page.goto(base + 'prehled.php');
         const preset = page.locator('[data-overview-preset=song_details]'), filters = page.locator('#overview-filters');
         assert(await preset.isVisible()); assert.equal(await filters.evaluate(e => e.open), false);
@@ -138,7 +148,10 @@ module.exports = async ({ base, clients, request, good, check, song, empty, rehe
         await guestPage.goto(base + 'index.php?v=2&kind=song&collection_id=' + song.id);
         await guestPage.locator('#song-details .song-details-music').waitFor();
         assert.equal(await guestPage.locator('.song-details-edit').count(), 0);
+        await guestPage.goto(base + 'index.php?v=2&kind=rehearsal&collection_id=' + rehearsal.id);
+        await guestPage.locator('#song-details .song-details-description').filter({ hasText: 'Na další zkoušce' }).waitFor();
+        assert.equal(await guestPage.locator('.song-details-edit').count(), 0);
         assert.deepEqual(errors, []);
-        check(true, 'browser: guest reads song metadata without edit controls; rehearsal header stays unchanged');
+        check(true, 'browser: non-owner edits rehearsal description without BPM or meter fields; guest reads both descriptions');
     } finally { await browser.close(); }
 };

@@ -20,11 +20,15 @@ try {
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Kompaktní přehled · Zkušebna DK!</title>
+<link rel="stylesheet" href="css/vz2-song-map-symbol.css?v=<?=hash_file('sha256', __DIR__.'/css/vz2-song-map-symbol.css')?>">
 <link rel="stylesheet" href="css/themes.css?v=<?=filemtime(__DIR__.'/css/themes.css')?>">
+<link rel="stylesheet" href="css/vz2-overview-render.css?v=<?=filemtime(__DIR__.'/css/vz2-overview-render.css')?>">
 <link rel="stylesheet" href="css/vz2-overview.css?v=<?=filemtime(__DIR__.'/css/vz2-overview.css')?>">
 <script defer src="js/vz2-timestamp-model.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-model.js')?>"></script>
 <script src="js/vz2-song-map-model.js?v=<?=filemtime(__DIR__.'/js/vz2-song-map-model.js')?>" defer></script>
+<script defer src="js/vz2-song-map-svg.js?v=<?=hash_file('sha256', __DIR__.'/js/vz2-song-map-svg.js')?>"></script>
 <script src="js/vz2-overview-filter.js?v=<?=filemtime(__DIR__.'/js/vz2-overview-filter.js')?>" defer></script>
+<script src="js/vz2-overview-render.js?v=<?=filemtime(__DIR__.'/js/vz2-overview-render.js')?>" defer></script>
 <script src="js/vz2-overview.js?v=<?=filemtime(__DIR__.'/js/vz2-overview.js')?>" defer></script>
 </head>
 <body>
@@ -65,7 +69,7 @@ try {
 <label><input type="checkbox" data-filter="rehearsal_played" checked> Hrané skladby</label>
 <label><input type="checkbox" data-filter="rehearsal_summary" checked> Souhrny</label>
 <label><input type="checkbox" data-filter="rehearsal_attachment" checked> Poznámky k přílohám</label>
-<label><input type="checkbox" data-filter="rehearsal_marker_song_start" checked> Pokusy</label>
+<label><input type="checkbox" data-filter="rehearsal_marker_song_start" checked> Úseky</label>
 <label><input type="checkbox" data-filter="rehearsal_marker_song_end" checked> Nespárované konce</label>
 <label><input type="checkbox" data-filter="rehearsal_marker_passage" checked> Značky pasáží</label>
 <label><input type="checkbox" data-filter="rehearsal_marker_note" checked> Časové poznámky</label>
@@ -80,7 +84,7 @@ try {
 <label><input type="checkbox" data-filter="song_map_details" checked> Detaily taktů</label>
 <label><input type="checkbox" data-filter="song_summary" checked> Souhrny</label>
 <label><input type="checkbox" data-filter="song_attachment" checked> Poznámky k přílohám</label>
-<label><input type="checkbox" data-filter="song_marker_song_start" checked> Pokusy</label>
+<label><input type="checkbox" data-filter="song_marker_song_start" checked> Úseky</label>
 <label><input type="checkbox" data-filter="song_marker_song_end" checked> Nespárované konce</label>
 <label><input type="checkbox" data-filter="song_marker_passage" checked> Značky pasáží</label>
 <label><input type="checkbox" data-filter="song_marker_note" checked> Časové poznámky</label>

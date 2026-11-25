@@ -4,10 +4,12 @@ require_once __DIR__.'/vz2_core.php';
 require_once __DIR__.'/vz2_timestamp_model.php';
 
 /** Text-only, current snapshot for the standalone overview. No audio files or URLs. */
-function vz2_overview_data(mysqli $db): array {
+function vz2_overview_data(mysqli $db, ?int $songId = null): array {
+    $params = $songId === null ? [] : [$songId];
+    $scope = static fn(string $column): string => $songId === null ? '' : " AND $column=?";
     $groups = ['rehearsal'=>[], 'song'=>[]];
     $kindById = [];
-    $collections = vz2_rows($db, "SELECT id,kind,title,lifecycle,created_at,song_description,song_tempos,song_meters FROM vz2_collections WHERE lifecycle IN ('active','archived') ORDER BY kind,sort_order,id");
+    $collections = vz2_rows($db, "SELECT id,kind,title,lifecycle,created_at,song_description,song_tempos,song_meters FROM vz2_collections WHERE lifecycle IN ('active','archived')" . ($songId === null ? '' : " AND kind='song' AND lifecycle='active'".$scope('id')) . ' ORDER BY kind,sort_order,id', $params);
     foreach ($collections as $collection) {
         $kind = $collection['kind'];
         $id = (int)$collection['id'];
@@ -31,7 +33,7 @@ function vz2_overview_data(mysqli $db): array {
 
     $documents = vz2_rows($db, 'SELECT d.collection_id,d.kind,d.title,d.updated_at,v.body,u.name author
         FROM vz2_documents d JOIN vz2_document_versions v ON v.document_id=d.id AND v.revision=d.current_revision
-        JOIN users u ON u.id=d.updated_by ORDER BY d.collection_id,d.id');
+        JOIN users u ON u.id=d.updated_by WHERE 1=1'.$scope('d.collection_id').' ORDER BY d.collection_id,d.id', $params);
     foreach ($documents as $document) {
         $kind = $document['kind'];
         if ($kind === 'song_map') {
@@ -45,16 +47,18 @@ function vz2_overview_data(mysqli $db): array {
                 $bars = is_array($section['bars'] ?? null) ? $section['bars'] : [];
                 $barCount = count($bars);
                 $playingBars = [];
-                foreach ($bars as $bar) $playingBars[] = [
-                    'base'=>$bar['base'] ?? null, 'fill'=>(int)($bar['fill'] ?? 0),
-                    'crash'=>(bool)($bar['crash'] ?? false), 'special'=>$bar['special'] ?? null,
-                    'has_detail'=>trim((string)($bar['detail'] ?? '')) !== ''
-                ];
+                foreach ($bars as $bar) {
+                    $playingBar = array_intersect_key($bar, array_flip([
+                        'kind','base','meter','marks','unresolved_fill','fill','crash','special'
+                    ]));
+                    $playingBar['has_detail'] = trim((string)($bar['detail'] ?? '')) !== '';
+                    $playingBars[] = $playingBar;
+                }
                 $mapSections[] = ['name'=>$name, 'bars'=>$playingBars, 'first_bar'=>$barNumber];
                 foreach ($bars as $index => $bar) {
                     if (trim((string)($bar['detail'] ?? '')) === '') continue;
                     $mapDetails[] = ['type'=>'map_detail','label'=>$name.' · takt '.($barNumber+$index),
-                        'body'=>$bar['detail'], 'at'=>$document['updated_at'], 'author'=>$document['author']];
+                        'bar_number'=>$barNumber+$index, 'body'=>$bar['detail'], 'at'=>$document['updated_at'], 'author'=>$document['author']];
                 }
                 $barNumber += $barCount;
             }
@@ -77,7 +81,7 @@ function vz2_overview_data(mysqli $db): array {
     $summaries = vz2_rows($db, "SELECT r.collection_id,r.summary,r.summary_updated_at,r.created_at,u.name author
         FROM vz2_recordings r LEFT JOIN users u ON u.id=r.summary_updated_by
         WHERE r.lifecycle='active' AND r.summary IS NOT NULL AND TRIM(r.summary)<>''
-        ORDER BY r.collection_id,r.sort_order,r.id");
+        ".$scope('r.collection_id')." ORDER BY r.collection_id,r.sort_order,r.id", $params);
     foreach ($summaries as $summary) {
         $append((int)$summary['collection_id'], ['type'=>'summary','label'=>'Souhrn', 'body'=>$summary['summary'],
             'at'=>$summary['summary_updated_at'] ?: $summary['created_at'], 'author'=>$summary['author']]);
@@ -86,16 +90,22 @@ function vz2_overview_data(mysqli $db): array {
     $attachments = vz2_rows($db, "SELECT a.collection_id,a.summary,a.summary_updated_at,u.name author
         FROM vz2_attachments a LEFT JOIN users u ON u.id=a.summary_updated_by
         WHERE a.state='available' AND a.summary IS NOT NULL AND TRIM(a.summary)<>''
-        ORDER BY a.collection_id,a.id");
+        ".$scope('a.collection_id')." ORDER BY a.collection_id,a.id", $params);
     foreach ($attachments as $attachment) {
         $append((int)$attachment['collection_id'], ['type'=>'attachment_note','label'=>'Poznámka k příloze',
             'body'=>$attachment['summary'], 'at'=>$attachment['summary_updated_at'], 'author'=>$attachment['author']]);
     }
 
+    // Include rehearsal recordings that contain an explicitly tagged take of this song.
+    // Read their full marker sequence before pairing ends and resolving child passages.
+    $markerScope = $songId === null ? '' : " AND (r.collection_id=? OR (c.kind='rehearsal' AND c.lifecycle='active'
+        AND EXISTS (SELECT 1 FROM vz2_timestamps tag
+            WHERE tag.recording_id=r.id AND tag.kind='song_start' AND tag.song_collection_id=?)))";
     $markers = vz2_rows($db, "SELECT r.id recording_id,r.collection_id,r.kind recording_kind,r.title recording_title,
+            c.title collection_title,
             r.duration_ms,t.*,u.name author,s.title song_title
-        FROM vz2_timestamps t JOIN vz2_recordings r ON r.id=t.recording_id JOIN users u ON u.id=t.created_by LEFT JOIN vz2_collections s ON s.id=t.song_collection_id
-        WHERE r.lifecycle='active' ORDER BY r.collection_id,r.sort_order,r.id,t.time_ms,t.id");
+        FROM vz2_timestamps t JOIN vz2_recordings r ON r.id=t.recording_id JOIN vz2_collections c ON c.id=r.collection_id JOIN users u ON u.id=t.created_by LEFT JOIN vz2_collections s ON s.id=t.song_collection_id
+        WHERE r.lifecycle='active'".$markerScope." ORDER BY r.collection_id,r.sort_order,r.id,t.time_ms,t.id", $songId === null ? [] : [$songId, $songId]);
     $recordingFiles = [];
     if ($markers) {
         $recordingIds = array_values(array_unique(array_map(static fn($marker) => (int)$marker['recording_id'], $markers)));
@@ -116,10 +126,14 @@ function vz2_overview_data(mysqli $db): array {
         if ($name === '') $name = trim($recording['recording_title']) ?: 'Nahrávka #'.$id;
         if ($recording['recording_kind'] === 'multitrack' && count($files) > 1) $name .= ' +'.(count($files)-1);
         foreach (vz2_timestamp_annotations(['id'=>$id,'duration_ms'=>$recording['duration_ms']], $rows) as $item) {
+            $collectionId = (int)$recording['collection_id'];
+            $linked = $songId !== null && $collectionId !== $songId;
+            if ($linked && $item['song_id'] !== $songId) continue;
             $source = $item['source']; $end = $item['end_source'];
             // Read-only projection: keep the shared interval contract without raw SQL rows.
             unset($item['source'], $item['end_source']);
-            $append((int)$recording['collection_id'], array_merge($item, [
+            if ($linked) $item['rehearsal_title'] = $recording['collection_title'];
+            $append($linked ? $songId : $collectionId, array_merge($item, [
                 'type'=>'marker', 'body'=>$item['label'], 'time_ms'=>$item['start_ms'],
                 'recording_name'=>$name, 'at'=>$source['created_at'], 'author'=>$source['author'],
                 'end_body'=>$end && !in_array(trim($end['body']), ['↑','↓'], true) ? $end['body'] : '',
@@ -131,13 +145,13 @@ function vz2_overview_data(mysqli $db): array {
     $posts = vz2_rows($db, 'SELECT t.collection_id,p.body,p.created_at,u.name author
         FROM vz2_discussion_posts p JOIN vz2_discussion_threads t ON t.id=p.thread_id
         JOIN users u ON u.id=p.created_by WHERE t.collection_id IS NOT NULL
-        ORDER BY t.collection_id,p.id');
+        '.$scope('t.collection_id').' ORDER BY t.collection_id,p.id', $params);
     foreach ($posts as $post) {
         $append((int)$post['collection_id'], ['type'=>'discussion','label'=>'Diskuse',
             'body'=>$post['body'], 'at'=>$post['created_at'], 'author'=>$post['author']]);
     }
 
-    $plays = vz2_rows($db, 'SELECT p.rehearsal_collection_id,p.song_collection_id,s.title song_title,COUNT(*) play_count
+    $plays = $songId !== null ? [] : vz2_rows($db, 'SELECT p.rehearsal_collection_id,p.song_collection_id,s.title song_title,COUNT(*) play_count
         FROM vz2_rehearsal_plays p JOIN vz2_collections s ON s.id=p.song_collection_id
         GROUP BY p.rehearsal_collection_id,p.song_collection_id,s.title
         ORDER BY p.rehearsal_collection_id,s.title,p.song_collection_id');

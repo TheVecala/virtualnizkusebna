@@ -4,9 +4,17 @@
     const make = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     let catalog = null, selectedIds = new Set(), selection = null, loadedAudio = null, loadSerial = 0, playSerial = 0, animation = null;
     let audioSource = null;
-    const audio = $('segments-audio'), waveCache = new Map();
+    const audio = $('segments-audio');
     const panel = window.Vz2SegmentsPanel.mount($('segments-panel'), {
-        onSelect: select,
+        onSelect: value => select(value, false, true),
+        onSeek: seekPosition,
+        onZoomChange(zoom) {
+            const select = $('segments-zoom');
+            select.querySelector('[data-custom]')?.remove();
+            const existing = [...select.options].find(o => Math.abs(Number(o.value) - zoom) < .001);
+            if (existing) select.value = existing.value;
+            else { const option = new Option(zoom.toFixed(1) + '×', String(zoom)); option.dataset.custom = ''; select.add(option); select.value = option.value; }
+        },
         onActivate(value) { select(value); if (!$('segments-play').disabled) play(); }
     });
     function status(text, error = false) { $('segments-status').textContent = text; $('segments-status').classList.toggle('is-error', error); }
@@ -57,7 +65,7 @@
     function legend(recordings) {
         const host = $('segments-legend'); host.replaceChildren(); const mode = $('segments-color').value;
         const entries = new Map();
-        if (mode === 'type') for (const [kind, title] of [['recording', 'Celá nahrávka'], ['take', 'Pokus / skladba'], ['passage', 'Pasáž'], ['note', 'Poznámka'], ['boundary', 'Nespárovaný konec']]) entries.set(title, M.color({ kind }, 0, mode));
+        if (mode === 'type') for (const [kind, title] of [['recording', 'Celá nahrávka'], ['take', 'Úsek / skladba'], ['passage', 'Pasáž'], ['note', 'Poznámka'], ['boundary', 'Nespárovaný konec']]) entries.set(title, M.color({ kind }, 0, mode));
         else if (mode === 'mono') entries.set('Jednotná barva · význam určuje popisek a řádek', M.color({}, 0, mode));
         else for (const r of recordings) {
             if (mode === 'recording') entries.set(M.name(r), M.color({}, r.id, mode));
@@ -73,14 +81,9 @@
                 const r = queue.shift(), file = r.files?.[0];
                 if (r.kind === 'multitrack') { panel.setWaveform(r.id, { message: 'Křivka společného mixu není k dispozici; jednotlivé stopy otevřete v mixéru.' }); continue; }
                 if (!file?.url || !file.sha256) { panel.setWaveform(r.id, { message: 'Křivka není k dispozici.' }); continue; }
-                const key = String(file.id) + ':' + file.sha256;
-                if (!waveCache.has(key)) waveCache.set(key, get('php/ajax/vz2_peaks.php?id=' + encodeURIComponent(file.id) + '&hash=' + encodeURIComponent(file.sha256)).then(data => {
-                    if (!Array.isArray(data.peaks) || !data.peaks.length || data.peaks.length > 4096 || !data.peaks.every(v => Number.isFinite(v) && v >= 0 && v <= 1) || Number(data.duration_ms) !== Number(file.duration_ms)) throw Error('Uložená křivka neodpovídá nahrávce.');
-                    return data;
-                }).catch(e => ({ message: e.message })));
-                const data = await waveCache.get(key);
+                const data = await window.Vz2TimestampControls.fileWaveform(file, null, { decode: false }).catch(e => ({ message: e.message }));
                 // Ignore a response for a file replaced during a catalogue refresh.
-                if (available().find(item => String(item.id) === String(r.id))?.files?.[0]?.sha256 === file.sha256) panel.setWaveform(r.id, data);
+                if (available().find(item => String(item.id) === String(r.id))?.files?.[0]?.sha256 === file.sha256) panel.setWaveform(r.id, data || { message: 'Křivka není k dispozici.' });
             }
         }
         await Promise.all([worker(), worker(), worker()]);
@@ -92,8 +95,11 @@
         if ($('segments-wave').checked) void loadWaves(recordings);
     }
     function selectedFile() { return selection?.recording.kind === 'single' ? selection.recording.files?.[0] : null; }
-    function select(value, refresh = false) {
-        if (!refresh) stop(); selection = value; const { recording: r, segment: s } = value;
+    function select(value, refresh = false, keepPlayback = false) {
+        if (!refresh) {
+            if (keepPlayback && String(selection?.recording_id) === String(value.recording_id)) window.Vz2TimestampPlayback.stop();
+            else stop();
+        } selection = value; const { recording: r, segment: s } = value;
         const file = selectedFile();
         if (!refresh && loadedAudio !== file?.url) { audio.removeAttribute('src'); audio.load(); audioSource?.release(); audioSource = null; loadedAudio = null; }
         else if (!refresh && audio.readyState > 0) audio.currentTime = s.start_ms / 1000;
@@ -101,7 +107,7 @@
         $('segments-selected-title').textContent = s.label;
         $('segments-selected-info').textContent = [M.name(r), s.song_title].filter(Boolean).join(' · ');
         $('segments-selected-time').textContent = M.format(s.start_ms) + (s.end_ms === null ? ' · bod' : ' – ' + M.format(s.end_ms));
-        $('segments-selected-body').textContent = s.boundary === 'derived' ? 'Pasáž končí na následující hranici nebo na konci pokusu či nahrávky.' : s.boundary === 'open' ? 'Začátek zatím nemá spárovaný konec.' : '';
+        $('segments-selected-body').textContent = s.boundary === 'derived' ? 'Pasáž končí na následující hranici nebo na konci úseku či nahrávky.' : s.boundary === 'open' ? 'Začátek zatím nemá spárovaný konec.' : '';
         $('segments-play').disabled = !file?.url; audio.hidden = !file?.url;
         $('segments-loop').disabled = s.end_ms === null; if (s.end_ms === null) $('segments-loop').checked = false;
         const params = new URLSearchParams({ v: '2', collection_id: r.collection_id, recording_id: r.id, view: r.kind === 'multitrack' ? 'mixer' : 'looper', time_ms: Math.round(s.start_ms) });
@@ -117,6 +123,17 @@
             panel.setPlayhead(r.id, s.start_ms);
             window.Vz2TimestampStore.select({ recording_id: r.id, item_id: s.id });
         }
+    }
+    function seekPosition(value) {
+        const { recording_id, recording, time_ms, segment_id } = value;
+        const segment = selection?.segment;
+        if (String(selection?.recording_id) !== String(recording_id) || !segment || !segment_id && (time_ms < segment.start_ms || segment.end_ms != null && time_ms >= segment.end_ms)) {
+            select({ recording_id, recording, segment: { id: 'recording', kind: 'recording', label: 'Celá nahrávka', start_ms: 0, end_ms: recording.duration_ms ?? null } }, false, true);
+        }
+        selection.time_ms = time_ms;
+        window.Vz2TimestampPlayback.stop();
+        if (loadedAudio === selectedFile()?.url && audio.readyState > 0) audio.currentTime = time_ms / 1000;
+        panel.setPlayhead(recording_id, time_ms);
     }
     function atBoundary() {
         if (selection) panel.setPlayhead(selection.recording_id, audio.currentTime * 1000);
@@ -137,6 +154,7 @@
                 repeat: $('segments-loop').checked, onError: text => { $('segments-audio-status').textContent = text; }
             });
             if (token !== playSerial) return;
+            if (value.time_ms != null) audio.currentTime = value.time_ms / 1000;
             $('segments-audio-status').textContent = value.segment.end_ms === null ? 'Přehrávání od vybrané značky.' : 'Přehrávání vybraného úseku.';
             $('segments-audio-status').textContent += audioSource?.local ? ' Ze zařízení.' : ' Ze sítě.';
         } catch (e) { if (token === playSerial) $('segments-audio-status').textContent = 'Audio nelze přehrát. ' + e.message; }
@@ -145,7 +163,7 @@
     audio.addEventListener('pause', () => { $('segments-play').textContent = '▶ Přehrát úsek'; cancelAnimationFrame(animation); });
     audio.addEventListener('timeupdate', atBoundary); audio.addEventListener('ended', atBoundary);
     audio.addEventListener('loadedmetadata', () => {
-        if (selection && loadedAudio) audio.currentTime = Math.min(selection.segment.start_ms / 1000, Number.isFinite(audio.duration) ? audio.duration : Infinity);
+        if (selection && loadedAudio) audio.currentTime = Math.min((selection.time_ms ?? selection.segment.start_ms) / 1000, Number.isFinite(audio.duration) ? audio.duration : Infinity);
     });
     audio.addEventListener('error', () => { $('segments-audio-status').textContent = 'Audio se nepodařilo načíst. Zkuste ho otevřít v přehrávači.'; });
     $('segments-play').onclick = play;
@@ -154,7 +172,7 @@
         try {
             const data = await get('php/ajax/vz2.php?action=catalog');
             if (serial !== loadSerial) return;
-            clearSelection(); catalog = data; waveCache.clear(); panel.clearWaveforms();
+            clearSelection(); catalog = data; panel.clearWaveforms();
             const rows = available(); selectedIds = new Set([...selectedIds].filter(id => rows.some(r => String(r.id) === id)));
             const requested = new URLSearchParams(location.search).get('recording_id');
             if (!selectedIds.size) {
@@ -221,13 +239,13 @@
     $('segments-new-passage').onclick = () => edit('passage');
     $('segments-new-note').onclick = () => edit('note');
     $('segments-delete').onclick = async () => {
-        if (!selection || !confirm('Smazat vybraný úsek?')) return;
+        if (!selection || !confirm('Smazat vybrané časové značky? Nahrávka zůstane zachovaná.')) return;
         const chosen = selection;
         try {
             const list = await window.Vz2TimestampStore.load(chosen.recording_id);
             const current = window.Vz2TimestampModel.items(list).find(i => i.id === chosen.segment.id);
             if (!current || current.source.revision !== chosen.segment.source.revision) throw Error('Úsek byl změněn. Zkontrolujte aktuální údaje.');
-            await window.Vz2TimestampStore.remove(chosen.recording_id, current, list.timestamps_revision);
+            await window.Vz2TimestampStore.removeWithHistory(chosen.recording_id, current, list.timestamps_revision);
         } catch (e) { status(e.message, true); }
     };
     document.addEventListener('vz2:timestamp-selected', e => {

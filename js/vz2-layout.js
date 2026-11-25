@@ -147,6 +147,7 @@
         $('catalog-heading').textContent = $('collection-kind-label').textContent = label;
         $('catalog-heading-mobile').textContent = label;
         $('collection-kind-inline').textContent = collectionKind === 'rehearsal' ? 'Zkouška:' : 'Skladba:';
+        $('collection-kind-icon').className = 'ti ' + (collectionKind === 'rehearsal' ? 'ti-microphone' : 'ti-music');
         $('catalog-dialog').setAttribute('aria-label', label);
         $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
         const mobilePanels = $('mobile-panels');
@@ -286,7 +287,7 @@
     });
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape' || e.defaultPrevented || !fullscreenPanel || document.querySelector('dialog[open]')) return;
-        const menu = fullscreenPanel.querySelector('details[open]');
+        const menu = fullscreenPanel.querySelector('details[open]:not(.vz2-timestamps)');
         if (menu) { menu.open = false; menu.querySelector('summary').focus(); e.preventDefault(); return; }
         const control = fullscreenPanel.querySelector('.panel-fullscreen-button');
         setPanelFullscreen(fullscreenPanel); control.focus({ preventScroll: true }); e.preventDefault();

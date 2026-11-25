@@ -28,7 +28,7 @@ const write = (name, value) => { fs.mkdirSync(path.dirname(name), { recursive: t
 const phpString = value => "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 for (const dir of ['php', 'js', 'css', 'meat']) fs.cpSync(path.join(root, dir), path.join(web, dir), { recursive: true });
 for (const dir of ['migrations', 'tools']) fs.cpSync(path.join(root, '_pomocne', dir), path.join(web, dir), { recursive: true });
-for (const file of ['index.php', 'admin.php', 'help.php', 'prehled.php', 'useky.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
+for (const file of ['index.php', 'admin.php', 'help.php', 'prehled.php', 'useky.php', 'simple.php', 'hrani.php', 'config.theme.php', 'maintenance.html']) fs.copyFileSync(path.join(root, file), path.join(web, file));
 write(path.join(media, '.vz2-storage-id'), database);
 write(path.join(temp, 'db.php'), `<?php
 if(PHP_SAPI!=='cli')exit;
@@ -154,6 +154,10 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
             check((await request(clients.anon, 'maintenance.html')).status === 200, 'maintenance target exists');
         } finally { write(entryPath, normalEntry); }
         check((await request(clients.admin, 'index.php?v=2')).status === 200, 'application resumes after maintenance switch is disabled');
+        if (process.env.VZ2_TEST_SUITE === 'hrani') {
+            await require('./hrani.integration')({ clients, request, good, upload, wav, db, check });
+            console.log('PASS playing view suite: ' + checks + ' checks'); return;
+        }
         if (process.env.VZ2_TEST_SUITE === 'song-details') {
             await require('./vz2_song_details.integration')({ base, clients, request, good, db, check,
                 migrate: () => dbAction('migrate_song_details') });
@@ -162,11 +166,17 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         if (process.env.VZ2_TEST_SUITE === 'timestamp-intervals') {
             await require('./vz2_timestamp_intervals.integration')({ request, clients, good, upload, wav, db, check });
             if (process.env.VZ2_TEST_BROWSER === 'timestamps') await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });
+            if (process.env.VZ2_TEST_BROWSER === 'delete-link') await require('./vz2_delete_link.browser')({ base, clients, good, upload, wav, request, db, check });
             console.log('PASS timestamp interval suite: ' + checks + ' checks'); return;
         }
         if (process.env.VZ2_TEST_SUITE === 'wave-boundaries') {
             await require('./vz2_wave_boundaries.browser')({ base, clients, good, request, check, temp, upload, wav });
             console.log('PASS wave boundaries: ' + checks + ' checks');
+            return;
+        }
+        if (process.env.VZ2_TEST_SUITE === 'songmap-migration') {
+            await require('./vz2_song_map_migration.integration')({ request, clients, db, good, check, database, dbPort, php, root });
+            console.log('PASS song map migration: ' + checks + ' checks');
             return;
         }
         if (process.env.VZ2_TEST_SUITE === 'songmap') {
@@ -416,7 +426,7 @@ require_once __DIR__.'/php/auth.php';auth_refresh_session();
         fs.renameSync(path.join(media,partialFile+'.held'),path.join(media,partialFile));
         if (process.env.VZ2_TEST_UPLOAD_PEAKS === '1') await require('./vz2_upload_peaks.browser')({ base, clients, good, wav, db, media, check });
         if (['1', 'timestamps'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_timestamps.browser')({ base, clients, good, upload, wav, request, db, media, check, temp });
-        if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_content.browser')({ base, clients, good, request, db, check, temp, upload, wav });
+        if (['1', 'content'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_content.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1','songmap'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_song_map.browser')({ base, clients, good, request, db, check, temp });
         if (process.env.VZ2_TEST_BROWSER === '1') await require('./vz2_navigation.browser')({ base, clients, good, request, db, check, temp, upload, wav });
         if (['1', 'layout'].includes(process.env.VZ2_TEST_BROWSER)) await require('./vz2_layout.browser')({ base, clients, good, request, db, check, temp, upload, wav });

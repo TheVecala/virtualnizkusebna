@@ -23,7 +23,7 @@ assert.equal(by(4).parent_id, 't1');
 assert.equal(by(4).song_id, 22);
 assert.equal(by(5).end_ms, null, 'notes do not create ranges');
 assert.equal(by(6).end_ms, null, 'orphan starts stay points');
-assert.equal(by(6).label, 'Pokus 2');
+assert.equal(by(6).label, 'Úsek 2');
 assert.equal(by(7).kind, 'boundary');
 assert.equal(by(8).end_ms, null);
 assert.equal(model.incomplete, 3);

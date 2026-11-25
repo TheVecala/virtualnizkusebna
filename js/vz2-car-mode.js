@@ -47,11 +47,11 @@
         audio.pause(); audio.removeAttribute('src'); audio.load();
         previous?.abort.abort(); previous?.audioSource?.release();
     }
-    async function openSingle(recording, seconds = 0) {
+    async function openSingle(recording, seconds = 0, recovering = false) {
         const file = recording.files.find(item => item.url);
         if (!file) { setStatus('Audio není dostupné.', true); return; }
         releaseSingle();
-        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), abort: new AbortController(), audioSource: null };
+        const current = { id: String(recording.id), file, phase: 'loading', seconds: Math.max(0, Number(seconds) || 0), abort: new AbortController(), audioSource: null, autoRetried: false, recovering };
         single = current;
         const serial = audioSerial;
         audio.loop = false;
@@ -65,17 +65,42 @@
     }
     audio.addEventListener('loadedmetadata', () => {
         if (!single) return;
-        audio.currentTime = Math.min(Math.max(0, audio.duration || 0), single.seconds);
+        const duration = Number.isFinite(audio.duration) ? Math.max(0, audio.duration) : single.seconds;
+        audio.currentTime = Math.min(duration, single.seconds);
         single.phase = 'ready';
+        if (single.recovering) { single.recovering = false; setStatus(audio.paused ? 'Nahrávka je připravená. Stiskni Play.' : ''); }
         tick();
     });
+    function retrySingle(current, requestPlay = false) {
+        if (single !== current) return;
+        if (!current.audioSource) {
+            const recording = context?.recordings.find(row => String(row.id) === current.id);
+            if (recording) { setStatus('Znovu načítám nahrávku…'); void openSingle(recording, current.seconds, true); }
+            return;
+        }
+        current.phase = 'loading'; current.recovering = true;
+        setStatus('Znovu načítám nahrávku…'); tick();
+        audio.src = current.audioSource.url; audio.load();
+        if (requestPlay) audio.play().catch(() => {
+            if (single === current && current.phase !== 'error') setStatus('Nahrávka se načítá. Po načtení stiskni Play.');
+        });
+    }
+    audio.addEventListener('timeupdate', () => {
+        if (single?.phase === 'ready' && Number.isFinite(audio.currentTime)) single.seconds = audio.currentTime;
+    });
     audio.addEventListener('error', () => {
-        if (!single) return;
-        single.phase = 'error'; setStatus('Audio nelze načíst.', true); tick();
+        const current = single;
+        if (!current) return;
+        if (!current.autoRetried && current.audioSource) {
+            current.autoRetried = true; retrySingle(current); return;
+        }
+        current.phase = 'error'; current.recovering = false;
+        setStatus('Audio nelze načíst. Stiskni Play pro další pokus.', true); tick();
     });
     audio.addEventListener('play', () => {
         document.querySelectorAll('audio').forEach(other => { if (other !== audio) other.pause(); });
         window.MultitrackApp?.pause();
+        if (single) single.autoRetried = false;
     });
     function syncSingle() {
         if (mode.hidden || !mobile.matches) return;
@@ -106,7 +131,10 @@
     }
     async function play() {
         window.Vz2TimestampPlayback.stop();
-        if (single) { if (single.phase === 'ready') await audio.play(); }
+        if (single) {
+            if (single.phase === 'ready') { await audio.play(); setStatus(''); }
+            else if (single.phase === 'error') { single.autoRetried = true; retrySingle(single, true); }
+        }
         else await window.Vz2Player.play();
         tick();
     }
@@ -154,7 +182,7 @@
         host.replaceChildren(); activeChapter = null;
         const starts = timestampList ? Model.items(timestampList).filter(item => item.kind === 'take') : [];
         if (!starts.length) {
-            host.append(text('p', timestampId ? timestampList ? 'Žádné pokusy.' : 'Načítám pokusy…' : 'Po výběru nahrávky se zobrazí pokusy.', 'car-empty'));
+            host.append(text('p', timestampId ? timestampList ? 'Žádné úseky.' : 'Načítám úseky…' : 'Po výběru nahrávky se zobrazí úseky.', 'car-empty'));
             return;
         }
         for (const row of starts) {
@@ -163,7 +191,7 @@
             button.append(text('span', format(row.start_ms / 1000) + (row.end_ms === null ? '\nbez konce' : '\n– ' + format(row.end_ms / 1000)), 'car-chapter-time'),
                 text('span', [row.song_title, row.label].filter((value, i, values) => value && values.indexOf(value) === i).join(' · '), 'car-chapter-name'),
                 text('span', '', 'car-chapter-play'));
-            if (row.end_ms === null) button.title = 'Konec pokusu není doplněný.';
+            if (row.end_ms === null) button.title = 'Konec úseku není doplněný.';
             button.lastElementChild.setAttribute('aria-hidden', 'true');
             button.addEventListener('click', async () => {
                 if (context?.player?.phase !== 'ready') return;
@@ -190,7 +218,8 @@
         const seek = $('car-seek');
         seek.max = String(duration); seek.disabled = !ready || duration <= 0;
         if (document.activeElement !== seek) seek.value = String(Math.min(position, duration));
-        for (const id of ['car-back', 'car-forward', 'car-play']) $(id).disabled = !ready;
+        for (const id of ['car-back', 'car-forward']) $(id).disabled = !ready;
+        $('car-play').disabled = !ready && !(single?.phase === 'error');
         for (const id of ['car-up', 'car-down']) $(id).disabled = !ready || !timestampList?.can_create || ratingBusy;
         $('car-chapter-list').querySelectorAll('.car-chapter').forEach(button => { button.disabled = !ready; });
         $('car-play').querySelector('span').classList.toggle('is-playing', !!player?.playing);
@@ -208,6 +237,18 @@
         }
         if (String(player?.id || '') !== String(timestampId || '')) refreshContext();
     }
+    function folderRecordings(id) {
+        const linked = new Set((context?.linkedRecordings?.[String(id)] || []).map(String));
+        return (context?.recordings || []).filter(row => row.lifecycle === 'active' && (String(row.collection_id) === String(id) || linked.has(String(row.id))));
+    }
+    function nameParts(value) {
+        const name = text('strong', '', 'car-name');
+        const chars = Array.from(value);
+        const split = Math.ceil(chars.length * .65);
+        name.append(text('span', chars.slice(0, split).join(''), 'car-name-start'), text('span', chars.slice(split).join(''), 'car-name-end'));
+        name.title = value;
+        return name;
+    }
     function renderPicker() {
         const folder = collection(browseCollectionId);
         $('car-picker-folder').querySelector('strong').textContent = folder?.title || 'Vybrat složku';
@@ -221,19 +262,22 @@
             if (!folders.length) host.append(text('p', 'Žádné složky.', 'car-empty'));
             folders.forEach(row => {
                 const button = text('button', '', 'car-picker-row'); button.type = 'button';
-                button.append(text('strong', row.title), text('small', context.recordings.filter(r => String(r.collection_id) === String(row.id) && available(r)).length + ' nahrávek'));
+                const count = folderRecordings(row.id).filter(available).length + ' nahrávek';
+                button.setAttribute('aria-label', row.title + ' · ' + count);
+                button.append(nameParts(row.title), text('small', count));
                 button.addEventListener('click', () => { browseCollectionId = row.id; pickerLevel = 'recordings'; renderPicker(); });
                 host.append(button);
             });
         } else {
             const host = $('car-picker-recordings'); host.replaceChildren();
-            const recordings = (context?.recordings || []).filter(row => String(row.collection_id) === String(browseCollectionId) && row.lifecycle === 'active');
+            const recordings = folderRecordings(browseCollectionId);
             if (!recordings.length) host.append(text('p', 'V této složce nejsou nahrávky.', 'car-empty'));
             recordings.forEach(row => {
                 const button = text('button', '', 'car-picker-row'); button.type = 'button';
                 button.disabled = !available(row);
+                button.setAttribute('aria-label', recordingName(row));
                 button.append(text('span', row.kind === 'multitrack' ? '≋' : '♪', 'car-picker-icon'),
-                    text('strong', recordingName(row)), text('small', button.disabled ? 'Audio není dostupné' : row.kind === 'multitrack' ? 'Mixér' : format(Number(row.files?.[0]?.duration_ms || 0) / 1000)));
+                    nameParts(recordingName(row)), text('small', button.disabled ? 'Audio není dostupné' : row.kind === 'multitrack' ? 'Mixér' : format(Number(row.files?.[0]?.duration_ms || 0) / 1000)));
                 if (String(row.id) === String(context?.player?.id)) button.classList.add('is-selected');
                 button.addEventListener('click', () => chooseRecording(row));
                 host.append(button);
@@ -320,7 +364,7 @@
     picker.addEventListener('click', event => { if (event.target === picker) hidePicker(); });
     document.querySelectorAll('[data-car-kind]').forEach(button => button.addEventListener('click', () => { browseKind = button.dataset.carKind; renderPicker(); }));
     $('car-play').onclick = async () => {
-        try { if (playerState()?.playing) pause(); else await play(); setStatus(''); }
+        try { if (playerState()?.playing) { pause(); setStatus(''); } else await play(); }
         catch (_) { setStatus('Přehrávání se nepodařilo spustit.', true); }
         tick();
     };

@@ -4,9 +4,11 @@ require_once __DIR__.'/vz2_song_details.php';
 
 final class Vz2Error extends RuntimeException {
     public int $status;
-    public function __construct(string $message, int $status = 400) {
+    public ?string $reason;
+    public function __construct(string $message, int $status = 400, ?string $reason = null) {
         parent::__construct($message);
         $this->status = $status;
+        $this->reason = $reason;
     }
 }
 
@@ -123,7 +125,8 @@ function vz2_mutate(array $in): array {
             vz2_log($db,'collection.created','collection',$id,$title);
             return ['id'=>$id,'revision'=>1];
         }
-        if ($action === 'song_details_update') return vz2_song_details_save($db, $in);
+        if ($action === 'song_details_update') return vz2_collection_details_save($db, $in, 'song');
+        if ($action === 'rehearsal_description_update') return vz2_collection_details_save($db, $in, 'rehearsal');
         if ($action === 'collection_rename') {
             $r = vz2_collection($db, vz2_id($in['id'] ?? null)); vz2_active($r);
             vz2_permission('rename_val',(int)$r['created_by']); vz2_revision($r,$in['revision'] ?? null);
@@ -152,7 +155,7 @@ function vz2_mutate(array $in): array {
                         if (($source && $origin['kind']!=='rehearsal') || (!$source && $origin['kind']!=='song')) throw new Vz2Error('Vazba nahrávky neodpovídá její složce. Přesun vyžaduje kontrolu historie.',409);
                         if ($source) vz2_query($db,'UPDATE vz2_rehearsal_plays SET rehearsal_collection_id=?,rehearsal_title_snapshot=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[$target['id'],$target['title'],vz2_actor(),$link['id']]);
                         else {
-                            if($link['start_timestamp_id'] && (int)$target['id']!==(int)$origin['id'])throw new Vz2Error('Nejprve odpojte výstřižek od pokusu v historii.',409);
+                            if($link['start_timestamp_id'] && (int)$target['id']!==(int)$origin['id'])throw new Vz2Error('Nejprve odpojte výstřižek od úseku v historii.',409);
                             vz2_query($db,'UPDATE vz2_rehearsal_plays SET song_collection_id=?,song_title_snapshot=?,revision=revision+1,updated_by=?,updated_at=UTC_TIMESTAMP() WHERE id=?',[$target['id'],$target['title'],vz2_actor(),$link['id']]);
                         }
                         vz2_log($db,'history.reassigned','rehearsal_play',(int)$link['id'],$r['title'],'Přesun nahrávky #'.$id.' do #'.$target['id']);

@@ -1,0 +1,41 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { chromium } = require('playwright');
+const root = path.resolve(__dirname, '../..');
+(async () => {
+    const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || chromium.executablePath() });
+    try {
+        const page = await browser.newPage({ viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true });
+        const script = fs.readFileSync(path.join(root, 'js/vz2-select.js'), 'utf8');
+        const css = fs.readFileSync(path.join(root, 'css/vz2-select.css'), 'utf8');
+        await page.setContent(`<meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><form><label>Skladba<select id="choice" name="song" required><option value="">Vybrat</option><option value="1">První skladba</option><option value="2">Druhá skladba</option></select></label></form><dialog id="d"><select aria-label="Číslo"><option value="a">A</option><option value="b">B</option></select></dialog><script>${script}</script>`);
+        const select = page.locator('#choice'), button = page.locator('.vz2-select-button').first();
+        await button.waitFor();
+        await page.evaluate(() => { window.changes = 0; document.querySelector('#choice').addEventListener('change', () => window.changes++); });
+        await button.click();
+        assert.equal(await page.locator('[role=listbox]').count(), 1);
+        const box = await page.locator('[role=listbox]').boundingBox(); assert(box.x >= 0 && box.x + box.width <= 320 && box.y >= 0 && box.y + box.height <= 640);
+        await page.getByRole('option', { name: 'Druhá skladba' }).click();
+        assert.equal(await select.inputValue(), '2'); assert.equal(await page.evaluate(() => window.changes), 1);
+        assert((await button.textContent()).includes('Druhá skladba'));
+        await select.evaluate(node => { node.value = '1'; }); assert((await button.textContent()).includes('První skladba'));
+        await button.click(); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+        assert.equal(await select.inputValue(), '2');
+        await button.click(); await page.keyboard.press('Escape'); assert.equal(await page.locator('[role=listbox]').count(), 0);
+        await page.evaluate(() => document.querySelector('form').reset());
+        await page.waitForFunction(() => document.querySelector('.vz2-select-button').textContent === 'Vybrat');
+        await page.evaluate(() => document.querySelector('#d').showModal());
+        await page.locator('#d .vz2-select-button').click(); assert.equal(await page.locator('#d [role=listbox]').count(), 1);
+        await page.getByRole('option', { name: 'B', exact: true }).click(); assert.equal(await page.locator('#d select').inputValue(), 'b');
+        await page.evaluate(() => document.querySelector('#d').close());
+        await page.evaluate(() => { const select = document.createElement('select'); select.id = 'dynamic'; select.append(new Option('Jeden', '1'), new Option('Dva', '2')); document.body.append(select); });
+        await page.locator('#dynamic + .vz2-select-button').click(); await page.getByRole('option', { name: 'Dva', exact: true }).click();
+        assert.equal(await page.locator('#dynamic').inputValue(), '2');
+        await page.evaluate(() => { const input = document.createElement('input'); input.id = 'after-choice'; document.body.append(input); document.querySelector('#dynamic').addEventListener('change', () => input.focus()); });
+        await page.locator('#dynamic + .vz2-select-button').click(); await page.getByRole('option', { name: 'Jeden', exact: true }).click();
+        assert.equal(await page.evaluate(() => document.activeElement.id), 'after-choice');
+        console.log('PASS own selection menus: mobile layout, forms, keyboard, modal and dynamic options');
+    } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

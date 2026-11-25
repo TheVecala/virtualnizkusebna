@@ -82,3 +82,14 @@ body.car-mode-open { overflow: hidden; }
     .collection-heading-row #collection-title-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 @media (max-width: 375px) { .car-screen { gap: 7px; } .car-controls button { min-height: 56px; } .car-chapter { min-height: 49px; } }
+/* Keep titles and counts on one line while preserving the end of long names. */
+.car-picker-row:has(> strong:first-child) { grid-template-columns: minmax(0, 1fr) auto; min-height: 54px; }
+.car-picker-row:has(> strong:first-child) strong { grid-column: 1; font-size: 18px; }
+.car-picker-row:has(> strong:first-child) small { grid-column: 2; white-space: nowrap; }
+.car-picker-row .car-name { display: flex; min-width: 0; }
+.car-name-start { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.car-name-end { flex: none; white-space: nowrap; }
+#car-mode #car-folder { border: 1px solid var(--color-border-strong); border-radius: 10px; background: var(--color-surface); padding: 4px 8px; }
+#car-mode #car-folder::after { content: ' ⌄'; color: var(--color-primary); }
+.car-header, .car-transport, .car-rating, #car-status { flex-shrink: 0; }
+#car-chapter-list { -webkit-overflow-scrolling: touch; touch-action: pan-y; }

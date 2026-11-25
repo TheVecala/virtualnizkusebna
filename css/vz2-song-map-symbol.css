@@ -1,0 +1,20 @@
+.song-map-symbol {
+    display: inline-block;
+    width: 24px;
+    height: auto;
+    overflow: visible;
+    vertical-align: middle;
+    color: var(--color-song-map-ink, #e4e9dc);
+    fill: currentColor;
+}
+
+.song-map-symbol-crash {
+    fill: var(--song-map-icon-background, var(--color-panel, #242b26));
+    stroke: var(--color-song-map-crash, #b1c47a);
+    stroke-linejoin: round;
+}
+
+.song-map-symbol-large {
+    display: block;
+    width: 100%;
+}
