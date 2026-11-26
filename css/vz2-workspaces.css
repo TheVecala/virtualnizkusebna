@@ -160,7 +160,6 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #collection-header { justify-content: space-between; gap: 8px; padding: 0 8px 6px; }
     #collection-header .workspace-heading { display: flex; align-items: center; flex: 1 1 auto; gap: 10px; }
     #collection-header .collection-heading-row { flex: 0 1 auto; min-width: 0; max-width: 42%; }
-    #collection-header #catalog-picker { min-height: 30px; margin: 0; border: 1px solid var(--color-border); border-radius: 5px; }
     #collection-header #collection-title-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #desktop-panels button { display: grid; place-items: center; min-width: 34px; min-height: 30px; padding: 2px 5px; }
     #desktop-panels .section-icon { width: 19px; height: 19px; }

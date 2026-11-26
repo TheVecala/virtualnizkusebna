@@ -78,9 +78,7 @@
     let state = states.song;
     function save(mode) { try { localStorage.setItem(prefix + collectionKind + ':' + mode, JSON.stringify(state[mode])); } catch (_) { /* Keep the in-memory choice. */ } }
     function mode() { return desktop.matches ? 'desktop' : mobile.matches ? 'mobile' : 'tablet'; }
-    let catalogOpenedOnDesktop = false;
     function closeCatalog() {
-        catalogOpenedOnDesktop = false;
         if ($('catalog-dialog').open) $('catalog-dialog').close();
         $('catalog-picker').setAttribute('aria-expanded', 'false');
     }
@@ -97,9 +95,8 @@
         $('catalog-dialog').style.setProperty('--catalog-left', Math.max(8, Math.min(anchor.left, innerWidth - 428)) + 'px');
     }
     function openCatalog() {
-        if (!isCollection()) return;
+        if (desktop.matches || !isCollection()) return;
         if ($('catalog-dialog').open) { closeCatalog(); return; }
-        catalogOpenedOnDesktop = desktop.matches;
         $('catalog-dialog-slot').append($('sidebar'));
         $('catalog-dialog').showModal();
         $('catalog-picker').setAttribute('aria-expanded', 'true');
@@ -128,7 +125,7 @@
             String(!full && button.dataset.playerPosition === workspace.dataset.playerPosition)));
     }
     function apply() {
-        if (desktop.matches && $('catalog-dialog').open && !catalogOpenedOnDesktop) closeCatalog();
+        if (desktop.matches && $('catalog-dialog').open) closeCatalog();
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current], collection = isCollection();
         $('panel-lyrics').setAttribute('aria-label', panelName('lyrics'));
         $('panel-lyrics').querySelector('.panel-header h2').textContent = panelName('lyrics');
@@ -175,7 +172,11 @@
         $('collection-kind-inline').textContent = collectionKind === 'rehearsal' ? 'Zkouška:' : 'Skladba:';
         $('collection-kind-icon').className = 'ti ' + (collectionKind === 'rehearsal' ? 'ti-microphone' : 'ti-music');
         $('catalog-dialog').setAttribute('aria-label', label);
-        $('catalog-picker').title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
+        const picker = $('catalog-picker'), titleName = $('collection-title-name');
+        picker.title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
+        picker.hidden = desktop.matches;
+        if (desktop.matches && titleName.parentElement === picker) picker.before(titleName);
+        else if (!desktop.matches && titleName.parentElement !== picker) picker.querySelector('.catalog-chevron').before(titleName);
         const mobilePanels = $('mobile-panels');
         mobilePanels.hidden = !collection || !mobile.matches;
         $('mobile-sections-dock').hidden = mobilePanels.hidden;
@@ -211,7 +212,7 @@
             b.hidden = !availableIds().includes(b.dataset.mobilePanel);
             b.setAttribute('aria-pressed', String(b.dataset.mobilePanel === state.mobile));
         });
-        const slot = $(desktop.matches && !$('catalog-dialog').open ? 'sidebar-slot' : 'catalog-dialog-slot');
+        const slot = $(desktop.matches ? 'sidebar-slot' : 'catalog-dialog-slot');
         if ($('sidebar').parentElement !== slot) { closeCatalog(); slot.append($('sidebar')); }
         placeCatalog();
     }

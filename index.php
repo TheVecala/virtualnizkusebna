@@ -96,7 +96,12 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
             const splash = $('vz2-boot'), hadFocus = splash.contains(document.activeElement);
             splash.setAttribute('aria-hidden', 'true'); splash.inert = true;
             splash.classList.add('is-leaving');
-            if (hadFocus) $('catalog-picker').focus({ preventScroll: true });
+            if (hadFocus) {
+                const picker = $('catalog-picker');
+                const target = picker.hidden ? document.querySelector('#collections button[aria-pressed=true]')
+                    || document.querySelector('#workspace-navigation button[aria-pressed=true]') : picker;
+                target?.focus({ preventScroll: true });
+            }
             setTimeout(() => splash.remove(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180);
             document.removeEventListener('load', loaded, true);
             window.removeEventListener('error', startupError, true);

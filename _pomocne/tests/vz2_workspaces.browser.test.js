@@ -197,7 +197,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('songs');
         const choose = title => page.locator('#collections .collection > button').filter({ hasText: title }).click();
         await choose('Poslední vlak');
-        await page.locator('#collection-title-name').getByText('Poslední vlak', { exact: true }).waitFor();
+        const catalogPicker = page.locator('#catalog-picker'), catalogDialog = page.locator('#catalog-dialog');
+        const plainTitle = page.locator('#collection-title > #collection-title-name');
+        await page.getByRole('heading', { name: 'Poslední vlak', exact: true }).waitFor();
+        await plainTitle.click();
+        assert.equal(await catalogDialog.isVisible(), false);
+        assert.equal(await catalogPicker.isVisible(), false);
+        await page.setViewportSize({ width: 1199, height: 900 });
+        await catalogPicker.getByText('Poslední vlak', { exact: true }).click();
+        await catalogDialog.waitFor({ state: 'visible' });
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await catalogDialog.waitFor({ state: 'hidden' });
+        await plainTitle.waitFor();
         await choose('Nová skladba');
         await page.locator('#song-details').getByText('Zkušební popis skladby', { exact: true }).waitFor();
         await page.locator('#lyrics-content .document-preview').waitFor();
@@ -215,7 +226,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         }
         await switchTo('rehearsals');
         await choose('Zkouška 1. října');
-        await page.locator('#collection-title-name').getByText('Zkouška 1. října', { exact: true }).waitFor();
+        await plainTitle.getByText('Zkouška 1. října', { exact: true }).waitFor();
         await choose('Zkouška 8. října');
         await page.locator('#song-details').getByText('Pracovní poznámka ke zkoušce', { exact: true }).waitFor();
         const openPlayer = async (id, label, mode) => {
@@ -346,6 +357,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             await page.waitForFunction(layout => document.body.dataset.layout === layout, width >= 1200 ? 'desktop' : width >= 768 ? 'tablet' : 'mobile');
             assert.equal(await page.locator('#sidebar-slot').isVisible(), width >= 1200);
             assert.equal(await page.locator('#bottom-nav').isVisible(), width < 768);
+            assert.equal(await catalogPicker.isVisible(), width < 1200);
             assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1 && document.documentElement.scrollHeight <= innerHeight + 1));
         }
         assert.deepEqual(errors, []);
@@ -650,8 +662,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             if (workspace === 'songs' || workspace === 'rehearsals') {
                 const header = await page.evaluate(() => {
                     const rect = selector => document.querySelector(selector).getBoundingClientRect();
+                    const center = selector => { const box = rect(selector); return box.y + box.height / 2; };
                     return { ordered: rect('#workspace-navigation').bottom <= rect('#collections').top,
-                        sameRow: Math.abs(rect('#catalog-picker').y - rect('#desktop-panels').y) < 2,
+                        sameRow: Math.abs(center('#collection-title-name') - center('#desktop-panels')) < 2,
                         sameIcon: document.querySelector('#desktop-panels [data-desktop-panel=recordings] use').getAttribute('href') === document.querySelector('#panel-recordings .panel-header use').getAttribute('href') };
                 });
                 assert(header.ordered && header.sameRow && header.sameIcon, `${workspace} panel controls share the information row`);
