@@ -18,6 +18,8 @@
         : collectionKind === 'rehearsal' && id === 'tablature' ? 'Začátky skladeb' : names[id];
     const surfaces = new Map([...document.querySelectorAll('[data-workspace]')].map(panel => [panel.dataset.workspace, panel]));
     const fullscreenHandlers = new WeakMap();
+    const player = $('player-shell'), workspace = $('workspace');
+    const playerPositions = player.querySelectorAll('.player-position-button');
     function setPanelFullscreen(panel) {
         if (fullscreenPanel === panel) panel = null;
         if (fullscreenPanel) {
@@ -37,7 +39,9 @@
     function updateFullscreenButton(panel, active) {
         const control = panel.querySelector('.panel-fullscreen-button');
         if (!control) return;
-        const label = active ? 'Ukončit celou obrazovku' : 'Celá obrazovka';
+        const label = panel === player && desktop.matches
+            ? (active ? 'Obnovit předchozí polohu' : 'Celá plocha')
+            : (active ? 'Ukončit celou obrazovku' : 'Celá obrazovka');
         control.setAttribute('aria-label', label + ': ' + panel.getAttribute('aria-label'));
         control.setAttribute('aria-pressed', String(active));
         control.title = label;
@@ -103,6 +107,26 @@
         ($('collections').querySelector('.collection > button') || $('create-collection-open') || $('catalog-close')).focus();
     }
     function moveControls(id, slot) { const control = $(id), target = $(slot); if (control.parentElement !== target) target.append(control); }
+    function placeWorkspaceNavigation() {
+        const navigation = $('workspace-navigation'), sidebar = $('sidebar-slot');
+        if (desktop.matches) {
+            if (navigation.parentElement === sidebar) return;
+            document.querySelector('.shell-menu nav').prepend($('show-ideas'));
+            navigation.prepend(navigation.querySelector('[data-workspace-target="rehearsals"]'));
+            sidebar.prepend(navigation);
+        } else if (navigation.parentElement === sidebar) {
+            navigation.prepend(navigation.querySelector('[data-workspace-target="songs"]'));
+            navigation.append($('show-ideas'));
+            document.querySelector('.topbar-account').before(navigation);
+        }
+    }
+    function updatePlayerPosition() {
+        const full = fullscreenPanel === player;
+        $('workspace-frame').inert = desktop.matches && full;
+        updateFullscreenButton(player, full);
+        playerPositions.forEach(button => button.setAttribute('aria-pressed',
+            String(!full && button.dataset.playerPosition === workspace.dataset.playerPosition)));
+    }
     function apply() {
         if (desktop.matches && $('catalog-dialog').open && !catalogOpenedOnDesktop) closeCatalog();
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current], collection = isCollection();
@@ -130,7 +154,7 @@
             option.textContent = panelName(option.value);
             option.hidden = option.disabled = !availableIds().includes(option.value);
         });
-        if (fullscreenPanel && fullscreenPanel.id !== 'player-shell') {
+        if (fullscreenPanel && fullscreenPanel !== player) {
             const surface = fullscreenPanel.closest('[data-workspace]')?.dataset.workspace;
             if ((surface === 'panels' ? !collection : surface !== activeWorkspace) ||
                 (fullscreenPanel.dataset.panel && !shown.includes(fullscreenPanel.dataset.panel))) setPanelFullscreen(null);
@@ -140,7 +164,9 @@
         document.body.dataset.collectionKind = collectionKind;
         surfaces.forEach((panel, key) => panel.hidden = key === 'panels' ? !collection : key !== activeWorkspace);
         $('collection-header').hidden = !collection;
-        $('sidebar-slot').hidden = !collection;
+        $('desktop-panels').hidden = !desktop.matches;
+        $('sidebar-slot').hidden = !desktop.matches;
+        $('sidebar').hidden = !collection;
         $('song-workspace').setAttribute('aria-label', collectionKind === 'rehearsal' ? 'Pracovní plocha zkoušky' : 'Pracovní plocha skladby');
         document.querySelectorAll('[data-workspace-target]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.workspaceTarget === activeWorkspace)));
         const label = collectionKind === 'rehearsal' ? 'Zkoušky' : 'Skladby';
@@ -159,12 +185,11 @@
             const header = $('panel-' + state.mobile).querySelector('.panel-header');
             if (collectionHeading.parentElement !== header) header.prepend(collectionHeading);
         } else if (collectionHeading.parentElement !== collectionHeader) collectionHeader.prepend(collectionHeading);
-        // Move the existing controls, preserving values and listeners at every breakpoint.
-        moveControls('desktop-panels', 'sidebar');
-        moveControls('history-controls', 'history-controls-slot');
-        moveControls('ideas-controls', 'ideas-controls-slot');
-        $('history-controls').hidden = activeWorkspace !== 'history';
-        $('ideas-controls').hidden = activeWorkspace !== 'ideas';
+        placeWorkspaceNavigation();
+        updatePlayerPosition();
+        const historyInSidebar = desktop.matches && fullscreenPanel !== $('history-workspace');
+        moveControls('history-controls', historyInSidebar ? 'history-sidebar-slot' : 'history-controls-slot');
+        $('history-sidebar-slot').hidden = !historyInSidebar || activeWorkspace !== 'history';
         document.querySelectorAll('[data-idea-section]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.ideaSection === ideaSection)));
         document.querySelectorAll('[data-idea-panel]').forEach(panel => panel.hidden = panel.dataset.ideaPanel !== ideaSection);
         ids.forEach(id => {
@@ -190,6 +215,11 @@
         if ($('sidebar').parentElement !== slot) { closeCatalog(); slot.append($('sidebar')); }
         placeCatalog();
     }
+    playerPositions.forEach(button => button.addEventListener('click', () => {
+        workspace.dataset.playerPosition = button.dataset.playerPosition;
+        if (fullscreenPanel === player) setPanelFullscreen(null);
+        else updatePlayerPosition();
+    }));
     ids.forEach(id => {
         addFullscreenButton($('panel-' + id));
         const select = document.createElement('select');
@@ -293,7 +323,7 @@
         setPanelFullscreen(fullscreenPanel); control.focus({ preventScroll: true }); e.preventDefault();
     });
     document.addEventListener('keydown', e => {
-        if (e.key !== 'Tab' || !fullscreenPanel || document.querySelector('dialog[open]')) return;
+        if (e.key !== 'Tab' || !fullscreenPanel || (desktop.matches && fullscreenPanel === player) || document.querySelector('dialog[open]')) return;
         const controls = [...fullscreenPanel.querySelectorAll('button, input, select, textarea, a[href], summary, [tabindex]')]
             .filter(control => !control.disabled && control.tabIndex >= 0 && control.getClientRects().length);
         const first = controls[0], last = controls.at(-1);
@@ -329,6 +359,7 @@
         exitFullscreen(panel) { if (fullscreenPanel === panel) setPanelFullscreen(null); },
         showIdeas() { showWorkspace('ideas'); },
         revealRecording() {
+            if (desktop.matches && fullscreenPanel === player) setPanelFullscreen(null);
             showWorkspace(collectionKind === 'rehearsal' ? 'rehearsals' : 'songs');
             const current = mode();
             if (current === 'mobile') state.mobile = 'recordings';

@@ -66,7 +66,7 @@ module.exports = async ({ base, clients, good, upload, wav, request, check, temp
         assert.equal(await page.locator('#looper-menu').isVisible(), true);
         await page.locator('#player-fullscreen').click();
         assert.equal((await state()).fullscreen, true); assert.equal((await state()).collapsed, false);
-        assert.deepEqual(await page.locator('#player-shell').evaluate(n => { const r = n.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }), [0, 0, 1440, 900]);
+        assert.deepEqual(await page.locator('#player-shell').boundingBox(), await page.locator('#workspace').boundingBox());
         await page.locator('#looper-zoom').evaluate(n => { n.value = 4; n.dispatchEvent(new Event('input', { bubbles: true })); });
         await page.screenshot({ path: path.join(temp, 'ui-stage3-looper-desktop.png') });
         await page.keyboard.press('Escape');

@@ -72,7 +72,7 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await page.locator('#looper-audio').evaluate(async audio => { audio.muted = true; audio.loop = true; await audio.play(); });
         await openHistory();
         await page.locator('#history-options > summary').click();
-        assert.equal(await history.locator('#history-menu > button').count(), 1);
+        assert.equal(await page.locator('#history-sidebar-slot #history-menu > button').count(), 1);
         await page.locator('#history-unassigned-open').click();
         await unassigned.waitFor();
         assert.equal(await page.locator('#history-options').getAttribute('open'), null);

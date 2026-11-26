@@ -186,19 +186,28 @@
         let mobileActions, mobileAdd, mobilePassage, mobileNote, mobileQuickUp, mobileQuickDown, mobileToggle, resizeObserver, playerObserver, mobileMedia;
         const looperPanel = container.id === 'looper-timestamps';
         const mixerPanel = container.id === 'mixer-timestamps';
+        const player = looperPanel || mixerPanel ? document.getElementById('player-shell') : null;
+        const workspace = player?.closest('#workspace');
+        const desktopMedia = workspace && matchMedia('(min-width: 1200px)');
         const editorHost = looperPanel ? el('div') : null;
         if (editorHost) { editorHost.className = 'ts-editor-host'; editorHost.hidden = true; container.prepend(editorHost); }
         const actionsRow = looperPanel ? document.getElementById('looper-action-row') : null;
-        const pinnedOpen = () => looperPanel
-            && document.getElementById('player-shell').classList.contains('player-fullscreen');
+        const pinnedOpen = () => looperPanel && player.classList.contains('player-fullscreen');
         const positionDrawer = () => {
             if (pinnedOpen()) shell.open = true;
             if (looperPanel) {
                 if (reload.parentElement !== mobileActions) (mobileNote || mobileAdd).after(reload);
             } else if (reload.parentElement !== toolbar) quickDown.after(reload);
-            if (mobileActions && (looperPanel || mobileMedia.matches)) {
+            if (desktopMedia?.matches) {
+                const area = workspace.getBoundingClientRect(), bar = player.getBoundingClientRect();
+                const atBottom = workspace.dataset.playerPosition === 'bottom', gap = 6;
+                const top = atBottom ? area.top : bar.bottom;
+                const bottom = atBottom ? bar.top : area.bottom;
+                container.style.setProperty('--ts-workspace-inset',
+                    [top + gap, innerWidth - area.right + gap, innerHeight - bottom + gap, area.left + gap].map(px => px + 'px').join(' '));
+            } else if (mobileActions && (looperPanel || mobileMedia.matches)) {
                 const actionBottom = (actionsRow || mobileActions).getBoundingClientRect().bottom;
-                const bottom = looperPanel ? Math.min(actionBottom, document.getElementById('player-shell').getBoundingClientRect().bottom) : actionBottom;
+                const bottom = looperPanel ? Math.min(actionBottom, player.getBoundingClientRect().bottom) : actionBottom;
                 container.style.setProperty('--ts-drawer-top', bottom + 8 + 'px');
             }
             Notes.reposition(panel);
@@ -221,7 +230,7 @@
             }
         };
         const onMobileChange = () => { if (!looperPanel) toggleDrawer(false); positionDrawer(); };
-        if (container.id === 'looper-timestamps' || container.id === 'mixer-timestamps') {
+        if (player) {
             mobileMedia = matchMedia('(max-width: 767px)');
             mobileActions = el('div'); mobileActions.className = 'looper-timestamp-actions';
             mobileToggle = button(mixerPanel ? 'Časové značky' : 'seznam značek', () => toggleDrawer(!container.classList.contains('ts-drawer-open')));
@@ -244,10 +253,14 @@
             else container.before(mobileActions);
             document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
             resizeObserver = new ResizeObserver(positionDrawer);
-            resizeObserver.observe(document.getElementById('player-shell')); resizeObserver.observe(mobileActions);
+            resizeObserver.observe(player); resizeObserver.observe(mobileActions);
             if (actionsRow) resizeObserver.observe(actionsRow);
             playerObserver = new MutationObserver(positionDrawer);
-            playerObserver.observe(document.getElementById('player-shell'), { attributes: true, attributeFilter: ['class'] });
+            playerObserver.observe(player, { attributes: true, attributeFilter: ['class'] });
+            if (workspace) {
+                resizeObserver.observe(workspace);
+                playerObserver.observe(workspace, { attributes: true, attributeFilter: ['data-player-position'] });
+            }
             mobileMedia.addEventListener('change', onMobileChange);
             window.addEventListener('resize', positionDrawer); document.addEventListener('keydown', onDrawerKey);
         }
@@ -347,6 +360,7 @@
                 resizeObserver?.disconnect(); playerObserver?.disconnect(); mobileMedia?.removeEventListener('change', onMobileChange);
                 window.removeEventListener('resize', positionDrawer); document.removeEventListener('keydown', onDrawerKey);
                 mobileActions?.remove(); container.classList.remove('ts-drawer-open'); container.style.removeProperty('--ts-drawer-top');
+                container.style.removeProperty('--ts-workspace-inset');
                 document.dispatchEvent(new Event('vz2:timestamp-actions-changed'));
             }
         };

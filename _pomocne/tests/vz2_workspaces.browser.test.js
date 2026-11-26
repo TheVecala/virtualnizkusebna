@@ -151,21 +151,221 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         return route.fulfill({ status: 204, body: '' });
     });
     const nav = name => page.locator(`[data-workspace-target="${name}"]:visible`);
-    async function switchTo(name) { await nav(name).click(); await page.waitForFunction(workspace => document.body.dataset.workspace === workspace, name); }
+    async function switchTo(name) {
+        if (name === 'ideas' && await page.locator('.shell-menu:not([open]) #show-ideas').count()) {
+            await page.locator('.shell-menu > summary').click();
+        }
+        await nav(name).click();
+        await page.waitForFunction(workspace => document.body.dataset.workspace === workspace, name);
+    }
+    async function checkDrawer(selector, position, content) {
+        await page.waitForFunction(({ selector, position, content }) => {
+            const rect = host => document.querySelector(host).getBoundingClientRect();
+            const drawer = rect(selector), workspace = rect('#workspace'), player = rect('#player-shell');
+            const topbar = rect('#topbar'), sidebar = rect('#sidebar-slot');
+            const top = position === 'top' ? player.bottom : workspace.top;
+            const bottom = position === 'top' ? workspace.bottom : player.top;
+            const targets = content === '#content-area'
+                ? [...document.querySelectorAll('#content-area > .panel:not([hidden])')].map(panel => panel.getBoundingClientRect())
+                : [rect(content)];
+            const layered = targets.every(box => {
+                const visibleTop = Math.max(drawer.top, box.top), visibleBottom = Math.min(drawer.bottom, box.bottom);
+                const point = document.elementFromPoint((box.left + box.right) / 2, (visibleTop + visibleBottom) / 2);
+                return visibleBottom > visibleTop && !!point?.closest(selector);
+            });
+            return drawer.top >= top && drawer.top >= topbar.bottom && drawer.top <= top + 8 &&
+                drawer.bottom <= bottom && drawer.bottom >= bottom - 8 &&
+                drawer.left >= sidebar.right && drawer.right <= workspace.right &&
+                drawer.width >= workspace.width - 16 && layered;
+        }, { selector, position, content });
+    }
     async function ready() { await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting')); }
     async function shot(name) { if (process.env.WORKSPACE_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.WORKSPACE_SCREENSHOT_DIR, name + '.png') }); }
+    async function verifyDesktopLayout() {
+        page.setDefaultTimeout(8000);
+        collections[0].song_description = 'Zkušební popis skladby';
+        collections[2].song_description = 'Pracovní poznámka ke zkoušce';
+        for (let i = 0; i < 16; i++) {
+            matrix.songs.push({ id: 100 + i, title: 'Skladba ' + i });
+            matrix.rehearsals.push({ id: 200 + i, title: 'Zkouška ' + i });
+        }
+        await page.goto('http://vz2-workspaces.test/index.php?v=2'); await ready();
+        assert.deepEqual(await page.locator('#sidebar-slot #workspace-navigation > button').allTextContents(), ['Zkoušky', 'Skladby', 'Matice']);
+        assert.equal(await page.locator('#topbar #workspace-navigation').count(), 0);
+        await switchTo('ideas');
+        assert(await page.locator('#ideas-controls').isVisible());
+        await switchTo('songs');
+        const choose = title => page.locator('#collections .collection > button').filter({ hasText: title }).click();
+        await choose('Poslední vlak');
+        await page.locator('#collection-title-name').getByText('Poslední vlak', { exact: true }).waitFor();
+        await choose('Nová skladba');
+        await page.locator('#song-details').getByText('Zkušební popis skladby', { exact: true }).waitFor();
+        await page.locator('#lyrics-content .document-preview').waitFor();
+        const discussion = page.locator('[data-desktop-panel="discussion"]');
+        const recordingsWidth = (await page.locator('#panel-recordings').boundingBox()).width;
+        await discussion.click();
+        assert(await page.locator('#panel-discussion').isVisible());
+        assert((await page.locator('#panel-recordings').boundingBox()).width < recordingsWidth);
+        for (const panel of ['recordings', 'lyrics', 'tablature', 'discussion']) {
+            const toggle = page.locator(`[data-desktop-panel="${panel}"]`);
+            await toggle.click();
+            assert.equal(await page.locator('#panel-' + panel).isVisible(), false);
+            await toggle.click();
+            assert(await page.locator('#panel-' + panel).isVisible());
+        }
+        await switchTo('rehearsals');
+        await choose('Zkouška 1. října');
+        await page.locator('#collection-title-name').getByText('Zkouška 1. října', { exact: true }).waitFor();
+        await choose('Zkouška 8. října');
+        await page.locator('#song-details').getByText('Pracovní poznámka ke zkoušce', { exact: true }).waitFor();
+        const openPlayer = async (id, label, mode) => {
+            const recording = page.locator('#recording-' + id);
+            await recording.locator('.recording-toggle').click();
+            await recording.getByRole('button', { name: label }).click();
+            await page.waitForFunction(mode => {
+                const state = window.Vz2Player.getState();
+                return state?.mode === mode && state.phase === 'ready';
+            }, mode);
+        };
+        await openPlayer(11, /Otevřít v looperu/i, 'looper');
+        await page.locator('#looper-view-wave').click();
+        const normalWaveHeight = (await page.locator('#looper-wave').boundingBox()).height;
+        const controls = page.locator('#looper-action-row .looper-timestamp-actions');
+        const positionButton = position => page.locator(`#player-shell [data-player-position="${position}"]`);
+        const visiblePanels = page.locator('#content-area > .panel:visible');
+        const panelBoxes = () => visiblePanels.evaluateAll(panels => panels.map(panel => panel.getBoundingClientRect().toJSON()));
+        assert.equal(await visiblePanels.count(), 4);
+        const topPanels = await panelBoxes();
+        await controls.getByRole('button', { name: 'Otevřít časové značky' }).click();
+        await checkDrawer('#looper-timestamps', 'top', '#content-area');
+        assert.deepEqual(await panelBoxes(), topPanels, 'Opening timestamps leaves all four panels in place');
+        await page.locator('#looper-timestamps .ts-song_start').getByRole('button', { name: 'Smyčka' }).click();
+        await page.waitForFunction(() => window.Vz2TimestampPlayback.state()?.repeat);
+        await page.evaluate(() => {
+            window.testAudio = document.getElementById('looper-audio');
+            window.testLoop = window.Vz2TimestampPlayback.state();
+            window.testTimestampList = document.querySelector('#looper-timestamps .ts-list');
+        });
+        await positionButton('bottom').click();
+        await checkDrawer('#looper-timestamps', 'bottom', '#content-area');
+        assert(await page.evaluate(() => document.getElementById('looper-audio') === window.testAudio && !window.testAudio.paused &&
+            window.Vz2TimestampPlayback.state() === window.testLoop && !!window.testLoop?.repeat &&
+            document.querySelector('#looper-timestamps .ts-list') === window.testTimestampList));
+        await page.locator('#looper-timestamps .ts-song_start').getByRole('button', { name: 'Smyčka' }).click();
+        await page.waitForFunction(() => window.Vz2TimestampPlayback.state()?.repeat);
+        const bottomPanels = await panelBoxes();
+        await controls.getByRole('button', { name: 'Zavřít časové značky' }).click();
+        assert.deepEqual(await panelBoxes(), bottomPanels, 'Closing the bottom drawer leaves panels in place');
+        await page.locator('#looper-play').click();
+        await page.locator('#looper-forward').click();
+        await page.locator('#looper-play').click();
+        const beforeDock = await page.evaluate(() => window.testAudio.currentTime);
+        await positionButton('top').click();
+        await positionButton('bottom').click();
+        await page.locator('#player-collapse').click();
+        assert(await positionButton('top').isVisible() && await positionButton('bottom').isVisible());
+        await page.locator('#player-fullscreen').click();
+        assert.deepEqual(await page.locator('#player-shell').boundingBox(), await page.locator('#workspace').boundingBox());
+        assert(await page.locator('#sidebar-slot #workspace-navigation').isVisible());
+        assert(await page.locator('#topbar').isVisible());
+        await page.locator('.shell-menu > summary').click();
+        assert(await page.locator('.shell-menu #show-ideas').isVisible());
+        await page.locator('.shell-menu > summary').click();
+        assert.equal(await visiblePanels.count(), 0);
+        assert(await page.locator('#looper-timestamps .ts-song_start').isVisible());
+        assert((await page.locator('#looper-wave').boundingBox()).height > normalWaveHeight);
+        await page.keyboard.press('Escape');
+        assert.equal(await positionButton('bottom').getAttribute('aria-pressed'), 'true');
+        assert((await page.evaluate(() => window.Vz2Player.getState())).collapsed);
+        assert(await page.evaluate(time => document.getElementById('looper-audio') === window.testAudio &&
+            !window.testAudio.paused && window.testAudio.currentTime >= time, beforeDock));
+        await page.locator('#player-collapse').click();
+        const waveWidth = await page.locator('#looper-wave').evaluate(wave => wave.width);
+        await page.setViewportSize({ width: 1200, height: 380 });
+        await page.waitForFunction(width => document.getElementById('looper-wave').width < width, waveWidth);
+        await switchTo('history');
+        await page.locator('.history-table').waitFor();
+        assert(await page.locator('#history-matrix').evaluate(matrix => {
+            matrix.scrollTo(matrix.scrollWidth, matrix.scrollHeight);
+            const scrolled = matrix.scrollTop > 0 && matrix.scrollLeft > 0;
+            matrix.scrollTo(0, 0);
+            return scrolled;
+        }));
+        await controls.getByRole('button', { name: 'Otevřít časové značky' }).click();
+        await checkDrawer('#looper-timestamps', 'bottom', '#history-matrix');
+        await positionButton('top').click();
+        await checkDrawer('#looper-timestamps', 'top', '#history-matrix');
+        const matrixBounds = await page.locator('#history-matrix').boundingBox();
+        await page.keyboard.press('Escape');
+        assert.deepEqual(await page.locator('#history-matrix').boundingBox(), matrixBounds);
+        console.log('PASS: Looper position changes preserve live audio, waveform, loop and timestamps; drawers cover panels and matrix within the desktop workspace');
+
+        await page.locator('#history-sidebar-slot #history-orientation').click();
+        assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
+        await page.locator('#history-audio-filter').check();
+        await page.locator('#history-filter summary').click();
+        await page.locator('#history-song-filter input[value="1"]').check();
+        await page.locator('#history-song-filter-close').click();
+        await page.locator('td[data-song-id="1"][data-rehearsal-id="3"] .history-count').click();
+        await page.locator('#history-list').waitFor();
+        await page.locator('#history-list [data-history-close]').click();
+        await switchTo('songs'); await switchTo('history');
+        assert(await page.locator('#history-audio-filter').isChecked());
+        await page.locator('#history-options summary').click();
+        await page.locator('#history-unassigned-open').click();
+        await page.locator('#history-unassigned').waitFor();
+        await page.locator('#history-unassigned [data-history-close]').click();
+
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.locator('#looper-options > summary').click();
+        await page.locator('#looper-close').click();
+        await switchTo('rehearsals');
+        await openPlayer(12, /Otevřít v Mixéru/i, 'mixer');
+        await page.locator('#mixer-action-row').getByRole('button', { name: 'Otevřít časové značky' }).click();
+        await checkDrawer('#mixer-timestamps', 'top', '#content-area');
+        await page.locator('#looper-play').click();
+        await page.waitForFunction(() => window.MultitrackApp.getState()?.playing);
+        const mixerTime = await page.evaluate(() => window.MultitrackApp.getState().position);
+        await positionButton('bottom').click();
+        await checkDrawer('#mixer-timestamps', 'bottom', '#content-area');
+        await page.locator('#player-fullscreen').click();
+        assert.deepEqual(await page.locator('#player-shell').boundingBox(), await page.locator('#workspace').boundingBox());
+        assert(await page.locator('#mixer-timestamps .ts-song_start').isVisible());
+        await page.locator('#player-fullscreen').click();
+        await checkDrawer('#mixer-timestamps', 'bottom', '#content-area');
+        await positionButton('top').click();
+        assert(await page.evaluate(time => {
+            const state = window.MultitrackApp.getState();
+            return state.id === '12' && state.playing && state.position >= time;
+        }, mixerTime));
+        await page.locator('#looper-play').click();
+
+        await page.locator('#mixer-action-row').getByRole('button', { name: 'Zavřít časové značky' }).click();
+        for (const [width, height] of [[1440, 900], [1200, 600], [1199, 600], [1024, 768], [768, 600], [740, 390], [390, 844], [320, 520]]) {
+            await page.setViewportSize({ width, height });
+            await page.waitForFunction(layout => document.body.dataset.layout === layout, width >= 1200 ? 'desktop' : width >= 768 ? 'tablet' : 'mobile');
+            assert.equal(await page.locator('#sidebar-slot').isVisible(), width >= 1200);
+            assert.equal(await page.locator('#bottom-nav').isVisible(), width < 768);
+            assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1 && document.documentElement.scrollHeight <= innerHeight + 1));
+        }
+        assert.deepEqual(errors, []);
+        console.log('PASS: desktop navigation, descriptions, panel toggles, matrix filters and dialogs; Mixer stays live across positions; desktop, tablet and mobile fit');
+    }
     try {
+        if (process.argv.includes('--desktop-layout')) { await verifyDesktopLayout(); return; }
         await page.goto('http://vz2-workspaces.test/index.php?v=2'); await ready();
         assert.equal(await page.locator('#content-area > .panel:visible').count(), 3);
         assert.equal(await page.locator('#player-title').textContent(), '');
         for (const width of [320, 390, 767, 1440]) {
             await page.setViewportSize({ width, height: 900 });
+            await page.waitForFunction(layout => document.body.dataset.layout === layout, width < 768 ? 'mobile' : 'desktop');
             const emptyPlayer = await page.evaluate(() => {
                 const shell = document.querySelector('#player-shell').getBoundingClientRect();
                 const label = document.querySelector('#player-mode').getBoundingClientRect();
                 const controls = document.querySelector('.looper-header-controls').getBoundingClientRect();
                 return { height: shell.height, sameRow: Math.abs(label.y + label.height / 2 - controls.y - controls.height / 2) < 3,
-                    inside: controls.right <= shell.right - 1, overflow: document.documentElement.scrollWidth > innerWidth + 1 };
+                    inside: controls.right <= shell.right - 1, overflow: document.documentElement.scrollWidth > innerWidth + 1,
+                    playerRight: shell.right, controlsRight: controls.right };
             });
             assert(emptyPlayer.sameRow && emptyPlayer.inside && !emptyPlayer.overflow && emptyPlayer.height < 70, `Empty player fits in one row at ${width}: ${JSON.stringify(emptyPlayer)}`);
         }
@@ -186,8 +386,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#player-help-close').click();
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.waitForFunction(() => document.querySelectorAll('#content-area > .panel:not([hidden])').length === 3);
-        const playerBounds = await page.locator('#player-shell').boundingBox(), sidebarBounds = await page.locator('#sidebar').boundingBox();
-        assert(sidebarBounds.y >= playerBounds.y + playerBounds.height, 'The catalog starts below the global player');
+        const playerBounds = await page.locator('#player-shell').boundingBox(), sidebarBounds = await page.locator('#sidebar-slot').boundingBox();
+        const topbarBounds = await page.locator('#topbar').boundingBox();
+        assert(sidebarBounds.x + sidebarBounds.width <= playerBounds.x && sidebarBounds.y === topbarBounds.y + topbarBounds.height,
+            'The desktop sidebar starts under the topbar, alongside the player');
         await page.locator('#tablature-content').getByRole('button', { name: 'Vytvořit mapu', exact: true }).click();
         await page.locator('.song-map-add-bar').click();
         await switchTo('rehearsals');
@@ -230,8 +432,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                         height: document.documentElement.scrollHeight > innerHeight + 1,
                         dockHeight: rect('#mobile-dock').height,
                         topMenuBelowPlayer: rect('#mobile-dock').top >= rect('#player-shell').bottom - 1,
-                        topMenuAboveContent: rect('#mobile-dock').bottom <= rect('.layout').top + 1,
-                        bottomMenuBelowContent: rect('#mobile-sections-dock').top >= rect('.layout').bottom - 1,
+                        topMenuAboveContent: rect('#mobile-dock').bottom <= rect('.workspace-content').top + 1,
+                        bottomMenuBelowContent: rect('#mobile-sections-dock').top >= rect('.workspace-content').bottom - 1,
                         menusInsideFrame: rect('#mobile-dock').top >= rect('#workspace-frame').top - 1 &&
                             rect('#mobile-sections-dock').bottom <= rect('#workspace-frame').bottom + 1,
                         frameBorder: getComputedStyle(document.querySelector('#workspace-frame')).borderBottomColor,
@@ -426,37 +628,40 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 1200, height: 900 });
         assert.equal(await page.locator('#catalog-search').count(), 0);
         for (const [workspace, control, slot] of [
-            ['songs', '#desktop-panels', 'sidebar'],
-            ['rehearsals', '#desktop-panels', 'sidebar'],
-            ['history', '#history-controls', 'history-controls-slot'],
+            ['songs', '#desktop-panels', 'collection-header'],
+            ['rehearsals', '#desktop-panels', 'collection-header'],
+            ['history', '#history-controls', 'history-sidebar-slot'],
             ['ideas', '#ideas-controls', 'ideas-controls-slot']
         ]) {
             await switchTo(workspace);
             assert.equal(await page.locator(control).evaluate(node => node.parentElement.id), slot);
             assert(await page.locator(control).isVisible(), `${workspace} controls should be visible`);
-            assert.equal(await page.locator('#collection-header').isVisible(), workspace === 'songs');
+            assert.equal(await page.locator('#collection-header').isVisible(), ['songs', 'rehearsals'].includes(workspace));
+            assert.deepEqual(await page.locator('#sidebar-slot #workspace-navigation > button').allTextContents(), ['Zkoušky', 'Skladby', 'Matice']);
+            assert.equal(await page.locator('#topbar #workspace-navigation').count(), 0);
+            assert.equal(await page.locator('#topbar .shell-menu #show-ideas').count(), 1);
             const topbar = await page.evaluate(() => {
                 const navigation = document.querySelector('#workspace-navigation');
-                const menu = document.querySelector('#topbar .shell-menu');
+                const sidebar = document.querySelector('#sidebar-slot');
                 return { fits: navigation.scrollWidth <= navigation.clientWidth + 1,
-                    separate: navigation.getBoundingClientRect().right <= menu.getBoundingClientRect().left + 1 };
+                    inside: navigation.getBoundingClientRect().right <= sidebar.getBoundingClientRect().right };
             });
-            assert(topbar.fits && topbar.separate, `${workspace} submenu overlaps the desktop topbar at 1200 px`);
+            assert(topbar.fits && topbar.inside, `${workspace} navigation fits in the sidebar at 1200 px`);
             if (workspace === 'songs' || workspace === 'rehearsals') {
-                const sidebar = await page.evaluate(() => {
-                    const top = selector => document.querySelector(selector).getBoundingClientRect().top;
-                    return { ordered: top('#desktop-panels') < top('#catalog-heading') && top('#catalog-heading') < top('.catalog-header') && top('.catalog-header') < top('#collections'),
-                        buttonWidth: document.querySelector('#desktop-panels button').getBoundingClientRect().width,
+                const header = await page.evaluate(() => {
+                    const rect = selector => document.querySelector(selector).getBoundingClientRect();
+                    return { ordered: rect('#workspace-navigation').bottom <= rect('#collections').top,
+                        sameRow: Math.abs(rect('#catalog-picker').y - rect('#desktop-panels').y) < 2,
                         sameIcon: document.querySelector('#desktop-panels [data-desktop-panel=recordings] use').getAttribute('href') === document.querySelector('#panel-recordings .panel-header use').getAttribute('href') };
                 });
-                assert(sidebar.ordered && sidebar.buttonWidth >= 40 && sidebar.sameIcon, `${workspace} sidebar section controls should stay above the scrolling list`);
+                assert(header.ordered && header.sameRow && header.sameIcon, `${workspace} panel controls share the information row`);
             }
         }
         await switchTo('songs');
         await page.locator('#desktop-panels [data-desktop-panel=discussion]').click();
         assert(await page.locator('#panel-discussion').isVisible());
         await page.locator('#desktop-panels [data-desktop-panel=discussion]').click();
-        console.log('PASS: icon controls stay above the desktop catalog and toggle panels; matrix and ideas controls stay in their headers');
+        console.log('PASS: desktop mode navigation and matrix controls are in the sidebar; panel toggles are in the information row');
 
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('ideas');
@@ -508,7 +713,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.keyboard.press('Escape');
         assert(await page.locator('#history-controls-slot #history-orientation').isVisible());
         await page.setViewportSize({ width: 1440, height: 900 });
-        await page.locator('#history-controls-slot #history-orientation').waitFor({ state: 'visible' });
+        await page.locator('#history-sidebar-slot #history-orientation').waitFor({ state: 'visible' });
         assert(await page.locator('#history-audio-filter').isChecked());
         await page.locator('#history-filter summary').click();
         assert(await page.locator('#history-song-filter').isVisible(), 'Desktop song filter opens inside its details menu');
@@ -672,7 +877,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await mixerRequested.promise; await switchTo('songs'); holdMixer.release(); holdMixer = null;
         await page.waitForFunction(() => window.Vz2Player.getState()?.mode === 'mixer' && window.Vz2Player.getState()?.phase === 'ready');
         await page.setViewportSize({ width: 1440, height: 900 });
-        await page.locator('#mixer-timestamps .ts-summary').click();
+        const mixerTimestamps = page.locator('#mixer-action-row').getByRole('button', { name: 'Otevřít časové značky' });
+        await mixerTimestamps.click();
         await page.waitForFunction(() => {
             const button = document.querySelector('#mixer-timestamps .ts-song_start .ts-action');
             return button && !button.disabled;

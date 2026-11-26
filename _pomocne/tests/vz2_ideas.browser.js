@@ -15,17 +15,22 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
         const [name, value] = clients.admin.cookie.split('='); await context.addCookies([{ name, value, url: base }]);
         const page = await context.newPage(), errors = [];
+        async function openIdeas() {
+            const menu = page.locator('.shell-menu:not([open]):has(#show-ideas)');
+            if (await menu.count()) await menu.locator('summary').click();
+            await page.locator('[data-workspace-target=ideas]:visible').click();
+        }
         page.on('pageerror', e => errors.push(e.message)); page.on('dialog', d => d.accept());
         await page.route('https://cdn.jsdelivr.net/**', r => r.abort());
         await page.goto(base + 'index.php?v=2&collection_id=' + collection.id);
         await page.locator('#recording-' + single.id + ' .recording-toggle').click();
-        await page.locator('#recording-' + single.id).getByRole('button', { name: 'Otevřít v Looperu', exact: true }).click();
+        await page.locator('#recording-' + single.id).getByRole('button', { name: 'Otevřít v looperu', exact: true }).click();
         await page.locator('#recording-' + single.id + ' .recording-toggle').click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
         await page.locator('#looper-play').click();
         const prefs = () => page.evaluate(() => Object.fromEntries(Object.entries(localStorage).filter(([k]) => k.includes('layout:'))));
         const before = await prefs();
-        await page.locator('[data-workspace-target=ideas]:visible').click();
+        await openIdeas();
         const ideas = page.locator('#ideas-workspace');
         await ideas.locator('article').filter({ hasText: 'Dlouhý nápad' }).waitFor();
         assert.equal(await page.locator('dialog[open]').count(), 0);
@@ -43,7 +48,7 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().collapsed), false);
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
         await page.locator('#looper-play').click();
-        await page.locator('[data-workspace-target=ideas]:visible').click(); assert.equal(await draft.inputValue(), 'Koncept přežije návrat i změnu šířky');
+        await openIdeas(); assert.equal(await draft.inputValue(), 'Koncept přežije návrat i změnu šířky');
         assert.deepEqual(await prefs(), before);
         check(true, 'ideas: full workspace preserves draft and panel preferences; playing Looper retains its size without interruption');
         for (const width of [360, 390, 767, 768, 1024, 1199, 1200, 1280, 1440, 1920]) {
@@ -72,10 +77,10 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await page.getByRole('option', { name: 'Diskuse', exact: true }).click();
         await page.getByRole('button', { name: /^Pravý panel:/ }).click();
         await page.getByRole('option', { name: 'Mapa skladby', exact: true }).click();
-        await page.locator('[data-workspace-target=ideas]:visible').click(); await page.locator('[data-workspace-target=songs]:visible').click();
+        await openIdeas(); await page.locator('[data-workspace-target=songs]:visible').click();
         assert(await page.locator('#panel-discussion').isVisible()); assert(await page.locator('#panel-tablature').isVisible());
         await page.setViewportSize({ width: 1440, height: 900 });
-        await page.locator('[data-workspace-target=ideas]:visible').click(); await page.locator('[data-workspace-target=songs]:visible').click();
+        await openIdeas(); await page.locator('[data-workspace-target=songs]:visible').click();
         assert(await page.locator('#panel-lyrics').isVisible()); assert.equal(await ideas.isVisible(), false);
         const menu = page.locator('#collections .collection').filter({ has: page.locator('button[aria-pressed=true]') }).locator('.collection-menu');
         await menu.locator('summary').click();
@@ -84,7 +89,7 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await menu.locator('summary').click(); await page.locator('#player-mode').click(); assert.equal(await menu.getAttribute('open'), null);
         assert.deepEqual(errors, []);
         check(true, 'ideas: tablet pair and desktop panels restore; menus close with Escape/outside click; no JavaScript errors');
-        await page.locator('[data-workspace-target=ideas]:visible').click();
+        await openIdeas();
         const own = ideas.locator('article').filter({ hasText: 'Koncept přežije návrat i změnu šířky' });
         await own.getByRole('button', { name: 'Upravit', exact: true }).click(); await draft.fill('Můj upravený nápad');
         const stored = (await request(clients.admin, endpoint + '?action=discussion&scope=ideas')).json().posts.find(p => p.body === 'Koncept přežije návrat i změnu šířky');
@@ -93,7 +98,7 @@ module.exports = async ({ base, clients, good, request, check, temp, upload, wav
         await ideas.getByRole('button', { name: 'Načíst aktuální příspěvek', exact: true }).click();
         await ideas.locator('pre').filter({ hasText: 'Souběžná změna nápadu' }).waitFor();
         assert.equal(await draft.inputValue(), 'Můj upravený nápad');
-        await page.locator('[data-workspace-target=songs]:visible').click(); await page.locator('[data-workspace-target=ideas]:visible').click();
+        await page.locator('[data-workspace-target=songs]:visible').click(); await openIdeas();
         await ideas.getByRole('button', { name: 'Použít aktuální revizi pro můj text', exact: true }).click();
         await ideas.getByRole('button', { name: 'Uložit úpravu', exact: true }).click();
         await ideas.locator('article').getByText('Můj upravený nápad', { exact: true }).waitFor();
