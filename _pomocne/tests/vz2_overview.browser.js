@@ -110,8 +110,11 @@ module.exports = async ({ base, clients, db, check, rehearsalRecordingId }) => {
         const sections = map.locator('.overview-map-section');
         assert.deepEqual(await sections.locator('h4').allTextContents(), ['Refrén', 'Bridge']);
         assert.equal(await sections.first().locator('.overview-map-row').count(), 2, 'nine bars wrap after the eighth');
-        assert.deepEqual(await sections.first().locator('.overview-map-bar').allTextContents(),
-            ['□', '○F2', '□✦', 'F4', '?', '—', '■', '○✦', '□F3']);
+        const bars = sections.first().locator('.overview-map-bar');
+        assert.equal(await bars.locator('svg.song-map-symbol').count(), 9);
+        assert.deepEqual(await bars.allTextContents(), ['', 'F2', '', 'F4', '?', '—', '', '', 'F3']);
+        assert.deepEqual(await bars.evaluateAll(cells => cells.map(cell => cell.dataset.base)),
+            ['hihat', 'ride', 'hihat', '', '', '', '', 'ride', 'hihat']);
         assert.equal(await map.locator('.overview-map-bar.has-detail').count(), 1);
         assert.equal(await sections.nth(1).locator('.overview-map-bar').getAttribute('aria-label'), 'Takt 10: Ride');
         const mapRow = await sections.first().locator('.overview-map-row').first().evaluate(row => {

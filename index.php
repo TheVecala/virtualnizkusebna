@@ -16,7 +16,7 @@ try{
     if(($_SESSION['logged_in_single']??false)!==true){
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
             $query=['v'=>'2'];
-            foreach(['collection_id','recording_id','time_ms','view','kind','listen'] as $p)if(isset($_GET[$p]) && is_string($_GET[$p]))$query[$p]=$_GET[$p];
+            foreach(['collection_id','recording_id','time_ms','view','kind','listen','workspace'] as $p)if(isset($_GET[$p]) && is_string($_GET[$p]))$query[$p]=$_GET[$p];
             $_SESSION['deep_link_after_login']=http_build_query($query);
         }
         require __DIR__.'/php/loginbox4.php';return;
@@ -128,6 +128,8 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <link rel="stylesheet" data-vz2-icons media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <link rel="stylesheet" data-vz2-style media="print" href="css/vz2-workspaces.css?v=<?=hash_file('sha256', __DIR__.'/css/vz2-workspaces.css')?>">
 <link rel="stylesheet" data-vz2-style media="print" href="css/vz2-segments.css?v=<?=filemtime(__DIR__.'/css/vz2-segments.css')?>">
+<link rel="stylesheet" data-vz2-style media="print" href="css/vz2-overview-render.css?v=<?=filemtime(__DIR__.'/css/vz2-overview-render.css')?>">
+<link rel="stylesheet" data-vz2-style media="print" href="css/vz2-overview.css?v=<?=filemtime(__DIR__.'/css/vz2-overview.css')?>">
 <link rel="stylesheet" data-vz2-style media="print" href="css/vz2-car-mode.css?v=<?=filemtime(__DIR__.'/css/vz2-car-mode.css')?>">
 <link rel="stylesheet" href="css/vz2-timestamp-editor.css?v=<?=filemtime(__DIR__.'/css/vz2-timestamp-editor.css')?>">
 <link rel="stylesheet" href="css/vz2-select.css?v=<?=filemtime(__DIR__.'/css/vz2-select.css')?>">
@@ -151,9 +153,9 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <button id="car-mode-menu-open" class="car-entry" type="button" title="Poslech v autě" aria-label="Poslech v autě"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11 7 5h10l2 6M4 11h16v8H4zM7 19v2m10-2v2M7 15h2m6 0h2"/></svg></button>
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
-<a href="prehled.php">Kompaktní přehled</a>
+<button type="button" data-workspace-target="segments" aria-pressed="false">Úseky</button>
+<button type="button" data-workspace-target="overview" aria-pressed="false">Přehled</button>
 <a href="simple.php">Simple</a>
-<a href="useky.php">Úseky nahrávek</a>
 <a href="help.php">Nápověda</a>
 <button id="show-offline">Správa offline souborů</button><button id="logout">Odhlásit</button></nav></details></header>
 <svg class="section-icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -175,7 +177,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
 <h2 id="catalog-heading">Skladby</h2>
 <div id="collections"></div>
-</aside><div id="history-sidebar-slot" hidden></div></div><div id="workspace" data-player-position="top">
+</aside><div id="history-sidebar-slot" hidden></div></div><div id="workspace" role="region" aria-label="Hlavní panel" data-player-position="top">
 <p id="message" role="status" aria-live="polite"></p><p id="connection-status" class="notice" role="status" aria-live="polite" hidden></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
 <section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
@@ -242,7 +244,16 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <details id="history-filter" class="history-song-control"><summary><svg class="section-icon" aria-hidden="true"><use href="#section-icon-filter"/></svg><span id="history-filter-label">Všechny skladby</span><span aria-hidden="true">⌄</span></summary><div class="history-filter-menu"><div class="history-filter-actions"><button id="history-song-filter-all" type="button">Všechny skladby</button><button id="history-song-filter-close" type="button">Zavřít</button></div><div id="history-song-filter" role="group" aria-label="Filtr skladeb"></div></div></details>
 <details id="history-options"><summary aria-label="Další možnosti matice" title="Další možnosti" aria-controls="history-menu"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-more"/></svg></summary><div id="history-menu" class="looper-menu-section"><button id="history-unassigned-open" type="button" aria-haspopup="dialog" aria-controls="history-unassigned"><i class="ti ti-list-details" aria-hidden="true"></i><span>Nezařazené úseky a výstřižky</span></button></div></details>
 </div></div></header><p id="history-status" role="status" aria-live="polite"></p><div id="history-matrix" tabindex="0" aria-label="Matice historie zkoušení"></div></section>
-<section id="ideas-workspace" data-workspace="ideas" hidden aria-label="Nápady" aria-labelledby="ideas-title"><header class="panel-header workspace-header"><h2 id="ideas-title">Nápady</h2><div id="ideas-controls-slot"><nav id="ideas-controls" class="workspace-controls" aria-label="Sekce nápadů"><button type="button" data-idea-section="write" aria-pressed="true" title="Piš"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-write"/></svg><span>Piš</span></button><button type="button" data-idea-section="draw" aria-pressed="false" title="Kresli"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-draw"/></svg><span>Kresli</span></button><button type="button" data-idea-section="speak" aria-pressed="false" title="Mluv"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-speak"/></svg><span>Mluv</span></button></nav></div></header><div id="ideas-write" class="panel-body content-editor" data-idea-panel="write"></div><div id="ideas-draw" class="panel-body idea-future" data-idea-panel="draw" hidden><h3>Kresli</h3><p>Prostor pro kresby a náčrty připravujeme.</p></div><div id="ideas-speak" class="panel-body idea-future" data-idea-panel="speak" hidden><h3>Mluv</h3><p>Prostor pro hlasové nápady připravujeme.</p></div><div id="ideas-shared" class="panel-body content-editor" aria-label="Společná fronta nápadů"></div></section></div></div>
+<section id="ideas-workspace" data-workspace="ideas" hidden aria-label="Nápady" aria-labelledby="ideas-title"><header class="panel-header workspace-header"><h2 id="ideas-title">Nápady</h2><div id="ideas-controls-slot"><nav id="ideas-controls" class="workspace-controls" aria-label="Sekce nápadů"><button type="button" data-idea-section="write" aria-pressed="true" title="Piš"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-write"/></svg><span>Piš</span></button><button type="button" data-idea-section="draw" aria-pressed="false" title="Kresli"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-draw"/></svg><span>Kresli</span></button><button type="button" data-idea-section="speak" aria-pressed="false" title="Mluv"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-speak"/></svg><span>Mluv</span></button></nav></div></header><div id="ideas-write" class="panel-body content-editor" data-idea-panel="write"></div><div id="ideas-draw" class="panel-body idea-future" data-idea-panel="draw" hidden><h3>Kresli</h3><p>Prostor pro kresby a náčrty připravujeme.</p></div><div id="ideas-speak" class="panel-body idea-future" data-idea-panel="speak" hidden><h3>Mluv</h3><p>Prostor pro hlasové nápady připravujeme.</p></div><div id="ideas-shared" class="panel-body content-editor" aria-label="Společná fronta nápadů"></div></section>
+<section id="segments-workspace" class="tool-workspace" data-workspace="segments" aria-labelledby="segments-title" hidden>
+<header class="panel-header workspace-header"><h2 id="segments-title">Úseky nahrávek</h2><button id="segments-reload" type="button">Obnovit data</button></header>
+<div class="panel-body segments-page"><?php require __DIR__ . '/php/inc/vz2_segments_view.php'; ?></div>
+</section>
+<section id="overview-workspace" class="tool-workspace" data-workspace="overview" aria-labelledby="overview-title" hidden>
+<header class="panel-header workspace-header"><h2 id="overview-title">Kompaktní přehled</h2></header>
+<div class="panel-body"><?php require __DIR__ . '/php/inc/vz2_overview_view.php'; ?></div>
+</section>
+</div></div>
 <div id="mobile-sections-dock">
 <nav id="mobile-panels" class="workspace-controls" aria-label="Sekce skladby nebo zkoušky">
 <button data-mobile-panel="recordings" aria-pressed="true" aria-label="Nahrávky" title="Nahrávky"><img class="panel-character-icon" src="meat/ikona_nahravky.png" alt=""><span class="section-button-label">Nahrávky</span></button>
@@ -291,5 +302,9 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 window.MULTITRACK_CONFIG={listUrl:'php/ajax/vz2.php?action=mixer',detailUrl:'php/ajax/vz2.php?action=mixer&id={id}',cacheDb:'zkusebna-vz2-cache',cacheStore:'audio',cachePrefix:window.VZ2.cachePrefix,requireFreshMetadata:true};</script>
 <script defer src="js/vz2-cache.js?v=<?=filemtime(__DIR__ . '/js/vz2-cache.js')?>"></script><script defer src="js/vz2-downloads.js?v=<?=filemtime(__DIR__.'/js/vz2-downloads.js')?>"></script><script defer src="js/vz2-downloads-panel.js?v=<?=filemtime(__DIR__.'/js/vz2-downloads-panel.js')?>"></script><script defer src="js/multitrack.js?v=<?=filemtime(__DIR__.'/js/multitrack.js')?>"></script><script defer src="js/vz2-timestamp-model.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-model.js')?>"></script><script defer src="js/vz2-timestamp-store.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-store.js')?>"></script><script defer src="js/vz2-timestamp-playback.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-playback.js')?>"></script><script defer src="js/vz2-note-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-note-editor.js')?>"></script><script defer src="js/vz2-timestamp-controls.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-controls.js')?>"></script><script defer src="js/vz2-timestamp-editor.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamp-editor.js')?>"></script><script defer src="js/vz2-timestamps.js?v=<?=filemtime(__DIR__.'/js/vz2-timestamps.js')?>"></script><script defer src="js/vz2-song-map-model.js?v=<?=hash_file('sha256', __DIR__.'/js/vz2-song-map-model.js')?>"></script><script defer src="js/vz2-song-map-svg.js?v=<?=hash_file('sha256', __DIR__.'/js/vz2-song-map-svg.js')?>"></script><script defer src="js/vz2-bar-detail.js?v=<?=filemtime(__DIR__.'/js/vz2-bar-detail.js')?>"></script><script defer src="js/vz2-song-map-editor.js?v=<?=hash_file('sha256', __DIR__.'/js/vz2-song-map-editor.js')?>"></script><script defer src="js/vz2-song-map.js?v=<?=hash_file('sha256', __DIR__.'/js/vz2-song-map.js')?>"></script><script defer src="js/vz2-content.js?v=<?=filemtime(__DIR__.'/js/vz2-content.js')?>"></script><script defer src="js/vz2-layout.js?v=<?=filemtime(__DIR__.'/js/vz2-layout.js')?>"></script><script defer src="js/vz2-segments-model.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-model.js')?>"></script><script defer src="js/vz2-timeline.js?v=<?=filemtime(__DIR__.'/js/vz2-timeline.js')?>"></script><script defer src="js/vz2-segments-panel.js?v=<?=filemtime(__DIR__.'/js/vz2-segments-panel.js')?>"></script><script defer src="js/vz2-player.js?v=<?=filemtime(__DIR__.'/js/vz2-player.js')?>"></script><script defer src="js/vz2-audio.js?v=<?=filemtime(__DIR__.'/js/vz2-audio.js')?>"></script><script defer src="js/vz2-song-details.js?v=<?=filemtime(__DIR__ . '/js/vz2-song-details.js')?>"></script><script defer src="js/vz2.js?v=<?=filemtime(__DIR__.'/js/vz2.js')?>"></script>
 <script defer src="js/vz2-history.js?v=<?=filemtime(__DIR__.'/js/vz2-history.js')?>"></script>
+<script defer src="js/vz2-segments.js?v=<?=filemtime(__DIR__.'/js/vz2-segments.js')?>"></script>
+<script defer src="js/vz2-overview-filter.js?v=<?=filemtime(__DIR__.'/js/vz2-overview-filter.js')?>"></script>
+<script defer src="js/vz2-overview-render.js?v=<?=filemtime(__DIR__.'/js/vz2-overview-render.js')?>"></script>
+<script defer src="js/vz2-overview.js?v=<?=filemtime(__DIR__.'/js/vz2-overview.js')?>"></script>
 <script defer src="js/vz2-car-mode.js?v=<?=filemtime(__DIR__.'/js/vz2-car-mode.js')?>"></script>
 </body></html>

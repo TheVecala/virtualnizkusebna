@@ -48,8 +48,8 @@ for (const file of ['2_migrace/song-map-cutover.md', '2_migrace/song-map-invento
 assert(manifest.files.some(f => f.path === 'php/login/connect.php'));
 assert(manifest.files.some(f => f.path === 'js/multitrack.js'));
 assert(manifest.files.some(f => f.path === 'maintenance.html'));
-for (const name of ['prehled.php', 'useky.php', 'config.theme.php', 'config.vz2.php']) {
-    assert(manifest.files.some(f => f.path === name), 'Complete release omits root application file: ' + name);
+for (const name of ['prehled.php', 'useky.php', 'php/inc/vz2_overview_view.php', 'php/inc/vz2_segments_view.php', 'config.theme.php', 'config.vz2.php']) {
+    assert(manifest.files.some(f => f.path === name), 'Complete release omits application file: ' + name);
 }
 assert.deepEqual(manifest.preserved_server_files, ['config.php']);
 assert.equal(fs.readFileSync(path.join(out, '1_soubory/config.vz2.php'), 'utf8'), read('config.vz2.php'));

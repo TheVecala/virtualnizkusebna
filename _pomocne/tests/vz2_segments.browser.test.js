@@ -6,7 +6,9 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '../..');
 const fixture = require('./vz2_segments.fixture.js');
-const php = fs.readFileSync(path.join(root, 'useky.php'), 'utf8');
+const viewPath = 'php/inc/vz2_segments_view.php';
+const php = fs.readFileSync(path.join(root, 'useky.php'), 'utf8')
+    .replace(`<?php require __DIR__ . '/${viewPath}'; ?>`, () => fs.readFileSync(path.join(root, viewPath), 'utf8'));
 const html = php.slice(php.indexOf('<!doctype html>')).replace(/<\?=json_encode\(\$config,[\s\S]*?\?>/, JSON.stringify({ csrf: 'test', write: false, cachePrefix: 'segments-test:' })).replace(/<\?[\s\S]*?\?>/g, '').replace('data-theme=""', 'data-theme="dark"');
 const wav = Buffer.alloc(44 + 8000 * 420 * 2);
 wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16);

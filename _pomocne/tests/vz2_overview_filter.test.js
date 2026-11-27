@@ -39,7 +39,7 @@ assert.deepEqual(selected.rehearsals.map(item => item.id), [2], 'individual rehe
 assert.deepEqual(selected.songs, [], 'individual song selection is independent');
 assert.deepEqual(filterOverview(data, { rehearsals: false }).rehearsals, [], 'an entire section can be hidden');
 
-const page = fs.readFileSync(path.join(__dirname, '../../prehled.php'), 'utf8');
+const page = fs.readFileSync(path.join(__dirname, '../../php/inc/vz2_overview_view.php'), 'utf8');
 const controls = new Set([...page.matchAll(/data-filter="([a-z_]+)"/g)].map(match => match[1]));
 for (const scope of ['rehearsal', 'song']) {
     for (const entry of [

@@ -10,6 +10,8 @@ const php = fs.readFileSync(path.join(root, 'index.php'), 'utf8');
 const config = { csrf: 'test', write: true, admin: true, canCreate: true, canUpload: true, canReorder: true, cachePrefix: 'workspaces-test:' };
 const html = php.slice(php.indexOf('<!doctype html>'))
     .replace("<?php readfile(__DIR__ . '/css/themes.css'); ?>", fs.readFileSync(path.join(root, 'css/themes.css'), 'utf8'))
+    .replace(/<\?php require __DIR__ \. '\/(php\/inc\/vz2_(?:overview|segments)_view\.php)'; \?>/g,
+        (_, file) => fs.readFileSync(path.join(root, file), 'utf8'))
     .replace(/<\?=json_encode\(\$config,[\s\S]*?\?>/, JSON.stringify(config)).replace(/<\?[\s\S]*?\?>/g, '');
 const wav = Buffer.alloc(44 + 8000 * 180 * 2);
 wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16);
@@ -46,7 +48,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     const errors = [], confirmations = [], deletionDialogs = [], recordingDeletions = [];
     const carNotes = [];
     let carTimestampRevision = 1;
-    let peakRequests = 0;
+    let peakRequests = 0, overviewRequests = 0;
     let holdMixer = null, mixerRequested = null;
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
@@ -134,6 +136,12 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             return json({ ok: true, can_create: true, thread: { id: 9, global_key: query.scope === 'ideas' ? 'ideas' : null, title: 'Diskuse' }, posts: [], next_before: null });
         }
         if (url.pathname === '/php/ajax/vz2_history.php') return json(matrix);
+        if (url.pathname === '/php/ajax/vz2_overview.php') {
+            overviewRequests++;
+            return json({ ok: true, generated_at: '2026-10-25T10:00:00Z',
+                rehearsals: [{ ...collections[2], entries: [], played_songs: [] }],
+                songs: [{ ...collections[0], entries: [{ type: 'document', kind: 'lyrics_chords', label: 'Text', body: 'Text z přehledu' }], played_songs: [] }] });
+        }
         if (url.pathname === '/php/ajax/vz2_timestamps.php') {
             const input = route.request().method() === 'POST' ? route.request().postDataJSON() : null;
             const recordingId = Number(input?.recording_id || url.searchParams.get('recording_id'));
@@ -152,7 +160,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     });
     const nav = name => page.locator(`[data-workspace-target="${name}"]:visible`);
     async function switchTo(name) {
-        if (name === 'ideas' && await page.locator('.shell-menu:not([open]) #show-ideas').count()) {
+        if (await page.locator(`.shell-menu:not([open]) [data-workspace-target="${name}"]`).count()) {
             await page.locator('.shell-menu > summary').click();
         }
         await nav(name).click();
@@ -363,8 +371,82 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.deepEqual(errors, []);
         console.log('PASS: desktop navigation, descriptions, panel toggles, matrix filters and dialogs; Mixer stays live across positions; desktop, tablet and mobile fit');
     }
+    async function verifyEmbeddedWorkspaces() {
+        page.setDefaultTimeout(8000);
+        recordings[0].timestamps = timestampRows;
+        await page.goto('http://vz2-workspaces.test/index.php?v=2&recording_id=11&view=looper');
+        await ready();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.phase === 'ready');
+        await page.locator('#looper-action-row button[aria-controls="looper-timestamps"]').click();
+        await page.locator('#looper-timestamps').getByRole('button', { name: 'Smyčka' }).click();
+        await page.waitForFunction(() => window.Vz2TimestampPlayback.state()?.repeat);
+        await page.locator('#looper-action-row button[aria-controls="looper-timestamps"]').click();
+        const playerBounds = await page.locator('#player-shell').boundingBox();
+        await page.evaluate(() => {
+            window.workspaceAudio = document.getElementById('looper-audio');
+            window.workspaceLoop = window.Vz2TimestampPlayback.state();
+        });
+        const main = page.getByRole('region', { name: 'Hlavní panel', exact: true });
+        const sections = main.getByRole('region', { name: 'Úseky nahrávek', exact: true });
+        const overview = main.getByRole('region', { name: 'Kompaktní přehled', exact: true });
+        const layoutMatches = async () => {
+            assert.deepEqual(await page.locator('#player-shell').boundingBox(), playerBounds);
+            assert(await page.locator('#topbar').isVisible() && await page.locator('#workspace-navigation').isVisible());
+            assert(await page.evaluate(() => window.workspaceAudio === document.getElementById('looper-audio')
+                && !window.workspaceAudio.paused && window.workspaceLoop === window.Vz2TimestampPlayback.state()));
+        };
+        await switchTo('segments');
+        assert.match(page.url(), /workspace=segments/);
+        const segment = sections.locator('[data-segment-id="t101"]');
+        await segment.click();
+        assert.equal(await sections.locator('#segments-selected-time').textContent(), '00:01 – 00:02');
+        assert.match(await sections.locator('#segments-open').getAttribute('href'), /recording_id=11.*view=looper.*time_ms=1000/);
+        await layoutMatches();
+
+        await switchTo('overview');
+        assert.equal(overviewRequests, 0, 'The overview starts loading only after clicking Generate');
+        await overview.getByRole('button', { name: 'Vytvořit výpis' }).click();
+        await overview.getByText('Text z přehledu', { exact: true }).waitFor();
+        await overview.getByRole('button', { name: 'Jen texty' }).click();
+        assert.equal(await overview.locator('#overview-rehearsals').count(), 1);
+        assert.equal(await overview.locator('#overview-rehearsals').isVisible(), false);
+        assert.equal(overviewRequests, 1);
+        await layoutMatches();
+        await page.emulateMedia({ media: 'print' });
+        assert(await overview.getByText('Text z přehledu').isVisible());
+        assert.equal(await page.locator('#player-shell').isVisible(), false);
+        await page.emulateMedia({ media: 'screen' });
+        await overview.getByRole('link', { name: 'Nová skladba', exact: true }).click();
+        await page.waitForFunction(() => document.body.dataset.workspace === 'songs');
+        await layoutMatches();
+        await page.goBack();
+        await overview.getByText('Text z přehledu', { exact: true }).waitFor();
+        assert.equal(await overview.getByRole('button', { name: 'Jen texty' }).getAttribute('aria-pressed'), 'true');
+        await page.goBack();
+        await sections.locator('#segments-selected-title').waitFor();
+        await layoutMatches();
+        await page.locator('#looper-play').click();
+        await sections.locator('#segments-play').click();
+        await page.waitForFunction(() => !document.getElementById('segments-audio').paused);
+        await switchTo('overview');
+        assert(await page.locator('#segments-audio').evaluate(audio => audio.paused));
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        await switchTo('overview');
+        assert(await overview.isVisible());
+        await switchTo('segments');
+        assert(await sections.isVisible());
+        assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+        await page.goto('http://vz2-workspaces.test/index.php?v=2&workspace=segments&recording_id=13');
+        await ready();
+        await sections.locator('input[name=segment-recording][value="13"]:checked').waitFor();
+        assert.equal(await page.evaluate(() => window.Vz2Player.getState()), null);
+        assert.deepEqual(errors, []);
+        console.log('PASS: both workspaces open in place, active Looper survives, filters and browser history are retained, and handheld navigation fits');
+    }
     try {
         if (process.argv.includes('--desktop-layout')) { await verifyDesktopLayout(); return; }
+        if (process.argv.includes('--embedded-workspaces')) { await verifyEmbeddedWorkspaces(); return; }
         await page.goto('http://vz2-workspaces.test/index.php?v=2'); await ready();
         assert.equal(await page.locator('#content-area > .panel:visible').count(), 3);
         assert.equal(await page.locator('#player-title').textContent(), '');

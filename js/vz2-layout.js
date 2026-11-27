@@ -17,6 +17,7 @@
     const panelName = id => collectionKind === 'rehearsal' && id === 'lyrics' ? 'Zápis ze zkoušky'
         : collectionKind === 'rehearsal' && id === 'tablature' ? 'Začátky skladeb' : names[id];
     const surfaces = new Map([...document.querySelectorAll('[data-workspace]')].map(panel => [panel.dataset.workspace, panel]));
+    const isAuxiliaryWorkspace = key => key !== 'panels' && surfaces.has(key);
     const fullscreenHandlers = new WeakMap();
     const player = $('player-shell'), workspace = $('workspace');
     const playerPositions = player.querySelectorAll('.player-position-button');
@@ -334,7 +335,7 @@
     desktop.addEventListener('change', apply); mobile.addEventListener('change', apply);
     function showWorkspace(key) {
         if (key === 'panels') key = collectionKind === 'rehearsal' ? 'rehearsals' : 'songs';
-        if (!['songs', 'rehearsals', 'history', 'ideas'].includes(key)) return;
+        if (!['songs', 'rehearsals'].includes(key) && !isAuxiliaryWorkspace(key)) return;
         const changed = key !== activeWorkspace;
         activeWorkspace = key; ideasOpen = key === 'ideas';
         closeCatalog(); apply();
@@ -353,7 +354,7 @@
     addFullscreenButton($('history-workspace'));
     addFullscreenButton($('ideas-workspace'));
     window.Vz2Layout = {
-        closeCatalog, hideIdeas, showWorkspace,
+        closeCatalog, hideIdeas, showWorkspace, isAuxiliaryWorkspace,
         getWorkspace: () => activeWorkspace,
         setCollectionKind(kind) { collectionKind = kind === 'rehearsal' ? 'rehearsal' : 'song'; state = states[collectionKind]; apply(); },
         registerFullscreen(panel, handlers = {}) { fullscreenHandlers.set(panel, handlers); addFullscreenButton(panel); },

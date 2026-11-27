@@ -1,6 +1,8 @@
 (() => {
     'use strict';
     const $ = id => document.getElementById(id);
+    const filterPanel = $('overview-filters');
+    if (!filterPanel) return;
     const make = (tag, text, className) => {
         const element = document.createElement(tag);
         if (text !== undefined) element.textContent = text;
@@ -97,7 +99,14 @@
         render(window.Vz2OverviewFilter.filterOverview(snapshot, filters, selectedSets()), filters, snapshot);
     }
 
-    const filterPanel = $('overview-filters');
+    $('overview-workspace')?.addEventListener('click', event => {
+        const link = event.target.closest('a[href^="#"]');
+        if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        const target = $(link.hash.slice(1));
+        if (!target) return;
+        event.preventDefault();
+        target.scrollIntoView({ block: 'start' });
+    });
     document.addEventListener('pointerdown', event => {
         if (filterPanel.open && !filterPanel.contains(event.target)) filterPanel.open = false;
     });
@@ -117,7 +126,7 @@
             defaultSelected[kind] = true;
             for (const id of selected[kind].keys()) selected[kind].set(id, true);
         }
-        for (const input of document.querySelectorAll('input[data-collection-id]')) input.checked = true;
+        for (const input of filterPanel.querySelectorAll('input[data-collection-id]')) input.checked = true;
         setActivePreset(null); updateFilterCount(); renderSnapshot();
     });
     $('overview-filter-none').addEventListener('click', () => {
@@ -143,7 +152,7 @@
         const kind = button.dataset.selectKind, checked = button.dataset.select === 'all';
         defaultSelected[kind] = checked;
         for (const id of selected[kind].keys()) selected[kind].set(id, checked);
-        for (const input of document.querySelectorAll(`input[data-collection-kind="${kind}"]`)) input.checked = checked;
+        for (const input of filterPanel.querySelectorAll(`input[data-collection-kind="${kind}"]`)) input.checked = checked;
         setActivePreset(null); updateFilterCount(); renderSnapshot();
     });
 

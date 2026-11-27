@@ -149,6 +149,7 @@
         qs = url.searchParams;
     }
     function resolveRoute(params) {
+        const auxiliary = window.Vz2Layout.isAuxiliaryWorkspace(params.workspace);
         const target = data?.recordings.find(r => String(r.id) === String(params.recording_id));
         const requestedKind = params.workspace === 'rehearsals' || params.kind === 'rehearsal' ? 'rehearsal' : 'song';
         // Linked rehearsal audio can play while its song folder remains selected.
@@ -156,8 +157,8 @@
         const collection = data?.collections.find(c => String(c.id) === String(requestedId) && c.lifecycle === 'active')
             || data?.collections.find(c => c.kind === requestedKind && c.lifecycle === 'active');
         const nextKind = collection?.kind || requestedKind;
-        const workspace = ['history', 'ideas'].includes(params.workspace) ? params.workspace : nextKind === 'rehearsal' ? 'rehearsals' : 'songs';
-        return { target, collection, kind: nextKind, workspace };
+        const workspace = auxiliary ? params.workspace : nextKind === 'rehearsal' ? 'rehearsals' : 'songs';
+        return { target, collection, kind: nextKind, workspace, auxiliary };
     }
     function rememberSurface() {
         if (!['songs', 'rehearsals'].includes(window.Vz2Layout.getWorkspace())) return;
@@ -166,10 +167,11 @@
     }
     async function canNavigate(params, force = false) {
         const next = resolveRoute(params), target = next.target;
+        // Hiding the collection workspace keeps any unfinished map edit mounted.
+        if (next.auxiliary) return true;
         const nextMode = target?.kind === 'multitrack' ? 'mixer' : target?.kind === 'single' && params.view === 'looper' ? 'looper' : null;
         if (!force && nextMode && !window.Vz2Player.canLeave(target.id, nextMode)) return false;
-        // Hiding the song workspace keeps its map mounted, including an unfinished edit.
-        if (['history', 'ideas'].includes(next.workspace) || next.kind !== 'song') return true;
+        if (next.kind !== 'song') return true;
         return window.Vz2SongMap.canLeave(next.collection?.id);
     }
     async function navigate(params, force = false) {
@@ -183,7 +185,7 @@
     async function applyRoute(openRecording = false) {
         const params = Object.fromEntries(qs), next = resolveRoute(params), target = next.target;
         // Non-collection workspaces preserve the mounted song/rehearsal surface.
-        if (!['history', 'ideas'].includes(next.workspace) || renderedData === undefined) {
+        if (!next.auxiliary || renderedData === undefined) {
             selected = next.collection?.id; kind = next.kind;
             if (selected != null) collectionMemory[kind] = String(selected);
             try { localStorage.setItem(cfg.cachePrefix + 'workspaces:collections', JSON.stringify(collectionMemory)); } catch (_) { /* Keep memory. */ }
@@ -191,13 +193,15 @@
         const route = { workspace: next.workspace, kind };
         if (params.listen === '1') route.listen = '1';
         if (selected != null) route.collection_id = String(selected);
-        if (target && !['history', 'ideas'].includes(next.workspace)) {
+        if (next.workspace === 'segments' && params.recording_id) route.recording_id = params.recording_id;
+        if (target && !next.auxiliary) {
             route.recording_id = String(target.id);
             if (params.time_ms !== undefined) route.time_ms = params.time_ms;
             if (params.view) route.view = params.view;
             if (params.keep_collection === '1') route.keep_collection = '1';
         }
         setRoute(route, true);
+        openRecording = openRecording && !next.auxiliary;
         const nextMixer = openRecording && target?.kind === 'multitrack' && target.lifecycle === 'active' ? String(target.id) : null;
         const nextCarAudio = openRecording && params.listen === '1' && matchMedia('(max-width: 767px)').matches
             && target?.kind === 'single' && target.lifecycle === 'active' && target.files.some(file => file.url) ? String(target.id) : null;
@@ -215,11 +219,11 @@
         const rebuild = renderedCollection !== selected || renderedData !== data || nextMixer;
         if (rebuild) render();
         window.Vz2Layout.showWorkspace(next.workspace);
-        if (rebuild && ['songs', 'rehearsals'].includes(next.workspace)) {
+        if (rebuild && !next.auxiliary) {
             $('panel-recordings').querySelector('.panel-body').scrollTop = surfaceMemory.get(String(selected))?.recordings || 0;
             $('collections').scrollTop = catalogMemory[kind].scroll;
         }
-        if (target && openRecording && !['history', 'ideas'].includes(next.workspace)) window.Vz2Layout.revealRecording();
+        if (target && openRecording) window.Vz2Layout.revealRecording();
         if (params.recording_id && !target) message('Odkazovaná nahrávka již neexistuje.', true);
         window.Vz2Boot?.ready();
         document.dispatchEvent(new Event('vz2:car-context'));
@@ -994,6 +998,12 @@
         const params = { workspace, kind: nextKind };
         if (collectionMemory[nextKind]) params.collection_id = collectionMemory[nextKind];
         navigate(params).catch(e => message(e.message, true));
+    });
+    $('workspace-surfaces').addEventListener('click', e => {
+        const link = e.target.closest('#segments-open[href], #overview-workspace .overview-collection-heading a[href]');
+        if (!link || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        navigate(Object.fromEntries(new URL(link.href).searchParams)).catch(error => message(error.message, true));
     });
     document.addEventListener('vz2:player-source', () => {
         const current = window.Vz2Player.getState();

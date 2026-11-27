@@ -4,7 +4,8 @@
     const make = (tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; return n; };
     let catalog = null, selectedIds = new Set(), selection = null, loadedAudio = null, loadSerial = 0, playSerial = 0, animation = null;
     let audioSource = null;
-    const audio = $('segments-audio');
+    const audio = $('segments-audio'), workspace = $('segments-workspace');
+    if (!audio) return;
     const panel = window.Vz2SegmentsPanel.mount($('segments-panel'), {
         onSelect: value => select(value, false, true),
         onSeek: seekPosition,
@@ -33,7 +34,10 @@
         return (!$('segments-collection').value || String(r.collection_id) === $('segments-collection').value)
             && (!query || (M.name(r) + ' ' + r.title + ' ' + collectionName(r)).toLocaleLowerCase('cs').includes(query));
     }
-    function stop() { window.Vz2TimestampPlayback.stop(); ++playSerial; audio.pause(); cancelAnimationFrame(animation); animation = null; }
+    function stopRange() {
+        if (window.Vz2TimestampPlayback.state()?.adapter === adapter) window.Vz2TimestampPlayback.stop();
+    }
+    function stop() { stopRange(); ++playSerial; audio.pause(); cancelAnimationFrame(animation); animation = null; }
     function clearSelection() {
         stop(); selection = null; loadedAudio = null; audioSource?.release(); audioSource = null; audio.removeAttribute('src'); audio.load();
         $('segments-selection').hidden = true; panel.clearSelection();
@@ -97,7 +101,7 @@
     function selectedFile() { return selection?.recording.kind === 'single' ? selection.recording.files?.[0] : null; }
     function select(value, refresh = false, keepPlayback = false) {
         if (!refresh) {
-            if (keepPlayback && String(selection?.recording_id) === String(value.recording_id)) window.Vz2TimestampPlayback.stop();
+            if (keepPlayback && String(selection?.recording_id) === String(value.recording_id)) stopRange();
             else stop();
         } selection = value; const { recording: r, segment: s } = value;
         const file = selectedFile();
@@ -131,7 +135,7 @@
             select({ recording_id, recording, segment: { id: 'recording', kind: 'recording', label: 'Celá nahrávka', start_ms: 0, end_ms: recording.duration_ms ?? null } }, false, true);
         }
         selection.time_ms = time_ms;
-        window.Vz2TimestampPlayback.stop();
+        stopRange();
         if (loadedAudio === selectedFile()?.url && audio.readyState > 0) audio.currentTime = time_ms / 1000;
         panel.setPlayhead(recording_id, time_ms);
     }
@@ -153,7 +157,7 @@
             await window.Vz2TimestampPlayback.play(adapter, { ...value.segment, recording_id: value.recording_id }, {
                 repeat: $('segments-loop').checked, onError: text => { $('segments-audio-status').textContent = text; }
             });
-            if (token !== playSerial) return;
+            if (token !== playSerial) { if (audio.paused) stopRange(); return; }
             if (value.time_ms != null) audio.currentTime = value.time_ms / 1000;
             $('segments-audio-status').textContent = value.segment.end_ms === null ? 'Přehrávání od vybrané značky.' : 'Přehrávání vybraného úseku.';
             $('segments-audio-status').textContent += audioSource?.local ? ' Ze zařízení.' : ' Ze sítě.';
@@ -231,7 +235,7 @@
     };
     $('segments-loop').onchange = () => {
         const state = window.Vz2TimestampPlayback.state();
-        if (state && selection) state.repeat = $('segments-loop').checked && selection.segment.end_ms !== null;
+        if (state?.adapter === adapter && selection) state.repeat = $('segments-loop').checked && selection.segment.end_ms !== null;
     };
     $('segments-edit').onclick = () => edit(selection?.segment.kind, true);
     $('segments-finish').onclick = () => edit(selection?.segment.kind, true, true);
@@ -249,11 +253,19 @@
         } catch (e) { status(e.message, true); }
     };
     document.addEventListener('vz2:timestamp-selected', e => {
+        if (workspace?.hidden) return;
         if (!e.detail || (selection?.recording_id === e.detail.recording_id && selection?.segment.id === e.detail.item_id)) return;
         panel.select(e.detail.recording_id, e.detail.item_id);
     });
     const downloads = window.Vz2DownloadsPanel.mount($('segments-downloads').querySelector('div'), () => catalog);
     $('segments-downloads').addEventListener('toggle', () => { if ($('segments-downloads').open) downloads.open(); });
     window.addEventListener('pagehide', () => { stop(); audioSource?.release(); });
-    void load();
+    if (workspace) {
+        document.addEventListener('vz2:workspace-changed', e => {
+            if (e.detail.workspace === 'segments') {
+                if (!catalog && !$('segments-reload').disabled) void load();
+            } else if (!audio.paused || selection) stop();
+        });
+        if (!workspace.hidden) void load();
+    } else void load();
 })();

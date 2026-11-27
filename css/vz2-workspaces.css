@@ -135,6 +135,12 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 #ideas-controls .section-icon { width: 16px; height: 16px; }
 .idea-future { padding: 24px; color: var(--color-text-muted); }
 .idea-future h3 { color: var(--color-text); }
+.tool-workspace { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; margin: 0 8px 8px; border: 1px solid var(--color-content-border); border-radius: 12px; background: var(--color-panel); }
+.tool-workspace > .workspace-header { justify-content: space-between; }
+.tool-workspace > .workspace-header h2 { font-size: 16px; }
+.tool-workspace > .workspace-header button { min-height: 30px; padding: 4px 8px; font-size: 12px; }
+.tool-workspace .segments-toolbar { padding: 8px; gap: 8px; }
+.tool-workspace .segments-toolbar label { margin: 0; }
 .mobile-label, #mobile-dock, #mobile-sections-dock { display: none; }
 @media (min-width: 1200px) {
     #sidebar-slot { display: flex; flex-direction: column; border-right: 1px solid var(--color-border); background: var(--color-shell); }
@@ -197,7 +203,9 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #content-area { padding: 0; gap: 0; }
     #content-area > .panel:not(.panel-fullscreen),
     #history-workspace:not(.panel-fullscreen),
-    #ideas-workspace:not(.panel-fullscreen) { margin: 0; border: 0; border-radius: 0; }
+    #ideas-workspace:not(.panel-fullscreen),
+    .tool-workspace { margin: 0; border: 0; border-radius: 0; }
+    .tool-workspace > .workspace-header button { min-height: 40px; }
     #workspace-navigation { display: none; }
     #topbar { display: flex; min-height: 36px; padding: 3px 10px; gap: 8px; }
     #topbar .brand { font-size: 10px; color: var(--color-primary-hover); font-weight: 700; }
@@ -262,8 +270,7 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #bottom-nav button[aria-pressed=true]::after { content: ''; position: absolute; right: 0; bottom: -3px; left: 0; height: 3px; background: var(--color-panel); pointer-events: none; }
     #mobile-sections-dock:not([hidden]) { display: block; flex: 0 0 auto; padding: 4px 8px; border-top: 1px solid var(--color-navigation-border); border-left: 2px solid var(--workspace-outline); border-right: 2px solid var(--workspace-outline); background: var(--color-shell); z-index: 20; }
     #activity.utility-panel, #offline-files.utility-panel { bottom: 53px; }
-    body:is([data-workspace=history], [data-workspace=ideas]) #activity.utility-panel,
-    body:is([data-workspace=history], [data-workspace=ideas]) #offline-files.utility-panel { bottom: 8px; }
+    body:is([data-workspace=history], [data-workspace=ideas], [data-workspace=segments], [data-workspace=overview]) :is(#activity, #offline-files).utility-panel { bottom: 8px; }
 }
 /* Leave a scrollable editor area when the mobile keyboard shortens the viewport.
    The complete player remains available by scrolling it or opening fullscreen. */
