@@ -39,6 +39,10 @@ wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.
         });
         await page.goto('http://segments.test/useky.php');
         await page.locator('.segment-recording').waitFor();
+        const downloads = page.locator('#segments-downloads');
+        await downloads.locator('summary').click();
+        await downloads.getByRole('heading', { name: 'Soubory v zařízení', exact: true }).waitFor();
+        await downloads.locator('summary').click();
         assert.equal(await page.locator('.segment-range').count(), 9);
         assert.equal(await page.locator('.segment-point').count(), 2);
         assert.equal(requests.filter(r => r.path.includes('peaks') || r.path === '/sample.wav').length, 0, 'no media downloads before opt-in');

@@ -257,8 +257,11 @@
         if (!e.detail || (selection?.recording_id === e.detail.recording_id && selection?.segment.id === e.detail.item_id)) return;
         panel.select(e.detail.recording_id, e.detail.item_id);
     });
-    const downloads = window.Vz2DownloadsPanel.mount($('segments-downloads').querySelector('div'), () => catalog);
-    $('segments-downloads').addEventListener('toggle', () => { if ($('segments-downloads').open) downloads.open(); });
+    const downloadsDisclosure = $('segments-downloads');
+    if (downloadsDisclosure) {
+        const downloads = window.Vz2DownloadsPanel.mount(downloadsDisclosure.querySelector('div'), () => catalog);
+        downloadsDisclosure.addEventListener('toggle', () => { if (downloadsDisclosure.open) downloads.open(); });
+    }
     window.addEventListener('pagehide', () => { stop(); audioSource?.release(); });
     if (workspace) {
         document.addEventListener('vz2:workspace-changed', e => {

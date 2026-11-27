@@ -397,6 +397,13 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         };
         await switchTo('segments');
         assert.match(page.url(), /workspace=segments/);
+        assert.equal(await sections.locator('#segments-downloads, .download-manager').count(), 0);
+        await page.locator('.shell-menu > summary').click();
+        await page.getByRole('button', { name: 'Správa offline souborů', exact: true }).click();
+        const offlineFiles = page.getByRole('region', { name: 'Offline soubory', exact: true });
+        await offlineFiles.getByRole('heading', { name: 'Soubory v zařízení', exact: true }).waitFor();
+        await offlineFiles.getByRole('button', { name: 'Zavřít offline soubory' }).click();
+        assert(await sections.isVisible());
         const segment = sections.locator('[data-segment-id="t101"]');
         await segment.click();
         assert.equal(await sections.locator('#segments-selected-time').textContent(), '00:01 – 00:02');

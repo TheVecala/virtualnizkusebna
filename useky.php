@@ -41,6 +41,7 @@ $config = ['csrf'=>auth_csrf_token(),'write'=>defined('VZ2_WRITES_ENABLED') && V
 <header class="segments-topbar"><a class="segments-brand" href="index.php?v=2">ZKUŠEBNA DK!</a><nav aria-label="Navigace"><a href="prehled.php">Kompaktní přehled</a><a href="index.php?v=2">← Zpět do zkušebny</a></nav></header>
 <main>
 <header class="segments-intro"><div><p class="segments-kicker">SAMOSTATNÝ PANEL · ČASOVÝ PŘEHLED</p><h1>Úseky nahrávek</h1><p>Celá zkouška. Jednotlivé úseky. Každá pasáž na svém místě.</p></div><button id="segments-reload" type="button">Obnovit data</button></header>
+<details id="segments-downloads"><summary>Stahování a soubory v zařízení</summary><div></div></details>
 <?php require __DIR__ . '/php/inc/vz2_segments_view.php'; ?>
 </main>
 </body>
