@@ -9,6 +9,7 @@ html:has(body.overview-page) { scroll-behavior: smooth; }
 .overview-topbar a { text-decoration: none; }
 .overview-brand { font-weight: 800; letter-spacing: .055em; }
 .overview-page main { max-width: 1080px; margin: 0 auto; padding: 24px 18px 64px; }
+.overview-page :is(#overview-controls-slot, #overview-controls) { display: contents; }
 .overview-intro { padding-bottom: 18px; border-bottom: 1px solid var(--color-divider); }
 .overview-kicker { margin: 0 0 5px; color: var(--color-primary); font-size: 11px; font-weight: 700; letter-spacing: .13em; }
 .overview-intro h1 { margin: 0; font-size: clamp(26px, 4vw, 38px); line-height: 1.15; }
@@ -42,8 +43,8 @@ html:has(body.overview-page) { scroll-behavior: smooth; }
 #overview-status { color: var(--color-text-muted); font-size: 12px; }
 .overview-page :is(button, a):focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 .overview-page #overview-output { position: relative; left: 50%; width: calc(100vw - 36px); transform: translateX(-50%); }
-#overview-workspace .overview-filters { position: static; box-shadow: none; }
-#overview-workspace .overview-filter-body { position: static; max-height: none; border: 0; box-shadow: none; }
+:is(#overview-workspace, #tool-sidebar-slot) .overview-filters { position: static; box-shadow: none; }
+:is(#overview-workspace, #tool-sidebar-slot) .overview-filter-body { position: static; max-height: none; border: 0; box-shadow: none; }
 .overview-meta { margin: 15px 0 6px; color: var(--color-text-muted); font-size: 12px; }
 .overview-jump { display: flex; gap: 14px; margin: 0 0 18px; font-size: 12px; }
 .overview-section { margin: 22px 0 30px; scroll-margin-top: 68px; }

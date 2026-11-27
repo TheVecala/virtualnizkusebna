@@ -1,3 +1,4 @@
+<div id="segments-controls-slot"><div id="segments-controls" class="segments-page" role="group" aria-label="Nastavení úseků">
 <div class="segments-toolbar">
 <label>Zobrazení<select id="segments-view"><option value="single">Jedna nahrávka</option><option value="stack">Nahrávky nad sebou</option></select></label>
 <label>Barvy<select id="segments-color"><option value="type">Podle typu úseku</option><option value="song">Podle skladby</option><option value="recording">Podle nahrávky</option><option value="mono">Jednobarevně</option></select></label>
@@ -7,6 +8,7 @@
 </div>
 <details class="segments-sources" id="segments-sources" open><summary>Nahrávky <span id="segments-count"></span></summary><div class="segments-source-tools"><label>Hledat<input id="segments-search" type="search" placeholder="Název nahrávky nebo zkoušky"></label><label>Zkouška / skladba<select id="segments-collection"><option value="">Všechny</option></select></label><button id="segments-select-all" type="button" hidden>Vybrat zobrazené</button><button id="segments-select-none" type="button" hidden>Zrušit výběr</button></div><div id="segments-recordings" class="segments-recordings"></div></details>
 <div class="segments-display-options" role="group" aria-label="Viditelné druhy značek"><label><input id="segments-takes" type="checkbox" checked>Úseky / skladby</label><label><input id="segments-passages" type="checkbox" checked>Pasáže</label><label><input id="segments-notes" type="checkbox" checked>Poznámky a hranice</label><label><input id="segments-labels" type="checkbox" checked>Popisky</label></div>
+</div></div>
 <p id="segments-status" class="segments-status" role="status" aria-live="polite">Načítám nahrávky…</p>
 <div id="segments-panel"></div>
 <div id="segments-legend" class="segments-legend" aria-label="Legenda barev"></div>

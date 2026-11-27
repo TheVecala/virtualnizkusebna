@@ -104,7 +104,10 @@
         placeCatalog();
         ($('collections').querySelector('.collection > button') || $('create-collection-open') || $('catalog-close')).focus();
     }
-    function moveControls(id, slot) { const control = $(id), target = $(slot); if (control.parentElement !== target) target.append(control); }
+    function moveControls(id, slot) {
+        const control = $(id), target = $(slot);
+        if (control && control.parentElement !== target) target.append(control);
+    }
     function placeWorkspaceNavigation() {
         const navigation = $('workspace-navigation'), sidebar = $('sidebar-slot');
         if (desktop.matches) {
@@ -192,6 +195,12 @@
         const historyInSidebar = desktop.matches && fullscreenPanel !== $('history-workspace');
         moveControls('history-controls', historyInSidebar ? 'history-sidebar-slot' : 'history-controls-slot');
         $('history-sidebar-slot').hidden = !historyInSidebar || activeWorkspace !== 'history';
+        const toolInSidebar = desktop.matches && ['segments', 'overview'].includes(activeWorkspace);
+        moveControls('segments-reload', toolInSidebar && activeWorkspace === 'segments' ? 'tool-sidebar-slot' : 'segments-reload-slot');
+        for (const key of ['segments', 'overview']) {
+            moveControls(key + '-controls', toolInSidebar && activeWorkspace === key ? 'tool-sidebar-slot' : key + '-controls-slot');
+        }
+        $('tool-sidebar-slot').hidden = !toolInSidebar;
         document.querySelectorAll('[data-idea-section]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.ideaSection === ideaSection)));
         document.querySelectorAll('[data-idea-panel]').forEach(panel => panel.hidden = panel.dataset.ideaPanel !== ideaSection);
         ids.forEach(id => {

@@ -1,3 +1,4 @@
+<div id="overview-controls-slot"><div id="overview-controls" role="group" aria-label="Nastavení přehledu">
 <section class="overview-presets" aria-label="Předvolby výpisu">
 <div id="overview-presets" class="overview-filter-actions" role="group" aria-label="Předvolby">
 <button type="button" data-overview-preset="all" aria-pressed="true">Vše</button>
@@ -62,6 +63,7 @@
 </div>
 </details>
 <div class="overview-actions"><button id="overview-generate" type="button">Vytvořit výpis</button><span id="overview-status" role="status" aria-live="polite">Výpis zatím není vytvořený.</span></div>
+</div></div>
 <div id="overview-output" hidden>
 <div id="overview-meta" class="overview-meta"></div>
 <p id="overview-no-results" class="overview-empty" hidden>Zaškrtněte zkoušky nebo skladby, které chcete zobrazit.</p>

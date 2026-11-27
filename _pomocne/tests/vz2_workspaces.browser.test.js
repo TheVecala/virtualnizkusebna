@@ -389,6 +389,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const main = page.getByRole('region', { name: 'Hlavní panel', exact: true });
         const sections = main.getByRole('region', { name: 'Úseky nahrávek', exact: true });
         const overview = main.getByRole('region', { name: 'Kompaktní přehled', exact: true });
+        const sidebar = page.locator('#tool-sidebar-slot');
+        const segmentSettings = sidebar.getByRole('group', { name: 'Nastavení úseků', exact: true });
+        const overviewSettings = sidebar.getByRole('group', { name: 'Nastavení přehledu', exact: true });
         const layoutMatches = async () => {
             assert.deepEqual(await page.locator('#player-shell').boundingBox(), playerBounds);
             assert(await page.locator('#topbar').isVisible() && await page.locator('#workspace-navigation').isVisible());
@@ -398,6 +401,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('segments');
         assert.match(page.url(), /workspace=segments/);
         assert.equal(await sections.locator('#segments-downloads, .download-manager').count(), 0);
+        assert.equal(await sections.locator('#segments-controls, #segments-reload').count(), 0);
+        assert(await sidebar.getByRole('button', { name: 'Obnovit data' }).isVisible());
+        await segmentSettings.locator('#segments-color').selectOption('song');
+        await segmentSettings.getByRole('checkbox', { name: 'Popisky', exact: true }).uncheck();
         await page.locator('.shell-menu > summary').click();
         await page.getByRole('button', { name: 'Správa offline souborů', exact: true }).click();
         const offlineFiles = page.getByRole('region', { name: 'Offline soubory', exact: true });
@@ -412,9 +419,13 @@ function gate() { let release; const promise = new Promise(resolve => release = 
 
         await switchTo('overview');
         assert.equal(overviewRequests, 0, 'The overview starts loading only after clicking Generate');
-        await overview.getByRole('button', { name: 'Vytvořit výpis' }).click();
+        assert.equal(await overview.locator('#overview-controls').count(), 0);
+        assert.equal(await segmentSettings.isVisible(), false);
+        await overviewSettings.getByRole('button', { name: 'Vytvořit výpis' }).click();
         await overview.getByText('Text z přehledu', { exact: true }).waitFor();
-        await overview.getByRole('button', { name: 'Jen texty' }).click();
+        await overviewSettings.locator('#overview-filters summary').click();
+        await overviewSettings.locator('input[data-filter="show_author"]').uncheck();
+        await overviewSettings.getByRole('button', { name: 'Jen texty' }).click();
         assert.equal(await overview.locator('#overview-rehearsals').count(), 1);
         assert.equal(await overview.locator('#overview-rehearsals').isVisible(), false);
         assert.equal(overviewRequests, 1);
@@ -428,7 +439,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await layoutMatches();
         await page.goBack();
         await overview.getByText('Text z přehledu', { exact: true }).waitFor();
-        assert.equal(await overview.getByRole('button', { name: 'Jen texty' }).getAttribute('aria-pressed'), 'true');
+        assert.equal(await overviewSettings.getByRole('button', { name: 'Jen texty' }).getAttribute('aria-pressed'), 'true');
         await page.goBack();
         await sections.locator('#segments-selected-title').waitFor();
         await layoutMatches();
@@ -438,11 +449,23 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('overview');
         assert(await page.locator('#segments-audio').evaluate(audio => audio.paused));
 
+        await page.setViewportSize({ width: 1200, height: 480 });
+        await overviewSettings.locator('#overview-filters summary').click();
+        assert(await sidebar.evaluate(node => {
+            node.scrollTop = node.scrollHeight;
+            return node.scrollTop > 0 && node.scrollWidth <= node.clientWidth + 1;
+        }));
+        await page.setViewportSize({ width: 1199, height: 650 });
+        await overview.getByRole('button', { name: 'Jen texty' }).waitFor();
+        assert.equal(await overview.locator('input[data-filter="show_author"]').isChecked(), false);
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('overview');
         assert(await overview.isVisible());
         await switchTo('segments');
         assert(await sections.isVisible());
+        assert(await sections.getByRole('button', { name: 'Obnovit data' }).isVisible());
+        assert.equal(await sections.locator('#segments-color').inputValue(), 'song');
+        assert.equal(await sections.getByRole('checkbox', { name: 'Popisky', exact: true }).isChecked(), false);
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
         await page.goto('http://vz2-workspaces.test/index.php?v=2&workspace=segments&recording_id=13');
         await ready();

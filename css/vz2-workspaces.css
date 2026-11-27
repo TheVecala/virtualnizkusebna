@@ -171,7 +171,18 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #desktop-panels .section-icon { width: 19px; height: 19px; }
     #desktop-panels button[aria-pressed=true] { color: var(--color-on-primary); background: var(--color-primary); border-color: var(--color-primary); }
 
-    #history-sidebar-slot { min-height: 0; overflow-y: auto; padding: 4px 8px 8px; }
+    #history-sidebar-slot, #tool-sidebar-slot { min-height: 0; overflow-y: auto; padding: 4px 8px 8px; }
+    #tool-sidebar-slot { overscroll-behavior: contain; }
+    #tool-sidebar-slot #segments-reload { min-height: 30px; margin-bottom: 8px; padding: 4px 8px; font-size: 12px; }
+    #tool-sidebar-slot #segments-controls { background: transparent; }
+    #tool-sidebar-slot #segments-controls label { margin: 0; }
+    #tool-sidebar-slot :is(.segments-toolbar, .segments-source-tools) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    #tool-sidebar-slot .segments-toolbar { padding: 0; border: 0; background: transparent; }
+    #tool-sidebar-slot :is(.segments-toolbar select, .segments-source-tools input, .segments-source-tools select) { width: 100%; min-width: 0; }
+    #tool-sidebar-slot .segments-switches { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+    #tool-sidebar-slot .segments-display-options { display: grid; gap: 4px; }
+    #tool-sidebar-slot .overview-presets { margin-top: 0; }
+    #tool-sidebar-slot .overview-filter-grid { grid-template-columns: minmax(0, 1fr); }
     #history-sidebar-slot #history-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
     #history-sidebar-slot #history-controls > :is(button, label) { grid-column: 1 / -1; justify-self: start; }
     #history-sidebar-slot #history-orientation { min-height: 30px; padding: 4px 7px; font-size: 12px; }

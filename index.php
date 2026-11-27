@@ -177,7 +177,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
 <h2 id="catalog-heading">Skladby</h2>
 <div id="collections"></div>
-</aside><div id="history-sidebar-slot" hidden></div></div><div id="workspace" role="region" aria-label="Hlavní panel" data-player-position="top">
+</aside><div id="history-sidebar-slot" hidden></div><div id="tool-sidebar-slot" hidden></div></div><div id="workspace" role="region" aria-label="Hlavní panel" data-player-position="top">
 <p id="message" role="status" aria-live="polite"></p><p id="connection-status" class="notice" role="status" aria-live="polite" hidden></p>
 <?php if(!$write):?><p class="notice">Režim pouze pro čtení.</p><?php endif;?>
 <section id="player-shell" aria-label="Looper a Mixér" data-mode="empty">
@@ -246,7 +246,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 </div></div></header><p id="history-status" role="status" aria-live="polite"></p><div id="history-matrix" tabindex="0" aria-label="Matice historie zkoušení"></div></section>
 <section id="ideas-workspace" data-workspace="ideas" hidden aria-label="Nápady" aria-labelledby="ideas-title"><header class="panel-header workspace-header"><h2 id="ideas-title">Nápady</h2><div id="ideas-controls-slot"><nav id="ideas-controls" class="workspace-controls" aria-label="Sekce nápadů"><button type="button" data-idea-section="write" aria-pressed="true" title="Piš"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-write"/></svg><span>Piš</span></button><button type="button" data-idea-section="draw" aria-pressed="false" title="Kresli"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-draw"/></svg><span>Kresli</span></button><button type="button" data-idea-section="speak" aria-pressed="false" title="Mluv"><svg class="section-icon" aria-hidden="true"><use href="#section-icon-speak"/></svg><span>Mluv</span></button></nav></div></header><div id="ideas-write" class="panel-body content-editor" data-idea-panel="write"></div><div id="ideas-draw" class="panel-body idea-future" data-idea-panel="draw" hidden><h3>Kresli</h3><p>Prostor pro kresby a náčrty připravujeme.</p></div><div id="ideas-speak" class="panel-body idea-future" data-idea-panel="speak" hidden><h3>Mluv</h3><p>Prostor pro hlasové nápady připravujeme.</p></div><div id="ideas-shared" class="panel-body content-editor" aria-label="Společná fronta nápadů"></div></section>
 <section id="segments-workspace" class="tool-workspace" data-workspace="segments" aria-labelledby="segments-title" hidden>
-<header class="panel-header workspace-header"><h2 id="segments-title">Úseky nahrávek</h2><button id="segments-reload" type="button">Obnovit data</button></header>
+<header class="panel-header workspace-header"><h2 id="segments-title">Úseky nahrávek</h2><div id="segments-reload-slot"><button id="segments-reload" type="button">Obnovit data</button></div></header>
 <div class="panel-body segments-page"><?php require __DIR__ . '/php/inc/vz2_segments_view.php'; ?></div>
 </section>
 <section id="overview-workspace" class="tool-workspace" data-workspace="overview" aria-labelledby="overview-title" hidden>
