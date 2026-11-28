@@ -473,18 +473,79 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('overview');
         assert(await overview.isVisible());
+        const opener = page.locator('#sidebar-open'), drawer = page.locator('#catalog-dialog');
+        const close = drawer.locator('#sidebar-close');
+        await opener.click();
+        assert(await overviewSettings.getByRole('button', { name: 'Jen texty' }).isVisible());
+        assert.equal(await overview.locator('#overview-controls').count(), 0);
+        assert.equal(await overviewSettings.locator('input[data-filter="show_author"]').isChecked(), false);
+        await close.click();
         await switchTo('segments');
         assert(await sections.isVisible());
-        assert(await sections.getByRole('button', { name: 'Obnovit data' }).isVisible());
-        assert.equal(await sections.locator('#segments-color').inputValue(), 'song');
-        assert.equal(await sections.getByRole('checkbox', { name: 'Popisky', exact: true }).isChecked(), false);
-        assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+        assert.equal(await sections.locator('#segments-controls, #segments-reload').count(), 0);
+        await page.locator('#looper-play').click();
+        await page.waitForFunction(() => window.Vz2Player.getState()?.playing);
+        for (const [width, height] of [[320, 568], [390, 844], [740, 390], [767, 320]]) {
+            await page.setViewportSize({ width, height });
+            await opener.click();
+            await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
+            const box = await drawer.boundingBox();
+            const brand = await page.locator('#topbar .brand').boundingBox();
+            const hamburger = await page.locator('#topbar .shell-menu').boundingBox();
+            assert(box.width >= width - 20 && box.width < width && box.height === height && box.y === 0);
+            assert(Math.abs(brand.x + brand.width / 2 - width / 2) < 1 && hamburger.x > brand.x + brand.width);
+            assert.deepEqual(await drawer.locator('#workspace-navigation > button').allTextContents(), ['Zkoušky', 'Skladby', 'Matice']);
+            assert(await sidebar.getByRole('button', { name: 'Obnovit data' }).isVisible());
+            assert.equal(await segmentSettings.locator('#segments-color').inputValue(), 'song');
+            assert.equal(await segmentSettings.getByRole('checkbox', { name: 'Popisky', exact: true }).isChecked(), false);
+            assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+            if (height < 400) assert(await sidebar.evaluate(node => {
+                node.scrollTop = node.scrollHeight;
+                const scrolled = node.scrollTop > 0 && node.scrollWidth <= node.clientWidth + 1;
+                node.scrollTop = 0;
+                return scrolled;
+            }));
+            if (width === 320) await page.keyboard.press('Escape');
+            else if (width === 740) await page.mouse.click(width - 4, height / 2);
+            else await close.click();
+            await drawer.waitFor({ state: 'hidden' });
+            await page.waitForFunction(() => document.activeElement?.id === 'sidebar-open'
+                && document.activeElement.getAttribute('aria-expanded') === 'false');
+        }
+        await opener.click();
+        await drawer.getByRole('button', { name: 'Skladby', exact: true }).click();
+        await drawer.locator('#collections').getByRole('button', { name: 'Poslední vlak', exact: true }).click();
+        await drawer.waitFor({ state: 'hidden' });
+        assert.equal(await page.locator('#collection-title-name').textContent(), 'Poslední vlak');
+        await opener.click();
+        await drawer.getByRole('button', { name: 'Zkoušky', exact: true }).click();
+        await drawer.locator('#collections .collection > button').filter({ hasText: 'Zkouška 1. října' }).click();
+        await drawer.waitFor({ state: 'hidden' });
+        assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 1. října');
+        assert(await page.evaluate(() => window.workspaceAudio === document.getElementById('looper-audio') && !window.workspaceAudio.paused));
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.locator('#catalog-picker').click();
+        await drawer.getByRole('button', { name: /Nová zkouška/ }).click();
+        await page.getByRole('dialog', { name: 'Nová zkouška' }).waitFor();
+        await page.locator('#create-collection-cancel').click();
+        assert(await drawer.isVisible());
+        await close.click();
+        await opener.click();
+        await page.setViewportSize({ width: 768, height: 650 });
+        await drawer.waitFor({ state: 'hidden' });
+        assert.equal(await opener.isVisible(), false);
+        await page.locator('#catalog-picker').click();
+        assert(await drawer.locator('#collections').isVisible());
+        assert.equal(await drawer.locator('#workspace-navigation').count(), 0);
+        await page.locator('#catalog-close').click();
+        await page.setViewportSize({ width: 390, height: 844 });
         await page.goto('http://vz2-workspaces.test/index.php?v=2&workspace=segments&recording_id=13');
         await ready();
-        await sections.locator('input[name=segment-recording][value="13"]:checked').waitFor();
+        await opener.click();
+        await segmentSettings.locator('input[name=segment-recording][value="13"]:checked').waitFor();
         assert.equal(await page.evaluate(() => window.Vz2Player.getState()), null);
         assert.deepEqual(errors, []);
-        console.log('PASS: both workspaces open in place, active Looper survives, filters and browser history are retained, and handheld navigation fits');
+        console.log('PASS: embedded workspaces, shared sidebar controls, mobile drawer at 320–767 px, catalogue selection, focus and tablet transition; Looper continues playing');
     }
     try {
         if (process.argv.includes('--desktop-layout')) { await verifyDesktopLayout(); return; }
@@ -585,12 +646,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                         const labelsFit = await page.locator('#mobile-panels button:visible .section-button-label').evaluateAll(labels => labels.every(label => label.getBoundingClientRect().width > 0 && label.scrollWidth <= label.clientWidth + 1));
                         assert(labelsFit, `${workspace}: section tab labels fit at ${width} px`);
                     }
-                    else {
-                        const header = workspace === 'history' ? '#history-workspace .workspace-header' : '#ideas-workspace .workspace-header';
-                        const controls = workspace === 'history' ? '#history-controls' : '#ideas-controls';
-                        const headerBox = await page.locator(header).boundingBox(), controlsBox = await page.locator(controls).boundingBox();
+                    else if (workspace === 'ideas') {
+                        const headerBox = await page.locator('#ideas-workspace .workspace-header').boundingBox();
+                        const controlsBox = await page.locator('#ideas-controls').boundingBox();
                         assert(controlsBox.y >= headerBox.y && controlsBox.y + controlsBox.height <= headerBox.y + headerBox.height + 1, `${workspace}: controls fit in one header row`);
-                    }
+                    } else assert.equal(await page.locator('#history-controls').isVisible(), false);
                     assert(geometry.dockHeight < 80, `${workspace}: main navigation fits below the player`);
                 }
                 if (width === 390 || width === 1440) await shot(`${workspace}-${width}`);
@@ -704,16 +764,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 320, height: 900 });
         await switchTo('songs');
         await page.locator('#catalog-picker').click();
+        await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
         const compactCatalog = await page.locator('#catalog-dialog').boundingBox();
         const compactHeading = await page.locator('#catalog-heading-mobile').boundingBox();
         const compactCreate = await page.locator('#create-collection-open').boundingBox();
-        const compactClose = await page.locator('#catalog-close').boundingBox();
+        const compactClose = await page.locator('#sidebar-close').boundingBox();
         assert.equal(await page.locator('#catalog-heading-mobile').textContent(), 'Skladby');
-        assert(compactCatalog.width < 320 - 16 && compactHeading.x >= compactCatalog.x + 9
+        assert.equal(compactCatalog.width, 320 - 16);
+        assert(compactHeading.x >= compactCatalog.x + 8
             && compactClose.x + compactClose.width <= compactCatalog.x + compactCatalog.width - 9,
             'Catalog header has padding and fits at 320 px');
         assert(Math.abs(compactHeading.y + compactHeading.height / 2 - compactCreate.y - compactCreate.height / 2) < 2, 'Song title and creation button share one row at 320 px');
-        await page.locator('#catalog-close').click();
+        await page.locator('#sidebar-close').click();
 
         await page.setViewportSize({ width: 320, height: 900 });
         await switchTo('songs');
@@ -814,33 +876,31 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.getByText('Příspěvek uložen.', { exact: true }).waitFor();
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('history');
+        await page.locator('#sidebar-open').click();
         await page.locator('#history-orientation').click(); await page.locator('#history-audio-filter').check();
-        await page.locator('#history-filter summary').click();
-        const popup = await page.locator('.history-filter-menu').boundingBox(), header = await page.locator('#history-workspace .workspace-header').boundingBox(), mainNavigation = await page.locator('#bottom-nav').boundingBox();
-        assert(header.y >= mainNavigation.y + mainNavigation.height - 1 && popup.y >= header.y + header.height - 1 && popup.y + popup.height < 844,
-            `Filter opens below the header within the viewport: ${JSON.stringify({popup, header, mainNavigation})}`);
-        assert(popup.x >= 0 && popup.x + popup.width <= 390, 'Filter fits inside the mobile viewport');
+        const filterMenu = await page.locator('#catalog-dialog .history-filter-menu').boundingBox();
+        assert(filterMenu.x >= 0 && filterMenu.x + filterMenu.width <= 390, 'Filters fit inside the mobile drawer');
         assert(await page.locator('#history-song-filter label').evaluateAll(labels => labels.every(label => { const box = label.querySelector('input').getBoundingClientRect(); const rect = label.getBoundingClientRect(); return box.left - rect.left < 12 && box.width <= 22; })), 'Checkboxes align at the start of each song row');
         await page.locator('#history-song-filter input[value="1"]').check();
         await page.locator('#history-song-filter input[value="2"]').check();
         assert.equal(await page.locator('#history-song-filter input:checked').count(), 2);
         const fixedActions = await page.evaluate(() => {
-            const list = document.querySelector('#history-song-filter'), actions = document.querySelector('.history-filter-actions');
+            const list = document.querySelector('#history-song-filter'), actions = document.querySelector('.history-filter-heading');
             for (let i = 0; i < 20; i++) { const row = list.firstElementChild.cloneNode(true); row.classList.add('test-extra'); list.append(row); }
             const before = actions.getBoundingClientRect().top; list.scrollTop = list.scrollHeight;
             return { scrolled: list.scrollTop > 0, before, after: actions.getBoundingClientRect().top };
         });
-        assert(fixedActions.scrolled && fixedActions.before === fixedActions.after, 'Only the song list scrolls while both filter actions stay fixed');
+        assert(fixedActions.scrolled && fixedActions.before === fixedActions.after, 'Only the song list scrolls while its heading stays fixed');
         await page.evaluate(() => document.querySelectorAll('#history-song-filter .test-extra').forEach(row => row.remove()));
-        await page.locator('#history-song-filter-close').click();
-        assert.equal(await page.locator('#history-filter').getAttribute('open'), null);
-        await page.locator('#history-filter summary').click();
+        await page.locator('#sidebar-close').click();
+        await page.locator('#sidebar-open').click();
         assert.equal(await page.locator('#history-song-filter input:checked').count(), 2, 'Closing the filter preserves the selection');
         await page.locator('#history-song-filter input[value="2"]').uncheck();
         await page.locator('#history-unassigned-open').click();
         const unassigned = page.locator('#history-unassigned');
         assert((await unassigned.boundingBox()).width <= 390, 'Unassigned items fit inside the mobile viewport');
         await unassigned.locator('[data-history-close]').click();
+        await page.locator('#sidebar-close').click();
         await switchTo('songs'); await switchTo('history');
         assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
         assert(await page.locator('#history-audio-filter').isChecked());
@@ -848,7 +908,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-workspace .panel-fullscreen-button').click();
         await page.locator('#history-controls-slot #history-orientation').waitFor({ state: 'visible' });
         await page.keyboard.press('Escape');
-        assert(await page.locator('#history-controls-slot #history-orientation').isVisible());
+        assert.equal(await page.locator('#history-controls-slot #history-orientation').count(), 0);
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.locator('#history-sidebar-slot #history-orientation').waitFor({ state: 'visible' });
         assert(await page.locator('#history-audio-filter').isChecked());
@@ -861,12 +921,13 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 1. října');
         await page.locator('#catalog-picker').click();
         assert.equal(await page.locator('#catalog-picker').getAttribute('aria-expanded'), 'true');
-        const title = await page.locator('#catalog-picker').boundingBox(), dropdown = await page.locator('#catalog-dialog').boundingBox();
-        assert(dropdown.y >= title.y + title.height, 'Catalog drops down from the large title');
+        await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
+        const dropdown = await page.locator('#catalog-dialog').boundingBox();
+        assert.equal(dropdown.y, 0, 'The title also opens the mobile drawer');
         const heading = await page.locator('#catalog-heading-mobile').boundingBox(), create = await page.locator('#create-collection-open').boundingBox();
         assert(Math.abs(heading.y + heading.height / 2 - create.y - create.height / 2) < 2, 'Catalog title and creation button share one row');
-        assert(heading.x >= dropdown.x + 9, 'Catalog heading is inset from the dialog border');
-        assert(dropdown.width < 390 - 16, 'Mobile catalog uses less than the full viewport width');
+        assert(heading.x >= dropdown.x + 8, 'Catalog heading is inset from the dialog border');
+        assert.equal(dropdown.width, 390 - 16);
         await shot('catalog-rehearsals-390');
         assert.equal(await page.locator('#collections .collection:visible').count(), 2);
         await page.locator('#collections .collection > button').filter({ hasText: 'Zkouška 8. října' }).click();

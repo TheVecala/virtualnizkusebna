@@ -20,6 +20,8 @@
     const isAuxiliaryWorkspace = key => key !== 'panels' && surfaces.has(key);
     const fullscreenHandlers = new WeakMap();
     const player = $('player-shell'), workspace = $('workspace');
+    const sidebar = $('sidebar-slot'), catalogDialog = $('catalog-dialog'), dialogSlot = $('catalog-dialog-slot');
+    const catalogOpeners = [$('catalog-picker'), $('sidebar-open')];
     const playerPositions = player.querySelectorAll('.player-position-button');
     function setPanelFullscreen(panel) {
         if (fullscreenPanel === panel) panel = null;
@@ -79,38 +81,55 @@
     let state = states.song;
     function save(mode) { try { localStorage.setItem(prefix + collectionKind + ':' + mode, JSON.stringify(state[mode])); } catch (_) { /* Keep the in-memory choice. */ } }
     function mode() { return desktop.matches ? 'desktop' : mobile.matches ? 'mobile' : 'tablet'; }
+    function setCatalogExpanded(open) {
+        catalogOpeners.forEach(control => control.setAttribute('aria-expanded', String(open)));
+    }
     function closeCatalog() {
-        if ($('catalog-dialog').open) $('catalog-dialog').close();
-        $('catalog-picker').setAttribute('aria-expanded', 'false');
+        if (catalogDialog.open) catalogDialog.close();
+        setCatalogExpanded(false);
     }
     function placeCatalog() {
-        if (!$('catalog-dialog').open) return;
+        if (!catalogDialog.open || mobile.matches) return;
         const anchor = $('catalog-picker').getBoundingClientRect();
         const viewportTop = window.visualViewport?.offsetTop || 0;
         const height = window.visualViewport?.height || innerHeight;
-        const lower = viewportTop + height - (mobile.matches && height > 500 ? $('mobile-sections-dock').offsetHeight + 8 : 8);
+        const lower = viewportTop + height - 8;
         const top = Math.max(viewportTop + 8, Math.min(anchor.bottom + 6, lower - 120));
         const available = Math.max(40, lower - top);
-        $('catalog-dialog').style.setProperty('--catalog-top', top + 'px');
-        $('catalog-dialog').style.setProperty('--catalog-height', available + 'px');
-        $('catalog-dialog').style.setProperty('--catalog-left', Math.max(8, Math.min(anchor.left, innerWidth - 428)) + 'px');
+        catalogDialog.style.setProperty('--catalog-top', top + 'px');
+        catalogDialog.style.setProperty('--catalog-height', available + 'px');
+        catalogDialog.style.setProperty('--catalog-left', Math.max(8, Math.min(anchor.left, innerWidth - 428)) + 'px');
     }
     function openCatalog() {
-        if (desktop.matches || !isCollection()) return;
-        if ($('catalog-dialog').open) { closeCatalog(); return; }
-        $('catalog-dialog-slot').append($('sidebar'));
-        $('catalog-dialog').showModal();
-        $('catalog-picker').setAttribute('aria-expanded', 'true');
+        if (desktop.matches || (!mobile.matches && !isCollection())) return;
+        if (catalogDialog.open) { closeCatalog(); return; }
+        catalogDialog.showModal();
+        setCatalogExpanded(true);
         placeCatalog();
-        ($('collections').querySelector('.collection > button') || $('create-collection-open') || $('catalog-close')).focus();
+        const focus = mobile.matches ? $('sidebar-close')
+            : $('collections').querySelector('.collection > button') || $('create-collection-open') || $('catalog-close');
+        focus.focus({ preventScroll: true });
     }
     function moveControls(id, slot) {
         const control = $(id), target = $(slot);
         if (control && control.parentElement !== target) target.append(control);
     }
-    function placeWorkspaceNavigation() {
-        const navigation = $('workspace-navigation'), sidebar = $('sidebar-slot');
-        if (desktop.matches) {
+    function placeSidebar() {
+        if (mobile.matches && sidebar.parentElement !== dialogSlot) {
+            closeCatalog();
+            dialogSlot.append(sidebar);
+        } else if (!mobile.matches && sidebar.parentElement === dialogSlot) {
+            closeCatalog();
+            workspace.before(sidebar);
+        }
+        const asideSlot = desktop.matches || mobile.matches ? sidebar : dialogSlot;
+        if ($('sidebar').parentElement !== asideSlot) {
+            closeCatalog();
+            asideSlot.append($('sidebar'));
+        }
+        sidebar.hidden = !desktop.matches && !mobile.matches;
+        const navigation = $('workspace-navigation');
+        if (desktop.matches || mobile.matches) {
             if (navigation.parentElement === sidebar) return;
             document.querySelector('.shell-menu nav').prepend($('show-ideas'));
             navigation.prepend(navigation.querySelector('[data-workspace-target="rehearsals"]'));
@@ -129,7 +148,7 @@
             String(!full && button.dataset.playerPosition === workspace.dataset.playerPosition)));
     }
     function apply() {
-        if (desktop.matches && $('catalog-dialog').open) closeCatalog();
+        if (desktop.matches && catalogDialog.open) closeCatalog();
         const current = mode(), shown = current === 'mobile' ? [state.mobile] : state[current], collection = isCollection();
         $('panel-lyrics').setAttribute('aria-label', panelName('lyrics'));
         $('panel-lyrics').querySelector('.panel-header h2').textContent = panelName('lyrics');
@@ -166,7 +185,6 @@
         surfaces.forEach((panel, key) => panel.hidden = key === 'panels' ? !collection : key !== activeWorkspace);
         $('collection-header').hidden = !collection;
         $('desktop-panels').hidden = !desktop.matches;
-        $('sidebar-slot').hidden = !desktop.matches;
         $('sidebar').hidden = !collection;
         $('song-workspace').setAttribute('aria-label', collectionKind === 'rehearsal' ? 'Pracovní plocha zkoušky' : 'Pracovní plocha skladby');
         document.querySelectorAll('[data-workspace-target]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.workspaceTarget === activeWorkspace)));
@@ -175,7 +193,7 @@
         $('catalog-heading-mobile').textContent = label;
         $('collection-kind-inline').textContent = collectionKind === 'rehearsal' ? 'Zkouška:' : 'Skladba:';
         $('collection-kind-icon').className = 'ti ' + (collectionKind === 'rehearsal' ? 'ti-microphone' : 'ti-music');
-        $('catalog-dialog').setAttribute('aria-label', label);
+        catalogDialog.setAttribute('aria-label', mobile.matches ? 'Levý panel' : label);
         const picker = $('catalog-picker'), titleName = $('collection-title-name');
         picker.title = collectionKind === 'rehearsal' ? 'Vybrat zkoušku' : 'Vybrat skladbu';
         picker.hidden = desktop.matches;
@@ -190,16 +208,16 @@
             const header = $('panel-' + state.mobile).querySelector('.panel-header');
             if (collectionHeading.parentElement !== header) header.prepend(collectionHeading);
         } else if (collectionHeading.parentElement !== collectionHeader) collectionHeader.prepend(collectionHeading);
-        placeWorkspaceNavigation();
+        placeSidebar();
         updatePlayerPosition();
-        const historyInSidebar = desktop.matches && fullscreenPanel !== $('history-workspace');
+        const historyInSidebar = (desktop.matches || mobile.matches) && fullscreenPanel !== $('history-workspace');
         const historySlot = historyInSidebar ? 'history-sidebar-slot' : 'history-controls-slot';
         if ($('history-controls').parentElement !== $(historySlot)) {
             moveControls('history-controls', historySlot);
             $('history-filter').open = historyInSidebar;
         }
         $('history-sidebar-slot').hidden = !historyInSidebar || activeWorkspace !== 'history';
-        const toolInSidebar = desktop.matches && ['segments', 'overview'].includes(activeWorkspace);
+        const toolInSidebar = (desktop.matches || mobile.matches) && ['segments', 'overview'].includes(activeWorkspace);
         moveControls('segments-reload', toolInSidebar && activeWorkspace === 'segments' ? 'tool-sidebar-slot' : 'segments-reload-slot');
         for (const key of ['segments', 'overview']) {
             moveControls(key + '-controls', toolInSidebar && activeWorkspace === key ? 'tool-sidebar-slot' : key + '-controls-slot');
@@ -226,8 +244,6 @@
             b.hidden = !availableIds().includes(b.dataset.mobilePanel);
             b.setAttribute('aria-pressed', String(b.dataset.mobilePanel === state.mobile));
         });
-        const slot = $(desktop.matches ? 'sidebar-slot' : 'catalog-dialog-slot');
-        if ($('sidebar').parentElement !== slot) { closeCatalog(); slot.append($('sidebar')); }
         placeCatalog();
     }
     playerPositions.forEach(button => button.addEventListener('click', () => {
@@ -259,14 +275,15 @@
         state.mobile = b.dataset.mobilePanel; save('mobile'); apply();
         b.focus({ preventScroll: true });
     }));
-    $('catalog-picker').addEventListener('click', openCatalog);
+    catalogOpeners.forEach(control => control.addEventListener('click', openCatalog));
     $('catalog-close').addEventListener('click', closeCatalog);
-    $('catalog-dialog').addEventListener('click', e => {
-        if (e.target !== $('catalog-dialog')) return;
+    $('sidebar-close').addEventListener('click', closeCatalog);
+    catalogDialog.addEventListener('click', e => {
+        if (e.target !== catalogDialog) return;
         const rect = e.target.getBoundingClientRect();
         if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) closeCatalog();
     });
-    $('catalog-dialog').addEventListener('close', () => { $('catalog-picker').setAttribute('aria-expanded', 'false'); apply(); });
+    catalogDialog.addEventListener('close', () => { if (!catalogDialog.open) setCatalogExpanded(false); });
     $('create-collection-open')?.addEventListener('click', () => {
         const rehearsal = collectionKind === 'rehearsal';
         $('create-collection-title').textContent = rehearsal ? 'Nová zkouška' : 'Nová skladba';
@@ -319,7 +336,7 @@
     window.visualViewport?.addEventListener('resize', () => {
         document.querySelectorAll('.collection-menu[open]').forEach(placeCollectionMenu);
     });
-    $('catalog-dialog').addEventListener('animationend', () => {
+    catalogDialog.addEventListener('animationend', () => {
         document.querySelectorAll('.collection-menu[open]').forEach(placeCollectionMenu);
     });
     document.addEventListener('click', e => {
@@ -351,7 +368,8 @@
         if (!['songs', 'rehearsals'].includes(key) && !isAuxiliaryWorkspace(key)) return;
         const changed = key !== activeWorkspace;
         activeWorkspace = key; ideasOpen = key === 'ideas';
-        closeCatalog(); apply();
+        if (!mobile.matches) closeCatalog();
+        apply();
         if (changed) document.dispatchEvent(new CustomEvent('vz2:workspace-changed', { detail: { workspace: key } }));
     }
     function requestWorkspace(key) { document.dispatchEvent(new CustomEvent('vz2:workspace-request', { detail: { workspace: key } })); }

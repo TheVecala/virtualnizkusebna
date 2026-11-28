@@ -205,15 +205,16 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await page.setViewportSize({ width: 390, height: 844 });
         await openHistory();
         assert.equal(await history.isVisible(), true);
+        await page.locator('#sidebar-open').click();
+        assert(await page.locator('#catalog-dialog #history-sidebar-slot #history-filter').evaluate(filter => filter.open));
         await page.locator('#history-unassigned-open').click();
         assert((await unassigned.boundingBox()).width <= 390);
         await unassigned.locator('[data-history-close]').click();
-        await page.locator('#history-filter summary').click();
         assert(await page.locator('#history-song-filter input[value="' + song.id + '"]').isChecked());
         assert(await page.locator('#history-rehearsal-filter input[value="' + rehearsal.id + '"]').isChecked());
-        await page.locator('#history-song-filter-close').click();
         assert.equal(await page.locator('#history-orientation').getAttribute('aria-pressed'), 'true');
         assert.equal(await page.locator('#history-audio-filter').isChecked(), true);
+        await page.locator('#sidebar-close').click();
         assert.equal(await page.evaluate(() => window.Vz2Player.getState().playing), true);
         assert(await page.locator('#bn-matice').isVisible());
         const bounds = await history.boundingBox();
@@ -230,7 +231,9 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await closeList();
         assert.equal(await cell().locator('.history-count').textContent(), '1');
         // Restore the second attempt through the same UI, with the default orientation.
+        await page.locator('#sidebar-open').click();
         await page.locator('#history-orientation').click();
+        await page.locator('#sidebar-close').click();
         await addCandidate('c:' + directClip);
         await closeList();
         assert.deepEqual(errors, []);
@@ -244,10 +247,12 @@ module.exports = async function ({ base, clients, request, check, song, rehearsa
         await guestPage.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting'));
         await guestPage.locator('[data-workspace-target=history]:visible').click();
         await guestPage.locator('#history-matrix .history-table').waitFor();
+        await guestPage.locator('#sidebar-open').click();
         await guestPage.locator('#history-unassigned-open').click();
         assert.equal(await guestPage.locator('#history-unassigned .history-unassigned-section').count(), 2);
         assert.equal(await guestPage.locator('#history-unassigned button').count(), 1);
         await guestPage.locator('#history-unassigned [data-history-close]').click();
+        await guestPage.locator('#sidebar-close').click();
         assert.equal(await guestPage.locator('#history-matrix .history-add').count(), 0);
         const guestCell = guestPage.locator('td[data-song-id="'+song.id+'"][data-rehearsal-id="'+rehearsal.id+'"]');
         assert.equal(await guestCell.locator('button').count(), 1);

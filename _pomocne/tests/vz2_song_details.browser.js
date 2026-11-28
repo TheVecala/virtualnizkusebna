@@ -37,7 +37,7 @@ module.exports = async ({ base, clients, request, good, check, song, empty, rehe
         await header.locator('.song-details-more').click();
         await page.locator('#catalog-picker').click();
         assert.equal(await page.locator('.collection-bpm').filter({ hasText: '124/132,5/124' }).count(), 1);
-        await page.locator('#catalog-close').click();
+        await page.locator('#sidebar-close').click();
         await header.locator('.song-details-edit').click();
         await editor.locator('[name=description]').fill('Rozepsaný společný popisek');
         const current = await read();

@@ -98,8 +98,9 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
             splash.classList.add('is-leaving');
             if (hadFocus) {
                 const picker = $('catalog-picker');
-                const target = picker.hidden ? document.querySelector('#collections button[aria-pressed=true]')
-                    || document.querySelector('#workspace-navigation button[aria-pressed=true]') : picker;
+                const target = matchMedia('(max-width: 767px)').matches ? $('sidebar-open')
+                    : picker.hidden ? document.querySelector('#collections button[aria-pressed=true]')
+                        || document.querySelector('#workspace-navigation button[aria-pressed=true]') : picker;
                 target?.focus({ preventScroll: true });
             }
             setTimeout(() => splash.remove(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180);
@@ -142,7 +143,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <div id="vz2-boot-footer"><p id="vz2-boot-status" role="status" aria-live="polite">Načítáme skladby a nahrávky…</p><button id="vz2-boot-retry" type="button" hidden onclick="location.reload()">Zkusit znovu</button>
 <noscript><style>#vz2-boot-status { display: none; } #vz2-boot-wave span { animation: none; }</style><p id="vz2-boot-noscript">Pro otevření zkušebny povol JavaScript v prohlížeči a obnov stránku.</p></noscript>
 </div></div></section>
-<header id="topbar"><a class="brand" href="index.php?v=2">ZKUŠEBNA DK!</a>
+<header id="topbar"><button id="sidebar-open" class="sidebar-toggle" type="button" aria-label="Otevřít levý panel" title="Otevřít levý panel" aria-haspopup="dialog" aria-controls="catalog-dialog" aria-expanded="false"><svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m4-8h5m-2-2 2 2-2 2"/></svg></button><a class="brand" href="index.php?v=2">ZKUŠEBNA DK!</a>
 <nav id="workspace-navigation" aria-label="Pracovní plochy">
 <button type="button" data-workspace-target="songs" aria-pressed="true">Skladby</button>
 <button type="button" data-workspace-target="rehearsals" aria-pressed="false">Zkoušky</button>
@@ -171,7 +172,7 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <symbol id="section-icon-speak" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0m-7 7v3m-4 0h8"/></symbol>
 </defs></svg>
 <main id="app-shell" aria-busy="true">
-<div class="layout"><div id="sidebar-slot"><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header"><h2 id="catalog-heading-mobile">Skladby</h2>
+<div class="layout"><div id="sidebar-slot"><button id="sidebar-close" class="sidebar-toggle" type="button" aria-label="Zavřít levý panel" title="Zavřít levý panel"><svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><aside id="sidebar" aria-label="Výběr skladby nebo zkoušky"><div class="catalog-header"><h2 id="catalog-heading-mobile">Skladby</h2>
 <?php if($config['canCreate']):?><button id="create-collection-open" type="button">+ Nová skladba</button><?php endif;?>
 <button id="catalog-close" type="button" aria-label="Zavřít výběr" title="Zavřít výběr">×</button></div>
 <h2 id="catalog-heading">Skladby</h2>
