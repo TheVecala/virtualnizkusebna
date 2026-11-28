@@ -1,13 +1,20 @@
-<div id="segments-controls-slot"><div id="segments-controls" class="segments-page" role="group" aria-label="Nastavení úseků">
-<div class="segments-toolbar">
+<div id="segments-controls-slot"><div id="segments-controls" class="segments-page" role="group" aria-label="Ovládání úseků">
+<div id="segments-tabs" role="tablist" aria-label="Úseky nahrávek" hidden>
+<button id="segments-tab-recordings" type="button" role="tab" aria-controls="segments-recordings-pane" aria-selected="true">Výběr nahrávek</button>
+<button id="segments-tab-settings" type="button" role="tab" aria-controls="segments-settings-pane" aria-selected="false" tabindex="-1">Nastavení</button>
+</div>
+<div id="segments-toolbar" class="segments-toolbar">
 <label>Zobrazení<select id="segments-view"><option value="single">Jedna nahrávka</option><option value="stack">Nahrávky nad sebou</option></select></label>
 <label>Barvy<select id="segments-color"><option value="type">Podle typu úseku</option><option value="song">Podle skladby</option><option value="recording">Podle nahrávky</option><option value="mono">Jednobarevně</option></select></label>
 <label>Časová osa<select id="segments-scale"><option value="shared">Stejné měřítko času</option><option value="fit">Každá na celou šířku</option></select></label>
 <label>Přiblížení<select id="segments-zoom"><option value="1">Celá nahrávka</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
 <div class="segments-switches"><label><input id="segments-wave" type="checkbox"> wave</label><label><input id="segments-compact" type="checkbox" checked>Kompaktní</label></div>
 </div>
+<div id="segments-recordings-pane"><div id="segments-picker-reload-slot"></div>
 <details class="segments-sources" id="segments-sources" open><summary>Nahrávky <span id="segments-count"></span></summary><div class="segments-source-tools"><label>Hledat<input id="segments-search" type="search" placeholder="Název nahrávky nebo zkoušky"></label><label>Zkouška / skladba<select id="segments-collection"><option value="">Všechny</option></select></label><button id="segments-select-all" type="button" hidden>Vybrat zobrazené</button><button id="segments-select-none" type="button" hidden>Zrušit výběr</button></div><div id="segments-recordings" class="segments-recordings"></div></details>
-<div class="segments-display-options" role="group" aria-label="Viditelné druhy značek"><label><input id="segments-takes" type="checkbox" checked>Úseky / skladby</label><label><input id="segments-passages" type="checkbox" checked>Pasáže</label><label><input id="segments-notes" type="checkbox" checked>Poznámky a hranice</label><label><input id="segments-labels" type="checkbox" checked>Popisky</label></div>
+</div>
+<div id="segments-display-options" class="segments-display-options" role="group" aria-label="Viditelné druhy značek"><label><input id="segments-takes" type="checkbox" checked>Úseky / skladby</label><label><input id="segments-passages" type="checkbox" checked>Pasáže</label><label><input id="segments-notes" type="checkbox" checked>Poznámky a hranice</label><label><input id="segments-labels" type="checkbox" checked>Popisky</label></div>
+<div id="segments-settings-pane" hidden></div>
 </div></div>
 <p id="segments-status" class="segments-status" role="status" aria-live="polite">Načítám nahrávky…</p>
 <div id="segments-panel"></div>

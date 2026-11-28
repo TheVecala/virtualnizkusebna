@@ -22,6 +22,7 @@
     const player = $('player-shell'), workspace = $('workspace');
     const sidebar = $('sidebar-slot'), catalogDialog = $('catalog-dialog'), dialogSlot = $('catalog-dialog-slot');
     const catalogOpeners = [$('catalog-picker'), $('sidebar-open')];
+    const segmentTabs = [...$('segments-tabs').querySelectorAll('[role=tab]')];
     const playerPositions = player.querySelectorAll('.player-position-button');
     function setPanelFullscreen(panel) {
         if (fullscreenPanel === panel) panel = null;
@@ -113,6 +114,43 @@
     function moveControls(id, slot) {
         const control = $(id), target = $(slot);
         if (control && control.parentElement !== target) target.append(control);
+    }
+    function selectSegmentsTab(selected) {
+        for (const tab of segmentTabs) {
+            const active = tab === selected;
+            tab.setAttribute('aria-selected', String(active));
+            tab.tabIndex = active ? 0 : -1;
+            $(tab.getAttribute('aria-controls')).hidden = !active;
+        }
+        $('tool-sidebar-slot').scrollTop = 0;
+    }
+    function placeSegmentsControls(inSidebar) {
+        moveControls('segments-controls', inSidebar ? 'tool-sidebar-slot' : 'segments-controls-slot');
+        const tabs = $('segments-tabs');
+        if (tabs.hidden === !inSidebar) return;
+        const recordings = $('segments-recordings-pane'), settings = $('segments-settings-pane');
+        const toolbar = $('segments-toolbar'), options = $('segments-display-options');
+        if (inSidebar) {
+            moveControls('segments-reload', 'segments-picker-reload-slot');
+            settings.append(toolbar, options);
+            for (const tab of segmentTabs) {
+                const panel = $(tab.getAttribute('aria-controls'));
+                panel.setAttribute('role', 'tabpanel');
+                panel.setAttribute('aria-labelledby', tab.id);
+            }
+            selectSegmentsTab(tabs.querySelector('[aria-selected=true]'));
+        } else {
+            moveControls('segments-reload', 'segments-reload-slot');
+            recordings.before(toolbar);
+            recordings.after(options);
+            recordings.hidden = false;
+            settings.hidden = true;
+            for (const panel of [recordings, settings]) {
+                panel.removeAttribute('role');
+                panel.removeAttribute('aria-labelledby');
+            }
+        }
+        tabs.hidden = !inSidebar;
     }
     function placeSidebar() {
         if (mobile.matches && sidebar.parentElement !== dialogSlot) {
@@ -218,10 +256,8 @@
         }
         $('history-sidebar-slot').hidden = !historyInSidebar || activeWorkspace !== 'history';
         const toolInSidebar = (desktop.matches || mobile.matches) && ['segments', 'overview'].includes(activeWorkspace);
-        moveControls('segments-reload', toolInSidebar && activeWorkspace === 'segments' ? 'tool-sidebar-slot' : 'segments-reload-slot');
-        for (const key of ['segments', 'overview']) {
-            moveControls(key + '-controls', toolInSidebar && activeWorkspace === key ? 'tool-sidebar-slot' : key + '-controls-slot');
-        }
+        placeSegmentsControls(toolInSidebar && activeWorkspace === 'segments');
+        moveControls('overview-controls', toolInSidebar && activeWorkspace === 'overview' ? 'tool-sidebar-slot' : 'overview-controls-slot');
         $('tool-sidebar-slot').hidden = !toolInSidebar;
         document.querySelectorAll('[data-idea-section]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.ideaSection === ideaSection)));
         document.querySelectorAll('[data-idea-panel]').forEach(panel => panel.hidden = panel.dataset.ideaPanel !== ideaSection);
@@ -278,6 +314,19 @@
     catalogOpeners.forEach(control => control.addEventListener('click', openCatalog));
     $('catalog-close').addEventListener('click', closeCatalog);
     $('sidebar-close').addEventListener('click', closeCatalog);
+    for (const tab of segmentTabs) {
+        tab.addEventListener('click', () => selectSegmentsTab(tab));
+        tab.addEventListener('keydown', e => {
+            let target;
+            if (e.key === 'Home') target = segmentTabs[0];
+            else if (e.key === 'End') target = segmentTabs.at(-1);
+            else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') target = segmentTabs.find(other => other !== tab);
+            else return;
+            e.preventDefault();
+            selectSegmentsTab(target);
+            target.focus({ preventScroll: true });
+        });
+    }
     catalogDialog.addEventListener('click', e => {
         if (e.target !== catalogDialog) return;
         const rect = e.target.getBoundingClientRect();
