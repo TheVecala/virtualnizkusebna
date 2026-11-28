@@ -39,7 +39,7 @@ try {
 <h1>Kompaktní přehled</h1>
 <p>Texty a zápisky ze všech zkoušek a skladeb na jednom místě. Výpis se sestaví jen po kliknutí a je pouze pro čtení.</p>
 </div>
-<?php require __DIR__ . '/php/inc/vz2_overview_view.php'; ?>
+<?php $overviewStandalone = true; require __DIR__ . '/php/inc/vz2_overview_view.php'; ?>
 </main>
 </body>
 </html>

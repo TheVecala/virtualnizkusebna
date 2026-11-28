@@ -1,5 +1,5 @@
 <div id="segments-controls-slot"><div id="segments-controls" class="segments-page" role="group" aria-label="Ovládání úseků">
-<div id="segments-tabs" role="tablist" aria-label="Úseky nahrávek" hidden>
+<div id="segments-tabs" class="sidebar-tabs" role="tablist" aria-label="Úseky nahrávek" hidden>
 <button id="segments-tab-recordings" type="button" role="tab" aria-controls="segments-recordings-pane" aria-selected="true">Výběr nahrávek</button>
 <button id="segments-tab-settings" type="button" role="tab" aria-controls="segments-settings-pane" aria-selected="false" tabindex="-1">Nastavení</button>
 </div>

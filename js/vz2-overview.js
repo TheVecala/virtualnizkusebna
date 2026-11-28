@@ -3,6 +3,8 @@
     const $ = id => document.getElementById(id);
     const filterPanel = $('overview-filters');
     if (!filterPanel) return;
+    const workspace = $('overview-workspace'), generate = $('overview-generate');
+    const status = $('overview-status'), retry = $('overview-retry');
     const make = (tag, text, className) => {
         const element = document.createElement(tag);
         if (text !== undefined) element.textContent = text;
@@ -27,7 +29,7 @@
     const metadataFilters = new Set(['show_created', 'show_author', 'show_entry_date']);
     const selected = { rehearsal: new Map(), song: new Map() };
     const defaultSelected = { rehearsal: true, song: true };
-    let snapshot = null;
+    let snapshot = null, loading = false;
     const fixedInputs = () => [...document.querySelectorAll('#overview-filters input[data-filter]')];
     const currentFilters = () => Object.fromEntries(fixedInputs().map(input => [input.dataset.filter, input.checked]));
     const selectedSets = () => Object.fromEntries(['rehearsal', 'song'].map(kind => [kind,
@@ -99,7 +101,7 @@
         render(window.Vz2OverviewFilter.filterOverview(snapshot, filters, selectedSets()), filters, snapshot);
     }
 
-    $('overview-workspace')?.addEventListener('click', event => {
+    workspace?.addEventListener('click', event => {
         const link = event.target.closest('a[href^="#"]');
         if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
         const target = $(link.hash.slice(1));
@@ -107,11 +109,12 @@
         event.preventDefault();
         target.scrollIntoView({ block: 'start' });
     });
+    const filterPopupOpen = () => filterPanel.open && !filterPanel.closest('#tool-sidebar-slot');
     document.addEventListener('pointerdown', event => {
-        if (filterPanel.open && !filterPanel.contains(event.target)) filterPanel.open = false;
+        if (filterPopupOpen() && !filterPanel.contains(event.target)) filterPanel.open = false;
     });
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && filterPanel.open) filterPanel.open = false;
+        if (event.key === 'Escape' && filterPopupOpen()) filterPanel.open = false;
     });
 
     $('overview-filters').addEventListener('change', event => {
@@ -156,9 +159,11 @@
         setActivePreset(null); updateFilterCount(); renderSnapshot();
     });
 
-    $('overview-generate').addEventListener('click', async () => {
-        const button = $('overview-generate'), status = $('overview-status');
-        button.disabled = true;
+    async function loadOverview() {
+        if (loading) return;
+        loading = true;
+        if (generate) generate.disabled = true;
+        retry.hidden = true;
         status.textContent = 'Sestavuji aktuální výpis…';
         try {
             const response = await fetch('php/ajax/vz2_overview.php', { credentials: 'same-origin', cache: 'no-store' });
@@ -167,10 +172,21 @@
             snapshot = data;
             updateCollectionChoices(data);
             renderSnapshot();
-            status.textContent = 'Hotovo. Dalším kliknutím výpis aktualizujete.';
-            button.textContent = 'Aktualizovat výpis';
+            status.textContent = generate ? 'Hotovo. Dalším kliknutím výpis aktualizujete.' : '';
+            if (generate) generate.textContent = 'Aktualizovat výpis';
         } catch (error) {
             status.textContent = error.message || 'Výpis se nepodařilo načíst.';
-        } finally { button.disabled = false; }
-    });
+            retry.hidden = !workspace;
+        } finally {
+            loading = false;
+            if (generate) generate.disabled = false;
+        }
+    }
+    if (workspace) {
+        retry.addEventListener('click', loadOverview);
+        document.addEventListener('vz2:workspace-changed', event => {
+            if (event.detail.workspace === 'overview') void loadOverview();
+        });
+        if (!workspace.hidden) void loadOverview();
+    } else generate.addEventListener('click', loadOverview);
 })();

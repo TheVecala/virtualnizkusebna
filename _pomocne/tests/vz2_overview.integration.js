@@ -55,6 +55,9 @@ module.exports = async ({ base, clients, request, good, db, check, browser }) =>
         && page.text.includes('id="overview-collection-filters"')
         && page.text.includes('js/vz2-overview-filter.js') && page.text.includes('js/vz2-overview.js')
         && !page.text.includes('Zrychlit refrén.'), 'standalone page waits for a click before displaying data');
+    const embedded = await request(clients.guest, 'index.php?v=2&workspace=overview');
+    check(embedded.status === 200 && embedded.text.includes('id="overview-tabs"') && !embedded.text.includes('id="overview-generate"'),
+        'embedded overview renders both tabs without a generate button');
     const response = await request(clients.guest, 'php/ajax/vz2_overview.php');
     assert.equal(response.status, 200, response.text);
     const data = response.json();

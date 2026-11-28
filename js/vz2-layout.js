@@ -22,7 +22,6 @@
     const player = $('player-shell'), workspace = $('workspace');
     const sidebar = $('sidebar-slot'), catalogDialog = $('catalog-dialog'), dialogSlot = $('catalog-dialog-slot');
     const catalogOpeners = [$('catalog-picker'), $('sidebar-open')];
-    const segmentTabs = [...$('segments-tabs').querySelectorAll('[role=tab]')];
     const playerPositions = player.querySelectorAll('.player-position-button');
     function setPanelFullscreen(panel) {
         if (fullscreenPanel === panel) panel = null;
@@ -115,14 +114,29 @@
         const control = $(id), target = $(slot);
         if (control && control.parentElement !== target) target.append(control);
     }
-    function selectSegmentsTab(selected) {
-        for (const tab of segmentTabs) {
+    function selectSidebarTab(tabList, selected) {
+        for (const tab of tabList.querySelectorAll('[role=tab]')) {
             const active = tab === selected;
             tab.setAttribute('aria-selected', String(active));
             tab.tabIndex = active ? 0 : -1;
             $(tab.getAttribute('aria-controls')).hidden = !active;
         }
         $('tool-sidebar-slot').scrollTop = 0;
+    }
+    function setSidebarTabs(tabList, enabled) {
+        for (const tab of tabList.querySelectorAll('[role=tab]')) {
+            const panel = $(tab.getAttribute('aria-controls'));
+            if (enabled) {
+                panel.setAttribute('role', 'tabpanel');
+                panel.setAttribute('aria-labelledby', tab.id);
+            } else {
+                panel.removeAttribute('role');
+                panel.removeAttribute('aria-labelledby');
+                panel.hidden = false;
+            }
+        }
+        if (enabled) selectSidebarTab(tabList, tabList.querySelector('[aria-selected=true]'));
+        tabList.hidden = !enabled;
     }
     function placeSegmentsControls(inSidebar) {
         moveControls('segments-controls', inSidebar ? 'tool-sidebar-slot' : 'segments-controls-slot');
@@ -137,26 +151,22 @@
             moveControls('segments-count', 'segments-picker-reload-slot');
             recordings.append(sourceTools, list);
             settings.append(toolbar, options);
-            for (const tab of segmentTabs) {
-                const panel = $(tab.getAttribute('aria-controls'));
-                panel.setAttribute('role', 'tabpanel');
-                panel.setAttribute('aria-labelledby', tab.id);
-            }
-            selectSegmentsTab(tabs.querySelector('[aria-selected=true]'));
         } else {
             moveControls('segments-reload', 'segments-reload-slot');
             sources.querySelector('summary').append($('segments-count'));
             sources.append(sourceTools, list);
             recordings.before(toolbar);
             recordings.after(options);
-            recordings.hidden = false;
-            settings.hidden = true;
-            for (const panel of [recordings, settings]) {
-                panel.removeAttribute('role');
-                panel.removeAttribute('aria-labelledby');
-            }
         }
-        tabs.hidden = !inSidebar;
+        setSidebarTabs(tabs, inSidebar);
+        if (!inSidebar) settings.hidden = true;
+    }
+    function placeOverviewControls(inSidebar) {
+        moveControls('overview-controls', inSidebar ? 'tool-sidebar-slot' : 'overview-controls-slot');
+        const tabs = $('overview-tabs');
+        if (tabs.hidden === !inSidebar) return;
+        $('overview-filters').open = inSidebar;
+        setSidebarTabs(tabs, inSidebar);
     }
     function placeSidebar() {
         if (mobile.matches && sidebar.parentElement !== dialogSlot) {
@@ -263,7 +273,7 @@
         $('history-sidebar-slot').hidden = !historyInSidebar || activeWorkspace !== 'history';
         const toolInSidebar = (desktop.matches || mobile.matches) && ['segments', 'overview'].includes(activeWorkspace);
         placeSegmentsControls(toolInSidebar && activeWorkspace === 'segments');
-        moveControls('overview-controls', toolInSidebar && activeWorkspace === 'overview' ? 'tool-sidebar-slot' : 'overview-controls-slot');
+        placeOverviewControls(toolInSidebar && activeWorkspace === 'overview');
         $('tool-sidebar-slot').hidden = !toolInSidebar;
         document.querySelectorAll('[data-idea-section]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.ideaSection === ideaSection)));
         document.querySelectorAll('[data-idea-panel]').forEach(panel => panel.hidden = panel.dataset.ideaPanel !== ideaSection);
@@ -320,17 +330,21 @@
     catalogOpeners.forEach(control => control.addEventListener('click', openCatalog));
     $('catalog-close').addEventListener('click', closeCatalog);
     $('sidebar-close').addEventListener('click', closeCatalog);
-    for (const tab of segmentTabs) {
-        tab.addEventListener('click', () => selectSegmentsTab(tab));
-        tab.addEventListener('keydown', e => {
-            let target;
-            if (e.key === 'Home') target = segmentTabs[0];
-            else if (e.key === 'End') target = segmentTabs.at(-1);
-            else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') target = segmentTabs.find(other => other !== tab);
-            else return;
-            e.preventDefault();
-            selectSegmentsTab(target);
-            target.focus({ preventScroll: true });
+    for (const tabList of document.querySelectorAll('.sidebar-tabs')) {
+        const tabs = [...tabList.querySelectorAll('[role=tab]')];
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => selectSidebarTab(tabList, tab));
+            tab.addEventListener('keydown', e => {
+                let target;
+                if (e.key === 'Home') target = tabs[0];
+                else if (e.key === 'End') target = tabs.at(-1);
+                else if (e.key === 'ArrowLeft') target = tabs[(index + tabs.length - 1) % tabs.length];
+                else if (e.key === 'ArrowRight') target = tabs[(index + 1) % tabs.length];
+                else return;
+                e.preventDefault();
+                selectSidebarTab(tabList, target);
+                target.focus({ preventScroll: true });
+            });
         });
     }
     catalogDialog.addEventListener('click', e => {

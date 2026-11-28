@@ -1,5 +1,9 @@
 <div id="overview-controls-slot"><div id="overview-controls" role="group" aria-label="Nastavení přehledu">
-<section class="overview-presets" aria-label="Předvolby výpisu">
+<div id="overview-tabs" class="sidebar-tabs" role="tablist" aria-label="Kompaktní přehled" hidden>
+<button id="overview-tab-presets" type="button" role="tab" aria-controls="overview-presets-pane" aria-selected="true">Předvolby</button>
+<button id="overview-tab-custom" type="button" role="tab" aria-controls="overview-custom-pane" aria-selected="false" tabindex="-1">Vlastní výběr</button>
+</div>
+<section id="overview-presets-pane" class="overview-presets" aria-label="Předvolby výpisu">
 <div id="overview-presets" class="overview-filter-actions" role="group" aria-label="Předvolby">
 <button type="button" data-overview-preset="all" aria-pressed="true">Vše</button>
 <button type="button" data-overview-preset="song_details" aria-pressed="false">Popisky skladeb</button>
@@ -10,7 +14,7 @@
 <button type="button" data-overview-preset="summaries" aria-pressed="false">Jen souhrny</button>
 </div><p id="overview-preset-status" class="overview-filter-hint" role="status">Předvolba: Vše</p>
 </section>
-<details id="overview-filters" class="overview-filters">
+<div id="overview-custom-pane"><details id="overview-filters" class="overview-filters">
 <summary>Vlastní výběr <span id="overview-filter-count">Vše</span></summary>
 <div class="overview-filter-body">
 <div class="overview-filter-actions"><button id="overview-filter-all" type="button">Zaškrtnout vše</button><button id="overview-filter-none" type="button">Zrušit druhy obsahu</button></div>
@@ -59,11 +63,15 @@
 <fieldset class="overview-filter-group"><legend>Skladby</legend><div class="overview-filter-actions"><button type="button" data-select-kind="song" data-select="all">Všechny</button><button type="button" data-select-kind="song" data-select="none">Žádná</button></div><div id="overview-song-options" class="overview-collection-options"></div></fieldset>
 </div>
 </div>
-<p class="overview-filter-hint">Po vytvoření výpisu se změny zaškrtávátek projeví hned, bez nového načtení.</p>
+<p class="overview-filter-hint overview-filter-help">Po vytvoření výpisu se změny zaškrtávátek projeví hned, bez nového načtení.</p>
 </div>
-</details>
-<div class="overview-actions"><button id="overview-generate" type="button">Vytvořit výpis</button><span id="overview-status" role="status" aria-live="polite">Výpis zatím není vytvořený.</span></div>
+</details></div>
 </div></div>
+<div class="overview-actions">
+<?php if (!empty($overviewStandalone)): ?><button id="overview-generate" type="button">Vytvořit výpis</button><?php endif; ?>
+<span id="overview-status" role="status" aria-live="polite"><?= !empty($overviewStandalone) ? 'Výpis zatím není vytvořený.' : '' ?></span>
+<button id="overview-retry" type="button" hidden>Zkusit znovu</button>
+</div>
 <div id="overview-output" hidden>
 <div id="overview-meta" class="overview-meta"></div>
 <p id="overview-no-results" class="overview-empty" hidden>Zaškrtněte zkoušky nebo skladby, které chcete zobrazit.</p>

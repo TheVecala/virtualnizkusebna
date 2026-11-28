@@ -12,6 +12,7 @@ const html = php.slice(php.indexOf('<!doctype html>'))
     .replace("<?php readfile(__DIR__ . '/css/themes.css'); ?>", fs.readFileSync(path.join(root, 'css/themes.css'), 'utf8'))
     .replace(/<\?php require __DIR__ \. '\/(php\/inc\/vz2_(?:overview|segments)_view\.php)'; \?>/g,
         (_, file) => fs.readFileSync(path.join(root, file), 'utf8'))
+    .replace(/<\?php if \(!empty\(\$overviewStandalone\)\): \?>[\s\S]*?<\?php endif; \?>/g, '')
     .replace(/<\?=json_encode\(\$config,[\s\S]*?\?>/, JSON.stringify(config)).replace(/<\?[\s\S]*?\?>/g, '');
 const wav = Buffer.alloc(44 + 8000 * 180 * 2);
 wav.write('RIFF'); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16);
@@ -48,7 +49,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     const errors = [], confirmations = [], deletionDialogs = [], recordingDeletions = [];
     const carNotes = [];
     let carTimestampRevision = 1;
-    let peakRequests = 0, overviewRequests = 0;
+    let peakRequests = 0, overviewRequests = 0, overviewFailure = false;
     let holdMixer = null, mixerRequested = null;
     const mobileScroll = process.argv.includes('--mobile-scroll');
     const context = await browser.newContext(mobileScroll
@@ -141,6 +142,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         if (url.pathname === '/php/ajax/vz2_history.php') return json(matrix);
         if (url.pathname === '/php/ajax/vz2_overview.php') {
             overviewRequests++;
+            if (overviewFailure) return json({ ok: false, error: 'Výpis se nepodařilo načíst.' });
             return json({ ok: true, generated_at: '2026-10-25T10:00:00Z',
                 rehearsals: [{ ...collections[2], entries: [], played_songs: [] },
                     ...(mobileScroll ? matrix.rehearsals.slice(2).map(item => ({ ...item, entries: [], played_songs: [] })) : [])],
@@ -193,6 +195,13 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         }, { selector, position, content });
     }
     async function ready() { await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting')); }
+    async function waitForMobileDrawer() {
+        await page.waitForFunction(() => {
+            const drawer = document.querySelector('#catalog-dialog');
+            return drawer.open && drawer.getBoundingClientRect().left === 0
+                && drawer.getAnimations().every(animation => animation.playState === 'finished');
+        });
+    }
     async function shot(name) { if (process.env.WORKSPACE_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.WORKSPACE_SCREENSHOT_DIR, name + '.png') }); }
     async function recordingPickerLayout() {
         const layout = await page.locator('#segments-recordings-pane').evaluate(pane => {
@@ -227,7 +236,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const opener = page.locator('#sidebar-open'), closer = drawer.locator('#sidebar-close');
         const open = async () => {
             await opener.click();
-            await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
+            await waitForMobileDrawer();
         };
         async function swipeUp(x, y, distance) {
             await input.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
@@ -299,9 +308,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await drawer.getByRole('checkbox', { name: 'Popisky', exact: true }).uncheck();
         await closer.click();
         await switchTo('overview');
+        await page.locator('#overview-output').waitFor();
         await open();
-        await drawer.getByRole('button', { name: 'Vytvořit výpis' }).click();
-        await drawer.locator('#overview-filters summary').click();
+        await drawer.getByRole('tab', { name: 'Vlastní výběr', exact: true }).click();
         await scrollToLast('#tool-sidebar-slot', '#overview-filters .overview-filter-group label', '#overview-song-options label:last-child');
         await closer.click();
         await page.setViewportSize({ width: 740, height: 390 });
@@ -531,6 +540,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const recordingTab = sidebar.getByRole('tab', { name: 'Výběr nahrávek', exact: true });
         const settingsTab = sidebar.getByRole('tab', { name: 'Nastavení', exact: true });
         const overviewSettings = sidebar.getByRole('group', { name: 'Nastavení přehledu', exact: true });
+        const overviewPresets = overviewSettings.getByRole('tab', { name: 'Předvolby', exact: true });
+        const overviewCustom = overviewSettings.getByRole('tab', { name: 'Vlastní výběr', exact: true });
         const layoutMatches = async () => {
             assert.deepEqual(await page.locator('#player-shell').boundingBox(), playerBounds);
             assert(await page.locator('#topbar').isVisible() && await page.locator('#workspace-navigation').isVisible());
@@ -579,14 +590,18 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.match(await sections.locator('#segments-open').getAttribute('href'), /recording_id=11.*view=looper.*time_ms=1000/);
         await layoutMatches();
 
+        assert.equal(overviewRequests, 0, 'The overview waits until the workspace is opened');
         await switchTo('overview');
-        assert.equal(overviewRequests, 0, 'The overview starts loading only after clicking Generate');
         assert.equal(await overview.locator('#overview-controls').count(), 0);
         assert.equal(await segmentControls.isVisible(), false);
-        await overviewSettings.getByRole('button', { name: 'Vytvořit výpis' }).click();
+        assert.equal(await page.locator('#overview-generate').count(), 0);
+        assert.equal(await overviewPresets.getAttribute('aria-selected'), 'true');
         await overview.getByText('Text z přehledu', { exact: true }).waitFor();
-        await overviewSettings.locator('#overview-filters summary').click();
+        await overviewPresets.press('ArrowRight');
+        assert.equal(await overviewCustom.getAttribute('aria-selected'), 'true');
+        assert.equal(await overviewSettings.locator('#overview-filters summary').isVisible(), false);
         await overviewSettings.locator('input[data-filter="show_author"]').uncheck();
+        await overviewPresets.click();
         await overviewSettings.getByRole('button', { name: 'Jen texty' }).click();
         assert.equal(await overview.locator('#overview-rehearsals').count(), 1);
         assert.equal(await overview.locator('#overview-rehearsals').isVisible(), false);
@@ -599,8 +614,12 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await overview.getByRole('link', { name: 'Nová skladba', exact: true }).click();
         await page.waitForFunction(() => document.body.dataset.workspace === 'songs');
         await layoutMatches();
-        await page.goBack();
+        await Promise.all([
+            page.waitForResponse(response => response.url().includes('/php/ajax/vz2_overview.php') && response.ok()),
+            page.goBack()
+        ]);
         await overview.getByText('Text z přehledu', { exact: true }).waitFor();
+        assert.equal(overviewRequests, 2, 'Returning to the overview refreshes the snapshot');
         assert.equal(await overviewSettings.getByRole('button', { name: 'Jen texty' }).getAttribute('aria-pressed'), 'true');
         await page.goBack();
         await sections.locator('#segments-selected-title').waitFor();
@@ -612,13 +631,15 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert(await page.locator('#segments-audio').evaluate(audio => audio.paused));
 
         await page.setViewportSize({ width: 1200, height: 480 });
-        await overviewSettings.locator('#overview-filters summary').click();
+        await overviewCustom.click();
         assert(await sidebar.evaluate(node => {
             node.scrollTop = node.scrollHeight;
             return node.scrollTop > 0 && node.scrollWidth <= node.clientWidth + 1;
         }));
         await page.setViewportSize({ width: 1199, height: 650 });
         await overview.getByRole('button', { name: 'Jen texty' }).waitFor();
+        assert.equal(await overview.locator('#overview-tabs').isVisible(), false);
+        assert(await overview.locator('#overview-filters summary').isVisible());
         assert.equal(await overview.locator('input[data-filter="show_author"]').isChecked(), false);
         await switchTo('segments');
         assert.equal(await sections.locator('#segments-tabs').isVisible(), false);
@@ -631,9 +652,11 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         const opener = page.locator('#sidebar-open'), drawer = page.locator('#catalog-dialog');
         const close = drawer.locator('#sidebar-close');
         await opener.click();
-        assert(await overviewSettings.getByRole('button', { name: 'Jen texty' }).isVisible());
         assert.equal(await overview.locator('#overview-controls').count(), 0);
+        assert.equal(await overviewCustom.getAttribute('aria-selected'), 'true');
         assert.equal(await overviewSettings.locator('input[data-filter="show_author"]').isChecked(), false);
+        await overviewPresets.click();
+        assert.equal(await overviewSettings.getByRole('button', { name: 'Jen texty' }).getAttribute('aria-pressed'), 'true');
         await close.click();
         await switchTo('segments');
         assert(await sections.isVisible());
@@ -643,7 +666,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         for (const [width, height] of [[320, 568], [390, 844], [740, 390], [767, 320]]) {
             await page.setViewportSize({ width, height });
             await opener.click();
-            await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
+            await waitForMobileDrawer();
             const box = await drawer.boundingBox();
             const brand = await page.locator('#topbar .brand').boundingBox();
             const hamburger = await page.locator('#topbar .shell-menu').boundingBox();
@@ -700,6 +723,14 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await opener.click();
         await segmentControls.locator('input[name=segment-recording][value="13"]:checked').waitFor();
         assert.equal(await page.evaluate(() => window.Vz2Player.getState()), null);
+        overviewFailure = true;
+        await page.goto('http://vz2-workspaces.test/index.php?v=2&workspace=overview');
+        await ready();
+        await page.getByText('Výpis se nepodařilo načíst.', { exact: true }).waitFor();
+        overviewFailure = false;
+        await overview.getByRole('button', { name: 'Zkusit znovu', exact: true }).click();
+        await overview.getByText('Text z přehledu', { exact: true }).waitFor();
+        assert.equal(await page.locator('#overview-retry').isVisible(), false);
         assert.deepEqual(errors, []);
         console.log('PASS: embedded workspaces, shared sidebar controls, mobile drawer at 320–767 px, catalogue selection, focus and tablet transition; Looper continues playing');
     }
@@ -921,7 +952,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 320, height: 900 });
         await switchTo('songs');
         await page.locator('#catalog-picker').click();
-        await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
+        await waitForMobileDrawer();
         const compactCatalog = await page.locator('#catalog-dialog').boundingBox();
         const compactHeading = await page.locator('#catalog-heading-mobile').boundingBox();
         const compactCreate = await page.locator('#create-collection-open').boundingBox();
@@ -1080,7 +1111,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 1. října');
         await page.locator('#catalog-picker').click();
         assert.equal(await page.locator('#catalog-picker').getAttribute('aria-expanded'), 'true');
-        await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
+        await waitForMobileDrawer();
         const dropdown = await page.locator('#catalog-dialog').boundingBox();
         assert.equal(dropdown.y, 16, 'The title also opens the inset mobile drawer');
         const heading = await page.locator('#catalog-heading-mobile').boundingBox(), create = await page.locator('#create-collection-open').boundingBox();
