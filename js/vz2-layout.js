@@ -130,8 +130,12 @@
         if (tabs.hidden === !inSidebar) return;
         const recordings = $('segments-recordings-pane'), settings = $('segments-settings-pane');
         const toolbar = $('segments-toolbar'), options = $('segments-display-options');
+        const sources = $('segments-sources'), sourceTools = $('segments-source-tools'), list = $('segments-recordings');
+        sources.hidden = inSidebar;
         if (inSidebar) {
             moveControls('segments-reload', 'segments-picker-reload-slot');
+            moveControls('segments-count', 'segments-picker-reload-slot');
+            recordings.append(sourceTools, list);
             settings.append(toolbar, options);
             for (const tab of segmentTabs) {
                 const panel = $(tab.getAttribute('aria-controls'));
@@ -141,6 +145,8 @@
             selectSegmentsTab(tabs.querySelector('[aria-selected=true]'));
         } else {
             moveControls('segments-reload', 'segments-reload-slot');
+            sources.querySelector('summary').append($('segments-count'));
+            sources.append(sourceTools, list);
             recordings.before(toolbar);
             recordings.after(options);
             recordings.hidden = false;

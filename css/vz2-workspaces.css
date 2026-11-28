@@ -150,19 +150,36 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 .tool-workspace .segments-toolbar label { margin: 0; }
 #history-sidebar-slot, #tool-sidebar-slot { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 8px 8px; }
 #tool-sidebar-slot:has(#segments-tabs:not([hidden])) { scroll-padding-top: 48px; }
-#segments-tabs:not([hidden]) { position: sticky; top: 0; z-index: 1; display: flex; gap: 4px; padding: 2px 0 6px; background: var(--color-shell); }
+#segments-tabs:not([hidden]) { position: sticky; top: 0; z-index: 1; display: flex; flex: none; gap: 4px; padding: 2px 0 6px; background: var(--color-shell); }
 #segments-tabs button { flex: 1 1 auto; min-width: 0; min-height: 36px; padding: 4px; font-size: 12px; }
 #segments-tabs button[aria-selected=true] { color: var(--color-control-selected-text); background: var(--color-control-selected-bg); border-color: var(--color-control-selected-border); }
-#tool-sidebar-slot #segments-reload { min-height: 32px; margin-bottom: 4px; padding: 4px 8px; font-size: 12px; }
+#tool-sidebar-slot:has(#segments-recordings-pane:not([hidden])),
+#tool-sidebar-slot #segments-controls:has(#segments-recordings-pane:not([hidden])),
+#tool-sidebar-slot #segments-recordings-pane:not([hidden]) { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; }
+#tool-sidebar-slot:has(#segments-recordings-pane:not([hidden])) { overflow: hidden; }
+#tool-sidebar-slot #segments-picker-reload-slot { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+#tool-sidebar-slot #segments-count { margin: 0; }
+#tool-sidebar-slot #segments-reload { min-height: 32px; padding: 4px 8px; font-size: 12px; }
 #tool-sidebar-slot #segments-controls { background: transparent; }
 #tool-sidebar-slot #segments-controls label { margin: 0; }
-#tool-sidebar-slot :is(.segments-toolbar, .segments-source-tools) { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 6px; }
-#tool-sidebar-slot .segments-toolbar { padding: 0; border: 0; background: transparent; }
+#tool-sidebar-slot .segments-toolbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 6px; padding: 0; border: 0; background: transparent; }
+#tool-sidebar-slot .segments-source-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: none; gap: 4px; padding: 4px 0 8px; }
+#tool-sidebar-slot .segments-source-tools > label { grid-column: 1 / -1; gap: 2px; }
+#tool-sidebar-slot .segments-source-tools > button { padding: 4px; }
 #tool-sidebar-slot :is(.segments-toolbar select, .segments-source-tools input, .segments-source-tools select) { width: 100%; min-width: 0; }
 #tool-sidebar-slot .segments-switches { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 #tool-sidebar-slot .segments-display-options { display: grid; gap: 4px; }
-#tool-sidebar-slot .segments-sources { margin: 0; border: 0; }
-#tool-sidebar-slot .segments-recordings { max-height: none; overflow: visible; }
+#tool-sidebar-slot #segments-recordings { flex: 1 1 auto; min-height: 0; max-height: none; align-content: start; padding-bottom: 2px; overflow: hidden auto; overscroll-behavior-y: contain; touch-action: pan-y pinch-zoom; }
+@media (max-height: 420px) {
+    #tool-sidebar-slot .segments-source-tools > label { grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 6px; }
+    #tool-sidebar-slot .segments-source-tools :is(button, input) { min-height: 32px; padding-block: 4px; }
+    #tool-sidebar-slot .segments-recording-option { padding-block: 4px; }
+    #tool-sidebar-slot .segments-recording-option small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (520px <= width <= 767px) and (max-height: 420px) {
+    #tool-sidebar-slot .segments-source-tools:has(> button:not([hidden])) { grid-template-columns: minmax(0, 1fr) auto auto; }
+    #tool-sidebar-slot .segments-source-tools:has(> button:not([hidden])) > label:nth-child(2) { grid-column: 1; }
+}
 #history-sidebar-slot #history-controls { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; }
 #history-sidebar-slot #history-controls > button { min-height: 30px; padding: 4px 7px; font-size: 12px; }
 #history-sidebar-slot #history-filter { width: 100%; margin-top: 6px; }

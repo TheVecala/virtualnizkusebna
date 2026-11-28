@@ -194,6 +194,24 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     }
     async function ready() { await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting')); }
     async function shot(name) { if (process.env.WORKSPACE_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.WORKSPACE_SCREENSHOT_DIR, name + '.png') }); }
+    async function recordingPickerLayout() {
+        const layout = await page.locator('#segments-recordings-pane').evaluate(pane => {
+            const box = selector => pane.querySelector(selector).getBoundingClientRect();
+            const reload = box('#segments-reload');
+            const search = box('#segments-search');
+            const filter = box('label:has(#segments-collection) .vz2-select-button');
+            const list = box('#segments-recordings');
+            return {
+                ordered: reload.height > 0 && reload.bottom <= search.top && search.bottom <= filter.top && filter.bottom <= list.top,
+                positions: [reload.top, search.top, filter.top, list.top],
+                listHeight: list.height,
+                rowHeight: box('#segments-recordings label').height,
+                sidebarScroll: pane.closest('#tool-sidebar-slot').scrollTop
+            };
+        });
+        assert(layout.ordered && layout.listHeight >= layout.rowHeight && layout.sidebarScroll === 0, JSON.stringify(layout));
+        return layout;
+    }
     async function verifyMobileScroll() {
         page.setDefaultTimeout(5000);
         for (let i = 1; i <= 28; i++) {
@@ -219,7 +237,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             await input.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
         }
         async function scrollToLast(scrollSelector, startSelector, lastSelector) {
-            const start = drawer.locator(startSelector).first();
+            const start = page.locator(startSelector).first();
             await start.waitFor();
             const box = await start.boundingBox();
             const x = Math.round(box.x + box.width / 2), y = Math.round(box.y + box.height / 2);
@@ -228,17 +246,21 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             await swipeUp(x, y, distance);
             await page.waitForFunction(selector => document.querySelector(selector).scrollTop > 0, scrollSelector,
                 { timeout: 2500 }).catch(() => assert.fail(`Touch on ${startSelector} must scroll ${scrollSelector}`));
-            const scroller = drawer.locator(scrollSelector), scrollBox = await scroller.boundingBox();
+            const scroller = page.locator(scrollSelector), scrollBox = await scroller.boundingBox();
             const reachedLast = () => scroller.evaluate((node, selector) => {
                 const last = node.querySelector(selector), bounds = node.getBoundingClientRect(), row = last.getBoundingClientRect();
                 return row.height > 0 && row.top >= bounds.top && row.bottom <= bounds.bottom + 1
                     && last.contains(document.elementFromPoint(row.x + row.width / 2, row.y + row.height / 2));
             }, lastSelector);
             for (let step = 0; step < 12 && !await reachedLast(); step++) {
-                await swipeUp(Math.round(scrollBox.x + scrollBox.width / 2), Math.round(scrollBox.y + scrollBox.height * .8), Math.round(scrollBox.height * .6));
+                const startY = Math.round(scrollBox.y + scrollBox.height * .65);
+                const travel = Math.min(startY - 24, Math.max(140, Math.round(scrollBox.height * .6)));
+                await swipeUp(Math.round(scrollBox.x + scrollBox.width / 2), startY, travel);
             }
             assert(await reachedLast(), `Touch scrolling must reach ${lastSelector}`);
-            assert((await closer.boundingBox()).y - (await drawer.boundingBox()).y < 15, 'Close stays at the top of the drawer after scrolling');
+            if (await drawer.isVisible()) {
+                assert((await closer.boundingBox()).y - (await drawer.boundingBox()).y < 15, 'Close stays at the top of the drawer after scrolling');
+            }
         }
         await page.goto('http://vz2-workspaces.test/index.php?v=2');
         await ready();
@@ -249,12 +271,27 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await closer.click();
         await switchTo('segments');
         await open();
-        await scrollToLast('#tool-sidebar-slot', '#segments-recordings label', '#segments-recordings label:last-child');
-        assert.equal(await drawer.locator('#segments-tabs').evaluate(tabs => {
-            const container = tabs.closest('#tool-sidebar-slot');
-            const inset = tabs.getBoundingClientRect().top - container.getBoundingClientRect().top;
-            return inset >= 0 && inset <= 4;
-        }), true, 'Tabs stay available after scrolling all the recordings');
+        await drawer.locator('#segments-recordings label').first().waitFor();
+        assert.equal(await drawer.locator('#segments-sources summary').isVisible(), false);
+        for (const viewport of [{ width: 390, height: 680 }, { width: 767, height: 320 }, { width: 1200, height: 480 }]) {
+            await page.setViewportSize(viewport);
+            await page.waitForFunction(width => document.body.dataset.layout === (width < 768 ? 'mobile' : 'desktop'), viewport.width);
+            if (viewport.height === 320) {
+                await drawer.getByRole('tab', { name: 'Nastavení', exact: true }).click();
+                await drawer.locator('#segments-view').selectOption('stack');
+                await drawer.getByRole('tab', { name: 'Výběr nahrávek', exact: true }).click();
+                assert(await drawer.getByRole('button', { name: 'Vybrat zobrazené', exact: true }).isVisible());
+            }
+            await page.locator('#segments-recordings').evaluate(list => { list.scrollTop = 0; });
+            const before = await recordingPickerLayout();
+            await scrollToLast('#segments-recordings', '#segments-recordings label', 'label:last-child');
+            assert.deepEqual((await recordingPickerLayout()).positions, before.positions, 'Reload, search and filter stay fixed while recordings scroll');
+        }
+        await page.setViewportSize({ width: 390, height: 680 });
+        await open();
+        await drawer.getByRole('button', { name: /^Zkouška \/ skladba:/ }).click();
+        await page.getByRole('option', { name: 'Zkouška 28', exact: true }).click();
+        assert.equal(await drawer.locator('#segments-recordings label').count(), 1);
         await drawer.getByRole('tab', { name: 'Nastavení', exact: true }).click();
         await drawer.getByRole('checkbox', { name: 'Popisky', exact: true }).uncheck();
         await closer.click();
@@ -504,8 +541,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await recordingTab.getAttribute('aria-selected'), 'true');
         const pickerPane = sidebar.getByRole('tabpanel', { name: 'Výběr nahrávek', exact: true });
         assert(await pickerPane.getByRole('button', { name: 'Obnovit data' }).isVisible());
+        assert.equal(await pickerPane.locator('#segments-sources summary').isVisible(), false);
         assert.equal(await segmentControls.locator('#segments-color').isVisible(), false);
         await pickerPane.locator('input[name=segment-recording][value="11"]:checked').waitFor();
+        await recordingPickerLayout();
         await pickerPane.locator('#segments-search').fill('Celá zkouška');
         assert.equal(await pickerPane.locator('#segments-recordings label').count(), 1);
         await recordingTab.press('ArrowRight');
@@ -574,6 +613,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await switchTo('segments');
         assert.equal(await sections.locator('#segments-tabs').isVisible(), false);
         assert(await sections.locator('#segments-color').isVisible() && await sections.locator('#segments-search').isVisible());
+        assert(await sections.locator('#segments-sources summary').isVisible());
         assert(await sections.getByRole('button', { name: 'Obnovit data' }).isVisible());
         await page.setViewportSize({ width: 390, height: 844 });
         await switchTo('overview');
