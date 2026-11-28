@@ -238,7 +238,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 await swipeUp(Math.round(scrollBox.x + scrollBox.width / 2), Math.round(scrollBox.y + scrollBox.height * .8), Math.round(scrollBox.height * .6));
             }
             assert(await reachedLast(), `Touch scrolling must reach ${lastSelector}`);
-            assert((await closer.boundingBox()).y < 15, 'Close stays accessible after scrolling to the last item');
+            assert((await closer.boundingBox()).y - (await drawer.boundingBox()).y < 15, 'Close stays at the top of the drawer after scrolling');
         }
         await page.goto('http://vz2-workspaces.test/index.php?v=2');
         await ready();
@@ -571,7 +571,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             const box = await drawer.boundingBox();
             const brand = await page.locator('#topbar .brand').boundingBox();
             const hamburger = await page.locator('#topbar .shell-menu').boundingBox();
-            assert(box.width >= width - 20 && box.width < width && box.height === height && box.y === 0);
+            assert.deepEqual(box, { x: 0, y: 16, width: width - 16, height: height - 32 }, 'Drawer leaves equal gaps at the top, bottom and right');
             assert(Math.abs(brand.x + brand.width / 2 - width / 2) < 1 && hamburger.x > brand.x + brand.width);
             assert.deepEqual(await drawer.locator('#workspace-navigation > button').allTextContents(), ['Zkoušky', 'Skladby', 'Matice']);
             assert(await sidebar.getByRole('button', { name: 'Obnovit data' }).isVisible());
@@ -585,8 +585,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 return scrolled;
             }));
             if (width === 320) await page.keyboard.press('Escape');
+            else if (width === 390) await page.mouse.click(width / 2, 8);
             else if (width === 740) await page.mouse.click(width - 4, height / 2);
-            else await close.click();
+            else await page.mouse.click(width / 2, height - 8);
             await drawer.waitFor({ state: 'hidden' });
             await page.waitForFunction(() => document.activeElement?.id === 'sidebar-open'
                 && document.activeElement.getAttribute('aria-expanded') === 'false');
@@ -1005,7 +1006,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await page.locator('#catalog-picker').getAttribute('aria-expanded'), 'true');
         await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
         const dropdown = await page.locator('#catalog-dialog').boundingBox();
-        assert.equal(dropdown.y, 0, 'The title also opens the mobile drawer');
+        assert.equal(dropdown.y, 16, 'The title also opens the inset mobile drawer');
         const heading = await page.locator('#catalog-heading-mobile').boundingBox(), create = await page.locator('#create-collection-open').boundingBox();
         assert(Math.abs(heading.y + heading.height / 2 - create.y - create.height / 2) < 2, 'Catalog title and creation button share one row');
         assert(heading.x >= dropdown.x + 8, 'Catalog heading is inset from the dialog border');
