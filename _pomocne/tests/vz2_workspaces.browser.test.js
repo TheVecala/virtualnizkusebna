@@ -50,7 +50,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     let carTimestampRevision = 1;
     let peakRequests = 0, overviewRequests = 0;
     let holdMixer = null, mixerRequested = null;
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const mobileScroll = process.argv.includes('--mobile-scroll');
+    const context = await browser.newContext(mobileScroll
+        ? { viewport: { width: 390, height: 680 }, isMobile: true, hasTouch: true }
+        : { viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message));
     page.on('dialog', async dialog => {
@@ -139,8 +142,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         if (url.pathname === '/php/ajax/vz2_overview.php') {
             overviewRequests++;
             return json({ ok: true, generated_at: '2026-10-25T10:00:00Z',
-                rehearsals: [{ ...collections[2], entries: [], played_songs: [] }],
-                songs: [{ ...collections[0], entries: [{ type: 'document', kind: 'lyrics_chords', label: 'Text', body: 'Text z přehledu' }], played_songs: [] }] });
+                rehearsals: [{ ...collections[2], entries: [], played_songs: [] },
+                    ...(mobileScroll ? matrix.rehearsals.slice(2).map(item => ({ ...item, entries: [], played_songs: [] })) : [])],
+                songs: [{ ...collections[0], entries: [{ type: 'document', kind: 'lyrics_chords', label: 'Text', body: 'Text z přehledu' }], played_songs: [] },
+                    ...(mobileScroll ? matrix.songs.slice(2).map(item => ({ ...item, entries: [], played_songs: [] })) : [])] });
         }
         if (url.pathname === '/php/ajax/vz2_timestamps.php') {
             const input = route.request().method() === 'POST' ? route.request().postDataJSON() : null;
@@ -189,6 +194,80 @@ function gate() { let release; const promise = new Promise(resolve => release = 
     }
     async function ready() { await page.waitForFunction(() => !document.documentElement.classList.contains('vz2-booting')); }
     async function shot(name) { if (process.env.WORKSPACE_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.WORKSPACE_SCREENSHOT_DIR, name + '.png') }); }
+    async function verifyMobileScroll() {
+        page.setDefaultTimeout(5000);
+        for (let i = 1; i <= 28; i++) {
+            const song = { ...collections[0], id: 100 + i, title: `Skladba ${i}` };
+            const rehearsal = { ...collections[2], id: 200 + i, title: `Zkouška ${i}` };
+            collections.push(song, rehearsal);
+            matrix.songs.push(song);
+            matrix.rehearsals.push(rehearsal);
+            recordings.push({ ...recordings[0], id: 300 + i, collection_id: rehearsal.id, title: `Nahrávka ${i}`, files: [file(300 + i)] });
+        }
+        const input = await context.newCDPSession(page);
+        const drawer = page.locator('#catalog-dialog');
+        const opener = page.locator('#sidebar-open'), closer = drawer.locator('#sidebar-close');
+        const open = async () => {
+            await opener.click();
+            await page.waitForFunction(() => document.querySelector('#catalog-dialog').getBoundingClientRect().left === 0);
+        };
+        async function swipeUp(x, y, distance) {
+            await input.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+            for (let step = 1; step <= 5; step++) {
+                await input.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - Math.round(distance * step / 5) }] });
+            }
+            await input.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        }
+        async function scrollToLast(scrollSelector, startSelector, lastSelector) {
+            const start = drawer.locator(startSelector).first();
+            await start.waitFor();
+            const box = await start.boundingBox();
+            const x = Math.round(box.x + box.width / 2), y = Math.round(box.y + box.height / 2);
+            const distance = Math.min(y - 55, 150);
+            assert(distance >= 30 && y < page.viewportSize().height, `The initial touch hits ${startSelector}`);
+            await swipeUp(x, y, distance);
+            await page.waitForFunction(selector => document.querySelector(selector).scrollTop > 0, scrollSelector,
+                { timeout: 2500 }).catch(() => assert.fail(`Touch on ${startSelector} must scroll ${scrollSelector}`));
+            const scroller = drawer.locator(scrollSelector), scrollBox = await scroller.boundingBox();
+            const reachedLast = () => scroller.evaluate((node, selector) => {
+                const last = node.querySelector(selector), bounds = node.getBoundingClientRect(), row = last.getBoundingClientRect();
+                return row.height > 0 && row.top >= bounds.top && row.bottom <= bounds.bottom + 1
+                    && last.contains(document.elementFromPoint(row.x + row.width / 2, row.y + row.height / 2));
+            }, lastSelector);
+            for (let step = 0; step < 12 && !await reachedLast(); step++) {
+                await swipeUp(Math.round(scrollBox.x + scrollBox.width / 2), Math.round(scrollBox.y + scrollBox.height * .8), Math.round(scrollBox.height * .6));
+            }
+            assert(await reachedLast(), `Touch scrolling must reach ${lastSelector}`);
+            assert((await closer.boundingBox()).y < 15, 'Close stays accessible after scrolling to the last item');
+        }
+        await page.goto('http://vz2-workspaces.test/index.php?v=2');
+        await ready();
+        await open();
+        await scrollToLast('#collections', '#collections .collection', '#collections .collection:last-child');
+        await drawer.getByRole('button', { name: 'Matice', exact: true }).click();
+        await scrollToLast('#history-sidebar-slot', '#history-song-filter label', '#history-rehearsal-filter label:last-child');
+        await closer.click();
+        await switchTo('segments');
+        await open();
+        await scrollToLast('#tool-sidebar-slot', '#segments-recordings label', '#segments-labels');
+        await drawer.getByRole('checkbox', { name: 'Popisky', exact: true }).uncheck();
+        await closer.click();
+        await switchTo('overview');
+        await open();
+        await drawer.getByRole('button', { name: 'Vytvořit výpis' }).click();
+        await drawer.locator('#overview-filters summary').click();
+        await scrollToLast('#tool-sidebar-slot', '#overview-filters .overview-filter-group label', '#overview-song-options label:last-child');
+        await closer.click();
+        await page.setViewportSize({ width: 740, height: 390 });
+        await open();
+        await drawer.getByRole('button', { name: 'Zkoušky', exact: true }).click();
+        await scrollToLast('#collections', '#collections .collection', '#collections .collection:last-child');
+        await drawer.getByRole('button', { name: 'Zkouška 28', exact: true }).click();
+        await drawer.waitFor({ state: 'hidden' });
+        assert.equal(await page.locator('#collection-title-name').textContent(), 'Zkouška 28');
+        assert.deepEqual(errors, []);
+        console.log('PASS: mobile touch scrolling reaches the last catalog item, Matrix filters, Sections options and Overview filters');
+    }
     async function verifyDesktopLayout() {
         page.setDefaultTimeout(8000);
         collections[0].song_description = 'Zkušební popis skladby';
@@ -548,6 +627,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         console.log('PASS: embedded workspaces, shared sidebar controls, mobile drawer at 320–767 px, catalogue selection, focus and tablet transition; Looper continues playing');
     }
     try {
+        if (mobileScroll) { await verifyMobileScroll(); return; }
         if (process.argv.includes('--desktop-layout')) { await verifyDesktopLayout(); return; }
         if (process.argv.includes('--embedded-workspaces')) { await verifyEmbeddedWorkspaces(); return; }
         await page.goto('http://vz2-workspaces.test/index.php?v=2'); await ready();
@@ -884,13 +964,15 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.locator('#history-song-filter input[value="1"]').check();
         await page.locator('#history-song-filter input[value="2"]').check();
         assert.equal(await page.locator('#history-song-filter input:checked').count(), 2);
-        const fixedActions = await page.evaluate(() => {
-            const list = document.querySelector('#history-song-filter'), actions = document.querySelector('.history-filter-heading');
+        const fixedNavigation = await page.evaluate(() => {
+            const list = document.querySelector('#history-song-filter'), close = document.querySelector('#sidebar-close');
             for (let i = 0; i < 20; i++) { const row = list.firstElementChild.cloneNode(true); row.classList.add('test-extra'); list.append(row); }
-            const before = actions.getBoundingClientRect().top; list.scrollTop = list.scrollHeight;
-            return { scrolled: list.scrollTop > 0, before, after: actions.getBoundingClientRect().top };
+            const settings = document.querySelector('#history-sidebar-slot');
+            const before = close.getBoundingClientRect().top;
+            settings.scrollTop = settings.scrollHeight;
+            return { scrolled: settings.scrollTop > 0 && list.scrollTop === 0, before, after: close.getBoundingClientRect().top };
         });
-        assert(fixedActions.scrolled && fixedActions.before === fixedActions.after, 'Only the song list scrolls while its heading stays fixed');
+        assert(fixedNavigation.scrolled && fixedNavigation.before === fixedNavigation.after, 'Matrix settings scroll together below the fixed navigation');
         await page.evaluate(() => document.querySelectorAll('#history-song-filter .test-extra').forEach(row => row.remove()));
         await page.locator('#sidebar-close').click();
         await page.locator('#sidebar-open').click();

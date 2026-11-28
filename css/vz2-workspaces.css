@@ -263,16 +263,17 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     #catalog-dialog #workspace-navigation { display: flex; align-items: stretch; gap: 4px; margin: 0; }
     #catalog-dialog #workspace-navigation button { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 4px 2px; }
     #catalog-dialog :is(#sidebar, #history-sidebar-slot, #tool-sidebar-slot) { grid-column: 1 / -1; grid-row: 2; }
-    #catalog-dialog #sidebar { max-height: none; }
+    #catalog-dialog #sidebar { align-self: stretch; max-height: none; }
     #catalog-dialog #catalog-heading { display: none; }
-    #catalog-dialog #collections { overscroll-behavior: contain; }
+    #catalog-dialog :is(#collections, #history-sidebar-slot, #tool-sidebar-slot) { overflow: hidden auto; overscroll-behavior-y: contain; touch-action: pan-y pinch-zoom; }
     #catalog-heading-mobile { display: block; flex: 0 0 auto; margin: 0 auto 0 0; color: var(--color-primary-hover); font-size: 14px; }
     #catalog-dialog #create-collection-open { flex: 0 0 auto; min-height: 40px; padding: 5px 8px; }
     #catalog-dialog #catalog-close { display: none; }
     #catalog-dialog :is(#history-sidebar-slot, #tool-sidebar-slot) { padding: 2px 2px 8px; }
     #catalog-dialog #history-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 0; border: 0; background: none; }
     #catalog-dialog #history-controls > :is(button, label) { min-height: 40px; white-space: normal; }
-    #catalog-dialog .history-filter-list { max-height: max(110px, 27dvh); }
+    /* Let a gesture over a list scroll the settings all the way to the last control. */
+    #catalog-dialog :is(.history-filter-list, .segments-recordings, .overview-filter-body, .overview-collection-options) { max-height: none; overflow: visible; }
     #catalog-dialog .history-filter-list label { min-height: 34px; }
     @media (prefers-reduced-motion: no-preference) {
         #catalog-dialog[open] { animation: sidebar-slide-in .22s ease-out; }
