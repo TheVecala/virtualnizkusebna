@@ -190,8 +190,8 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
 .mobile-label, #mobile-dock, #mobile-sections-dock { display: none; }
 @media (min-width: 1200px) {
     #sidebar-slot { display: flex; flex-direction: column; border-right: 1px solid var(--color-border); background: var(--color-shell); }
-    #workspace-navigation { flex: none; margin: 0; padding: 8px; }
-    #workspace-navigation > button { flex: 1 1 0; min-width: 0; min-height: 32px; padding: 4px 2px; font-size: 12px; }
+    #workspace-navigation { flex: none; flex-wrap: wrap; margin: 0; padding: 8px; }
+    #workspace-navigation > button { flex: 1 1 28%; min-width: 0; min-height: 32px; padding: 4px 2px; font-size: 12px; }
     #sidebar-slot > #sidebar { flex: 1; height: auto; border: 0; }
     #sidebar-slot #catalog-heading { display: none; }
 
@@ -294,7 +294,7 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     }
     #catalog-dialog #sidebar-slot { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
     #catalog-dialog #workspace-navigation { display: flex; align-items: stretch; gap: 4px; margin: 0; }
-    #catalog-dialog #workspace-navigation button { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 4px 2px; }
+    #catalog-dialog #workspace-navigation button { flex: 1 1 auto; min-width: 0; min-height: 40px; padding: 4px 2px; font-size: 12px; }
     #catalog-dialog :is(#sidebar, #history-sidebar-slot, #tool-sidebar-slot) { grid-column: 1 / -1; grid-row: 2; }
     #catalog-dialog #sidebar { align-self: stretch; max-height: none; }
     #catalog-dialog #catalog-heading { display: none; }
@@ -340,6 +340,11 @@ body[data-collection-kind=rehearsal] #collection-title-name { font-weight: 750; 
     body:is([data-workspace=history], [data-workspace=ideas], [data-workspace=segments], [data-workspace=overview]) :is(#activity, #offline-files).utility-panel { bottom: 8px; }
 }
 @keyframes sidebar-slide-in { from { translate: -100% 0; } to { translate: none; } }
+@media (max-width: 359px) {
+    #catalog-dialog #workspace-navigation { flex-wrap: wrap; }
+    #catalog-dialog #workspace-navigation button { flex-basis: 28%; }
+    #catalog-dialog #sidebar-close { align-self: start; }
+}
 /* Leave a scrollable editor area when the mobile keyboard shortens the viewport.
    The complete player remains available by scrolling it or opening fullscreen. */
 @media (max-width: 767px) and (max-height: 500px) {

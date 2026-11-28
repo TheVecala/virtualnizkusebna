@@ -166,12 +166,32 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         return route.fulfill({ status: 204, body: '' });
     });
     const nav = name => page.locator(`[data-workspace-target="${name}"]:visible`);
+    const sidebarWorkspaceLabels = ['Zkoušky', 'Skladby', 'Matice', 'Úseky', 'Přehled'];
     async function switchTo(name) {
-        if (await page.locator(`.shell-menu:not([open]) [data-workspace-target="${name}"]`).count()) {
+        const visible = await nav(name).count();
+        const drawerTarget = page.locator(`#catalog-dialog #workspace-navigation [data-workspace-target="${name}"]`);
+        const openDrawer = !visible && await drawerTarget.count();
+        if (openDrawer) {
+            await page.locator('#sidebar-open').click();
+            await waitForMobileDrawer();
+        } else if (!visible && await page.locator(`.shell-menu:not([open]) [data-workspace-target="${name}"]`).count()) {
             await page.locator('.shell-menu > summary').click();
         }
         await nav(name).click();
         await page.waitForFunction(workspace => document.body.dataset.workspace === workspace, name);
+        if (openDrawer) await page.locator('#sidebar-close').click();
+    }
+    async function verifySidebarNavigation(active) {
+        const navigation = page.locator('#sidebar-slot #workspace-navigation');
+        assert.deepEqual(await navigation.locator('button').allTextContents(), sidebarWorkspaceLabels);
+        assert.equal(await navigation.locator('button[aria-pressed=true]').getAttribute('data-workspace-target'), active);
+        assert(await navigation.evaluate(nav => {
+            const bounds = nav.getBoundingClientRect();
+            return [...nav.querySelectorAll('button')].every(button => {
+                const box = button.getBoundingClientRect();
+                return box.width > 0 && box.right <= bounds.right + 1 && button.scrollWidth <= button.clientWidth + 1;
+            });
+        }), 'All five buttons and labels fit the sidebar navigation');
     }
     async function checkDrawer(selector, position, content) {
         await page.waitForFunction(({ selector, position, content }) => {
@@ -277,9 +297,8 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await scrollToLast('#collections', '#collections .collection', '#collections .collection:last-child');
         await drawer.getByRole('button', { name: 'Matice', exact: true }).click();
         await scrollToLast('#history-sidebar-slot', '#history-song-filter label', '#history-rehearsal-filter label:last-child');
-        await closer.click();
         await switchTo('segments');
-        await open();
+        await verifySidebarNavigation('segments');
         await drawer.locator('#segments-recordings label').first().waitFor();
         assert.equal(await drawer.locator('#segments-sources summary').isVisible(), false);
         for (const viewport of [{ width: 390, height: 680 }, { width: 767, height: 320 }, { width: 1200, height: 480 }]) {
@@ -306,10 +325,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await drawer.locator('#segments-recordings label').count(), 1);
         await drawer.getByRole('tab', { name: 'Nastavení', exact: true }).click();
         await drawer.getByRole('checkbox', { name: 'Popisky', exact: true }).uncheck();
-        await closer.click();
         await switchTo('overview');
         await page.locator('#overview-output').waitFor();
-        await open();
+        await verifySidebarNavigation('overview');
         await drawer.getByRole('tab', { name: 'Vlastní výběr', exact: true }).click();
         await scrollToLast('#tool-sidebar-slot', '#overview-filters .overview-filter-group label', '#overview-song-options label:last-child');
         await closer.click();
@@ -332,8 +350,9 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             matrix.rehearsals.push({ id: 200 + i, title: 'Zkouška ' + i });
         }
         await page.goto('http://vz2-workspaces.test/index.php?v=2'); await ready();
-        assert.deepEqual(await page.locator('#sidebar-slot #workspace-navigation > button').allTextContents(), ['Zkoušky', 'Skladby', 'Matice']);
+        await verifySidebarNavigation('songs');
         assert.equal(await page.locator('#topbar #workspace-navigation').count(), 0);
+        assert.equal(await page.locator('.shell-menu [data-workspace-target="segments"], .shell-menu [data-workspace-target="overview"]').count(), 0);
         await switchTo('ideas');
         assert(await page.locator('#ideas-controls').isVisible());
         await switchTo('songs');
@@ -549,6 +568,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
                 && !window.workspaceAudio.paused && window.workspaceLoop === window.Vz2TimestampPlayback.state()));
         };
         await switchTo('segments');
+        await verifySidebarNavigation('segments');
         assert.match(page.url(), /workspace=segments/);
         assert.equal(await sections.locator('#segments-downloads, .download-manager').count(), 0);
         assert.equal(await sections.locator('#segments-controls, #segments-reload').count(), 0);
@@ -592,6 +612,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
 
         assert.equal(overviewRequests, 0, 'The overview waits until the workspace is opened');
         await switchTo('overview');
+        await verifySidebarNavigation('overview');
         assert.equal(await overview.locator('#overview-controls').count(), 0);
         assert.equal(await segmentControls.isVisible(), false);
         assert.equal(await page.locator('#overview-generate').count(), 0);
@@ -663,7 +684,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         assert.equal(await sections.locator('#segments-controls, #segments-reload').count(), 0);
         await page.locator('#looper-play').click();
         await page.waitForFunction(() => window.Vz2Player.getState()?.playing);
-        for (const [width, height] of [[320, 568], [390, 844], [740, 390], [767, 320]]) {
+        for (const [width, height] of [[320, 568], [360, 800], [390, 844], [740, 390], [767, 320]]) {
             await page.setViewportSize({ width, height });
             await opener.click();
             await waitForMobileDrawer();
@@ -672,7 +693,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             const hamburger = await page.locator('#topbar .shell-menu').boundingBox();
             assert.deepEqual(box, { x: 0, y: 16, width: width - 16, height: height - 32 }, 'Drawer leaves equal gaps at the top, bottom and right');
             assert(Math.abs(brand.x + brand.width / 2 - width / 2) < 1 && hamburger.x > brand.x + brand.width);
-            assert.deepEqual(await drawer.locator('#workspace-navigation > button').allTextContents(), ['Zkoušky', 'Skladby', 'Matice']);
+            await verifySidebarNavigation('segments');
             assert(await page.evaluate(() => window.segmentTabsBeforeResize === document.getElementById('segments-tabs')));
             assert.equal(await settingsTab.getAttribute('aria-selected'), 'true');
             assert.equal(await segmentControls.locator('#segments-color').inputValue(), 'recording');
@@ -713,6 +734,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await page.setViewportSize({ width: 768, height: 650 });
         await drawer.waitFor({ state: 'hidden' });
         assert.equal(await opener.isVisible(), false);
+        const tabletNav = page.locator('#topbar #workspace-navigation');
+        assert(await tabletNav.getByRole('button', { name: 'Úseky', exact: true }).isVisible());
+        assert(await tabletNav.getByRole('button', { name: 'Přehled', exact: true }).isVisible());
+        assert(await page.locator('#topbar').evaluate(topbar => topbar.scrollWidth <= topbar.clientWidth + 1));
         await page.locator('#catalog-picker').click();
         assert(await drawer.locator('#collections').isVisible());
         assert.equal(await drawer.locator('#workspace-navigation').count(), 0);
@@ -1023,7 +1048,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             assert.equal(await page.locator(control).evaluate(node => node.parentElement.id), slot);
             assert(await page.locator(control).isVisible(), `${workspace} controls should be visible`);
             assert.equal(await page.locator('#collection-header').isVisible(), ['songs', 'rehearsals'].includes(workspace));
-            assert.deepEqual(await page.locator('#sidebar-slot #workspace-navigation > button').allTextContents(), ['Zkoušky', 'Skladby', 'Matice']);
+            assert.deepEqual(await page.locator('#sidebar-slot #workspace-navigation > button').allTextContents(), sidebarWorkspaceLabels);
             assert.equal(await page.locator('#topbar #workspace-navigation').count(), 0);
             assert.equal(await page.locator('#topbar .shell-menu #show-ideas').count(), 1);
             const topbar = await page.evaluate(() => {

@@ -148,14 +148,14 @@ html.vz2-booting body > :not(#vz2-boot) { visibility: hidden; }
 <button type="button" data-workspace-target="songs" aria-pressed="true">Skladby</button>
 <button type="button" data-workspace-target="rehearsals" aria-pressed="false">Zkoušky</button>
 <button type="button" id="show-history" data-workspace-target="history" aria-pressed="false">Matice</button>
+<button type="button" data-workspace-target="segments" aria-pressed="false">Úseky</button>
+<button type="button" data-workspace-target="overview" aria-pressed="false">Přehled</button>
 <button type="button" id="show-ideas" data-workspace-target="ideas" aria-pressed="false">Nápady</button>
 </nav>
 <span class="topbar-account" title="Přihlášený účet: <?=auth_h($_SESSION['user_name']??'Host')?>"><?=auth_h($_SESSION['user_name']??'Host')?></span>
 <button id="car-mode-menu-open" class="car-entry" type="button" title="Poslech v autě" aria-label="Poslech v autě"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11 7 5h10l2 6M4 11h16v8H4zM7 19v2m10-2v2M7 15h2m6 0h2"/></svg></button>
 <details class="shell-menu"><summary aria-label="Další možnosti" title="Další možnosti"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span></summary><nav aria-label="Další možnosti">
 <?php if(auth_is_admin()):?><a href="admin.php">Správa účtů</a><button id="show-log">Deník změn</button><?php endif;?>
-<button type="button" data-workspace-target="segments" aria-pressed="false">Úseky</button>
-<button type="button" data-workspace-target="overview" aria-pressed="false">Přehled</button>
 <a href="simple.php">Simple</a>
 <a href="help.php">Nápověda</a>
 <button id="show-offline">Správa offline souborů</button><button id="logout">Odhlásit</button></nav></details></header>
