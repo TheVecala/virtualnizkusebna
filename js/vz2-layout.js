@@ -30,7 +30,7 @@
         }
         fullscreenPanel = panel;
         if (panel) {
-            document.querySelectorAll('#looper-options[open], #history-options[open], .shell-menu[open], .actions-menu[open], .collection-menu[open]').forEach(menu => menu.open = false);
+            document.querySelectorAll('#looper-options[open], .shell-menu[open], .actions-menu[open], .collection-menu[open]').forEach(menu => menu.open = false);
             panel.classList.add('panel-fullscreen');
             updateFullscreenButton(panel, true);
             fullscreenHandlers.get(panel)?.enter?.();
@@ -193,7 +193,11 @@
         placeWorkspaceNavigation();
         updatePlayerPosition();
         const historyInSidebar = desktop.matches && fullscreenPanel !== $('history-workspace');
-        moveControls('history-controls', historyInSidebar ? 'history-sidebar-slot' : 'history-controls-slot');
+        const historySlot = historyInSidebar ? 'history-sidebar-slot' : 'history-controls-slot';
+        if ($('history-controls').parentElement !== $(historySlot)) {
+            moveControls('history-controls', historySlot);
+            $('history-filter').open = historyInSidebar;
+        }
         $('history-sidebar-slot').hidden = !historyInSidebar || activeWorkspace !== 'history';
         const toolInSidebar = desktop.matches && ['segments', 'overview'].includes(activeWorkspace);
         moveControls('segments-reload', toolInSidebar && activeWorkspace === 'segments' ? 'tool-sidebar-slot' : 'segments-reload-slot');
@@ -279,7 +283,7 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelector('.shell-menu').open = false; });
     document.addEventListener('click', e => { if (!e.target.closest('.shell-menu')) document.querySelector('.shell-menu').open = false; });
-    const menuSelector = '.actions-menu, .collection-menu, #history-options';
+    const menuSelector = '.actions-menu, .collection-menu';
     function placeCollectionMenu(menu) {
         const popover = menu.querySelector('.collection-menu-popover');
         if (!popover || !menu.open) return;
@@ -323,7 +327,7 @@
     });
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape' || document.querySelector('dialog[open]') || document.querySelector('.player-fullscreen')) return;
-        const menu = document.querySelector('.actions-menu[open], .collection-menu[open], #history-options[open]');
+        const menu = document.querySelector('.actions-menu[open], .collection-menu[open]');
         if (menu) { menu.open = false; menu.querySelector('summary').focus(); e.preventDefault(); }
     });
     document.addEventListener('keydown', e => {
