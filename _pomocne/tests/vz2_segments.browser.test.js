@@ -39,6 +39,12 @@ wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.
         });
         await page.goto('http://segments.test/useky.php');
         await page.locator('.segment-recording').waitFor();
+        assert.equal(await page.locator('#segments-view').inputValue(), 'stack');
+        assert.equal(await page.locator('#segments-color').inputValue(), 'song');
+        assert.equal(await page.locator('#segments-scale').inputValue(), 'fit');
+        assert.equal(await page.locator('#segments-zoom').count(), 0);
+        assert(await page.locator('.segments-toolbar').evaluate(toolbar => toolbar.querySelector('.segments-switches').getBoundingClientRect().bottom
+            <= toolbar.querySelector('label:has(#segments-view)').getBoundingClientRect().top));
         const downloads = page.locator('#segments-downloads');
         await downloads.locator('summary').click();
         await downloads.getByRole('heading', { name: 'Soubory v zařízení', exact: true }).waitFor();
@@ -50,13 +56,13 @@ wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.
         assert.equal(await page.locator('#segments-selected-title').textContent(), 'Refrén');
         assert.equal(await page.locator('#segments-selected-time').textContent(), '04:30 – 05:00');
         assert.match(await page.locator('#segments-open').getAttribute('href'), /recording_id=11.*time_ms=270000/);
-        await page.locator('#segments-view').selectOption('stack');
         await page.locator('input[name="segment-recording"][value="12"]').check();
         assert.equal(await page.locator('.segment-recording').count(), 2);
         const widths = () => page.locator('.segment-baseline .segment-item').evaluateAll(items => items.map(i => i.getBoundingClientRect().width));
-        let sizes = await widths(); assert(Math.abs(sizes[1] / sizes[0] - 360 / 420) < .001, 'common time scale');
-        await page.locator('#segments-scale').selectOption('fit'); sizes = await widths(); assert(Math.abs(sizes[1] - sizes[0]) < 1, 'fit each recording');
-        await page.locator('#segments-color').selectOption('song');
+        let sizes = await widths(); assert(Math.abs(sizes[1] - sizes[0]) < 1, 'each recording fills the timeline by default');
+        await page.locator('#segments-scale').selectOption('shared'); sizes = await widths();
+        assert(Math.abs(sizes[1] / sizes[0] - 360 / 420) < .001, 'common time scale');
+        await page.locator('#segments-scale').selectOption('fit');
         const color = await page.locator('[data-segment-id="t1"]').first().evaluate(e => e.style.getPropertyValue('--segment-color'));
         assert.equal(await page.locator('[data-segment-id="t9"]').evaluate(e => e.style.getPropertyValue('--segment-color')), color, 'passage inherits song color');
         await page.locator('#segments-takes').uncheck(); assert.equal(await page.locator('.segment-take').count(), 0); assert.equal(await page.locator('.segment-passage').count(), 4);
@@ -68,15 +74,18 @@ wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.
         await page.waitForFunction(() => document.querySelectorAll('.segment-wave').length === 2);
         assert.equal(requests.filter(r => r.path.includes('peaks')).length, waveRequests);
         assert.equal(requests.filter(r => r.path === '/sample.wav').length, 0, 'waveform views do not download audio');
-        await page.locator('#segments-zoom').selectOption('4');
-        assert(await page.locator('.segment-plot').first().evaluate(e => Math.abs((Number(e.dataset.viewEnd) - Number(e.dataset.viewStart)) / Number(e.dataset.duration) - .25) < .001), 'dropdown zoom narrows the viewport');
-        await page.locator('.timeline-zoom-controls').getByRole('button', { name: 'Oddálit', exact: true }).click();
-        await page.waitForFunction(() => document.getElementById('segments-zoom').value === '2');
-        await page.locator('.timeline-zoom-controls').getByRole('button', { name: 'Celá nahrávka', exact: true }).click();
-        await page.waitForFunction(() => document.getElementById('segments-zoom').value === '1');
-        assert.equal(requests.filter(r => r.path.includes('peaks')).length, waveRequests, 'zoom reuses the cached waveform');
-        await page.locator('#segments-zoom').selectOption('1');
+        const zoomButton = name => page.locator('.timeline-zoom-controls').getByRole('button', { name, exact: true });
+        const waitForSpan = span => page.waitForFunction(span => {
+            const { viewEnd, viewStart, duration } = document.querySelector('.segment-plot').dataset;
+            return Math.abs((Number(viewEnd) - Number(viewStart)) / Number(duration) - span) < .001;
+        }, span);
+        await zoomButton('Přiblížit').click(); await waitForSpan(.5);
+        await zoomButton('Přiblížit').click(); await waitForSpan(.25);
         await page.locator('#segments-color').selectOption('type');
+        await waitForSpan(.25);
+        await zoomButton('Oddálit').click(); await waitForSpan(.5);
+        await zoomButton('Celá nahrávka').click(); await waitForSpan(1);
+        assert.equal(requests.filter(r => r.path.includes('peaks')).length, waveRequests, 'zoom reuses the cached waveform');
         await page.locator('#segments-scale').selectOption('shared');
         const screenshots = process.env.SEGMENTS_SCREENSHOT_DIR;
         if (screenshots) { fs.mkdirSync(screenshots, { recursive: true }); await page.screenshot({ path: path.join(screenshots, 'segments-desktop.png'), fullPage: true }); }

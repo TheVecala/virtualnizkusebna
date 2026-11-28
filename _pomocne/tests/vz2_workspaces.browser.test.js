@@ -278,7 +278,10 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             await page.waitForFunction(width => document.body.dataset.layout === (width < 768 ? 'mobile' : 'desktop'), viewport.width);
             if (viewport.height === 320) {
                 await drawer.getByRole('tab', { name: 'Nastavení', exact: true }).click();
-                await drawer.locator('#segments-view').selectOption('stack');
+                assert.equal(await drawer.locator('#segments-view').inputValue(), 'stack');
+                assert.equal(await drawer.locator('#segments-color').inputValue(), 'song');
+                assert.equal(await drawer.locator('#segments-scale').inputValue(), 'fit');
+                assert.equal(await drawer.locator('#segments-zoom').count(), 0);
                 await drawer.getByRole('tab', { name: 'Výběr nahrávek', exact: true }).click();
                 assert(await drawer.getByRole('button', { name: 'Vybrat zobrazené', exact: true }).isVisible());
             }
@@ -550,7 +553,14 @@ function gate() { let release; const promise = new Promise(resolve => release = 
         await recordingTab.press('ArrowRight');
         assert.equal(await settingsTab.getAttribute('aria-selected'), 'true');
         assert.equal(await pickerPane.isVisible(), false);
-        await segmentControls.locator('#segments-color').selectOption('song');
+        assert.equal(await segmentControls.locator('#segments-view').inputValue(), 'stack');
+        assert.equal(await segmentControls.locator('#segments-color').inputValue(), 'song');
+        assert.equal(await segmentControls.locator('#segments-scale').inputValue(), 'fit');
+        assert.equal(await segmentControls.locator('#segments-zoom').count(), 0);
+        const switches = await segmentControls.locator('.segments-switches').boundingBox();
+        const view = await segmentControls.locator('label:has(#segments-view)').boundingBox();
+        assert(switches.y + switches.height <= view.y, 'Wave and Kompaktní are above the other settings');
+        await segmentControls.locator('#segments-color').selectOption('recording');
         await segmentControls.getByRole('checkbox', { name: 'Popisky', exact: true }).uncheck();
         await settingsTab.press('Home');
         assert.equal(await pickerPane.locator('#segments-search').inputValue(), 'Celá zkouška');
@@ -642,7 +652,7 @@ function gate() { let release; const promise = new Promise(resolve => release = 
             assert.deepEqual(await drawer.locator('#workspace-navigation > button').allTextContents(), ['Zkoušky', 'Skladby', 'Matice']);
             assert(await page.evaluate(() => window.segmentTabsBeforeResize === document.getElementById('segments-tabs')));
             assert.equal(await settingsTab.getAttribute('aria-selected'), 'true');
-            assert.equal(await segmentControls.locator('#segments-color').inputValue(), 'song');
+            assert.equal(await segmentControls.locator('#segments-color').inputValue(), 'recording');
             assert.equal(await segmentControls.getByRole('checkbox', { name: 'Popisky', exact: true }).isChecked(), false);
             await recordingTab.click();
             assert.equal(await pickerPane.locator('#segments-search').inputValue(), 'Celá zkouška');

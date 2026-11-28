@@ -153,7 +153,7 @@
             setRange(range) {
                 if (config.onViewportChange) { config.onViewportChange(range); return; }
                 viewportRange = range; options.zoom = 1 / (range.end - range.start);
-                render(); config.onZoomChange?.(options.zoom);
+                render();
             }
         });
         if (config.controls !== false) host.append(root.Vz2Timeline.controls(timeline));

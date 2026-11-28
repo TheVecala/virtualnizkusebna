@@ -9,13 +9,6 @@
     const panel = window.Vz2SegmentsPanel.mount($('segments-panel'), {
         onSelect: value => select(value, false, true),
         onSeek: seekPosition,
-        onZoomChange(zoom) {
-            const select = $('segments-zoom');
-            select.querySelector('[data-custom]')?.remove();
-            const existing = [...select.options].find(o => Math.abs(Number(o.value) - zoom) < .001);
-            if (existing) select.value = existing.value;
-            else { const option = new Option(zoom.toFixed(1) + '×', String(zoom)); option.dataset.custom = ''; select.add(option); select.value = option.value; }
-        },
         onActivate(value) { select(value); if (!$('segments-play').disabled) play(); }
     });
     function status(text, error = false) { $('segments-status').textContent = text; $('segments-status').classList.toggle('is-error', error); }
@@ -62,7 +55,7 @@
         $('segments-count').textContent = selectedIds.size + ' vybráno / ' + available().length;
     }
     function options() {
-        return { color: $('segments-color').value, scale: $('segments-scale').value, zoom: Number($('segments-zoom').value),
+        return { color: $('segments-color').value, scale: $('segments-scale').value,
             wave: $('segments-wave').checked, compact: $('segments-compact').checked,
             labels: $('segments-labels').checked, takes: $('segments-takes').checked, passages: $('segments-passages').checked, notes: $('segments-notes').checked };
     }
@@ -195,7 +188,7 @@
         if ($('segments-view').value === 'single' && selectedIds.size > 1) selectedIds = new Set([[...selectedIds][0]]);
         if (selection && !selectedIds.has(String(selection.recording_id))) clearSelection(); render();
     };
-    for (const key of ['color', 'scale', 'zoom', 'wave', 'compact', 'labels', 'takes', 'passages', 'notes']) $('segments-' + key).onchange = render;
+    for (const key of ['color', 'scale', 'wave', 'compact', 'labels', 'takes', 'passages', 'notes']) $('segments-' + key).onchange = render;
     $('segments-search').oninput = list; $('segments-collection').onchange = list;
     $('segments-select-all').onclick = () => { available().filter(matches).forEach(r => selectedIds.add(String(r.id))); render(); };
     $('segments-select-none').onclick = () => { selectedIds.clear(); clearSelection(); render(); };
